@@ -3,11 +3,11 @@ using System.Linq.Expressions;
 
 namespace TogglDoodle.Models
 {
-    public class Project : Model
+    public class ProjectModel : Model
     {
         public long? WorkspaceId { get; set; }
 
-        public Expression<Func<Workspace, bool>> Workspace {
+        public Expression<Func<WorkspaceModel, bool>> Workspace {
             get { return (m) => m.Id == WorkspaceId; }
         }
     }

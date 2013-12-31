@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using TogglDoodle.Models;
 using SQLite;
 
 namespace TogglDoodle
@@ -25,10 +26,10 @@ namespace TogglDoodle
             Console.WriteLine ("Using SQLite file: {0}", path);
 
             var db = new SQLiteConnection (path);
-            CreateTables (db, typeof(Models.Workspace));
+            CreateTables (db, typeof(WorkspaceModel));
 
-//            var ws = new Models.Workspace () {
-//                Id = Model.NextId<Models.Workspace> (),
+//            var ws = new WorkspaceModel () {
+//                Id = Model.NextId<WorkspaceModel> (),
 //                Name = "Test workspace",
 //                DefaultCurrency = "EUR",
 //                DefaultHourlyRate = 70.5m,
@@ -36,8 +37,8 @@ namespace TogglDoodle
 //                IsPremium = true,
 //            };
 //
-//            var te = new Models.TimeEntry () {
-//                Id = Model.NextId<Models.TimeEntry> (),
+//            var te = new TimeEntryModel () {
+//                Id = Model.NextId<TimeEntryModel> (),
 //                WorkspaceId = ws.Id,
 //                Billable = true,
 //                CreatedWith = "Me",
@@ -48,8 +49,8 @@ namespace TogglDoodle
 //            db.Insert (ws);
 //            db.Insert (te);
 
-//            var ws = Model.GetShared (db.Get<Models.Workspace> (1));
-//            var tes = db.Table<Models.TimeEntry> ().Where (ws.TimeEntries);
+//            var ws = Model.GetShared (db.Get<WorkspaceModel> (1));
+//            var tes = db.Table<TimeEntryModel> ().Where (ws.TimeEntries);
 //
 //            Console.WriteLine ("Workspace: {0}", ws.Name);
 //            Console.WriteLine ("TimeEntries: {0}", tes.Count ());

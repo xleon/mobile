@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace TogglDoodle.Models
 {
-    public class TimeEntry : Model
+    public class TimeEntryModel : Model
     {
         public string Description { get; set; }
 
@@ -28,15 +28,15 @@ namespace TogglDoodle.Models
 
         public bool DurationOnly { get; set; }
         // Relations
-        public Expression<Func<Workspace, bool>> Workspace {
+        public Expression<Func<WorkspaceModel, bool>> Workspace {
             get { return (m) => m.Id == WorkspaceId; }
         }
 
-        public Expression<Func<Project, bool>> Project {
+        public Expression<Func<ProjectModel, bool>> Project {
             get { return (m) => m.Id == ProjectId; }
         }
 
-        public Expression<Func<Task, bool>> Task {
+        public Expression<Func<TaskModel, bool>> Task {
             get { return (m) => m.Id == TaskId; }
         }
     }

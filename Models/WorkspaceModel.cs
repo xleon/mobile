@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 
 namespace TogglDoodle.Models
 {
-    public class Workspace : Model
+    public class WorkspaceModel : Model
     {
         public enum Privilege
         {
@@ -31,7 +31,7 @@ namespace TogglDoodle.Models
 
         public Uri LogoUrl { get; set; }
         // [Relation(CascadeDelete)]
-        public Expression<Func<TimeEntry, bool>> TimeEntries {
+        public Expression<Func<TimeEntryModel, bool>> TimeEntries {
             get { return (m) => m.WorkspaceId == Id; }
         }
     }

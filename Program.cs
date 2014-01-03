@@ -7,14 +7,15 @@ namespace TogglDoodle
 {
     class MainClass
     {
-        private static void CreateTables (SQLiteConnection db, Type type)
+        private static void CreateTables (SQLiteConnection db)
         {
+            var modelType = typeof(Model);
             // Auto-discover models in single assembly namespace
-            var modelTypes =
-                from t in type.Assembly.GetTypes ()
-                            where t.Namespace.StartsWith (type.Namespace) && t.IsSubclassOf (typeof(Model))
+            var modelSubtypes =
+                from t in modelType.Assembly.GetTypes ()
+                            where t.Namespace == modelType.Namespace && t.IsSubclassOf (modelType)
                             select t;
-            foreach (var t in modelTypes) {
+            foreach (var t in modelSubtypes) {
                 db.CreateTable (t);
             }
         }
@@ -26,7 +27,7 @@ namespace TogglDoodle
             Console.WriteLine ("Using SQLite file: {0}", path);
 
             var db = new SQLiteConnection (path);
-            CreateTables (db, typeof(WorkspaceModel));
+            CreateTables (db);
 
 //            var ws = Model.GetShared (new WorkspaceModel () {
 //                Id = WorkspaceModel.NextId,

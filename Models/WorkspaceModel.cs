@@ -5,6 +5,10 @@ namespace TogglDoodle.Models
 {
     public class WorkspaceModel : Model
     {
+        public static long NextId {
+            get { return Model.NextId<WorkspaceModel> (); }
+        }
+
         public enum Privilege
         {
             Admins,

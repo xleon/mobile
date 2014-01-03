@@ -28,23 +28,23 @@ namespace TogglDoodle
             var db = new SQLiteConnection (path);
             CreateTables (db, typeof(WorkspaceModel));
 
-//            var ws = new WorkspaceModel () {
-//                Id = Model.NextId<WorkspaceModel> (),
+//            var ws = Model.GetShared (new WorkspaceModel () {
+//                Id = WorkspaceModel.NextId,
 //                Name = "Test workspace",
 //                DefaultCurrency = "EUR",
 //                DefaultHourlyRate = 70.5m,
 //                IsAdmin = true,
 //                IsPremium = true,
-//            };
+//            });
 //
-//            var te = new TimeEntryModel () {
-//                Id = Model.NextId<TimeEntryModel> (),
-//                WorkspaceId = ws.Id,
+//            var te = Model.GetShared (new TimeEntryModel () {
+//                Id = TimeEntryModel.NextId,
+//                Workspace = ws,
 //                Billable = true,
 //                CreatedWith = "Me",
 //                Description = "Testing...",
 //                Start = DateTime.UtcNow,
-//            };
+//            });
 //
 //            db.Insert (ws);
 //            db.Insert (te);
@@ -54,6 +54,7 @@ namespace TogglDoodle
 //
 //            Console.WriteLine ("Workspace: {0}", ws.Name);
 //            Console.WriteLine ("TimeEntries: {0}", tes.Count ());
+//            Console.WriteLine ("Workspace is same: {0}", tes.First ().Workspace == ws);
 
             Console.WriteLine ("Hello World!");
         }

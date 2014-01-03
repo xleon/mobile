@@ -5,10 +5,26 @@ namespace TogglDoodle.Models
 {
     public class ProjectModel : Model
     {
-        public long? WorkspaceId { get; set; }
+        public static long NextId {
+            get { return Model.NextId<ProjectModel> (); }
+        }
 
-        public Expression<Func<WorkspaceModel, bool>> Workspace {
-            get { return (m) => m.Id == WorkspaceId; }
+        private readonly int workspaceRelationId;
+
+        public ProjectModel ()
+        {
+            workspaceRelationId = ForeignRelation (() => WorkspaceId, () => Workspace);
+        }
+
+        public long? WorkspaceId {
+            get { return GetForeignId (workspaceRelationId); }
+            set { SetForeignId (workspaceRelationId, value); }
+        }
+
+        [SQLite.Ignore]
+        public WorkspaceModel Workspace {
+            get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
+            set { SetForeignModel (workspaceRelationId, value); }
         }
     }
 }

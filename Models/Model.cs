@@ -30,7 +30,7 @@ namespace TogglDoodle.Models
             if (model.sharedInstance)
                 return model;
 
-            T sharedModel = GetCached<T> (model.Id);
+            T sharedModel = GetShared<T> (model.Id);
             if (sharedModel == null) {
                 MakeShared (model);
                 sharedModel = model;
@@ -41,17 +41,22 @@ namespace TogglDoodle.Models
             return sharedModel;
         }
 
-        private static T GetCached<T> (long id)
+        public static T GetShared<T> (long id)
             where T : Model
         {
-            if (!modelCache.ContainsKey (typeof(T)))
+            return GetShared (typeof(T), id) as T;
+        }
+
+        private static Model GetShared (Type type, long id)
+        {
+            if (!modelCache.ContainsKey (type))
                 return null;
 
-            var cache = modelCache [typeof(T)];
+            var cache = modelCache [type];
             if (!cache.ContainsKey (id))
                 return null;
 
-            var inst = cache [id].Target as T;
+            var inst = cache [id].Target as Model;
             if (inst == null) {
                 cache.Remove (id);
             }
@@ -111,6 +116,8 @@ namespace TogglDoodle.Models
             return prop.Name;
         }
 
+        #region Property change helpers
+
         protected void NotifyPropertyChanging<T> (Expression<Func<T>> expr)
         {
             var propertyChanging = PropertyChanging;
@@ -144,11 +151,128 @@ namespace TogglDoodle.Models
 
             string prop = GetPropertyName (expr);
             if (propertyChanging != null)
-                propertyChanging (this, new PropertyChangingEventArgs (GetPropertyName (expr)));
+                propertyChanging (this, new PropertyChangingEventArgs (prop));
             change ();
             if (propertyChanged != null)
                 propertyChanged (this, new PropertyChangedEventArgs (prop));
         }
+
+        protected void ChangePropertyAndNotify (string propertyName, Action change)
+        {
+            var propertyChanging = PropertyChanging;
+            var propertyChanged = PropertyChanged;
+
+            if (propertyChanging != null)
+                propertyChanging (this, new PropertyChangingEventArgs (propertyName));
+            change ();
+            if (propertyChanged != null)
+                propertyChanged (this, new PropertyChangedEventArgs (propertyName));
+        }
+
+        #endregion
+
+        #region Foreign relations helpers
+
+        private class ForeignRelationData
+        {
+            public string IdProperty { get; set; }
+
+            public long? Id { get; set; }
+
+            public string InstanceProperty { get; set; }
+
+            public Type InstanceType { get; set; }
+
+            public Model Instance { get; set; }
+        }
+
+        private readonly List<ForeignRelationData> fkRelations = new List<ForeignRelationData> ();
+
+        protected int ForeignRelation<T> (Expression<Func<long?>> exprId, Expression<Func<T>> exprInst)
+        {
+            fkRelations.Add (new ForeignRelationData () {
+                IdProperty = GetPropertyName (exprId),
+                InstanceProperty = GetPropertyName (exprInst),
+                InstanceType = typeof(T),
+            });
+            return fkRelations.Count;
+        }
+
+        protected long? GetForeignId (int relationId)
+        {
+            var fk = fkRelations [relationId - 1];
+            return fk.Id;
+        }
+
+        protected void SetForeignId (int relationId, long? value)
+        {
+            var fk = fkRelations [relationId - 1];
+            if (fk.Id == value)
+                return;
+
+            ChangePropertyAndNotify (fk.IdProperty, delegate {
+                fk.Id = value;
+            });
+
+            // Try to resolve id to model
+            Model inst = null;
+            if (fk.Id != null) {
+                inst = Model.GetShared (fk.InstanceType, fk.Id.Value);
+            }
+            if (inst != fk.Instance) {
+                ChangePropertyAndNotify (fk.InstanceProperty, delegate {
+                    fk.Instance = inst;
+                });
+            }
+        }
+
+        protected T GetForeignModel<T> (int relationId)
+            where T : Model
+        {
+            var fk = fkRelations [relationId - 1];
+            if (fk.Instance != null)
+                return (T)fk.Instance;
+
+            if (fk.Id != null) {
+                // Lazy loading, try to load the value from shared models, or database.
+                var inst = Model.GetShared (fk.InstanceType, fk.Id.Value);
+
+                if (inst == null) {
+                    // Try loading from database
+                    // TODO
+                }
+
+                ChangePropertyAndNotify (fk.InstanceProperty, delegate {
+                    fk.Instance = inst;
+                });
+            }
+
+            return (T)fk.Instance;
+        }
+
+        protected void SetForeignModel<T> (int relationId, T value)
+            where T : Model
+        {
+            var fk = fkRelations [relationId - 1];
+            if (value != null)
+                value = Model.GetShared (value);
+            if (fk.Instance == value)
+                return;
+
+            ChangePropertyAndNotify (fk.InstanceProperty, delegate {
+                fk.Instance = value;
+            });
+
+            // Update current id:
+            var id = fk.Instance != null ? fk.Instance.Id : (long?)null;
+            if (fk.Id != id) {
+                ChangePropertyAndNotify (fk.IdProperty, delegate {
+                    fk.Id = id;
+                });
+            }
+        }
+
+        #endregion
 
         protected void MarkDirty ()
         {
@@ -281,6 +405,11 @@ namespace TogglDoodle.Models
                     merging = value;
                 });
             }
+        }
+
+        [SQLite.Ignore]
+        public bool IsShared {
+            get { return sharedInstance; }
         }
     }
 }

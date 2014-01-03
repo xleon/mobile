@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TogglDoodle.Models;
 
 namespace TogglDoodle
 {

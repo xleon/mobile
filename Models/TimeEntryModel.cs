@@ -6,13 +6,22 @@ namespace TogglDoodle.Models
 {
     public class TimeEntryModel : Model
     {
+        public static long NextId {
+            get { return Model.NextId<TimeEntryModel> (); }
+        }
+
+        private readonly int workspaceRelationId;
+        private readonly int projectRelationId;
+        private readonly int taskRelationId;
+
+        public TimeEntryModel ()
+        {
+            workspaceRelationId = ForeignRelation (() => WorkspaceId, () => Workspace);
+            projectRelationId = ForeignRelation (() => ProjectId, () => Project);
+            taskRelationId = ForeignRelation (() => TaskId, () => Task);
+        }
+
         public string Description { get; set; }
-
-        public long? WorkspaceId { get; set; }
-
-        public long? ProjectId { get; set; }
-
-        public long? TaskId { get; set; }
 
         public bool Billable { get; set; }
 
@@ -27,17 +36,43 @@ namespace TogglDoodle.Models
         public ISet<string> Tags { get { return null; } }
 
         public bool DurationOnly { get; set; }
-        // Relations
-        public Expression<Func<WorkspaceModel, bool>> Workspace {
-            get { return (m) => m.Id == WorkspaceId; }
+
+        #region Relations
+
+        public long? WorkspaceId {
+            get { return GetForeignId (workspaceRelationId); }
+            set { SetForeignId (workspaceRelationId, value); }
         }
 
-        public Expression<Func<ProjectModel, bool>> Project {
-            get { return (m) => m.Id == ProjectId; }
+        [SQLite.Ignore]
+        public WorkspaceModel Workspace {
+            get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
+            set { SetForeignModel (workspaceRelationId, value); }
         }
 
-        public Expression<Func<TaskModel, bool>> Task {
-            get { return (m) => m.Id == TaskId; }
+        public long? ProjectId {
+            get { return GetForeignId (projectRelationId); }
+            set { SetForeignId (projectRelationId, value); }
         }
+
+        [SQLite.Ignore]
+        public ProjectModel Project {
+            get { return GetForeignModel<ProjectModel> (projectRelationId); }
+            set { SetForeignModel (projectRelationId, value); }
+        }
+
+        public long? TaskId {
+            get { return GetForeignId (taskRelationId); }
+            set { SetForeignId (taskRelationId, value); }
+        }
+
+        [SQLite.Ignore]
+        public TaskModel Task {
+            get { return GetForeignModel<TaskModel> (taskRelationId); }
+            set { SetForeignModel (taskRelationId, value); }
+        }
+
+        #endregion
+
     }
 }

@@ -26,17 +26,25 @@ namespace TogglDoodle.Models
         private readonly int workspaceRelationId;
         private readonly int projectRelationId;
         private readonly int taskRelationId;
+        private readonly int userRelationId;
         private readonly string propertyIsShared;
         private readonly string propertyIsRunning;
+        private readonly string propertyIsPersisted;
 
         public TimeEntryModel ()
         {
             workspaceRelationId = ForeignRelation (() => WorkspaceId, () => Workspace);
             projectRelationId = ForeignRelation (() => ProjectId, () => Project);
             taskRelationId = ForeignRelation (() => TaskId, () => Task);
-            // TODO: Add user relation
-            propertyIsShared = (() => IsShared).ToPropertyName (this);
-            propertyIsRunning = (() => IsRunning).ToPropertyName (this);
+            userRelationId = ForeignRelation (() => UserId, () => User);
+            propertyIsShared = GetPropertyName (() => IsShared);
+            propertyIsRunning = GetPropertyName (() => IsRunning);
+            propertyIsPersisted = GetPropertyName (() => IsPersisted);
+        }
+
+        private string GetPropertyName<T> (Expression<Func<T>> expr)
+        {
+            return expr.ToPropertyName (this);
         }
 
         #region Data
@@ -160,7 +168,12 @@ namespace TogglDoodle.Models
             }
         }
 
-        public ISet<string> Tags { get { return null; } }
+        public ISet<string> Tags {
+            get {
+                // TODO: Implement Tags logic
+                return null;
+            }
+        }
 
         private bool durationOnly;
 
@@ -233,14 +246,29 @@ namespace TogglDoodle.Models
             set { SetForeignModel (taskRelationId, value); }
         }
 
+        public long? UserId {
+            get { return GetForeignId (userRelationId); }
+            set { SetForeignId (userRelationId, value); }
+        }
+
+        [SQLite.Ignore]
+        public UserModel User {
+            get { return GetForeignModel<UserModel> (userRelationId); }
+            set { SetForeignModel (userRelationId, value); }
+        }
+
         #endregion
 
         #region Business logic
 
         protected override void OnPropertyChanged (string property)
         {
-            if (property == propertyIsShared || property == propertyIsRunning) {
-                if (IsShared && IsRunning) {
+            base.OnPropertyChanged (property);
+
+            if (property == propertyIsShared
+                || property == propertyIsRunning
+                || property == propertyIsPersisted) {
+                if (IsShared && IsRunning && IsPersisted) {
                     // TODO: Make sure that this is the only time entry running
                 }
             }
@@ -248,8 +276,8 @@ namespace TogglDoodle.Models
 
         public void Stop ()
         {
-            if (!IsShared)
-                throw new InvalidOperationException ("Model needs to be the shared one.");
+            if (!IsShared || !IsPersisted)
+                throw new InvalidOperationException ("Model needs to be the shared and persisted.");
 
             if (DurationOnly) {
                 IsRunning = false;
@@ -260,8 +288,8 @@ namespace TogglDoodle.Models
 
         public TimeEntryModel Continue ()
         {
-            if (!IsShared)
-                throw new InvalidOperationException ("Model needs to be the shared one.");
+            if (!IsShared || !IsPersisted)
+                throw new InvalidOperationException ("Model needs to be the shared and persisted.");
 
             if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
                 IsRunning = true;

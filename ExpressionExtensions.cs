@@ -10,7 +10,7 @@ namespace TogglDoodle
         {
             if (expr == null)
                 return null;
-
+            
             var member = expr.Body as MemberExpression;
             if (member == null)
                 throw new ArgumentException ("Expression should be in the format of: () => PropertyName", "expr");

@@ -397,6 +397,20 @@ namespace TogglDoodle.Models
             }
         }
 
+        private bool persisted;
+
+        [SQLite.Ignore]
+        public bool IsPersisted {
+            get { return persisted; }
+            set {
+                if (persisted == value)
+                    return;
+                ChangePropertyAndNotify (() => IsPersisted, delegate {
+                    persisted = value;
+                });
+            }
+        }
+
         private bool sharedInstance;
 
         [SQLite.Ignore]

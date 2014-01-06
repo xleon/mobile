@@ -12,10 +12,9 @@ namespace TogglDoodle
             string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
             var path = System.IO.Path.Combine (folder, "toggldoodle.db");
             Console.WriteLine ("Using SQLite file: {0}", path);
-
             Model.Store = new ModelStore (path);
 
-//            var ws = Model.GetShared (new WorkspaceModel () {
+//            var ws = Model.Update (new WorkspaceModel () {
 //                Id = WorkspaceModel.NextId,
 //                Name = "Test workspace",
 //                DefaultCurrency = "EUR",
@@ -25,7 +24,7 @@ namespace TogglDoodle
 //                IsPersisted = true,
 //            });
 //
-//            var te = Model.GetShared (new TimeEntryModel () {
+//            var te = Model.Update (new TimeEntryModel () {
 //                Id = TimeEntryModel.NextId,
 //                Workspace = ws,
 //                IsBillable = true,
@@ -34,12 +33,13 @@ namespace TogglDoodle
 //                StartTime = DateTime.UtcNow,
 //                IsPersisted = true,
 //            });
+//            te.IsDirty = false;
 //
 //            Model.Store.Commit ();
 
-//            var ws = Model.GetShared<WorkspaceModel> (1);
+//            var ws = Model.Get<WorkspaceModel> (1);
 //            var tes = db.Table<TimeEntryModel> ().Where (ws.TimeEntries);
-//
+
 //            Console.WriteLine ("Workspace: {0}", ws.Name);
 //            Console.WriteLine ("TimeEntries: {0}", tes.Count ());
 //            Console.WriteLine ("Workspace is same: {0}", tes.First ().Workspace == ws);

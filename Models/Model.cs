@@ -16,7 +16,12 @@ namespace TogglDoodle.Models
 
         public static ModelStore Store { get; set; }
 
-        public static IEnumerable<T> GetAllShared<T> ()
+        /// <summary>
+        /// Returns all of the cached shared models.
+        /// </summary>
+        /// <returns>Enumerable for cached model instances.</returns>
+        /// <typeparam name="T">Type of model to get cached instances for.</typeparam>
+        public static IEnumerable<T> GetCached<T> ()
             where T : Model
         {
             var type = typeof(T);
@@ -28,21 +33,31 @@ namespace TogglDoodle.Models
                     .Where ((m) => m != null);
         }
 
+        public static IEnumerable<Model> GetCached (Type type)
+        {
+            if (!modelCache.ContainsKey (type))
+                return Enumerable.Empty<Model> ();
+
+            return modelCache [type].Values
+                    .Select ((r) => r.Target as Model)
+                    .Where ((m) => m != null);
+        }
+
         /// <summary>
         /// Gets the shared instance for this model (by id). If there is no shared instance for this the given
         /// model instance is marked as the shared instance. The data from this given model is merged with the
-        /// shared model by default (by calling the Merge method).
+        /// shared model.
         /// </summary>
         /// <returns>The shared shared model instance.</returns>
         /// <param name="model">Model for which a shared instance should be returned.</param>
         /// <typeparam name="T">Type of model.</typeparam>
-        public static T GetShared<T> (T model)
+        public static T Update<T> (T model)
             where T : Model
         {
             if (model.IsShared)
                 return model;
 
-            T sharedModel = (T)GetShared (model.GetType (), model.Id);
+            T sharedModel = (T)Get (model.GetType (), model.Id);
             if (sharedModel == null) {
                 MakeShared (model);
                 sharedModel = model;
@@ -53,13 +68,18 @@ namespace TogglDoodle.Models
             return sharedModel;
         }
 
-        public static T GetShared<T> (long id)
+        /// <summary>
+        /// Retrieves the specified model either from cache or from model store.
+        /// </summary>
+        /// <param name="id">Id for the model.</param>
+        /// <typeparam name="T">Type of the model.</typeparam>
+        public static T Get<T> (long id)
             where T : Model
         {
-            return GetShared (typeof(T), id) as T;
+            return Get (typeof(T), id) as T;
         }
 
-        private static Model GetShared (Type type, long id)
+        private static Model Get (Type type, long id)
         {
             Model inst = null;
 
@@ -111,7 +131,7 @@ namespace TogglDoodle.Models
             }
         }
 
-        public static long NextId<T> ()
+        protected static long NextId<T> ()
             where T : Model
         {
             return NextId (typeof(T));
@@ -166,6 +186,12 @@ namespace TogglDoodle.Models
 
             if (Store != null)
                 Store.ModelChanged (this, property);
+
+            // Automatically mark the object dirty, if property doesn't explicitly disable it
+            var propInfo = GetType ().GetProperty (property);
+            if (propInfo.GetCustomAttributes (typeof(DontDirtyAttribute), true).Length == 0) {
+                MarkDirty ();
+            }
         }
 
         #endregion
@@ -216,7 +242,7 @@ namespace TogglDoodle.Models
             // Try to resolve id to model
             Model inst = null;
             if (fk.Id != null) {
-                inst = Model.GetShared (fk.InstanceType, fk.Id.Value);
+                inst = Model.GetCached (fk.InstanceType).FirstOrDefault ((m) => m.Id == fk.Id.Value);
             }
             if (inst != fk.Instance) {
                 ChangePropertyAndNotify (fk.InstanceProperty, delegate {
@@ -234,12 +260,7 @@ namespace TogglDoodle.Models
 
             if (fk.Id != null) {
                 // Lazy loading, try to load the value from shared models, or database.
-                var inst = Model.GetShared (fk.InstanceType, fk.Id.Value);
-
-                if (inst == null) {
-                    // Try loading from database
-                    // TODO
-                }
+                var inst = Model.Get (fk.InstanceType, fk.Id.Value);
 
                 ChangePropertyAndNotify (fk.InstanceProperty, delegate {
                     fk.Instance = inst;
@@ -254,7 +275,7 @@ namespace TogglDoodle.Models
         {
             var fk = fkRelations [relationId - 1];
             if (value != null)
-                value = Model.GetShared (value);
+                value = Model.Update (value);
             if (fk.Instance == value)
                 return;
 
@@ -275,7 +296,10 @@ namespace TogglDoodle.Models
 
         protected void MarkDirty ()
         {
-            ModifiedAt = DateTime.UtcNow;
+            if (!IsShared || IsMerging)
+                return;
+            if (!IsDirty)
+                ModifiedAt = DateTime.UtcNow;
             IsDirty = true;
         }
 
@@ -320,6 +344,7 @@ namespace TogglDoodle.Models
 
         private bool merging;
 
+        [DontDirty]
         [SQLite.Ignore]
         public bool IsMerging {
             get { return merging; }
@@ -337,8 +362,14 @@ namespace TogglDoodle.Models
         public event PropertyChangingEventHandler PropertyChanging;
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public virtual void Delete ()
+        {
+            DeletedAt = DateTime.UtcNow;
+        }
+
         private long id;
 
+        [DontDirty]
         [SQLite.PrimaryKey]
         public long Id {
             get { return id; }
@@ -351,12 +382,12 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => Id, delegate {
                     id = value;
                 });
-                MarkDirty ();
             }
         }
 
         private long? remoteId;
 
+        [DontDirty]
         public long? RemoteId {
             get { return remoteId; }
             set {
@@ -365,7 +396,6 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => RemoteId, delegate {
                     remoteId = value;
                 });
-                MarkDirty ();
             }
         }
 
@@ -379,7 +409,6 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => RemoteId, delegate {
                     modified = value;
                 });
-                IsDirty = true;
             }
         }
 
@@ -393,12 +422,12 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => DeletedAt, delegate {
                     deleted = value;
                 });
-                MarkDirty ();
             }
         }
 
         private bool dirty;
 
+        [DontDirty]
         public bool IsDirty {
             get { return dirty; }
             set {
@@ -412,6 +441,7 @@ namespace TogglDoodle.Models
 
         private bool persisted;
 
+        [DontDirty]
         [SQLite.Ignore]
         public bool IsPersisted {
             get { return persisted; }
@@ -426,6 +456,7 @@ namespace TogglDoodle.Models
 
         private bool sharedInstance;
 
+        [DontDirty]
         [SQLite.Ignore]
         public bool IsShared {
             get { return sharedInstance; }

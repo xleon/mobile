@@ -23,7 +23,7 @@ namespace TogglDoodle.Models
         public static void UpdateDurations ()
         {
             // TODO: Call this method periodically from some place
-            var allEntries = Model.GetAllShared<TimeEntryModel> ();
+            var allEntries = Model.GetCached<TimeEntryModel> ();
             foreach (var entry in allEntries) {
                 entry.UpdateDuration ();
             }
@@ -66,8 +66,6 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => Description, delegate {
                     description = value;
                 });
-
-                MarkDirty ();
             }
         }
 
@@ -82,8 +80,6 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => IsBillable, delegate {
                     billable = value;
                 });
-
-                MarkDirty ();
             }
         }
 
@@ -98,8 +94,6 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => StartTime, delegate {
                     startTime = value;
                 });
-
-                MarkDirty ();
             }
         }
 
@@ -116,8 +110,6 @@ namespace TogglDoodle.Models
                 });
 
                 IsRunning = stopTime != null;
-
-                MarkDirty ();
             }
         }
 
@@ -139,8 +131,6 @@ namespace TogglDoodle.Models
                 } else {
                     RawDuration = value;
                 }
-
-                MarkDirty ();
             }
         }
 
@@ -167,8 +157,6 @@ namespace TogglDoodle.Models
 
                 IsRunning = value < 0;
                 UpdateDuration ();
-
-                MarkDirty ();
             }
         }
 
@@ -183,8 +171,6 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => CreatedWith, delegate {
                     createdWith = value;
                 });
-
-                MarkDirty ();
             }
         }
 
@@ -206,8 +192,6 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => DurationOnly, delegate {
                     durationOnly = value;
                 });
-
-                MarkDirty ();
             }
         }
 
@@ -228,8 +212,6 @@ namespace TogglDoodle.Models
                 } else if (!IsRunning && RawDuration < 0) {
                     RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration);
                 }
-
-                MarkDirty ();
             }
         }
 
@@ -242,6 +224,7 @@ namespace TogglDoodle.Models
             set { SetForeignId (workspaceRelationId, value); }
         }
 
+        [DontDirty]
         [SQLite.Ignore]
         public WorkspaceModel Workspace {
             get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
@@ -253,6 +236,7 @@ namespace TogglDoodle.Models
             set { SetForeignId (projectRelationId, value); }
         }
 
+        [DontDirty]
         [SQLite.Ignore]
         public ProjectModel Project {
             get { return GetForeignModel<ProjectModel> (projectRelationId); }
@@ -264,6 +248,7 @@ namespace TogglDoodle.Models
             set { SetForeignId (taskRelationId, value); }
         }
 
+        [DontDirty]
         [SQLite.Ignore]
         public TaskModel Task {
             get { return GetForeignModel<TaskModel> (taskRelationId); }
@@ -275,6 +260,7 @@ namespace TogglDoodle.Models
             set { SetForeignId (userRelationId, value); }
         }
 
+        [DontDirty]
         [SQLite.Ignore]
         public UserModel User {
             get { return GetForeignModel<UserModel> (userRelationId); }
@@ -320,7 +306,7 @@ namespace TogglDoodle.Models
                 return this;
             }
 
-            return Model.GetShared (new TimeEntryModel () {
+            return Model.Update (new TimeEntryModel () {
                 Id = TimeEntryModel.NextId,
                 WorkspaceId = WorkspaceId,
                 ProjectId = ProjectId,

@@ -29,6 +29,7 @@ namespace TogglDoodle.Models
 
                 var model = obj as Model;
                 if (model != null) {
+                    model.IsPersisted = true;
                     store.createdModels.Add (new WeakReference (model));
                 }
             }
@@ -54,6 +55,7 @@ namespace TogglDoodle.Models
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
         private string propertyIsShared;
         private string propertyIsPersisted;
+        private string propertyIsMerging;
         /* What this class should do
          * - Scan for dirty models that need to be saved in the db
          * - Enable lookup of models
@@ -108,6 +110,11 @@ namespace TogglDoodle.Models
                 propertyIsShared = GetPropertyName (model, () => model.IsShared);
             if (propertyIsPersisted == null)
                 propertyIsPersisted = GetPropertyName (model, () => model.IsPersisted);
+            if (propertyIsMerging == null)
+                propertyIsMerging = GetPropertyName (model, () => model.IsMerging);
+
+            if (property == propertyIsMerging)
+                return;
 
             if (property == propertyIsShared) {
                 // No need to mark newly created property as changed:

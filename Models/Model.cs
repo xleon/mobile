@@ -14,6 +14,8 @@ namespace TogglDoodle.Models
         private static Dictionary<Type, long> lastIds =
             new Dictionary<Type, long> ();
 
+        public static ModelStore Store { get; set; }
+
         public static IEnumerable<T> GetAllShared<T> ()
             where T : Model
         {
@@ -37,12 +39,10 @@ namespace TogglDoodle.Models
         public static T GetShared<T> (T model)
             where T : Model
         {
-            if (typeof(T) != model.GetType ())
-                throw new ArgumentException ("Provided model is not of type T.");
             if (model.IsShared)
                 return model;
 
-            T sharedModel = GetShared<T> (model.Id);
+            T sharedModel = (T)GetShared (model.GetType (), model.Id);
             if (sharedModel == null) {
                 MakeShared (model);
                 sharedModel = model;
@@ -61,16 +61,26 @@ namespace TogglDoodle.Models
 
         private static Model GetShared (Type type, long id)
         {
-            if (!modelCache.ContainsKey (type))
-                return null;
+            Model inst = null;
 
-            var cache = modelCache [type];
-            if (!cache.ContainsKey (id))
-                return null;
+            // Look through in-memory models:
+            if (modelCache.ContainsKey (type)) {
+                var cache = modelCache [type];
+                if (cache.ContainsKey (id)) {
+                    inst = cache [id].Target as Model;
+                    if (inst == null) {
+                        cache.Remove (id);
+                    } else {
+                        return inst;
+                    }
+                }
+            }
 
-            var inst = cache [id].Target as Model;
-            if (inst == null) {
-                cache.Remove (id);
+            // Try to load from database:
+            inst = Store.Get (type, id);
+            if (inst != null) {
+                MakeShared (inst);
+                return inst;
             }
 
             return inst;
@@ -153,6 +163,9 @@ namespace TogglDoodle.Models
             var propertyChanged = PropertyChanged;
             if (propertyChanged != null)
                 propertyChanged (this, new PropertyChangedEventArgs (property));
+
+            if (Store != null)
+                Store.ModelChanged (this, property);
         }
 
         #endregion

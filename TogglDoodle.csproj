@@ -46,6 +46,7 @@
     <Compile Include="Models\Model.cs" />
     <Compile Include="ExpressionExtensions.cs" />
     <Compile Include="Models\UserModel.cs" />
+    <Compile Include="Models\ModelStore.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

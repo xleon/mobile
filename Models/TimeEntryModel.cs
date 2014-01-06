@@ -4,6 +4,12 @@ using System.Linq.Expressions;
 
 namespace TogglDoodle.Models
 {
+    /* TODO: Things to test:
+     * - Stopping another time entry works from any angle
+     * - Restoring from database/json gets correct state (ie order of setting the properties shouldn't affect
+     *   the outcome)
+     * - Duration updating
+     */
     public class TimeEntryModel : Model
     {
         // TODO: Move UserAgent to some better place
@@ -60,6 +66,8 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => Description, delegate {
                     description = value;
                 });
+
+                MarkDirty ();
             }
         }
 
@@ -74,6 +82,8 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => IsBillable, delegate {
                     billable = value;
                 });
+
+                MarkDirty ();
             }
         }
 
@@ -88,6 +98,8 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => StartTime, delegate {
                     startTime = value;
                 });
+
+                MarkDirty ();
             }
         }
 
@@ -104,6 +116,8 @@ namespace TogglDoodle.Models
                 });
 
                 IsRunning = stopTime != null;
+
+                MarkDirty ();
             }
         }
 
@@ -125,6 +139,8 @@ namespace TogglDoodle.Models
                 } else {
                     RawDuration = value;
                 }
+
+                MarkDirty ();
             }
         }
 
@@ -151,6 +167,8 @@ namespace TogglDoodle.Models
 
                 IsRunning = value < 0;
                 UpdateDuration ();
+
+                MarkDirty ();
             }
         }
 
@@ -165,6 +183,8 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => CreatedWith, delegate {
                     createdWith = value;
                 });
+
+                MarkDirty ();
             }
         }
 
@@ -186,6 +206,8 @@ namespace TogglDoodle.Models
                 ChangePropertyAndNotify (() => DurationOnly, delegate {
                     durationOnly = value;
                 });
+
+                MarkDirty ();
             }
         }
 
@@ -206,6 +228,8 @@ namespace TogglDoodle.Models
                 } else if (!IsRunning && RawDuration < 0) {
                     RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration);
                 }
+
+                MarkDirty ();
             }
         }
 

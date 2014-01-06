@@ -39,7 +39,7 @@ namespace TogglDoodle.Models
         {
             if (typeof(T) != model.GetType ())
                 throw new ArgumentException ("Provided model is not of type T.");
-            if (model.sharedInstance)
+            if (model.IsShared)
                 return model;
 
             T sharedModel = GetShared<T> (model.Id);
@@ -78,7 +78,7 @@ namespace TogglDoodle.Models
 
         private static void MakeShared (Model model)
         {
-            model.sharedInstance = true;
+            model.IsShared = true;
 
             var type = model.GetType ();
             if (!modelCache.ContainsKey (type)) {
@@ -107,41 +107,18 @@ namespace TogglDoodle.Models
             return NextId (typeof(T));
         }
 
-        private bool sharedInstance;
-
         private string GetPropertyName<T> (Expression<Func<T>> expr)
         {
-            if (expr == null)
-                return null;
-
-            var member = expr.Body as MemberExpression;
-            if (member == null)
-                throw new ArgumentException ("Expression should be in the format of: () => PropertyName", "expr");
-
-            var prop = member.Member as PropertyInfo;
-            if (prop == null
-                || prop.DeclaringType == null
-                || !prop.DeclaringType.IsAssignableFrom (GetType ())
-                || prop.GetGetMethod (true).IsStatic)
-                throw new ArgumentException ("Expression should be in the format of: () => PropertyName", "expr");
-
-            return prop.Name;
+            return expr.ToPropertyName (this);
         }
 
         #region Property change helpers
 
-        protected void NotifyPropertyChanging<T> (Expression<Func<T>> expr)
+        protected void OnPropertyChanging<T> (Expression<Func<T>> expr)
         {
             var propertyChanging = PropertyChanging;
             if (propertyChanging != null)
                 propertyChanging (this, new PropertyChangingEventArgs (GetPropertyName (expr)));
-        }
-
-        protected void NotifyPropertyChanged<T> (Expression<Func<T>> expr)
-        {
-            var propertyChanged = PropertyChanged;
-            if (propertyChanged != null)
-                propertyChanged (this, new PropertyChangedEventArgs (GetPropertyName (expr)));
         }
 
         /// <summary>
@@ -153,32 +130,29 @@ namespace TogglDoodle.Models
         /// <typeparam name="T">Type of the property being changed (compiler will deduce this for you).</typeparam>
         protected void ChangePropertyAndNotify<T> (Expression<Func<T>> expr, Action change)
         {
-            var propertyChanging = PropertyChanging;
-            var propertyChanged = PropertyChanged;
-
-            if (propertyChanging == null && propertyChanged == null) {
-                change ();
-                return;
-            }
-
-            string prop = GetPropertyName (expr);
-            if (propertyChanging != null)
-                propertyChanging (this, new PropertyChangingEventArgs (prop));
-            change ();
-            if (propertyChanged != null)
-                propertyChanged (this, new PropertyChangedEventArgs (prop));
+            ChangePropertyAndNotify (GetPropertyName (expr), change);
         }
 
         protected void ChangePropertyAndNotify (string propertyName, Action change)
         {
             var propertyChanging = PropertyChanging;
-            var propertyChanged = PropertyChanged;
 
             if (propertyChanging != null)
                 propertyChanging (this, new PropertyChangingEventArgs (propertyName));
             change ();
+            OnPropertyChanged (propertyName);
+        }
+
+        protected void OnPropertyChanged<T> (Expression<Func<T>> expr)
+        {
+            OnPropertyChanged (GetPropertyName (expr));
+        }
+
+        protected virtual void OnPropertyChanged (string property)
+        {
+            var propertyChanged = PropertyChanged;
             if (propertyChanged != null)
-                propertyChanged (this, new PropertyChangedEventArgs (propertyName));
+                propertyChanged (this, new PropertyChangedEventArgs (property));
         }
 
         #endregion
@@ -356,7 +330,7 @@ namespace TogglDoodle.Models
         public long Id {
             get { return id; }
             set {
-                if (sharedInstance)
+                if (IsShared)
                     throw new InvalidOperationException ("Cannot change Id after being promoted to shared status.");
 
                 if (id == value)
@@ -423,9 +397,19 @@ namespace TogglDoodle.Models
             }
         }
 
+        private bool sharedInstance;
+
         [SQLite.Ignore]
         public bool IsShared {
             get { return sharedInstance; }
+            private set {
+                if (sharedInstance == value || !value)
+                    return;
+
+                ChangePropertyAndNotify (() => IsShared, delegate {
+                    sharedInstance = value;
+                });
+            }
         }
     }
 }

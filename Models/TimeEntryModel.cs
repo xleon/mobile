@@ -26,6 +26,8 @@ namespace TogglDoodle.Models
         private readonly int workspaceRelationId;
         private readonly int projectRelationId;
         private readonly int taskRelationId;
+        private readonly string propertyIsShared;
+        private readonly string propertyIsRunning;
 
         public TimeEntryModel ()
         {
@@ -33,6 +35,8 @@ namespace TogglDoodle.Models
             projectRelationId = ForeignRelation (() => ProjectId, () => Project);
             taskRelationId = ForeignRelation (() => TaskId, () => Task);
             // TODO: Add user relation
+            propertyIsShared = (() => IsShared).ToPropertyName (this);
+            propertyIsRunning = (() => IsRunning).ToPropertyName (this);
         }
 
         #region Data
@@ -109,7 +113,7 @@ namespace TogglDoodle.Models
                 });
 
                 if (RawDuration < 0) {
-                    RawDuration = value - (DateTime.UtcNow - UnixStart).TotalSeconds;
+                    RawDuration = (long)(value - (DateTime.UtcNow - UnixStart).TotalSeconds);
                 } else {
                     RawDuration = value;
                 }
@@ -119,7 +123,7 @@ namespace TogglDoodle.Models
         private void UpdateDuration ()
         {
             if (RawDuration < 0) {
-                Duration = (DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration;
+                Duration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration);
             } else {
                 Duration = RawDuration;
             }
@@ -185,9 +189,9 @@ namespace TogglDoodle.Models
                 });
 
                 if (IsRunning && RawDuration >= 0) {
-                    RawDuration = RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds;
+                    RawDuration = (long)(RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds);
                 } else if (!IsRunning && RawDuration < 0) {
-                    RawDuration = (DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration;
+                    RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration);
                 }
             }
         }
@@ -233,17 +237,32 @@ namespace TogglDoodle.Models
 
         #region Business logic
 
+        protected override void OnPropertyChanged (string property)
+        {
+            if (property == propertyIsShared || property == propertyIsRunning) {
+                if (IsShared && IsRunning) {
+                    // TODO: Make sure that this is the only time entry running
+                }
+            }
+        }
+
         public void Stop ()
         {
+            if (!IsShared)
+                throw new InvalidOperationException ("Model needs to be the shared one.");
+
             if (DurationOnly) {
                 IsRunning = false;
             } else {
-                Stop = DateTime.UtcNow;
+                StopTime = DateTime.UtcNow;
             }
         }
 
         public TimeEntryModel Continue ()
         {
+            if (!IsShared)
+                throw new InvalidOperationException ("Model needs to be the shared one.");
+
             if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
                 IsRunning = true;
                 return this;

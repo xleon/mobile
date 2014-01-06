@@ -7,6 +7,10 @@ using System.Reflection;
 
 namespace TogglDoodle.Models
 {
+    /**
+     * TODO: Test for:
+     * - correct MarkDirty behaviour
+     */
     public abstract class Model : INotifyPropertyChanging, INotifyPropertyChanged
     {
         private static Dictionary<Type, Dictionary<long, WeakReference>> modelCache =
@@ -334,6 +338,8 @@ namespace TogglDoodle.Models
 
                 // Update our own properties in a specific order:
                 this.RemoteId = other.RemoteId;
+                if (other.IsPersisted)
+                    this.IsPersisted = other.IsPersisted;
                 this.DeletedAt = other.DeletedAt;
                 this.ModifiedAt = other.ModifiedAt;
                 this.IsDirty = other.IsDirty;

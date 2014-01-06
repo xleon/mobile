@@ -5,13 +5,18 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
+//#define NotifyPropertyChanging
 namespace TogglDoodle.Models
 {
     /**
      * TODO: Test for:
      * - correct MarkDirty behaviour
      */
-    public abstract class Model : INotifyPropertyChanging, INotifyPropertyChanged
+    public abstract class Model :
+        #if NotifyPropertyChanging
+        INotifyPropertyChanging,
+        #endif
+        INotifyPropertyChanged
     {
         private static Dictionary<Type, Dictionary<long, WeakReference>> modelCache =
             new Dictionary<Type, Dictionary<long, WeakReference>> ();
@@ -148,14 +153,25 @@ namespace TogglDoodle.Models
 
         #region Property change helpers
 
+        #if NotifyPropertyChanging
         public event PropertyChangingEventHandler PropertyChanging;
+        #endif
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanging<T> (Expression<Func<T>> expr)
         {
+            #if NotifyPropertyChanging
+            OnPropertyChanged (GetPropertyName (expr));
+            #endif
+        }
+
+        protected virtual void OnPropertyChanging (string property)
+        {
+            #if NotifyPropertyChanging
             var propertyChanging = PropertyChanging;
             if (propertyChanging != null)
-                propertyChanging (this, new PropertyChangingEventArgs (GetPropertyName (expr)));
+            propertyChanging (this, new PropertyChangingEventArgs (GetPropertyName (expr)));
+            #endif
         }
 
         /// <summary>
@@ -172,10 +188,7 @@ namespace TogglDoodle.Models
 
         protected void ChangePropertyAndNotify (string propertyName, Action change)
         {
-            var propertyChanging = PropertyChanging;
-
-            if (propertyChanging != null)
-                propertyChanging (this, new PropertyChangingEventArgs (propertyName));
+            OnPropertyChanging (propertyName);
             change ();
             OnPropertyChanged (propertyName);
         }

@@ -148,6 +148,9 @@ namespace TogglDoodle.Models
 
         #region Property change helpers
 
+        public event PropertyChangingEventHandler PropertyChanging;
+        public event PropertyChangedEventHandler PropertyChanged;
+
         protected void OnPropertyChanging<T> (Expression<Func<T>> expr)
         {
             var propertyChanging = PropertyChanging;
@@ -364,9 +367,6 @@ namespace TogglDoodle.Models
         }
 
         #endregion
-
-        public event PropertyChangingEventHandler PropertyChanging;
-        public event PropertyChangedEventHandler PropertyChanged;
 
         public virtual void Delete ()
         {

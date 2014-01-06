@@ -14,6 +14,18 @@ namespace TogglDoodle.Models
         private static Dictionary<Type, long> lastIds =
             new Dictionary<Type, long> ();
 
+        public static IEnumerable<T> GetAllShared<T> ()
+            where T : Model
+        {
+            var type = typeof(T);
+            if (!modelCache.ContainsKey (type))
+                return Enumerable.Empty<T> ();
+
+            return modelCache [type].Values
+                    .Select ((r) => r.Target as T)
+                    .Where ((m) => m != null);
+        }
+
         /// <summary>
         /// Gets the shared instance for this model (by id). If there is no shared instance for this the given
         /// model instance is marked as the shared instance. The data from this given model is merged with the
@@ -280,6 +292,8 @@ namespace TogglDoodle.Models
             IsDirty = true;
         }
 
+        #region Merge functionality
+
         protected virtual void Merge (Model model)
         {
             if (model.GetType () != GetType ())
@@ -316,6 +330,22 @@ namespace TogglDoodle.Models
                 IsMerging = false;
             }
         }
+
+        private bool merging;
+
+        [SQLite.Ignore]
+        public bool IsMerging {
+            get { return merging; }
+            protected set {
+                if (merging == value)
+                    return;
+                ChangePropertyAndNotify (() => IsMerging, delegate {
+                    merging = value;
+                });
+            }
+        }
+
+        #endregion
 
         public event PropertyChangingEventHandler PropertyChanging;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -389,20 +419,6 @@ namespace TogglDoodle.Models
                     return;
                 ChangePropertyAndNotify (() => IsDirty, delegate {
                     dirty = value;
-                });
-            }
-        }
-
-        private bool merging;
-
-        [SQLite.Ignore]
-        public bool IsMerging {
-            get { return merging; }
-            protected set {
-                if (merging == value)
-                    return;
-                ChangePropertyAndNotify (() => IsMerging, delegate {
-                    merging = value;
                 });
             }
         }

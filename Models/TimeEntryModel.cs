@@ -6,8 +6,21 @@ namespace TogglDoodle.Models
 {
     public class TimeEntryModel : Model
     {
+        // TODO: Move UserAgent to some better place
+        private static readonly string UserAgent = "Toggl Mobile";
+        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1);
+
         public static long NextId {
             get { return Model.NextId<TimeEntryModel> (); }
+        }
+
+        public static void UpdateDurations ()
+        {
+            // TODO: Call this method periodically from some place
+            var allEntries = Model.GetAllShared<TimeEntryModel> ();
+            foreach (var entry in allEntries) {
+                entry.UpdateDuration ();
+            }
         }
 
         private readonly int workspaceRelationId;
@@ -19,23 +32,167 @@ namespace TogglDoodle.Models
             workspaceRelationId = ForeignRelation (() => WorkspaceId, () => Workspace);
             projectRelationId = ForeignRelation (() => ProjectId, () => Project);
             taskRelationId = ForeignRelation (() => TaskId, () => Task);
+            // TODO: Add user relation
         }
 
-        public string Description { get; set; }
+        #region Data
 
-        public bool Billable { get; set; }
+        private string description;
 
-        public DateTime Start { get; set; }
+        public string Description {
+            get { return description; }
+            set {
+                if (description == value)
+                    return;
 
-        public DateTime? End { get; set; }
+                ChangePropertyAndNotify (() => Description, delegate {
+                    description = value;
+                });
+            }
+        }
 
-        public long Duration { get; set; }
+        private bool billable;
 
-        public string CreatedWith { get; set; }
+        public bool IsBillable {
+            get { return billable; }
+            set {
+                if (billable == value)
+                    return;
+
+                ChangePropertyAndNotify (() => IsBillable, delegate {
+                    billable = value;
+                });
+            }
+        }
+
+        private DateTime startTime;
+
+        public DateTime StartTime {
+            get { return startTime; }
+            set {
+                if (startTime == value)
+                    return;
+
+                ChangePropertyAndNotify (() => StartTime, delegate {
+                    startTime = value;
+                });
+            }
+        }
+
+        private DateTime? stopTime;
+
+        public DateTime? StopTime {
+            get { return stopTime; }
+            set {
+                if (stopTime == value)
+                    return;
+
+                ChangePropertyAndNotify (() => StopTime, delegate {
+                    stopTime = value;
+                });
+
+                IsRunning = stopTime != null;
+            }
+        }
+
+        private long duration;
+
+        [SQLite.Ignore]
+        public long Duration {
+            get { return duration; }
+            set {
+                if (duration == value)
+                    return;
+
+                ChangePropertyAndNotify (() => Duration, delegate {
+                    duration = value;
+                });
+
+                if (RawDuration < 0) {
+                    RawDuration = value - (DateTime.UtcNow - UnixStart).TotalSeconds;
+                } else {
+                    RawDuration = value;
+                }
+            }
+        }
+
+        private void UpdateDuration ()
+        {
+            if (RawDuration < 0) {
+                Duration = (DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration;
+            } else {
+                Duration = RawDuration;
+            }
+        }
+
+        private long rawDuration;
+
+        public long RawDuration {
+            get { return rawDuration; }
+            set {
+                if (rawDuration == value)
+                    return;
+
+                ChangePropertyAndNotify (() => RawDuration, delegate {
+                    rawDuration = value;
+                });
+
+                IsRunning = value < 0;
+                UpdateDuration ();
+            }
+        }
+
+        private string createdWith;
+
+        public string CreatedWith {
+            get { return createdWith; }
+            set {
+                if (createdWith == value)
+                    return;
+
+                ChangePropertyAndNotify (() => CreatedWith, delegate {
+                    createdWith = value;
+                });
+            }
+        }
 
         public ISet<string> Tags { get { return null; } }
 
-        public bool DurationOnly { get; set; }
+        private bool durationOnly;
+
+        public bool DurationOnly {
+            get { return durationOnly; }
+            set {
+                if (durationOnly == value)
+                    return;
+
+                ChangePropertyAndNotify (() => DurationOnly, delegate {
+                    durationOnly = value;
+                });
+            }
+        }
+
+        private bool running;
+
+        public bool IsRunning {
+            get { return running; }
+            set {
+                if (running == value)
+                    return;
+
+                ChangePropertyAndNotify (() => IsRunning, delegate {
+                    running = value;
+                });
+
+                if (IsRunning && RawDuration >= 0) {
+                    RawDuration = RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds;
+                } else if (!IsRunning && RawDuration < 0) {
+                    RawDuration = (DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration;
+                }
+            }
+        }
+
+        #endregion
 
         #region Relations
 
@@ -70,6 +227,41 @@ namespace TogglDoodle.Models
         public TaskModel Task {
             get { return GetForeignModel<TaskModel> (taskRelationId); }
             set { SetForeignModel (taskRelationId, value); }
+        }
+
+        #endregion
+
+        #region Business logic
+
+        public void Stop ()
+        {
+            if (DurationOnly) {
+                IsRunning = false;
+            } else {
+                Stop = DateTime.UtcNow;
+            }
+        }
+
+        public TimeEntryModel Continue ()
+        {
+            if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
+                IsRunning = true;
+                return this;
+            }
+
+            return Model.GetShared (new TimeEntryModel () {
+                Id = TimeEntryModel.NextId,
+                WorkspaceId = WorkspaceId,
+                ProjectId = ProjectId,
+                TaskId = TaskId,
+                Description = Description,
+                StartTime = DateTime.UtcNow,
+                DurationOnly = DurationOnly,
+                CreatedWith = TimeEntryModel.UserAgent,
+//                Tags = Tags,
+                IsBillable = IsBillable,
+                IsRunning = true,
+            });
         }
 
         #endregion

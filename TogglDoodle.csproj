@@ -49,6 +49,10 @@
     <Compile Include="Models\DontDirtyAttribute.cs" />
     <Compile Include="Models\IModelStore.cs" />
     <Compile Include="Models\SQLiteModelStore.cs" />
+    <Compile Include="Models\ClientModel.cs" />
+    <Compile Include="Models\AccessLevel.cs" />
+    <Compile Include="Models\RoundingMode.cs" />
+    <Compile Include="Models\TrackingMode.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

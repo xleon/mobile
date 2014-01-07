@@ -88,9 +88,9 @@ namespace TogglDoodle.Models
             get { return GetForeignModel<ProjectModel> (projectRelationId); }
             set { SetForeignModel (projectRelationId, value); }
         }
+        // TODO: Reverse relation for tasks
 
         #endregion
 
-        // TODO: Reverse relation for tasks
     }
 }

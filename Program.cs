@@ -18,7 +18,7 @@ namespace TogglDoodle
 //                Id = WorkspaceModel.NextId,
 //                Name = "Test workspace",
 //                DefaultCurrency = "EUR",
-//                DefaultHourlyRate = 70.5m,
+//                DefaultRate = 70.5m,
 //                IsAdmin = true,
 //                IsPremium = true,
 //                IsPersisted = true,
@@ -33,7 +33,6 @@ namespace TogglDoodle
 //                StartTime = DateTime.UtcNow,
 //                IsPersisted = true,
 //            });
-//            te.IsDirty = false;
 //
 //            Model.Store.Commit ();
 

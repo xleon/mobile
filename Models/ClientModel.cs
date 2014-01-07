@@ -46,7 +46,10 @@ namespace Toggl.Phoebe.Models
             get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
             set { SetForeignModel (workspaceRelationId, value); }
         }
-        // TODO: Reverse relation for tasks
+
+        public IModelQuery<ProjectModel> Projects {
+            get { return Model.Query<ProjectModel> ((m) => m.ClientId == Id); }
+        }
 
         #endregion
 

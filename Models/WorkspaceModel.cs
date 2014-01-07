@@ -161,7 +161,21 @@ namespace Toggl.Phoebe.Models
 
         #region Relations
 
-        // TODO: Reverse relations
+        public IModelQuery<ClientModel> Clients {
+            get { return Model.Query<ClientModel> ((m) => m.WorkspaceId == Id); }
+        }
+
+        public IModelQuery<ProjectModel> Projects {
+            get { return Model.Query<ProjectModel> ((m) => m.WorkspaceId == Id); }
+        }
+
+        public IModelQuery<TaskModel> Tasks {
+            get { return Model.Query<TaskModel> ((m) => m.WorkspaceId == Id); }
+        }
+
+        public IModelQuery<TimeEntryModel> TimeEntries {
+            get { return Model.Query<TimeEntryModel> ((m) => m.WorkspaceId == Id); }
+        }
 
         #endregion
 

@@ -144,6 +144,14 @@ namespace Toggl.Phoebe.Models
             set { SetForeignModel (clientRelationId, value); }
         }
 
+        public IModelQuery<TaskModel> Tasks {
+            get { return Model.Query<TaskModel> ((m) => m.ProjectId == Id); }
+        }
+
+        public IModelQuery<TimeEntryModel> TimeEntries {
+            get { return Model.Query<TimeEntryModel> ((m) => m.ProjectId == Id); }
+        }
+
         #endregion
 
     }

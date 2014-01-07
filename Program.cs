@@ -37,8 +37,8 @@ namespace Toggl.Phoebe
 //            Model.Store.Commit ();
 
 //            var ws = Model.Get<WorkspaceModel> (1);
-//            var tes = db.Table<TimeEntryModel> ().Where (ws.TimeEntries);
-
+//            var tes = ws.TimeEntries;
+//
 //            Console.WriteLine ("Workspace: {0}", ws.Name);
 //            Console.WriteLine ("TimeEntries: {0}", tes.Count ());
 //            Console.WriteLine ("Workspace is same: {0}", tes.First ().Workspace == ws);

@@ -88,7 +88,10 @@ namespace Toggl.Phoebe.Models
             get { return GetForeignModel<ProjectModel> (projectRelationId); }
             set { SetForeignModel (projectRelationId, value); }
         }
-        // TODO: Reverse relation for tasks
+
+        public IModelQuery<TimeEntryModel> TimeEntries {
+            get { return Model.Query<TimeEntryModel> ((m) => m.TaskId == Id); }
+        }
 
         #endregion
 

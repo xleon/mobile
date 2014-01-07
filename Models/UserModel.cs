@@ -201,6 +201,10 @@ namespace Toggl.Phoebe.Models
             set { SetForeignModel (defaultWorkspaceRelationId, value); }
         }
 
+        public IModelQuery<TimeEntryModel> TimeEntries {
+            get { return Model.Query<TimeEntryModel> ((m) => m.UserId == Id); }
+        }
+
         #endregion
 
     }

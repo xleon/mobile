@@ -88,7 +88,7 @@ namespace Toggl.Phoebe.Models
             return Get (typeof(T), id) as T;
         }
 
-        private static Model Get (Type type, long id)
+        private static Model Get (Type type, long id, bool autoLoad = true)
         {
             Model inst = null;
 
@@ -106,13 +106,34 @@ namespace Toggl.Phoebe.Models
             }
 
             // Try to load from database:
-            inst = Store.Get (type, id);
-            if (inst != null) {
-                MakeShared (inst);
-                return inst;
+            if (autoLoad) {
+                inst = Store.Get (type, id);
+                if (inst != null) {
+                    MakeShared (inst);
+                    return inst;
+                }
             }
 
             return inst;
+        }
+
+        public static IModelQuery<T> Query<T> (Expression<Func<T, bool>> predicate = null)
+            where T : Model, new()
+        {
+            return Store.Query (predicate, (e) => e.Select (UpdateQueryModel));
+        }
+
+        private static T UpdateQueryModel<T> (T model)
+            where T : Model, new()
+        {
+            var cached = (T)Get (typeof(T), model.Id, false);
+            if (cached != null) {
+                cached.Merge (model);
+                return cached;
+            }
+
+            MakeShared (model);
+            return model;
         }
 
         private static void MakeShared (Model model)

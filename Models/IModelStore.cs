@@ -1,4 +1,6 @@
 using System;
+using System.Linq.Expressions;
+using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Models
 {
@@ -8,6 +10,11 @@ namespace Toggl.Phoebe.Models
             where T : Model;
 
         Model Get (Type type, long id);
+
+        IModelQuery<T> Query<T> (
+            Expression<Func<T, bool>> expr = null,
+            Func<IEnumerable<T>, IEnumerable<T>> filter = null)
+            where T : Model, new();
 
         void ModelChanged (Model model, string property);
 

@@ -12,6 +12,10 @@ namespace Toggl.Phoebe.Models
      * - Non-persisted shared model exists, new instance is loaded from db and merged into it (persisted or not?)
      * - Creating a new persisted model just by having the IsPersisted set before making shared
      */
+    /* What this class should do
+     * TODO: Reverse relation lookup
+     * TODO: Last ID value restoration
+     */
     public class SQLiteModelStore : IModelStore
     {
         private class DbCommand : SQLiteCommand
@@ -50,18 +54,72 @@ namespace Toggl.Phoebe.Models
             }
         }
 
+        private class DbQuery<T> : IModelQuery<T>
+            where T : Model, new()
+        {
+            private readonly TableQuery<T> query;
+            private readonly Func<IEnumerable<T>, IEnumerable<T>> filter;
+
+            public DbQuery (TableQuery<T> query, Func<IEnumerable<T>, IEnumerable<T>> filter)
+            {
+                this.query = query;
+                this.filter = filter;
+            }
+
+            private DbQuery<T> Wrap (TableQuery<T> query)
+            {
+                return new DbQuery<T> (query, filter);
+            }
+
+            public IModelQuery<T> Where (Expression<Func<T, bool>> predExpr)
+            {
+                return Wrap (query.Where (predExpr));
+            }
+
+            public IModelQuery<T> OrderBy<U> (Expression<Func<T, U>> orderExpr, bool asc = true)
+            {
+                if (asc)
+                    return Wrap (query.OrderBy (orderExpr));
+                else
+                    return Wrap (query.OrderByDescending (orderExpr));
+            }
+
+            public IModelQuery<T> Take (int n)
+            {
+                return Wrap (query.Take (n));
+            }
+
+            public IModelQuery<T> Skip (int n)
+            {
+                return Wrap (query.Skip (n));
+            }
+
+            public int Count ()
+            {
+                return query.Count ();
+            }
+
+            public IEnumerator<T> GetEnumerator ()
+            {
+                IEnumerable<T> q = query;
+                if (filter != null)
+                    q = filter (q);
+                return q.GetEnumerator ();
+            }
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
+            {
+                return GetEnumerator ();
+            }
+        }
+
         private readonly SQLiteConnection conn;
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
         private string propertyIsShared;
         private string propertyIsPersisted;
         private string propertyIsMerging;
-        /* What this class should do
-         * - Scan for dirty models that need to be saved in the db
-         * - Enable lookup of models
-         * - Reverse relation lookup
-         * - Last ID value restoration
-         */
+
         public SQLiteModelStore (string dbPath)
         {
             conn = new DbConnection (this, dbPath);
@@ -94,6 +152,17 @@ namespace Toggl.Phoebe.Models
 
             var map = conn.GetMapping (type);
             return (Model)conn.Query (map, map.GetByPrimaryKeySql, id).FirstOrDefault ();
+        }
+
+        public IModelQuery<T> Query<T> (
+            Expression<Func<T, bool>> predExpr = null,
+            Func<IEnumerable<T>, IEnumerable<T>> filter = null)
+            where T : Model, new()
+        {
+            IModelQuery<T> query = new DbQuery<T> (conn.Table<T> (), filter);
+            if (predExpr != null)
+                query = query.Where (predExpr);
+            return query;
         }
 
         private string GetPropertyName<T> (Model model, Expression<Func<T>> expr)

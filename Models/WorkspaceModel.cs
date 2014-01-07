@@ -81,12 +81,12 @@ namespace Toggl.Phoebe.Models
             }
         }
 
-        private AccessLevel projectCreationPriv;
+        private AccessLevel projectCreationPriv = AccessLevel.Any;
 
         public AccessLevel ProjectCreationPrivileges {
             get { return projectCreationPriv; }
             set {
-                if (value != AccessLevel.Admin || value != AccessLevel.Any)
+                if (value != AccessLevel.Admin && value != AccessLevel.Any)
                     throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
 
                 if (projectCreationPriv == value)
@@ -98,12 +98,12 @@ namespace Toggl.Phoebe.Models
             }
         }
 
-        private AccessLevel ratesVisbility;
+        private AccessLevel ratesVisbility = AccessLevel.Any;
 
         public AccessLevel BillableRatesVisibility {
             get { return ratesVisbility; }
             set {
-                if (value != AccessLevel.Admin || value != AccessLevel.Any)
+                if (value != AccessLevel.Admin && value != AccessLevel.Any)
                     throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
 
                 if (ratesVisbility == value)
@@ -115,7 +115,7 @@ namespace Toggl.Phoebe.Models
             }
         }
 
-        private RoundingMode roundingMode;
+        private RoundingMode roundingMode = RoundingMode.Up;
 
         public RoundingMode RoundingMode {
             get { return roundingMode; }

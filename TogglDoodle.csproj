@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{2EB7C94A-661D-4927-AC6E-2D9995B69721}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>TogglDoodle</RootNamespace>
+    <RootNamespace>Toggl.Phoebe</RootNamespace>
     <AssemblyName>TogglDoodle</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -50,9 +50,9 @@
     <Compile Include="Models\IModelStore.cs" />
     <Compile Include="Models\SQLiteModelStore.cs" />
     <Compile Include="Models\ClientModel.cs" />
-    <Compile Include="Models\AccessLevel.cs" />
-    <Compile Include="Models\RoundingMode.cs" />
-    <Compile Include="Models\TrackingMode.cs" />
+    <Compile Include="TrackingMode.cs" />
+    <Compile Include="RoundingMode.cs" />
+    <Compile Include="AccessLevel.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

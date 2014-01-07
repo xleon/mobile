@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace TogglDoodle.Models
+namespace Toggl.Phoebe.Models
 {
     /* TODO: Things to test:
      * - Stopping another time entry works from any angle

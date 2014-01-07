@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
-using TogglDoodle.Models;
+using Toggl.Phoebe.Models;
 using SQLite;
 
-namespace TogglDoodle
+namespace Toggl.Phoebe
 {
     class MainClass
     {

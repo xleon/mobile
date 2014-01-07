@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace TogglDoodle
+namespace Toggl.Phoebe
 {
     public static class ExpressionExtensions
     {

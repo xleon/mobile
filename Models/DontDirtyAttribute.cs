@@ -1,6 +1,6 @@
 using System;
 
-namespace TogglDoodle.Models
+namespace Toggl.Phoebe.Models
 {
     [AttributeUsage (AttributeTargets.Property, Inherited = true)]
     public class DontDirtyAttribute : Attribute

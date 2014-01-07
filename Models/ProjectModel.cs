@@ -1,7 +1,7 @@
 using System;
 using System.Linq.Expressions;
 
-namespace TogglDoodle.Models
+namespace Toggl.Phoebe.Models
 {
     public class ProjectModel : Model
     {

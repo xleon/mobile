@@ -1,6 +1,6 @@
 using System;
 
-namespace TogglDoodle.Models
+namespace Toggl.Phoebe
 {
     public enum TrackingMode
     {

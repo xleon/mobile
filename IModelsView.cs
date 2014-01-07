@@ -2,9 +2,9 @@ using System;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TogglDoodle.Models;
+using Toggl.Phoebe.Models;
 
-namespace TogglDoodle
+namespace Toggl.Phoebe
 {
     public interface IModelsView<T> : INotifyPropertyChanged
         where T : Model

@@ -1,6 +1,6 @@
 using System;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe.Data
 {
     public class UserModel : Model
     {

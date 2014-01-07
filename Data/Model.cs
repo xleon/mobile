@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 
 //#define NotifyPropertyChanging
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe.Data
 {
     /**
      * TODO: Test for:

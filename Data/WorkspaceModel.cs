@@ -1,7 +1,7 @@
 using System;
 using System.Linq.Expressions;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe.Data
 {
     public class WorkspaceModel : Model
     {

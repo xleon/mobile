@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using Toggl.Phoebe.Models;
+using Toggl.Phoebe.Data;
 using SQLite;
 
 namespace Toggl.Phoebe

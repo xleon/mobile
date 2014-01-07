@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe.Data
 {
     public interface IModelQuery<T> : IEnumerable<T>
         where T : Model, new()

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using SQLite;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe.Data
 {
     /**
      * What to test for here:

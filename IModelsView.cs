@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Models;
+using Toggl.Phoebe.Data;
 
 namespace Toggl.Phoebe
 {

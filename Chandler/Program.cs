@@ -1,9 +1,8 @@
 using System;
 using System.Linq;
 using Toggl.Phoebe.Data;
-using SQLite;
 
-namespace Toggl.Phoebe
+namespace Toggl.Chandler
 {
     class MainClass
     {

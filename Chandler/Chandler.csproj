@@ -5,10 +5,10 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>12.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2EB7C94A-661D-4927-AC6E-2D9995B69721}</ProjectGuid>
+    <ProjectGuid>{D2F22459-352E-44E8-9A07-344F93B79764}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Toggl.Phoebe</RootNamespace>
-    <AssemblyName>TogglDoodle</AssemblyName>
+    <RootNamespace>Toggl.Chandler</RootNamespace>
+    <AssemblyName>Chandler</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,28 +36,12 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IModelsView.cs" />
-    <Compile Include="SQLite.NET\SQLiteAsync.cs" />
-    <Compile Include="ExpressionExtensions.cs" />
-    <Compile Include="TrackingMode.cs" />
-    <Compile Include="RoundingMode.cs" />
-    <Compile Include="AccessLevel.cs" />
-    <Compile Include="SQLite.NET\SQLite.cs" />
-    <Compile Include="Data\ProjectModel.cs" />
-    <Compile Include="Data\TaskModel.cs" />
-    <Compile Include="Data\TimeEntryModel.cs" />
-    <Compile Include="Data\WorkspaceModel.cs" />
-    <Compile Include="Data\Model.cs" />
-    <Compile Include="Data\UserModel.cs" />
-    <Compile Include="Data\DontDirtyAttribute.cs" />
-    <Compile Include="Data\IModelStore.cs" />
-    <Compile Include="Data\SQLiteModelStore.cs" />
-    <Compile Include="Data\ClientModel.cs" />
-    <Compile Include="Data\IModelQuery.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Folder Include="SQLite.NET\" />
-    <Folder Include="Data\" />
+    <ProjectReference Include="..\Phoebe\Phoebe.Desktop.csproj">
+      <Project>{C50664AF-B4E8-4B23-A3E4-67162EA6D895}</Project>
+      <Name>Phoebe.Desktop</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

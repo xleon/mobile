@@ -12,10 +12,6 @@ namespace Toggl.Phoebe.Models
      * - Non-persisted shared model exists, new instance is loaded from db and merged into it (persisted or not?)
      * - Creating a new persisted model just by having the IsPersisted set before making shared
      */
-    /* What this class should do
-     * TODO: Reverse relation lookup
-     * TODO: Last ID value restoration
-     */
     public class SQLiteModelStore : IModelStore
     {
         private class DbCommand : SQLiteCommand
@@ -168,6 +164,16 @@ namespace Toggl.Phoebe.Models
         private string GetPropertyName<T> (Model model, Expression<Func<T>> expr)
         {
             return expr.ToPropertyName (model);
+        }
+
+        public long GetLastId (Type type)
+        {
+            if (!type.IsSubclassOf (typeof(Model)))
+                throw new ArgumentException ("Type must be of a subclass of Model.", "type");
+
+            var map = conn.GetMapping (type);
+            var sql = String.Format ("select max({0}) from {1}", map.PK.Name, map.TableName);
+            return conn.ExecuteScalar<long> (sql);
         }
 
         public void ModelChanged (Model model, string property)

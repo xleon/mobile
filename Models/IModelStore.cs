@@ -16,6 +16,8 @@ namespace Toggl.Phoebe.Models
             Func<IEnumerable<T>, IEnumerable<T>> filter = null)
             where T : Model, new();
 
+        long GetLastId (Type type);
+
         void ModelChanged (Model model, string property);
 
         void Commit ();

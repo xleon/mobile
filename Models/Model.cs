@@ -150,15 +150,15 @@ namespace Toggl.Phoebe.Models
 
         private static long NextId (Type modelType)
         {
-            // TODO: Add persisting of last ids, etc.
+            long id;
             if (!lastIds.ContainsKey (modelType)) {
-                lastIds [modelType] = 1;
-                return 1;
+                // Get the latest ID from model store
+                id = Store.GetLastId (modelType) + 1;
             } else {
-                var id = lastIds [modelType] + 1;
-                lastIds [modelType] = id;
-                return id;
+                id = lastIds [modelType] + 1;
             }
+            lastIds [modelType] = id;
+            return id;
         }
 
         protected static long NextId<T> ()

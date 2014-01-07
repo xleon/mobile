@@ -6,9 +6,9 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyTitle ("Chandler")]
 [assembly: AssemblyDescription ("")]
 [assembly: AssemblyConfiguration ("")]
-[assembly: AssemblyCompany ("BitterFudge OÜ")]
+[assembly: AssemblyCompany ("Toggl")]
 [assembly: AssemblyProduct ("")]
-[assembly: AssemblyCopyright ("BitterFudge OÜ")]
+[assembly: AssemblyCopyright ("Toggl OÜ")]
 [assembly: AssemblyTrademark ("")]
 [assembly: AssemblyCulture ("")]
 // The assembly version has the format "{Major}.{Minor}.{Build}.{Revision}".

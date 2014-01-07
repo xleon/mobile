@@ -12,13 +12,13 @@ namespace TogglDoodle.Models
      * - Non-persisted shared model exists, new instance is loaded from db and merged into it (persisted or not?)
      * - Creating a new persisted model just by having the IsPersisted set before making shared
      */
-    public class ModelStore
+    public class SQLiteModelStore : IModelStore
     {
         private class DbCommand : SQLiteCommand
         {
-            private readonly ModelStore store;
+            private readonly SQLiteModelStore store;
 
-            public DbCommand (ModelStore store, SQLiteConnection conn) : base (conn)
+            public DbCommand (SQLiteModelStore store, SQLiteConnection conn) : base (conn)
             {
                 this.store = store;
             }
@@ -37,9 +37,9 @@ namespace TogglDoodle.Models
 
         private class DbConnection: SQLiteConnection
         {
-            private readonly ModelStore store;
+            private readonly SQLiteModelStore store;
 
-            public DbConnection (ModelStore store, string databasePath) : base (databasePath)
+            public DbConnection (SQLiteModelStore store, string databasePath) : base (databasePath)
             {
                 this.store = store;
             }
@@ -62,7 +62,7 @@ namespace TogglDoodle.Models
          * - Reverse relation lookup
          * - Last ID value restoration
          */
-        public ModelStore (string dbPath)
+        public SQLiteModelStore (string dbPath)
         {
             conn = new DbConnection (this, dbPath);
             CreateTables (conn);

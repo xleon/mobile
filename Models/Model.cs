@@ -23,7 +23,7 @@ namespace TogglDoodle.Models
         private static Dictionary<Type, long> lastIds =
             new Dictionary<Type, long> ();
 
-        public static ModelStore Store { get; set; }
+        public static IModelStore Store { get; set; }
 
         /// <summary>
         /// Returns all of the cached shared models.

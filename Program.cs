@@ -12,7 +12,7 @@ namespace TogglDoodle
             string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
             var path = System.IO.Path.Combine (folder, "toggldoodle.db");
             Console.WriteLine ("Using SQLite file: {0}", path);
-            Model.Store = new ModelStore (path);
+            Model.Store = new SQLiteModelStore (path);
 
 //            var ws = Model.Update (new WorkspaceModel () {
 //                Id = WorkspaceModel.NextId,

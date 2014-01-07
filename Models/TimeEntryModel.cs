@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Linq;
 
 namespace Toggl.Phoebe.Models
 {
@@ -279,7 +280,21 @@ namespace Toggl.Phoebe.Models
                 || property == propertyIsRunning
                 || property == propertyIsPersisted) {
                 if (IsShared && IsRunning && IsPersisted) {
-                    // TODO: Make sure that this is the only time entry running
+                    // Make sure that this is the only time entry running:
+                    var entries = Model.GetCached<TimeEntryModel> ().Where ((m) => m.UserId == UserId && m.IsRunning);
+                    foreach (var entry in entries) {
+                        if (entry == this)
+                            continue;
+                        entry.IsRunning = false;
+                    }
+
+                    // Double check the database as well:
+                    entries = Model.Query<TimeEntryModel> ((m) => m.UserId == UserId && m.IsRunning);
+                    foreach (var entry in entries) {
+                        if (entry == this)
+                            continue;
+                        entry.IsRunning = false;
+                    }
                 }
             }
         }

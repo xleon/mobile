@@ -173,7 +173,7 @@ namespace Toggl.Phoebe.Data
 
             var map = conn.GetMapping (type);
             var sql = String.Format ("select max({0}) from {1}", map.PK.Name, map.TableName);
-            return conn.ExecuteScalar<long> (sql);
+            return conn.ExecuteScalar<long?> (sql) ?? 0;
         }
 
         public void ModelChanged (Model model, string property)

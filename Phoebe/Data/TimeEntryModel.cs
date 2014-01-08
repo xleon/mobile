@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
@@ -58,6 +59,7 @@ namespace Toggl.Phoebe.Data
 
         private string description;
 
+        [JsonProperty ("description")]
         public string Description {
             get { return description; }
             set {
@@ -72,6 +74,7 @@ namespace Toggl.Phoebe.Data
 
         private bool billable;
 
+        [JsonProperty ("billable")]
         public bool IsBillable {
             get { return billable; }
             set {
@@ -86,6 +89,7 @@ namespace Toggl.Phoebe.Data
 
         private DateTime startTime;
 
+        [JsonProperty ("start")]
         public DateTime StartTime {
             get { return startTime; }
             set {
@@ -100,6 +104,7 @@ namespace Toggl.Phoebe.Data
 
         private DateTime? stopTime;
 
+        [JsonProperty ("stop", NullValueHandling = NullValueHandling.Include)]
         public DateTime? StopTime {
             get { return stopTime; }
             set {
@@ -146,6 +151,7 @@ namespace Toggl.Phoebe.Data
 
         private long rawDuration;
 
+        [JsonProperty ("duration")]
         public long RawDuration {
             get { return rawDuration; }
             set {
@@ -163,6 +169,7 @@ namespace Toggl.Phoebe.Data
 
         private string createdWith;
 
+        [JsonProperty ("created_with")]
         public string CreatedWith {
             get { return createdWith; }
             set {
@@ -184,6 +191,7 @@ namespace Toggl.Phoebe.Data
 
         private bool durationOnly;
 
+        [JsonProperty ("duronly")]
         public bool DurationOnly {
             get { return durationOnly; }
             set {
@@ -220,6 +228,7 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        [JsonProperty ("wid")]
         public long? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
@@ -232,6 +241,7 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (workspaceRelationId, value); }
         }
 
+        [JsonProperty ("pid")]
         public long? ProjectId {
             get { return GetForeignId (projectRelationId); }
             set { SetForeignId (projectRelationId, value); }
@@ -244,6 +254,7 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (projectRelationId, value); }
         }
 
+        [JsonProperty ("tid")]
         public long? TaskId {
             get { return GetForeignId (taskRelationId); }
             set { SetForeignId (taskRelationId, value); }
@@ -256,6 +267,7 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (taskRelationId, value); }
         }
 
+        [JsonProperty ("uid")]
         public long? UserId {
             get { return GetForeignId (userRelationId); }
             set { SetForeignId (userRelationId, value); }

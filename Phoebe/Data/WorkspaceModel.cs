@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
@@ -13,6 +14,7 @@ namespace Toggl.Phoebe.Data
 
         private string name;
 
+        [JsonProperty ("name")]
         public string Name {
             get { return name; }
             set {
@@ -27,6 +29,7 @@ namespace Toggl.Phoebe.Data
 
         private bool premium;
 
+        [JsonProperty ("premium")]
         public bool IsPremium {
             get { return premium; }
             set {
@@ -41,6 +44,7 @@ namespace Toggl.Phoebe.Data
 
         private bool admin;
 
+        [JsonProperty ("admin")]
         public bool IsAdmin {
             get { return admin; }
             set {
@@ -55,6 +59,7 @@ namespace Toggl.Phoebe.Data
 
         private decimal? defaultRate;
 
+        [JsonProperty ("default_hourly_rate", NullValueHandling = NullValueHandling.Ignore)]
         public decimal? DefaultRate {
             get { return defaultRate; }
             set {
@@ -69,6 +74,7 @@ namespace Toggl.Phoebe.Data
 
         private string defaultCurrency;
 
+        [JsonProperty ("default_currency")]
         public string DefaultCurrency {
             get { return defaultCurrency; }
             set {
@@ -98,6 +104,12 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        [JsonProperty ("only_admins_may_create_projects")]
+        private bool OnlyAdminsMayCreateProjects {
+            get { return ProjectCreationPrivileges == AccessLevel.Admin; }
+            set { ProjectCreationPrivileges = value ? AccessLevel.Admin : AccessLevel.Any; }
+        }
+
         private AccessLevel ratesVisbility = AccessLevel.Any;
 
         public AccessLevel BillableRatesVisibility {
@@ -115,8 +127,15 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        [JsonProperty ("only_admins_see_billable_rates")]
+        private bool OnlyAdminsSeeBillableRates {
+            get { return BillableRatesVisibility == AccessLevel.Admin; }
+            set { BillableRatesVisibility = value ? AccessLevel.Admin : AccessLevel.Any; }
+        }
+
         private RoundingMode roundingMode = RoundingMode.Up;
 
+        [JsonProperty ("rounding")]
         public RoundingMode RoundingMode {
             get { return roundingMode; }
             set {
@@ -131,6 +150,7 @@ namespace Toggl.Phoebe.Data
 
         private int roundingPercision;
 
+        [JsonProperty ("rounding_minutes")]
         public int RoundingPercision {
             get { return roundingPercision; }
             set {
@@ -145,6 +165,7 @@ namespace Toggl.Phoebe.Data
 
         private string logoUrl;
 
+        [JsonProperty ("logo_url")]
         public string LogoUrl {
             get { return logoUrl; }
             set {

@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
@@ -21,6 +22,7 @@ namespace Toggl.Phoebe.Data
 
         private string name;
 
+        [JsonProperty ("name")]
         public string Name {
             get { return name; }
             set {
@@ -35,6 +37,7 @@ namespace Toggl.Phoebe.Data
 
         private bool active;
 
+        [JsonProperty ("active")]
         public bool IsActive {
             get { return active; }
             set {
@@ -49,6 +52,7 @@ namespace Toggl.Phoebe.Data
 
         private long estimate;
 
+        [JsonProperty ("estimated_seconds")]
         public long Estimate {
             get { return estimate; }
             set {
@@ -65,6 +69,7 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        [JsonProperty ("wid")]
         public long? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
@@ -77,6 +82,7 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (workspaceRelationId, value); }
         }
 
+        [JsonProperty ("pid")]
         public long? ProjectId {
             get { return GetForeignId (projectRelationId); }
             set { SetForeignId (projectRelationId, value); }

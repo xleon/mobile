@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Newtonsoft.Json;
 
 //#define NotifyPropertyChanging
 namespace Toggl.Phoebe.Data
@@ -12,6 +13,7 @@ namespace Toggl.Phoebe.Data
      * TODO: Test for:
      * - correct MarkDirty behaviour
      */
+    [JsonObject (MemberSerialization.OptIn)]
     public abstract class Model :
         #if NotifyPropertyChanging
         INotifyPropertyChanging,
@@ -428,6 +430,7 @@ namespace Toggl.Phoebe.Data
         private long? remoteId;
 
         [DontDirty]
+        [JsonProperty ("id", NullValueHandling = NullValueHandling.Ignore)]
         public long? RemoteId {
             get { return remoteId; }
             set {
@@ -441,6 +444,7 @@ namespace Toggl.Phoebe.Data
 
         private DateTime modified;
 
+        [JsonProperty ("at")]
         public DateTime ModifiedAt {
             get { return modified; }
             set {

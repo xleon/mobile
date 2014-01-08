@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
@@ -19,6 +20,7 @@ namespace Toggl.Phoebe.Data
 
         private string name;
 
+        [JsonProperty ("name")]
         public string Name {
             get { return name; }
             set {
@@ -35,6 +37,7 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        [JsonProperty ("wid")]
         public long? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }

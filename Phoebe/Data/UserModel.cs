@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
@@ -19,6 +20,7 @@ namespace Toggl.Phoebe.Data
 
         private string name;
 
+        [JsonProperty ("fullname")]
         public string Name {
             get { return name; }
             set {
@@ -33,6 +35,7 @@ namespace Toggl.Phoebe.Data
 
         private string email;
 
+        [JsonProperty ("email")]
         public string Email {
             get { return email; }
             set {
@@ -47,6 +50,7 @@ namespace Toggl.Phoebe.Data
 
         private DayOfWeek startOfWeek;
 
+        [JsonProperty ("beginning_of_week")]
         public DayOfWeek StartOfWeek {
             get { return startOfWeek; }
             set {
@@ -61,6 +65,7 @@ namespace Toggl.Phoebe.Data
 
         private string dateFormat;
 
+        [JsonProperty ("date_format")]
         public string DateFormat {
             get { return dateFormat; }
             set {
@@ -75,6 +80,7 @@ namespace Toggl.Phoebe.Data
 
         private string timeFormat;
 
+        [JsonProperty ("timeofday_format")]
         public string TimeFormat {
             get { return timeFormat; }
             set {
@@ -89,6 +95,7 @@ namespace Toggl.Phoebe.Data
 
         private string imageUrl;
 
+        [JsonProperty ("image_url")]
         public string ImageUrl {
             get { return imageUrl; }
             set {
@@ -103,6 +110,7 @@ namespace Toggl.Phoebe.Data
 
         private string locale;
 
+        [JsonProperty ("language")]
         public string Locale {
             get { return locale; }
             set {
@@ -117,6 +125,7 @@ namespace Toggl.Phoebe.Data
 
         private string timezone;
 
+        [JsonProperty ("timezone")]
         public string Timezone {
             get { return timezone; }
             set {
@@ -131,6 +140,7 @@ namespace Toggl.Phoebe.Data
 
         private bool sendProductEmails;
 
+        [JsonProperty ("send_product_emails")]
         public bool SendProductEmails {
             get { return sendProductEmails; }
             set {
@@ -145,6 +155,7 @@ namespace Toggl.Phoebe.Data
 
         private bool sendTimerNotifications;
 
+        [JsonProperty ("send_timer_notifications")]
         public bool SendTimerNotifications {
             get { return sendTimerNotifications; }
             set {
@@ -159,6 +170,7 @@ namespace Toggl.Phoebe.Data
 
         private bool sendWeeklyReport;
 
+        [JsonProperty ("send_weekly_report")]
         public bool SendWeeklyReport {
             get { return sendWeeklyReport; }
             set {
@@ -183,6 +195,12 @@ namespace Toggl.Phoebe.Data
                     trackingMode = value;
                 });
             }
+        }
+
+        [JsonProperty ("store_start_and_stop_time")]
+        private bool StoreStartAndStopTime {
+            get { return TrackingMode == TrackingMode.StartNew; }
+            set { TrackingMode = value ? TrackingMode.StartNew : TrackingMode.Continue; }
         }
 
         #endregion

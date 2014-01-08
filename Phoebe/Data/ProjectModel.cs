@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
@@ -22,6 +23,7 @@ namespace Toggl.Phoebe.Data
 
         private bool active;
 
+        [JsonProperty ("active")]
         public bool IsActive {
             get { return active; }
             set {
@@ -36,6 +38,7 @@ namespace Toggl.Phoebe.Data
 
         private bool priv;
 
+        [JsonProperty ("is_private")]
         public bool IsPrivate {
             get { return priv; }
             set {
@@ -50,6 +53,7 @@ namespace Toggl.Phoebe.Data
 
         private bool taskEstimate;
 
+        [JsonProperty ("auto_estimates")]
         public bool UseTasksEstimate {
             get { return taskEstimate; }
             set {
@@ -64,6 +68,7 @@ namespace Toggl.Phoebe.Data
 
         private bool billable;
 
+        [JsonProperty ("billable")]
         public bool IsBillable {
             get { return billable; }
             set {
@@ -78,6 +83,7 @@ namespace Toggl.Phoebe.Data
 
         private string color;
 
+        [JsonProperty ("color")]
         public string Color {
             get { return color; }
             set {
@@ -92,6 +98,7 @@ namespace Toggl.Phoebe.Data
 
         private bool template;
 
+        [JsonProperty ("template")]
         public bool IsTemplate {
             get { return template; }
             set {
@@ -106,6 +113,7 @@ namespace Toggl.Phoebe.Data
 
         private string name;
 
+        [JsonProperty ("name")]
         public string Name {
             get { return name; }
             set {
@@ -122,6 +130,7 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        [JsonProperty ("wid")]
         public long? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
@@ -133,6 +142,7 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (workspaceRelationId, value); }
         }
 
+        [JsonProperty ("cid")]
         public long? ClientId {
             get { return GetForeignId (clientRelationId); }
             set { SetForeignId (clientRelationId, value); }

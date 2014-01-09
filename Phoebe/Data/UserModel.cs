@@ -203,6 +203,22 @@ namespace Toggl.Phoebe.Data
             set { TrackingMode = value ? TrackingMode.StartNew : TrackingMode.Continue; }
         }
 
+        private string createdWith;
+
+        [JsonProperty ("created_with")]
+        [SQLite.Ignore]
+        public string CreatedWith {
+            get { return createdWith; }
+            set {
+                if (createdWith == value)
+                    return;
+
+                ChangePropertyAndNotify (() => CreatedWith, delegate {
+                    createdWith = value;
+                });
+            }
+        }
+
         #endregion
 
         #region Relations

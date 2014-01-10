@@ -1,7 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Toggl.Phoebe.Data;
 
 namespace Toggl.Phoebe.Net
@@ -10,17 +15,23 @@ namespace Toggl.Phoebe.Net
     {
         private readonly Uri v8Url;
         private readonly Dictionary<Type, Uri> modelUrls;
+        private readonly HttpClient httpClient;
 
         public TogglRestClient (Uri url)
         {
-            v8Url = new Uri (url, "v8");
+            v8Url = new Uri (url, "v8/");
             modelUrls = new Dictionary<Type, Uri> () {
-                { typeof(ClientModel), new Uri (v8Url, "clients") },
-                { typeof(ProjectModel), new Uri (v8Url, "projects") },
-                { typeof(TaskModel), new Uri (v8Url, "tasks") },
-                { typeof(TimeEntryModel), new Uri (v8Url, "time_entries") },
-                { typeof(WorkspaceModel), new Uri (v8Url, "workspaces") },
+                { typeof(ClientModel), new Uri (v8Url, "clients/") },
+                { typeof(ProjectModel), new Uri (v8Url, "projects/") },
+                { typeof(TaskModel), new Uri (v8Url, "tasks/") },
+                { typeof(TimeEntryModel), new Uri (v8Url, "time_entries/") },
+                { typeof(WorkspaceModel), new Uri (v8Url, "workspaces/") },
             };
+            httpClient = new HttpClient ();
+            var headers = httpClient.DefaultRequestHeaders;
+            headers.UserAgent.Clear ();
+            headers.UserAgent.Add (new ProductInfoHeaderValue ("TogglMobile", "0.01")); // TODO: Populate UserAgent
+            headers.Accept.Add (new MediaTypeWithQualityHeaderValue ("application/json"));
         }
 
         public async Task Create<T> (T model)
@@ -68,10 +79,6 @@ namespace Toggl.Phoebe.Net
         {
             if (typeof(T) == typeof(ClientModel)) {
                 return await ListClients () as List<T>;
-            } else if (typeof(T) == typeof(ProjectModel)) {
-                return await ListProjects () as List<T>;
-            } else if (typeof(T) == typeof(TaskModel)) {
-                return await ListTasks () as List<T>;
             } else if (typeof(T) == typeof(TimeEntryModel)) {
                 return await ListTimeEntries () as List<T>;
             } else if (typeof(T) == typeof(WorkspaceModel)) {
@@ -133,13 +140,60 @@ namespace Toggl.Phoebe.Net
             }
         }
 
+        private string ModelToJson<T> (T model)
+            where T : Model
+        {
+            string dataKey;
+            if (typeof(T) == typeof(TimeEntryModel)) {
+                dataKey = "time_entry";
+            } else if (typeof(T) == typeof(ProjectModel)) {
+                dataKey = "project";
+            } else if (typeof(T) == typeof(ClientModel)) {
+                dataKey = "client";
+            } else if (typeof(T) == typeof(TaskModel)) {
+                dataKey = "task";
+            } else if (typeof(T) == typeof(WorkspaceModel)) {
+                dataKey = "workspace";
+            } else if (typeof(T) == typeof(UserModel)) {
+                dataKey = "user";
+            } else {
+                throw new ArgumentException ("Don't know how to handle model of type T.", "model");
+            }
+
+            var json = new JObject ();
+            json.Add (dataKey, JObject.FromObject (model));
+            return json.ToString (Formatting.None);
+        }
+
+        private async Task CreateModel<T> (Uri url, T model)
+            where T : Model, new()
+        {
+            var json = ModelToJson (model);
+            var httpReq = new HttpRequestMessage () {
+                Method = HttpMethod.Post,
+                RequestUri = url,
+                Content = new StringContent (json, Encoding.UTF8, "application/json"),
+            };
+            httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
+                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                    string.Format ("{0}:x", "apiToken")))); // TODO: Use real api token
+            var httpResp = await httpClient.SendAsync (httpReq);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
+            model.Merge (wrap.Data);
+            // In case the local model has changed in the mean time (and merge does nothing),
+            // make sure that the remote id is set.
+            if (model.RemoteId == null)
+                model.RemoteId = wrap.Data.RemoteId;
+        }
+
         #region Client methods
 
         public Task CreateClient (ClientModel model)
         {
             var url = modelUrls [typeof(ClientModel)];
-
-            throw new NotImplementedException ();
+            return CreateModel<ClientModel> (url, model);
         }
 
         public Task<ClientModel> GetClient (long id)
@@ -182,20 +236,12 @@ namespace Toggl.Phoebe.Net
         public Task CreateProject (ProjectModel model)
         {
             var url = modelUrls [typeof(ProjectModel)];
-
-            throw new NotImplementedException ();
+            return CreateModel<ProjectModel> (url, model);
         }
 
         public Task<ProjectModel> GetProject (long id)
         {
             var url = new Uri (modelUrls [typeof(ProjectModel)], id.ToString ());
-
-            throw new NotImplementedException ();
-        }
-
-        public Task<List<ProjectModel>> ListProjects ()
-        {
-            var url = modelUrls [typeof(ProjectModel)];
 
             throw new NotImplementedException ();
         }
@@ -234,20 +280,12 @@ namespace Toggl.Phoebe.Net
         public Task CreateTask (TaskModel model)
         {
             var url = modelUrls [typeof(TaskModel)];
-
-            throw new NotImplementedException ();
+            return CreateModel<TaskModel> (url, model);
         }
 
         public Task<TaskModel> GetTask (long id)
         {
             var url = new Uri (modelUrls [typeof(TaskModel)], id.ToString ());
-
-            throw new NotImplementedException ();
-        }
-
-        public Task<List<TaskModel>> ListTasks ()
-        {
-            var url = modelUrls [typeof(TaskModel)];
 
             throw new NotImplementedException ();
         }
@@ -291,8 +329,7 @@ namespace Toggl.Phoebe.Net
         public Task CreateTimeEntry (TimeEntryModel model)
         {
             var url = modelUrls [typeof(TimeEntryModel)];
-
-            throw new NotImplementedException ();
+            return CreateModel<TimeEntryModel> (url, model);
         }
 
         public Task<TimeEntryModel> GetTimeEntry (long id)
@@ -337,8 +374,7 @@ namespace Toggl.Phoebe.Net
         public Task CreateWorkspace (WorkspaceModel model)
         {
             var url = modelUrls [typeof(WorkspaceModel)];
-
-            throw new NotImplementedException ();
+            return CreateModel<WorkspaceModel> (url, model);
         }
 
         public Task<WorkspaceModel> GetWorkspace (long id)
@@ -381,6 +417,25 @@ namespace Toggl.Phoebe.Net
             throw new NotImplementedException ();
         }
 
+        public async Task<UserModel> GetUser (string username, string password)
+        {
+            var url = new Uri (v8Url, "me");
+
+            var httpReq = new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = url,
+            };
+            httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
+                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                    string.Format ("{0}:{1}", username, password))));
+            var httpResp = await httpClient.SendAsync (httpReq);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);
+
+            return wrap.Data;
+        }
+
         public Task UpdateUser (UserModel model)
         {
             // TODO: Check that the id is that of the currently logged in user
@@ -391,6 +446,14 @@ namespace Toggl.Phoebe.Net
 
         #endregion
 
+        private class Wrapper<T>
+        {
+            [JsonProperty ("data")]
+            public T Data { get; set; }
+
+            [JsonProperty ("since", NullValueHandling = NullValueHandling.Ignore)]
+            public long? Since { get; set; }
+        }
     }
 }
 

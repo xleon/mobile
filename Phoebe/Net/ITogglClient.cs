@@ -30,6 +30,8 @@ namespace Toggl.Phoebe.Net
 
         #endregion
 
+        Task<UserModel> GetUser (string username, string password);
+
         Task<List<ClientModel>> ListWorkspaceClients (long workspaceId);
 
         Task<List<ProjectModel>> ListWorkspaceProjects (long workspaceId);

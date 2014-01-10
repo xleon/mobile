@@ -348,7 +348,7 @@ namespace Toggl.Phoebe.Data
 
         #region Merge functionality
 
-        protected virtual void Merge (Model model)
+        public virtual void Merge (Model model)
         {
             if (model.GetType () != GetType ())
                 throw new ArgumentException ("Cannot merge models of different kind", "model");

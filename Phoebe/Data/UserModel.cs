@@ -48,6 +48,38 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        private string password;
+
+        [JsonProperty ("password", NullValueHandling = NullValueHandling.Include)]
+        [SQLite.Ignore]
+        public string Password {
+            get { return password; }
+            set {
+                if (password == value)
+                    return;
+
+                ChangePropertyAndNotify (() => Password, delegate {
+                    password = value;
+                });
+            }
+        }
+
+        private string apiToken;
+
+        [JsonProperty ("api_token", NullValueHandling = NullValueHandling.Ignore)]
+        [SQLite.Ignore]
+        public string ApiToken {
+            get { return apiToken; }
+            set {
+                if (apiToken == value)
+                    return;
+
+                ChangePropertyAndNotify (() => ApiToken, delegate {
+                    apiToken = value;
+                });
+            }
+        }
+
         private DayOfWeek startOfWeek;
 
         [JsonProperty ("beginning_of_week")]

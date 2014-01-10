@@ -135,19 +135,39 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        public T Get<T> (long id)
+        public T Get<T> (Guid id)
             where T : Model
         {
             return (T)Get (typeof(T), id);
         }
 
-        public Model Get (Type type, long id)
+        public Model Get (Type type, Guid id)
         {
             if (!type.IsSubclassOf (typeof(Model)))
                 throw new ArgumentException ("Type must be of a subclass of Model.", "type");
 
             var map = conn.GetMapping (type);
             return (Model)conn.Query (map, map.GetByPrimaryKeySql, id).FirstOrDefault ();
+        }
+
+        public T GetByRemoteId<T> (long remoteId)
+            where T : Model
+        {
+            return (T)GetByRemoteId (typeof(T), remoteId);
+        }
+
+        public Model GetByRemoteId (Type type, long remoteId)
+        {
+            if (!type.IsSubclassOf (typeof(Model)))
+                throw new ArgumentException ("Type must be of a subclass of Model.", "type");
+
+            var map = conn.GetMapping (type);
+            var sql = string.Format (
+                          "select * from \"{0}\" where \"{1}\" = ?",
+                          map.TableName,
+                          map.FindColumnWithPropertyName ("RemoteId")
+                      );
+            return (Model)conn.Query (map, sql, remoteId).FirstOrDefault ();
         }
 
         public IModelQuery<T> Query<T> (
@@ -164,16 +184,6 @@ namespace Toggl.Phoebe.Data
         private string GetPropertyName<T> (Model model, Expression<Func<T>> expr)
         {
             return expr.ToPropertyName (model);
-        }
-
-        public long GetLastId (Type type)
-        {
-            if (!type.IsSubclassOf (typeof(Model)))
-                throw new ArgumentException ("Type must be of a subclass of Model.", "type");
-
-            var map = conn.GetMapping (type);
-            var sql = String.Format ("select max({0}) from {1}", map.PK.Name, map.TableName);
-            return conn.ExecuteScalar<long?> (sql) ?? 0;
         }
 
         public void ModelChanged (Model model, string property)

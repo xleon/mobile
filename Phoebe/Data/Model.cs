@@ -20,10 +20,8 @@ namespace Toggl.Phoebe.Data
         #endif
         INotifyPropertyChanged
     {
-        private static Dictionary<Type, Dictionary<long, WeakReference>> modelCache =
-            new Dictionary<Type, Dictionary<long, WeakReference>> ();
-        private static Dictionary<Type, long> lastIds =
-            new Dictionary<Type, long> ();
+        private static Dictionary<Type, MemoryModelCache> modelCaches =
+            new Dictionary<Type, MemoryModelCache> ();
 
         public static IModelStore Store { get; set; }
 
@@ -35,29 +33,27 @@ namespace Toggl.Phoebe.Data
         public static IEnumerable<T> GetCached<T> ()
             where T : Model
         {
-            var type = typeof(T);
-            if (!modelCache.ContainsKey (type))
+            MemoryModelCache cache;
+            if (!modelCaches.TryGetValue (typeof(T), out cache))
                 return Enumerable.Empty<T> ();
 
-            return modelCache [type].Values
-                    .Select ((r) => r.Target as T)
-                    .Where ((m) => m != null);
+            return cache.All<T> ();
         }
 
         public static IEnumerable<Model> GetCached (Type type)
         {
-            if (!modelCache.ContainsKey (type))
+            MemoryModelCache cache;
+            if (!modelCaches.TryGetValue (type, out cache))
                 return Enumerable.Empty<Model> ();
 
-            return modelCache [type].Values
-                    .Select ((r) => r.Target as Model)
-                    .Where ((m) => m != null);
+            return cache.All<Model> ();
         }
 
         /// <summary>
-        /// Gets the shared instance for this model (by id). If there is no shared instance for this the given
-        /// model instance is marked as the shared instance. The data from this given model is merged with the
-        /// shared model.
+        /// Gets the shared instance for this model (by Id or RemoteId). If no existing model (in memory and model
+        /// store) is found, the given model is promoted to a shared instance status.
+        /// When an existing model is found, the data from given instance is merged into the shared instance
+        /// automatically.
         /// </summary>
         /// <returns>The shared shared model instance.</returns>
         /// <param name="model">Model for which a shared instance should be returned.</param>
@@ -68,12 +64,20 @@ namespace Toggl.Phoebe.Data
             if (model.IsShared)
                 return model;
 
-            T sharedModel = (T)Get (model.GetType (), model.Id);
-            if (sharedModel == null) {
+            T sharedModel = null;
+
+            // First, try to look-up the shared model based on the Id
+            if (model.Id.HasValue)
+                sharedModel = (T)Get (model.GetType (), model.Id.Value);
+            // If that fails, try to use RemoteId
+            if (sharedModel == null && model.RemoteId.HasValue)
+                sharedModel = (T)GetByRemoteId (model.GetType (), model.RemoteId.Value);
+
+            if (sharedModel != null) {
+                sharedModel.Merge (model);
+            } else {
                 MakeShared (model);
                 sharedModel = model;
-            } else {
-                sharedModel.Merge (model);
             }
 
             return sharedModel;
@@ -82,37 +86,69 @@ namespace Toggl.Phoebe.Data
         /// <summary>
         /// Retrieves the specified model either from cache or from model store.
         /// </summary>
+        /// <returns>The shared instance, null if not found.</returns>
         /// <param name="id">Id for the model.</param>
         /// <typeparam name="T">Type of the model.</typeparam>
-        public static T Get<T> (long id)
+        public static T Get<T> (Guid id)
             where T : Model
         {
-            return Get (typeof(T), id) as T;
+            return (T)Get (typeof(T), id);
         }
 
-        private static Model Get (Type type, long id, bool autoLoad = true)
+        private static Model Get (Type type, Guid id, bool autoLoad = true)
         {
             Model inst = null;
+            MemoryModelCache cache;
 
             // Look through in-memory models:
-            if (modelCache.ContainsKey (type)) {
-                var cache = modelCache [type];
-                if (cache.ContainsKey (id)) {
-                    inst = cache [id].Target as Model;
-                    if (inst == null) {
-                        cache.Remove (id);
-                    } else {
-                        return inst;
-                    }
-                }
+            if (modelCaches.TryGetValue (type, out cache)) {
+                inst = cache.GetById<Model> (id);
             }
 
             // Try to load from database:
-            if (autoLoad) {
+            if (inst == null && autoLoad) {
                 inst = Store.Get (type, id);
                 if (inst != null) {
                     MakeShared (inst);
                     return inst;
+                }
+            }
+
+            return inst;
+        }
+
+        /// <summary>
+        /// Retrieves a shared model by unique RemoteId from cache or from model store.
+        /// </summary>
+        /// <returns>The shared instance, null if not found.</returns>
+        /// <param name="remoteId">Remote identifier.</param>
+        /// <typeparam name="T">Type of the model.</typeparam>
+        public static T GetByRemoteId<T> (long remoteId)
+            where T : Model
+        {
+            return (T)GetByRemoteId (typeof(T), remoteId);
+        }
+
+        private static Model GetByRemoteId (Type type, long remoteId)
+        {
+            Model inst = null;
+            MemoryModelCache cache;
+
+            // Look through in-memory models:
+            if (modelCaches.TryGetValue (type, out cache)) {
+                inst = cache.GetByRemoteId<Model> (remoteId);
+            }
+
+            // Try to load from database:
+            if (inst == null) {
+                inst = Store.GetByRemoteId (type, remoteId);
+                // Check that this model isn't in memory already and having been modified
+                if (inst != null && cache != null && cache.GetById<Model> (inst.Id.Value) != null) {
+                    inst = null;
+                }
+                // Mark the loaded model as shared
+                if (inst != null) {
+                    MakeShared (inst);
                 }
             }
 
@@ -128,7 +164,7 @@ namespace Toggl.Phoebe.Data
         private static T UpdateQueryModel<T> (T model)
             where T : Model, new()
         {
-            var cached = (T)Get (typeof(T), model.Id, false);
+            var cached = (T)Get (typeof(T), model.Id.Value, false);
             if (cached != null) {
                 cached.Merge (model);
                 return cached;
@@ -140,33 +176,22 @@ namespace Toggl.Phoebe.Data
 
         private static void MakeShared (Model model)
         {
+            if (model.Id == null)
+                model.Id = Guid.NewGuid ();
+            // Enforce integrity
+            if (model.RemoteId != null && Model.GetByRemoteId (model.GetType (), model.RemoteId.Value) != null) {
+                throw new IntegrityException ("RemoteId is not unique, cannot make shared.");
+            }
             model.IsShared = true;
 
+            MemoryModelCache cache;
             var type = model.GetType ();
-            if (!modelCache.ContainsKey (type)) {
-                modelCache [type] = new Dictionary<long, WeakReference> ();
+
+            if (!modelCaches.TryGetValue (type, out cache)) {
+                modelCaches [type] = cache = new MemoryModelCache ();
             }
 
-            modelCache [type] [model.Id] = new WeakReference (model);
-        }
-
-        private static long NextId (Type modelType)
-        {
-            long id;
-            if (!lastIds.ContainsKey (modelType)) {
-                // Get the latest ID from model store
-                id = Store.GetLastId (modelType) + 1;
-            } else {
-                id = lastIds [modelType] + 1;
-            }
-            lastIds [modelType] = id;
-            return id;
-        }
-
-        protected static long NextId<T> ()
-            where T : Model
-        {
-            return NextId (typeof(T));
+            cache.Add (model);
         }
 
         private string GetPropertyName<T> (Expression<Func<T>> expr)
@@ -245,7 +270,7 @@ namespace Toggl.Phoebe.Data
         {
             public string IdProperty { get; set; }
 
-            public long? Id { get; set; }
+            public Guid? Id { get; set; }
 
             public string InstanceProperty { get; set; }
 
@@ -256,7 +281,7 @@ namespace Toggl.Phoebe.Data
 
         private readonly List<ForeignRelationData> fkRelations = new List<ForeignRelationData> ();
 
-        protected int ForeignRelation<T> (Expression<Func<long?>> exprId, Expression<Func<T>> exprInst)
+        protected int ForeignRelation<T> (Expression<Func<Guid?>> exprId, Expression<Func<T>> exprInst)
         {
             fkRelations.Add (new ForeignRelationData () {
                 IdProperty = GetPropertyName (exprId),
@@ -266,13 +291,13 @@ namespace Toggl.Phoebe.Data
             return fkRelations.Count;
         }
 
-        protected long? GetForeignId (int relationId)
+        protected Guid? GetForeignId (int relationId)
         {
             var fk = fkRelations [relationId - 1];
             return fk.Id;
         }
 
-        protected void SetForeignId (int relationId, long? value)
+        protected void SetForeignId (int relationId, Guid? value)
         {
             var fk = fkRelations [relationId - 1];
             if (fk.Id == value)
@@ -327,7 +352,7 @@ namespace Toggl.Phoebe.Data
             });
 
             // Update current id:
-            var id = fk.Instance != null ? fk.Instance.Id : (long?)null;
+            var id = fk.Instance != null ? fk.Instance.Id : (Guid?)null;
             if (fk.Id != id) {
                 ChangePropertyAndNotify (fk.IdProperty, delegate {
                     fk.Id = id;
@@ -409,11 +434,11 @@ namespace Toggl.Phoebe.Data
             DeletedAt = DateTime.UtcNow;
         }
 
-        private long id;
+        private Guid? id;
 
         [DontDirty]
         [SQLite.PrimaryKey]
-        public long Id {
+        public Guid? Id {
             get { return id; }
             set {
                 if (IsShared)
@@ -431,13 +456,29 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         [JsonProperty ("id", NullValueHandling = NullValueHandling.Ignore)]
+        [SQLite.Unique]
         public long? RemoteId {
             get { return remoteId; }
             set {
                 if (remoteId == value)
                     return;
+
+                // Check for constraints
+                if (value != null && IsShared) {
+                    if (Model.GetByRemoteId (GetType (), value.Value) != null) {
+                        throw new IntegrityException ("Model with such RemoteId already exists.");
+                    }
+                }
+
                 ChangePropertyAndNotify (() => RemoteId, delegate {
+                    var oldId = remoteId;
                     remoteId = value;
+
+                    // Update cache index
+                    MemoryModelCache cache;
+                    if (modelCaches.TryGetValue (GetType (), out cache)) {
+                        cache.UpdateRemoteId (this, oldId, remoteId);
+                    }
                 });
             }
         }

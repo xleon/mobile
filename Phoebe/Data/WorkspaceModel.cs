@@ -6,10 +6,6 @@ namespace Toggl.Phoebe.Data
 {
     public class WorkspaceModel : Model
     {
-        public static long NextId {
-            get { return Model.NextId<WorkspaceModel> (); }
-        }
-
         #region Data
 
         private string name;
@@ -199,6 +195,5 @@ namespace Toggl.Phoebe.Data
         }
 
         #endregion
-
     }
 }

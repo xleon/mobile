@@ -14,7 +14,6 @@ namespace Toggl.Chandler
             Model.Store = new SQLiteModelStore (path);
 
 //            var ws = Model.Update (new WorkspaceModel () {
-//                Id = WorkspaceModel.NextId,
 //                Name = "Test workspace",
 //                DefaultCurrency = "EUR",
 //                DefaultRate = 70.5m,
@@ -24,7 +23,6 @@ namespace Toggl.Chandler
 //            });
 //
 //            var te = Model.Update (new TimeEntryModel () {
-//                Id = TimeEntryModel.NextId,
 //                Workspace = ws,
 //                IsBillable = true,
 //                CreatedWith = "Me",
@@ -34,7 +32,7 @@ namespace Toggl.Chandler
 //            });
 //
 //            Model.Store.Commit ();
-
+//
 //            var ws = Model.Get<WorkspaceModel> (1);
 //            var tes = ws.TimeEntries;
 //

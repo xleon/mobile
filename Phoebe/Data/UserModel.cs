@@ -5,10 +5,6 @@ namespace Toggl.Phoebe.Data
 {
     public class UserModel : Model
     {
-        public static long NextId {
-            get { return Model.NextId<UserModel> (); }
-        }
-
         private readonly int defaultWorkspaceRelationId;
 
         public UserModel ()
@@ -255,7 +251,7 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
-        public long? DefaultWorkspaceId {
+        public Guid? DefaultWorkspaceId {
             get { return GetForeignId (defaultWorkspaceRelationId); }
             set { SetForeignId (defaultWorkspaceRelationId, value); }
         }
@@ -272,6 +268,5 @@ namespace Toggl.Phoebe.Data
         }
 
         #endregion
-
     }
 }

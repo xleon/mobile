@@ -18,10 +18,6 @@ namespace Toggl.Phoebe.Data
         private static readonly string UserAgent = "Toggl Mobile";
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1);
 
-        public static long NextId {
-            get { return Model.NextId<TimeEntryModel> (); }
-        }
-
         public static void UpdateDurations ()
         {
             // TODO: Call this method periodically from some place
@@ -229,7 +225,7 @@ namespace Toggl.Phoebe.Data
         #region Relations
 
         [JsonProperty ("wid")]
-        public long? WorkspaceId {
+        public Guid? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
         }
@@ -242,7 +238,7 @@ namespace Toggl.Phoebe.Data
         }
 
         [JsonProperty ("pid")]
-        public long? ProjectId {
+        public Guid? ProjectId {
             get { return GetForeignId (projectRelationId); }
             set { SetForeignId (projectRelationId, value); }
         }
@@ -255,7 +251,7 @@ namespace Toggl.Phoebe.Data
         }
 
         [JsonProperty ("tid")]
-        public long? TaskId {
+        public Guid? TaskId {
             get { return GetForeignId (taskRelationId); }
             set { SetForeignId (taskRelationId, value); }
         }
@@ -268,7 +264,7 @@ namespace Toggl.Phoebe.Data
         }
 
         [JsonProperty ("uid")]
-        public long? UserId {
+        public Guid? UserId {
             get { return GetForeignId (userRelationId); }
             set { SetForeignId (userRelationId, value); }
         }
@@ -334,7 +330,6 @@ namespace Toggl.Phoebe.Data
             }
 
             return Model.Update (new TimeEntryModel () {
-                Id = TimeEntryModel.NextId,
                 WorkspaceId = WorkspaceId,
                 ProjectId = ProjectId,
                 TaskId = TaskId,
@@ -349,6 +344,5 @@ namespace Toggl.Phoebe.Data
         }
 
         #endregion
-
     }
 }

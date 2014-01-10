@@ -5,10 +5,6 @@ namespace Toggl.Phoebe.Data
 {
     public class ClientModel : Model
     {
-        public static long NextId {
-            get { return Model.NextId<ClientModel> (); }
-        }
-
         private readonly int workspaceRelationId;
 
         public ClientModel ()
@@ -38,7 +34,7 @@ namespace Toggl.Phoebe.Data
         #region Relations
 
         [JsonProperty ("wid")]
-        public long? WorkspaceId {
+        public Guid? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
         }
@@ -55,6 +51,5 @@ namespace Toggl.Phoebe.Data
         }
 
         #endregion
-
     }
 }

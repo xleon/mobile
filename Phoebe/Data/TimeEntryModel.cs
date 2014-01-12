@@ -14,6 +14,10 @@ namespace Toggl.Phoebe.Data
      */
     public class TimeEntryModel : Model
     {
+        private static string GetPropertyName<T> (Expression<Func<TimeEntryModel, T>> expr)
+        {
+            return expr.ToPropertyName ();
+        }
         // TODO: Move UserAgent to some better place
         private static readonly string UserAgent = "Toggl Mobile";
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1);
@@ -31,19 +35,13 @@ namespace Toggl.Phoebe.Data
         private readonly int projectRelationId;
         private readonly int taskRelationId;
         private readonly int userRelationId;
-        private readonly string propertyIsShared;
-        private readonly string propertyIsRunning;
-        private readonly string propertyIsPersisted;
 
         public TimeEntryModel ()
         {
-            workspaceRelationId = ForeignRelation (() => WorkspaceId, () => Workspace);
-            projectRelationId = ForeignRelation (() => ProjectId, () => Project);
-            taskRelationId = ForeignRelation (() => TaskId, () => Task);
-            userRelationId = ForeignRelation (() => UserId, () => User);
-            propertyIsShared = GetPropertyName (() => IsShared);
-            propertyIsRunning = GetPropertyName (() => IsRunning);
-            propertyIsPersisted = GetPropertyName (() => IsPersisted);
+            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
+            projectRelationId = ForeignRelation<ProjectModel> (PropertyProjectId, PropertyProject);
+            taskRelationId = ForeignRelation<TaskModel> (PropertyTaskId, PropertyTask);
+            userRelationId = ForeignRelation<UserModel> (PropertyUserId, PropertyUser);
         }
 
         private string GetPropertyName<T> (Expression<Func<T>> expr)
@@ -54,6 +52,7 @@ namespace Toggl.Phoebe.Data
         #region Data
 
         private string description;
+        public static readonly string PropertyDescription = GetPropertyName ((m) => m.Description);
 
         [JsonProperty ("description")]
         public string Description {
@@ -62,13 +61,14 @@ namespace Toggl.Phoebe.Data
                 if (description == value)
                     return;
 
-                ChangePropertyAndNotify (() => Description, delegate {
+                ChangePropertyAndNotify (PropertyDescription, delegate {
                     description = value;
                 });
             }
         }
 
         private bool billable;
+        public static readonly string PropertyIsBillable = GetPropertyName ((m) => m.IsBillable);
 
         [JsonProperty ("billable")]
         public bool IsBillable {
@@ -77,13 +77,14 @@ namespace Toggl.Phoebe.Data
                 if (billable == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsBillable, delegate {
+                ChangePropertyAndNotify (PropertyIsBillable, delegate {
                     billable = value;
                 });
             }
         }
 
         private DateTime startTime;
+        public static readonly string PropertyStartTime = GetPropertyName ((m) => m.StartTime);
 
         [JsonProperty ("start")]
         public DateTime StartTime {
@@ -92,13 +93,14 @@ namespace Toggl.Phoebe.Data
                 if (startTime == value)
                     return;
 
-                ChangePropertyAndNotify (() => StartTime, delegate {
+                ChangePropertyAndNotify (PropertyStartTime, delegate {
                     startTime = value;
                 });
             }
         }
 
         private DateTime? stopTime;
+        public static readonly string PropertyStopTime = GetPropertyName ((m) => m.StopTime);
 
         [JsonProperty ("stop", NullValueHandling = NullValueHandling.Include)]
         public DateTime? StopTime {
@@ -107,7 +109,7 @@ namespace Toggl.Phoebe.Data
                 if (stopTime == value)
                     return;
 
-                ChangePropertyAndNotify (() => StopTime, delegate {
+                ChangePropertyAndNotify (PropertyStopTime, delegate {
                     stopTime = value;
                 });
 
@@ -116,6 +118,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private long duration;
+        public static readonly string PropertyDuration = GetPropertyName ((m) => m.Duration);
 
         [SQLite.Ignore]
         public long Duration {
@@ -124,7 +127,7 @@ namespace Toggl.Phoebe.Data
                 if (duration == value)
                     return;
 
-                ChangePropertyAndNotify (() => Duration, delegate {
+                ChangePropertyAndNotify (PropertyDuration, delegate {
                     duration = value;
                 });
 
@@ -146,6 +149,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private long rawDuration;
+        public static readonly string PropertyRawDuration = GetPropertyName ((m) => m.RawDuration);
 
         [JsonProperty ("duration")]
         public long RawDuration {
@@ -154,7 +158,7 @@ namespace Toggl.Phoebe.Data
                 if (rawDuration == value)
                     return;
 
-                ChangePropertyAndNotify (() => RawDuration, delegate {
+                ChangePropertyAndNotify (PropertyRawDuration, delegate {
                     rawDuration = value;
                 });
 
@@ -164,6 +168,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private string createdWith;
+        public static readonly string PropertyCreatedWith = GetPropertyName ((m) => m.CreatedWith);
 
         [JsonProperty ("created_with")]
         public string CreatedWith {
@@ -172,7 +177,7 @@ namespace Toggl.Phoebe.Data
                 if (createdWith == value)
                     return;
 
-                ChangePropertyAndNotify (() => CreatedWith, delegate {
+                ChangePropertyAndNotify (PropertyCreatedWith, delegate {
                     createdWith = value;
                 });
             }
@@ -186,6 +191,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private bool durationOnly;
+        public static readonly string PropertyDurationOnly = GetPropertyName ((m) => m.DurationOnly);
 
         [JsonProperty ("duronly")]
         public bool DurationOnly {
@@ -194,13 +200,14 @@ namespace Toggl.Phoebe.Data
                 if (durationOnly == value)
                     return;
 
-                ChangePropertyAndNotify (() => DurationOnly, delegate {
+                ChangePropertyAndNotify (PropertyDurationOnly, delegate {
                     durationOnly = value;
                 });
             }
         }
 
         private bool running;
+        public static readonly string PropertyIsRunning = GetPropertyName ((m) => m.IsRunning);
 
         public bool IsRunning {
             get { return running; }
@@ -208,7 +215,7 @@ namespace Toggl.Phoebe.Data
                 if (running == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsRunning, delegate {
+                ChangePropertyAndNotify (PropertyIsRunning, delegate {
                     running = value;
                 });
 
@@ -224,11 +231,15 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
+
         [JsonProperty ("wid")]
         public Guid? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
         }
+
+        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
 
         [DontDirty]
         [SQLite.Ignore]
@@ -237,11 +248,15 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (workspaceRelationId, value); }
         }
 
+        public static readonly string PropertyProjectId = GetPropertyName ((m) => m.ProjectId);
+
         [JsonProperty ("pid")]
         public Guid? ProjectId {
             get { return GetForeignId (projectRelationId); }
             set { SetForeignId (projectRelationId, value); }
         }
+
+        public static readonly string PropertyProject = GetPropertyName ((m) => m.Project);
 
         [DontDirty]
         [SQLite.Ignore]
@@ -250,11 +265,15 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (projectRelationId, value); }
         }
 
+        public static readonly string PropertyTaskId = GetPropertyName ((m) => m.TaskId);
+
         [JsonProperty ("tid")]
         public Guid? TaskId {
             get { return GetForeignId (taskRelationId); }
             set { SetForeignId (taskRelationId, value); }
         }
+
+        public static readonly string PropertyTask = GetPropertyName ((m) => m.Task);
 
         [DontDirty]
         [SQLite.Ignore]
@@ -263,11 +282,15 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (taskRelationId, value); }
         }
 
+        public static readonly string PropertyUserId = GetPropertyName ((m) => m.UserId);
+
         [JsonProperty ("uid")]
         public Guid? UserId {
             get { return GetForeignId (userRelationId); }
             set { SetForeignId (userRelationId, value); }
         }
+
+        public static readonly string PropertyUser = GetPropertyName ((m) => m.User);
 
         [DontDirty]
         [SQLite.Ignore]
@@ -284,9 +307,9 @@ namespace Toggl.Phoebe.Data
         {
             base.OnPropertyChanged (property);
 
-            if (property == propertyIsShared
-                || property == propertyIsRunning
-                || property == propertyIsPersisted) {
+            if (property == PropertyIsShared
+                || property == PropertyIsRunning
+                || property == PropertyIsPersisted) {
                 if (IsShared && IsRunning && IsPersisted) {
                     // Make sure that this is the only time entry running:
                     var entries = Model.GetCached<TimeEntryModel> ().Where ((m) => m.UserId == UserId && m.IsRunning);

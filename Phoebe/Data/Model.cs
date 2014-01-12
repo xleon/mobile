@@ -11,9 +11,9 @@ namespace Toggl.Phoebe.Data
     [JsonObject (MemberSerialization.OptIn)]
     public abstract partial class Model
     {
-        private string GetPropertyName<T> (Expression<Func<T>> expr)
+        private static string GetPropertyName<T> (Expression<Func<Model, T>> expr)
         {
-            return expr.ToPropertyName (this);
+            return expr.ToPropertyName ();
         }
 
         protected void MarkDirty ()
@@ -31,6 +31,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private Guid? id;
+        public static readonly string PropertyId = GetPropertyName ((m) => m.Id);
 
         [DontDirty]
         [SQLite.PrimaryKey]
@@ -42,13 +43,14 @@ namespace Toggl.Phoebe.Data
 
                 if (id == value)
                     return;
-                ChangePropertyAndNotify (() => Id, delegate {
+                ChangePropertyAndNotify (PropertyId, delegate {
                     id = value;
                 });
             }
         }
 
         private long? remoteId;
+        public static readonly string PropertyRemoteId = GetPropertyName ((m) => m.RemoteId);
 
         [DontDirty]
         [JsonProperty ("id", NullValueHandling = NullValueHandling.Ignore)]
@@ -66,7 +68,7 @@ namespace Toggl.Phoebe.Data
                     }
                 }
 
-                ChangePropertyAndNotify (() => RemoteId, delegate {
+                ChangePropertyAndNotify (PropertyRemoteId, delegate {
                     var oldId = remoteId;
                     remoteId = value;
 
@@ -80,6 +82,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private DateTime modified;
+        public static readonly string PropertyModifiedAt = GetPropertyName ((m) => m.ModifiedAt);
 
         [JsonProperty ("at")]
         public DateTime ModifiedAt {
@@ -87,26 +90,28 @@ namespace Toggl.Phoebe.Data
             set {
                 if (modified == value)
                     return;
-                ChangePropertyAndNotify (() => RemoteId, delegate {
+                ChangePropertyAndNotify (PropertyModifiedAt, delegate {
                     modified = value;
                 });
             }
         }
 
         private DateTime? deleted;
+        public static readonly string PropertyDeletedAt = GetPropertyName ((m) => m.DeletedAt);
 
         public DateTime? DeletedAt {
             get { return deleted; }
             set {
                 if (deleted == value)
                     return;
-                ChangePropertyAndNotify (() => DeletedAt, delegate {
+                ChangePropertyAndNotify (PropertyDeletedAt, delegate {
                     deleted = value;
                 });
             }
         }
 
         private bool dirty;
+        public static readonly string PropertyIsDirty = GetPropertyName ((m) => m.IsDirty);
 
         [DontDirty]
         public bool IsDirty {
@@ -114,13 +119,14 @@ namespace Toggl.Phoebe.Data
             set {
                 if (dirty == value)
                     return;
-                ChangePropertyAndNotify (() => IsDirty, delegate {
+                ChangePropertyAndNotify (PropertyIsDirty, delegate {
                     dirty = value;
                 });
             }
         }
 
         private bool persisted;
+        public static readonly string PropertyIsPersisted = GetPropertyName ((m) => m.IsPersisted);
 
         [DontDirty]
         [SQLite.Ignore]
@@ -129,13 +135,14 @@ namespace Toggl.Phoebe.Data
             set {
                 if (persisted == value)
                     return;
-                ChangePropertyAndNotify (() => IsPersisted, delegate {
+                ChangePropertyAndNotify (PropertyIsPersisted, delegate {
                     persisted = value;
                 });
             }
         }
 
         private bool sharedInstance;
+        public static readonly string PropertyIsShared = GetPropertyName ((m) => m.IsShared);
 
         [DontDirty]
         [SQLite.Ignore]
@@ -145,7 +152,7 @@ namespace Toggl.Phoebe.Data
                 if (sharedInstance == value || !value)
                     return;
 
-                ChangePropertyAndNotify (() => IsShared, delegate {
+                ChangePropertyAndNotify (PropertyIsShared, delegate {
                     sharedInstance = value;
                 });
             }

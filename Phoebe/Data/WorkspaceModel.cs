@@ -6,9 +6,15 @@ namespace Toggl.Phoebe.Data
 {
     public class WorkspaceModel : Model
     {
+        private static string GetPropertyName<T> (Expression<Func<WorkspaceModel, T>> expr)
+        {
+            return expr.ToPropertyName ();
+        }
+
         #region Data
 
         private string name;
+        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
 
         [JsonProperty ("name")]
         public string Name {
@@ -17,13 +23,14 @@ namespace Toggl.Phoebe.Data
                 if (name == value)
                     return;
 
-                ChangePropertyAndNotify (() => Name, delegate {
+                ChangePropertyAndNotify (PropertyName, delegate {
                     name = value;
                 });
             }
         }
 
         private bool premium;
+        public static readonly string PropertyIsPremium = GetPropertyName ((m) => m.IsPremium);
 
         [JsonProperty ("premium")]
         public bool IsPremium {
@@ -32,13 +39,14 @@ namespace Toggl.Phoebe.Data
                 if (premium == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsPremium, delegate {
+                ChangePropertyAndNotify (PropertyIsPremium, delegate {
                     premium = value;
                 });
             }
         }
 
         private bool admin;
+        public static readonly string PropertyIsAdmin = GetPropertyName ((m) => m.IsAdmin);
 
         [JsonProperty ("admin")]
         public bool IsAdmin {
@@ -47,13 +55,14 @@ namespace Toggl.Phoebe.Data
                 if (admin == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsAdmin, delegate {
+                ChangePropertyAndNotify (PropertyIsAdmin, delegate {
                     admin = value;
                 });
             }
         }
 
         private decimal? defaultRate;
+        public static readonly string PropertyDefaultRate = GetPropertyName ((m) => m.DefaultRate);
 
         [JsonProperty ("default_hourly_rate", NullValueHandling = NullValueHandling.Ignore)]
         public decimal? DefaultRate {
@@ -62,13 +71,14 @@ namespace Toggl.Phoebe.Data
                 if (defaultRate == value)
                     return;
 
-                ChangePropertyAndNotify (() => DefaultRate, delegate {
+                ChangePropertyAndNotify (PropertyDefaultRate, delegate {
                     defaultRate = value;
                 });
             }
         }
 
         private string defaultCurrency;
+        public static readonly string PropertyDefaultCurrency = GetPropertyName ((m) => m.DefaultCurrency);
 
         [JsonProperty ("default_currency")]
         public string DefaultCurrency {
@@ -77,13 +87,14 @@ namespace Toggl.Phoebe.Data
                 if (defaultCurrency == value)
                     return;
 
-                ChangePropertyAndNotify (() => DefaultCurrency, delegate {
+                ChangePropertyAndNotify (PropertyDefaultCurrency, delegate {
                     defaultCurrency = value;
                 });
             }
         }
 
         private AccessLevel projectCreationPriv = AccessLevel.Any;
+        public static readonly string PropertyProjectCreationPrivileges = GetPropertyName ((m) => m.ProjectCreationPrivileges);
 
         public AccessLevel ProjectCreationPrivileges {
             get { return projectCreationPriv; }
@@ -94,7 +105,7 @@ namespace Toggl.Phoebe.Data
                 if (projectCreationPriv == value)
                     return;
 
-                ChangePropertyAndNotify (() => ProjectCreationPrivileges, delegate {
+                ChangePropertyAndNotify (PropertyProjectCreationPrivileges, delegate {
                     projectCreationPriv = value;
                 });
             }
@@ -107,6 +118,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private AccessLevel ratesVisbility = AccessLevel.Any;
+        public static readonly string PropertyBillableRatesVisibility = GetPropertyName ((m) => m.BillableRatesVisibility);
 
         public AccessLevel BillableRatesVisibility {
             get { return ratesVisbility; }
@@ -117,7 +129,7 @@ namespace Toggl.Phoebe.Data
                 if (ratesVisbility == value)
                     return;
 
-                ChangePropertyAndNotify (() => BillableRatesVisibility, delegate {
+                ChangePropertyAndNotify (PropertyBillableRatesVisibility, delegate {
                     ratesVisbility = value;
                 });
             }
@@ -130,6 +142,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private RoundingMode roundingMode = RoundingMode.Up;
+        public static readonly string PropertyRoundingMode = GetPropertyName ((m) => m.RoundingMode);
 
         [JsonProperty ("rounding")]
         public RoundingMode RoundingMode {
@@ -138,13 +151,14 @@ namespace Toggl.Phoebe.Data
                 if (roundingMode == value)
                     return;
 
-                ChangePropertyAndNotify (() => RoundingMode, delegate {
+                ChangePropertyAndNotify (PropertyRoundingMode, delegate {
                     roundingMode = value;
                 });
             }
         }
 
         private int roundingPercision;
+        public static readonly string PropertyRoundingPercision = GetPropertyName ((m) => m.RoundingPercision);
 
         [JsonProperty ("rounding_minutes")]
         public int RoundingPercision {
@@ -153,13 +167,14 @@ namespace Toggl.Phoebe.Data
                 if (roundingPercision == value)
                     return;
 
-                ChangePropertyAndNotify (() => RoundingPercision, delegate {
+                ChangePropertyAndNotify (PropertyRoundingPercision, delegate {
                     roundingPercision = value;
                 });
             }
         }
 
         private string logoUrl;
+        public static readonly string PropertyLogoUrl = GetPropertyName ((m) => m.LogoUrl);
 
         [JsonProperty ("logo_url")]
         public string LogoUrl {
@@ -168,7 +183,7 @@ namespace Toggl.Phoebe.Data
                 if (logoUrl == value)
                     return;
 
-                ChangePropertyAndNotify (() => LogoUrl, delegate {
+                ChangePropertyAndNotify (PropertyLogoUrl, delegate {
                     logoUrl = value;
                 });
             }

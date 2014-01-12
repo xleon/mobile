@@ -1,20 +1,27 @@
 using System;
+using System.Linq.Expressions;
 using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
     public class ClientModel : Model
     {
+        private static string GetPropertyName<T> (Expression<Func<ClientModel, T>> expr)
+        {
+            return expr.ToPropertyName ();
+        }
+
         private readonly int workspaceRelationId;
 
         public ClientModel ()
         {
-            workspaceRelationId = ForeignRelation (() => WorkspaceId, () => Workspace);
+            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
         }
 
         #region Data
 
         private string name;
+        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
 
         [JsonProperty ("name")]
         public string Name {
@@ -23,7 +30,7 @@ namespace Toggl.Phoebe.Data
                 if (name == value)
                     return;
 
-                ChangePropertyAndNotify (() => Name, delegate {
+                ChangePropertyAndNotify (PropertyName, delegate {
                     name = value;
                 });
             }
@@ -33,11 +40,15 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
+
         [JsonProperty ("wid")]
         public Guid? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
         }
+
+        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
 
         [DontDirty]
         [SQLite.Ignore]

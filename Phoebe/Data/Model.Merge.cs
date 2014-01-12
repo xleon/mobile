@@ -45,6 +45,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private bool merging;
+        public static readonly string PropertyIsMerging = GetPropertyName ((m) => m.IsMerging);
 
         [DontDirty]
         [SQLite.Ignore]
@@ -53,7 +54,7 @@ namespace Toggl.Phoebe.Data
             protected set {
                 if (merging == value)
                     return;
-                ChangePropertyAndNotify (() => IsMerging, delegate {
+                ChangePropertyAndNotify (PropertyIsMerging, delegate {
                     merging = value;
                 });
             }

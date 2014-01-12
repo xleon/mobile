@@ -113,18 +113,11 @@ namespace Toggl.Phoebe.Data
         private readonly SQLiteConnection conn;
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
-        private string propertyIsShared;
-        private string propertyIsPersisted;
-        private string propertyIsMerging;
 
         public SQLiteModelStore (string dbPath)
         {
             conn = new DbConnection (this, dbPath);
             CreateTables (conn);
-
-            propertyIsShared = GetPropertyName ((m) => m.IsShared);
-            propertyIsPersisted = GetPropertyName ((m) => m.IsPersisted);
-            propertyIsMerging = GetPropertyName ((m) => m.IsMerging);
 
             ServiceContainer.Resolve<Messenger> ().Subscribe<ModelChangedMessage> (OnModelChangedMessage);
         }
@@ -188,11 +181,6 @@ namespace Toggl.Phoebe.Data
             return query;
         }
 
-        private string GetPropertyName<T> (Expression<Func<Model, T>> expr)
-        {
-            return expr.ToPropertyName ();
-        }
-
         private void OnModelChangedMessage (ModelChangedMessage msg)
         {
             var model = msg.Model;
@@ -201,16 +189,16 @@ namespace Toggl.Phoebe.Data
             if (!model.IsShared)
                 return;
 
-            if (property == propertyIsMerging)
+            if (property == Model.PropertyIsMerging)
                 return;
 
-            if (property == propertyIsShared) {
+            if (property == Model.PropertyIsShared) {
                 // No need to mark newly created property as changed:
                 if (createdModels.Any ((r) => r.Target == model))
                     return;
             }
 
-            if (property == propertyIsPersisted || model.IsPersisted) {
+            if (property == Model.PropertyIsPersisted || model.IsPersisted) {
                 changedModels.Add (model);
             }
         }

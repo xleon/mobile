@@ -22,11 +22,11 @@ namespace Toggl.Phoebe.Data
 
         private readonly List<ForeignRelationData> fkRelations = new List<ForeignRelationData> ();
 
-        protected int ForeignRelation<T> (Expression<Func<Guid?>> exprId, Expression<Func<T>> exprInst)
+        protected int ForeignRelation<T> (string idProperty, string instanceProperty)
         {
             fkRelations.Add (new ForeignRelationData () {
-                IdProperty = GetPropertyName (exprId),
-                InstanceProperty = GetPropertyName (exprInst),
+                IdProperty = idProperty,
+                InstanceProperty = instanceProperty,
                 InstanceType = typeof(T),
             });
             return fkRelations.Count;

@@ -6,18 +6,24 @@ namespace Toggl.Phoebe.Data
 {
     public class ProjectModel : Model
     {
+        private static string GetPropertyName<T> (Expression<Func<ProjectModel, T>> expr)
+        {
+            return expr.ToPropertyName ();
+        }
+
         private readonly int workspaceRelationId;
         private readonly int clientRelationId;
 
         public ProjectModel ()
         {
-            workspaceRelationId = ForeignRelation (() => WorkspaceId, () => Workspace);
-            clientRelationId = ForeignRelation (() => ClientId, () => Client);
+            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
+            clientRelationId = ForeignRelation<ClientModel> (PropertyClientId, PropertyClient);
         }
 
         #region Data
 
         private bool active;
+        public static readonly string PropertyIsActive = GetPropertyName ((m) => m.IsActive);
 
         [JsonProperty ("active")]
         public bool IsActive {
@@ -26,13 +32,14 @@ namespace Toggl.Phoebe.Data
                 if (active == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsActive, delegate {
+                ChangePropertyAndNotify (PropertyIsActive, delegate {
                     active = value;
                 });
             }
         }
 
         private bool priv;
+        public static readonly string PropertyIsPrivate = GetPropertyName ((m) => m.IsPrivate);
 
         [JsonProperty ("is_private")]
         public bool IsPrivate {
@@ -41,13 +48,14 @@ namespace Toggl.Phoebe.Data
                 if (priv == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsPrivate, delegate {
+                ChangePropertyAndNotify (PropertyIsPrivate, delegate {
                     priv = value;
                 });
             }
         }
 
         private bool taskEstimate;
+        public static readonly string PropertyUseTasksEstimate = GetPropertyName ((m) => m.UseTasksEstimate);
 
         [JsonProperty ("auto_estimates")]
         public bool UseTasksEstimate {
@@ -56,13 +64,14 @@ namespace Toggl.Phoebe.Data
                 if (taskEstimate == value)
                     return;
 
-                ChangePropertyAndNotify (() => UseTasksEstimate, delegate {
+                ChangePropertyAndNotify (PropertyUseTasksEstimate, delegate {
                     taskEstimate = value;
                 });
             }
         }
 
         private bool billable;
+        public static readonly string PropertyIsBillable = GetPropertyName ((m) => m.IsBillable);
 
         [JsonProperty ("billable")]
         public bool IsBillable {
@@ -71,13 +80,14 @@ namespace Toggl.Phoebe.Data
                 if (billable == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsBillable, delegate {
+                ChangePropertyAndNotify (PropertyIsBillable, delegate {
                     billable = value;
                 });
             }
         }
 
         private string color;
+        public static readonly string PropertyColor = GetPropertyName ((m) => m.Color);
 
         [JsonProperty ("color")]
         public string Color {
@@ -86,13 +96,14 @@ namespace Toggl.Phoebe.Data
                 if (color == value)
                     return;
 
-                ChangePropertyAndNotify (() => Color, delegate {
+                ChangePropertyAndNotify (PropertyColor, delegate {
                     color = value;
                 });
             }
         }
 
         private bool template;
+        public static readonly string PropertyIsTemplate = GetPropertyName ((m) => m.IsTemplate);
 
         [JsonProperty ("template")]
         public bool IsTemplate {
@@ -101,13 +112,14 @@ namespace Toggl.Phoebe.Data
                 if (template == value)
                     return;
 
-                ChangePropertyAndNotify (() => IsTemplate, delegate {
+                ChangePropertyAndNotify (PropertyIsTemplate, delegate {
                     template = value;
                 });
             }
         }
 
         private string name;
+        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
 
         [JsonProperty ("name")]
         public string Name {
@@ -116,7 +128,7 @@ namespace Toggl.Phoebe.Data
                 if (name == value)
                     return;
 
-                ChangePropertyAndNotify (() => Name, delegate {
+                ChangePropertyAndNotify (PropertyName, delegate {
                     name = value;
                 });
             }
@@ -126,11 +138,15 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
+
         [JsonProperty ("wid")]
         public Guid? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
         }
+
+        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
 
         [SQLite.Ignore]
         public WorkspaceModel Workspace {
@@ -138,11 +154,15 @@ namespace Toggl.Phoebe.Data
             set { SetForeignModel (workspaceRelationId, value); }
         }
 
+        public static readonly string PropertyClientId = GetPropertyName ((m) => m.ClientId);
+
         [JsonProperty ("cid")]
         public Guid? ClientId {
             get { return GetForeignId (clientRelationId); }
             set { SetForeignId (clientRelationId, value); }
         }
+
+        public static readonly string PropertyClient = GetPropertyName ((m) => m.Client);
 
         [SQLite.Ignore]
         public ClientModel Client {

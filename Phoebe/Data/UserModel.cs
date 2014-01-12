@@ -1,20 +1,27 @@
 using System;
+using System.Linq.Expressions;
 using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data
 {
     public class UserModel : Model
     {
+        private static string GetPropertyName<T> (Expression<Func<UserModel, T>> expr)
+        {
+            return expr.ToPropertyName ();
+        }
+
         private readonly int defaultWorkspaceRelationId;
 
         public UserModel ()
         {
-            defaultWorkspaceRelationId = ForeignRelation (() => DefaultWorkspaceId, () => DefaultWorkspace);
+            defaultWorkspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyDefaultWorkspaceId, PropertyDefaultWorkspace);
         }
 
         #region Data
 
         private string name;
+        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
 
         [JsonProperty ("fullname")]
         public string Name {
@@ -23,13 +30,14 @@ namespace Toggl.Phoebe.Data
                 if (name == value)
                     return;
 
-                ChangePropertyAndNotify (() => Name, delegate {
+                ChangePropertyAndNotify (PropertyName, delegate {
                     name = value;
                 });
             }
         }
 
         private string email;
+        public static readonly string PropertyEmail = GetPropertyName ((m) => m.Email);
 
         [JsonProperty ("email")]
         public string Email {
@@ -38,13 +46,14 @@ namespace Toggl.Phoebe.Data
                 if (email == value)
                     return;
 
-                ChangePropertyAndNotify (() => Email, delegate {
+                ChangePropertyAndNotify (PropertyEmail, delegate {
                     email = value;
                 });
             }
         }
 
         private string password;
+        public static readonly string PropertyPassword = GetPropertyName ((m) => m.Password);
 
         [JsonProperty ("password", NullValueHandling = NullValueHandling.Include)]
         [SQLite.Ignore]
@@ -54,13 +63,14 @@ namespace Toggl.Phoebe.Data
                 if (password == value)
                     return;
 
-                ChangePropertyAndNotify (() => Password, delegate {
+                ChangePropertyAndNotify (PropertyPassword, delegate {
                     password = value;
                 });
             }
         }
 
         private string apiToken;
+        public static readonly string PropertyApiToken = GetPropertyName ((m) => m.ApiToken);
 
         [JsonProperty ("api_token", NullValueHandling = NullValueHandling.Ignore)]
         [SQLite.Ignore]
@@ -70,13 +80,14 @@ namespace Toggl.Phoebe.Data
                 if (apiToken == value)
                     return;
 
-                ChangePropertyAndNotify (() => ApiToken, delegate {
+                ChangePropertyAndNotify (PropertyApiToken, delegate {
                     apiToken = value;
                 });
             }
         }
 
         private DayOfWeek startOfWeek;
+        public static readonly string PropertyStartOfWeek = GetPropertyName ((m) => m.StartOfWeek);
 
         [JsonProperty ("beginning_of_week")]
         public DayOfWeek StartOfWeek {
@@ -85,13 +96,14 @@ namespace Toggl.Phoebe.Data
                 if (startOfWeek == value)
                     return;
 
-                ChangePropertyAndNotify (() => StartOfWeek, delegate {
+                ChangePropertyAndNotify (PropertyStartOfWeek, delegate {
                     startOfWeek = value;
                 });
             }
         }
 
         private string dateFormat;
+        public static readonly string PropertyDateFormat = GetPropertyName ((m) => m.DateFormat);
 
         [JsonProperty ("date_format")]
         public string DateFormat {
@@ -100,13 +112,14 @@ namespace Toggl.Phoebe.Data
                 if (dateFormat == value)
                     return;
 
-                ChangePropertyAndNotify (() => DateFormat, delegate {
+                ChangePropertyAndNotify (PropertyDateFormat, delegate {
                     dateFormat = value;
                 });
             }
         }
 
         private string timeFormat;
+        public static readonly string PropertyTimeFormat = GetPropertyName ((m) => m.TimeFormat);
 
         [JsonProperty ("timeofday_format")]
         public string TimeFormat {
@@ -115,13 +128,14 @@ namespace Toggl.Phoebe.Data
                 if (timeFormat == value)
                     return;
 
-                ChangePropertyAndNotify (() => TimeFormat, delegate {
+                ChangePropertyAndNotify (PropertyTimeFormat, delegate {
                     timeFormat = value;
                 });
             }
         }
 
         private string imageUrl;
+        public static readonly string PropertyImageUrl = GetPropertyName ((m) => m.ImageUrl);
 
         [JsonProperty ("image_url")]
         public string ImageUrl {
@@ -130,13 +144,14 @@ namespace Toggl.Phoebe.Data
                 if (imageUrl == value)
                     return;
 
-                ChangePropertyAndNotify (() => ImageUrl, delegate {
+                ChangePropertyAndNotify (PropertyImageUrl, delegate {
                     imageUrl = value;
                 });
             }
         }
 
         private string locale;
+        public static readonly string PropertyLocale = GetPropertyName ((m) => m.Locale);
 
         [JsonProperty ("language")]
         public string Locale {
@@ -145,13 +160,14 @@ namespace Toggl.Phoebe.Data
                 if (locale == value)
                     return;
 
-                ChangePropertyAndNotify (() => Locale, delegate {
+                ChangePropertyAndNotify (PropertyLocale, delegate {
                     locale = value;
                 });
             }
         }
 
         private string timezone;
+        public static readonly string PropertyTimezone = GetPropertyName ((m) => m.Timezone);
 
         [JsonProperty ("timezone")]
         public string Timezone {
@@ -160,13 +176,14 @@ namespace Toggl.Phoebe.Data
                 if (timezone == value)
                     return;
 
-                ChangePropertyAndNotify (() => Timezone, delegate {
+                ChangePropertyAndNotify (PropertyTimezone, delegate {
                     timezone = value;
                 });
             }
         }
 
         private bool sendProductEmails;
+        public static readonly string PropertySendProductEmails = GetPropertyName ((m) => m.SendProductEmails);
 
         [JsonProperty ("send_product_emails")]
         public bool SendProductEmails {
@@ -175,13 +192,14 @@ namespace Toggl.Phoebe.Data
                 if (sendProductEmails == value)
                     return;
 
-                ChangePropertyAndNotify (() => SendProductEmails, delegate {
+                ChangePropertyAndNotify (PropertySendProductEmails, delegate {
                     sendProductEmails = value;
                 });
             }
         }
 
         private bool sendTimerNotifications;
+        public static readonly string PropertySendTimerNotifications = GetPropertyName ((m) => m.SendTimerNotifications);
 
         [JsonProperty ("send_timer_notifications")]
         public bool SendTimerNotifications {
@@ -190,13 +208,14 @@ namespace Toggl.Phoebe.Data
                 if (sendTimerNotifications == value)
                     return;
 
-                ChangePropertyAndNotify (() => SendTimerNotifications, delegate {
+                ChangePropertyAndNotify (PropertySendTimerNotifications, delegate {
                     sendTimerNotifications = value;
                 });
             }
         }
 
         private bool sendWeeklyReport;
+        public static readonly string PropertySendWeeklyReport = GetPropertyName ((m) => m.SendWeeklyReport);
 
         [JsonProperty ("send_weekly_report")]
         public bool SendWeeklyReport {
@@ -205,13 +224,14 @@ namespace Toggl.Phoebe.Data
                 if (sendWeeklyReport == value)
                     return;
 
-                ChangePropertyAndNotify (() => SendWeeklyReport, delegate {
+                ChangePropertyAndNotify (PropertySendWeeklyReport, delegate {
                     sendWeeklyReport = value;
                 });
             }
         }
 
         private TrackingMode trackingMode;
+        public static readonly string PropertyTrackingMode = GetPropertyName ((m) => m.TrackingMode);
 
         public TrackingMode TrackingMode {
             get { return trackingMode; }
@@ -219,7 +239,7 @@ namespace Toggl.Phoebe.Data
                 if (trackingMode == value)
                     return;
 
-                ChangePropertyAndNotify (() => TrackingMode, delegate {
+                ChangePropertyAndNotify (PropertyTrackingMode, delegate {
                     trackingMode = value;
                 });
             }
@@ -232,6 +252,7 @@ namespace Toggl.Phoebe.Data
         }
 
         private string createdWith;
+        public static readonly string PropertyCreatedWith = GetPropertyName ((m) => m.CreatedWith);
 
         [JsonProperty ("created_with")]
         [SQLite.Ignore]
@@ -241,7 +262,7 @@ namespace Toggl.Phoebe.Data
                 if (createdWith == value)
                     return;
 
-                ChangePropertyAndNotify (() => CreatedWith, delegate {
+                ChangePropertyAndNotify (PropertyCreatedWith, delegate {
                     createdWith = value;
                 });
             }
@@ -251,10 +272,14 @@ namespace Toggl.Phoebe.Data
 
         #region Relations
 
+        public static readonly string PropertyDefaultWorkspaceId = GetPropertyName ((m) => m.DefaultWorkspaceId);
+
         public Guid? DefaultWorkspaceId {
             get { return GetForeignId (defaultWorkspaceRelationId); }
             set { SetForeignId (defaultWorkspaceRelationId, value); }
         }
+
+        public static readonly string PropertyDefaultWorkspace = GetPropertyName ((m) => m.DefaultWorkspace);
 
         [DontDirty]
         [SQLite.Ignore]

@@ -19,13 +19,6 @@ namespace Toggl.Phoebe.Data
         #endif
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanging<T> (Expression<Func<T>> expr)
-        {
-            #if NotifyPropertyChanging
-            OnPropertyChanged (GetPropertyName (expr));
-            #endif
-        }
-
         protected virtual void OnPropertyChanging (string property)
         {
             #if NotifyPropertyChanging
@@ -39,24 +32,30 @@ namespace Toggl.Phoebe.Data
         /// Helper function to call PropertyChanging and PropertyChanged events before and after
         /// the property has been changed.
         /// </summary>
-        /// <param name="expr">Expression in the format of () =&gt; PropertyName for the name of the argument of the events.</param>
+        /// <param name="propertyName">Property name, see example for suggested usage.</param>
         /// <param name="change">Delegate to do the actual property changing.</param>
-        /// <typeparam name="T">Type of the property being changed (compiler will deduce this for you).</typeparam>
-        protected void ChangePropertyAndNotify<T> (Expression<Func<T>> expr, Action change)
-        {
-            ChangePropertyAndNotify (GetPropertyName (expr), change);
-        }
-
+        /// <example>
+        /// // ...
+        /// private string description;
+        /// public static readonly string PropertyDescription = GetPropertyName ((m) => m.Description);
+        /// 
+        /// public string Description {
+        ///     get { return description; }
+        ///     set {
+        ///         if (description == value)
+        ///             return;
+        ///         ChangePropertyAndNotify (PropertyDescription, delegate {
+        ///             description = value;
+        ///         });
+        ///     }
+        /// }
+        /// // ...
+        /// </example>
         protected void ChangePropertyAndNotify (string propertyName, Action change)
         {
             OnPropertyChanging (propertyName);
             change ();
             OnPropertyChanged (propertyName);
-        }
-
-        protected void OnPropertyChanged<T> (Expression<Func<T>> expr)
-        {
-            OnPropertyChanged (GetPropertyName (expr));
         }
 
         protected virtual void OnPropertyChanged (string property)

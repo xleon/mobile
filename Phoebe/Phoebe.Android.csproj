@@ -47,11 +47,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Contrib\sqlite-net\src\SQLite.cs">
-      <Link>SQLite.cs</Link>
+      <Link>Contrib\SQLite\SQLite.cs</Link>
+    </Compile>
+    <Compile Include="..\Contrib\XPlatUtils\XPlatUtils\Messenger.cs">
+      <Link>Contrib\XPlatUtils\Messenger.cs</Link>
+    </Compile>
+    <Compile Include="..\Contrib\XPlatUtils\XPlatUtils\ServiceContainer.cs">
+      <Link>Contrib\XPlatUtils\ServiceContainer.cs</Link>
     </Compile>
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Contrib\" />
+    <Folder Include="Contrib\SQLite\" />
+    <Folder Include="Contrib\XPlatUtils\" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
 </Project>

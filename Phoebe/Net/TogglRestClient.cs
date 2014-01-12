@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -165,18 +166,23 @@ namespace Toggl.Phoebe.Net
             return json.ToString (Formatting.None);
         }
 
+        private HttpRequestMessage SetupRequest (HttpRequestMessage req)
+        {
+            req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
+                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                    string.Format ("{0}:x", "apiToken")))); // TODO: Use real api token
+            return req;
+        }
+
         private async Task CreateModel<T> (Uri url, T model)
             where T : Model, new()
         {
             var json = ModelToJson (model);
-            var httpReq = new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
-            };
-            httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
-                    string.Format ("{0}:x", "apiToken")))); // TODO: Use real api token
+            });
             var httpResp = await httpClient.SendAsync (httpReq);
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
@@ -188,45 +194,107 @@ namespace Toggl.Phoebe.Net
                 model.RemoteId = wrap.Data.RemoteId;
         }
 
+        private async Task<T> GetModel<T> (Uri url)
+            where T : Model, new()
+        {
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = url,
+            });
+
+            var httpResp = await httpClient.SendAsync (httpReq);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
+
+            return Model.Update<T> (wrap.Data);
+        }
+
+        private async Task UpdateModel<T> (Uri url, T model)
+            where T : Model, new()
+        {
+            var json = ModelToJson (model);
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Put,
+                RequestUri = url,
+                Content = new StringContent (json, Encoding.UTF8, "application/json"),
+            });
+            var httpResp = await httpClient.SendAsync (httpReq);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
+            model.Merge (wrap.Data);
+        }
+
+        private async Task<List<T>> ListModels<T> (Uri url)
+            where T : Model, new()
+        {
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = url,
+            });
+
+            var httpResp = await httpClient.SendAsync (httpReq);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var models = JsonConvert.DeserializeObject<List<T>> (respData);
+
+            return models.Select (Model.Update).ToList ();
+        }
+
+        private async Task DeleteModel (Uri url)
+        {
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Delete,
+                RequestUri = url,
+            });
+            var httpResp = await httpClient.SendAsync (httpReq);
+
+            // TODO: Check status code and throw something
+            // httpResp.StatusCode != System.Net.HttpStatusCode.OK
+        }
+
+        private Task DeleteModels (Uri url)
+        {
+            return DeleteModel (url);
+        }
+
         #region Client methods
 
         public Task CreateClient (ClientModel model)
         {
             var url = modelUrls [typeof(ClientModel)];
-            return CreateModel<ClientModel> (url, model);
+            return CreateModel (url, model);
         }
 
         public Task<ClientModel> GetClient (long id)
         {
             var url = new Uri (modelUrls [typeof(ClientModel)], id.ToString ());
-
-            throw new NotImplementedException ();
+            return GetModel<ClientModel> (url);
         }
 
         public Task<List<ClientModel>> ListClients ()
         {
             var url = modelUrls [typeof(ClientModel)];
-
-            throw new NotImplementedException ();
+            return ListModels<ClientModel> (url);
         }
 
         public Task<List<ClientModel>> ListWorkspaceClients (long workspaceId)
         {
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(WorkspaceModel)], String.Format ("{0}/clients", workspaceId));
+            return ListModels<ClientModel> (url);
         }
 
         public Task UpdateClient (ClientModel model)
         {
-            var url = modelUrls [typeof(ClientModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(ClientModel)], model.RemoteId.Value.ToString ());
+            return UpdateModel (url, model);
         }
 
         public Task DeleteClient (ClientModel model)
         {
-            var url = modelUrls [typeof(ClientModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(ClientModel)], model.RemoteId.Value.ToString ());
+            return DeleteModel (url);
         }
 
         #endregion
@@ -236,41 +304,38 @@ namespace Toggl.Phoebe.Net
         public Task CreateProject (ProjectModel model)
         {
             var url = modelUrls [typeof(ProjectModel)];
-            return CreateModel<ProjectModel> (url, model);
+            return CreateModel (url, model);
         }
 
         public Task<ProjectModel> GetProject (long id)
         {
             var url = new Uri (modelUrls [typeof(ProjectModel)], id.ToString ());
-
-            throw new NotImplementedException ();
+            return GetModel<ProjectModel> (url);
         }
 
         public Task<List<ProjectModel>> ListWorkspaceProjects (long workspaceId)
         {
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(WorkspaceModel)], String.Format ("{0}/projects", workspaceId));
+            return ListModels<ProjectModel> (url);
         }
 
         public Task UpdateProject (ProjectModel model)
         {
-            var url = modelUrls [typeof(ProjectModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(ProjectModel)], model.RemoteId.Value.ToString ());
+            return UpdateModel (url, model);
         }
 
         public Task DeleteProject (ProjectModel model)
         {
-            var url = modelUrls [typeof(ProjectModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(ProjectModel)], model.RemoteId.Value.ToString ());
+            return DeleteModel (url);
         }
 
         public Task DeleteProjects (IEnumerable<ProjectModel> models)
         {
             var url = new Uri (modelUrls [typeof(ProjectModel)],
                           String.Join (",", models.Select ((model) => model.Id.ToString ())));
-
-            throw new NotImplementedException ();
+            return DeleteModels (url);
         }
 
         #endregion
@@ -280,46 +345,44 @@ namespace Toggl.Phoebe.Net
         public Task CreateTask (TaskModel model)
         {
             var url = modelUrls [typeof(TaskModel)];
-            return CreateModel<TaskModel> (url, model);
+            return CreateModel (url, model);
         }
 
         public Task<TaskModel> GetTask (long id)
         {
             var url = new Uri (modelUrls [typeof(TaskModel)], id.ToString ());
-
-            throw new NotImplementedException ();
+            return GetModel<TaskModel> (url);
         }
 
         public Task<List<TaskModel>> ListProjectTasks (long projectId)
         {
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(ProjectModel)], String.Format ("{0}/tasks", projectId));
+            return ListModels<TaskModel> (url);
         }
 
         public Task<List<TaskModel>> ListWorkspaceTasks (long workspaceId)
         {
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(WorkspaceModel)], String.Format ("{0}/tasks", workspaceId));
+            return ListModels<TaskModel> (url);
         }
 
         public Task UpdateTask (TaskModel model)
         {
-            var url = modelUrls [typeof(TaskModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(TaskModel)], model.RemoteId.ToString ());
+            return UpdateModel (url, model);
         }
 
         public Task DeleteTask (TaskModel model)
         {
-            var url = modelUrls [typeof(TaskModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(TaskModel)], model.RemoteId.ToString ());
+            return DeleteModel (url);
         }
 
         public Task DeleteTasks (IEnumerable<TaskModel> models)
         {
             var url = new Uri (modelUrls [typeof(TaskModel)],
                           String.Join (",", models.Select ((model) => model.Id.ToString ())));
-
-            throw new NotImplementedException ();
+            return DeleteModels (url);
         }
 
         #endregion
@@ -329,42 +392,40 @@ namespace Toggl.Phoebe.Net
         public Task CreateTimeEntry (TimeEntryModel model)
         {
             var url = modelUrls [typeof(TimeEntryModel)];
-            return CreateModel<TimeEntryModel> (url, model);
+            return CreateModel (url, model);
         }
 
         public Task<TimeEntryModel> GetTimeEntry (long id)
         {
             var url = new Uri (modelUrls [typeof(TimeEntryModel)], id.ToString ());
-
-            throw new NotImplementedException ();
+            return GetModel<TimeEntryModel> (url);
         }
 
         public Task<List<TimeEntryModel>> ListTimeEntries ()
         {
             var url = modelUrls [typeof(TimeEntryModel)];
-
-            throw new NotImplementedException ();
+            return ListModels<TimeEntryModel> (url);
         }
 
         public Task<List<TimeEntryModel>> ListTimeEntries (DateTime start, DateTime end)
         {
-            var url = modelUrls [typeof(TimeEntryModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(TimeEntryModel)],
+                          String.Format ("?start_date={0}&end_date={1}",
+                              WebUtility.UrlEncode (start.ToString ("o")),
+                              WebUtility.UrlEncode (end.ToString ("o"))));
+            return ListModels<TimeEntryModel> (url);
         }
 
         public Task UpdateTimeEntry (TimeEntryModel model)
         {
-            var url = modelUrls [typeof(TimeEntryModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(TimeEntryModel)], model.RemoteId.Value.ToString ());
+            return UpdateModel (url, model);
         }
 
         public Task DeleteTimeEntry (TimeEntryModel model)
         {
-            var url = modelUrls [typeof(TimeEntryModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(TimeEntryModel)], model.RemoteId.Value.ToString ());
+            return DeleteModel (url);
         }
 
         #endregion
@@ -374,28 +435,25 @@ namespace Toggl.Phoebe.Net
         public Task CreateWorkspace (WorkspaceModel model)
         {
             var url = modelUrls [typeof(WorkspaceModel)];
-            return CreateModel<WorkspaceModel> (url, model);
+            return CreateModel (url, model);
         }
 
         public Task<WorkspaceModel> GetWorkspace (long id)
         {
             var url = new Uri (modelUrls [typeof(WorkspaceModel)], id.ToString ());
-
-            throw new NotImplementedException ();
+            return GetModel<WorkspaceModel> (url);
         }
 
         public Task<List<WorkspaceModel>> ListWorkspaces ()
         {
             var url = modelUrls [typeof(WorkspaceModel)];
-
-            throw new NotImplementedException ();
+            return ListModels<WorkspaceModel> (url);
         }
 
         public Task UpdateWorkspace (WorkspaceModel model)
         {
-            var url = modelUrls [typeof(WorkspaceModel)];
-
-            throw new NotImplementedException ();
+            var url = new Uri (modelUrls [typeof(WorkspaceModel)], model.RemoteId.Value.ToString ());
+            return UpdateModel (url, model);
         }
 
         #endregion
@@ -405,16 +463,14 @@ namespace Toggl.Phoebe.Net
         public Task CreateUser (UserModel model)
         {
             var url = new Uri (v8Url, "signups");
-
-            throw new NotImplementedException ();
+            return CreateModel (url, model);
         }
 
         public Task<UserModel> GetUser (long id)
         {
             // TODO: Check that the id is that of the currently logged in user
             var url = new Uri (v8Url, "me");
-
-            throw new NotImplementedException ();
+            return GetModel<UserModel> (url);
         }
 
         public async Task<UserModel> GetUser (string username, string password)
@@ -440,8 +496,7 @@ namespace Toggl.Phoebe.Net
         {
             // TODO: Check that the id is that of the currently logged in user
             var url = new Uri (v8Url, "me");
-
-            throw new NotImplementedException ();
+            return UpdateModel (url, model);
         }
 
         #endregion

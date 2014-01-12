@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using SQLite;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
@@ -120,6 +121,12 @@ namespace Toggl.Phoebe.Data
         {
             conn = new DbConnection (this, dbPath);
             CreateTables (conn);
+
+            propertyIsShared = GetPropertyName ((m) => m.IsShared);
+            propertyIsPersisted = GetPropertyName ((m) => m.IsPersisted);
+            propertyIsMerging = GetPropertyName ((m) => m.IsMerging);
+
+            ServiceContainer.Resolve<Messenger> ().Subscribe<ModelChangedMessage> (OnModelChangedMessage);
         }
 
         private static void CreateTables (SQLiteConnection db)
@@ -181,22 +188,18 @@ namespace Toggl.Phoebe.Data
             return query;
         }
 
-        private string GetPropertyName<T> (Model model, Expression<Func<T>> expr)
+        private string GetPropertyName<T> (Expression<Func<Model, T>> expr)
         {
-            return expr.ToPropertyName (model);
+            return expr.ToPropertyName ();
         }
 
-        public void ModelChanged (Model model, string property)
+        private void OnModelChangedMessage (ModelChangedMessage msg)
         {
+            var model = msg.Model;
+            var property = msg.PropertyName;
+
             if (!model.IsShared)
                 return;
-
-            if (propertyIsShared == null)
-                propertyIsShared = GetPropertyName (model, () => model.IsShared);
-            if (propertyIsPersisted == null)
-                propertyIsPersisted = GetPropertyName (model, () => model.IsPersisted);
-            if (propertyIsMerging == null)
-                propertyIsMerging = GetPropertyName (model, () => model.IsMerging);
 
             if (property == propertyIsMerging)
                 return;

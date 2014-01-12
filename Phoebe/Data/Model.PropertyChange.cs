@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq.Expressions;
+using XPlatUtils;
 
 #if false
 #define NotifyPropertyChanging
@@ -64,8 +65,7 @@ namespace Toggl.Phoebe.Data
             if (propertyChanged != null)
                 propertyChanged (this, new PropertyChangedEventArgs (property));
 
-            if (Store != null)
-                Store.ModelChanged (this, property);
+            ServiceContainer.Resolve<Messenger> ().Publish (new ModelChangedMessage (this, property));
 
             // Automatically mark the object dirty, if property doesn't explicitly disable it
             var propInfo = GetType ().GetProperty (property);

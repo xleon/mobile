@@ -21,8 +21,6 @@ namespace Toggl.Phoebe.Data
             Func<IEnumerable<T>, IEnumerable<T>> filter = null)
             where T : Model, new();
 
-        void ModelChanged (Model model, string property);
-
         void Commit ();
     }
 }

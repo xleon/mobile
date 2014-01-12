@@ -24,5 +24,24 @@ namespace Toggl.Phoebe
 
             return prop.Name;
         }
+
+        public static string ToPropertyName<K, T> (this Expression<Func<K, T>> expr)
+        {
+            if (expr == null)
+                return null;
+
+            var member = expr.Body as MemberExpression;
+            if (member == null)
+                throw new ArgumentException ("Expression should be in the format of: (o) => o.PropertyName", "expr");
+
+            var prop = member.Member as PropertyInfo;
+            if (prop == null
+                || prop.DeclaringType == null
+                || !prop.DeclaringType.IsAssignableFrom (typeof(K))
+                || prop.GetGetMethod (true).IsStatic)
+                throw new ArgumentException ("Expression should be in the format of: (o) => o.PropertyName", "expr");
+
+            return prop.Name;
+        }
     }
 }

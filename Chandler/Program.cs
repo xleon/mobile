@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Toggl.Phoebe.Data;
+using XPlatUtils;
 
 namespace Toggl.Chandler
 {
@@ -11,7 +12,8 @@ namespace Toggl.Chandler
             string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
             var path = System.IO.Path.Combine (folder, "toggldoodle.db");
             Console.WriteLine ("Using SQLite file: {0}", path);
-            Model.Store = new SQLiteModelStore (path);
+            ServiceContainer.Register<Messenger> ();
+            ServiceContainer.Register<IModelStore> (new SQLiteModelStore (path));
 
 //            var ws = Model.Update (new WorkspaceModel () {
 //                Name = "Test workspace",

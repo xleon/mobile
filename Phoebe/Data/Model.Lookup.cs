@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
@@ -9,8 +10,6 @@ namespace Toggl.Phoebe.Data
     {
         private static Dictionary<Type, MemoryModelCache> modelCaches =
             new Dictionary<Type, MemoryModelCache> ();
-
-        public static IModelStore Store { get; set; }
 
         /// <summary>
         /// Returns all of the cached shared models.
@@ -94,7 +93,8 @@ namespace Toggl.Phoebe.Data
 
             // Try to load from database:
             if (inst == null && autoLoad) {
-                inst = Store.Get (type, id);
+                var modelStore = ServiceContainer.Resolve<IModelStore> ();
+                inst = modelStore.Get (type, id);
                 if (inst != null) {
                     MakeShared (inst);
                     return inst;
@@ -128,7 +128,8 @@ namespace Toggl.Phoebe.Data
 
             // Try to load from database:
             if (inst == null) {
-                inst = Store.GetByRemoteId (type, remoteId);
+                var modelStore = ServiceContainer.Resolve<IModelStore> ();
+                inst = modelStore.GetByRemoteId (type, remoteId);
                 // Check that this model isn't in memory already and having been modified
                 if (inst != null && cache != null && cache.GetById<Model> (inst.Id.Value) != null) {
                     inst = null;
@@ -145,7 +146,8 @@ namespace Toggl.Phoebe.Data
         public static IModelQuery<T> Query<T> (Expression<Func<T, bool>> predicate = null)
             where T : Model, new()
         {
-            return Store.Query (predicate, (e) => e.Select (UpdateQueryModel));
+            var modelStore = ServiceContainer.Resolve<IModelStore> ();
+            return modelStore.Query (predicate, (e) => e.Select (UpdateQueryModel));
         }
 
         private static T UpdateQueryModel<T> (T model)

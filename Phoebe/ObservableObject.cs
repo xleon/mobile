@@ -1,14 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq.Expressions;
-using XPlatUtils;
 
 #if false
 #define NotifyPropertyChanging
 #endif
-namespace Toggl.Phoebe.Data
+namespace Toggl.Phoebe
 {
-    public partial class Model :
+    public class ObservableObject :
         #if NotifyPropertyChanging
         INotifyPropertyChanging,
         #endif
@@ -24,7 +22,7 @@ namespace Toggl.Phoebe.Data
             #if NotifyPropertyChanging
             var propertyChanging = PropertyChanging;
             if (propertyChanging != null)
-            propertyChanging (this, new PropertyChangingEventArgs (GetPropertyName (expr)));
+                propertyChanging (this, new PropertyChangingEventArgs (GetPropertyName (expr)));
             #endif
         }
 
@@ -63,14 +61,7 @@ namespace Toggl.Phoebe.Data
             var propertyChanged = PropertyChanged;
             if (propertyChanged != null)
                 propertyChanged (this, new PropertyChangedEventArgs (property));
-
-            ServiceContainer.Resolve<Messenger> ().Publish (new ModelChangedMessage (this, property));
-
-            // Automatically mark the object dirty, if property doesn't explicitly disable it
-            var propInfo = GetType ().GetProperty (property);
-            if (propInfo.GetCustomAttributes (typeof(DontDirtyAttribute), true).Length == 0) {
-                MarkDirty ();
-            }
         }
     }
 }
+

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Chandler
@@ -14,6 +15,8 @@ namespace Toggl.Chandler
             Console.WriteLine ("Using SQLite file: {0}", path);
             ServiceContainer.Register<Messenger> ();
             ServiceContainer.Register<IModelStore> (new SQLiteModelStore (path));
+            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (new Uri ("https://next.toggl.com/api/")));
+            ServiceContainer.Register<AuthManager> ();
 
 //            var ws = Model.Update (new WorkspaceModel () {
 //                Name = "Test workspace",

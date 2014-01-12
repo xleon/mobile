@@ -1,6 +1,7 @@
 using System;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
@@ -9,11 +10,24 @@ namespace Toggl.Phoebe.Data
      * - correct MarkDirty behaviour
      */
     [JsonObject (MemberSerialization.OptIn)]
-    public abstract partial class Model
+    public abstract partial class Model : ObservableObject
     {
         private static string GetPropertyName<T> (Expression<Func<Model, T>> expr)
         {
             return expr.ToPropertyName ();
+        }
+
+        protected override void OnPropertyChanged (string property)
+        {
+            base.OnPropertyChanged (property);
+
+            ServiceContainer.Resolve<Messenger> ().Publish (new ModelChangedMessage (this, property));
+
+            // Automatically mark the object dirty, if property doesn't explicitly disable it
+            var propInfo = GetType ().GetProperty (property);
+            if (propInfo.GetCustomAttributes (typeof(DontDirtyAttribute), true).Length == 0) {
+                MarkDirty ();
+            }
         }
 
         protected void MarkDirty ()

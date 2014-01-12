@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Toggl.Phoebe.Data;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {
@@ -22,11 +23,11 @@ namespace Toggl.Phoebe.Net
         {
             v8Url = new Uri (url, "v8/");
             modelUrls = new Dictionary<Type, Uri> () {
-                { typeof(ClientModel), new Uri (v8Url, "clients/") },
-                { typeof(ProjectModel), new Uri (v8Url, "projects/") },
-                { typeof(TaskModel), new Uri (v8Url, "tasks/") },
-                { typeof(TimeEntryModel), new Uri (v8Url, "time_entries/") },
-                { typeof(WorkspaceModel), new Uri (v8Url, "workspaces/") },
+                { typeof(ClientModel), new Uri (v8Url, "clients") },
+                { typeof(ProjectModel), new Uri (v8Url, "projects") },
+                { typeof(TaskModel), new Uri (v8Url, "tasks") },
+                { typeof(TimeEntryModel), new Uri (v8Url, "time_entries") },
+                { typeof(WorkspaceModel), new Uri (v8Url, "workspaces") },
             };
             httpClient = new HttpClient ();
             var headers = httpClient.DefaultRequestHeaders;
@@ -168,9 +169,12 @@ namespace Toggl.Phoebe.Net
 
         private HttpRequestMessage SetupRequest (HttpRequestMessage req)
         {
-            req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
-                    string.Format ("{0}:x", "apiToken")))); // TODO: Use real api token
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (authManager.Token != null) {
+                req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
+                    Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                        string.Format ("{0}:api_token", authManager.Token))));
+            }
             return req;
         }
 
@@ -237,7 +241,7 @@ namespace Toggl.Phoebe.Net
             var httpResp = await httpClient.SendAsync (httpReq);
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
-            var models = JsonConvert.DeserializeObject<List<T>> (respData);
+            var models = JsonConvert.DeserializeObject<List<T>> (respData) ?? Enumerable.Empty<T> ();
 
             return models.Select (Model.Update).ToList ();
         }
@@ -468,7 +472,10 @@ namespace Toggl.Phoebe.Net
 
         public Task<UserModel> GetUser (long id)
         {
-            // TODO: Check that the id is that of the currently logged in user
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (authManager.Token == null || authManager.User.RemoteId != (long?)id)
+                throw new NotSupportedException ("Can only update currently logged in user.");
+
             var url = new Uri (v8Url, "me");
             return GetModel<UserModel> (url);
         }
@@ -489,12 +496,15 @@ namespace Toggl.Phoebe.Net
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);
 
-            return wrap.Data;
+            return Model.Update (wrap.Data);
         }
 
         public Task UpdateUser (UserModel model)
         {
-            // TODO: Check that the id is that of the currently logged in user
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (authManager.Token == null || authManager.UserId != model.Id)
+                throw new NotSupportedException ("Can only update currently logged in user.");
+
             var url = new Uri (v8Url, "me");
             return UpdateModel (url, model);
         }

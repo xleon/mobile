@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data
         {
             base.OnPropertyChanged (property);
 
-            ServiceContainer.Resolve<Messenger> ().Publish (new ModelChangedMessage (this, property));
+            ServiceContainer.Resolve<MessageBus> ().Send (new ModelChangedMessage (this, property));
 
             // Automatically mark the object dirty, if property doesn't explicitly disable it
             var propInfo = GetType ().GetProperty (property);

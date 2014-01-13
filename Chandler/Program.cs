@@ -14,7 +14,7 @@ namespace Toggl.Chandler
             string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
             var path = System.IO.Path.Combine (folder, "toggldoodle.db");
             Console.WriteLine ("Using SQLite file: {0}", path);
-            ServiceContainer.Register<Messenger> ();
+            ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<IPlatformInfo> (() => new ConsolePlatformInfo ());
             ServiceContainer.Register<ICredentialStore> (() => new MemoryCredentialStore ());
             ServiceContainer.Register<IModelStore> (new SQLiteModelStore (path));

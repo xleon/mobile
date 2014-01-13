@@ -181,7 +181,7 @@ namespace Toggl.Phoebe.Net
 
         private void PrepareResponse (HttpResponseMessage resp)
         {
-            ServiceContainer.Resolve<Messenger> ().Publish (new TogglHttpResponseMessage (this, resp));
+            ServiceContainer.Resolve<MessageBus> ().Send (new TogglHttpResponseMessage (this, resp));
             resp.EnsureSuccessStatusCode ();
         }
 

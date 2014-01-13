@@ -49,9 +49,6 @@
     <Compile Include="..\Contrib\sqlite-net\src\SQLite.cs">
       <Link>Contrib\SQLite\SQLite.cs</Link>
     </Compile>
-    <Compile Include="..\Contrib\XPlatUtils\XPlatUtils\Messenger.cs">
-      <Link>Contrib\XPlatUtils\Messenger.cs</Link>
-    </Compile>
     <Compile Include="..\Contrib\XPlatUtils\XPlatUtils\ServiceContainer.cs">
       <Link>Contrib\XPlatUtils\ServiceContainer.cs</Link>
     </Compile>

@@ -171,6 +171,12 @@ namespace Toggl.Phoebe.Data
         public static readonly string PropertyCreatedWith = GetPropertyName ((m) => m.CreatedWith);
 
         [JsonProperty ("created_with")]
+        [SQLite.Ignore]
+        /// <summary>
+        /// Gets or sets the created with. Created with should be automatically set by <see cref="ITogglClient"/>
+        /// implementation before sending data to server.
+        /// </summary>
+        /// <value>The created with string.</value>
         public string CreatedWith {
             get { return createdWith; }
             set {
@@ -359,7 +365,6 @@ namespace Toggl.Phoebe.Data
                 Description = Description,
                 StartTime = DateTime.UtcNow,
                 DurationOnly = DurationOnly,
-                CreatedWith = TimeEntryModel.UserAgent,
 //                Tags = Tags,
                 IsBillable = IsBillable,
                 IsRunning = true,

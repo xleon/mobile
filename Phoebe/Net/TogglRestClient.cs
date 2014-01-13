@@ -32,7 +32,7 @@ namespace Toggl.Phoebe.Net
             httpClient = new HttpClient ();
             var headers = httpClient.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
-            headers.UserAgent.Add (new ProductInfoHeaderValue ("TogglMobile", "0.01")); // TODO: Populate UserAgent
+            headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));
             headers.Accept.Add (new MediaTypeWithQualityHeaderValue ("application/json"));
         }
 
@@ -404,6 +404,7 @@ namespace Toggl.Phoebe.Net
         public Task CreateTimeEntry (TimeEntryModel model)
         {
             var url = modelUrls [typeof(TimeEntryModel)];
+            model.CreatedWith = Platform.DefaultCreatedWith;
             return CreateModel (url, model);
         }
 
@@ -475,6 +476,7 @@ namespace Toggl.Phoebe.Net
         public Task CreateUser (UserModel model)
         {
             var url = new Uri (v8Url, "signups");
+            model.CreatedWith = Platform.DefaultCreatedWith;
             return CreateModel (url, model);
         }
 

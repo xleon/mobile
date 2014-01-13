@@ -15,6 +15,7 @@ namespace Toggl.Phoebe.Net
 {
     public class TogglRestClient : ITogglClient
     {
+        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1);
         private readonly Uri v8Url;
         private readonly Dictionary<Type, Uri> modelUrls;
         private readonly HttpClient httpClient;
@@ -521,6 +522,42 @@ namespace Toggl.Phoebe.Net
         }
 
         #endregion
+
+        public async Task<UserRelatedModels> GetChanges (DateTime? since)
+        {
+            var relUrl = "me?with_related_data=true";
+            if (since.HasValue)
+                relUrl = String.Format ("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
+            var url = new Uri (v8Url, relUrl);
+
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = url,
+            });
+            var httpResp = await httpClient.SendAsync (httpReq);
+            PrepareResponse (httpResp);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var json = JObject.Parse (respData);
+
+            return new UserRelatedModels () {
+                Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
+                User = Model.Update (json ["data"].ToObject<UserModel> ()),
+                Workspaces = GetChangesModels<WorkspaceModel> (json ["data"] ["workspaces"]),
+                Clients = GetChangesModels<ClientModel> (json ["data"] ["clients"]),
+                Projects = GetChangesModels<ProjectModel> (json ["data"] ["projects"]),
+                Tasks = GetChangesModels<TaskModel> (json ["data"] ["tasks"]),
+                TimeEntries = GetChangesModels<TimeEntryModel> (json ["data"] ["time_entries"]),
+            };
+        }
+
+        private IEnumerable<T> GetChangesModels<T> (JToken json)
+            where T : Model, new()
+        {
+            if (json == null)
+                return Enumerable.Empty<T> ();
+            return json.ToObject<List<T>> ().Select (Model.Update);
+        }
 
         private class Wrapper<T>
         {

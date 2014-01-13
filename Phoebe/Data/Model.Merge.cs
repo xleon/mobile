@@ -15,10 +15,13 @@ namespace Toggl.Phoebe.Data
 
         protected void MergeSimpleOverwrite (Model other)
         {
+            if (this.IsShared && other.IsShared)
+                throw new InvalidOperationException ("Cannot merge two shared models.");
+
             IsMerging = true;
             try {
-                // Very simple merging rules: the newest one is always correct.
-                if (other.ModifiedAt <= this.ModifiedAt)
+                // Very simple merging rules: the newest one is always correct, remote deletion overrides everything.
+                if (other.ModifiedAt <= this.ModifiedAt && other.RemoteDeletedAt == null)
                     return;
 
                 // Update properties defined in subclasses:
@@ -34,9 +37,16 @@ namespace Toggl.Phoebe.Data
 
                 // Update our own properties in a specific order:
                 this.RemoteId = other.RemoteId;
-                if (other.IsPersisted)
-                    this.IsPersisted = other.IsPersisted;
-                this.DeletedAt = other.DeletedAt;
+                this.RemoteDeletedAt = other.RemoteDeletedAt;
+                if (other.RemoteDeletedAt != null) {
+                    // Custom logic for handling remote deletions:
+                    this.IsPersisted = false;
+                    this.DeletedAt = other.RemoteDeletedAt.Value;
+                } else {
+                    if (other.IsPersisted)
+                        this.IsPersisted = other.IsPersisted;
+                    this.DeletedAt = other.DeletedAt;
+                }
                 this.ModifiedAt = other.ModifiedAt;
                 this.IsDirty = other.IsDirty;
             } finally {

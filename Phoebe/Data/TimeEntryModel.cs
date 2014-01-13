@@ -18,8 +18,7 @@ namespace Toggl.Phoebe.Data
         {
             return expr.ToPropertyName ();
         }
-        // TODO: Move UserAgent to some better place
-        private static readonly string UserAgent = "Toggl Mobile";
+
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1);
 
         public static void UpdateDurations ()

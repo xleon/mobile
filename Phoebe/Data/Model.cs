@@ -124,6 +124,23 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        private DateTime? remoteDeleted;
+        public static readonly string PropertyRemoteDeletedAt = GetPropertyName ((m) => m.RemoteDeletedAt);
+
+        [JsonProperty ("server_deleted_at", NullValueHandling = NullValueHandling.Ignore)]
+        [SQLite.Ignore]
+        public DateTime? RemoteDeletedAt {
+            get { return remoteDeleted; }
+            set {
+                if (remoteDeleted == value)
+                    return;
+
+                ChangePropertyAndNotify (PropertyRemoteDeletedAt, delegate {
+                    remoteDeleted = value;
+                });
+            }
+        }
+
         private bool dirty;
         public static readonly string PropertyIsDirty = GetPropertyName ((m) => m.IsDirty);
 

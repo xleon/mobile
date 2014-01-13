@@ -113,13 +113,17 @@ namespace Toggl.Phoebe.Data
         private readonly SQLiteConnection conn;
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
+        private readonly Action<ModelChangedMessage> subscriptionModelChanged;
 
         public SQLiteModelStore (string dbPath)
         {
             conn = new DbConnection (this, dbPath);
             CreateTables (conn);
 
-            ServiceContainer.Resolve<Messenger> ().Subscribe<ModelChangedMessage> (OnModelChangedMessage);
+            // We have to subscribe to this like so, else mono's GC get's a bit over excited and wipes our
+            // subscription before we can receive anything
+            subscriptionModelChanged = (msg) => OnModelChangedMessage (msg.Model, msg.PropertyName);
+            ServiceContainer.Resolve<Messenger> ().Subscribe<ModelChangedMessage> (subscriptionModelChanged);
         }
 
         private static void CreateTables (SQLiteConnection db)
@@ -181,11 +185,8 @@ namespace Toggl.Phoebe.Data
             return query;
         }
 
-        private void OnModelChangedMessage (ModelChangedMessage msg)
+        private void OnModelChangedMessage (Model model, string property)
         {
-            var model = msg.Model;
-            var property = msg.PropertyName;
-
             if (!model.IsShared)
                 return;
 

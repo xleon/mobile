@@ -14,6 +14,7 @@ namespace Toggl.Chandler
             var path = System.IO.Path.Combine (folder, "toggldoodle.db");
             Console.WriteLine ("Using SQLite file: {0}", path);
             ServiceContainer.Register<Messenger> ();
+            ServiceContainer.Register<ICredentialStore> (() => new MemoryCredentialStore ());
             ServiceContainer.Register<IModelStore> (new SQLiteModelStore (path));
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (new Uri ("https://next.toggl.com/api/")));
             ServiceContainer.Register<AuthManager> ();
@@ -46,6 +47,19 @@ namespace Toggl.Chandler
 //            Console.WriteLine ("Workspace is same: {0}", tes.First ().Workspace == ws);
 
             Console.WriteLine ("Hello World!");
+        }
+
+        private class MemoryCredentialStore : ICredentialStore
+        {
+            public Guid? UserId { get; set; }
+
+            public string ApiToken { get; set; }
+
+            public void Clear ()
+            {
+                UserId = null;
+                ApiToken = null;
+            }
         }
     }
 }

@@ -6,12 +6,23 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {
-    // TODO: Store credentials somewhere
     public class AuthManager : ObservableObject
     {
         private static string GetPropertyName<T> (Expression<Func<AuthManager, T>> expr)
         {
             return expr.ToPropertyName ();
+        }
+
+        public AuthManager ()
+        {
+            var credStore = ServiceContainer.Resolve<ICredentialStore> ();
+            try {
+                UserId = credStore.UserId;
+                Token = credStore.ApiToken;
+            } catch (ArgumentException) {
+                // When data is corrupt and cannot find user
+                credStore.Clear ();
+            }
         }
 
         public async Task<bool> Authenticate (string username, string password)
@@ -28,6 +39,10 @@ namespace Toggl.Phoebe.Net
             if (user == null)
                 return false;
 
+            var credStore = ServiceContainer.Resolve<ICredentialStore> ();
+            credStore.UserId = user.Id;
+            credStore.ApiToken = user.ApiToken;
+
             user.IsPersisted = true;
             IsAuthenticating = false;
             UserId = user.Id;
@@ -43,6 +58,9 @@ namespace Toggl.Phoebe.Net
         {
             if (IsAuthenticated)
                 throw new InvalidOperationException ("Cannot forget credentials which don't exist.");
+
+            var credStore = ServiceContainer.Resolve<ICredentialStore> ();
+            credStore.Clear ();
 
             IsAuthenticated = false;
             Token = null;

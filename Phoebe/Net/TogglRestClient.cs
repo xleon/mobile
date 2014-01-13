@@ -206,13 +206,14 @@ namespace Toggl.Phoebe.Net
                 model.RemoteId = wrap.Data.RemoteId;
         }
 
-        private async Task<T> GetModel<T> (Uri url)
+        private async Task<T> GetModel<T> (Uri url, Func<T, T> selector = null)
             where T : Model, new()
         {
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
+            selector = selector ?? Model.Update;
 
             var httpResp = await httpClient.SendAsync (httpReq);
             PrepareResponse (httpResp);
@@ -220,10 +221,10 @@ namespace Toggl.Phoebe.Net
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
 
-            return Model.Update<T> (wrap.Data);
+            return selector (wrap.Data);
         }
 
-        private async Task UpdateModel<T> (Uri url, T model)
+        private async Task UpdateModel<T> (Uri url, T model, Func<T, T> selector = null)
             where T : Model, new()
         {
             var json = ModelToJson (model);
@@ -237,10 +238,12 @@ namespace Toggl.Phoebe.Net
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
+            if (selector != null)
+                wrap.Data = selector (wrap.Data);
             model.Merge (wrap.Data);
         }
 
-        private async Task<List<T>> ListModels<T> (Uri url)
+        private async Task<List<T>> ListModels<T> (Uri url, Func<T, T> selector = null)
             where T : Model, new()
         {
             var httpReq = SetupRequest (new HttpRequestMessage () {
@@ -254,7 +257,7 @@ namespace Toggl.Phoebe.Net
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var models = JsonConvert.DeserializeObject<List<T>> (respData) ?? Enumerable.Empty<T> ();
 
-            return models.Select (Model.Update).ToList ();
+            return models.Select (selector ?? Model.Update).ToList ();
         }
 
         private async Task DeleteModel (Uri url)
@@ -412,13 +415,21 @@ namespace Toggl.Phoebe.Net
         public Task<TimeEntryModel> GetTimeEntry (long id)
         {
             var url = new Uri (modelUrls [typeof(TimeEntryModel)], id.ToString ());
-            return GetModel<TimeEntryModel> (url);
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            return GetModel<TimeEntryModel> (url, (te) => {
+                te.User = user;
+                return Model.Update (te);
+            });
         }
 
         public Task<List<TimeEntryModel>> ListTimeEntries ()
         {
             var url = modelUrls [typeof(TimeEntryModel)];
-            return ListModels<TimeEntryModel> (url);
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            return ListModels<TimeEntryModel> (url, (te) => {
+                te.User = user;
+                return Model.Update (te);
+            });
         }
 
         public Task<List<TimeEntryModel>> ListTimeEntries (DateTime start, DateTime end)
@@ -427,13 +438,21 @@ namespace Toggl.Phoebe.Net
                           String.Format ("?start_date={0}&end_date={1}",
                               WebUtility.UrlEncode (start.ToString ("o")),
                               WebUtility.UrlEncode (end.ToString ("o"))));
-            return ListModels<TimeEntryModel> (url);
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            return ListModels<TimeEntryModel> (url, (te) => {
+                te.User = user;
+                return Model.Update (te);
+            });
         }
 
         public Task UpdateTimeEntry (TimeEntryModel model)
         {
             var url = new Uri (modelUrls [typeof(TimeEntryModel)], model.RemoteId.Value.ToString ());
-            return UpdateModel (url, model);
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            return UpdateModel (url, model, (te) => {
+                te.User = user;
+                return te;
+            });
         }
 
         public Task DeleteTimeEntry (TimeEntryModel model)
@@ -540,14 +559,15 @@ namespace Toggl.Phoebe.Net
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var json = JObject.Parse (respData);
 
+            var user = Model.Update (json ["data"].ToObject<UserModel> ());
             return new UserRelatedModels () {
                 Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
-                User = Model.Update (json ["data"].ToObject<UserModel> ()),
+                User = user,
                 Workspaces = GetChangesModels<WorkspaceModel> (json ["data"] ["workspaces"]),
                 Clients = GetChangesModels<ClientModel> (json ["data"] ["clients"]),
                 Projects = GetChangesModels<ProjectModel> (json ["data"] ["projects"]),
                 Tasks = GetChangesModels<TaskModel> (json ["data"] ["tasks"]),
-                TimeEntries = GetChangesModels<TimeEntryModel> (json ["data"] ["time_entries"]),
+                TimeEntries = GetChangesTimeEntryModels (json ["data"] ["time_entries"], user),
             };
         }
 
@@ -557,6 +577,16 @@ namespace Toggl.Phoebe.Net
             if (json == null)
                 return Enumerable.Empty<T> ();
             return json.ToObject<List<T>> ().Select (Model.Update);
+        }
+
+        private IEnumerable<TimeEntryModel> GetChangesTimeEntryModels (JToken json, UserModel user)
+        {
+            if (json == null)
+                return Enumerable.Empty<TimeEntryModel> ();
+            return json.ToObject<List<TimeEntryModel>> ().Select ((te) => {
+                te.User = user;
+                return Model.Update (te);
+            });
         }
 
         private class Wrapper<T>

@@ -178,6 +178,12 @@ namespace Toggl.Phoebe.Net
             return req;
         }
 
+        private void PrepareResponse (HttpResponseMessage resp)
+        {
+            ServiceContainer.Resolve<Messenger> ().Publish (new TogglHttpResponseMessage (this, resp));
+            resp.EnsureSuccessStatusCode ();
+        }
+
         private async Task CreateModel<T> (Uri url, T model)
             where T : Model, new()
         {
@@ -188,6 +194,7 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             var httpResp = await httpClient.SendAsync (httpReq);
+            PrepareResponse (httpResp);
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
@@ -207,6 +214,7 @@ namespace Toggl.Phoebe.Net
             });
 
             var httpResp = await httpClient.SendAsync (httpReq);
+            PrepareResponse (httpResp);
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
@@ -224,6 +232,7 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             var httpResp = await httpClient.SendAsync (httpReq);
+            PrepareResponse (httpResp);
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
@@ -239,6 +248,7 @@ namespace Toggl.Phoebe.Net
             });
 
             var httpResp = await httpClient.SendAsync (httpReq);
+            PrepareResponse (httpResp);
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var models = JsonConvert.DeserializeObject<List<T>> (respData) ?? Enumerable.Empty<T> ();
@@ -253,9 +263,7 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
             var httpResp = await httpClient.SendAsync (httpReq);
-
-            // TODO: Check status code and throw something
-            // httpResp.StatusCode != System.Net.HttpStatusCode.OK
+            PrepareResponse (httpResp);
         }
 
         private Task DeleteModels (Uri url)
@@ -492,6 +500,7 @@ namespace Toggl.Phoebe.Net
                 Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
                     string.Format ("{0}:{1}", username, password))));
             var httpResp = await httpClient.SendAsync (httpReq);
+            PrepareResponse (httpResp);
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);

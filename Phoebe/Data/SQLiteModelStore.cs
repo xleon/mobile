@@ -212,8 +212,7 @@ namespace Toggl.Phoebe.Data
             try {
                 foreach (var model in changedModels) {
                     if (model.IsPersisted) {
-                        if (conn.Update (model) == 0)
-                            conn.Insert (model);
+                        conn.InsertOrReplace (model);
                     } else {
                         conn.Delete (model);
                     }

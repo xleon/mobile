@@ -288,6 +288,7 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         [SQLite.Ignore]
+        [JsonProperty ("default_wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
         public WorkspaceModel DefaultWorkspace {
             get { return GetForeignModel<WorkspaceModel> (defaultWorkspaceRelationId); }
             set { SetForeignModel (defaultWorkspaceRelationId, value); }

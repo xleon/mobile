@@ -140,7 +140,6 @@ namespace Toggl.Phoebe.Data
 
         public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
 
-        [JsonProperty ("wid")]
         public Guid? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
@@ -149,6 +148,7 @@ namespace Toggl.Phoebe.Data
         public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
 
         [SQLite.Ignore]
+        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
         public WorkspaceModel Workspace {
             get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
             set { SetForeignModel (workspaceRelationId, value); }
@@ -156,7 +156,6 @@ namespace Toggl.Phoebe.Data
 
         public static readonly string PropertyClientId = GetPropertyName ((m) => m.ClientId);
 
-        [JsonProperty ("cid")]
         public Guid? ClientId {
             get { return GetForeignId (clientRelationId); }
             set { SetForeignId (clientRelationId, value); }
@@ -165,6 +164,7 @@ namespace Toggl.Phoebe.Data
         public static readonly string PropertyClient = GetPropertyName ((m) => m.Client);
 
         [SQLite.Ignore]
+        [JsonProperty ("cid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
         public ClientModel Client {
             get { return GetForeignModel<ClientModel> (clientRelationId); }
             set { SetForeignModel (clientRelationId, value); }

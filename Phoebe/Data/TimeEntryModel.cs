@@ -238,7 +238,6 @@ namespace Toggl.Phoebe.Data
 
         public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
 
-        [JsonProperty ("wid")]
         public Guid? WorkspaceId {
             get { return GetForeignId (workspaceRelationId); }
             set { SetForeignId (workspaceRelationId, value); }
@@ -248,6 +247,7 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         [SQLite.Ignore]
+        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
         public WorkspaceModel Workspace {
             get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
             set { SetForeignModel (workspaceRelationId, value); }
@@ -255,7 +255,6 @@ namespace Toggl.Phoebe.Data
 
         public static readonly string PropertyProjectId = GetPropertyName ((m) => m.ProjectId);
 
-        [JsonProperty ("pid")]
         public Guid? ProjectId {
             get { return GetForeignId (projectRelationId); }
             set { SetForeignId (projectRelationId, value); }
@@ -265,6 +264,7 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         [SQLite.Ignore]
+        [JsonProperty ("pid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
         public ProjectModel Project {
             get { return GetForeignModel<ProjectModel> (projectRelationId); }
             set { SetForeignModel (projectRelationId, value); }
@@ -272,7 +272,6 @@ namespace Toggl.Phoebe.Data
 
         public static readonly string PropertyTaskId = GetPropertyName ((m) => m.TaskId);
 
-        [JsonProperty ("tid")]
         public Guid? TaskId {
             get { return GetForeignId (taskRelationId); }
             set { SetForeignId (taskRelationId, value); }
@@ -282,6 +281,7 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         [SQLite.Ignore]
+        [JsonProperty ("tid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
         public TaskModel Task {
             get { return GetForeignModel<TaskModel> (taskRelationId); }
             set { SetForeignModel (taskRelationId, value); }
@@ -289,7 +289,6 @@ namespace Toggl.Phoebe.Data
 
         public static readonly string PropertyUserId = GetPropertyName ((m) => m.UserId);
 
-        [JsonProperty ("uid")]
         public Guid? UserId {
             get { return GetForeignId (userRelationId); }
             set { SetForeignId (userRelationId, value); }
@@ -299,6 +298,7 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         [SQLite.Ignore]
+        [JsonProperty ("uid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
         public UserModel User {
             get { return GetForeignModel<UserModel> (userRelationId); }
             set { SetForeignModel (userRelationId, value); }

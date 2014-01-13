@@ -116,7 +116,7 @@ namespace Toggl.Phoebe.Data
             return (T)GetByRemoteId (typeof(T), remoteId);
         }
 
-        private static Model GetByRemoteId (Type type, long remoteId)
+        internal static Model GetByRemoteId (Type type, long remoteId)
         {
             Model inst = null;
             MemoryModelCache cache;

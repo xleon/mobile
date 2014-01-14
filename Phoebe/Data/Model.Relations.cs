@@ -61,11 +61,16 @@ namespace Toggl.Phoebe.Data
         }
 
         protected T GetForeignModel<T> (int relationId)
-        where T : Model
+            where T : Model
+        {
+            return (T)GetForeignModel (relationId);
+        }
+
+        private Model GetForeignModel (int relationId)
         {
             var fk = fkRelations [relationId - 1];
             if (fk.Instance != null)
-                return (T)fk.Instance;
+                return fk.Instance;
 
             if (fk.Id != null) {
                 // Lazy loading, try to load the value from shared models, or database.
@@ -76,11 +81,11 @@ namespace Toggl.Phoebe.Data
                 });
             }
 
-            return (T)fk.Instance;
+            return fk.Instance;
         }
 
         protected void SetForeignModel<T> (int relationId, T value)
-        where T : Model
+            where T : Model
         {
             var fk = fkRelations [relationId - 1];
             if (value != null)
@@ -99,6 +104,17 @@ namespace Toggl.Phoebe.Data
                     fk.Id = id;
                 });
             }
+        }
+
+        public Dictionary<string, Model> GetAllForeignModels ()
+        {
+            var dict = new Dictionary<string, Model> ();
+            for (var i = 0; i < fkRelations.Count; i++) {
+                var relationId = i + 1;
+                var fk = fkRelations [relationId - 1];
+                dict [fk.InstanceProperty] = GetForeignModel (relationId);
+            }
+            return dict;
         }
     }
 }

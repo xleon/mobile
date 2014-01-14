@@ -40,17 +40,18 @@ namespace Toggl.Phoebe.Net
         public async Task Create<T> (T model)
             where T : Model
         {
-            if (typeof(T) == typeof(ClientModel)) {
+            var type = model.GetType ();
+            if (type == typeof(ClientModel)) {
                 await CreateClient (model as ClientModel);
-            } else if (typeof(T) == typeof(ProjectModel)) {
+            } else if (type == typeof(ProjectModel)) {
                 await CreateProject (model as ProjectModel);
-            } else if (typeof(T) == typeof(TaskModel)) {
+            } else if (type == typeof(TaskModel)) {
                 await CreateTask (model as TaskModel);
-            } else if (typeof(T) == typeof(TimeEntryModel)) {
+            } else if (type == typeof(TimeEntryModel)) {
                 await CreateTimeEntry (model as TimeEntryModel);
-            } else if (typeof(T) == typeof(WorkspaceModel)) {
+            } else if (type == typeof(WorkspaceModel)) {
                 await CreateWorkspace (model as WorkspaceModel);
-            } else if (typeof(T) == typeof(UserModel)) {
+            } else if (type == typeof(UserModel)) {
                 await CreateUser (model as UserModel);
             } else {
                 throw new NotSupportedException ("Creating of model (of type T) is not supported.");
@@ -94,17 +95,18 @@ namespace Toggl.Phoebe.Net
         public async Task Update<T> (T model)
             where T : Model
         {
-            if (typeof(T) == typeof(ClientModel)) {
+            var type = model.GetType ();
+            if (type == typeof(ClientModel)) {
                 await UpdateClient (model as ClientModel);
-            } else if (typeof(T) == typeof(ProjectModel)) {
+            } else if (type == typeof(ProjectModel)) {
                 await UpdateProject (model as ProjectModel);
-            } else if (typeof(T) == typeof(TaskModel)) {
+            } else if (type == typeof(TaskModel)) {
                 await UpdateTask (model as TaskModel);
-            } else if (typeof(T) == typeof(TimeEntryModel)) {
+            } else if (type == typeof(TimeEntryModel)) {
                 await UpdateTimeEntry (model as TimeEntryModel);
-            } else if (typeof(T) == typeof(WorkspaceModel)) {
+            } else if (type == typeof(WorkspaceModel)) {
                 await UpdateWorkspace (model as WorkspaceModel);
-            } else if (typeof(T) == typeof(UserModel)) {
+            } else if (type == typeof(UserModel)) {
                 await UpdateUser (model as UserModel);
             } else {
                 throw new NotSupportedException ("Updating of model (of type T) is not supported.");
@@ -114,13 +116,14 @@ namespace Toggl.Phoebe.Net
         public async Task Delete<T> (T model)
             where T : Model
         {
-            if (typeof(T) == typeof(ClientModel)) {
+            var type = model.GetType ();
+            if (type == typeof(ClientModel)) {
                 await DeleteClient (model as ClientModel);
-            } else if (typeof(T) == typeof(ProjectModel)) {
+            } else if (type == typeof(ProjectModel)) {
                 await DeleteProject (model as ProjectModel);
-            } else if (typeof(T) == typeof(TaskModel)) {
+            } else if (type == typeof(TaskModel)) {
                 await DeleteTask (model as TaskModel);
-            } else if (typeof(T) == typeof(TimeEntryModel)) {
+            } else if (type == typeof(TimeEntryModel)) {
                 await DeleteTimeEntry (model as TimeEntryModel);
             } else {
                 throw new NotSupportedException ("Deleting of model (of type T) is not supported.");
@@ -138,6 +141,8 @@ namespace Toggl.Phoebe.Net
                 await DeleteTasks (models as IEnumerable<TaskModel>);
             } else if (typeof(T) == typeof(TimeEntryModel)) {
                 await Task.WhenAll (models.Select ((model) => DeleteTimeEntry (model as TimeEntryModel)));
+            } else if (typeof(T) == typeof(Model)) {
+                await Task.WhenAll (models.Select ((model) => Delete (model)));
             } else {
                 throw new NotSupportedException ("Deleting of models (of type T) is not supported.");
             }

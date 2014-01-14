@@ -20,6 +20,7 @@ namespace Toggl.Chandler
             ServiceContainer.Register<IModelStore> (new SQLiteModelStore (path));
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (new Uri ("https://next.toggl.com/api/")));
             ServiceContainer.Register<AuthManager> ();
+            ServiceContainer.Register<SyncManager> ();
 
 //            var ws = Model.Update (new WorkspaceModel () {
 //                Name = "Test workspace",

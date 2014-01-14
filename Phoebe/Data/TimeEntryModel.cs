@@ -19,7 +19,7 @@ namespace Toggl.Phoebe.Data
             return expr.ToPropertyName ();
         }
 
-        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1);
+        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
         public static void UpdateDurations ()
         {
@@ -89,6 +89,7 @@ namespace Toggl.Phoebe.Data
         public DateTime StartTime {
             get { return startTime; }
             set {
+                value = value.ToUtc ();
                 if (startTime == value)
                     return;
 
@@ -105,6 +106,7 @@ namespace Toggl.Phoebe.Data
         public DateTime? StopTime {
             get { return stopTime; }
             set {
+                value = value.ToUtc ();
                 if (stopTime == value)
                     return;
 

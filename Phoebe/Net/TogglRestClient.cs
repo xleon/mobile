@@ -15,7 +15,7 @@ namespace Toggl.Phoebe.Net
 {
     public class TogglRestClient : ITogglClient
     {
-        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1);
+        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri v8Url;
         private readonly Dictionary<Type, Uri> modelUrls;
         private readonly HttpClient httpClient;
@@ -549,6 +549,7 @@ namespace Toggl.Phoebe.Net
 
         public async Task<UserRelatedModels> GetChanges (DateTime? since)
         {
+            since = since.ToUtc ();
             var relUrl = "me?with_related_data=true";
             if (since.HasValue)
                 relUrl = String.Format ("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);

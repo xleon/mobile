@@ -106,6 +106,7 @@ namespace Toggl.Phoebe.Data
         public DateTime ModifiedAt {
             get { return modified; }
             set {
+                value = value.ToUtc ();
                 if (modified == value)
                     return;
                 ChangePropertyAndNotify (PropertyModifiedAt, delegate {
@@ -120,6 +121,7 @@ namespace Toggl.Phoebe.Data
         public DateTime? DeletedAt {
             get { return deleted; }
             set {
+                value = value.ToUtc ();
                 if (deleted == value)
                     return;
                 ChangePropertyAndNotify (PropertyDeletedAt, delegate {
@@ -136,6 +138,7 @@ namespace Toggl.Phoebe.Data
         public DateTime? RemoteDeletedAt {
             get { return remoteDeleted; }
             set {
+                value = value.ToUtc ();
                 if (remoteDeleted == value)
                     return;
 

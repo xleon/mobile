@@ -34,9 +34,11 @@ namespace Toggl.Phoebe.Data
         {
             if (!IsShared || IsMerging)
                 return;
-            if (!IsDirty)
+            if (!IsDirty) {
+                // Order here is important, else we'll get into a stack overflow if we set ModifiedAt first.
+                IsDirty = true;
                 ModifiedAt = DateTime.UtcNow;
-            IsDirty = true;
+            }
         }
 
         public virtual void Delete ()

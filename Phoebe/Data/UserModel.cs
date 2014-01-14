@@ -72,6 +72,7 @@ namespace Toggl.Phoebe.Data
         private string apiToken;
         public static readonly string PropertyApiToken = GetPropertyName ((m) => m.ApiToken);
 
+        [DontDirty]
         [JsonProperty ("api_token", NullValueHandling = NullValueHandling.Ignore)]
         [SQLite.Ignore]
         public string ApiToken {

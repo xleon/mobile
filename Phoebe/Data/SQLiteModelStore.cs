@@ -167,7 +167,7 @@ namespace Toggl.Phoebe.Data
             var sql = string.Format (
                           "select * from \"{0}\" where \"{1}\" = ?",
                           map.TableName,
-                          map.FindColumnWithPropertyName ("RemoteId")
+                          map.FindColumnWithPropertyName ("RemoteId").Name
                       );
             return (Model)conn.Query (map, sql, remoteId).FirstOrDefault ();
         }

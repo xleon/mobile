@@ -55,9 +55,17 @@ namespace Toggl.Phoebe.Data
             // First, try to look-up the shared model based on the Id
             if (model.Id.HasValue)
                 sharedModel = (T)Get (model.GetType (), model.Id.Value);
-            // If that fails, try to use RemoteId
-            if (sharedModel == null && model.RemoteId.HasValue)
-                sharedModel = (T)GetByRemoteId (model.GetType (), model.RemoteId.Value);
+            if (model.RemoteId != null) {
+                if (sharedModel == null) {
+                    // If lookup by id failed, try remote id
+                    sharedModel = (T)GetByRemoteId (model.GetType (), model.RemoteId.Value);
+                } else {
+                    // Enforce integrity, no duplicate RemoteId's
+                    if (GetByRemoteId (model.GetType (), model.RemoteId.Value) != null) {
+                        throw new IntegrityException ("RemoteId is not unique, cannot make shared.");
+                    }
+                }
+            }
 
             if (sharedModel != null) {
                 sharedModel.Merge (model);
@@ -167,10 +175,6 @@ namespace Toggl.Phoebe.Data
         {
             if (model.Id == null)
                 model.Id = Guid.NewGuid ();
-            // Enforce integrity
-            if (model.RemoteId != null && Model.GetByRemoteId (model.GetType (), model.RemoteId.Value) != null) {
-                throw new IntegrityException ("RemoteId is not unique, cannot make shared.");
-            }
             model.IsShared = true;
 
             MemoryModelCache cache;

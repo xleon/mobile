@@ -86,10 +86,12 @@ namespace Toggl.Phoebe.Data
                     var oldId = remoteId;
                     remoteId = value;
 
-                    // Update cache index
-                    MemoryModelCache cache;
-                    if (modelCaches.TryGetValue (GetType (), out cache)) {
-                        cache.UpdateRemoteId (this, oldId, remoteId);
+                    if (IsShared) {
+                        // Update cache index
+                        MemoryModelCache cache;
+                        if (modelCaches.TryGetValue (GetType (), out cache)) {
+                            cache.UpdateRemoteId (this, oldId, remoteId);
+                        }
                     }
                 });
             }

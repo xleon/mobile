@@ -17,19 +17,11 @@ namespace Toggl.Phoebe.Net
     {
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri v8Url;
-        private readonly Dictionary<Type, Uri> modelUrls;
         private readonly HttpClient httpClient;
 
         public TogglRestClient (Uri url)
         {
             v8Url = new Uri (url, "v8/");
-            modelUrls = new Dictionary<Type, Uri> () {
-                { typeof(ClientModel), new Uri (v8Url, "clients") },
-                { typeof(ProjectModel), new Uri (v8Url, "projects") },
-                { typeof(TaskModel), new Uri (v8Url, "tasks") },
-                { typeof(TimeEntryModel), new Uri (v8Url, "time_entries") },
-                { typeof(WorkspaceModel), new Uri (v8Url, "workspaces") },
-            };
             httpClient = new HttpClient ();
             var headers = httpClient.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
@@ -284,37 +276,37 @@ namespace Toggl.Phoebe.Net
 
         public Task CreateClient (ClientModel model)
         {
-            var url = modelUrls [typeof(ClientModel)];
+            var url = new Uri (v8Url, "clients");
             return CreateModel (url, model);
         }
 
         public Task<ClientModel> GetClient (long id)
         {
-            var url = new Uri (modelUrls [typeof(ClientModel)], id.ToString ());
+            var url = new Uri (v8Url, String.Format ("clients/{0}", id.ToString ()));
             return GetModel<ClientModel> (url);
         }
 
         public Task<List<ClientModel>> ListClients ()
         {
-            var url = modelUrls [typeof(ClientModel)];
+            var url = new Uri (v8Url, "clients");
             return ListModels<ClientModel> (url);
         }
 
         public Task<List<ClientModel>> ListWorkspaceClients (long workspaceId)
         {
-            var url = new Uri (modelUrls [typeof(WorkspaceModel)], String.Format ("{0}/clients", workspaceId));
+            var url = new Uri (v8Url, String.Format ("workspaces/{0}/clients", workspaceId.ToString ()));
             return ListModels<ClientModel> (url);
         }
 
         public Task UpdateClient (ClientModel model)
         {
-            var url = new Uri (modelUrls [typeof(ClientModel)], model.RemoteId.Value.ToString ());
+            var url = new Uri (v8Url, String.Format ("clients/{0}", model.RemoteId.Value.ToString ()));
             return UpdateModel (url, model);
         }
 
         public Task DeleteClient (ClientModel model)
         {
-            var url = new Uri (modelUrls [typeof(ClientModel)], model.RemoteId.Value.ToString ());
+            var url = new Uri (v8Url, String.Format ("clients/{0}", model.RemoteId.Value.ToString ()));
             return DeleteModel (url);
         }
 
@@ -324,38 +316,38 @@ namespace Toggl.Phoebe.Net
 
         public Task CreateProject (ProjectModel model)
         {
-            var url = modelUrls [typeof(ProjectModel)];
+            var url = new Uri (v8Url, "projects");
             return CreateModel (url, model);
         }
 
         public Task<ProjectModel> GetProject (long id)
         {
-            var url = new Uri (modelUrls [typeof(ProjectModel)], id.ToString ());
+            var url = new Uri (v8Url, String.Format ("projects/{0}", id.ToString ()));
             return GetModel<ProjectModel> (url);
         }
 
         public Task<List<ProjectModel>> ListWorkspaceProjects (long workspaceId)
         {
-            var url = new Uri (modelUrls [typeof(WorkspaceModel)], String.Format ("{0}/projects", workspaceId));
+            var url = new Uri (v8Url, String.Format ("workspaces/{0}/projects", workspaceId.ToString ()));
             return ListModels<ProjectModel> (url);
         }
 
         public Task UpdateProject (ProjectModel model)
         {
-            var url = new Uri (modelUrls [typeof(ProjectModel)], model.RemoteId.Value.ToString ());
+            var url = new Uri (v8Url, String.Format ("projects/{0}", model.RemoteId.Value.ToString ()));
             return UpdateModel (url, model);
         }
 
         public Task DeleteProject (ProjectModel model)
         {
-            var url = new Uri (modelUrls [typeof(ProjectModel)], model.RemoteId.Value.ToString ());
+            var url = new Uri (v8Url, String.Format ("projects/{0}", model.RemoteId.Value.ToString ()));
             return DeleteModel (url);
         }
 
         public Task DeleteProjects (IEnumerable<ProjectModel> models)
         {
-            var url = new Uri (modelUrls [typeof(ProjectModel)],
-                          String.Join (",", models.Select ((model) => model.Id.ToString ())));
+            var url = new Uri (v8Url, String.Format ("projects/{0}",
+                          String.Join (",", models.Select ((model) => model.Id.Value.ToString ()))));
             return DeleteModels (url);
         }
 
@@ -365,44 +357,44 @@ namespace Toggl.Phoebe.Net
 
         public Task CreateTask (TaskModel model)
         {
-            var url = modelUrls [typeof(TaskModel)];
+            var url = new Uri (v8Url, "tasks");
             return CreateModel (url, model);
         }
 
         public Task<TaskModel> GetTask (long id)
         {
-            var url = new Uri (modelUrls [typeof(TaskModel)], id.ToString ());
+            var url = new Uri (v8Url, String.Format ("tasks/{0}", id.ToString ()));
             return GetModel<TaskModel> (url);
         }
 
         public Task<List<TaskModel>> ListProjectTasks (long projectId)
         {
-            var url = new Uri (modelUrls [typeof(ProjectModel)], String.Format ("{0}/tasks", projectId));
+            var url = new Uri (v8Url, String.Format ("projects/{0}/tasks", projectId.ToString ()));
             return ListModels<TaskModel> (url);
         }
 
         public Task<List<TaskModel>> ListWorkspaceTasks (long workspaceId)
         {
-            var url = new Uri (modelUrls [typeof(WorkspaceModel)], String.Format ("{0}/tasks", workspaceId));
+            var url = new Uri (v8Url, String.Format ("workspaces/{0}/tasks", workspaceId.ToString ()));
             return ListModels<TaskModel> (url);
         }
 
         public Task UpdateTask (TaskModel model)
         {
-            var url = new Uri (modelUrls [typeof(TaskModel)], model.RemoteId.ToString ());
+            var url = new Uri (v8Url, String.Format ("tasks/{0}", model.RemoteId.Value.ToString ()));
             return UpdateModel (url, model);
         }
 
         public Task DeleteTask (TaskModel model)
         {
-            var url = new Uri (modelUrls [typeof(TaskModel)], model.RemoteId.ToString ());
+            var url = new Uri (v8Url, String.Format ("tasks/{0}", model.RemoteId.Value.ToString ()));
             return DeleteModel (url);
         }
 
         public Task DeleteTasks (IEnumerable<TaskModel> models)
         {
-            var url = new Uri (modelUrls [typeof(TaskModel)],
-                          String.Join (",", models.Select ((model) => model.Id.ToString ())));
+            var url = new Uri (v8Url, String.Format ("tasks/{0}",
+                          String.Join (",", models.Select ((model) => model.Id.Value.ToString ()))));
             return DeleteModels (url);
         }
 
@@ -412,14 +404,14 @@ namespace Toggl.Phoebe.Net
 
         public Task CreateTimeEntry (TimeEntryModel model)
         {
-            var url = modelUrls [typeof(TimeEntryModel)];
+            var url = new Uri (v8Url, "time_entries");
             model.CreatedWith = Platform.DefaultCreatedWith;
             return CreateModel (url, model);
         }
 
         public Task<TimeEntryModel> GetTimeEntry (long id)
         {
-            var url = new Uri (modelUrls [typeof(TimeEntryModel)], id.ToString ());
+            var url = new Uri (v8Url, String.Format ("time_entries/{0}", id.ToString ()));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             return GetModel<TimeEntryModel> (url, (te) => {
                 te.User = user;
@@ -429,7 +421,7 @@ namespace Toggl.Phoebe.Net
 
         public Task<List<TimeEntryModel>> ListTimeEntries ()
         {
-            var url = modelUrls [typeof(TimeEntryModel)];
+            var url = new Uri (v8Url, "time_entries");
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListModels<TimeEntryModel> (url, (te) => {
                 te.User = user;
@@ -439,10 +431,10 @@ namespace Toggl.Phoebe.Net
 
         public Task<List<TimeEntryModel>> ListTimeEntries (DateTime start, DateTime end)
         {
-            var url = new Uri (modelUrls [typeof(TimeEntryModel)],
-                          String.Format ("?start_date={0}&end_date={1}",
-                              WebUtility.UrlEncode (start.ToString ("o")),
-                              WebUtility.UrlEncode (end.ToString ("o"))));
+            var url = new Uri (v8Url,
+                          String.Format ("time_entries?start_date={0}&end_date={1}",
+                              WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
+                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListModels<TimeEntryModel> (url, (te) => {
                 te.User = user;
@@ -452,7 +444,7 @@ namespace Toggl.Phoebe.Net
 
         public Task UpdateTimeEntry (TimeEntryModel model)
         {
-            var url = new Uri (modelUrls [typeof(TimeEntryModel)], model.RemoteId.Value.ToString ());
+            var url = new Uri (v8Url, String.Format ("time_entries/{0}", model.RemoteId.Value.ToString ()));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             return UpdateModel (url, model, (te) => {
                 te.User = user;
@@ -462,7 +454,7 @@ namespace Toggl.Phoebe.Net
 
         public Task DeleteTimeEntry (TimeEntryModel model)
         {
-            var url = new Uri (modelUrls [typeof(TimeEntryModel)], model.RemoteId.Value.ToString ());
+            var url = new Uri (v8Url, String.Format ("time_entries/{0}", model.RemoteId.Value.ToString ()));
             return DeleteModel (url);
         }
 
@@ -472,25 +464,25 @@ namespace Toggl.Phoebe.Net
 
         public Task CreateWorkspace (WorkspaceModel model)
         {
-            var url = modelUrls [typeof(WorkspaceModel)];
+            var url = new Uri (v8Url, "workspaces");
             return CreateModel (url, model);
         }
 
         public Task<WorkspaceModel> GetWorkspace (long id)
         {
-            var url = new Uri (modelUrls [typeof(WorkspaceModel)], id.ToString ());
+            var url = new Uri (v8Url, String.Format ("workspaces/{0}", id.ToString ()));
             return GetModel<WorkspaceModel> (url);
         }
 
         public Task<List<WorkspaceModel>> ListWorkspaces ()
         {
-            var url = modelUrls [typeof(WorkspaceModel)];
+            var url = new Uri (v8Url, "workspaces");
             return ListModels<WorkspaceModel> (url);
         }
 
         public Task UpdateWorkspace (WorkspaceModel model)
         {
-            var url = new Uri (modelUrls [typeof(WorkspaceModel)], model.RemoteId.Value.ToString ());
+            var url = new Uri (v8Url, String.Format ("workspaces/{0}", model.RemoteId.Value.ToString ()));
             return UpdateModel (url, model);
         }
 

@@ -20,6 +20,41 @@ namespace Toggl.Phoebe.Data
             projectRelationId = ForeignRelation<ProjectModel> (PropertyProjectId, PropertyProject);
         }
 
+        protected override void Validate (ValidationContext ctx)
+        {
+            base.Validate (ctx);
+
+            if (ctx.HasChanged (PropertyName)) {
+                if (String.IsNullOrWhiteSpace (Name)) {
+                    ctx.AddError (PropertyName, "Task name cannot be empty.");
+                } else if (Model.Query<TaskModel> (
+                               (m) => m.Name == Name
+                               && m.ProjectId == ProjectId
+                               && m.Id != Id
+                           ).Count () > 0) {
+                    ctx.AddError (PropertyName, "Task with such name already exists.");
+                }
+            }
+
+            if (ctx.HasChanged (PropertyProjectId)
+                || ctx.HasChanged (PropertyWorkspaceId)) {
+
+                ctx.ClearErrors (PropertyProjectId);
+                ctx.ClearErrors (PropertyProject);
+                ctx.ClearErrors (PropertyWorkspaceId);
+
+                if (ProjectId == null) {
+                    ctx.AddError (PropertyProjectId, "Task must be associated with a project.");
+                } else if (Project == null) {
+                    ctx.AddError (PropertyProject, "Associated project could not be found.");
+                }
+
+                if (Project != null && Project.WorkspaceId != WorkspaceId) {
+                    ctx.AddError (PropertyWorkspaceId, "Task workspace doesn't match the projects workspace.");
+                }
+            }
+        }
+
         #region Data
 
         private string name;

@@ -28,7 +28,13 @@ namespace Toggl.Phoebe.Data
             errors [propertyName] = error;
         }
 
-        public void MarkValid (string propertyName)
+        /// <summary>
+        /// Clears any errors on the property with propertyName. Usually if HasChanged returns true for the property,
+        /// the errors are cleared automatically. However, for composite validation, this can be used to clear errors
+        /// on fields which didn't change.
+        /// </summary>
+        /// <param name="propertyName">Property name.</param>
+        public void ClearErrors (string propertyName)
         {
             errors [propertyName] = null;
         }

@@ -80,17 +80,28 @@ namespace Toggl.Phoebe.Net
                 if (mode.HasFlag (SyncMode.Push)) {
                     // Construct dependency graph:
                     var graph = Graph.FromDirty (Enumerable.Empty<Model> ()
-                        .Union (Model.Query<WorkspaceModel> ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null))
-                        .Union (Model.Query<ClientModel> ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null))
-                        .Union (Model.Query<ProjectModel> ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null))
-                        .Union (Model.Query<TaskModel> ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null))
-                        .Union (Model.Query<TimeEntryModel> ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null).ForCurrentUser ()));
+                        .Union (QueryDirtyModels<WorkspaceModel> ())
+                        .Union (QueryDirtyModels<ClientModel> ())
+                        .Union (QueryDirtyModels<ProjectModel> ())
+                        .Union (QueryDirtyModels<TaskModel> ())
+                        .Union (QueryDirtyModels<TimeEntryModel> ().ForCurrentUser ()));
+
+                    // Purge invalid nodes:
+                    var models = graph.Nodes.Where ((m) => !m.IsValid && m.RemoteId == null).ToList ();
+                    foreach (var model in models) {
+                        graph.RemoveBranch (model);
+                    }
+                    models = graph.Nodes.Where ((m) => !m.IsValid && m.RemoteId != null).ToList ();
+                    foreach (var model in models) {
+                        graph.Remove (model);
+                    }
 
                     // Start pushing the dependencies from the end nodes up
                     var tasks = new List<Task<Exception>> ();
                     while (true) {
                         tasks.Clear ();
-                        var models = graph.EndNodes.ToList ();
+
+                        models = graph.EndNodes.ToList ();
                         if (models.Count == 0)
                             break;
 
@@ -127,6 +138,12 @@ namespace Toggl.Phoebe.Net
                 IsRunning = false;
                 bus.Send (new SyncFinishedMessage (this, mode, hasErrors, ex));
             }
+        }
+
+        private static IModelQuery<T> QueryDirtyModels<T> ()
+            where T : Model, new()
+        {
+            return Model.Query<T> ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null);
         }
 
         private async Task<Exception> PushModel (Model model)
@@ -221,6 +238,10 @@ namespace Toggl.Phoebe.Net
 
             public int NodeCount {
                 get { return nodes.Count; }
+            }
+
+            public IEnumerable<Model> Nodes {
+                get { return nodes.Keys; }
             }
 
             public IEnumerable<Model> EndNodes {

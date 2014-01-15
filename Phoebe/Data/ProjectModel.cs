@@ -20,6 +20,56 @@ namespace Toggl.Phoebe.Data
             clientRelationId = ForeignRelation<ClientModel> (PropertyClientId, PropertyClient);
         }
 
+        protected override void Validate (ValidationContext ctx)
+        {
+            base.Validate (ctx);
+
+            if (ctx.HasChanged (PropertyName)) {
+                if (String.IsNullOrWhiteSpace (Name)) {
+                    ctx.AddError (PropertyName, "Project name cannot be empty.");
+                } else if (Model.Query<ProjectModel> (
+                               (m) => m.Name == Name
+                               && m.WorkspaceId == WorkspaceId
+                               && m.Id != Id
+                           ).Count () > 0) {
+                    ctx.AddError (PropertyName, "Project with such name already exists.");
+                }
+            }
+
+            if (ctx.HasChanged (PropertyWorkspaceId)
+                || ctx.HasChanged (PropertyIsBillable)
+                || ctx.HasChanged (PropertyIsTemplate)) {
+
+                ctx.ClearErrors (PropertyWorkspaceId);
+                ctx.ClearErrors (PropertyWorkspace);
+
+                if (WorkspaceId == null) {
+                    ctx.AddError (PropertyWorkspaceId, "Project must be associated with a workspace.");
+                } else if (Workspace == null) {
+                    ctx.AddError (PropertyWorkspace, "Associated workspace could not be found.");
+                }
+
+                // Check premium feature usage
+                if (IsBillable && Workspace != null && !Workspace.IsPremium) {
+                    ctx.AddError (PropertyIsBillable, "Billable projects can only exist in premium workspaces.");
+                } else {
+                    ctx.ClearErrors (PropertyIsBillable);
+                }
+
+                if (IsTemplate && Workspace != null && !Workspace.IsPremium) {
+                    ctx.AddError (PropertyIsTemplate, "Projects can be templates only in premium workspaces.");
+                } else {
+                    ctx.ClearErrors (PropertyIsTemplate);
+                }
+
+                if (UseTasksEstimate && Workspace != null && !Workspace.IsPremium) {
+                    ctx.AddError (PropertyUseTasksEstimate, "Task estimates are only available in premium workspaces.");
+                } else {
+                    ctx.ClearErrors (PropertyUseTasksEstimate);
+                }
+            }
+        }
+
         #region Data
 
         private bool active;

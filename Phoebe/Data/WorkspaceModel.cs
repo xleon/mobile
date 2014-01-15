@@ -11,6 +11,22 @@ namespace Toggl.Phoebe.Data
             return expr.ToPropertyName ();
         }
 
+        protected override void Validate (ValidationContext ctx)
+        {
+            base.Validate (ctx);
+
+            if (ctx.HasChanged (PropertyName)) {
+                if (String.IsNullOrWhiteSpace (Name)) {
+                    ctx.AddError (PropertyName, "Workspace name cannot be empty.");
+                } else if (Model.Query<WorkspaceModel> (
+                               (m) => m.Name == Name
+                               && m.Id != Id
+                           ).Count () > 0) {
+                    ctx.AddError (PropertyName, "Workspace with such name already exists.");
+                }
+            }
+        }
+
         #region Data
 
         private string name;

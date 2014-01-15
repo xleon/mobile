@@ -143,7 +143,7 @@ namespace Toggl.Phoebe.Data
         private void UpdateDuration ()
         {
             if (RawDuration < 0) {
-                Duration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration);
+                Duration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds + RawDuration);
             } else {
                 Duration = RawDuration;
             }

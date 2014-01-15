@@ -327,10 +327,8 @@ namespace Toggl.Phoebe.Data
                     }
 
                     // Double check the database as well:
-                    entries = Model.Query<TimeEntryModel> ((m) => m.UserId == UserId && m.IsRunning);
+                    entries = Model.Query<TimeEntryModel> ((m) => m.UserId == UserId && m.IsRunning && m.Id != Id);
                     foreach (var entry in entries) {
-                        if (entry == this)
-                            continue;
                         entry.IsRunning = false;
                     }
                 }

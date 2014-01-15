@@ -105,7 +105,13 @@ namespace Toggl.Phoebe.Net
                             var error = tasks [i].Result;
 
                             if (error != null) {
-                                graph.RemoveBranch (model);
+                                if (model.RemoteId == null) {
+                                    // When creation fails, remove branch as there are models that depend on this
+                                    // one, so there is no point in continuing with the branch.
+                                    graph.RemoveBranch (model);
+                                } else {
+                                    graph.Remove (model);
+                                }
                                 hasErrors = true;
                                 // TODO: Log error?
                             } else {

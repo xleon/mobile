@@ -28,19 +28,18 @@ namespace Toggl.Phoebe.Data
             // Automatically mark the object dirty, if property doesn't explicitly disable it
             var propInfo = GetType ().GetProperty (property);
             if (propInfo.GetCustomAttributes (typeof(DontDirtyAttribute), true).Length == 0) {
-                MarkDirty ();
+                MarkDirty (property != PropertyModifiedAt);
             }
         }
 
-        protected void MarkDirty ()
+        protected void MarkDirty (bool updateModTime = true)
         {
             if (!IsShared || IsMerging)
                 return;
-            if (!IsDirty) {
-                // Order here is important, else we'll get into a stack overflow if we set ModifiedAt first.
-                IsDirty = true;
+
+            if (updateModTime)
                 ModifiedAt = DateTime.UtcNow;
-            }
+            IsDirty = true;
         }
 
         public virtual void Delete ()

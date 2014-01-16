@@ -45,6 +45,9 @@ namespace Toggl.Phoebe.Data
         public virtual void Delete ()
         {
             DeletedAt = DateTime.UtcNow;
+            if (RemoteId == null) {
+                IsPersisted = false;
+            }
         }
 
         private Guid? id;

@@ -13,6 +13,12 @@ namespace Toggl.Phoebe.Data
             return q.Where ((entry) => entry.UserId == authManager.UserId);
         }
 
+        public static IModelQuery<T> NotDeleted<T> (this IModelQuery<T> q)
+            where T : Model, new()
+        {
+            return q.Where ((entry) => entry.DeletedAt == null);
+        }
+
         public static IModelsView<T> ToView<T> (this IModelQuery<T> q, int batchSize = 25)
             where T : Model, new()
         {

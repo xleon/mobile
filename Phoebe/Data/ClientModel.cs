@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Data
                                (m) => m.Name == Name
                                && m.WorkspaceId == WorkspaceId
                                && m.Id != Id
-                           ).Count () > 0) {
+                           ).NotDeleted ().Count () > 0) {
                     ctx.AddError (PropertyName, "Client with such name already exists.");
                 }
             }

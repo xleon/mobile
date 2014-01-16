@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data
                 } else if (Model.Query<WorkspaceModel> (
                                (m) => m.Name == Name
                                && m.Id != Id
-                           ).Count () > 0) {
+                           ).NotDeleted ().Count () > 0) {
                     ctx.AddError (PropertyName, "Workspace with such name already exists.");
                 }
             }

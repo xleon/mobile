@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <style name="Theme.Base"    parent="android:Theme.Holo.Light" />
+    <style name="Theme.App"     parent="Theme.Base" />
+    <style name="Theme.Login"   parent="android:style/Theme.Holo.Light.NoActionBar"  />
+</resources>

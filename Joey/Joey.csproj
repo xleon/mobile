@@ -64,4 +64,10 @@
     <AndroidResource Include="Resources\drawable\login_logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\Phoebe\Phoebe.Android.csproj">
+      <Project>{FF67B529-C11B-4FE0-AA1B-CD77141816BB}</Project>
+      <Name>Phoebe.Android</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

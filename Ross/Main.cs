@@ -4,7 +4,7 @@ using System.Linq;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 
-namespace Ross
+namespace Toggl.Ross
 {
     public class Application
     {

@@ -9,7 +9,7 @@ namespace Toggl.Phoebe.Data.Views
     /// <summary>
     /// This view returns the recent unique time entries.
     /// </summary>
-    public class RecentTimeEntriesView : ObservableObject, IModelsView<TimeEntryModel>
+    public class RecentTimeEntriesView : ModelsView<TimeEntryModel>
     {
         private static string GetPropertyName<K> (Expression<Func<RecentTimeEntriesView, K>> expr)
         {
@@ -65,7 +65,7 @@ namespace Toggl.Phoebe.Data.Views
             OnPropertyChanged (PropertyCount);
         }
 
-        public void Reload ()
+        public override void Reload ()
         {
             // TODO: Add support for multiple workspaces
             query = Model.Query<TimeEntryModel> ()
@@ -91,7 +91,7 @@ namespace Toggl.Phoebe.Data.Views
                 && e.ProjectId == e.ProjectId);
         }
 
-        public void LoadMore ()
+        public override void LoadMore ()
         {
             int oldCount = data.Count;
             bool hasData = true;
@@ -123,58 +123,12 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public static readonly string PropertyModels = GetPropertyName ((m) => m.Models);
-
-        public IEnumerable<TimeEntryModel> Models {
+        public override IEnumerable<TimeEntryModel> Models {
             get { return data; }
         }
 
-        public static readonly string PropertyCount = GetPropertyName ((m) => m.Count);
-
-        public long Count {
+        public override long Count {
             get { return data.Count; }
-        }
-
-        public static readonly string PropertyTotalCount = GetPropertyName ((m) => m.TotalCount);
-
-        public long? TotalCount {
-            get { return null; }
-        }
-
-        private bool hasMore;
-        public static readonly string PropertyHasMore = GetPropertyName ((m) => m.HasMore);
-
-        public bool HasMore {
-            get { return hasMore; }
-            set {
-                if (hasMore == value)
-                    return;
-
-                ChangePropertyAndNotify (PropertyHasMore, delegate {
-                    hasMore = value;
-                });
-            }
-        }
-
-        public static readonly string PropertyIsLoading = GetPropertyName ((m) => m.IsLoading);
-
-        public bool IsLoading {
-            get { return false; }
-        }
-
-        private bool hasError;
-        public static readonly string PropertyHasError = GetPropertyName ((m) => m.HasError);
-
-        public bool HasError {
-            get { return hasError; }
-            set {
-                if (hasError == value)
-                    return;
-
-                ChangePropertyAndNotify (PropertyHasError, delegate {
-                    hasError = value;
-                });
-            }
         }
     }
 }

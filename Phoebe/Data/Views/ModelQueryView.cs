@@ -8,7 +8,7 @@ namespace Toggl.Phoebe.Data.Views
     /// <summary>
     /// Query view wraps IModelQuery and retrieves only required amount of data at once.
     /// </summary>
-    public class ModelQueryView<T> : ObservableObject, IModelsView<T>
+    public class ModelQueryView<T> : ModelsView<T>
         where T : Model, new()
     {
         private static string GetPropertyName<K> (Expression<Func<ModelQueryView<T>, K>> expr)
@@ -36,7 +36,7 @@ namespace Toggl.Phoebe.Data.Views
             OnPropertyChanged (PropertyCount);
         }
 
-        public void Reload ()
+        public override void Reload ()
         {
             HasError = false;
 
@@ -54,7 +54,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public void LoadMore ()
+        public override void LoadMore ()
         {
             HasError = false;
 
@@ -71,65 +71,12 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public static readonly string PropertyModels = GetPropertyName ((m) => m.Models);
-
-        public IEnumerable<T> Models {
+        public override IEnumerable<T> Models {
             get { return data; }
         }
 
-        public static readonly string PropertyCount = GetPropertyName ((m) => m.Count);
-
-        public long Count {
+        public override long Count {
             get { return data.Count; }
-        }
-
-        private bool hasMore;
-        public static readonly string PropertyHasMore = GetPropertyName ((m) => m.HasMore);
-
-        public bool HasMore {
-            get { return hasMore; }
-            private set {
-                if (hasMore == value)
-                    return;
-
-                ChangePropertyAndNotify (PropertyHasMore, delegate {
-                    hasMore = value;
-                });
-            }
-        }
-
-        private long? totalCount;
-        public static readonly string PropertyTotalCount = GetPropertyName ((m) => m.TotalCount);
-
-        public long? TotalCount {
-            get { return totalCount; }
-            private set {
-                if (totalCount == value)
-                    return;
-
-                ChangePropertyAndNotify (PropertyTotalCount, delegate {
-                    totalCount = value;
-                });
-            }
-        }
-
-        public bool IsLoading {
-            get { return false; }
-        }
-
-        private bool hasError;
-        public static readonly string PropertyHasError = GetPropertyName ((m) => m.HasError);
-
-        public bool HasError {
-            get { return hasError; }
-            private set {
-                if (hasError == value)
-                    return;
-
-                ChangePropertyAndNotify (PropertyHasError, delegate {
-                    hasError = value;
-                });
-            }
         }
     }
 }

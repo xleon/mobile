@@ -10,7 +10,7 @@ namespace Toggl.Phoebe.Data.Views
     /// This view combines IModelStore data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
-    public class AllTimeEntriesView : ObservableObject, IModelsView<TimeEntryModel>
+    public class AllTimeEntriesView : ModelsView<TimeEntryModel>
     {
         private static string GetPropertyName<K> (Expression<Func<AllTimeEntriesView, K>> expr)
         {
@@ -44,7 +44,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public void Reload ()
+        public override void Reload ()
         {
             if (IsLoading)
                 return;
@@ -66,7 +66,7 @@ namespace Toggl.Phoebe.Data.Views
             OnPropertyChanged (PropertyCount);
         }
 
-        public async void LoadMore ()
+        public async override void LoadMore ()
         {
             if (IsLoading)
                 return;
@@ -119,58 +119,12 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public static readonly string PropertyModels = GetPropertyName ((m) => m.Models);
-
-        public IEnumerable<TimeEntryModel> Models {
+        public override IEnumerable<TimeEntryModel> Models {
             get { return data; }
         }
 
-        public static readonly string PropertyCount = GetPropertyName ((m) => m.Count);
-
-        public long Count {
+        public override long Count {
             get { return data.Count; }
-        }
-
-        public static readonly string PropertyTotalCount = GetPropertyName ((m) => m.TotalCount);
-
-        public long? TotalCount {
-            get { return null; }
-        }
-
-        public static readonly string PropertyHasMore = GetPropertyName ((m) => m.HasMore);
-
-        public bool HasMore {
-            get { return true; }
-        }
-
-        private bool loading;
-        public static readonly string PropertyIsLoading = GetPropertyName ((m) => m.IsLoading);
-
-        public bool IsLoading {
-            get { return loading; }
-            set {
-                if (loading == value)
-                    return;
-
-                ChangePropertyAndNotify (PropertyIsLoading, delegate {
-                    loading = value;
-                });
-            }
-        }
-
-        private bool hasError;
-        public static readonly string PropertyHasError = GetPropertyName ((m) => m.HasError);
-
-        public bool HasError {
-            get { return hasError; }
-            set {
-                if (hasError == value)
-                    return;
-
-                ChangePropertyAndNotify (PropertyHasError, delegate {
-                    hasError = value;
-                });
-            }
         }
     }
 }

@@ -25,7 +25,7 @@ namespace Toggl.Phoebe.Net
             Run (SyncMode.Auto);
         }
 
-        public async Task Run (SyncMode mode = SyncMode.Auto)
+        public async Task Run (SyncMode mode = SyncMode.Full)
         {
             if (IsRunning)
                 return;

@@ -1,4 +1,5 @@
 ﻿using System;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Net;
 using XPlatUtils;

@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
 
-namespace Toggl.Phoebe.Data
+namespace Toggl.Phoebe.Data.Models
 {
     public class WorkspaceModel : Model
     {

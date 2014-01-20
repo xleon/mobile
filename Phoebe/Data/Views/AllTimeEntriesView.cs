@@ -1,5 +1,6 @@
 ﻿using System;
 using XPlatUtils;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using System.Collections.Generic;
 using System.Linq.Expressions;

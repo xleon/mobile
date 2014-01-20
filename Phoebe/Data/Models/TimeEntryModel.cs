@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Linq;
 using Newtonsoft.Json;
 
-namespace Toggl.Phoebe.Data
+namespace Toggl.Phoebe.Data.Models
 {
     /* TODO: Things to test:
      * - Stopping another time entry works from any angle

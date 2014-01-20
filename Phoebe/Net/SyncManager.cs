@@ -1,11 +1,12 @@
 ﻿using System;
-using XPlatUtils;
-using Toggl.Phoebe.Data;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Net.Http;
 using System.Linq.Expressions;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {

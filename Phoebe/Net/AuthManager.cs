@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net

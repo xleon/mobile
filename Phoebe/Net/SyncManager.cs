@@ -178,9 +178,8 @@ namespace Toggl.Phoebe.Net
         public bool IsRunning { get; private set; }
 
         private DateTime? LastRun {
-            // TODO:
-            get { return null; }
-            set { }
+            get { return ServiceContainer.Resolve<ISettingsStore> ().SyncLastRun; }
+            set { ServiceContainer.Resolve<ISettingsStore> ().SyncLastRun = value; }
         }
 
         private class Graph

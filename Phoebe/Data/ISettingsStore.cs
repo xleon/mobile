@@ -7,5 +7,7 @@ namespace Toggl.Phoebe.Data
         Guid? UserId { get; set; }
 
         string ApiToken { get; set; }
+
+        DateTime? SyncLastRun { get; set; }
     }
 }

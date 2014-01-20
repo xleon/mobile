@@ -57,6 +57,8 @@ namespace Toggl.Chandler
             public Guid? UserId { get; set; }
 
             public string ApiToken { get; set; }
+
+            public DateTime? SyncLastRun { get; set; }
         }
 
         private class ConsolePlatformInfo : IPlatformInfo

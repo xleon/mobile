@@ -12,7 +12,9 @@ namespace Toggl.Phoebe.Net
 {
     public class SyncManager
     {
+        #pragma warning disable 0414
         private readonly object subscriptionModelsCommited;
+        #pragma warning restore 0414
 
         public SyncManager ()
         {

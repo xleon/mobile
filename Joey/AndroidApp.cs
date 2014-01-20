@@ -13,6 +13,14 @@ namespace Toggl.Joey
     [Application]
     class AndroidApp : Application, IPlatformInfo
     {
+        public AndroidApp () : base ()
+        {
+        }
+
+        public AndroidApp (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer) : base (javaRef, transfer)
+        {
+        }
+
         public override void OnCreate ()
         {
             base.OnCreate ();

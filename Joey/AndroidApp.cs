@@ -6,6 +6,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.Data;
 
 namespace Toggl.Joey
 {
@@ -36,6 +37,8 @@ namespace Toggl.Joey
 
             // Register Joey components:
             ServiceContainer.Register<IPlatformInfo> (this);
+            ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
+            ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
             ServiceContainer.Register<IModelStore> (delegate {
                 string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
                 var path = System.IO.Path.Combine (folder, "toggl.db");

@@ -27,7 +27,7 @@ namespace Toggl.Phoebe.Net
             Run (SyncMode.Auto);
         }
 
-        public async Task Run (SyncMode mode = SyncMode.Full)
+        public async void Run (SyncMode mode = SyncMode.Full)
         {
             if (!ServiceContainer.Resolve<AuthManager> ().IsAuthenticated)
                 return;

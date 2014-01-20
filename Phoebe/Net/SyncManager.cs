@@ -12,6 +12,19 @@ namespace Toggl.Phoebe.Net
 {
     public class SyncManager
     {
+        private readonly object subscriptionModelsCommited;
+
+        public SyncManager ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionModelsCommited = bus.Subscribe<ModelsCommittedMessage> (OnModelsCommited);
+        }
+
+        private void OnModelsCommited (ModelsCommittedMessage msg)
+        {
+            Run (SyncMode.Auto);
+        }
+
         public async Task Run (SyncMode mode = SyncMode.Auto)
         {
             if (IsRunning)

@@ -37,21 +37,31 @@ namespace Toggl.Phoebe.Net
             var client = ServiceContainer.Resolve<ITogglClient> ();
             IsAuthenticating = true;
 
-            var user = await client.GetUser (username, password);
-            if (user == null)
-                return false;
+            try {
+                UserModel user;
+                try {
+                    user = await client.GetUser (username, password);
+                } catch {
+                    // TODO: Log error
+                    user = null;
+                }
+                if (user == null) {
+                    return false;
+                }
 
-            var credStore = ServiceContainer.Resolve<ISettingsStore> ();
-            credStore.UserId = user.Id;
-            credStore.ApiToken = user.ApiToken;
+                var credStore = ServiceContainer.Resolve<ISettingsStore> ();
+                credStore.UserId = user.Id;
+                credStore.ApiToken = user.ApiToken;
 
-            user.IsPersisted = true;
-            IsAuthenticating = false;
-            UserId = user.Id;
-            Token = user.ApiToken;
-            IsAuthenticated = true;
+                user.IsPersisted = true;
+                UserId = user.Id;
+                Token = user.ApiToken;
+                IsAuthenticated = true;
 
-            // TODO: Send message about successful authentication
+                // TODO: Send message about successful authentication
+            } finally {
+                IsAuthenticating = false;
+            }
 
             return true;
         }

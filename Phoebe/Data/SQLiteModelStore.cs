@@ -131,10 +131,11 @@ namespace Toggl.Phoebe.Data
         private static void CreateTables (SQLiteConnection db)
         {
             var modelType = typeof(Model);
+            var modelsNamespace = typeof(Toggl.Phoebe.Data.Models.TimeEntryModel).Namespace;
             // Auto-discover models in single assembly namespace
             var modelSubtypes =
                 from t in modelType.Assembly.GetTypes ()
-                            where t.Namespace == modelType.Namespace && t.IsSubclassOf (modelType)
+                            where t.Namespace == modelsNamespace && t.IsSubclassOf (modelType)
                             select t;
             foreach (var t in modelSubtypes) {
                 db.CreateTable (t);

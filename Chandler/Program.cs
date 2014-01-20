@@ -16,7 +16,7 @@ namespace Toggl.Chandler
             Console.WriteLine ("Using SQLite file: {0}", path);
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<IPlatformInfo> (() => new ConsolePlatformInfo ());
-            ServiceContainer.Register<ICredentialStore> (() => new MemoryCredentialStore ());
+            ServiceContainer.Register<ISettingsStore> (() => new TempSettingsStore ());
             ServiceContainer.Register<IModelStore> (new SQLiteModelStore (path));
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (new Uri ("https://next.toggl.com/api/")));
             ServiceContainer.Register<AuthManager> ();
@@ -52,17 +52,11 @@ namespace Toggl.Chandler
             Console.WriteLine ("Hello World!");
         }
 
-        private class MemoryCredentialStore : ICredentialStore
+        private class TempSettingsStore : ISettingsStore
         {
             public Guid? UserId { get; set; }
 
             public string ApiToken { get; set; }
-
-            public void Clear ()
-            {
-                UserId = null;
-                ApiToken = null;
-            }
         }
 
         private class ConsolePlatformInfo : IPlatformInfo

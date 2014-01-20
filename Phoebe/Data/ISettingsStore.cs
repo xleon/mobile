@@ -2,12 +2,10 @@
 
 namespace Toggl.Phoebe.Data
 {
-    public interface ICredentialStore
+    public interface ISettingsStore
     {
         Guid? UserId { get; set; }
 
         string ApiToken { get; set; }
-
-        void Clear ();
     }
 }

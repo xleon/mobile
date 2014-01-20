@@ -16,13 +16,14 @@ namespace Toggl.Phoebe.Net
 
         public AuthManager ()
         {
-            var credStore = ServiceContainer.Resolve<ICredentialStore> ();
+            var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             try {
                 UserId = credStore.UserId;
                 Token = credStore.ApiToken;
             } catch (ArgumentException) {
                 // When data is corrupt and cannot find user
-                credStore.Clear ();
+                credStore.UserId = null;
+                credStore.ApiToken = null;
             }
         }
 
@@ -40,7 +41,7 @@ namespace Toggl.Phoebe.Net
             if (user == null)
                 return false;
 
-            var credStore = ServiceContainer.Resolve<ICredentialStore> ();
+            var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             credStore.UserId = user.Id;
             credStore.ApiToken = user.ApiToken;
 
@@ -60,8 +61,9 @@ namespace Toggl.Phoebe.Net
             if (IsAuthenticated)
                 throw new InvalidOperationException ("Cannot forget credentials which don't exist.");
 
-            var credStore = ServiceContainer.Resolve<ICredentialStore> ();
-            credStore.Clear ();
+            var credStore = ServiceContainer.Resolve<ISettingsStore> ();
+            credStore.UserId = null;
+            credStore.ApiToken = null;
 
             IsAuthenticated = false;
             Token = null;

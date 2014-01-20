@@ -49,8 +49,8 @@
   <ItemGroup>
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="LoginActivity.cs" />
-    <Compile Include="ModelsViewAdapter.cs" />
+    <Compile Include="UI\Activities\LoginActivity.cs" />
+    <Compile Include="UI\Adapters\ModelsViewAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -70,5 +70,12 @@
       <Project>{FF67B529-C11B-4FE0-AA1B-CD77141816BB}</Project>
       <Name>Phoebe.Android</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="UI\" />
+    <Folder Include="UI\Activities\" />
+    <Folder Include="UI\Fragments\" />
+    <Folder Include="UI\Adapters\" />
+    <Folder Include="Data\" />
   </ItemGroup>
 </Project>

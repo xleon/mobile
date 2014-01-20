@@ -7,7 +7,7 @@ using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Views;
 
-namespace Toggl.Joey
+namespace Toggl.Joey.UI.Adapters
 {
     class ModelsViewAdapter<T> : BaseAdapter
         where T : Model

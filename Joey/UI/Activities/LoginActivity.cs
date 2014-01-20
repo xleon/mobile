@@ -9,7 +9,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 
-namespace Toggl.Joey
+namespace Toggl.Joey.UI.Activities
 {
     [Activity (Label = "LoginActivity", MainLauncher = true, Theme = "@style/Theme.Login")]
     public class LoginActivity : Activity

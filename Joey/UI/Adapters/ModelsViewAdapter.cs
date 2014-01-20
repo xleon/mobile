@@ -9,8 +9,8 @@ using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    class ModelsViewAdapter<T> : BaseAdapter
-        where T : Model
+    public abstract class ModelsViewAdapter<T> : BaseAdapter
+        where T : Model, new()
     {
         private static readonly int LoadMoreOffset = 3;
         protected static readonly int ViewTypeLoaderPlaceholder = 1;
@@ -34,7 +34,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override Java.Lang.Object GetItem (int position)
         {
-            return GetModel (position);
+            return null;
         }
 
         public T GetModel (int position)
@@ -75,7 +75,7 @@ namespace Toggl.Joey.UI.Adapters
 
         protected virtual View GetLoadIndicatorView (int position, View convertView, ViewGroup parent)
         {
-            if (convertView)
+            if (convertView != null)
                 return convertView;
             // TODO: Implement default loading indicator view
             return new TextView (parent.Context) {
@@ -92,8 +92,8 @@ namespace Toggl.Joey.UI.Adapters
         public override int Count {
             get {
                 if (modelsView.IsLoading)
-                    return modelsView.Count + 1;
-                return modelsView.Count;
+                    return (int)modelsView.Count + 1;
+                return (int)modelsView.Count;
             }
         }
     }

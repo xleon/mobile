@@ -224,6 +224,9 @@ namespace Toggl.Phoebe.Data
             } finally {
                 conn.Commit ();
             }
+
+            ServiceContainer.Resolve<MessageBus> ().Send (
+                new ModelsCommittedMessage (this));
         }
 
         private bool IsScheduled { get; set; }

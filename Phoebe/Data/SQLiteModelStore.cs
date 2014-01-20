@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using SQLite;
 using XPlatUtils;
 
@@ -32,6 +33,7 @@ namespace Toggl.Phoebe.Data
                 if (model != null) {
                     model.IsPersisted = true;
                     store.createdModels.Add (new WeakReference (model));
+                    store.ScheduleCommit ();
                 }
             }
         }
@@ -202,12 +204,12 @@ namespace Toggl.Phoebe.Data
 
             if (property == Model.PropertyIsPersisted || model.IsPersisted) {
                 changedModels.Add (model);
+                ScheduleCommit ();
             }
         }
 
         public void Commit ()
         {
-            // TODO: Call this from somewhere...
             conn.BeginTransaction ();
             try {
                 foreach (var model in changedModels) {
@@ -221,6 +223,23 @@ namespace Toggl.Phoebe.Data
                 createdModels.Clear ();
             } finally {
                 conn.Commit ();
+            }
+        }
+
+        private bool IsScheduled { get; set; }
+
+        private async void ScheduleCommit ()
+        {
+            if (IsScheduled)
+                return;
+
+            IsScheduled = true;
+
+            try {
+                await Task.Delay (TimeSpan.FromMilliseconds (250));
+                Commit ();
+            } finally {
+                IsScheduled = false;
             }
         }
     }

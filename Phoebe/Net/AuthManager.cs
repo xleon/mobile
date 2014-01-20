@@ -41,11 +41,15 @@ namespace Toggl.Phoebe.Net
                 UserModel user;
                 try {
                     user = await client.GetUser (username, password);
-                } catch {
+                    if (user == null) {
+                        ServiceContainer.Resolve<MessageBus> ().Send (
+                            new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials));
+                        return false;
+                    }
+                } catch (Exception ex) {
                     // TODO: Log error
-                    user = null;
-                }
-                if (user == null) {
+                    ServiceContainer.Resolve<MessageBus> ().Send (
+                        new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials, ex));
                     return false;
                 }
 
@@ -58,7 +62,8 @@ namespace Toggl.Phoebe.Net
                 Token = user.ApiToken;
                 IsAuthenticated = true;
 
-                // TODO: Send message about successful authentication
+                ServiceContainer.Resolve<MessageBus> ().Send (
+                    new AuthChangedMessage (this));
             } finally {
                 IsAuthenticating = false;
             }
@@ -80,7 +85,9 @@ namespace Toggl.Phoebe.Net
             UserId = null;
 
             // TODO: Clear database
-            // TODO: Send message about user logging out
+
+            ServiceContainer.Resolve<MessageBus> ().Send (
+                new AuthChangedMessage (this));
         }
 
         private bool authenticating;

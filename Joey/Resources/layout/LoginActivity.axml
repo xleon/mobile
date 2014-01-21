@@ -11,36 +11,22 @@
         android:src="@drawable/login_logo"
         android:layout_width="match_parent"
         android:layout_height="119.0dp"
-        android:id="@+id/imageView1"
         android:layout_marginTop="50dp" />
     <EditText
         android:inputType="textEmailAddress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/userEmail"
-        android:hint="Email" />
+        android:id="@+id/EmailEditText"
+        android:hint="@string/LoginEmailHint" />
     <EditText
         android:inputType="textVisiblePassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/userPassword"
-        android:hint="Password" />
-    <CheckBox
-        android:text="Hide password"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/hidePassword"
-        style="@android:style/TextAppearance.Small" />
-    <CheckBox
-        android:text="Remember me"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/rememberMe"
-        style="@android:style/TextAppearance.Small"
-        android:checked="true" />
+        android:id="@+id/PasswordEditText"
+        android:hint="@string/LoginPasswordHint" />
     <Button
-        android:text="Login"
+        android:text="@string/LoginButtonText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button1" />
+        android:id="@+id/LoginButton" />
 </LinearLayout>

@@ -3,4 +3,7 @@
     <string name="AppName">Toggl Time Tracker</string>
     <string name="AppDescription">Simple one-click time tracking.</string>
     <string name="EntryName">Toggl</string>
+    <string name="LoginEmailHint">Email</string>
+    <string name="LoginPasswordHint">Password</string>
+    <string name="LoginButtonText">Login</string>
 </resources>

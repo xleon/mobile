@@ -1,38 +1,78 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Runtime;
-using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
-        Label = "@string/EntryName",
-        MainLauncher = true,
+        Exported = false,
         Theme = "@style/Theme.Login")]
-    public class LoginActivity : Activity
+    public class LoginActivity : BaseActivity
     {
+        protected EditText EmailEditText { get; private set; }
+
+        protected EditText PasswordEditText { get; private set; }
+
+        protected Button LoginButton { get; private set; }
+
+        private void FindViews ()
+        {
+            EmailEditText = FindViewById<EditText> (Resource.Id.EmailEditText);
+            PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
+            LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
+        }
+
+        protected override bool RequireAuth {
+            get { return false; }
+        }
+
+        private void CheckAuth ()
+        {
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (authManager.IsAuthenticated) {
+                var intent = new Intent (this, typeof(RecentTimeEntriesActivity));
+                intent.AddFlags (ActivityFlags.ClearTop);
+                StartActivity (intent);
+                Finish ();
+            }
+        }
+
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
 
-            SetContentView (Resource.Layout.Login);
-            // Create your application here
+            CheckAuth ();
 
-            EditText passwordField = FindViewById<EditText> (Resource.Id.userPassword);
-            CheckBox hidePassword = FindViewById<CheckBox> (Resource.Id.hidePassword);
-            hidePassword.Click += (o, e) => {
-                if (hidePassword.Checked)
-                    passwordField.InputType = Android.Text.InputTypes.ClassText | Android.Text.InputTypes.TextVariationPassword;
-                else
-                    passwordField.InputType = Android.Text.InputTypes.ClassText | Android.Text.InputTypes.TextVariationVisiblePassword;
-            };
+            SetContentView (Resource.Layout.LoginActivity);
+            FindViews ();
+
+            LoginButton.Click += OnLoginButtonClick;
+        }
+
+        protected override void OnResume ()
+        {
+            base.OnResume ();
+
+            CheckAuth ();
+        }
+
+        private async void OnLoginButtonClick (object sender, EventArgs e)
+        {
+            LoginButton.Enabled = false;
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            var success = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
+            LoginButton.Enabled = true;
+
+            if (!success)
+                PasswordEditText.Text = String.Empty;
+
+            CheckAuth ();
         }
     }
 }
-

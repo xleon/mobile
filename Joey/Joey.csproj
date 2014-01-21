@@ -54,6 +54,7 @@
     <Compile Include="AndroidApp.cs" />
     <Compile Include="Data\SettingsStore.cs" />
     <Compile Include="UI\Activities\BaseActivity.cs" />
+    <Compile Include="UI\Activities\RecentTimeEntriesActivity.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

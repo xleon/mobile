@@ -39,13 +39,20 @@ namespace Toggl.Phoebe.Data
         {
             base.OnPropertyChanged (property);
 
-            Validate (property);
+            if (IsShared) {
+                if (property == PropertyIsShared) {
+                    // Validate whole model when being promoted to shared
+                    Validate ();
+                } else {
+                    Validate (property);
+                }
 
-            ServiceContainer.Resolve<MessageBus> ().Send (new ModelChangedMessage (this, property));
+                ServiceContainer.Resolve<MessageBus> ().Send (new ModelChangedMessage (this, property));
 
-            // Automatically mark the object dirty, if property doesn't explicitly disable it
-            if (CanDirty (GetType (), property)) {
-                MarkDirty (property != PropertyModifiedAt);
+                // Automatically mark the object dirty, if property doesn't explicitly disable it
+                if (CanDirty (GetType (), property)) {
+                    MarkDirty (property != PropertyModifiedAt);
+                }
             }
         }
 

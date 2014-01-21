@@ -13,8 +13,8 @@ namespace Toggl.Joey.UI.Adapters
         where T : Model, new()
     {
         private static readonly int LoadMoreOffset = 3;
-        protected static readonly int ViewTypeLoaderPlaceholder = 1;
-        protected static readonly int ViewTypeContent = 2;
+        protected static readonly int ViewTypeLoaderPlaceholder = 0;
+        protected static readonly int ViewTypeContent = 1;
         private IModelsView<T> modelsView;
 
         public BaseModelsViewAdapter (IModelsView<T> modelsView)

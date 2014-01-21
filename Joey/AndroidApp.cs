@@ -10,7 +10,11 @@ using Toggl.Joey.Data;
 
 namespace Toggl.Joey
 {
-    [Application]
+    [Application (
+        Icon = "@drawable/Icon",
+        Label = "@string/AppName",
+        Description = "@string/AppDescription",
+        Theme = "@style/Theme.App")]
     class AndroidApp : Application, IPlatformInfo
     {
         public AndroidApp () : base ()

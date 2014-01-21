@@ -11,7 +11,10 @@ using Android.Widget;
 
 namespace Toggl.Joey.UI.Activities
 {
-    [Activity (Label = "LoginActivity", MainLauncher = true, Theme = "@style/Theme.Login")]
+    [Activity (
+        Label = "@string/EntryName",
+        MainLauncher = true,
+        Theme = "@style/Theme.Login")]
     public class LoginActivity : Activity
     {
         protected override void OnCreate (Bundle bundle)

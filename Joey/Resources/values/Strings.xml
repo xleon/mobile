@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, Click Me!</string>
-    <string name="app_name">Joey</string>
+    <string name="AppName">Toggl Time Tracker</string>
+    <string name="AppDescription">Simple one-click time tracking.</string>
+    <string name="EntryName">Toggl</string>
 </resources>

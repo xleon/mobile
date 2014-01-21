@@ -25,8 +25,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private void OnModelsViewPropertyChanged (object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == ModelsView<T>.PropertyCount
-                || e.PropertyName == ModelsView<T>.PropertyHasMore
+            if (e.PropertyName == ModelsView<T>.PropertyHasMore
                 || e.PropertyName == ModelsView<T>.PropertyModels) {
                 NotifyDataSetChanged ();
             }

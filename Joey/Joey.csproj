@@ -53,6 +53,7 @@
     <Compile Include="UI\Adapters\ModelsViewAdapter.cs" />
     <Compile Include="AndroidApp.cs" />
     <Compile Include="Data\SettingsStore.cs" />
+    <Compile Include="UI\Activities\BaseActivity.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

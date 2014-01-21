@@ -41,7 +41,9 @@ namespace Toggl.Phoebe.Data.Views
                 return;
 
             if (data.Contains (entry)) {
-                data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                ChangeDataAndNotify (delegate {
+                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                });
                 return;
             }
 
@@ -51,12 +53,16 @@ namespace Toggl.Phoebe.Data.Views
                     // Newer version already exists in the dataset.
                     return;
                 } else {
-                    data.Remove (oldEntry);
+                    ChangeDataAndNotify (delegate {
+                        data.Remove (oldEntry);
+                    });
                 }
             }
 
-            data.Add (entry);
-            data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+            ChangeDataAndNotify (delegate {
+                data.Add (entry);
+                data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+            });
         }
 
         private void ChangeDataAndNotify (Action change)

@@ -56,7 +56,7 @@ namespace Toggl.Joey.UI.Adapters
             if (position == modelsView.Count && modelsView.IsLoading)
                 return ViewTypeLoaderPlaceholder;
 
-            return ViewTypeLoaderPlaceholder;
+            return ViewTypeContent;
         }
 
         public override View GetView (int position, View convertView, ViewGroup parent)

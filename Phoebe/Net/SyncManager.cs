@@ -58,7 +58,7 @@ namespace Toggl.Phoebe.Net
                     // Purge excess time entries. Do it 200 items at a time, to avoid allocating too much memory to the
                     // models to be deleted. If there are more than 200 entries, they will be removed in the next purge.
                     var q = Model.Query<TimeEntryModel> (
-                                (te) => (!te.IsDirty && te.RemoteId != null)
+                                (te) => (te.IsDirty != true && te.RemoteId != null)
                                 || (te.RemoteId == null && te.DeletedAt != null))
                         .OrderBy ((te) => te.StartTime, false).Skip (1000).Take (200);
                     foreach (var entry in q) {

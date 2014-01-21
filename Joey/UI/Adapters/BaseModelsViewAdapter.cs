@@ -25,6 +25,10 @@ namespace Toggl.Joey.UI.Adapters
 
         private void OnModelsViewPropertyChanged (object sender, PropertyChangedEventArgs e)
         {
+            // Need to access the Handle property, else mono optimises/loses the context and we get a weird
+            // low-level exception about "'jobject' must not be IntPtr.Zero".
+            if (Handle == IntPtr.Zero)
+                return;
             if (e.PropertyName == ModelsView<T>.PropertyHasMore
                 || e.PropertyName == ModelsView<T>.PropertyModels) {
                 NotifyDataSetChanged ();

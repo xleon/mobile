@@ -20,6 +20,7 @@ namespace Toggl.Phoebe.Net
             try {
                 UserId = credStore.UserId;
                 Token = credStore.ApiToken;
+                IsAuthenticated = !String.IsNullOrEmpty (Token);
             } catch (ArgumentException) {
                 // When data is corrupt and cannot find user
                 credStore.UserId = null;

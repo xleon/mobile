@@ -9,7 +9,7 @@ using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public abstract class ModelsViewAdapter<T> : BaseAdapter
+    public abstract class BaseModelsViewAdapter<T> : BaseAdapter
         where T : Model, new()
     {
         private static readonly int LoadMoreOffset = 3;
@@ -17,7 +17,7 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeContent = 2;
         private IModelsView<T> modelsView;
 
-        public ModelsViewAdapter (IModelsView<T> modelsView)
+        public BaseModelsViewAdapter (IModelsView<T> modelsView)
         {
             this.modelsView = modelsView;
             modelsView.PropertyChanged += OnModelsViewPropertyChanged;

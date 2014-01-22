@@ -55,6 +55,7 @@
     <Compile Include="UI\Activities\BaseActivity.cs" />
     <Compile Include="UI\Activities\RecentTimeEntriesActivity.cs" />
     <Compile Include="UI\Adapters\BaseModelsViewAdapter.cs" />
+    <Compile Include="UI\Adapters\RecentTimeEntriesAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -67,6 +68,8 @@
     <AndroidResource Include="Resources\values\styles.xml" />
     <AndroidResource Include="Resources\drawable\login_logo.png" />
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
+    <AndroidResource Include="Resources\layout\RecentTimeEntriesActivity.axml" />
+    <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

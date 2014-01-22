@@ -6,4 +6,6 @@
     <string name="LoginEmailHint">Email</string>
     <string name="LoginPasswordHint">Password</string>
     <string name="LoginButtonText">Login</string>
+    <string name="RecentTimeEntryNoDescription">(no description)</string>
+    <string name="RecentTimeEntryNoProject">(no project)</string>
 </resources>

@@ -56,6 +56,7 @@
     <Compile Include="UI\Activities\RecentTimeEntriesActivity.cs" />
     <Compile Include="UI\Adapters\BaseModelsViewAdapter.cs" />
     <Compile Include="UI\Adapters\RecentTimeEntriesAdapter.cs" />
+    <Compile Include="UI\Fragments\RecentTimeEntriesListFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

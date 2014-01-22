@@ -14,21 +14,11 @@ namespace Toggl.Joey.UI.Activities
         MainLauncher = true)]
     public class RecentTimeEntriesActivity : BaseActivity
     {
-        protected ListView RecentListView { get; private set; }
-
-        private void FindViews ()
-        {
-            RecentListView = FindViewById<ListView> (Resource.Id.RecentListView);
-        }
-
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
 
             SetContentView (Resource.Layout.RecentTimeEntriesActivity);
-            FindViews ();
-
-            RecentListView.Adapter = new RecentTimeEntriesAdapter ();
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);

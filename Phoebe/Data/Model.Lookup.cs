@@ -175,7 +175,6 @@ namespace Toggl.Phoebe.Data
         {
             if (model.Id == null)
                 model.Id = Guid.NewGuid ();
-            model.IsShared = true;
 
             MemoryModelCache cache;
             var type = model.GetType ();
@@ -185,6 +184,7 @@ namespace Toggl.Phoebe.Data
             }
 
             cache.Add (model);
+            model.IsShared = true;
         }
     }
 }

@@ -20,13 +20,30 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        private static bool UpdateScheduled = false;
 
-        public static void UpdateDurations ()
+        private static async void EnsureLiveDurations ()
         {
-            // TODO: Call this method periodically from some place
-            var allEntries = Model.GetCached<TimeEntryModel> ();
-            foreach (var entry in allEntries) {
-                entry.UpdateDuration ();
+            if (UpdateScheduled)
+                return;
+
+            UpdateScheduled = true;
+            try {
+                bool done = false;
+
+                while (!done) {
+                    done = true;
+
+                    var allEntries = Model.GetCached<TimeEntryModel> ().Where ((te) => te.IsRunning);
+                    foreach (var entry in allEntries) {
+                        entry.UpdateDuration ();
+                        done = false;
+                    }
+
+                    await System.Threading.Tasks.Task.Delay (TimeSpan.FromMilliseconds (500));
+                }
+            } finally {
+                UpdateScheduled = false;
             }
         }
 
@@ -264,6 +281,9 @@ namespace Toggl.Phoebe.Data.Models
                     running = value;
                 });
 
+                if (IsRunning)
+                    EnsureLiveDurations ();
+
                 if (IsRunning && RawDuration >= 0) {
                     RawDuration = (long)(RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds);
                 } else if (!IsRunning && RawDuration < 0) {
@@ -371,6 +391,8 @@ namespace Toggl.Phoebe.Data.Models
                     foreach (var entry in entries) {
                         entry.IsRunning = false;
                     }
+
+                    EnsureLiveDurations ();
                 }
             }
         }

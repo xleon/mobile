@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
@@ -46,6 +47,10 @@ namespace Toggl.Phoebe.Data.Views
                 });
                 return;
             }
+
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (entry.UserId != authManager.UserId)
+                return;
 
             var oldEntry = GetSimilar (entry);
             if (oldEntry != null) {

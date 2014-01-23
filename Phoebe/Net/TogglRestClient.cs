@@ -183,7 +183,7 @@ namespace Toggl.Phoebe.Net
             resp.EnsureSuccessStatusCode ();
         }
 
-        private async Task CreateModel<T> (Uri url, T model)
+        private async Task CreateModel<T> (Uri url, T model, Action<T, T> merger = null)
             where T : Model, new()
         {
             var json = ModelToJson (model);
@@ -197,7 +197,10 @@ namespace Toggl.Phoebe.Net
 
             var respData = await httpResp.Content.ReadAsStringAsync ();
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
-            model.Merge (wrap.Data);
+            if (merger != null)
+                merger (model, wrap.Data);
+            else
+                model.Merge (wrap.Data);
             // In case the local model has changed in the mean time (and merge does nothing),
             // make sure that the remote id is set.
             if (model.RemoteId == null)
@@ -407,7 +410,11 @@ namespace Toggl.Phoebe.Net
         {
             var url = new Uri (v8Url, "time_entries");
             model.CreatedWith = Platform.DefaultCreatedWith;
-            return CreateModel (url, model);
+            return CreateModel (url, model, (te1, te2) => {
+                // Assign the correct user to the response from the server
+                te2.User = ServiceContainer.Resolve<AuthManager> ().User;
+                te1.Merge (te2);
+            });
         }
 
         public Task<TimeEntryModel> GetTimeEntry (long id)

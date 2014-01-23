@@ -40,7 +40,8 @@ namespace Toggl.Phoebe.Data.Models
                         done = false;
                     }
 
-                    await System.Threading.Tasks.Task.Delay (TimeSpan.FromMilliseconds (500));
+                    if (!done)
+                        await System.Threading.Tasks.Task.Delay (TimeSpan.FromMilliseconds (500));
                 }
             } finally {
                 UpdateScheduled = false;

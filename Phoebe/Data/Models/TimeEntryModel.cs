@@ -401,12 +401,14 @@ namespace Toggl.Phoebe.Data.Models
                 WorkspaceId = WorkspaceId,
                 ProjectId = ProjectId,
                 TaskId = TaskId,
+                UserId = UserId,
                 Description = Description,
                 StartTime = DateTime.UtcNow,
                 DurationOnly = DurationOnly,
 //                Tags = Tags,
                 IsBillable = IsBillable,
                 IsRunning = true,
+                IsPersisted = true,
             });
         }
 

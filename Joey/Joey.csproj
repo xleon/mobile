@@ -57,6 +57,7 @@
     <Compile Include="UI\Adapters\BaseModelsViewAdapter.cs" />
     <Compile Include="UI\Adapters\RecentTimeEntriesAdapter.cs" />
     <Compile Include="UI\Fragments\RecentTimeEntriesListFragment.cs" />
+    <Compile Include="UI\Fragments\TimerFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -71,6 +72,9 @@
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntriesActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
+    <AndroidResource Include="Resources\layout\TimerFragment.axml" />
+    <AndroidResource Include="Resources\layout\TimerRunningFragmentState.axml" />
+    <AndroidResource Include="Resources\layout\TimerStoppedFragmentState.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

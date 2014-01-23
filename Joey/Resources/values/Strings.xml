@@ -8,4 +8,7 @@
     <string name="LoginButtonText">Login</string>
     <string name="RecentTimeEntryNoDescription">(no description)</string>
     <string name="RecentTimeEntryNoProject">(no project)</string>
+    <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
+    <string name="TimerStartButtonText">Start</string>
+    <string name="TimerStopButtonText">Stop</string>
 </resources>

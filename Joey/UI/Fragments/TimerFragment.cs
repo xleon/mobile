@@ -59,26 +59,23 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnModelChanged (ModelChangedMessage msg)
         {
-            if (runningEntry != null && msg.Model == runningEntry) {
+            if (msg.Model != runningEntry) {
+                // When some other time entry becomes IsRunning we need to switch over to that
+                if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
+                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
+                    var entry = msg.Model as TimeEntryModel;
+                    if (entry != null && entry.IsRunning && ForCurrentUser (entry)) {
+                        runningEntry = entry;
+                        Rebind ();
+                    }
+                }
+            } else {
                 // Listen for changes regarding current running entry
                 if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
                     || msg.PropertyName == TimeEntryModel.PropertyDuration) {
                     if (!runningEntry.IsRunning)
                         runningEntry = null;
                     Rebind ();
-                }
-            } else if (runningEntry == null) {
-                if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
-                    // Try to find the new running entry to listen for
-                    runningEntry = msg.Model as TimeEntryModel;
-                    if (runningEntry != null) {
-                        if (!runningEntry.IsRunning || !ForCurrentUser (runningEntry)) {
-                            runningEntry = null;
-                        } else {
-                            Rebind ();
-                        }
-                    }
                 }
             }
         }

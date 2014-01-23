@@ -267,7 +267,7 @@ namespace Toggl.Phoebe.Data.Models
                 if (IsRunning && RawDuration >= 0) {
                     RawDuration = (long)(RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds);
                 } else if (!IsRunning && RawDuration < 0) {
-                    RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds - RawDuration);
+                    RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds + RawDuration);
                 }
             }
         }

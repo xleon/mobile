@@ -47,6 +47,9 @@ namespace Toggl.Joey.UI.Activities
             case 0:
                 fragment = new RecentTimeEntriesListFragment ();
                 break;
+            case 1:
+                fragment = new LogTimeEntriesListFragment ();
+                break;
             default:
                 return false;
             }

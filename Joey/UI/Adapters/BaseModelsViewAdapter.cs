@@ -30,7 +30,8 @@ namespace Toggl.Joey.UI.Adapters
             if (Handle == IntPtr.Zero)
                 return;
             if (e.PropertyName == ModelsView<T>.PropertyHasMore
-                || e.PropertyName == ModelsView<T>.PropertyModels) {
+                || e.PropertyName == ModelsView<T>.PropertyModels
+                || e.PropertyName == ModelsView<T>.PropertyIsLoading) {
                 NotifyDataSetChanged ();
             }
         }

@@ -28,6 +28,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            HasMore = true;
             Reload ();
         }
 

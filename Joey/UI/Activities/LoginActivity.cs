@@ -36,7 +36,7 @@ namespace Toggl.Joey.UI.Activities
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.IsAuthenticated) {
-                var intent = new Intent (this, typeof(RecentTimeEntriesActivity));
+                var intent = new Intent (this, typeof(TimeEntriesActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);
                 StartActivity (intent);
                 Finish ();

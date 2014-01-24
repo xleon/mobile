@@ -8,9 +8,8 @@
         android:layout_width="match_parent"
         android:layout_height="60dip"
         android:id="@+id/TimerFragment" />
-    <fragment
-        android:name="Toggl.Joey.UI.Fragments.RecentTimeEntriesListFragment"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/RecentTimeEntriesListFragment" />
+        android:id="@+id/TimeEntriesListFragmentContainer" />
 </LinearLayout>

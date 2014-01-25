@@ -1,14 +1,37 @@
 using System;
 using NUnit.Framework;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests
 {
-    [TestFixture ()]
-    public class Test
+    public abstract class Test
     {
-        [Test ()]
-        public void TestCase ()
+        [TestFixtureSetUp]
+        public virtual void Init ()
         {
+            ServiceContainer.Register<MessageBus> ();
+        }
+
+        [TestFixtureTearDown]
+        public virtual void Cleanup ()
+        {
+            ServiceContainer.Clear ();
+        }
+
+        [SetUp]
+        public virtual void SetUp ()
+        {
+            ServiceContainer.AddScope ();
+        }
+
+        [TearDown]
+        public virtual void TearDown ()
+        {
+            ServiceContainer.RemoveScope ();
+        }
+
+        protected MessageBus MessageBus {
+            get { return ServiceContainer.Resolve<MessageBus> (); }
         }
     }
 }

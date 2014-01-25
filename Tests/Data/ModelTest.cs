@@ -2,39 +2,14 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
-using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Data
 {
     [TestFixture]
-    public class ModelTest
+    public class ModelTest : Test
     {
         private class PlainModel : Model
         {
-        }
-
-        [TestFixtureSetUp]
-        public void Init ()
-        {
-            ServiceContainer.Register<MessageBus> ();
-        }
-
-        [TestFixtureTearDown]
-        public void Cleanup ()
-        {
-            ServiceContainer.Clear ();
-        }
-
-        [SetUp]
-        public void SetUp ()
-        {
-            ServiceContainer.AddScope ();
-        }
-
-        [TearDown]
-        public void TearDown ()
-        {
-            ServiceContainer.RemoveScope ();
         }
 
         [Test]
@@ -53,10 +28,6 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.IsNull (model.RemoteDeletedAt, "RemoteDeletedAt must be null");
             Assert.IsEmpty (model.Errors, "Errors must be empty");
             Assert.IsTrue (model.IsValid, "IsValid must be true");
-        }
-
-        private MessageBus MessageBus {
-            get { return ServiceContainer.Resolve<MessageBus> (); }
         }
 
         [Test]

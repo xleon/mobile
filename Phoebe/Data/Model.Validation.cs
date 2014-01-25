@@ -26,9 +26,11 @@ namespace Toggl.Phoebe.Data
             var ctx = new ValidationContext (properties);
             Validate (ctx);
 
-            ChangePropertyAndNotify (PropertyErrors, delegate {
-                ctx.GetErrors (propertyErrors);
-            });
+            if (ctx.HasErrors) {
+                ChangePropertyAndNotify (PropertyErrors, delegate {
+                    ctx.GetErrors (propertyErrors);
+                });
+            }
 
             IsValid = propertyErrors.Count == 0;
         }

@@ -39,6 +39,10 @@ namespace Toggl.Phoebe.Data
             errors [propertyName] = null;
         }
 
+        public bool HasErrors {
+            get { return errors.Count > 0; }
+        }
+
         public void GetErrors (Dictionary<string, string> dict)
         {
             if (properties == null) {

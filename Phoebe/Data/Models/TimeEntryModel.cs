@@ -34,7 +34,7 @@ namespace Toggl.Phoebe.Data.Models
                 while (!done) {
                     done = true;
 
-                    var allEntries = Model.GetCached<TimeEntryModel> ().Where ((te) => te.IsRunning);
+                    var allEntries = Model.Manager.Cached<TimeEntryModel> ().Where ((te) => te.IsRunning);
                     foreach (var entry in allEntries) {
                         entry.UpdateDuration ();
                         done = false;
@@ -378,7 +378,7 @@ namespace Toggl.Phoebe.Data.Models
                 || property == PropertyIsPersisted) {
                 if (IsShared && IsRunning && IsPersisted) {
                     // Make sure that this is the only time entry running:
-                    var entries = Model.GetCached<TimeEntryModel> ().Where ((m) => m.UserId == UserId && m.IsRunning);
+                    var entries = Model.Manager.Cached<TimeEntryModel> ().Where ((m) => m.UserId == UserId && m.IsRunning);
                     foreach (var entry in entries) {
                         if (entry == this)
                             continue;
@@ -436,5 +436,6 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         #endregion
+
     }
 }

@@ -36,6 +36,7 @@ namespace Toggl.Joey
         {
             // Register common Phoebe components:
             ServiceContainer.Register<MessageBus> ();
+            ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<SyncManager> ();
             ServiceContainer.Register<ITogglClient> (delegate {

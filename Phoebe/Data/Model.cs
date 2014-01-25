@@ -107,7 +107,7 @@ namespace Toggl.Phoebe.Data
 
                 // Check for constraints
                 if (value != null && IsShared) {
-                    if (Model.GetByRemoteId (GetType (), value.Value) != null) {
+                    if (Model.Manager.GetByRemoteId (GetType (), value.Value) != null) {
                         throw new IntegrityException ("Model with such RemoteId already exists.");
                     }
                 }
@@ -116,13 +116,7 @@ namespace Toggl.Phoebe.Data
                     var oldId = remoteId;
                     remoteId = value;
 
-                    if (IsShared) {
-                        // Update cache index
-                        MemoryModelCache cache;
-                        if (modelCaches.TryGetValue (GetType (), out cache)) {
-                            cache.UpdateRemoteId (this, oldId, remoteId);
-                        }
-                    }
+                    Manager.NotifyRemoteIdChanged (this, oldId, remoteId);
                 });
             }
         }
@@ -214,7 +208,7 @@ namespace Toggl.Phoebe.Data
         [SQLite.Ignore]
         public bool IsShared {
             get { return sharedInstance; }
-            private set {
+            internal set {
                 if (sharedInstance == value || !value)
                     return;
 

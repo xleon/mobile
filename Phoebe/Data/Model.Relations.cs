@@ -51,7 +51,7 @@ namespace Toggl.Phoebe.Data
             // Try to resolve id to model
             Model inst = null;
             if (fk.Id != null) {
-                inst = Model.GetCached (fk.InstanceType).FirstOrDefault ((m) => m.Id == fk.Id.Value);
+                inst = Model.Manager.Cached (fk.InstanceType).FirstOrDefault ((m) => m.Id == fk.Id.Value);
             }
             if (inst != fk.Instance) {
                 ChangePropertyAndNotify (fk.InstanceProperty, delegate {
@@ -74,7 +74,7 @@ namespace Toggl.Phoebe.Data
 
             if (fk.Id != null) {
                 // Lazy loading, try to load the value from shared models, or database.
-                var inst = Model.Get (fk.InstanceType, fk.Id.Value);
+                var inst = Model.Manager.Get (fk.InstanceType, fk.Id.Value);
 
                 ChangePropertyAndNotify (fk.InstanceProperty, delegate {
                     fk.Instance = inst;

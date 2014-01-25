@@ -24,7 +24,7 @@ namespace Toggl.Phoebe.Data
             }
 
             var remoteId = Convert.ToInt64 (reader.Value);
-            var model = Model.GetByRemoteId (objectType, remoteId);
+            var model = Model.Manager.GetByRemoteId (objectType, remoteId);
             if (model == null) {
                 model = (Model)Activator.CreateInstance (objectType);
                 model.RemoteId = remoteId;

@@ -26,7 +26,7 @@ namespace Toggl.Phoebe.Tests.Data
                 store.Get (typeof(PlainModel), id) == storedModel
             ));
 
-            Assert.AreSame (storedModel, Model.Get<PlainModel> (id));
+            Assert.AreSame (storedModel, Model.ById<PlainModel> (id));
         }
 
         [Test]
@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.Tests.Data
                 Id = id,
             });
 
-            Assert.AreSame (model, Model.Get<PlainModel> (id));
+            Assert.AreSame (model, Model.ById<PlainModel> (id));
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace Toggl.Phoebe.Tests.Data
                 store.Get (typeof(PlainModel), id) == storedModel
             ));
 
-            Assert.IsNull (Model.Get<PlainModel> (id));
+            Assert.IsNull (Model.ById<PlainModel> (id));
         }
 
         [Test]
@@ -76,7 +76,7 @@ namespace Toggl.Phoebe.Tests.Data
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
 
-            Assert.AreSame (storedModel, Model.GetByRemoteId<PlainModel> (remoteId));
+            Assert.AreSame (storedModel, Model.ByRemoteId<PlainModel> (remoteId));
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace Toggl.Phoebe.Tests.Data
                 RemoteId = remoteId,
             });
 
-            Assert.AreSame (model, Model.GetByRemoteId<PlainModel> (remoteId));
+            Assert.AreSame (model, Model.ByRemoteId<PlainModel> (remoteId));
         }
 
         [Test]
@@ -109,7 +109,7 @@ namespace Toggl.Phoebe.Tests.Data
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
 
-            Assert.IsNull (Model.GetByRemoteId<PlainModel> (remoteId));
+            Assert.IsNull (Model.ByRemoteId<PlainModel> (remoteId));
         }
     }
 }

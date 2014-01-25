@@ -132,7 +132,7 @@ namespace Toggl.Phoebe.Net
 
                 UserModel model = null;
                 if (value.HasValue) {
-                    model = Model.Get<UserModel> (value.Value);
+                    model = Model.ById<UserModel> (value.Value);
                     if (model == null)
                         throw new ArgumentException ("Unable to resolve UserId to model.");
                 }

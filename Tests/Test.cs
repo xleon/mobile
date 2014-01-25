@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using Toggl.Phoebe.Data;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests
@@ -22,6 +23,7 @@ namespace Toggl.Phoebe.Tests
         public virtual void SetUp ()
         {
             ServiceContainer.AddScope ();
+            ServiceContainer.RegisterScoped (new ModelManager ());
         }
 
         [TearDown]

@@ -43,7 +43,7 @@ namespace Toggl.Phoebe.Tests.Data
             model.PropertyChanged += (sender, e) => {
                 if (e.PropertyName == PlainModel.PropertyIsShared) {
                     // Check that model is present in cache
-                    Assert.That (Model.GetCached<PlainModel> (), Has.Exactly (1).SameAs (model), "The newly shared object should be present in cache already.");
+                    Assert.That (Model.Manager.Cached<PlainModel> (), Has.Exactly (1).SameAs (model), "The newly shared object should be present in cache already.");
                 } else if (e.PropertyName == PlainModel.PropertyId) {
                     // Expect ID assignment
                 } else {

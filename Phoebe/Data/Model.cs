@@ -127,7 +127,7 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        private DateTime modified;
+        private DateTime modified = DateTime.UtcNow;
         public static readonly string PropertyModifiedAt = GetPropertyName ((m) => m.ModifiedAt);
 
         [JsonProperty ("at")]

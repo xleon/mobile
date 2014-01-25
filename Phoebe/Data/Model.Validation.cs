@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.Data
             get { return propertyErrors; }
         }
 
-        private bool valid;
+        private bool valid = true;
         public static readonly string PropertyIsValid = GetPropertyName ((m) => m.IsValid);
 
         [DontDirty]

@@ -28,6 +28,7 @@ namespace Toggl.Phoebe.Data
             if (model == null) {
                 model = (Model)Activator.CreateInstance (objectType);
                 model.RemoteId = remoteId;
+                model.ModifiedAt = new DateTime ();
                 model = Model.Update (model);
             }
 

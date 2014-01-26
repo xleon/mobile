@@ -23,8 +23,12 @@ namespace Toggl.Phoebe.Data
 
         public void AddError (string propertyName, string error)
         {
-            if (errors.ContainsKey (propertyName))
+            // Prevent overriding previous error
+            string prevError;
+            errors.TryGetValue (propertyName, out prevError);
+            if (prevError != null)
                 return;
+
             errors [propertyName] = error;
         }
 
@@ -39,25 +43,54 @@ namespace Toggl.Phoebe.Data
             errors [propertyName] = null;
         }
 
-        public bool HasErrors {
-            get { return errors.Count > 0; }
-        }
-
-        public void GetErrors (Dictionary<string, string> dict)
+        public bool CheckForChangedErrors (IDictionary<string, string> existingErrors)
         {
             if (properties == null) {
-                dict.Clear ();
+                // If all of the existing error keys aren't present in changes, something has changed
+                foreach (var prop in existingErrors.Keys) {
+                    if (!errors.ContainsKey (prop))
+                        return true;
+                }
+            } else {
+                // Check for old errors that will be cleared for properties
+                foreach (var prop in properties) {
+                    if (existingErrors.ContainsKey (prop) && !errors.ContainsKey (prop))
+                        return true;
+                }
+            }
+
+            // Compare error changes with existing errors
+            foreach (var kvp in errors) {
+                if (kvp.Value == null) {
+                    if (existingErrors.ContainsKey (kvp.Key))
+                        return true;
+                } else {
+                    string oldError;
+                    if (!existingErrors.TryGetValue (kvp.Key, out oldError))
+                        return true;
+                    if (oldError != kvp.Value)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void MergeErrors (Dictionary<string, string> existingErrors)
+        {
+            if (properties == null) {
+                existingErrors.Clear ();
             } else {
                 foreach (var propertyName in properties) {
-                    dict.Remove (propertyName);
+                    existingErrors.Remove (propertyName);
                 }
             }
 
             foreach (var kvp in errors) {
                 if (kvp.Value != null) {
-                    dict [kvp.Key] = kvp.Value;
+                    existingErrors [kvp.Key] = kvp.Value;
                 } else {
-                    dict.Remove (kvp.Key);
+                    existingErrors.Remove (kvp.Key);
                 }
             }
         }

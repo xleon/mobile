@@ -42,6 +42,7 @@
     <Compile Include="Test.cs" />
     <Compile Include="Data\ModelTest.cs" />
     <Compile Include="Data\ModelManagerTest.cs" />
+    <Compile Include="Data\ModelValidationTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

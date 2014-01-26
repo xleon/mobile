@@ -27,6 +27,7 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null)
                 return;
 
+            model.IsPersisted = true;
             model.Continue ();
         }
     }

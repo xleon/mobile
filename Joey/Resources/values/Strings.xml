@@ -3,4 +3,17 @@
     <string name="AppName">Toggl Time Tracker</string>
     <string name="AppDescription">Simple one-click time tracking.</string>
     <string name="EntryName">Toggl</string>
+    <string name="LoginEmailHint">Email</string>
+    <string name="LoginPasswordHint">Password</string>
+    <string name="LoginButtonText">Login</string>
+    <string name="RecentTimeEntryNoDescription">(no description)</string>
+    <string name="RecentTimeEntryNoProject">(no project)</string>
+    <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
+    <string name="TimerStartButtonText">Start</string>
+    <string name="TimerStopButtonText">Stop</string>
+    <string name="LogTimeEntryEditButton">Edit</string>
+    <string-array name="TimeEntriesNavigationList">
+        <item>Recent</item>
+        <item>Log</item>
+    </string-array>
 </resources>

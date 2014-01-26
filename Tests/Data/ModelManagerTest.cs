@@ -7,14 +7,27 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Tests.Data
 {
     [TestFixture]
-    public class ModelLookupTest : Test
+    public class ModelManagerTest : Test
     {
         private class PlainModel : Model
         {
         }
 
+        private ModelManager Manager {
+            get { return ServiceContainer.Resolve<ModelManager> (); }
+        }
+
         [Test]
-        public void TestByIdFromStore ()
+        public void TestCaching ()
+        {
+            Assert.IsEmpty (Manager.Cached<PlainModel> (), "Nothing should be cached yet.");
+            var model = Manager.Update (new PlainModel ());
+            Assert.That (Manager.Cached<PlainModel> (), Has.Exactly (1).EqualTo (model), "Only single item should be cached.");
+            Assert.IsEmpty (Manager.Cached<Model> (), "Other types cache shouldn't be affected.");
+        }
+
+        [Test]
+        public void TestGetByIdFromStore ()
         {
             var id = Guid.NewGuid ();
             var storedModel = new PlainModel () {
@@ -26,11 +39,11 @@ namespace Toggl.Phoebe.Tests.Data
                 store.Get (typeof(PlainModel), id) == storedModel
             ));
 
-            Assert.AreSame (storedModel, Model.ById<PlainModel> (id));
+            Assert.AreSame (storedModel, Manager.Get<PlainModel> (id));
         }
 
         [Test]
-        public void TestByIdFromCache ()
+        public void TestGetByIdFromCache ()
         {
             var id = Guid.NewGuid ();
             PlainModel storedModel = null;
@@ -41,15 +54,15 @@ namespace Toggl.Phoebe.Tests.Data
             ));
 
             // TODO: Should instead just mock the cache
-            var model = Model.Update (new PlainModel () {
+            var model = Manager.Update (new PlainModel () {
                 Id = id,
             });
 
-            Assert.AreSame (model, Model.ById<PlainModel> (id));
+            Assert.AreSame (model, Manager.Get<PlainModel> (id));
         }
 
         [Test]
-        public void TestByIdNotFound ()
+        public void TestGetByIdNotFound ()
         {
             var id = Guid.NewGuid ();
             PlainModel storedModel = null;
@@ -59,11 +72,11 @@ namespace Toggl.Phoebe.Tests.Data
                 store.Get (typeof(PlainModel), id) == storedModel
             ));
 
-            Assert.IsNull (Model.ById<PlainModel> (id));
+            Assert.IsNull (Manager.Get<PlainModel> (id));
         }
 
         [Test]
-        public void TestByRemoteIdFromStore ()
+        public void TestGetByRemoteIdFromStore ()
         {
             var remoteId = 1234;
             var storedModel = new PlainModel () {
@@ -76,13 +89,13 @@ namespace Toggl.Phoebe.Tests.Data
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
 
-            Assert.AreSame (storedModel, Model.ByRemoteId<PlainModel> (remoteId));
+            Assert.AreSame (storedModel, Manager.GetByRemoteId<PlainModel> (remoteId));
         }
 
         [Test]
-        public void TestByRemoteIdFromCache ()
+        public void TestGetByRemoteIdFromCache ()
         {
-            var remoteId = 2345;
+            var remoteId = 1234;
             PlainModel storedModel = null;
 
             ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
@@ -91,17 +104,17 @@ namespace Toggl.Phoebe.Tests.Data
             ));
 
             // TODO: Should instead just mock the cache
-            var model = Model.Update (new PlainModel () {
+            var model = Manager.Update (new PlainModel () {
                 RemoteId = remoteId,
             });
 
-            Assert.AreSame (model, Model.ByRemoteId<PlainModel> (remoteId));
+            Assert.AreSame (model, Manager.GetByRemoteId<PlainModel> (remoteId));
         }
 
         [Test]
-        public void TestByRemoteIdNotFound ()
+        public void TestGetByRemoteIdNotFound ()
         {
-            var remoteId = 3456;
+            var remoteId = 1234;
             PlainModel storedModel = null;
 
             ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
@@ -109,7 +122,7 @@ namespace Toggl.Phoebe.Tests.Data
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
 
-            Assert.IsNull (Model.ByRemoteId<PlainModel> (remoteId));
+            Assert.IsNull (Manager.GetByRemoteId<PlainModel> (remoteId));
         }
     }
 }

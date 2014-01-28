@@ -128,7 +128,7 @@ namespace Toggl.Phoebe.Data
             modelChangedSubscription = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage);
         }
 
-        private static void CreateTables (SQLiteConnection db)
+        protected virtual void CreateTables (SQLiteConnection db)
         {
             var modelType = typeof(Model);
             var modelsNamespace = typeof(Toggl.Phoebe.Data.Models.TimeEntryModel).Namespace;
@@ -234,7 +234,7 @@ namespace Toggl.Phoebe.Data
 
         private bool IsScheduled { get; set; }
 
-        private async void ScheduleCommit ()
+        protected async virtual void ScheduleCommit ()
         {
             if (IsScheduled)
                 return;

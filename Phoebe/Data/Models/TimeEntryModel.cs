@@ -52,6 +52,7 @@ namespace Toggl.Phoebe.Data.Models
         private readonly int projectRelationId;
         private readonly int taskRelationId;
         private readonly int userRelationId;
+        private readonly TagsCollection tagsCollection;
 
         public TimeEntryModel ()
         {
@@ -59,6 +60,7 @@ namespace Toggl.Phoebe.Data.Models
             projectRelationId = ForeignRelation<ProjectModel> (PropertyProjectId, PropertyProject);
             taskRelationId = ForeignRelation<TaskModel> (PropertyTaskId, PropertyTask);
             userRelationId = ForeignRelation<UserModel> (PropertyUserId, PropertyUser);
+            tagsCollection = new TagsCollection (this);
         }
 
         private string GetPropertyName<T> (Expression<Func<T>> expr)
@@ -245,13 +247,6 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        public ISet<string> Tags {
-            get {
-                // TODO: Implement Tags logic
-                return null;
-            }
-        }
-
         private bool durationOnly;
         public static readonly string PropertyDurationOnly = GetPropertyName ((m) => m.DurationOnly);
 
@@ -289,6 +284,38 @@ namespace Toggl.Phoebe.Data.Models
                     RawDuration = (long)(RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds);
                 } else if (!IsRunning && RawDuration < 0) {
                     RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds + RawDuration);
+                }
+            }
+        }
+
+        private List<string> stringTagsList;
+
+        [JsonProperty ("tags")]
+        private List<string> StringTags {
+            get {
+                if (stringTagsList != null)
+                    return stringTagsList;
+                if (!IsShared)
+                    return null;
+                return Tags.Select ((m) => m.To.Name).ToList ();
+            }
+            set {
+                if (IsShared && value != null) {
+                    stringTagsList = null;
+                    foreach (var inter in Tags.ToList()) {
+                        if (!value.Remove (inter.To.Name)) {
+                            inter.Delete ();
+                        }
+                    }
+                    foreach (var tag in value) {
+                        Tags.Add (tag);
+                    }
+                } else if (value != null) {
+                    stringTagsList = value.Where ((tag) => !String.IsNullOrWhiteSpace (tag)).ToList ();
+                    if (stringTagsList.Count == 0)
+                        stringTagsList = null;
+                } else {
+                    stringTagsList = null;
                 }
             }
         }
@@ -365,6 +392,11 @@ namespace Toggl.Phoebe.Data.Models
             set { SetForeignModel (userRelationId, value); }
         }
 
+        [SQLite.Ignore]
+        public TagsCollection Tags {
+            get { return tagsCollection; }
+        }
+
         #endregion
 
         #region Business logic
@@ -372,6 +404,14 @@ namespace Toggl.Phoebe.Data.Models
         protected override void OnPropertyChanged (string property)
         {
             base.OnPropertyChanged (property);
+
+            // Make sure the string tags are converted into actual relations as soon as possible:
+            if (property == PropertyIsShared
+                || property == PropertyIsPersisted) {
+                if (IsShared && IsPersisted && stringTagsList != null) {
+                    StringTags = stringTagsList;
+                }
+            }
 
             if (property == PropertyIsShared
                 || property == PropertyIsRunning
@@ -396,6 +436,12 @@ namespace Toggl.Phoebe.Data.Models
                     EnsureLiveDurations ();
                 }
             }
+        }
+
+        public override void Delete ()
+        {
+            base.Delete ();
+            Tags.Clear ();
         }
 
         public void Stop ()
@@ -428,7 +474,7 @@ namespace Toggl.Phoebe.Data.Models
                 Description = Description,
                 StartTime = DateTime.UtcNow,
                 DurationOnly = DurationOnly,
-//                Tags = Tags,
+                StringTags = StringTags,
                 IsBillable = IsBillable,
                 IsRunning = true,
                 IsPersisted = true,
@@ -437,5 +483,53 @@ namespace Toggl.Phoebe.Data.Models
 
         #endregion
 
+        public class TagsCollection : RelatedModelsCollection<TagModel, TimeEntryTagModel, TimeEntryModel, TagModel>
+        {
+            private readonly TimeEntryModel model;
+
+            public TagsCollection (TimeEntryModel model) : base (model)
+            {
+                this.model = model;
+            }
+
+            private TagModel GetTagModel (string tag)
+            {
+                var tagModel = Model.Manager.Cached<TagModel> ()
+                    .Where ((m) => m.WorkspaceId == model.WorkspaceId && m.Name == tag)
+                    .FirstOrDefault ();
+                if (tagModel == null) {
+                    tagModel = Model.Query<TagModel> ((m) => m.WorkspaceId == model.WorkspaceId && m.Name == tag)
+                        .FirstOrDefault ();
+                }
+                return tagModel;
+            }
+
+            public TimeEntryTagModel Add (string tag)
+            {
+                if (!model.WorkspaceId.HasValue)
+                    throw new InvalidOperationException ("Cannot add a tag to a model with no workspace association");
+
+                var tagModel = GetTagModel (tag);
+                if (tagModel == null) {
+                    tagModel = Model.Update (new TagModel () {
+                        Name = tag,
+                        WorkspaceId = model.WorkspaceId,
+                        IsPersisted = true,
+                    });
+                }
+
+                return Add (tagModel);
+            }
+
+            public void Remove (string tag)
+            {
+                if (!model.WorkspaceId.HasValue)
+                    throw new InvalidOperationException ("Cannot remove a tag to a model with no workspace association");
+
+                var tagModel = GetTagModel (tag);
+                if (tagModel != null)
+                    Remove (tagModel);
+            }
+        }
     }
 }

@@ -75,6 +75,11 @@ namespace Toggl.Phoebe.Net
                             m.IsPersisted = true;
                         }
                     }
+                    foreach (var m in changes.Tags) {
+                        if (m.RemoteDeletedAt == null) {
+                            m.IsPersisted = true;
+                        }
+                    }
                     foreach (var m in changes.Clients) {
                         if (m.RemoteDeletedAt == null) {
                             m.IsPersisted = true;
@@ -102,6 +107,7 @@ namespace Toggl.Phoebe.Net
                     // Construct dependency graph:
                     var graph = Graph.FromDirty (Enumerable.Empty<Model> ()
                         .Union (QueryDirtyModels<WorkspaceModel> ())
+                        .Union (QueryDirtyModels<TagModel> ())
                         .Union (QueryDirtyModels<ClientModel> ())
                         .Union (QueryDirtyModels<ProjectModel> ())
                         .Union (QueryDirtyModels<TaskModel> ())

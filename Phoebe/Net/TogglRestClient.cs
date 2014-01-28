@@ -46,6 +46,8 @@ namespace Toggl.Phoebe.Net
                 await CreateWorkspace (model as WorkspaceModel);
             } else if (type == typeof(UserModel)) {
                 await CreateUser (model as UserModel);
+            } else if (type == typeof(TagModel)) {
+                await CreateTag (model as TagModel);
             } else {
                 throw new NotSupportedException ("Creating of model (of type T) is not supported.");
             }
@@ -101,6 +103,8 @@ namespace Toggl.Phoebe.Net
                 await UpdateWorkspace (model as WorkspaceModel);
             } else if (type == typeof(UserModel)) {
                 await UpdateUser (model as UserModel);
+            } else if (type == typeof(TagModel)) {
+                await UpdateTag (model as TagModel);
             } else {
                 throw new NotSupportedException ("Updating of model (of type T) is not supported.");
             }
@@ -118,6 +122,8 @@ namespace Toggl.Phoebe.Net
                 await DeleteTask (model as TaskModel);
             } else if (type == typeof(TimeEntryModel)) {
                 await DeleteTimeEntry (model as TimeEntryModel);
+            } else if (type == typeof(TagModel)) {
+                await DeleteTag (model as TagModel);
             } else {
                 throw new NotSupportedException ("Deleting of model (of type T) is not supported.");
             }
@@ -157,6 +163,8 @@ namespace Toggl.Phoebe.Net
                 dataKey = "workspace";
             } else if (typeof(T) == typeof(UserModel)) {
                 dataKey = "user";
+            } else if (typeof(T) == typeof(TagModel)) {
+                dataKey = "tag";
             } else {
                 throw new ArgumentException ("Don't know how to handle model of type T.", "model");
             }
@@ -496,6 +504,28 @@ namespace Toggl.Phoebe.Net
 
         #endregion
 
+        #region Tag methods
+
+        public Task CreateTag (TagModel model)
+        {
+            var url = new Uri (v8Url, "tags");
+            return CreateModel (url, model);
+        }
+
+        public Task UpdateTag (TagModel model)
+        {
+            var url = new Uri (v8Url, String.Format ("tags/{0}", model.RemoteId.Value.ToString ()));
+            return UpdateModel (url, model);
+        }
+
+        public Task DeleteTag (TagModel model)
+        {
+            var url = new Uri (v8Url, String.Format ("tags/{0}", model.RemoteId.Value.ToString ()));
+            return DeleteModel (url);
+        }
+
+        #endregion
+
         #region User methods
 
         public Task CreateUser (UserModel model)
@@ -570,6 +600,7 @@ namespace Toggl.Phoebe.Net
                 Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
                 User = user,
                 Workspaces = GetChangesModels<WorkspaceModel> (json ["data"] ["workspaces"]),
+                Tags = GetChangesModels<TagModel> (json ["data"] ["tags"]),
                 Clients = GetChangesModels<ClientModel> (json ["data"] ["clients"]),
                 Projects = GetChangesModels<ProjectModel> (json ["data"] ["projects"]),
                 Tasks = GetChangesModels<TaskModel> (json ["data"] ["tasks"]),

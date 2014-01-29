@@ -12,10 +12,12 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         private readonly int defaultWorkspaceRelationId;
+        private readonly RelatedModelsCollection<WorkspaceModel, WorkspaceUserModel, WorkspaceModel, UserModel> workspacesCollection;
 
         public UserModel ()
         {
             defaultWorkspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyDefaultWorkspaceId, PropertyDefaultWorkspace);
+            workspacesCollection = new RelatedModelsCollection<WorkspaceModel, WorkspaceUserModel, WorkspaceModel, UserModel> (this);
         }
 
         protected override void Validate (ValidationContext ctx)
@@ -344,6 +346,11 @@ namespace Toggl.Phoebe.Data.Models
             get { return Model.Query<TimeEntryModel> ((m) => m.UserId == Id); }
         }
 
+        public RelatedModelsCollection<WorkspaceModel, WorkspaceUserModel, WorkspaceModel, UserModel> Workspaces {
+            get { return workspacesCollection; }
+        }
+
         #endregion
+
     }
 }

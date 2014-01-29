@@ -107,6 +107,7 @@ namespace Toggl.Phoebe.Net
                     // Construct dependency graph:
                     var graph = Graph.FromDirty (Enumerable.Empty<Model> ()
                         .Union (QueryDirtyModels<WorkspaceModel> ())
+                        .Union (QueryDirtyModels<WorkspaceUserModel> ())
                         .Union (QueryDirtyModels<TagModel> ())
                         .Union (QueryDirtyModels<ClientModel> ())
                         .Union (QueryDirtyModels<ProjectModel> ())

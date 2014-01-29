@@ -11,6 +11,13 @@ namespace Toggl.Phoebe.Data.Models
             return expr.ToPropertyName ();
         }
 
+        private readonly RelatedModelsCollection<UserModel, WorkspaceUserModel, WorkspaceModel, UserModel> usersCollection;
+
+        public WorkspaceModel ()
+        {
+            usersCollection = new RelatedModelsCollection<UserModel, WorkspaceUserModel, WorkspaceModel, UserModel> (this);
+        }
+
         protected override void Validate (ValidationContext ctx)
         {
             base.Validate (ctx);
@@ -225,6 +232,11 @@ namespace Toggl.Phoebe.Data.Models
             get { return Model.Query<TimeEntryModel> ((m) => m.WorkspaceId == Id); }
         }
 
+        public RelatedModelsCollection<UserModel, WorkspaceUserModel, WorkspaceModel, UserModel> Users {
+            get { return usersCollection; }
+        }
+
         #endregion
+
     }
 }

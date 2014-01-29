@@ -8,6 +8,7 @@ namespace Toggl.Phoebe.Net
 {
     public interface ITogglClient
     {
+
         #region Generic CURD methods
 
         Task Create<T> (T model)
@@ -36,9 +37,13 @@ namespace Toggl.Phoebe.Net
 
         Task<List<ProjectModel>> ListWorkspaceProjects (long workspaceId);
 
+        Task<List<WorkspaceUserModel>> ListWorkspaceUsers (long workspaceId);
+
         Task<List<TaskModel>> ListWorkspaceTasks (long workspaceId);
 
         Task<List<TaskModel>> ListProjectTasks (long projectId);
+
+        Task<List<ProjectUserModel>> ListProjectUsers (long projectId);
 
         Task<List<TimeEntryModel>> ListTimeEntries (DateTime start, DateTime end);
 

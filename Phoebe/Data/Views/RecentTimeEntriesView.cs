@@ -100,9 +100,17 @@ namespace Toggl.Phoebe.Data.Views
             return data.FirstOrDefault (
                 (e) => e.Description == entry.Description
                 && e.IsBillable == entry.IsBillable
-                // TODO: Compare tags
                 && e.TaskId == e.TaskId
-                && e.ProjectId == e.ProjectId);
+                && e.ProjectId == e.ProjectId
+                && HasSameTags (e, entry));
+        }
+
+        private static bool HasSameTags (TimeEntryModel a, TimeEntryModel b)
+        {
+            var at = a.Tags.Select ((m) => m.ToId).ToList ();
+            var bt = b.Tags.Select ((m) => m.ToId).ToList ();
+
+            return !at.Union (bt).Except (bt).Any ();
         }
 
         public override void LoadMore ()

@@ -13,11 +13,13 @@ namespace Toggl.Phoebe.Data.Models
 
         private readonly int workspaceRelationId;
         private readonly int clientRelationId;
+        private readonly RelatedModelsCollection<UserModel, ProjectUserModel, ProjectModel, UserModel> usersCollection;
 
         public ProjectModel ()
         {
             workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
             clientRelationId = ForeignRelation<ClientModel> (PropertyClientId, PropertyClient);
+            usersCollection = new RelatedModelsCollection<UserModel, ProjectUserModel, ProjectModel, UserModel> (this);
         }
 
         protected override void Validate (ValidationContext ctx)
@@ -228,6 +230,11 @@ namespace Toggl.Phoebe.Data.Models
             get { return Model.Query<TimeEntryModel> ((m) => m.ProjectId == Id); }
         }
 
+        public RelatedModelsCollection<UserModel, ProjectUserModel, ProjectModel, UserModel> Users {
+            get { return usersCollection; }
+        }
+
         #endregion
+
     }
 }

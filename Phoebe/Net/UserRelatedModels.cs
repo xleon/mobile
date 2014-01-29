@@ -10,6 +10,8 @@ namespace Toggl.Phoebe.Net
 
         public IEnumerable<WorkspaceModel> Workspaces { get; set; }
 
+        public IEnumerable<TagModel> Tags { get; set; }
+
         public IEnumerable<ProjectModel> Projects { get; set; }
 
         public IEnumerable<TaskModel> Tasks { get; set; }

@@ -111,6 +111,7 @@ namespace Toggl.Phoebe.Net
                         .Union (QueryDirtyModels<TagModel> ())
                         .Union (QueryDirtyModels<ClientModel> ())
                         .Union (QueryDirtyModels<ProjectModel> ())
+                        .Union (QueryDirtyModels<ProjectUserModel> ())
                         .Union (QueryDirtyModels<TaskModel> ())
                         .Union (QueryDirtyModels<TimeEntryModel> ().ForCurrentUser ()));
 

@@ -43,6 +43,8 @@ namespace Toggl.Phoebe.Net
 
         Task<List<TaskModel>> ListProjectTasks (long projectId);
 
+        Task<List<ProjectUserModel>> ListProjectUsers (long projectId);
+
         Task<List<TimeEntryModel>> ListTimeEntries (DateTime start, DateTime end);
 
         Task<UserRelatedModels> GetChanges (DateTime? since);

@@ -50,6 +50,8 @@ namespace Toggl.Phoebe.Net
                 await CreateTag (model as TagModel);
             } else if (type == typeof(WorkspaceUserModel)) {
                 await CreateWorkspaceUser (model as WorkspaceUserModel);
+            } else if (type == typeof(ProjectUserModel)) {
+                await CreateProjectUser (model as ProjectUserModel);
             } else {
                 throw new NotSupportedException ("Creating of model (of type T) is not supported.");
             }
@@ -109,6 +111,8 @@ namespace Toggl.Phoebe.Net
                 await UpdateTag (model as TagModel);
             } else if (type == typeof(WorkspaceUserModel)) {
                 await UpdateWorkspaceUser (model as WorkspaceUserModel);
+            } else if (type == typeof(ProjectUserModel)) {
+                await UpdateProjectUser (model as ProjectUserModel);
             } else {
                 throw new NotSupportedException ("Updating of model (of type T) is not supported.");
             }
@@ -130,6 +134,8 @@ namespace Toggl.Phoebe.Net
                 await DeleteTag (model as TagModel);
             } else if (type == typeof(WorkspaceUserModel)) {
                 await DeleteWorkspaceUser (model as WorkspaceUserModel);
+            } else if (type == typeof(ProjectUserModel)) {
+                await DeleteProjectUser (model as ProjectUserModel);
             } else {
                 throw new NotSupportedException ("Deleting of model (of type T) is not supported.");
             }
@@ -173,6 +179,8 @@ namespace Toggl.Phoebe.Net
                 dataKey = "tag";
             } else if (typeof(T) == typeof(WorkspaceUserModel)) {
                 dataKey = "workspace_user";
+            } else if (typeof(T) == typeof(ProjectUserModel)) {
+                dataKey = "project_user";
             } else {
                 throw new ArgumentException ("Don't know how to handle model of type T.", "model");
             }
@@ -399,6 +407,12 @@ namespace Toggl.Phoebe.Net
             return ListModels<TaskModel> (url);
         }
 
+        public Task<List<ProjectUserModel>> ListProjectUsers (long projectId)
+        {
+            var url = new Uri (v8Url, String.Format ("projects/{0}/project_users", projectId.ToString ()));
+            return ListModels<ProjectUserModel> (url);
+        }
+
         public Task<List<TaskModel>> ListWorkspaceTasks (long workspaceId)
         {
             var url = new Uri (v8Url, String.Format ("workspaces/{0}/tasks", workspaceId.ToString ()));
@@ -575,6 +589,28 @@ namespace Toggl.Phoebe.Net
         public Task DeleteWorkspaceUser (WorkspaceUserModel model)
         {
             var url = new Uri (v8Url, String.Format ("workspace_users/{0}", model.RemoteId.Value.ToString ()));
+            return DeleteModel (url);
+        }
+
+        #endregion
+
+        #region Project user methods
+
+        public Task CreateProjectUser (ProjectUserModel model)
+        {
+            var url = new Uri (v8Url, "project_users");
+            return CreateModel (url, model);
+        }
+
+        public Task UpdateProjectUser (ProjectUserModel model)
+        {
+            var url = new Uri (v8Url, String.Format ("project_users/{0}", model.RemoteId.Value.ToString ()));
+            return UpdateModel (url, model);
+        }
+
+        public Task DeleteProjectUser (ProjectUserModel model)
+        {
+            var url = new Uri (v8Url, String.Format ("project_users/{0}", model.RemoteId.Value.ToString ()));
             return DeleteModel (url);
         }
 

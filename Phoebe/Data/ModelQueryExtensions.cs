@@ -19,11 +19,5 @@ namespace Toggl.Phoebe.Data
         {
             return q.Where ((entry) => entry.DeletedAt == null);
         }
-
-        public static IModelsView<T> ToView<T> (this IModelQuery<T> q, int batchSize = 25)
-            where T : Model, new()
-        {
-            return new ModelQueryView<T> (q, batchSize);
-        }
     }
 }

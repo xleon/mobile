@@ -1,6 +1,9 @@
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Phoebe.Data.Models
 {
@@ -65,6 +68,19 @@ namespace Toggl.Phoebe.Data.Models
                 }
             }
 
+        }
+
+        public IEnumerable<ProjectModel> GetAvailableProjects (WorkspaceModel workspace = null)
+        {
+            workspace = workspace ?? DefaultWorkspace;
+            if (workspace == null) {
+                throw new ArgumentNullException ("workspace", "Must specify a workspace, when user has no default one.");
+            }
+
+            IEnumerable<ProjectModel> projects;
+            projects = workspace.Projects.NotDeleted ().Where ((m) => m.IsPrivate != true);
+            projects = projects.Union (Projects.Select ((m) => m.From));
+            return projects.OrderBy ((m) => m.Name).ToList ();
         }
 
         #region Data

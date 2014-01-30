@@ -41,7 +41,7 @@ namespace Toggl.Joey.UI.Adapters
             return null;
         }
 
-        public T GetModel (int position)
+        public virtual T GetModel (int position)
         {
             return modelsView.Models.ElementAt (position);
         }

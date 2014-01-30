@@ -690,7 +690,7 @@ namespace Toggl.Phoebe.Net
                 Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
                 User = user,
                 Workspaces = GetChangesModels<WorkspaceModel> (json ["data"] ["workspaces"]),
-                Tags = GetChangesModels<TagModel> (json ["data"] ["tags"]),
+                Tags = GetChangesTagModels (json ["data"] ["tags"]),
                 Clients = GetChangesModels<ClientModel> (json ["data"] ["clients"]),
                 Projects = GetChangesModels<ProjectModel> (json ["data"] ["projects"]),
                 Tasks = GetChangesModels<TaskModel> (json ["data"] ["tasks"]),
@@ -704,6 +704,39 @@ namespace Toggl.Phoebe.Net
             if (json == null)
                 return Enumerable.Empty<T> ();
             return json.ToObject<List<T>> ().Select (Model.Update);
+        }
+
+        private IEnumerable<TagModel> GetChangesTagModels (JToken json)
+        {
+            if (json == null)
+                return Enumerable.Empty<TagModel> ();
+            return json.ToObject<List<TagModel>> ().Select (MergeTag);
+        }
+
+        private TagModel MergeTag (TagModel model)
+        {
+            // Try find existing tag with which to merge:
+            IEnumerable<TagModel> existingTags;
+            // Load database entries into memory
+            existingTags = Model.Query<TagModel> ((m) =>
+                (m.Name == model.Name && m.RemoteId == null) || m.RemoteId == model.RemoteId).ToList ();
+            // Look through the cache to discover the correct items
+            existingTags = Model.Manager.Cached<TagModel> ().Where ((m) =>
+                (m.Name == model.Name && m.RemoteId == null) || m.RemoteId == model.RemoteId).ToList ();
+
+            var tag = existingTags.Where ((m) => m.RemoteId == model.RemoteId).FirstOrDefault ();
+            if (tag == null)
+                tag = existingTags.FirstOrDefault ();
+
+            if (tag != null) {
+                // Merge with existing:
+                tag.Merge (model);
+            } else {
+                // Nothing to merge with, insert
+                tag = Model.Update (model);
+            }
+
+            return tag;
         }
 
         private IEnumerable<TimeEntryModel> GetChangesTimeEntryModels (JToken json, UserModel user)

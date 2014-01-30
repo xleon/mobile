@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.OS;
 using Android.Views;
+using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
-using Android.Widget;
 using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -36,9 +37,15 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnStart ();
 
+            // Load database entries into memeory:
+            IEnumerable<TimeEntryModel> entries;
+            entries = Model.Query<TimeEntryModel> ((te) => te.IsRunning)
+                .NotDeleted ().ForCurrentUser ().ToList ();
             // Find currently running time entry:
-            runningEntry = Model.Query<TimeEntryModel> ((te) => te.IsRunning)
-                .NotDeleted ().ForCurrentUser ().Take (1).FirstOrDefault ();
+            entries = Model.Manager.Cached<TimeEntryModel> ()
+                .Where ((te) => te.IsRunning && te.DeletedAt == null)
+                .ForCurrentUser ();
+            runningEntry = entries.FirstOrDefault ();
 
             // Start listening for changes model changes
             var bus = ServiceContainer.Resolve<MessageBus> ();

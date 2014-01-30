@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Linq;
+using System.Linq.Expressions;
 using Newtonsoft.Json;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
 {
@@ -46,6 +48,48 @@ namespace Toggl.Phoebe.Data.Models
             } finally {
                 UpdateScheduled = false;
             }
+        }
+
+        public static TimeEntryModel StartNew ()
+        {
+            return StartNew (null, null, null);
+        }
+
+        public static TimeEntryModel StartNew (WorkspaceModel workspace)
+        {
+            return StartNew (workspace, null, null);
+        }
+
+        public static TimeEntryModel StartNew (ProjectModel project)
+        {
+            return StartNew (project.Workspace, project, null);
+        }
+
+        public static TimeEntryModel StartNew (TaskModel task)
+        {
+            return StartNew (task.Project.Workspace, task.Project, task);
+        }
+
+        private static TimeEntryModel StartNew (WorkspaceModel workspace, ProjectModel project, TaskModel task)
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            workspace = workspace ?? user.DefaultWorkspace;
+            if (workspace == null) {
+                throw new ArgumentNullException ("workspace", "A time entry must be started in a workspace.");
+            }
+
+            return Model.Update (new TimeEntryModel () {
+                Workspace = workspace,
+                Project = project,
+                Task = task,
+                User = user,
+                StartTime = DateTime.UtcNow,
+                DurationOnly = user.TrackingMode == TrackingMode.Continue,
+                StringTags = new List<string> () { "mobile" },
+                IsRunning = true,
+                IsPersisted = true,
+            });
         }
 
         private readonly int workspaceRelationId;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Android.App;
+using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -10,6 +11,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Activities;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -149,6 +151,14 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnStartTrackingButtonClicked (object sender, EventArgs e)
         {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            var hasProjects = user.GetAvailableProjects ().Any ();
+
+            if (hasProjects) {
+                StartActivity (new Intent (Activity, typeof(StartTimeEntryActivity)));
+            } else {
+                TimeEntryModel.StartNew ();
+            }
         }
     }
 }

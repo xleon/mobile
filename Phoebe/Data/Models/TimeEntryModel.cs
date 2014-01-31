@@ -214,7 +214,7 @@ namespace Toggl.Phoebe.Data.Models
                     stopTime = value;
                 });
 
-                IsRunning = stopTime != null;
+                IsRunning = stopTime == null;
             }
         }
 
@@ -328,6 +328,12 @@ namespace Toggl.Phoebe.Data.Models
                     RawDuration = (long)(RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds);
                 } else if (!IsRunning && RawDuration < 0) {
                     RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds + RawDuration);
+                }
+
+                if (IsRunning) {
+                    StopTime = null;
+                } else {
+                    StopTime = StartTime + TimeSpan.FromSeconds (RawDuration);
                 }
             }
         }

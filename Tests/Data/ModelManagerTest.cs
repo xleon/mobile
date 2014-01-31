@@ -124,5 +124,61 @@ namespace Toggl.Phoebe.Tests.Data
 
             Assert.IsNull (Manager.GetByRemoteId<PlainModel> (remoteId));
         }
+
+        [Test]
+        public void TestMergeSettingRemoteId ()
+        {
+            var remoteId = 1234;
+            PlainModel storedModel = null;
+
+            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+                store => store.GetByRemoteId<PlainModel> (remoteId) == storedModel &&
+                store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
+            ));
+
+            var model = Manager.Update (new PlainModel () {
+                ModifiedAt = new DateTime (),
+            });
+
+            model.Merge (new PlainModel () {
+                RemoteId = remoteId,
+                ModifiedAt = DateTime.UtcNow,
+            });
+
+            Assert.AreEqual (remoteId, model.RemoteId, "Model remote id was not updated by merge.");
+            Assert.AreSame (model, Manager.GetByRemoteId<PlainModel> (remoteId), "Unable to find model by remote id after merge.");
+        }
+
+        [Test]
+        public void TestMergeUpdatingRemoteId ()
+        {
+            var remoteId1 = 1234;
+            var remoteId2 = 4321;
+            PlainModel storedModel = null;
+
+            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+                store => store.GetByRemoteId<PlainModel> (remoteId1) == storedModel &&
+                store.GetByRemoteId (typeof(PlainModel), remoteId1) == storedModel &&
+                store.GetByRemoteId<PlainModel> (remoteId2) == storedModel &&
+                store.GetByRemoteId (typeof(PlainModel), remoteId2) == storedModel
+            ));
+
+            var model = Manager.Update (new PlainModel () {
+                RemoteId = remoteId1,
+                ModifiedAt = new DateTime (),
+            });
+
+            Assert.AreSame (model, Manager.GetByRemoteId<PlainModel> (remoteId1));
+            Assert.IsNull (Manager.GetByRemoteId<PlainModel> (remoteId2));
+
+            model.Merge (new PlainModel () {
+                RemoteId = remoteId2,
+                ModifiedAt = DateTime.UtcNow,
+            });
+
+            Assert.AreEqual (remoteId2, model.RemoteId, "Model remote id was not updated by merge.");
+            Assert.IsNull (Manager.GetByRemoteId<PlainModel> (remoteId1), "Manager still returns model by old remote id.");
+            Assert.AreSame (model, Manager.GetByRemoteId<PlainModel> (remoteId2), "Unable to find model by remote id after merge.");
+        }
     }
 }

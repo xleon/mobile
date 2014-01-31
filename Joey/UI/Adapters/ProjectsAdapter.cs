@@ -137,7 +137,8 @@ namespace Toggl.Joey.UI.Adapters
             {
                 var ctx = ProjectTextView.Context;
 
-                ColorView.SetBackgroundColor (Android.Graphics.Color.DarkGreen);
+                var color = Android.Graphics.Color.ParseColor (model.ColorHex);
+                ColorView.SetBackgroundColor (color);
 
                 ProjectTextView.Text = model.Name;
 

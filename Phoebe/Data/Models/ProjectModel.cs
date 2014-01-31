@@ -236,5 +236,19 @@ namespace Toggl.Phoebe.Data.Models
 
         #endregion
 
+        #region Smart methods
+
+        private static string[] HexColorsIndex = new string[] {
+            "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
+            "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
+            "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
+        };
+
+        public String ColorHex {
+            get { return HexColorsIndex[Int32.Parse(Color) % HexColorsIndex.Length]; }
+        }
+
+        #endregion
+
     }
 }

@@ -101,12 +101,6 @@ namespace Toggl.Joey.UI.Adapters
             {
                 var ctx = ProjectTextView.Context;
 
-                if (model.IsRunning) {
-                    ColorView.SetBackgroundColor (Android.Graphics.Color.BlueViolet);
-                } else {
-                    ColorView.SetBackgroundColor (Android.Graphics.Color.DarkGreen);
-                }
-
                 if (model.Project == null) {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                 } else if (model.Task != null) {
@@ -114,6 +108,12 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     ProjectTextView.Text = model.Project.Name;
                 }
+
+                var color = Android.Graphics.Color.Transparent;
+                if (model.Project != null) {
+                    color = Android.Graphics.Color.ParseColor (model.Project.ColorHex);
+                }
+                ColorView.SetBackgroundColor (color);
 
                 if (String.IsNullOrWhiteSpace (model.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);

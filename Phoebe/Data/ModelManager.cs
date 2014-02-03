@@ -198,7 +198,7 @@ namespace Toggl.Phoebe.Data
 
             // Update cache index
             MemoryModelCache cache;
-            if (caches.TryGetValue (GetType (), out cache)) {
+            if (caches.TryGetValue (model.GetType (), out cache)) {
                 cache.UpdateRemoteId (model, oldValue, newValue);
             }
         }

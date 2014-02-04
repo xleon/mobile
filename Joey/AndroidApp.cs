@@ -43,6 +43,7 @@ namespace Toggl.Joey
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
 
             // Register Joey components:
+            ServiceContainer.Register<Context> (this);
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());

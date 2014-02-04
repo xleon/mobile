@@ -491,6 +491,8 @@ namespace Toggl.Phoebe.Data.Models
 
         public override void Delete ()
         {
+            if (IsShared && IsPersisted && IsRunning)
+                Stop ();
             base.Delete ();
             Tags.Clear ();
         }

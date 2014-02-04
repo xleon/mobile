@@ -15,6 +15,8 @@ namespace Toggl.Joey.Data
         private const string PhoebeUserIdKey = "phoebeUserId";
         private const string PhoebeApiTokenKey = "phoebeApiToken";
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
+        private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
+        private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
         private readonly ISharedPreferences prefs;
 
         public SettingsStore (Context ctx)
@@ -53,6 +55,24 @@ namespace Toggl.Joey.Data
             }
         }
 
+        protected int? GetInt (string key)
+        {
+            if (!prefs.Contains (key)) {
+                return null;
+            } else {
+                return prefs.GetInt (key, 0);
+            }
+        }
+
+        protected void SetInt (string key, int? value)
+        {
+            if (value != null) {
+                prefs.Edit ().PutInt (key, value.Value).Commit ();
+            } else {
+                prefs.Edit ().Remove (key).Commit ();
+            }
+        }
+
         protected DateTime? GetDateTime (string key)
         {
             if (!prefs.Contains (key)) {
@@ -69,6 +89,16 @@ namespace Toggl.Joey.Data
             } else {
                 prefs.Edit ().Remove (key).Commit ();
             }
+        }
+
+        public string GcmRegistrationId {
+            get { return GetString (JoeyGcmRegistrationIdKey); }
+            set { SetString (JoeyGcmRegistrationIdKey, value); }
+        }
+
+        public int? GcmAppVersion {
+            get { return GetInt (JoeyGcmAppVersionKey); }
+            set { SetInt (JoeyGcmAppVersionKey, value); }
         }
 
         Guid? ISettingsStore.UserId {

@@ -7,6 +7,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
+using Toggl.Joey.Net;
 
 namespace Toggl.Joey
 {
@@ -15,6 +16,8 @@ namespace Toggl.Joey
         Label = "@string/AppName",
         Description = "@string/AppDescription",
         Theme = "@style/Theme.App")]
+    [MetaData ("com.google.android.gms.version",
+        Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo
     {
         public AndroidApp () : base ()
@@ -39,16 +42,11 @@ namespace Toggl.Joey
             ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<SyncManager> ();
-            ServiceContainer.Register<ITogglClient> (delegate {
-                #if DEBUG
-                var url = new Uri ("https://next.toggl.com/api/");
-                #else
-                var url = new Uri("https://toggl.com/api/");
-                #endif
-                return new TogglRestClient (url);
-            });
+            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
+            ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
 
             // Register Joey components:
+            ServiceContainer.Register<Context> (this);
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
@@ -57,6 +55,7 @@ namespace Toggl.Joey
                 var path = System.IO.Path.Combine (folder, "toggl.db");
                 return new SQLiteModelStore (path);
             });
+            ServiceContainer.Register<GcmRegistrationManager> (new GcmRegistrationManager ());
         }
 
         public override void OnTrimMemory (TrimMemory level)
@@ -74,7 +73,7 @@ namespace Toggl.Joey
         }
 
         public string AppIdentifier {
-            get { return "TogglJoey"; }
+            get { return Build.AppIdentifier; }
         }
 
         public string AppVersion {

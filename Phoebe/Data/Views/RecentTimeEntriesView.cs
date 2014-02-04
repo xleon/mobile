@@ -105,11 +105,18 @@ namespace Toggl.Phoebe.Data.Views
                 && HasSameTags (e, entry));
         }
 
+        private static List<Guid?> GetTimeEntryTagIds (TimeEntryModel entry)
+        {
+            return entry.Tags
+                    .Where ((m) => m.To.Name != TimeEntryModel.DefaultTag)
+                    .Select ((m) => m.ToId)
+                    .ToList ();
+        }
+
         private static bool HasSameTags (TimeEntryModel a, TimeEntryModel b)
         {
-            var at = a.Tags.Select ((m) => m.ToId).ToList ();
-            var bt = b.Tags.Select ((m) => m.ToId).ToList ();
-
+            var at = GetTimeEntryTagIds (a);
+            var bt = GetTimeEntryTagIds (b);
             return !at.Union (bt).Except (bt).Any ();
         }
 

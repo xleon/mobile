@@ -21,6 +21,7 @@ namespace Toggl.Phoebe.Data.Models
             return expr.ToPropertyName ();
         }
 
+        internal static readonly string DefaultTag = "mobile";
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private static bool UpdateScheduled = false;
 
@@ -86,7 +87,7 @@ namespace Toggl.Phoebe.Data.Models
                 User = user,
                 StartTime = DateTime.UtcNow,
                 DurationOnly = user.TrackingMode == TrackingMode.Continue,
-                StringTags = new List<string> () { "mobile" },
+                StringTags = new List<string> () { DefaultTag },
                 IsRunning = true,
                 IsPersisted = true,
             });
@@ -579,6 +580,12 @@ namespace Toggl.Phoebe.Data.Models
                 var tagModel = GetTagModel (tag);
                 if (tagModel != null)
                     Remove (tagModel);
+            }
+
+            public bool HasNonDefault {
+                get {
+                    return this.Where ((m) => m.To.Name != TimeEntryModel.DefaultTag).Any ();
+                }
             }
         }
     }

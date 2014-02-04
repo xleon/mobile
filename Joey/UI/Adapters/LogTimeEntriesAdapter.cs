@@ -125,7 +125,7 @@ namespace Toggl.Joey.UI.Adapters
                 // TODO: Use user defined date format
                 DateTextView.Text = model.StartTime.ToShortDateString ();
 
-                TagsTextView.Visibility = model.Tags.Count > 0 ? ViewStates.Visible : ViewStates.Gone;
+                TagsTextView.Visibility = model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
                 BillableTextView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
             }
         }

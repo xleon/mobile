@@ -3,6 +3,7 @@ using System.Linq;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Android.Graphics;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
@@ -110,9 +111,9 @@ namespace Toggl.Joey.UI.Adapters
                     ProjectTextView.Text = model.Project.Name;
                 }
 
-                var color = Android.Graphics.Color.Transparent;
+                var color = Color.Transparent;
                 if (model.Project != null) {
-                    color = Android.Graphics.Color.ParseColor (model.Project.GetHexColor());
+                    color = Color.ParseColor (model.Project.GetHexColor());
                 }
                 ColorView.SetBackgroundColor (color);
 

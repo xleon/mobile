@@ -86,6 +86,8 @@ namespace Toggl.Joey.UI.Fragments
             for (var i = 0; i < arrSize; i++) {
                 var position = checkedPositions.KeyAt (i);
                 var isChecked = checkedPositions.Get (position);
+                if (!isChecked)
+                    continue;
 
                 var model = adapter.GetModel (position);
                 if (model != null)
@@ -93,10 +95,8 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // Delete models:
-            foreach (var model in toDelete) {
-                model.IsPersisted = true;
-                model.Delete ();
-            }
+            var dia = new DeleteTimeEntriesPromptDialogFragment (toDelete);
+            dia.Show (FragmentManager, "dialog");
         }
     }
 }

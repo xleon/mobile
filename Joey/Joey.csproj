@@ -71,6 +71,7 @@
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
     <Compile Include="Net\GcmRegistrationManager.cs" />
+    <Compile Include="UI\Fragments\DeleteTimeEntriesPromptDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -92,6 +93,10 @@
     <AndroidResource Include="Resources\layout\StartTimeEntryActivity.axml" />
     <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
+    <AndroidResource Include="Resources\values\Plurals.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDialogAlertHoloLight.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDialogAlertHoloLight.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDialogAlertHoloLight.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -108,6 +113,9 @@
     <Folder Include="Data\" />
     <Folder Include="Net\" />
     <Folder Include="Resources\menu\" />
+    <Folder Include="Resources\drawable-hdpi\" />
+    <Folder Include="Resources\drawable-mdpi\" />
+    <Folder Include="Resources\drawable-xhdpi\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">

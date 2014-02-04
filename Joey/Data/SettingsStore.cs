@@ -53,6 +53,24 @@ namespace Toggl.Joey.Data
             }
         }
 
+        protected int? GetInt (string key)
+        {
+            if (!prefs.Contains (key)) {
+                return null;
+            } else {
+                return prefs.GetInt (key, 0);
+            }
+        }
+
+        protected void SetInt (string key, int? value)
+        {
+            if (value != null) {
+                prefs.Edit ().PutInt (key, value.Value).Commit ();
+            } else {
+                prefs.Edit ().Remove (key).Commit ();
+            }
+        }
+
         protected DateTime? GetDateTime (string key)
         {
             if (!prefs.Contains (key)) {

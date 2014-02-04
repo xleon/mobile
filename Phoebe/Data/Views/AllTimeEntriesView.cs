@@ -40,15 +40,23 @@ namespace Toggl.Phoebe.Data.Views
             if (entry == null)
                 return;
 
-            if (!data.Contains (entry)) {
-                ChangeDataAndNotify (delegate {
-                    data.Add (entry);
-                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                });
-            } else if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
-                ChangeDataAndNotify (delegate {
-                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                });
+            if (entry.DeletedAt == null) {
+                if (!data.Contains (entry)) {
+                    ChangeDataAndNotify (delegate {
+                        data.Add (entry);
+                        data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                    });
+                } else if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
+                    ChangeDataAndNotify (delegate {
+                        data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                    });
+                }
+            } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
+                if (data.Contains (entry)) {
+                    ChangeDataAndNotify (delegate {
+                        data.Remove (entry);
+                    });
+                }
             }
         }
 

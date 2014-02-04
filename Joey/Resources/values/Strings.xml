@@ -11,7 +11,8 @@
     <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
     <string name="TimerStartButtonText">Start</string>
     <string name="TimerStopButtonText">Stop</string>
-    <string name="LogTimeEntryEditButton">Edit</string>
+    <string name="LogTimeEntryContextEdit">Edit</string>
+    <string name="LogTimeEntryContextDelete">Delete</string>
     <string-array name="TimeEntriesNavigationList">
         <item>Recent</item>
         <item>Log</item>

@@ -91,6 +91,7 @@
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\StartTimeEntryActivity.axml" />
     <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
+    <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -106,6 +107,7 @@
     <Folder Include="UI\Adapters\" />
     <Folder Include="Data\" />
     <Folder Include="Net\" />
+    <Folder Include="Resources\menu\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">

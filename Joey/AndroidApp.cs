@@ -39,14 +39,7 @@ namespace Toggl.Joey
             ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<SyncManager> ();
-            ServiceContainer.Register<ITogglClient> (delegate {
-                #if DEBUG
-                var url = new Uri ("https://next.toggl.com/api/");
-                #else
-                var url = new Uri("https://toggl.com/api/");
-                #endif
-                return new TogglRestClient (url);
-            });
+            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
 
             // Register Joey components:
             ServiceContainer.Register<IPlatformInfo> (this);
@@ -74,7 +67,7 @@ namespace Toggl.Joey
         }
 
         public string AppIdentifier {
-            get { return "TogglJoey"; }
+            get { return Build.AppIdentifier; }
         }
 
         public string AppVersion {

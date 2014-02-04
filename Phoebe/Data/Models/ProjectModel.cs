@@ -138,11 +138,10 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        private string color;
+        private int color;
         public static readonly string PropertyColor = GetPropertyName ((m) => m.Color);
 
-        [JsonProperty ("color")]
-        public string Color {
+        public int Color {
             get { return color; }
             set {
                 if (color == value)
@@ -152,6 +151,31 @@ namespace Toggl.Phoebe.Data.Models
                     color = value;
                 });
             }
+        }
+
+
+        private static string[] HexColorsIndex = new string[] {
+            "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
+            "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
+            "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
+        };
+
+        [JsonProperty ("color")]
+        private String ColorString {
+            get { 
+                return Color.ToString ();
+            }
+            set {
+                try {
+                    Color = Convert.ToInt32 (value) % HexColorsIndex.Length;
+                } catch {
+                    Color = HexColorsIndex.Length - 1; //Default color
+                }
+            }
+        }
+
+        public String GetHexColor() {
+            return HexColorsIndex [Color];
         }
 
         private bool template;

@@ -3,6 +3,7 @@ using System.Linq;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Android.Graphics;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
@@ -102,12 +103,6 @@ namespace Toggl.Joey.UI.Adapters
             {
                 var ctx = ProjectTextView.Context;
 
-                if (model.IsRunning) {
-                    ColorView.SetBackgroundColor (Android.Graphics.Color.BlueViolet);
-                } else {
-                    ColorView.SetBackgroundColor (Android.Graphics.Color.DarkGreen);
-                }
-
                 if (model.Project == null) {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                 } else if (model.Task != null) {
@@ -115,6 +110,12 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     ProjectTextView.Text = model.Project.Name;
                 }
+
+                var color = Color.Transparent;
+                if (model.Project != null) {
+                    color = Color.ParseColor (model.Project.GetHexColor());
+                }
+                ColorView.SetBackgroundColor (color);
 
                 if (String.IsNullOrWhiteSpace (model.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);

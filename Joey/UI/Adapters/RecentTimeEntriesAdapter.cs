@@ -111,7 +111,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 var color = Android.Graphics.Color.Transparent;
                 if (model.Project != null) {
-                    color = Android.Graphics.Color.ParseColor (model.Project.Color.Hex);
+                    color = Android.Graphics.Color.ParseColor (model.Project.HexColor);
                 }
                 ColorView.SetBackgroundColor (color);
 

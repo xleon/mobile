@@ -153,6 +153,12 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
+        private string[] hexColorsIndex = new string[] {
+            "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
+            "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
+            "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
+        };
+
         [JsonProperty ("color")]
         private String ColorString {
             get { 
@@ -160,38 +166,15 @@ namespace Toggl.Phoebe.Data.Models
             }
             set {
                 try {
-                    Color = Convert.ToInt32 (value);
+                    Color = Convert.ToInt32 (value) % hexColorsIndex.Length;
                 } catch {
                     Color = hexColorsIndex.Length - 1; //Default color
                 }
             }
         }
 
-        private string[] hexColorsIndex = new string[] {
-            "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
-            "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
-            "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
-        };
-
-        [SQLite.Ignore]
-        public String HexColor {
-            get { 
-                return hexColorsIndex [Color % hexColorsIndex.Length];
-            }
-            set {
-                int index;
-
-                if (value == null) {
-                    index = hexColorsIndex.Length - 1;
-                } else {
-                    index = Array.IndexOf (hexColorsIndex, value);
-                }
-
-                if (index == -1)
-                    index = hexColorsIndex.Length - 1;
-
-                Color = index;
-            }
+        public String GetHexColor() {
+            return hexColorsIndex [Color];
         }
 
         private bool template;

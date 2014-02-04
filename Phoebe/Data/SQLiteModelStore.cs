@@ -112,6 +112,8 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        private static readonly AttributeLookupCache<IgnoreAttribute> ignoreCache =
+            new AttributeLookupCache<IgnoreAttribute> ();
         private readonly SQLiteConnection conn;
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
@@ -205,10 +207,16 @@ namespace Toggl.Phoebe.Data
                     return;
             }
 
-            if (property == Model.PropertyIsPersisted || model.IsPersisted) {
-                changedModels.Add (model);
-                ScheduleCommit ();
-            }
+            // We only care about persisted models (and models which were just marked as non-persistent)
+            if (property != Model.PropertyIsPersisted && !model.IsPersisted)
+                return;
+
+            // Ignore changes which we don't store in the database
+            if (ignoreCache.HasAttribute (model, property))
+                return;
+
+            changedModels.Add (model);
+            ScheduleCommit ();
         }
 
         public void Commit ()

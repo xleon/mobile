@@ -40,6 +40,7 @@ namespace Toggl.Joey
             ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<SyncManager> ();
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
+            ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
 
             // Register Joey components:
             ServiceContainer.Register<IPlatformInfo> (this);

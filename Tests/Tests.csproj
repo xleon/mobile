@@ -45,6 +45,7 @@
     <Compile Include="Data\ModelValidationTest.cs" />
     <Compile Include="Data\RelatedModelsCollectionTest.cs" />
     <Compile Include="Data\TimeEntryModelTest.cs" />
+    <Compile Include="Data\AttributeLookupCacheTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

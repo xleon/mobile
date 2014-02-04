@@ -13,22 +13,8 @@ namespace Toggl.Phoebe.Data
     [JsonObject (MemberSerialization.OptIn)]
     public abstract partial class Model : ObservableObject
     {
-        private static readonly Dictionary<Type, Dictionary<string, bool>> dontDirtyCache =
-            new Dictionary<Type, Dictionary<string, bool>> ();
-
-        private static bool CanDirty (Type objectType, string property)
-        {
-            Dictionary<string, bool> typeCache;
-            if (!dontDirtyCache.TryGetValue (objectType, out typeCache)) {
-                dontDirtyCache [objectType] = typeCache = new Dictionary<string, bool> ();
-            }
-            bool hasAttr;
-            if (!typeCache.TryGetValue (property, out hasAttr)) {
-                var propInfo = objectType.GetProperty (property);
-                hasAttr = propInfo.GetCustomAttributes (typeof(DontDirtyAttribute), true).Length > 0;
-            }
-            return !hasAttr;
-        }
+        private static readonly AttributeLookupCache<DontDirtyAttribute> dontDirtyCache =
+            new AttributeLookupCache<DontDirtyAttribute> ();
 
         private static string GetPropertyName<T> (Expression<Func<Model, T>> expr)
         {
@@ -50,7 +36,7 @@ namespace Toggl.Phoebe.Data
                 }
 
                 // Automatically mark the object dirty, if property doesn't explicitly disable it
-                if (CanDirty (GetType (), property)) {
+                if (!dontDirtyCache.HasAttribute (GetType (), property)) {
                     MarkDirty (property != PropertyModifiedAt);
                 }
             }

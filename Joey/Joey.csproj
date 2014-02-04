@@ -64,6 +64,7 @@
     <Compile Include="UI\Activities\StartTimeEntryActivity.cs" />
     <Compile Include="UI\Fragments\NewTimeEntryProjectListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
+    <Compile Include="WakefulBroadcastReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

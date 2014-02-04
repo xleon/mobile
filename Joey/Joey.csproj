@@ -68,6 +68,9 @@
     <Compile Include="UI\Fragments\NewTimeEntryProjectListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
     <Compile Include="WakefulBroadcastReceiver.cs" />
+    <Compile Include="Net\GcmBroadcastReceiver.cs" />
+    <Compile Include="Net\GcmService.cs" />
+    <Compile Include="Net\GcmRegistrationManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -102,6 +105,7 @@
     <Folder Include="UI\Fragments\" />
     <Folder Include="UI\Adapters\" />
     <Folder Include="Data\" />
+    <Folder Include="Net\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">

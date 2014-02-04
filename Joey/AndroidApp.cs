@@ -7,6 +7,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
+using Toggl.Joey.Net;
 
 namespace Toggl.Joey
 {
@@ -54,6 +55,7 @@ namespace Toggl.Joey
                 var path = System.IO.Path.Combine (folder, "toggl.db");
                 return new SQLiteModelStore (path);
             });
+            ServiceContainer.Register<GcmRegistrationManager> (new GcmRegistrationManager ());
         }
 
         public override void OnTrimMemory (TrimMemory level)

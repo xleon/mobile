@@ -15,6 +15,8 @@ namespace Toggl.Joey
         Label = "@string/AppName",
         Description = "@string/AppDescription",
         Theme = "@style/Theme.App")]
+    [MetaData ("com.google.android.gms.version",
+        Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo
     {
         public AndroidApp () : base ()

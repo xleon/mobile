@@ -34,7 +34,7 @@ namespace Toggl.Phoebe.Tests.Data
                 Id = id,
             };
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.Get<PlainModel> (id) == storedModel &&
                 store.Get (typeof(PlainModel), id) == storedModel
             ));
@@ -48,7 +48,7 @@ namespace Toggl.Phoebe.Tests.Data
             var id = Guid.NewGuid ();
             PlainModel storedModel = null;
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.Get<PlainModel> (id) == storedModel &&
                 store.Get (typeof(PlainModel), id) == storedModel
             ));
@@ -67,7 +67,7 @@ namespace Toggl.Phoebe.Tests.Data
             var id = Guid.NewGuid ();
             PlainModel storedModel = null;
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.Get<PlainModel> (id) == storedModel &&
                 store.Get (typeof(PlainModel), id) == storedModel
             ));
@@ -84,7 +84,7 @@ namespace Toggl.Phoebe.Tests.Data
                 RemoteId = remoteId,
             };
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.GetByRemoteId<PlainModel> (remoteId) == storedModel &&
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
@@ -98,7 +98,7 @@ namespace Toggl.Phoebe.Tests.Data
             var remoteId = 1234;
             PlainModel storedModel = null;
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.GetByRemoteId<PlainModel> (remoteId) == storedModel &&
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
@@ -117,7 +117,7 @@ namespace Toggl.Phoebe.Tests.Data
             var remoteId = 1234;
             PlainModel storedModel = null;
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.GetByRemoteId<PlainModel> (remoteId) == storedModel &&
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
@@ -131,7 +131,7 @@ namespace Toggl.Phoebe.Tests.Data
             var remoteId = 1234;
             PlainModel storedModel = null;
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.GetByRemoteId<PlainModel> (remoteId) == storedModel &&
                 store.GetByRemoteId (typeof(PlainModel), remoteId) == storedModel
             ));
@@ -156,7 +156,7 @@ namespace Toggl.Phoebe.Tests.Data
             var remoteId2 = 4321;
             PlainModel storedModel = null;
 
-            ServiceContainer.RegisterScoped (Mock.Of<IModelStore> (
+            ServiceContainer.Register (Mock.Of<IModelStore> (
                 store => store.GetByRemoteId<PlainModel> (remoteId1) == storedModel &&
                 store.GetByRemoteId (typeof(PlainModel), remoteId1) == storedModel &&
                 store.GetByRemoteId<PlainModel> (remoteId2) == storedModel &&

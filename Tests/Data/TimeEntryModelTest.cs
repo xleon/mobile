@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Tests.Data
             base.SetUp ();
 
             tmpDb = Path.GetTempFileName ();
-            ServiceContainer.RegisterScoped<IModelStore> (new TestSqliteStore (tmpDb));
+            ServiceContainer.Register<IModelStore> (new TestSqliteStore (tmpDb));
 
             var user = Model.Update (new UserModel () {
                 Name = "User",
@@ -38,10 +38,10 @@ namespace Toggl.Phoebe.Tests.Data
                     Name = "Workspace",
                 }),
             });
-            ServiceContainer.RegisterScoped<ISettingsStore> (Mock.Of<ISettingsStore> (
+            ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
                 (store) => store.ApiToken == "test" &&
                 store.UserId == user.Id));
-            ServiceContainer.RegisterScoped<AuthManager> (new AuthManager ());
+            ServiceContainer.Register<AuthManager> (new AuthManager ());
         }
 
         public override void TearDown ()

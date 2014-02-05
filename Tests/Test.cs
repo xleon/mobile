@@ -10,26 +10,24 @@ namespace Toggl.Phoebe.Tests
         [TestFixtureSetUp]
         public virtual void Init ()
         {
-            ServiceContainer.Register<MessageBus> ();
         }
 
         [TestFixtureTearDown]
         public virtual void Cleanup ()
         {
-            ServiceContainer.Clear ();
         }
 
         [SetUp]
         public virtual void SetUp ()
         {
-            ServiceContainer.AddScope ();
-            ServiceContainer.RegisterScoped (new ModelManager ());
+            ServiceContainer.Register<MessageBus> ();
+            ServiceContainer.Register<ModelManager> ();
         }
 
         [TearDown]
         public virtual void TearDown ()
         {
-            ServiceContainer.RemoveScope ();
+            ServiceContainer.Clear ();
         }
 
         protected MessageBus MessageBus {

@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.Tests.Data
             base.SetUp ();
 
             tmpDb = Path.GetTempFileName ();
-            ServiceContainer.RegisterScoped<IModelStore> (new TestSqliteStore (tmpDb));
+            ServiceContainer.Register<IModelStore> (new TestSqliteStore (tmpDb));
         }
 
         public override void TearDown ()

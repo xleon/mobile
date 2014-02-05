@@ -102,5 +102,9 @@ namespace Toggl.Joey.UI.Adapters
                 return (int)modelsView.Count;
             }
         }
+
+        protected IModelsView<T> ModelsView {
+            get { return modelsView; }
+        }
     }
 }

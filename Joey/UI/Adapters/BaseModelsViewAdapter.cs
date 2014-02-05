@@ -43,6 +43,8 @@ namespace Toggl.Joey.UI.Adapters
 
         public virtual T GetModel (int position)
         {
+            if (modelsView.IsLoading && position == modelsView.Count)
+                return null;
             return modelsView.Models.ElementAt (position);
         }
 

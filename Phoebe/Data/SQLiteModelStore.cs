@@ -207,15 +207,15 @@ namespace Toggl.Phoebe.Data
                     return;
             }
 
-            // Whenever the IsPersisted property changes we _need_ to schedule it for commit
-            if (property != Model.PropertyIsPersisted) {
-                // We only care about persisted models
-                if (!model.IsPersisted)
-                    return;
-                // Ignore changes which we don't store in the databases
-                if (ignoreCache.HasAttribute (model, property))
-                    return;
-            }
+            // We only care about persisted models (and models which were just marked as non-persistent)
+            if (property != Model.PropertyIsPersisted && !model.IsPersisted)
+                return;
+
+            // Ignore changes which we don't store in the database (IsShared && IsPersisted are exceptions)
+            if (property != Model.PropertyIsShared
+                && property != Model.PropertyIsPersisted
+                && ignoreCache.HasAttribute (model, property))
+                return;
 
             changedModels.Add (model);
             ScheduleCommit ();

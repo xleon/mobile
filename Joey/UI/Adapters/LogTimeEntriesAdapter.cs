@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
+using Android.Content;
+using Android.Graphics;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Android.Graphics;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
@@ -33,6 +35,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private class TimeEntryListItemHolder : Java.Lang.Object
         {
+            private readonly StringBuilder stringBuilder = new StringBuilder ();
             #pragma warning disable 0414
             private readonly object subscriptionModelChanged;
             #pragma warning restore 0414
@@ -87,6 +90,11 @@ namespace Toggl.Joey.UI.Adapters
                     if (msg.PropertyName == ProjectModel.PropertyName
                         || msg.PropertyName == ProjectModel.PropertyColor)
                         Rebind ();
+                } else if (model.ProjectId.HasValue
+                           && model.Project.ClientId.HasValue
+                           && model.Project.ClientId == msg.Model.Id) {
+                    if (msg.PropertyName == ClientModel.PropertyName)
+                        Rebind ();
                 } else if (model.TaskId.HasValue && model.TaskId == msg.Model.Id) {
                     if (msg.PropertyName == TaskModel.PropertyName)
                         Rebind ();
@@ -99,17 +107,43 @@ namespace Toggl.Joey.UI.Adapters
                 Rebind ();
             }
 
-            private void Rebind ()
+            private string GetProjectText ()
             {
-                var ctx = ProjectTextView.Context;
+                var ctx = ServiceContainer.Resolve<Context> ();
+                stringBuilder.Clear ();
 
                 if (model.Project == null) {
-                    ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
-                } else if (model.Task != null) {
-                    ProjectTextView.Text = String.Format ("{0} | {1}", model.Project.Name, model.Task.Name);
-                } else {
-                    ProjectTextView.Text = model.Project.Name;
+                    return ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                 }
+
+                if (model.Project.Client != null
+                    && !String.IsNullOrWhiteSpace (model.Project.Client.Name)) {
+                    stringBuilder.Append (model.Project.Client.Name);
+                }
+
+                if (!String.IsNullOrWhiteSpace (model.Project.Name)) {
+                    if (stringBuilder.Length > 0) {
+                        stringBuilder.Append (" - ");
+                    }
+                    stringBuilder.Append (model.Project.Name);
+                }
+
+                if (model.Task != null
+                    && !String.IsNullOrWhiteSpace (model.Task.Name)) {
+                    if (stringBuilder.Length > 0) {
+                        stringBuilder.Append (" | ");
+                    }
+                    stringBuilder.Append (model.Task.Name);
+                }
+
+                return stringBuilder.ToString ();
+            }
+
+            private void Rebind ()
+            {
+                var ctx = ServiceContainer.Resolve<Context> ();
+
+                ProjectTextView.Text = GetProjectText ();
 
                 var color = Color.Transparent;
                 if (model.Project != null) {

@@ -15,6 +15,8 @@ namespace Toggl.Joey.UI.Activities
         MainLauncher = true)]
     public class TimeEntriesActivity : BaseActivity, ActionBar.IOnNavigationListener
     {
+        private static readonly string SelectedNavIndexExtra = "com.toggl.android.navigation_index";
+
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
@@ -28,8 +30,19 @@ namespace Toggl.Joey.UI.Activities
 
             SetContentView (Resource.Layout.TimeEntriesActivity);
 
+            if (bundle != null) {
+                ActionBar.SetSelectedNavigationItem (bundle.GetInt (SelectedNavIndexExtra));
+            }
+
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+        }
+
+        protected override void OnSaveInstanceState (Bundle outState)
+        {
+            base.OnSaveInstanceState (outState);
+
+            outState.PutInt (SelectedNavIndexExtra, ActionBar.SelectedNavigationIndex);
         }
 
         protected override void OnStart ()

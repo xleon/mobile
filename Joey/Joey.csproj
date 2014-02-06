@@ -97,6 +97,7 @@
     <AndroidResource Include="Resources\drawable-hdpi\IcDialogAlertHoloLight.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcDialogAlertHoloLight.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcDialogAlertHoloLight.png" />
+    <AndroidResource Include="Resources\layout\LogTimeEntryListSectionHeader.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

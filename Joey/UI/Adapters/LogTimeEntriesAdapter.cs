@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -14,20 +15,133 @@ namespace Toggl.Joey.UI.Adapters
 {
     public class LogTimeEntriesAdapter : BaseModelsViewAdapter<TimeEntryModel>
     {
+        protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
+
+        private readonly List<HeaderPosition> headers = new List<HeaderPosition> ();
+
+        private class HeaderPosition{ 
+            public int Position { get; set; }
+            public DateTime Date { get; set; }
+
+            public HeaderPosition(int position, DateTime date)
+            {
+                this.Position = position;
+                this.Date = date;
+            }
+        }
+
         public LogTimeEntriesAdapter () : base (new AllTimeEntriesView ())
         {
+            UpdateHeaders ();
+        }
+
+        public override void NotifyDataSetChanged ()
+        {
+            UpdateHeaders ();
+            base.NotifyDataSetChanged ();
+        }
+
+        private void UpdateHeaders ()
+        {
+            headers.Clear ();
+
+            if (ModelsView.Count == 0)
+                return;
+
+            TimeEntryModel model = ModelsView.Models.ElementAt (0);
+
+            headers.Add (new HeaderPosition (0, model.StartTime));
+
+            TimeEntryModel prevModel = model;
+
+            for (int i = 1; i < ModelsView.Count; i++) {
+                model = ModelsView.Models.ElementAt (i);
+                var date = model.StartTime.Date;
+                var isNewDay = prevModel.StartTime.Date.CompareTo (date) != 0;
+                if (isNewDay) {
+                    headers.Add (new HeaderPosition (i + headers.Count, date));
+                }
+                prevModel = model;
+            }
+        }
+
+        private HeaderPosition GetHeaderAt(int position)
+        {
+            return headers.FirstOrDefault ((h) => h.Position == position);
+        }
+
+        private int GetIndexForPosition (int position)
+        {
+            if (GetHeaderAt (position) != null) // This is header position, there is no index for that
+                return GetIndexForPosition (position + 1); // Return next position (which is probably an actual item)
+
+            int numberSections = 0;
+            foreach (HeaderPosition header in headers) {
+                if (position > header.Position) {
+                    numberSections++;
+                }
+            }
+
+            return position - numberSections;
+        }
+
+        public override bool IsEnabled (int position)
+        {
+            return GetHeaderAt (position) == null;
+        }
+
+        public override TimeEntryModel GetModel (int position)
+        {
+            var modelIndex = GetIndexForPosition (position);
+            if (modelIndex >= ModelsView.Models.Count())
+                return null;
+            
+            return ModelsView.Models.ElementAt (modelIndex);
+        }
+
+        public override int GetItemViewType (int position)
+        {
+            if (GetIndexForPosition(position) == ModelsView.Count && ModelsView.IsLoading)
+                return ViewTypeLoaderPlaceholder;
+
+            if (GetHeaderAt (position) == null)
+                return ViewTypeContent;
+            else
+                return ViewTypeDateHeader;
+        }
+
+        public override int ViewTypeCount {
+            get { return base.ViewTypeCount + 1; }
+        }
+
+        public override int Count {
+            get {
+                return base.Count + headers.Count;
+            }
         }
 
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
-            if (view == null) {
-                view = LayoutInflater.FromContext (parent.Context).Inflate (
-                    Resource.Layout.LogTimeEntryListItem, parent, false);
-                view.Tag = new TimeEntryListItemHolder (view);
+
+            var model = GetModel (position);
+
+            if (GetHeaderAt (position) != null) {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
+                }
+                view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).Text = GetHeaderAt (position).Date.ToShortDateString ();
+            } else {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.LogTimeEntryListItem, parent, false);
+                    view.Tag = new TimeEntryListItemHolder (view);
+                }
+                var holder = (TimeEntryListItemHolder) view.Tag;
+                holder.Bind (model);
             }
-            var holder = (TimeEntryListItemHolder)view.Tag;
-            holder.Bind (GetModel (position));
+
             return view;
         }
 

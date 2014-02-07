@@ -80,6 +80,7 @@
     <Compile Include="Bugsnag\Data\SystemInfo.cs" />
     <Compile Include="Bugsnag\Data\SystemState.cs" />
     <Compile Include="Bugsnag\Json\OrientationConverter.cs" />
+    <Compile Include="Bugsnag\BugsnagClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

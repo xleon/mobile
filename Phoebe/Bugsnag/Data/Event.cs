@@ -29,9 +29,6 @@ namespace Toggl.Phoebe.Bugsnag.Data
         [JsonProperty ("context"), JsonConverter (typeof(ErrorSeverityConverter))]
         public ErrorSeverity Severity { get; set; }
 
-        [JsonProperty ("groupingHash", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public string GroupingHash { get; set; }
-
         [JsonProperty ("exceptions")]
         public List<ExceptionInfo> Exceptions { get; set; }
 

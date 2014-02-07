@@ -14,6 +14,9 @@ namespace Toggl.Joey.Bugsnag.Data
         [JsonProperty ("screenDensity")]
         public float ScreenDensity { get; set; }
 
+        [JsonProperty ("screenResolution")]
+        public string ScreenResolution { get; set; }
+
         [JsonProperty ("apiLevel")]
         public int ApiLevel { get; set; }
 

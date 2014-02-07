@@ -56,6 +56,7 @@ namespace Toggl.Joey
                 return new SQLiteModelStore (path);
             });
             ServiceContainer.Register<GcmRegistrationManager> (new GcmRegistrationManager ());
+            ServiceContainer.Register<AndroidNotificationManager> (new AndroidNotificationManager ());
         }
 
         public override void OnTrimMemory (TrimMemory level)

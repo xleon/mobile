@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.Content;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -56,6 +58,13 @@ namespace Toggl.Joey
                 return new SQLiteModelStore (path);
             });
             ServiceContainer.Register<GcmRegistrationManager> (new GcmRegistrationManager ());
+
+            // Setup Bugsnag:
+            ServiceContainer.Register<BugsnagClient> (
+                new Toggl.Joey.Bugsnag.BugsnagClient (this, Build.BugsnagApiKey) {
+                    DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
+                    ProjectNamespaces = new List<string> () { "Toggl." },
+                });
         }
 
         public override void OnTrimMemory (TrimMemory level)

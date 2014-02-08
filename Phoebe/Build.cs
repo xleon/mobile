@@ -16,6 +16,7 @@ namespace Toggl.Phoebe
         #if __ANDROID__
         public static readonly string AppIdentifier = "TogglJoey";
         public static readonly string GcmSenderId = "";
+        public static readonly string BugsnagApiKey = "";
         #endif
         #endregion
 

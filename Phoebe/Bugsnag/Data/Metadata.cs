@@ -5,9 +5,12 @@ namespace Toggl.Phoebe.Bugsnag.Data
 {
     public class Metadata : JObject
     {
-        public Metadata Duplicate ()
+        public Metadata () : base ()
         {
-            return (Metadata)DeepClone ();
+        }
+
+        public Metadata (Metadata other) : base (other)
+        {
         }
 
         public void AddToTab (string tabName, string key, object value)

@@ -181,8 +181,10 @@ namespace Toggl.Phoebe.Bugsnag
             if (IgnoredExceptions != null && IgnoredExceptions.Contains (e.GetType ()))
                 return;
 
-            var md = metadata.Duplicate ();
-            md.Merge (extraMetadata);
+            var md = new Metadata (metadata);
+            if (extraMetadata != null) {
+                md.Merge (extraMetadata);
+            }
 
             var ev = new Event () {
                 User = userInfo,

@@ -65,14 +65,14 @@ namespace Toggl.Phoebe.Bugsnag
             }
         }
 
-        private void OnUnobservedTaskException (object sender, UnobservedTaskExceptionEventArgs e)
+        protected virtual void OnUnobservedTaskException (object sender, UnobservedTaskExceptionEventArgs e)
         {
             if (!AutoNotify)
                 return;
             Notify (e.Exception, ErrorSeverity.Warning);
         }
 
-        private void OnUnhandledException (object sender, UnhandledExceptionEventArgs e)
+        protected virtual void OnUnhandledException (object sender, UnhandledExceptionEventArgs e)
         {
             if (!AutoNotify)
                 return;

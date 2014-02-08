@@ -15,6 +15,7 @@ namespace Toggl.Joey.Data
         private const string PhoebeUserIdKey = "phoebeUserId";
         private const string PhoebeApiTokenKey = "phoebeApiToken";
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
+        private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
         private readonly ISharedPreferences prefs;
@@ -88,6 +89,17 @@ namespace Toggl.Joey.Data
                 prefs.Edit ().PutLong (key, value.Value.ToBinary ()).Commit ();
             } else {
                 prefs.Edit ().Remove (key).Commit ();
+            }
+        }
+
+        public string InstallId {
+            get {
+                var val = GetString (JoeyInstallIdKey);
+                if (String.IsNullOrEmpty (val)) {
+                    val = Guid.NewGuid ().ToString ();
+                    SetString (JoeyInstallIdKey, val);
+                }
+                return val;
             }
         }
 

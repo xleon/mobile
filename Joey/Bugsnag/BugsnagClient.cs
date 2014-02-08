@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using Android.Content;
 using Android.Util;
+using Newtonsoft.Json;
 using Toggl.Phoebe.Bugsnag.Data;
+using Toggl.Phoebe.Bugsnag.IO;
 
 namespace Toggl.Joey.Bugsnag
 {
@@ -14,6 +19,7 @@ namespace Toggl.Joey.Bugsnag
         private readonly Context androidContext;
         private readonly List<WeakReference> activityStack = new List<WeakReference> ();
         private readonly bool sendMetrics;
+        private readonly string errorsCachePath;
         private bool isInitialised;
         private WeakReference topActivity;
         private DateTime appStartTime;
@@ -27,6 +33,7 @@ namespace Toggl.Joey.Bugsnag
             sendMetrics = enableMetrics;
             androidContext = context.ApplicationContext;
             appStartTime = DateTime.UtcNow;
+            errorsCachePath = MakeCachePath (context);
             GuessReleaseStage ();
 
             JavaExceptionHandler.Install (this);
@@ -58,7 +65,9 @@ namespace Toggl.Joey.Bugsnag
             }
 
             if (!isInitialised) {
-                TrackUser ();
+                if (sendMetrics) {
+                    TrackUser ();
+                }
                 FlushReports ();
                 isInitialised = true;
             }
@@ -115,20 +124,190 @@ namespace Toggl.Joey.Bugsnag
             }
         }
 
-        private void FlushReports ()
+        private async void FlushReports ()
         {
-            // TODO: Send all events serialized from disk
-            throw new NotImplementedException ();
+            if (errorsCachePath == null)
+                return;
+
+            var files = Directory.GetFiles (errorsCachePath);
+            var streams = new List<Stream> (files.Length);
+            foreach (var path in files) {
+                try {
+                    streams.Add (new FileStream (path, FileMode.Open));
+                } catch (Exception ex) {
+                    LogError (String.Format ("Failed to open cached file {0}: {1}", Path.GetFileName (path), ex));
+                }
+            }
+
+            Stream notifStream = null;
+            bool sent = false;
+            try {
+                // Make a single request to send all stored events
+                notifStream = MakeNotification (streams.ToArray ());
+
+                try {
+                    var req = new HttpRequestMessage () {
+                        Method = HttpMethod.Post,
+                        RequestUri = BaseUrl,
+                        Content = new StreamContent (notifStream),
+                    };
+                    req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
+
+                    // Has to be synchronous as when the app is crashing we have to block to make sure the HTTP is sent
+                    var resp = await HttpClient.SendAsync (req);
+                    if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+                        LogError ("Failed to send notification due to invalid API key.");
+                    } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
+                        LogError ("Failed to send notification due to invalid payload.");
+                    } else {
+                        sent = true;
+                    }
+                } catch (Exception ex) {
+                    // Keep the stored file, it will be retried on next app start
+                    LogError (String.Format ("Failed to send notification: {0}", ex));
+                }
+            } finally {
+                if (notifStream != null) {
+                    // Notification stream closes all other streams:
+                    notifStream.Dispose ();
+                } else {
+                    foreach (var stream in streams) {
+                        stream.Dispose ();
+                    }
+                }
+                streams.Clear ();
+            }
+
+            // Remove cached files on success:
+            if (sent) {
+                foreach (var path in files) {
+                    try {
+                        File.Delete (path);
+                    } catch (Exception ex) {
+                        LogError (String.Format ("Failed to clean up stored event {0}: {1}",
+                            Path.GetFileName (path), ex));
+                    }
+                }
+            }
+        }
+
+        private string notifPrepend = null;
+        private string notifAppend = null;
+
+        private Stream MakeNotification (Stream[] jsonEventStreams)
+        {
+            if (notifPrepend == null || notifAppend == null) {
+                var json = JsonConvert.SerializeObject (new Notification () {
+                    ApiKey = ApiKey,
+                    Notifier = Notifier,
+                    Events = new List<Event> (0),
+                });
+
+                // Find empty events array:
+                var idx = json.IndexOf ("[]");
+                notifPrepend = json.Substring (0, idx + 1);
+                notifAppend = json.Substring (idx + 1);
+            }
+
+            var stream = new CombiningStream ();
+            stream.Add (notifPrepend);
+            if (jsonEventStreams.Length > 1) {
+                var eventsStream = new CombiningStream (", ");
+                foreach (var eventStream in jsonEventStreams) {
+                    eventsStream.Add (eventStream);
+                }
+                stream.Add (eventsStream);
+            } else if (jsonEventStreams.Length == 1) {
+                stream.Add (jsonEventStreams [0]);
+            }
+            stream.Add (notifAppend);
+
+            return stream;
+        }
+
+        private Stream TryStoreEvent (Event e, string path)
+        {
+            var json = new MemoryStream (
+                           System.Text.Encoding.UTF8.GetBytes (
+                               JsonConvert.SerializeObject (e)));
+
+            // Don't even try storing to disk when invalid path
+            if (path == null)
+                return json;
+
+            FileStream output = null;
+            try {
+                output = new FileStream (path, FileMode.Truncate);
+                json.CopyTo (output);
+                output.Flush ();
+
+                output.Seek (0, SeekOrigin.Begin);
+                json.Dispose ();
+                return output;
+            } catch (IOException ex) {
+                LogError (String.Format ("Failed to store error to disk: {0}", ex));
+
+                // Failed to store to disk (full?), return json memory stream instead
+                if (output != null) {
+                    output.Dispose ();
+                }
+                json.Seek (0, SeekOrigin.Begin);
+                return json;
+            }
         }
 
         protected override void SendEvent (Event e)
         {
-            /* TODO:
-             * - Serialize event to disk
-             * - Try sending data to bugsense
-             * - On success delete disk file
-             */
-            throw new NotImplementedException ();
+            // Determine file where to persist the error:
+            string path = null;
+            if (errorsCachePath != null) {
+                var file = String.Format ("{0}.json", DateTime.UtcNow.ToBinary ());
+                path = Path.Combine (errorsCachePath, file);
+            }
+
+            Stream eventStream = null;
+            Stream notifStream = null;
+            try {
+                // Serialize the event:
+                eventStream = TryStoreEvent (e, path);
+
+                // Combine into a valid payload:
+                notifStream = MakeNotification (new Stream[] { eventStream });
+
+                try {
+                    var req = new HttpRequestMessage () {
+                        Method = HttpMethod.Post,
+                        RequestUri = BaseUrl,
+                        Content = new StreamContent (notifStream),
+                    };
+                    req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
+
+                    // Has to be synchronous as when the app is crashing we have to block to make sure the HTTP is sent
+                    var resp = HttpClient.SendAsync (req).Result;
+                    if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+                        LogError ("Failed to send notification due to invalid API key.");
+                    } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
+                        LogError ("Failed to send notification due to invalid payload.");
+                    } else if (path != null) {
+                        // On successful response delete the stored file:
+                        try {
+                            File.Delete (path);
+                        } catch (Exception ex) {
+                            LogError (String.Format ("Failed to clean up stored event: {0}", ex));
+                        }
+                    }
+                } catch (Exception ex) {
+                    // Keep the stored file, it will be retried on next app start
+                    LogError (String.Format ("Failed to send notification: {0}", ex));
+                }
+            } finally {
+                if (notifStream != null) {
+                    // Also disposes of the eventStream
+                    notifStream.Dispose ();
+                } else if (eventStream != null) {
+                    eventStream.Dispose ();
+                }
+            }
         }
 
         protected override ApplicationInfo GetAppInfo ()
@@ -192,6 +371,26 @@ namespace Toggl.Joey.Bugsnag
                 LocationStatus = AndroidInfo.GetGpsStatus (androidContext),
                 NetworkStatus = AndroidInfo.GetNetworkStatus (androidContext),
             };
+        }
+
+        protected override void LogError (string msg)
+        {
+            Log.Error (Tag, msg);
+        }
+
+        private static string MakeCachePath (Context ctx)
+        {
+            var path = Path.Combine (ctx.CacheDir.AbsolutePath, "bugsense-events");
+            if (!Directory.Exists (path)) {
+                try {
+                    Directory.CreateDirectory (path);
+                } catch (Exception ex) {
+                    Log.Error (Tag, String.Format ("Failed to create cache dir: {0}", ex));
+                    path = null;
+                }
+            }
+
+            return path;
         }
 
         private class JavaExceptionHandler : Java.Lang.Object, Java.Lang.Thread.IUncaughtExceptionHandler

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Toggl.Phoebe.Bugsnag.Data;
 using Toggl.Phoebe.Bugsnag.Json;
 
@@ -11,7 +13,8 @@ namespace Toggl.Phoebe.Bugsnag
 {
     public abstract class BugsnagClient : IDisposable
     {
-        protected readonly string apiKey;
+        private readonly string apiKey;
+        private readonly Uri baseUrl;
         private readonly UserInfo userInfo = new UserInfo ();
         private readonly NotifierInfo notifierInfo = new NotifierInfo () {
             Name = "Toggl Xamarin/.NET Bugsnag Notifier",
@@ -28,6 +31,10 @@ namespace Toggl.Phoebe.Bugsnag
             }
 
             this.apiKey = apiKey;
+            this.baseUrl = new Uri ("https://notify.bugsnag.com/");
+            this.httpClient = new HttpClient ();
+            this.httpClient.DefaultRequestHeaders.Accept.Add (
+                new MediaTypeWithQualityHeaderValue ("application/json"));
 
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
@@ -121,29 +128,42 @@ namespace Toggl.Phoebe.Bugsnag
             metadata.ClearTab (tabName);
         }
 
-        protected string NotifierName {
-            get { return notifierInfo.Name; }
-            set { notifierInfo.Name = value; }
+        protected string ApiKey {
+            get { return apiKey; }
         }
 
-        protected string NotifierVersion {
-            get { return notifierInfo.Version; }
-            set { notifierInfo.Version = value; }
+        protected Uri BaseUrl {
+            get { return baseUrl; }
         }
 
-        protected string NotifierUrl {
-            get { return notifierInfo.Url; }
-            set { notifierInfo.Url = value; }
+        protected NotifierInfo Notifier {
+            get { return notifierInfo; }
+        }
+
+        protected HttpClient HttpClient {
+            get { return httpClient; }
         }
 
         public void TrackUser ()
         {
-            var data = new UserMetrics () {
+            var data = JsonConvert.SerializeObject (new UserMetrics () {
                 ApiKey = apiKey,
                 User = userInfo,
                 App = GetAppInfo (),
                 System = GetSystemInfo (),
+            });
+
+            var req = new HttpRequestMessage () {
+                RequestUri = new Uri (baseUrl, "metrics"),
+                Method = HttpMethod.Post,
+                Content = new StringContent (data, System.Text.Encoding.UTF8, "application/json"),
             };
+
+            httpClient.SendAsync (req).ContinueWith ((t) => {
+                if (t.IsFaulted) {
+                    LogError (String.Format ("Failed to track user: {0}", t.Exception));
+                }
+            });
         }
 
         protected bool ShouldNotify {
@@ -188,6 +208,8 @@ namespace Toggl.Phoebe.Bugsnag
         protected abstract SystemInfo GetSystemInfo ();
 
         protected abstract SystemState GetSystemState ();
+
+        protected abstract void LogError (string msg);
 
         private List<ExceptionInfo> ConvertExceptionTree (Exception ex)
         {

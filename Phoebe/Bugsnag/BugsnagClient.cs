@@ -119,6 +119,11 @@ namespace Toggl.Phoebe.Bugsnag
             UserName = name;
         }
 
+        protected virtual UserInfo GetUserInfo ()
+        {
+            return userInfo;
+        }
+
         public void AddToTab (string tabName, string key, object value)
         {
             metadata.AddToTab (tabName, key, value);
@@ -149,7 +154,7 @@ namespace Toggl.Phoebe.Bugsnag
         {
             var data = JsonConvert.SerializeObject (new UserMetrics () {
                 ApiKey = apiKey,
-                User = userInfo,
+                User = GetUserInfo (),
                 App = GetAppInfo (),
                 System = GetSystemInfo (),
             });

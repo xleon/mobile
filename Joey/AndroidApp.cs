@@ -65,6 +65,7 @@ namespace Toggl.Joey
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 });
+            ServiceContainer.Register (new BugsnagUserManager ());
         }
 
         public override void OnTrimMemory (TrimMemory level)

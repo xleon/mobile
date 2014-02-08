@@ -35,6 +35,7 @@ namespace Toggl.Phoebe.Bugsnag
             this.httpClient = new HttpClient ();
             this.httpClient.DefaultRequestHeaders.Accept.Add (
                 new MediaTypeWithQualityHeaderValue ("application/json"));
+            AutoNotify = true;
 
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using Android.Content;
 using Android.Util;
 using Newtonsoft.Json;
@@ -15,6 +16,7 @@ namespace Toggl.Joey.Bugsnag
     public class BugsnagClient : Toggl.Phoebe.Bugsnag.BugsnagClient
     {
         private static readonly TimeSpan IdleTimeForSessionEnd = TimeSpan.FromSeconds (10);
+        private static readonly TimeSpan StateCacheTimeToLive = TimeSpan.FromSeconds (1);
         private static readonly string Tag = "Bugsense";
         private readonly Context androidContext;
         private readonly List<WeakReference> activityStack = new List<WeakReference> ();
@@ -27,6 +29,10 @@ namespace Toggl.Joey.Bugsnag
         private DateTime sessionStartTime;
         private SystemInfo systemInfo;
         private ApplicationInfo appInfo;
+        private DateTime? cachedStateTime;
+        private ApplicationState cachedAppState;
+        private SystemState cachedSystemState;
+        private bool storeOnly;
 
         public BugsnagClient (Context context, string apiKey, bool enableMetrics = true) : base (apiKey)
         {
@@ -36,16 +42,39 @@ namespace Toggl.Joey.Bugsnag
             errorsCachePath = MakeCachePath (context);
             GuessReleaseStage ();
 
+            Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += OnUnhandledManagedException;
             JavaExceptionHandler.Install (this);
         }
 
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
+                Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser -= OnUnhandledManagedException;
                 JavaExceptionHandler.CleanUp ();
             }
 
             base.Dispose (disposing);
+        }
+
+        protected override void OnUnhandledException (object sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.IsTerminating) {
+                // At this point in time we don't want to attemt an HTTP connection, thus we only store
+                // the event to disk and hope that the user opens the application again to send the
+                // errors to Bugsense.
+                storeOnly = true;
+            }
+            base.OnUnhandledException (sender, e);
+        }
+
+        private void OnUnhandledManagedException (object sender, Android.Runtime.RaiseThrowableEventArgs e)
+        {
+            if (!AutoNotify)
+                return;
+
+            // Cache the app and system states, since filling them when the exception bubles to the global
+            // app domain unhandled exception is impossible.
+            CacheStates ();
         }
 
         public string DeviceId { get; set; }
@@ -124,73 +153,6 @@ namespace Toggl.Joey.Bugsnag
             }
         }
 
-        private async void FlushReports ()
-        {
-            if (errorsCachePath == null)
-                return;
-
-            var files = Directory.GetFiles (errorsCachePath);
-            var streams = new List<Stream> (files.Length);
-            foreach (var path in files) {
-                try {
-                    streams.Add (new FileStream (path, FileMode.Open));
-                } catch (Exception ex) {
-                    LogError (String.Format ("Failed to open cached file {0}: {1}", Path.GetFileName (path), ex));
-                }
-            }
-
-            Stream notifStream = null;
-            bool sent = false;
-            try {
-                // Make a single request to send all stored events
-                notifStream = MakeNotification (streams.ToArray ());
-
-                try {
-                    var req = new HttpRequestMessage () {
-                        Method = HttpMethod.Post,
-                        RequestUri = BaseUrl,
-                        Content = new StreamContent (notifStream),
-                    };
-                    req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
-
-                    // Has to be synchronous as when the app is crashing we have to block to make sure the HTTP is sent
-                    var resp = await HttpClient.SendAsync (req);
-                    if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
-                        LogError ("Failed to send notification due to invalid API key.");
-                    } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
-                        LogError ("Failed to send notification due to invalid payload.");
-                    } else {
-                        sent = true;
-                    }
-                } catch (Exception ex) {
-                    // Keep the stored file, it will be retried on next app start
-                    LogError (String.Format ("Failed to send notification: {0}", ex));
-                }
-            } finally {
-                if (notifStream != null) {
-                    // Notification stream closes all other streams:
-                    notifStream.Dispose ();
-                } else {
-                    foreach (var stream in streams) {
-                        stream.Dispose ();
-                    }
-                }
-                streams.Clear ();
-            }
-
-            // Remove cached files on success:
-            if (sent) {
-                foreach (var path in files) {
-                    try {
-                        File.Delete (path);
-                    } catch (Exception ex) {
-                        LogError (String.Format ("Failed to clean up stored event {0}: {1}",
-                            Path.GetFileName (path), ex));
-                    }
-                }
-            }
-        }
-
         private string notifPrepend = null;
         private string notifAppend = null;
 
@@ -237,7 +199,7 @@ namespace Toggl.Joey.Bugsnag
 
             FileStream output = null;
             try {
-                output = new FileStream (path, FileMode.Truncate);
+                output = new FileStream (path, FileMode.CreateNew);
                 json.CopyTo (output);
                 output.Flush ();
 
@@ -270,37 +232,35 @@ namespace Toggl.Joey.Bugsnag
             try {
                 // Serialize the event:
                 eventStream = TryStoreEvent (e, path);
+                if (storeOnly) {
+                    storeOnly = false;
+                    return;
+                }
 
                 // Combine into a valid payload:
                 notifStream = MakeNotification (new Stream[] { eventStream });
 
-                try {
-                    var req = new HttpRequestMessage () {
-                        Method = HttpMethod.Post,
-                        RequestUri = BaseUrl,
-                        Content = new StreamContent (notifStream),
-                    };
-                    req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
-
-                    // Has to be synchronous as when the app is crashing we have to block to make sure the HTTP is sent
-                    var resp = HttpClient.SendAsync (req).Result;
-                    if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
-                        LogError ("Failed to send notification due to invalid API key.");
-                    } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
-                        LogError ("Failed to send notification due to invalid payload.");
-                    } else if (path != null) {
-                        // On successful response delete the stored file:
-                        try {
-                            File.Delete (path);
-                        } catch (Exception ex) {
-                            LogError (String.Format ("Failed to clean up stored event: {0}", ex));
+                SendNotification (notifStream).ContinueWith ((t) => {
+                    try {
+                        if (t.Result) {
+                            // On successful response delete the stored file:
+                            try {
+                                File.Delete (path);
+                            } catch (Exception ex) {
+                                LogError (String.Format ("Failed to clean up stored event: {0}", ex));
+                            }
+                        }
+                    } finally {
+                        if (notifStream != null) {
+                            // Also disposes of the eventStream
+                            notifStream.Dispose ();
                         }
                     }
-                } catch (Exception ex) {
-                    // Keep the stored file, it will be retried on next app start
-                    LogError (String.Format ("Failed to send notification: {0}", ex));
-                }
-            } finally {
+                });
+            } catch (Exception ex) {
+                // Something went wrong...
+                LogError (String.Format ("Failed to send notification: {0}", ex));
+
                 if (notifStream != null) {
                     // Also disposes of the eventStream
                     notifStream.Dispose ();
@@ -308,6 +268,101 @@ namespace Toggl.Joey.Bugsnag
                     eventStream.Dispose ();
                 }
             }
+        }
+
+        private void FlushReports ()
+        {
+            if (errorsCachePath == null)
+                return;
+
+            var files = Directory.GetFiles (errorsCachePath);
+            if (files.Length == 0)
+                return;
+
+            var streams = new List<Stream> (files.Length);
+            foreach (var path in files) {
+                try {
+                    streams.Add (new FileStream (path, FileMode.Open));
+                } catch (Exception ex) {
+                    LogError (String.Format ("Failed to open cached file {0}: {1}", Path.GetFileName (path), ex));
+                }
+            }
+
+            Stream notifStream = null;
+            try {
+                // Make a single request to send all stored events
+                notifStream = MakeNotification (streams.ToArray ());
+
+                SendNotification (notifStream).ContinueWith ((t) => {
+                    try {
+                        // Remove cached files on success
+                        if (t.Result) {
+                            foreach (var path in files) {
+                                try {
+                                    File.Delete (path);
+                                } catch (Exception ex) {
+                                    LogError (String.Format ("Failed to clean up stored event {0}: {1}",
+                                        Path.GetFileName (path), ex));
+                                }
+                            }
+                        }
+                    } finally {
+                        if (notifStream != null) {
+                            notifStream.Dispose ();
+                        }
+                    }
+                });
+            } catch (Exception ex) {
+                // Something went wrong...
+                LogError (String.Format ("Failed to send notification: {0}", ex));
+
+                if (notifStream != null) {
+                    // Notification stream closes all other streams:
+                    notifStream.Dispose ();
+                } else {
+                    foreach (var stream in streams) {
+                        stream.Dispose ();
+                    }
+                }
+                streams.Clear ();
+            }
+        }
+
+        private Task<bool> SendNotification (Stream stream)
+        {
+            var req = new HttpRequestMessage () {
+                Method = HttpMethod.Post,
+                RequestUri = BaseUrl,
+                Content = new StreamContent (stream),
+            };
+            req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
+
+            return HttpClient.SendAsync (req).ContinueWith ((t) => {
+                try {
+                    var resp = t.Result;
+                    if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+                        LogError ("Failed to send notification due to invalid API key.");
+                    } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
+                        LogError ("Failed to send notification due to invalid payload.");
+                    } else {
+                        return true;
+                    }
+                } catch (Exception ex) {
+                    // Keep the stored file, it will be retried on next app start
+                    LogError (String.Format ("Failed to send notification: {0}", ex));
+                }
+
+                return false;
+            });
+        }
+
+        protected override UserInfo GetUserInfo ()
+        {
+            var val = base.GetUserInfo ();
+            if (String.IsNullOrEmpty (val.Id)) {
+                val.Id = DeviceId;
+            }
+            return val;
         }
 
         protected override ApplicationInfo GetAppInfo ()
@@ -324,8 +379,30 @@ namespace Toggl.Joey.Bugsnag
             return appInfo;
         }
 
+        private void CacheStates ()
+        {
+            // Old cache still valid
+            if (cachedStateTime.HasValue && cachedStateTime.Value + StateCacheTimeToLive > DateTime.UtcNow)
+                return;
+
+            cachedStateTime = null;
+            GetAppInfo ();
+            cachedAppState = GetAppState ();
+            GetSystemInfo ();
+            cachedSystemState = GetSystemState ();
+            cachedStateTime = DateTime.UtcNow;
+        }
+
         protected override ApplicationState GetAppState ()
         {
+            if (cachedStateTime.HasValue && cachedAppState != null) {
+                if (cachedStateTime.Value + StateCacheTimeToLive > DateTime.UtcNow) {
+                    return cachedAppState;
+                } else {
+                    cachedStateTime = null;
+                }
+            }
+
             return new Toggl.Joey.Bugsnag.Data.ApplicationState () {
                 SessionLength = SessionLength,
                 HasLowMemory = AndroidInfo.CheckMemoryLow (androidContext),
@@ -362,6 +439,14 @@ namespace Toggl.Joey.Bugsnag
 
         protected override SystemState GetSystemState ()
         {
+            if (cachedStateTime.HasValue && cachedSystemState != null) {
+                if (cachedStateTime.Value + StateCacheTimeToLive > DateTime.UtcNow) {
+                    return cachedSystemState;
+                } else {
+                    cachedStateTime = null;
+                }
+            }
+
             return new Toggl.Joey.Bugsnag.Data.SystemState () {
                 FreeMemory = AndroidInfo.GetFreeMemory (),
                 Orientation = AndroidInfo.GetOrientation (androidContext),

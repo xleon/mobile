@@ -26,7 +26,7 @@ namespace Toggl.Phoebe.Bugsnag.Data
         [JsonProperty ("context")]
         public string Context { get; set; }
 
-        [JsonProperty ("context"), JsonConverter (typeof(ErrorSeverityConverter))]
+        [JsonProperty ("severity"), JsonConverter (typeof(ErrorSeverityConverter))]
         public ErrorSeverity Severity { get; set; }
 
         [JsonProperty ("exceptions")]

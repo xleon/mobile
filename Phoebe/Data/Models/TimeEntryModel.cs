@@ -536,6 +536,18 @@ namespace Toggl.Phoebe.Data.Models
 
         #endregion
 
+        public static TimeEntryModel FindRunning () {
+            IEnumerable<TimeEntryModel> entries;
+            entries = Model.Query<TimeEntryModel> ((te) => te.IsRunning)
+                .NotDeleted ().ForCurrentUser ().ToList ();
+
+            // Find currently running time entry:
+            entries = Model.Manager.Cached<TimeEntryModel> ()
+                .Where ((te) => te.IsRunning && te.DeletedAt == null)
+                .ForCurrentUser ();
+            return entries.FirstOrDefault ();
+        }
+
         public class TagsCollection : RelatedModelsCollection<TagModel, TimeEntryTagModel, TimeEntryModel, TagModel>
         {
             private readonly TimeEntryModel model;

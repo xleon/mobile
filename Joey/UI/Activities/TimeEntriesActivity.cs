@@ -7,6 +7,9 @@ using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Fragments;
+using Toggl.Phoebe.Data;
+using System.Collections.Generic;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Joey.UI.Activities
 {

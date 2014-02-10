@@ -6,6 +6,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
@@ -14,7 +15,6 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Activities;
-using Android.Support.V4.App;
 
 namespace Toggl.Joey
 {
@@ -24,22 +24,22 @@ namespace Toggl.Joey
         private readonly object subscriptionModelChanged;
         #pragma warning restore 0414
 
-        private const int runningTimeEntryNotificationId = 10;
+        private const int RunningTimeEntryNotifId = 42;
+        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
         private Context ctx;
-
         private NotificationCompat.Builder notificationBuilder;
         private NotificationManager notificationManager;
-
         private TimeEntryModel currentTimeEntry;
 
         public AndroidNotificationManager ()
         {
-            ctx = ServiceContainer.Resolve<Context> ();
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+
+            ctx = ServiceContainer.Resolve<Context> ();
             notificationManager = (NotificationManager)ctx.GetSystemService(Context.NotificationService);
-            CreateNotification ();
+            CreateNotificationBuilder ();
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
@@ -74,38 +74,31 @@ namespace Toggl.Joey
 
         }
 
-        private static bool ForCurrentUser (TimeEntryModel model)
+        private bool ForCurrentUser (TimeEntryModel model)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             return model.UserId == authManager.UserId;
         }
 
-
-        private void CreateNotification ()
+        private void CreateNotificationBuilder ()
         {
-            PendingIntent stopIntent;
+            Intent openTimeEntriesActivityIntent = new Intent(ctx, typeof(TimeEntriesActivity));
+            openTimeEntriesActivityIntent.SetAction(Intent.ActionMain);
+            openTimeEntriesActivityIntent.AddCategory(Intent.CategoryLauncher);
+            PendingIntent contentIntent = PendingIntent.GetActivity(ctx, 0, openTimeEntriesActivityIntent, 0);
 
-            PendingIntent editIntent;
+            var closeRunningTimeEmtryIntent = new Intent(ctx, typeof(StopTimeEntryBroadcastReceiver));
 
-            Intent resultIntent = new Intent(ctx, typeof(TimeEntriesActivity));
-
-            TaskStackBuilder stackBuilder = TaskStackBuilder.Create(ctx);
-            stackBuilder.AddParentStack(Java.Lang.Class.FromType(typeof(TimeEntriesActivity)));
-            stackBuilder.AddNextIntent(resultIntent);
-
-            PendingIntent resultPendingIntent = stackBuilder.GetPendingIntent(0, (int)PendingIntentFlags.UpdateCurrent);
-
-            stopIntent = editIntent = resultPendingIntent; //TODO Implement it
+            var pendingIntentClose = PendingIntent.GetBroadcast (ctx, 0, closeRunningTimeEmtryIntent, PendingIntentFlags.UpdateCurrent);
 
             notificationBuilder = new NotificationCompat.Builder (ctx)
-                .SetAutoCancel(false)
+                .SetAutoCancel (false)
                 .SetUsesChronometer (true)
                 .SetOngoing (true)
-                .AddAction (Resource.Drawable.IcActionStop, "Stop", stopIntent)
-                .AddAction (Resource.Drawable.IcActionEdit, "Edit", editIntent)
-                .SetContentIntent (resultPendingIntent);
+                .AddAction (Resource.Drawable.IcActionStop, "Stop", pendingIntentClose)
+//                .AddAction (Resource.Drawable.IcActionEdit, "Edit", editIntent)
+                .SetContentIntent (contentIntent);
         }
-
 
         private void UpdateNotification (TimeEntryModel model)
         {
@@ -115,17 +108,17 @@ namespace Toggl.Joey
                 .SetContentText(model.Description)
                 .SetWhen(GetUnixTime(model.StartTime));
 
-            notificationManager.Notify(runningTimeEntryNotificationId, notificationBuilder.Build());
+            notificationManager.Notify(RunningTimeEntryNotifId, notificationBuilder.Build());
         }
 
         void CancelNotification ()
         {
-            notificationManager.Cancel (runningTimeEntryNotificationId);
+            notificationManager.Cancel (RunningTimeEntryNotifId);
         }
 
         private long GetUnixTime (DateTime startTime)
         {
-            TimeSpan t = startTime.ToUtc() - new DateTime(1970, 1, 1, 0, 0, 0);
+            TimeSpan t = startTime.ToUtc() - UnixStart;
             return (long) t.TotalMilliseconds;
         }
     }

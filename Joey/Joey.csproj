@@ -74,6 +74,7 @@
     <Compile Include="Net\GcmRegistrationManager.cs" />
     <Compile Include="UI\Fragments\DeleteTimeEntriesPromptDialogFragment.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
+    <Compile Include="StopTimeEntryBroadcastReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

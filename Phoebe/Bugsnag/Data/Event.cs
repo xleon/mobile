@@ -32,7 +32,7 @@ namespace Toggl.Phoebe.Bugsnag.Data
         [JsonProperty ("exceptions")]
         public List<ExceptionInfo> Exceptions { get; set; }
 
-        [JsonProperty ("metadata")]
+        [JsonProperty ("metaData")]
         public Metadata Metadata { get; set; }
     }
 }

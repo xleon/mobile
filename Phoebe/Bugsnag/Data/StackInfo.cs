@@ -6,13 +6,13 @@ namespace Toggl.Phoebe.Bugsnag.Data
     [JsonObject (MemberSerialization.OptIn)]
     public class StackInfo
     {
-        [JsonProperty ("file", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonProperty ("file")]
         public string File { get; set; }
 
-        [JsonProperty ("lineNumber", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonProperty ("lineNumber")]
         public int Line { get; set; }
 
-        [JsonProperty ("columnNumber", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonProperty ("columnNumber")]
         public int Column { get; set; }
 
         [JsonProperty ("method")]

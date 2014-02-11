@@ -17,7 +17,7 @@ namespace Toggl.Phoebe.Bugsnag.Data
         {
             var tab = GetTab (tabName);
             if (value != null) {
-                tab [key] = (JToken)value;
+                tab [key] = JToken.FromObject (value);
             } else {
                 tab.Remove (key);
             }

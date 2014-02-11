@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Android.Accounts;
 using Android.App;
 using Android.Content;
+using Android.Gms.Auth;
+using Android.Gms.Common;
 using Android.OS;
 using Android.Widget;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -15,17 +20,20 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Login")]
     public class LoginActivity : BaseActivity
     {
-        protected EditText EmailEditText { get; private set; }
+        protected AutoCompleteTextView EmailEditText { get; private set; }
 
         protected EditText PasswordEditText { get; private set; }
 
         protected Button LoginButton { get; private set; }
 
+        protected Button GoogleLoginButton { get; private set; }
+
         private void FindViews ()
         {
-            EmailEditText = FindViewById<EditText> (Resource.Id.EmailEditText);
+            EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
+            GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton);
         }
 
         protected override bool RequireAuth {
@@ -43,6 +51,17 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
+        private ArrayAdapter<string> MakeEmailsAdapter ()
+        {
+            var am = AccountManager.Get (this);
+            var emails = am.GetAccounts ()
+                .Select ((a) => a.Name)
+                .Where ((a) => a.Contains ("@"))
+                .Distinct ()
+                .ToList ();
+            return new ArrayAdapter<string> (this, Android.Resource.Layout.SelectDialogItem, emails);
+        }
+
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
@@ -53,6 +72,9 @@ namespace Toggl.Joey.UI.Activities
             FindViews ();
 
             LoginButton.Click += OnLoginButtonClick;
+            GoogleLoginButton.Click += OnGoogleLoginButtonClick;
+            EmailEditText.Adapter = MakeEmailsAdapter ();
+            EmailEditText.Threshold = 1;
         }
 
         protected override void OnResume ()
@@ -64,15 +86,231 @@ namespace Toggl.Joey.UI.Activities
 
         private async void OnLoginButtonClick (object sender, EventArgs e)
         {
-            LoginButton.Enabled = false;
+            IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             var success = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
-            LoginButton.Enabled = true;
+            IsAuthenticating = false;
 
             if (!success)
                 PasswordEditText.Text = String.Empty;
 
             CheckAuth ();
+        }
+
+        private void OnGoogleLoginButtonClick (object sender, EventArgs e)
+        {
+            var accounts = GoogleAccounts;
+
+            if (accounts.Count == 1) {
+                GoogleAuthFragment.Start (FragmentManager, accounts [0]);
+            } else if (accounts.Count > 1) {
+                var dia = new GoogleAccountSelectionDialogFragment ();
+                dia.Show (FragmentManager, "accounts_dialog");
+            }
+        }
+
+        private List<string> GoogleAccounts {
+            get {
+                var am = AccountManager.Get (this);
+                return am.GetAccounts ()
+                    .Where ((a) => a.Type == GoogleAuthUtil.GoogleAccountType)
+                    .Select ((a) => a.Name)
+                    .Distinct ()
+                    .ToList ();
+            }
+        }
+
+        private bool IsAuthenticating {
+            set {
+                EmailEditText.Enabled = !value;
+                PasswordEditText.Enabled = !value;
+                LoginButton.Enabled = !value;
+                GoogleLoginButton.Enabled = !value;
+            }
+        }
+
+        public class GoogleAuthFragment : Fragment
+        {
+            private static readonly string Tag = "LoginActivity.GoogleAuthFragment";
+            private static readonly int GoogleAuthRequestCode = 1;
+            private static readonly string GoogleOAuthScope =
+                "oauth2:https://www.googleapis.com/auth/userinfo.profile " +
+                "https://www.googleapis.com/auth/userinfo.email";
+            private static readonly string EmailArgument = "com.toggl.android.email";
+
+            public static void Start (FragmentManager mgr, string email)
+            {
+                if (mgr.FindFragmentByTag ("google_auth") != null)
+                    return;
+
+                mgr.BeginTransaction ()
+                    .Add (new GoogleAuthFragment (email), "google_auth")
+                    .Commit ();
+            }
+
+            public GoogleAuthFragment (string email) : base ()
+            {
+                var args = new Bundle ();
+                args.PutString (EmailArgument, email);
+                Arguments = args;
+            }
+
+            public GoogleAuthFragment () : base ()
+            {
+            }
+
+            public GoogleAuthFragment (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer) : base (javaRef, transfer)
+            {
+            }
+
+            public override void OnCreate (Bundle state)
+            {
+                base.OnCreate (state);
+
+                RetainInstance = true;
+            }
+
+            public override void OnActivityCreated (Bundle state)
+            {
+                base.OnActivityCreated (state);
+
+                // Restore IsAuthenticating value
+                var activity = Activity as LoginActivity;
+                if (activity != null)
+                    activity.IsAuthenticating = IsAuthenticating;
+            }
+
+            public override void OnStart ()
+            {
+                base.OnStart ();
+
+                StartAuth ();
+            }
+
+            public override void OnActivityResult (int requestCode, Result resultCode, Intent data)
+            {
+                base.OnActivityResult (requestCode, resultCode, data);
+
+                if (requestCode == GoogleAuthRequestCode) {
+                    if (resultCode == Result.Ok) {
+                        StartAuth ();
+                    }
+                }
+            }
+
+            private async void StartAuth ()
+            {
+                if (IsAuthenticating)
+                    return;
+                IsAuthenticating = true;
+
+                try {
+                    var log = ServiceContainer.Resolve<Logger> ();
+                    var authManager = ServiceContainer.Resolve<AuthManager> ();
+                    var ctx = Activity;
+
+                    String token = null;
+                    try {
+                        token = await Task.Factory.StartNew (() => GoogleAuthUtil.GetToken (ctx, Email, GoogleOAuthScope));
+                    } catch (GooglePlayServicesAvailabilityException exc) {
+                        var dia = GooglePlayServicesUtil.GetErrorDialog (
+                                      exc.ConnectionStatusCode, ctx, GoogleAuthRequestCode);
+                        dia.Show ();
+                    } catch (UserRecoverableAuthException exc) {
+                        StartActivityForResult (exc.Intent, GoogleAuthRequestCode);
+                    } catch (Java.IO.IOException exc) {
+                        // Connectivity error.. nothing to do really?
+                        log.Info (Tag, exc, "Failed to login with Google due to network issues.");
+                    } catch (Exception exc) {
+                        log.Error (Tag, exc, "Failed to get access token for '{0}'.", Email);
+                    }
+
+                    // Failed to get token
+                    if (token == null) {
+                        return;
+                    }
+
+                    // Authenticate client
+                    var success = await authManager.AuthenticateWithGoogle (token);
+                    if (!success) {
+                        GoogleAuthUtil.InvalidateToken (ctx, token);
+                    }
+                } finally {
+                    IsAuthenticating = false;
+                }
+
+                // Clean up self:
+                if (Activity != null) {
+                    FragmentManager.BeginTransaction ()
+                        .Remove (this)
+                        .Commit ();
+                }
+
+                // Try to make the activity recheck auth status
+                var activity = Activity as LoginActivity;
+                if (activity != null) {
+                    activity.CheckAuth ();
+                }
+            }
+
+            private string Email {
+                get {
+                    return Arguments != null ? Arguments.GetString (EmailArgument) : null;
+                }
+            }
+
+            private bool isAuthenticating;
+
+            private bool IsAuthenticating {
+                get { return isAuthenticating; }
+                set {
+                    isAuthenticating = value;
+                    var activity = Activity as LoginActivity;
+                    if (activity != null) {
+                        activity.IsAuthenticating = isAuthenticating;
+                    }
+                }
+            }
+        }
+
+        public class GoogleAccountSelectionDialogFragment : DialogFragment
+        {
+            private ArrayAdapter<string> accountsAdapter;
+
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                accountsAdapter = MakeAccountsAdapter ();
+
+                return new AlertDialog.Builder (Activity)
+                        .SetTitle (Resource.String.LoginAccountsDialogTitle)
+                        .SetAdapter (MakeAccountsAdapter (), OnAccountSelected)
+                        .SetNegativeButton (Resource.String.LoginAccountsDialogCancelButton, OnCancelButtonClicked)
+                        .Create ();
+            }
+
+            private void OnAccountSelected (object sender, DialogClickEventArgs args)
+            {
+                var email = accountsAdapter.GetItem (args.Which);
+                GoogleAuthFragment.Start (FragmentManager, email);
+                Dismiss ();
+            }
+
+            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                Dismiss ();
+            }
+
+            private ArrayAdapter<string> MakeAccountsAdapter ()
+            {
+                var am = AccountManager.Get (Activity);
+                var emails = am.GetAccounts ()
+                                    .Where ((a) => a.Type == GoogleAuthUtil.GoogleAccountType)
+                                    .Select ((a) => a.Name)
+                                    .Distinct ()
+                                    .ToList ();
+
+                return new ArrayAdapter<string> (Activity, Android.Resource.Layout.SimpleListItem1, emails);
+            }
         }
     }
 }

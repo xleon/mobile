@@ -655,6 +655,26 @@ namespace Toggl.Phoebe.Net
             return Model.Update (wrap.Data);
         }
 
+        public async Task<UserModel> GetUser (string googleAccessToken)
+        {
+            var url = new Uri (v8Url, "me?app_name=toggl_mobile");
+
+            var httpReq = new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = url,
+            };
+            httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
+                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                    string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
+            var httpResp = await httpClient.SendAsync (httpReq);
+            PrepareResponse (httpResp);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);
+
+            return Model.Update (wrap.Data);
+        }
+
         public Task UpdateUser (UserModel model)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();

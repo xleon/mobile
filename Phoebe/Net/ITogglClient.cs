@@ -33,6 +33,8 @@ namespace Toggl.Phoebe.Net
 
         Task<UserModel> GetUser (string username, string password);
 
+        Task<UserModel> GetUser (string googleAccessToken);
+
         Task<List<ClientModel>> ListWorkspaceClients (long workspaceId);
 
         Task<List<ProjectModel>> ListWorkspaceProjects (long workspaceId);

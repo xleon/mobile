@@ -30,20 +30,19 @@ namespace Toggl.Phoebe.Net
             }
         }
 
-        public async Task<bool> Authenticate (string username, string password)
+        private async Task<bool> Authenticate (Func<Task<UserModel>> getUser)
         {
             if (IsAuthenticated)
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
             if (IsAuthenticating)
                 throw new InvalidOperationException ("Another authentication is still in progress.");
 
-            var client = ServiceContainer.Resolve<ITogglClient> ();
             IsAuthenticating = true;
 
             try {
                 UserModel user;
                 try {
-                    user = await client.GetUser (username, password);
+                    user = await getUser ();
                     if (user == null) {
                         ServiceContainer.Resolve<MessageBus> ().Send (
                             new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials));
@@ -78,6 +77,18 @@ namespace Toggl.Phoebe.Net
             }
 
             return true;
+        }
+
+        public Task<bool> Authenticate (string username, string password)
+        {
+            var client = ServiceContainer.Resolve<ITogglClient> ();
+            return Authenticate (() => client.GetUser (username, password));
+        }
+
+        public Task<bool> AuthenticateWithGoogle (string accessToken)
+        {
+            var client = ServiceContainer.Resolve<ITogglClient> ();
+            return Authenticate (() => client.GetUser (accessToken));
         }
 
         public void Forget ()

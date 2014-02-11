@@ -13,6 +13,8 @@ namespace Toggl.Phoebe.Data.Views
     /// </summary>
     public class AllTimeEntriesView : ModelsView<TimeEntryModel>
     {
+        private static readonly string Tag = "AllTimeEntriesView";
+
         private static string GetPropertyName<K> (Expression<Func<AllTimeEntriesView, K>> expr)
         {
             return expr.ToPropertyName ();
@@ -107,8 +109,14 @@ namespace Toggl.Phoebe.Data.Views
                         foreach (var entry in entries) {
                             // OnModelChanged catches the newly created time entries and adds them to the dataset
                         }
-                    } catch {
-                        // TODO: Log error
+                    } catch (Exception exc) {
+                        var log = ServiceContainer.Resolve<Logger> ();
+                        if (exc is System.Net.Http.HttpRequestException) {
+                            log.Info (Tag, exc, "Failed to fetch time entries from {0} to {1}", startTime, endTime);
+                        } else {
+                            log.Warning (Tag, exc, "Failed to fetch time entries from {0} to {1}", startTime, endTime);
+                        }
+
                         HasError = true;
                         useLocal = true;
                     }
@@ -127,8 +135,10 @@ namespace Toggl.Phoebe.Data.Views
 
                 OnPropertyChanged (PropertyModels);
                 OnPropertyChanged (PropertyCount);
-            } catch {
-                // TODO: Log error
+            } catch (Exception exc) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Error (Tag, exc, "Failed to fetch time entries");
+
                 HasError = true;
             } finally {
                 IsLoading = false;

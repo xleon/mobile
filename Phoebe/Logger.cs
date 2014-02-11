@@ -20,7 +20,7 @@ namespace Toggl.Phoebe
         {
             #if DEBUG
             threshold = Level.Debug;
-            #elif
+            #else
             threshold = Level.Info;
             #endif
         }

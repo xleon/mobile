@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Android.Accounts;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -15,7 +16,7 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Login")]
     public class LoginActivity : BaseActivity
     {
-        protected EditText EmailEditText { get; private set; }
+        protected AutoCompleteTextView EmailEditText { get; private set; }
 
         protected EditText PasswordEditText { get; private set; }
 
@@ -23,7 +24,7 @@ namespace Toggl.Joey.UI.Activities
 
         private void FindViews ()
         {
-            EmailEditText = FindViewById<EditText> (Resource.Id.EmailEditText);
+            EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
         }
@@ -43,6 +44,17 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
+        private ArrayAdapter<string> MakeEmailsAdapter ()
+        {
+            var am = AccountManager.Get (this);
+            var emails = am.GetAccounts ()
+                .Select ((a) => a.Name)
+                .Where ((a) => a.Contains ("@"))
+                .Distinct ()
+                .ToList ();
+            return new ArrayAdapter<string> (this, Android.Resource.Layout.SelectDialogItem, emails);
+        }
+
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
@@ -53,6 +65,8 @@ namespace Toggl.Joey.UI.Activities
             FindViews ();
 
             LoginButton.Click += OnLoginButtonClick;
+            EmailEditText.Adapter = MakeEmailsAdapter ();
+            EmailEditText.Threshold = 1;
         }
 
         protected override void OnResume ()

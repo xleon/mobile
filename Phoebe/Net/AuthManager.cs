@@ -9,6 +9,8 @@ namespace Toggl.Phoebe.Net
 {
     public class AuthManager : ObservableObject
     {
+        private static readonly string Tag = "AuthManager";
+
         private static string GetPropertyName<T> (Expression<Func<AuthManager, T>> expr)
         {
             return expr.ToPropertyName ();
@@ -48,7 +50,13 @@ namespace Toggl.Phoebe.Net
                         return false;
                     }
                 } catch (Exception ex) {
-                    // TODO: Log error
+                    var log = ServiceContainer.Resolve<Logger> ();
+                    if (ex is System.Net.Http.HttpRequestException) {
+                        log.Info (Tag, ex, "Failed authenticate user.");
+                    } else {
+                        log.Warning (Tag, ex, "Failed to authenticate user.");
+                    }
+
                     ServiceContainer.Resolve<MessageBus> ().Send (
                         new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials, ex));
                     return false;

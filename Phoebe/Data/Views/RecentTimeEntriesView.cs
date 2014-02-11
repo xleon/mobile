@@ -13,6 +13,8 @@ namespace Toggl.Phoebe.Data.Views
     /// </summary>
     public class RecentTimeEntriesView : ModelsView<TimeEntryModel>
     {
+        private static readonly string Tag = "RecentTimeEntriesView";
+
         private static string GetPropertyName<K> (Expression<Func<RecentTimeEntriesView, K>> expr)
         {
             return expr.ToPropertyName ();
@@ -146,8 +148,10 @@ namespace Toggl.Phoebe.Data.Views
                 });
 
                 HasMore = hasData;
-            } catch {
-                // TODO: Log error
+            } catch (Exception exc) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Error (Tag, exc, "Failed to compose recent time entries");
+
                 HasError = true;
             }
         }

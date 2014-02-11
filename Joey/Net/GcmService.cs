@@ -15,6 +15,8 @@ namespace Toggl.Joey.Net
     [Service (Exported = false)]
     public class GcmService : Service
     {
+        private static readonly string Tag = "GcmService";
+
         public GcmService () : base ()
         {
         }
@@ -58,11 +60,14 @@ namespace Toggl.Joey.Net
                     schedule.Add (upcoming);
                 }
                 upcoming.AddCommand (intent, startId);
-            } catch {
+            } catch (Exception exc) {
                 // Something went wrong, recover gracefully
-                // TODO: Log errors
                 GcmBroadcastReceiver.CompleteWakefulIntent (intent);
                 StopSelf (startId);
+
+                // Log errors
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Error (Tag, exc, "Failed to process pushed message.");
             }
         }
 

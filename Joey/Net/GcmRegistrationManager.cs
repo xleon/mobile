@@ -12,6 +12,7 @@ namespace Toggl.Joey.Net
 {
     public class GcmRegistrationManager
     {
+        private static readonly string Tag = "GcmRegistrationManager";
         private string authToken;
         #pragma warning disable 0414
         private readonly object subscriptionAuthChanged;
@@ -100,8 +101,9 @@ namespace Toggl.Joey.Net
                 try {
                     RegistrationId = regId = await Task.Factory.StartNew (() =>
                         gcm.Register (Build.GcmSenderId));
-                } catch {
-                    // TODO: Log error
+                } catch (Exception exc) {
+                    var log = ServiceContainer.Resolve<Logger> ();
+                    log.Info (Tag, exc, "Failed register device for GCM push.");
                     return;
                 }
             }

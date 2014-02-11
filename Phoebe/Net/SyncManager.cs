@@ -12,6 +12,7 @@ namespace Toggl.Phoebe.Net
 {
     public class SyncManager
     {
+        private static readonly string Tag = "SyncManager";
         #pragma warning disable 0414
         private readonly object subscriptionModelsCommited;
         #pragma warning restore 0414
@@ -36,6 +37,7 @@ namespace Toggl.Phoebe.Net
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
+            var log = ServiceContainer.Resolve<Logger> ();
 
             // Resolve automatic sync mode to actual mode
             if (mode == SyncMode.Auto) {
@@ -153,7 +155,14 @@ namespace Toggl.Phoebe.Net
                                     graph.Remove (model);
                                 }
                                 hasErrors = true;
-                                // TODO: Log error?
+
+                                // Log error
+                                var id = model.RemoteId.HasValue ? model.RemoteId.ToString () : model.Id.ToString ();
+                                if (error is System.Net.Http.HttpRequestException) {
+                                    log.Info (Tag, error, "Failed to sync {0}#{1}.", model.GetType ().Name, id);
+                                } else {
+                                    log.Warning (Tag, error, "Failed to sync {0}#{1}.", model.GetType ().Name, id);
+                                }
                             } else {
                                 graph.Remove (model);
                             }
@@ -161,6 +170,12 @@ namespace Toggl.Phoebe.Net
                     }
                 }
             } catch (Exception e) {
+                if (e is System.Net.Http.HttpRequestException) {
+                    log.Info (Tag, e, "Sync ({0}) failed.", mode);
+                } else {
+                    log.Warning (Tag, e, "Sync ({0}) failed.", mode);
+                }
+
                 hasErrors = true;
                 ex = e;
             } finally {

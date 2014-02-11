@@ -39,15 +39,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnStart ();
 
-            // Load database entries into memeory:
-            IEnumerable<TimeEntryModel> entries;
-            entries = Model.Query<TimeEntryModel> ((te) => te.IsRunning)
-                .NotDeleted ().ForCurrentUser ().ToList ();
-            // Find currently running time entry:
-            entries = Model.Manager.Cached<TimeEntryModel> ()
-                .Where ((te) => te.IsRunning && te.DeletedAt == null)
-                .ForCurrentUser ();
-            runningEntry = entries.FirstOrDefault ();
+            runningEntry = TimeEntryModel.FindRunning();
 
             // Start listening for changes model changes
             var bus = ServiceContainer.Resolve<MessageBus> ();

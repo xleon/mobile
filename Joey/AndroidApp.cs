@@ -59,6 +59,7 @@ namespace Toggl.Joey
                 return new SQLiteModelStore (path);
             });
             ServiceContainer.Register<GcmRegistrationManager> (new GcmRegistrationManager ());
+            ServiceContainer.Register<AndroidNotificationManager> (new AndroidNotificationManager ());
 
             // Setup Bugsnag:
             ServiceContainer.Register<BugsnagClient> (

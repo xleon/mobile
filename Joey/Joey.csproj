@@ -91,6 +91,8 @@
     <Compile Include="UI\Activities\ChooseProjectActivity.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryProjectListFragment.cs" />
     <Compile Include="UI\Utils\MultipleModalChoiceShim.cs" />
+    <Compile Include="UI\Utils\MultipleModalChoiceGB.cs" />
+    <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

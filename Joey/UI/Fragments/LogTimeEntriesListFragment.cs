@@ -22,7 +22,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             ListAdapter = new LogTimeEntriesAdapter ();
-            shim = new MultipleModalChoiceShim (Activity as Activity, ListView, this);
+            shim = MultipleModalChoiceShim.Create (Activity as Activity, ListView, this);
             shim.ItemClick += OnItemClick;
             shim.ItemChecked += OnItemChecked;
         }

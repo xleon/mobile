@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using Android.App;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
+using ListFragment = Android.Support.V4.App.ListFragment;
 
 namespace Toggl.Joey.UI.Fragments
 {

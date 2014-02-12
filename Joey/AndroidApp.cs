@@ -17,7 +17,7 @@ namespace Toggl.Joey
         Icon = "@drawable/Icon",
         Label = "@string/AppName",
         Description = "@string/AppDescription",
-        Theme = "@style/Theme.App")]
+        Theme = "@style/Theme.Toggl.App")]
     [MetaData ("com.google.android.gms.version",
         Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo

@@ -6,6 +6,7 @@ using Android.Content;
 using Android.OS;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using DialogFragment = Android.Support.V4.App.DialogFragment;
 
 namespace Toggl.Joey.UI.Fragments
 {

@@ -3,9 +3,8 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <fragment
-        android:name="Toggl.Joey.UI.Fragments.NewTimeEntryProjectListFragment"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/NewTimeEntryProjectListFragment" />
+        android:id="@+id/ChooseTimeEntryProjectListFragment" />
 </LinearLayout>

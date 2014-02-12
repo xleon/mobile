@@ -69,8 +69,6 @@
     <Compile Include="UI\Activities\TimeEntriesActivity.cs" />
     <Compile Include="UI\Adapters\LogTimeEntriesAdapter.cs" />
     <Compile Include="UI\Fragments\LogTimeEntriesListFragment.cs" />
-    <Compile Include="UI\Activities\StartTimeEntryActivity.cs" />
-    <Compile Include="UI\Fragments\NewTimeEntryProjectListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
     <Compile Include="WakefulBroadcastReceiver.cs" />
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
@@ -86,6 +84,8 @@
     <Compile Include="AndroidLogger.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopTimeEntryBroadcastReceiver.cs" />
+    <Compile Include="UI\Activities\ChooseProjectActivity.cs" />
+    <Compile Include="UI\Fragments\ChooseTimeEntryProjectListFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -105,7 +105,6 @@
     <AndroidResource Include="Resources\layout\TimerStoppedFragmentState.axml" />
     <AndroidResource Include="Resources\layout\TimeEntriesActivity.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\layout\StartTimeEntryActivity.axml" />
     <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
     <AndroidResource Include="Resources\values\Plurals.xml" />
@@ -129,6 +128,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcActionEdit.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionStop.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionEdit.png" />
+    <AndroidResource Include="Resources\layout\ChooseProjectActivity.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

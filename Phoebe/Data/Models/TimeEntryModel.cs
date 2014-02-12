@@ -516,7 +516,7 @@ namespace Toggl.Phoebe.Data.Models
 
             // Time entry is already running, nothing to continue
             if (IsRunning)
-                return;
+                return this;
 
             if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
                 IsRunning = true;

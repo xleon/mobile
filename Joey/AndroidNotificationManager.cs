@@ -102,9 +102,13 @@ namespace Toggl.Joey
 
         private void UpdateNotification (TimeEntryModel model)
         {
+            string projectName = "(No project)";
+            if (model.Project != null)
+                projectName = model.Project.Name;
+
             notificationBuilder
                 .SetSmallIcon(Resource.Drawable.IcNotificationIcon)
-                .SetContentTitle(model.Project.Name)
+                .SetContentTitle(projectName)
                 .SetContentText(model.Description)
                 .SetWhen(GetUnixTime(model.StartTime));
 

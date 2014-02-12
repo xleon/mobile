@@ -7,6 +7,8 @@ using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Fragments;
+using ActionBar = Android.Support.V7.App.ActionBar;
+using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -22,7 +24,7 @@ namespace Toggl.Joey.UI.Activities
             base.OnCreate (bundle);
 
             ActionBar.SetDisplayShowTitleEnabled (false);
-            ActionBar.NavigationMode = ActionBarNavigationMode.List;
+            ActionBar.NavigationMode = ActionBar.NavigationModeList;
             var navAdapter = ArrayAdapter.CreateFromResource (this,
                                  Resource.Array.TimeEntriesNavigationList,
                                  Android.Resource.Layout.SimpleSpinnerDropDownItem);

@@ -1,9 +1,11 @@
 ﻿using System;
-using Android.App;
 using Android.Content;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Bugsnag;
+using ActionBar = Android.Support.V7.App.ActionBar;
+using Activity = Android.Support.V7.App.ActionBarActivity;
+using FragmentManager = Android.Support.V4.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -56,6 +58,14 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnDestroy ();
             BugsnagClient.OnActivityDestroyed (this);
+        }
+
+        public new ActionBar ActionBar {
+            get { return SupportActionBar; }
+        }
+
+        public new FragmentManager FragmentManager {
+            get { return SupportFragmentManager; }
         }
     }
 }

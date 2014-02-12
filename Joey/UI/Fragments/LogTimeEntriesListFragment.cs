@@ -1,33 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Android.App;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Utils;
+using ActionMode = Android.Support.V7.View.ActionMode;
+using Activity = Android.Support.V7.App.ActionBarActivity;
+using ListFragment = Android.Support.V4.App.ListFragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : ListFragment, AbsListView.IMultiChoiceModeListener
+    public class LogTimeEntriesListFragment : ListFragment, ActionMode.ICallback
     {
+        private MultipleModalChoiceShim shim;
+
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
             ListAdapter = new LogTimeEntriesAdapter ();
-            ListView.ChoiceMode = (ChoiceMode)AbsListViewChoiceMode.MultipleModal;
-            ListView.SetMultiChoiceModeListener (this);
+            shim = MultipleModalChoiceShim.Create (Activity as Activity, ListView, this);
+            shim.ItemClick += OnItemClick;
+            shim.ItemChecked += OnItemChecked;
         }
 
-        public override void OnListItemClick (ListView l, View v, int position, long id)
+        private void OnItemClick (object sender, AdapterView.ItemClickEventArgs e)
         {
-            var adapter = l.Adapter as LogTimeEntriesAdapter;
+            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
             if (adapter == null)
                 return;
 
-            var model = adapter.GetModel (position);
+            var model = adapter.GetModel (e.Position);
             if (model == null)
                 return;
 
@@ -35,11 +41,10 @@ namespace Toggl.Joey.UI.Fragments
             model.Continue ();
         }
 
-        void AbsListView.IMultiChoiceModeListener.OnItemCheckedStateChanged (ActionMode mode, int position, long id, bool @checked)
+        private void OnItemChecked (object sender, MultipleModalChoiceShim.ItemCheckedEventArgs e)
         {
-            int checkedCount = ListView.CheckedItemCount;
-            mode.Title = String.Format ("{0} selected", checkedCount);
-            mode.Menu.FindItem (Resource.Id.EditMenuItem).SetEnabled (checkedCount == 1);
+            e.ActionMode.Title = String.Format ("{0} selected", shim.CheckedItemCount);
+            e.ActionMode.Menu.FindItem (Resource.Id.EditMenuItem).SetEnabled (shim.CheckedItemCount == 1);
         }
 
         bool ActionMode.ICallback.OnCreateActionMode (ActionMode mode, IMenu menu)

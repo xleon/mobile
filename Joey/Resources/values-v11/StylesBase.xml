@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <style name="Theme.Toggl.Base" parent="Theme.AppCompat.Light">
+        <item name="activatedBackgroundIndicator">?android:attr/activatedBackgroundIndicator</item>
+    </style>
+</resources>

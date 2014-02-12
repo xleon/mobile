@@ -12,12 +12,15 @@ using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using DialogFragment = Android.Support.V4.App.DialogFragment;
+using Fragment = Android.Support.V4.App.Fragment;
+using FragmentManager = Android.Support.V4.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
         Exported = false,
-        Theme = "@style/Theme.Login")]
+        Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity
     {
         protected AutoCompleteTextView EmailEditText { get; private set; }
@@ -187,12 +190,12 @@ namespace Toggl.Joey.UI.Activities
                 StartAuth ();
             }
 
-            public override void OnActivityResult (int requestCode, Result resultCode, Intent data)
+            public override void OnActivityResult (int requestCode, int resultCode, Intent data)
             {
                 base.OnActivityResult (requestCode, resultCode, data);
 
                 if (requestCode == GoogleAuthRequestCode) {
-                    if (resultCode == Result.Ok) {
+                    if (resultCode == (int)Result.Ok) {
                         StartAuth ();
                     }
                 }

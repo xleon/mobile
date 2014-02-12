@@ -1,20 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Android.App;
 using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Support.V4.App;
-using Android.Views;
-using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Activities;
+using NotificationCompat = Android.Support.V4.App.NotificationCompat;
 
 namespace Toggl.Joey
 {

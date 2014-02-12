@@ -90,6 +90,7 @@
     <Compile Include="StopTimeEntryBroadcastReceiver.cs" />
     <Compile Include="UI\Activities\ChooseProjectActivity.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryProjectListFragment.cs" />
+    <Compile Include="UI\Utils\MultipleModalChoiceShim.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -156,6 +157,7 @@
     <Folder Include="Bugsnag\Data\" />
     <Folder Include="Bugsnag\Json\" />
     <Folder Include="Resources\drawable-xxhdpi\" />
+    <Folder Include="UI\Utils\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservicesgingerbread">

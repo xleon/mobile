@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <style name="Theme.Toggl.Base" parent="Theme.AppCompat.Light">
+        <!-- API<11 doesn't support view activation, so let's just ignore this for now. -->
+        <item name="activatedBackgroundIndicator">@android:color/transparent</item>
+    </style>
+</resources>

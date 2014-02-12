@@ -101,7 +101,6 @@
   <ItemGroup>
     <AndroidResource Include="Resources\values\Strings.xml" />
     <AndroidResource Include="Resources\drawable\Icon.png" />
-    <AndroidResource Include="Resources\values\styles.xml" />
     <AndroidResource Include="Resources\drawable\login_logo.png" />
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
@@ -134,6 +133,10 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionStop.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionEdit.png" />
     <AndroidResource Include="Resources\layout\ChooseProjectActivity.axml" />
+    <AndroidResource Include="Resources\values\Attrs.xml" />
+    <AndroidResource Include="Resources\values\Styles.xml" />
+    <AndroidResource Include="Resources\values\StylesBase.xml" />
+    <AndroidResource Include="Resources\values-v11\StylesBase.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -158,6 +161,7 @@
     <Folder Include="Bugsnag\Json\" />
     <Folder Include="Resources\drawable-xxhdpi\" />
     <Folder Include="UI\Utils\" />
+    <Folder Include="Resources\values-v11\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservicesgingerbread">

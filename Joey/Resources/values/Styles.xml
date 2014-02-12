@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
-    <style name="Theme.Toggl.Base"    parent="Theme.AppCompat.Light" />
     <style name="Theme.Toggl.App"     parent="Theme.Toggl.Base" />
     <style name="Theme.Toggl.Login"   parent="Theme.Toggl.Base">
         <item name="android:windowNoTitle">true</item>

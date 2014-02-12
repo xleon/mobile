@@ -20,7 +20,7 @@
         <item>Recent</item>
         <item>Log</item>
     </string-array>
-    <string name="ChooseProjectNewTimeEntryTitle">Choose project</string>
+    <string name="ChooseProjectTitle">Choose project</string>
     <string name="ProjectsNoClient">(no client)</string>
     <string name="ProjectsNoProject">Without project</string>
     <string name="DeleteTimeEntriesDialogTitle">Delete?</string>

@@ -147,7 +147,10 @@ namespace Toggl.Joey.UI.Fragments
             var hasProjects = user.GetAvailableProjects ().Any ();
 
             if (hasProjects) {
-                StartActivity (new Intent (Activity, typeof(StartTimeEntryActivity)));
+                var entry = TimeEntryModel.StartNew ();
+                var intent = new Intent (Activity, typeof(ChooseProjectActivity));
+                intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, entry.Id.ToString ());
+                StartActivity (intent);
             } else {
                 TimeEntryModel.StartNew ();
             }

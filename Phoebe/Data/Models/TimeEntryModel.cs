@@ -514,6 +514,10 @@ namespace Toggl.Phoebe.Data.Models
             if (!IsShared || !IsPersisted)
                 throw new InvalidOperationException ("Model needs to be the shared and persisted.");
 
+            // Time entry is already running, nothing to continue
+            if (IsRunning)
+                return;
+
             if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
                 IsRunning = true;
                 return this;

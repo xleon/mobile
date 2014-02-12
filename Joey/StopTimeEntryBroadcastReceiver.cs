@@ -12,7 +12,7 @@ using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Joey
 {
-    [BroadcastReceiver (Exported=false)]
+    [BroadcastReceiver (Exported=true)]
     class StopTimeEntryBroadcastReceiver: BroadcastReceiver
     {
         public override void OnReceive (Context context, Intent intent)

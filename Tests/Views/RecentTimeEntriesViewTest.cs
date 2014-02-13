@@ -62,6 +62,80 @@ namespace Toggl.Phoebe.Tests.Views
             );
         }
 
+        [Test]
+        public void TestInitialReload ()
+        {
+            var view = new RecentTimeEntriesView ();
+            view.Reload ();
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestChangeGroupBottom ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (1);
+            model.Description += " and some";
+
+            Assert.AreEqual (5, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2, 1 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestChangeGroupTop ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (3);
+            model.Description += " and some";
+
+            Assert.AreEqual (5, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2, 1 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestChangeGroupBottomToTop ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (1);
+            model.StopTime += TimeSpan.FromDays (1);
+            model.StartTime += TimeSpan.FromDays (1);
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 1, 5, 4, 2 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestChangeGroupTopToBottom ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (3);
+            model.StopTime -= TimeSpan.FromDays (1);
+            model.StartTime -= TimeSpan.FromDays (1);
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 2, 1 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
         private void CreateTestData ()
         {
             workspace = Model.Update (new WorkspaceModel () {

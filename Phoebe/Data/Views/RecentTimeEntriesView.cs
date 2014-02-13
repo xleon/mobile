@@ -23,7 +23,7 @@ namespace Toggl.Phoebe.Data.Views
         private readonly int batchSize = 25;
         private int querySkip;
         private IModelQuery<TimeEntryModel> query;
-        private readonly List<TimeEntryModel> data = new List<TimeEntryModel> ();
+        private readonly List<Group> data = new List<Group> ();
         #pragma warning disable 0414
         private readonly object subscriptionModelChanged;
         #pragma warning restore 0414
@@ -43,10 +43,31 @@ namespace Toggl.Phoebe.Data.Views
             if (entry == null)
                 return;
 
-            if (data.Contains (entry)) {
-                ChangeDataAndNotify (delegate {
-                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                });
+            var grp = FindGroup (entry);
+
+            if (grp != null) {
+                if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
+                    // Update group and resort data:
+                    ChangeDataAndNotify (delegate {
+                        grp.Update (entry);
+                        Sort ();
+                    });
+                } else if (msg.PropertyName == TimeEntryModel.PropertyDescription
+                           || msg.PropertyName == TimeEntryModel.PropertyIsBillable
+                           || msg.PropertyName == TimeEntryModel.PropertyTaskId
+                           || msg.PropertyName == TimeEntryModel.PropertyProjectId) {
+                    ChangeDataAndNotify (delegate {
+                        // Remove from old group:
+                        grp.Remove (entry);
+                        if (grp.IsEmpty) {
+                            data.Remove (grp);
+                        }
+
+                        // Add entry to correct group
+                        Add (entry);
+                        Sort ();
+                    });
+                }
                 return;
             }
 
@@ -54,21 +75,9 @@ namespace Toggl.Phoebe.Data.Views
             if (entry.UserId != authManager.UserId)
                 return;
 
-            var oldEntry = GetSimilar (entry);
-            if (oldEntry != null) {
-                if (oldEntry.StartTime >= entry.StartTime) {
-                    // Newer version already exists in the dataset.
-                    return;
-                } else {
-                    ChangeDataAndNotify (delegate {
-                        data.Remove (oldEntry);
-                    });
-                }
-            }
-
             ChangeDataAndNotify (delegate {
-                data.Add (entry);
-                data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                Add (entry);
+                Sort ();
             });
         }
 
@@ -97,29 +106,30 @@ namespace Toggl.Phoebe.Data.Views
             LoadMore ();
         }
 
-        private TimeEntryModel GetSimilar (TimeEntryModel entry)
+        private void Sort ()
         {
-            return data.FirstOrDefault (
-                (e) => e.Description == entry.Description
-                && e.IsBillable == entry.IsBillable
-                && e.TaskId == entry.TaskId
-                && e.ProjectId == entry.ProjectId
-                && HasSameTags (e, entry));
+            data.Sort ((a, b) => b.RecentStartTime.CompareTo (a.RecentStartTime));
         }
 
-        private static List<Guid?> GetTimeEntryTagIds (TimeEntryModel entry)
+        private Group FindGroup (TimeEntryModel entry)
         {
-            return entry.Tags
-                    .Where ((m) => m.To.Name != TimeEntryModel.DefaultTag)
-                    .Select ((m) => m.ToId)
-                    .ToList ();
+            return data.FirstOrDefault ((g) => g.Contains (entry));
         }
 
-        private static bool HasSameTags (TimeEntryModel a, TimeEntryModel b)
+        private bool Contains (TimeEntryModel entry)
         {
-            var at = GetTimeEntryTagIds (a);
-            var bt = GetTimeEntryTagIds (b);
-            return !at.Union (bt).Except (bt).Any ();
+            return FindGroup (entry) != null;
+        }
+
+        private void Add (TimeEntryModel entry)
+        {
+            var grp = data.FirstOrDefault ((g) => g.CanContain (entry));
+            if (grp == null) {
+                grp = new Group (entry);
+                data.Add (grp);
+            } else {
+                grp.Add (entry);
+            }
         }
 
         public override void LoadMore ()
@@ -138,13 +148,15 @@ namespace Toggl.Phoebe.Data.Views
                         // Find unique time entries and add them to the list
                         foreach (var entry in q) {
                             hasData = true;
-                            if (GetSimilar (entry) != null) {
+
+                            if (Contains (entry)) {
                                 continue;
                             }
-
-                            data.Add (entry);
+                            Add (entry);
                         }
                     }
+
+                    Sort ();
                 });
 
                 HasMore = hasData;
@@ -157,11 +169,125 @@ namespace Toggl.Phoebe.Data.Views
         }
 
         public override IEnumerable<TimeEntryModel> Models {
-            get { return data; }
+            get { return data.Where ((g) => !g.IsEmpty).Select ((g) => g.First ()); }
         }
 
         public override long Count {
             get { return data.Count; }
+        }
+
+        private class Group : IEnumerable<TimeEntryModel>
+        {
+            private readonly string description;
+            private readonly bool isBillable;
+            private readonly Guid? taskId;
+            private readonly Guid? projectId;
+            private readonly List<Guid> tags;
+            private readonly List<GroupItem> items = new List<GroupItem> ();
+
+            private static IEnumerable<Guid> GetTags (TimeEntryModel entry)
+            {
+                return entry.Tags
+                        .Where ((m) => m.To.Name != TimeEntryModel.DefaultTag)
+                        .Select ((e) => e.ToId.Value);
+            }
+
+            public Group (TimeEntryModel entry)
+            {
+                description = entry.Description;
+                isBillable = entry.IsBillable;
+                taskId = entry.TaskId;
+                projectId = entry.ProjectId;
+                tags = GetTags (entry).ToList ();
+
+                Add (entry);
+            }
+
+            public DateTime RecentStartTime {
+                get {
+                    if (items.Count < 1)
+                        return DateTime.MinValue;
+                    return items [0].StartTime;
+                }
+            }
+
+            public bool IsEmpty {
+                get { return items.Count < 1; }
+            }
+
+            public bool CanContain (TimeEntryModel entry)
+            {
+                // Check data:
+                if (description != entry.Description
+                    || isBillable != entry.IsBillable
+                    || taskId != entry.TaskId
+                    || projectId != entry.ProjectId)
+                    return false;
+
+                // Check tags:
+                if (tags.Intersect (GetTags (entry)).Any ())
+                    return false;
+
+                return true;
+            }
+
+            public void Add (TimeEntryModel entry)
+            {
+                items.Add (new GroupItem (entry));
+                items.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+            }
+
+            public void Update (TimeEntryModel entry)
+            {
+                var item = items.FirstOrDefault ((gi) => gi.Id == entry.Id);
+                if (item == null)
+                    return;
+
+                item.Update (entry);
+                items.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+            }
+
+            public void Remove (TimeEntryModel entry)
+            {
+                items.RemoveAll ((gi) => gi.Id == entry.Id);
+            }
+
+            public bool Contains (TimeEntryModel entry)
+            {
+                return items.Any ((gi) => gi.Id == entry.Id);
+            }
+
+            public IEnumerator<TimeEntryModel> GetEnumerator ()
+            {
+                return items.Select ((gi) => Model.ById<TimeEntryModel> (gi.Id)).GetEnumerator ();
+            }
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
+            {
+                return GetEnumerator ();
+            }
+        }
+
+        private class GroupItem
+        {
+            public GroupItem (TimeEntryModel entry)
+            {
+                Id = entry.Id.Value;
+                StartTime = entry.StartTime;
+            }
+
+            public void Update (TimeEntryModel entry)
+            {
+                if (entry == null)
+                    throw new ArgumentNullException ("entry");
+                if (entry.Id != Id)
+                    throw new ArgumentException ("Entry with invalid Id given.", "entry");
+                StartTime = entry.StartTime;
+            }
+
+            public Guid Id { get; private set; }
+
+            public DateTime StartTime { get; private set; }
         }
     }
 }

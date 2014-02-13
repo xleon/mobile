@@ -6,6 +6,7 @@
     <string name="LoginEmailHint">Email</string>
     <string name="LoginPasswordHint">Password</string>
     <string name="LoginButtonText">Login</string>
+    <string name="LoginIsUnsuccessful">Invalid username/password combination</string>
     <string name="LoginGoogleButtonText">Login with Google</string>
     <string name="LoginAccountsDialogTitle">Select account</string>
     <string name="LoginAccountsDialogCancelButton">Cancel</string>

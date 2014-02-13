@@ -98,8 +98,10 @@ namespace Toggl.Joey.UI.Activities
             var success = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
             IsAuthenticating = false;
 
-            if (!success)
+            if (!success) {
                 PasswordEditText.Text = String.Empty;
+                EmailEditText.SetError (Resources.GetString(Resource.String.LoginIsUnsuccessful), Resources.GetDrawable(Resource.Drawable.IcNotificationIcon));
+            }
 
             CheckAuth ();
         }

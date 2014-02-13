@@ -48,13 +48,21 @@ namespace Toggl.Phoebe.Data
 
         private Expression<Func<TInter, bool>> InterLookupQuery {
             get {
-                Expression<Func<TInter, bool>> q;
                 if (reverse) {
-                    q = (inter) => inter.ToId == model.Id;
+                    return (inter) => inter.ToId == model.Id;
                 } else {
-                    q = (inter) => inter.FromId == model.Id;
+                    return (inter) => inter.FromId == model.Id;
                 }
-                return q;
+            }
+        }
+
+        private Func<TInter, bool> InterLookupFunc {
+            get {
+                if (reverse) {
+                    return (inter) => inter.ToId == model.Id;
+                } else {
+                    return (inter) => inter.FromId == model.Id;
+                }
             }
         }
 
@@ -88,7 +96,7 @@ namespace Toggl.Phoebe.Data
                 return;
 
             relations = new List<TInter> ();
-            var cachedInters = Model.Manager.Cached<TInter> ().Where (InterLookupQuery.Compile ());
+            var cachedInters = Model.Manager.Cached<TInter> ().Where (InterLookupFunc);
             var dbInters = Model.Query<TInter> (InterLookupQuery);
             var inters = cachedInters.Union (dbInters).Where (IsOurInter);
             foreach (var inter in inters) {

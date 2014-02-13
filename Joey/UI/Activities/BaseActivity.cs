@@ -1,5 +1,8 @@
 ﻿using System;
 using Android.Content;
+using Android.Views;
+using Android.Widget;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Bugsnag;
@@ -11,6 +14,46 @@ namespace Toggl.Joey.UI.Activities
 {
     public abstract class BaseActivity : Activity
     {
+        private object subscriptionSyncStarted;
+        private object subscriptionSyncFinished;
+
+        private IMenu menu;
+        private const int SyncErrorMenuItemId = 0;
+
+        private void OnSyncStarted(SyncStartedMessage msg)
+        {
+            ToggleProgressBar (true);
+        }
+
+        private void OnSyncFinished(SyncFinishedMessage msg)
+        {
+            ToggleProgressBar(false);
+            if(msg.HadErrors) {
+                if (menu != null && menu.FindItem (SyncErrorMenuItemId) == null) {
+                    menu.Add (Menu.None, SyncErrorMenuItemId, Menu.None, "Sync error")
+                        .SetIcon (Resource.Drawable.IcDialogAlertHoloLight)
+                        .SetShowAsAction (ShowAsAction.Always);
+                }
+            } else {
+                if (menu != null && menu.FindItem (SyncErrorMenuItemId) != null) {
+                    menu.RemoveItem (SyncErrorMenuItemId);
+                }
+            }
+        }
+
+        public override bool OnCreateOptionsMenu (IMenu menu)
+        {
+            this.menu = menu;
+            return base.OnCreateOptionsMenu (menu);
+        }
+
+        private void ToggleProgressBar(bool switchOn){
+            if (Handle == IntPtr.Zero)
+                return;
+
+            SetProgressBarIndeterminateVisibility (switchOn);
+        }
+
         protected virtual bool RequireAuth {
             get { return true; }
         }
@@ -37,6 +80,10 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnCreate (Android.OS.Bundle state)
         {
             base.OnCreate (state);
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
+            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            RequestWindowFeature(WindowFeatures.IndeterminateProgress);
             BugsnagClient.OnActivityCreated (this);
             CheckAuth ();
         }
@@ -58,6 +105,9 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnDestroy ();
             BugsnagClient.OnActivityDestroyed (this);
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Unsubscribe (subscriptionSyncStarted);
+            bus.Unsubscribe (subscriptionSyncFinished);
         }
 
         public new ActionBar ActionBar {

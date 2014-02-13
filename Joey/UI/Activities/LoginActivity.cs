@@ -8,6 +8,7 @@ using Android.Content;
 using Android.Gms.Auth;
 using Android.Gms.Common;
 using Android.OS;
+using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
@@ -31,12 +32,15 @@ namespace Toggl.Joey.UI.Activities
 
         protected Button GoogleLoginButton { get; private set; }
 
+        protected ProgressBar LoginProgressBar { get; private set; }
+
         private void FindViews ()
         {
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton);
+            LoginProgressBar = FindViewById<ProgressBar> (Resource.Id.LoginProgressBar);
         }
 
         protected override bool RequireAuth {
@@ -129,6 +133,7 @@ namespace Toggl.Joey.UI.Activities
                 PasswordEditText.Enabled = !value;
                 LoginButton.Enabled = !value;
                 GoogleLoginButton.Enabled = !value;
+                LoginProgressBar.Visibility = value ? ViewStates.Visible : ViewStates.Invisible;
             }
         }
 

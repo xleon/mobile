@@ -102,8 +102,8 @@ namespace Toggl.Phoebe.Data.Views
             return data.FirstOrDefault (
                 (e) => e.Description == entry.Description
                 && e.IsBillable == entry.IsBillable
-                && e.TaskId == e.TaskId
-                && e.ProjectId == e.ProjectId
+                && e.TaskId == entry.TaskId
+                && e.ProjectId == entry.ProjectId
                 && HasSameTags (e, entry));
         }
 

@@ -48,6 +48,7 @@
     <Compile Include="Data\AttributeLookupCacheTest.cs" />
     <Compile Include="Data\SqliteModelStoreTest.cs" />
     <Compile Include="Bugsnag\CombiningStreamTest.cs" />
+    <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -62,5 +63,6 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Bugsnag\" />
+    <Folder Include="Views\" />
   </ItemGroup>
 </Project>

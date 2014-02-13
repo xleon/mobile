@@ -130,11 +130,7 @@ namespace Toggl.Joey.UI.Activities
                 PasswordEditText.Enabled = !value;
                 LoginButton.Enabled = !value;
                 GoogleLoginButton.Enabled = !value;
-                if (value) {
-                    LoginProgressBar.Visibility = ViewStates.Visible;
-                } else {
-                    LoginProgressBar.Visibility = ViewStates.Invisible;
-                }
+                LoginProgressBar.Visibility = value ? ViewStates.Visible : ViewStates.Invisible;
             }
         }
 

@@ -1,6 +1,7 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -101,9 +102,26 @@ namespace Toggl.Joey.UI.Fragments
                 StopTrackingButton = RunningStateView.FindViewById<Button> (Resource.Id.StopTrackingButton);
 
                 StopTrackingButton.Click += OnStopTrackingButtonClicked;
+                DurationTextView.Click += OnDurationTextClicked;
             }
 
             RunningStateView.Visibility = ViewStates.Visible;
+        }
+
+        void OnDurationTextClicked (object sender, EventArgs e)
+        {
+            long minutesInHours = 60 * 60;
+            int hours = (int) (runningEntry.Duration / minutesInHours);
+            int minutes = (int) ((runningEntry.Duration % minutesInHours) / 60);
+            var dialog = new TimePickerDialog (Activity, OnDurationSelected, hours, minutes, true);
+            dialog.Show ();
+        }
+
+        void OnDurationSelected (object sender, TimePickerDialog.TimeSetEventArgs timeSetArgs)
+        {
+            runningEntry.Duration = timeSetArgs.HourOfDay * 60  * 60 + timeSetArgs.Minute * 60;
+            //TODO Next line here just to make it work somehow, magic of changing start/stop time after duration change will be in Model
+            runningEntry.StartTime.Subtract (new TimeSpan (timeSetArgs.HourOfDay, timeSetArgs.Minute, 0));
         }
 
         private void ShowStoppedState ()

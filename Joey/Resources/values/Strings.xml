@@ -19,7 +19,7 @@
     <string name="LogTimeEntryContextDelete">Delete</string>
     <string-array name="TimeEntriesNavigationList">
         <item>Recent</item>
-        <item>Log</item>
+        <item>Timeline</item>
     </string-array>
     <string name="ChooseProjectTitle">Choose project</string>
     <string name="ProjectsNoClient">(no client)</string>

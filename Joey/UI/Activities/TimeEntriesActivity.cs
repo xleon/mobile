@@ -12,9 +12,6 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Activities
 {
-    [Activity (
-        Label = "@string/EntryName",
-        MainLauncher = true)]
     public class TimeEntriesActivity : BaseActivity, ActionBar.IOnNavigationListener
     {
         private static readonly string SelectedNavIndexExtra = "com.toggl.android.navigation_index";

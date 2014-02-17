@@ -24,7 +24,7 @@ namespace Toggl.Phoebe
         private bool TryWrite (Action act)
         {
             try {
-                rwlock.AcquireWriterLock (TimeSpan.FromMinutes (250));
+                rwlock.AcquireWriterLock (TimeSpan.FromMilliseconds (250));
                 try {
                     act ();
                 } finally {
@@ -39,7 +39,7 @@ namespace Toggl.Phoebe
         private bool TryRead (Action act)
         {
             try {
-                rwlock.AcquireReaderLock (TimeSpan.FromMinutes (250));
+                rwlock.AcquireReaderLock (TimeSpan.FromMilliseconds (250));
                 try {
                     act ();
                 } finally {

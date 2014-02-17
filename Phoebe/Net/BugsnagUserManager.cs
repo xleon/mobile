@@ -20,7 +20,7 @@ namespace Toggl.Joey.Net
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChangedMessage);
-            subscriptionAuthChanged = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage);
+            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage);
 
             currentUser = ServiceContainer.Resolve<AuthManager> ().User;
             OnUserChanged ();

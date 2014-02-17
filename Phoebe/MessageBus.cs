@@ -1,13 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Toggl.Phoebe
 {
     public sealed class MessageBus
     {
+        private readonly ReaderWriterLock rwlock = new ReaderWriterLock ();
         private readonly Dictionary<Type, List<WeakReference>> registry =
             new Dictionary<Type, List<WeakReference>> ();
+
+        private bool TryWrite (Action act)
+        {
+            try {
+                rwlock.AcquireWriterLock (TimeSpan.FromMinutes (250));
+                try {
+                    act ();
+                } finally {
+                    rwlock.ReleaseWriterLock ();
+                }
+            } catch (ApplicationException) {
+                return false;
+            }
+            return true;
+        }
+
+        private bool TryRead (Action act)
+        {
+            try {
+                rwlock.AcquireReaderLock (TimeSpan.FromMinutes (250));
+                try {
+                    act ();
+                } finally {
+                    rwlock.ReleaseReaderLock ();
+                }
+            } catch (ApplicationException) {
+                return false;
+            }
+            return true;
+        }
 
         /// <summary>
         /// Subscribe listener to receive messages for TMessage. This method returns a subscription object, which you
@@ -17,7 +49,7 @@ namespace Toggl.Phoebe
         /// <param name="listener">Listener.</param>
         /// <param name="threadSafe">Indicates if the listener is thread-safe or not.</param>
         /// <typeparam name="TMessage">Type of the message to subscribe to.</typeparam>
-        /// <returns>A subscription object.</returns>
+        /// <returns>A subscription object, null if subscribing failed.</returns>
         public Subscription<TMessage> Subscribe<TMessage> (Action<TMessage> listener, bool threadSafe = false)
             where TMessage : Message
         {
@@ -26,13 +58,18 @@ namespace Toggl.Phoebe
 
             var subscription = new Subscription<TMessage> (listener, threadSafe);
 
-            List<WeakReference> subscriptions;
-            if (!registry.TryGetValue (typeof(TMessage), out subscriptions)) {
-                subscriptions = new List<WeakReference> ();
-                registry [typeof(TMessage)] = subscriptions;
-            }
-            subscriptions.Add (new WeakReference (subscription));
+            var ok = TryWrite (delegate {
+                List<WeakReference> subscriptions;
+                if (!registry.TryGetValue (typeof(TMessage), out subscriptions)) {
+                    subscriptions = new List<WeakReference> ();
+                    registry [typeof(TMessage)] = subscriptions;
+                }
+                subscriptions.Add (new WeakReference (subscription));
+            });
 
+            if (!ok) {
+                return null;
+            }
             return subscription;
         }
 
@@ -43,12 +80,11 @@ namespace Toggl.Phoebe
         public void Unsubscribe<TMessage> (Subscription<TMessage> subscription)
             where TMessage : Message
         {
-            if (subscription == null)
-                throw new ArgumentNullException ("subscription");
-
-            foreach (var listeners in registry.Values) {
-                listeners.RemoveAll ((weak) => !weak.IsAlive || weak.Target == subscription);
-            }
+            TryWrite (delegate {
+                foreach (var listeners in registry.Values) {
+                    listeners.RemoveAll ((weak) => !weak.IsAlive || weak.Target == subscription);
+                }
+            });
         }
 
         /// <summary>
@@ -62,16 +98,30 @@ namespace Toggl.Phoebe
             if (msg == null)
                 throw new ArgumentNullException ("msg");
 
-            List<WeakReference> subscriptions;
-            if (registry.TryGetValue (typeof(TMessage), out subscriptions)) {
-                foreach (var weak in subscriptions.ToList()) {
-                    var subscription = weak.Target as Subscription<TMessage>;
-                    if (subscription != null) {
-                        subscription.Listener (msg);
-                    } else {
-                        subscriptions.Remove (weak);
+            var needsPurge = false;
+
+            // Dispatch message
+            TryRead (delegate {
+                List<WeakReference> subscriptions;
+                if (registry.TryGetValue (typeof(TMessage), out subscriptions)) {
+                    foreach (var weak in subscriptions) {
+                        var subscription = weak.Target as Subscription<TMessage>;
+                        if (subscription != null) {
+                            subscription.Listener (msg);
+                        } else {
+                            needsPurge = true;
+                        }
                     }
                 }
+            });
+
+            // Purge dead subscriptions
+            if (needsPurge) {
+                TryWrite (delegate {
+                    foreach (var listeners in registry.Values) {
+                        listeners.RemoveAll ((weak) => !weak.IsAlive);
+                    }
+                });
             }
         }
     }

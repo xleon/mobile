@@ -23,7 +23,7 @@ namespace Toggl.Phoebe.Data.Views
         private DateTime startFrom;
         private readonly List<TimeEntryModel> data = new List<TimeEntryModel> ();
         #pragma warning disable 0414
-        private readonly object subscriptionModelChanged;
+        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
         #pragma warning restore 0414
 
         public AllTimeEntriesView ()

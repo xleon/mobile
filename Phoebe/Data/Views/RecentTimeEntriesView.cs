@@ -25,7 +25,7 @@ namespace Toggl.Phoebe.Data.Views
         private IModelQuery<TimeEntryModel> query;
         private readonly List<Group> data = new List<Group> ();
         #pragma warning disable 0414
-        private readonly object subscriptionModelChanged;
+        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
         #pragma warning restore 0414
 
         public RecentTimeEntriesView (int batchSize = 25)

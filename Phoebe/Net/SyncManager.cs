@@ -14,7 +14,7 @@ namespace Toggl.Phoebe.Net
     {
         private static readonly string Tag = "SyncManager";
         #pragma warning disable 0414
-        private readonly object subscriptionModelsCommited;
+        private readonly Subscription<ModelsCommittedMessage> subscriptionModelsCommited;
         #pragma warning restore 0414
 
         public SyncManager ()

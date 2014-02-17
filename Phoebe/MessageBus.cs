@@ -15,28 +15,33 @@ namespace Toggl.Phoebe
         /// is garbage collected message delivery to listeners is not guaranteed anymore.
         /// </summary>
         /// <param name="listener">Listener.</param>
+        /// <param name="threadSafe">Indicates if the listener is thread-safe or not.</param>
         /// <typeparam name="TMessage">Type of the message to subscribe to.</typeparam>
         /// <returns>A subscription object.</returns>
-        public object Subscribe<TMessage> (Action<TMessage> listener)
+        public Subscription<TMessage> Subscribe<TMessage> (Action<TMessage> listener, bool threadSafe = false)
             where TMessage : Message
         {
             if (listener == null)
                 throw new ArgumentNullException ("listener");
 
-            List<WeakReference> listeners;
-            if (!registry.TryGetValue (typeof(TMessage), out listeners)) {
-                listeners = new List<WeakReference> ();
-                registry [typeof(TMessage)] = listeners;
+            var subscription = new Subscription<TMessage> (listener, threadSafe);
+
+            List<WeakReference> subscriptions;
+            if (!registry.TryGetValue (typeof(TMessage), out subscriptions)) {
+                subscriptions = new List<WeakReference> ();
+                registry [typeof(TMessage)] = subscriptions;
             }
-            listeners.Add (new WeakReference (listener));
-            return listener;
+            subscriptions.Add (new WeakReference (subscription));
+
+            return subscription;
         }
 
         /// <summary>
         /// Unsubscribes the specified subscription from receiving anymore messages.
         /// </summary>
         /// <param name="subscription">A subscription object from Subscribing to a message.</param>
-        public void Unsubscribe (object subscription)
+        public void Unsubscribe<TMessage> (Subscription<TMessage> subscription)
+            where TMessage : Message
         {
             if (subscription == null)
                 throw new ArgumentNullException ("subscription");
@@ -57,14 +62,14 @@ namespace Toggl.Phoebe
             if (msg == null)
                 throw new ArgumentNullException ("msg");
 
-            List<WeakReference> listeners;
-            if (registry.TryGetValue (typeof(TMessage), out listeners)) {
-                foreach (var weak in listeners.ToList()) {
-                    var listener = weak.Target as Action<TMessage>;
-                    if (listener != null) {
-                        listener (msg);
+            List<WeakReference> subscriptions;
+            if (registry.TryGetValue (typeof(TMessage), out subscriptions)) {
+                foreach (var weak in subscriptions.ToList()) {
+                    var subscription = weak.Target as Subscription<TMessage>;
+                    if (subscription != null) {
+                        subscription.Listener (msg);
                     } else {
-                        listeners.Remove (weak);
+                        subscriptions.Remove (weak);
                     }
                 }
             }

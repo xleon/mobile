@@ -118,7 +118,7 @@ namespace Toggl.Phoebe.Data
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
         #pragma warning disable 0414
-        private readonly object modelChangedSubscription;
+        private readonly Subscription<ModelChangedMessage> modelChangedSubscription;
         #pragma warning restore 0414
 
         public SQLiteModelStore (string dbPath)

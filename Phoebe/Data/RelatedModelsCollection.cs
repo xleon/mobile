@@ -19,7 +19,7 @@ namespace Toggl.Phoebe.Data
         private List<TInter> relations;
         private bool preloaded;
         #pragma warning disable 0414
-        private object subscriptionModelChanged;
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
         #pragma warning restore 0414
 
         public RelatedModelsCollection (Model model) : this (model, typeof(TRelated) == typeof(TFrom))

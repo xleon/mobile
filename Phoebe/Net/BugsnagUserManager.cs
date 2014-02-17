@@ -11,8 +11,8 @@ namespace Toggl.Joey.Net
     public class BugsnagUserManager
     {
         #pragma warning disable 0414
-        private readonly object subscriptionAuthChanged;
-        private readonly object subscriptionModelChanged;
+        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
+        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
         #pragma warning restore 0414
         private UserModel currentUser;
 

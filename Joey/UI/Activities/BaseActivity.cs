@@ -14,18 +14,17 @@ namespace Toggl.Joey.UI.Activities
 {
     public abstract class BaseActivity : Activity
     {
-        private object subscriptionSyncStarted;
-        private object subscriptionSyncFinished;
-
+        private Subscription<SyncStartedMessage> subscriptionSyncStarted;
+        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private IMenu menu;
         private const int SyncErrorMenuItemId = 0;
 
-        private void OnSyncStarted(SyncStartedMessage msg)
+        private void OnSyncStarted (SyncStartedMessage msg)
         {
             ToggleProgressBar (true);
         }
 
-        private void OnSyncFinished(SyncFinishedMessage msg)
+        private void OnSyncFinished (SyncFinishedMessage msg)
         {
             ToggleProgressBar(false);
             if(msg.HadErrors) {

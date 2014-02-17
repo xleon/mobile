@@ -18,7 +18,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class TimerFragment : Fragment
     {
-        private object subscriptionModelChanged;
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private TimeEntryModel runningEntry;
 
         protected View RunningStateView { get; private set; }

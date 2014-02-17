@@ -9,7 +9,7 @@ namespace Toggl.Phoebe
     {
         private readonly int threadId;
         private readonly SynchronizationContext threadContext;
-        private readonly ReaderWriterLock rwlock = new ReaderWriterLock ();
+        private readonly ReaderWriterLockSlim rwlock = new ReaderWriterLockSlim ();
         private readonly Dictionary<Type, List<WeakReference>> registry =
             new Dictionary<Type, List<WeakReference>> ();
         private readonly Queue<Action> dispatchQueue = new Queue<Action> ();
@@ -19,36 +19,6 @@ namespace Toggl.Phoebe
         {
             threadId = Thread.CurrentThread.ManagedThreadId;
             threadContext = SynchronizationContext.Current;
-        }
-
-        private bool TryWrite (Action act)
-        {
-            try {
-                rwlock.AcquireWriterLock (TimeSpan.FromMilliseconds (250));
-                try {
-                    act ();
-                } finally {
-                    rwlock.ReleaseWriterLock ();
-                }
-            } catch (ApplicationException) {
-                return false;
-            }
-            return true;
-        }
-
-        private bool TryRead (Action act)
-        {
-            try {
-                rwlock.AcquireReaderLock (TimeSpan.FromMilliseconds (250));
-                try {
-                    act ();
-                } finally {
-                    rwlock.ReleaseReaderLock ();
-                }
-            } catch (ApplicationException) {
-                return false;
-            }
-            return true;
         }
 
         /// <summary>
@@ -68,18 +38,18 @@ namespace Toggl.Phoebe
 
             var subscription = new Subscription<TMessage> (listener, threadSafe);
 
-            var ok = TryWrite (delegate {
+            rwlock.EnterWriteLock ();
+            try {
                 List<WeakReference> subscriptions;
                 if (!registry.TryGetValue (typeof(TMessage), out subscriptions)) {
                     subscriptions = new List<WeakReference> ();
                     registry [typeof(TMessage)] = subscriptions;
                 }
                 subscriptions.Add (new WeakReference (subscription));
-            });
-
-            if (!ok) {
-                return null;
+            } finally {
+                rwlock.ExitWriteLock ();
             }
+
             return subscription;
         }
 
@@ -90,11 +60,14 @@ namespace Toggl.Phoebe
         public void Unsubscribe<TMessage> (Subscription<TMessage> subscription)
             where TMessage : Message
         {
-            TryWrite (delegate {
+            rwlock.EnterWriteLock ();
+            try {
                 foreach (var listeners in registry.Values) {
                     listeners.RemoveAll ((weak) => !weak.IsAlive || weak.Target == subscription);
                 }
-            });
+            } finally {
+                rwlock.ExitWriteLock ();
+            }
         }
 
         /// <summary>
@@ -114,7 +87,8 @@ namespace Toggl.Phoebe
             var needsPurge = false;
 
             // Process message:
-            TryRead (delegate {
+            rwlock.EnterReadLock ();
+            try {
                 List<WeakReference> subscriptions;
                 if (registry.TryGetValue (typeof(TMessage), out subscriptions)) {
                     foreach (var weak in subscriptions) {
@@ -138,7 +112,9 @@ namespace Toggl.Phoebe
                         }
                     }
                 }
-            });
+            } finally {
+                rwlock.ExitReadLock ();
+            }
 
             // Dispatch messages (on this thread):
             if (sendHere != null) {
@@ -149,13 +125,16 @@ namespace Toggl.Phoebe
 
             if (sendMain != null) {
                 // Add to main thread dispatch queue:
-                TryWrite (delegate {
+                rwlock.EnterWriteLock ();
+                try {
                     foreach (var subscription in sendMain) {
                         dispatchQueue.Enqueue (delegate {
                             subscription.Listener (msg);
                         });
                     }
-                });
+                } finally {
+                    rwlock.ExitWriteLock ();
+                }
 
                 // Make sure the queue is processed now or in the future
                 if (onMainThread) {
@@ -167,34 +146,51 @@ namespace Toggl.Phoebe
 
             // Purge dead subscriptions
             if (needsPurge) {
-                TryWrite (delegate {
+                rwlock.EnterWriteLock ();
+                try {
                     foreach (var listeners in registry.Values) {
                         listeners.RemoveAll ((weak) => !weak.IsAlive);
                     }
-                });
+                } finally {
+                    rwlock.ExitWriteLock ();
+                }
             }
         }
 
         private void ScheduleProcessQueue ()
         {
-            TryWrite (delegate {
+            rwlock.EnterWriteLock ();
+            try {
                 if (!isScheduled) {
                     isScheduled = true;
                     threadContext.Post ((state) => {
                         ProcessQueue ();
                     }, null);
                 }
-            });
+            } finally {
+                rwlock.ExitWriteLock ();
+            }
         }
 
         private void ProcessQueue ()
         {
-            TryWrite (delegate {
-                while (dispatchQueue.Count > 0) {
-                    var act = dispatchQueue.Dequeue ();
-                    act ();
+            while (true) {
+                Action act;
+
+                rwlock.EnterWriteLock ();
+                try {
+                    if (dispatchQueue.Count > 0) {
+                        act = dispatchQueue.Dequeue ();
+                    } else {
+                        return;
+                    }
+                } finally {
+                    rwlock.ExitWriteLock ();
                 }
-            });
+
+                // Need to execute the item outside of lock to prevent recursive locking
+                act ();
+            }
         }
     }
 }

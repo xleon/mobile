@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
     public class ModelManager
     {
+        private readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim ();
         private readonly Dictionary<Type, MemoryModelCache> caches = new Dictionary<Type, MemoryModelCache> ();
 
         /// <summary>
@@ -19,8 +21,14 @@ namespace Toggl.Phoebe.Data
             where T : Model
         {
             MemoryModelCache cache;
-            if (!caches.TryGetValue (typeof(T), out cache))
-                return Enumerable.Empty<T> ();
+
+            cacheLock.EnterReadLock ();
+            try {
+                if (!caches.TryGetValue (typeof(T), out cache))
+                    return Enumerable.Empty<T> ();
+            } finally {
+                cacheLock.ExitReadLock ();
+            }
 
             return cache.All<T> ();
         }
@@ -28,8 +36,14 @@ namespace Toggl.Phoebe.Data
         public IEnumerable<Model> Cached (Type type)
         {
             MemoryModelCache cache;
-            if (!caches.TryGetValue (type, out cache))
-                return Enumerable.Empty<Model> ();
+
+            cacheLock.EnterReadLock ();
+            try {
+                if (!caches.TryGetValue (type, out cache))
+                    return Enumerable.Empty<Model> ();
+            } finally {
+                cacheLock.ExitReadLock ();
+            }
 
             return cache.All<Model> ();
         }
@@ -99,7 +113,13 @@ namespace Toggl.Phoebe.Data
             MemoryModelCache cache;
 
             // Look through in-memory models:
-            if (caches.TryGetValue (type, out cache)) {
+            cacheLock.EnterReadLock ();
+            try {
+                caches.TryGetValue (type, out cache);
+            } finally {
+                cacheLock.ExitReadLock ();
+            }
+            if (cache != null) {
                 inst = cache.GetById<Model> (id);
             }
 
@@ -134,7 +154,13 @@ namespace Toggl.Phoebe.Data
             MemoryModelCache cache;
 
             // Look through in-memory models:
-            if (caches.TryGetValue (type, out cache)) {
+            cacheLock.EnterReadLock ();
+            try {
+                caches.TryGetValue (type, out cache);
+            } finally {
+                cacheLock.ExitReadLock ();
+            }
+            if (cache != null) {
                 inst = cache.GetByRemoteId<Model> (remoteId);
             }
 
@@ -183,8 +209,19 @@ namespace Toggl.Phoebe.Data
             MemoryModelCache cache;
             var type = model.GetType ();
 
-            if (!caches.TryGetValue (type, out cache)) {
-                caches [type] = cache = new MemoryModelCache ();
+            cacheLock.EnterReadLock ();
+            try {
+                caches.TryGetValue (type, out cache);
+            } finally {
+                cacheLock.ExitReadLock ();
+            }
+            if (cache == null) {
+                cacheLock.EnterWriteLock ();
+                try {
+                    caches [type] = cache = new MemoryModelCache ();
+                } finally {
+                    cacheLock.ExitWriteLock ();
+                }
             }
 
             cache.Add (model);
@@ -198,7 +235,13 @@ namespace Toggl.Phoebe.Data
 
             // Update cache index
             MemoryModelCache cache;
-            if (caches.TryGetValue (model.GetType (), out cache)) {
+            cacheLock.EnterReadLock ();
+            try {
+                caches.TryGetValue (model.GetType (), out cache);
+            } finally {
+                cacheLock.ExitReadLock ();
+            }
+            if (cache != null) {
                 cache.UpdateRemoteId (model, oldValue, newValue);
             }
         }

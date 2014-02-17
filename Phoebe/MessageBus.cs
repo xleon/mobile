@@ -7,9 +7,19 @@ namespace Toggl.Phoebe
 {
     public sealed class MessageBus
     {
+        private readonly int threadId;
+        private readonly SynchronizationContext threadContext;
         private readonly ReaderWriterLock rwlock = new ReaderWriterLock ();
         private readonly Dictionary<Type, List<WeakReference>> registry =
             new Dictionary<Type, List<WeakReference>> ();
+        private readonly Queue<Action> dispatchQueue = new Queue<Action> ();
+        private volatile bool isScheduled;
+
+        public MessageBus ()
+        {
+            threadId = Thread.CurrentThread.ManagedThreadId;
+            threadContext = SynchronizationContext.Current;
+        }
 
         private bool TryWrite (Action act)
         {
@@ -98,22 +108,62 @@ namespace Toggl.Phoebe
             if (msg == null)
                 throw new ArgumentNullException ("msg");
 
+            List<Subscription<TMessage>> sendMain = null;
+            List<Subscription<TMessage>> sendHere = null;
+            var onMainThread = Thread.CurrentThread.ManagedThreadId == threadId;
             var needsPurge = false;
 
-            // Dispatch message
+            // Process message:
             TryRead (delegate {
                 List<WeakReference> subscriptions;
                 if (registry.TryGetValue (typeof(TMessage), out subscriptions)) {
                     foreach (var weak in subscriptions) {
                         var subscription = weak.Target as Subscription<TMessage>;
                         if (subscription != null) {
-                            subscription.Listener (msg);
+                            if (onMainThread || !subscription.IsThreadSafe) {
+                                // Add the item to be called on the main thread
+                                if (sendMain == null) {
+                                    sendMain = new List<Subscription<TMessage>> ();
+                                }
+                                sendMain.Add (subscription);
+                            } else {
+                                // Add the item to be called on this thread
+                                if (sendHere == null) {
+                                    sendHere = new List<Subscription<TMessage>> ();
+                                }
+                                sendHere.Add (subscription);
+                            }
                         } else {
                             needsPurge = true;
                         }
                     }
                 }
             });
+
+            // Dispatch messages (on this thread):
+            if (sendHere != null) {
+                foreach (var subscription in sendHere) {
+                    subscription.Listener (msg);
+                }
+            }
+
+            if (sendMain != null) {
+                // Add to main thread dispatch queue:
+                TryWrite (delegate {
+                    foreach (var subscription in sendMain) {
+                        dispatchQueue.Enqueue (delegate {
+                            subscription.Listener (msg);
+                        });
+                    }
+                });
+
+                // Make sure the queue is processed now or in the future
+                if (onMainThread) {
+                    ProcessQueue ();
+                } else if (!isScheduled) {
+                    ScheduleProcessQueue ();
+                }
+            }
 
             // Purge dead subscriptions
             if (needsPurge) {
@@ -123,6 +173,28 @@ namespace Toggl.Phoebe
                     }
                 });
             }
+        }
+
+        private void ScheduleProcessQueue ()
+        {
+            TryWrite (delegate {
+                if (!isScheduled) {
+                    isScheduled = true;
+                    threadContext.Post ((state) => {
+                        ProcessQueue ();
+                    }, null);
+                }
+            });
+        }
+
+        private void ProcessQueue ()
+        {
+            TryWrite (delegate {
+                while (dispatchQueue.Count > 0) {
+                    var act = dispatchQueue.Dequeue ();
+                    act ();
+                }
+            });
         }
     }
 }

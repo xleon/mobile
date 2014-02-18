@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using SQLite;
 using XPlatUtils;
@@ -115,6 +116,7 @@ namespace Toggl.Phoebe.Data
         private static readonly AttributeLookupCache<IgnoreAttribute> ignoreCache =
             new AttributeLookupCache<IgnoreAttribute> ();
         private readonly SQLiteConnection conn;
+        private readonly ReaderWriterLockSlim rwlock = new ReaderWriterLockSlim ();
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
         #pragma warning disable 0414
@@ -202,9 +204,14 @@ namespace Toggl.Phoebe.Data
                 return;
 
             if (property == Model.PropertyIsShared) {
-                // No need to mark newly created property as changed:
-                if (createdModels.Any ((r) => r.Target == model))
-                    return;
+                rwlock.EnterReadLock ();
+                try {
+                    // No need to mark newly created property as changed:
+                    if (createdModels.Any ((r) => r.Target == model))
+                        return;
+                } finally {
+                    rwlock.ExitReadLock ();
+                }
             }
 
             // We only care about persisted models (and models which were just marked as non-persistent)
@@ -217,13 +224,19 @@ namespace Toggl.Phoebe.Data
                 && ignoreCache.HasAttribute (model, property))
                 return;
 
-            changedModels.Add (model);
+            rwlock.EnterWriteLock ();
+            try {
+                changedModels.Add (model);
+            } finally {
+                rwlock.ExitWriteLock ();
+            }
             ScheduleCommit ();
         }
 
         public void Commit ()
         {
             conn.BeginTransaction ();
+            rwlock.EnterWriteLock ();
             try {
                 foreach (var model in changedModels) {
                     if (model.IsPersisted) {
@@ -235,6 +248,7 @@ namespace Toggl.Phoebe.Data
                 changedModels.Clear ();
                 createdModels.Clear ();
             } finally {
+                rwlock.ExitWriteLock ();
                 conn.Commit ();
             }
 
@@ -246,16 +260,32 @@ namespace Toggl.Phoebe.Data
 
         protected async virtual void ScheduleCommit ()
         {
-            if (IsScheduled)
-                return;
+            rwlock.EnterUpgradeableReadLock ();
+            try {
+                if (IsScheduled)
+                    return;
 
-            IsScheduled = true;
+                rwlock.EnterWriteLock ();
+                try {
+                    IsScheduled = true;
+                } catch {
+                    rwlock.ExitWriteLock ();
+                }
+            } finally {
+                rwlock.ExitUpgradeableReadLock ();
+            }
 
             try {
-                await Task.Delay (TimeSpan.FromMilliseconds (250));
+                await Task.Delay (TimeSpan.FromMilliseconds (250))
+                    .ConfigureAwait (continueOnCapturedContext: false);
                 Commit ();
             } finally {
-                IsScheduled = false;
+                rwlock.EnterWriteLock ();
+                try {
+                    IsScheduled = false;
+                } finally {
+                    rwlock.ExitWriteLock ();
+                }
             }
         }
     }

@@ -161,12 +161,22 @@ namespace Toggl.Phoebe
         {
             rwlock.EnterWriteLock ();
             try {
-                if (!isScheduled) {
-                    isScheduled = true;
-                    threadContext.Post ((state) => {
+                if (isScheduled)
+                    return;
+
+                isScheduled = true;
+                threadContext.Post ((s) => {
+                    try {
                         ProcessQueue ();
-                    }, null);
-                }
+                    } finally {
+                        rwlock.EnterWriteLock ();
+                        try {
+                            isScheduled = false;
+                        } finally {
+                            rwlock.ExitWriteLock ();
+                        }
+                    }
+                }, null);
             } finally {
                 rwlock.ExitWriteLock ();
             }

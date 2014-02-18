@@ -24,15 +24,17 @@ namespace Toggl.Phoebe.Data
             }
 
             var remoteId = Convert.ToInt64 (reader.Value);
-            var model = Model.Manager.GetByRemoteId (objectType, remoteId);
-            if (model == null) {
-                model = (Model)Activator.CreateInstance (objectType);
-                model.RemoteId = remoteId;
-                model.ModifiedAt = new DateTime ();
-                model = Model.Update (model);
-            }
+            lock (Model.SyncRoot) {
+                var model = Model.Manager.GetByRemoteId (objectType, remoteId);
+                if (model == null) {
+                    model = (Model)Activator.CreateInstance (objectType);
+                    model.RemoteId = remoteId;
+                    model.ModifiedAt = new DateTime ();
+                    model = Model.Update (model);
+                }
 
-            return model;
+                return model;
+            }
         }
 
         public override bool CanConvert (Type objectType)

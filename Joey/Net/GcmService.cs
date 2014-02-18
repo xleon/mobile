@@ -97,7 +97,7 @@ namespace Toggl.Joey.Net
             private readonly List<Intent> intents = new List<Intent> ();
             private readonly List<int> commandIds = new List<int> ();
             private GcmService service;
-            private object subscriptionSyncFinishedMessage;
+            private Subscription<SyncFinishedMessage> subscriptionSyncFinishedMessage;
 
             public ScheduledSync (GcmService service)
             {

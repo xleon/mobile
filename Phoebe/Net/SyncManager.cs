@@ -14,7 +14,7 @@ namespace Toggl.Phoebe.Net
     {
         private static readonly string Tag = "SyncManager";
         #pragma warning disable 0414
-        private readonly object subscriptionModelsCommited;
+        private readonly Subscription<ModelsCommittedMessage> subscriptionModelsCommited;
         #pragma warning restore 0414
 
         public SyncManager ()
@@ -35,6 +35,17 @@ namespace Toggl.Phoebe.Net
             if (IsRunning)
                 return;
 
+            IsRunning = true;
+
+            try {
+                await RunInBackground (mode);
+            } finally {
+                IsRunning = false;
+            }
+        }
+
+        private async Task RunInBackground (SyncMode mode)
+        {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var log = ServiceContainer.Resolve<Logger> ();
@@ -48,7 +59,6 @@ namespace Toggl.Phoebe.Net
                 }
             }
 
-            IsRunning = true;
             bus.Send (new SyncStartedMessage (this, mode));
 
             bool hasErrors = false;
@@ -69,7 +79,8 @@ namespace Toggl.Phoebe.Net
                 }
 
                 if (mode.HasFlag (SyncMode.Pull)) {
-                    var changes = await client.GetChanges (LastRun);
+                    var changes = await client.GetChanges (LastRun)
+                        .ConfigureAwait (continueOnCapturedContext: false);
 
                     changes.User.IsPersisted = true;
                     foreach (var m in changes.Workspaces) {
@@ -140,7 +151,8 @@ namespace Toggl.Phoebe.Net
                             tasks.Add (PushModel (model));
                         }
 
-                        await Task.WhenAll (tasks);
+                        await Task.WhenAll (tasks)
+                            .ConfigureAwait (continueOnCapturedContext: false);
 
                         for (var i = 0; i < tasks.Count; i++) {
                             var model = models [i];
@@ -179,7 +191,6 @@ namespace Toggl.Phoebe.Net
                 hasErrors = true;
                 ex = e;
             } finally {
-                IsRunning = false;
                 bus.Send (new SyncFinishedMessage (this, mode, hasErrors, ex));
             }
         }
@@ -197,16 +208,19 @@ namespace Toggl.Phoebe.Net
                 if (model.DeletedAt != null) {
                     if (model.RemoteId != null) {
                         // Delete model
-                        await client.Delete (model);
+                        await client.Delete (model)
+                            .ConfigureAwait (continueOnCapturedContext: false);
                         model.IsPersisted = false;
                     } else {
                         // Some weird combination where the DeletedAt exists and remote Id doesn't:
                         model.IsPersisted = false;
                     }
                 } else if (model.RemoteId != null) {
-                    await client.Update (model);
+                    await client.Update (model)
+                        .ConfigureAwait (continueOnCapturedContext: false);
                 } else {
-                    await client.Create (model);
+                    await client.Create (model)
+                        .ConfigureAwait (continueOnCapturedContext: false);
                 }
             } catch (HttpRequestException ex) {
                 return ex;

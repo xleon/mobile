@@ -41,14 +41,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("name")]
         public string Name {
-            get { return name; }
+            get {
+                lock (SyncRoot) {
+                    return name;
+                }
+            }
             set {
-                if (name == value)
-                    return;
+                lock (SyncRoot) {
+                    if (name == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyName, delegate {
-                    name = value;
-                });
+                    ChangePropertyAndNotify (PropertyName, delegate {
+                        name = value;
+                    });
+                }
             }
         }
 
@@ -57,14 +63,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("premium")]
         public bool IsPremium {
-            get { return premium; }
+            get {
+                lock (SyncRoot) {
+                    return premium;
+                }
+            }
             set {
-                if (premium == value)
-                    return;
+                lock (SyncRoot) {
+                    if (premium == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsPremium, delegate {
-                    premium = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsPremium, delegate {
+                        premium = value;
+                    });
+                }
             }
         }
 
@@ -73,14 +85,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("admin")]
         public bool IsAdmin {
-            get { return admin; }
+            get {
+                lock (SyncRoot) {
+                    return admin;
+                }
+            }
             set {
-                if (admin == value)
-                    return;
+                lock (SyncRoot) {
+                    if (admin == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsAdmin, delegate {
-                    admin = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsAdmin, delegate {
+                        admin = value;
+                    });
+                }
             }
         }
 
@@ -89,14 +107,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("default_hourly_rate", NullValueHandling = NullValueHandling.Ignore)]
         public decimal? DefaultRate {
-            get { return defaultRate; }
+            get {
+                lock (SyncRoot) {
+                    return defaultRate;
+                }
+            }
             set {
-                if (defaultRate == value)
-                    return;
+                lock (SyncRoot) {
+                    if (defaultRate == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyDefaultRate, delegate {
-                    defaultRate = value;
-                });
+                    ChangePropertyAndNotify (PropertyDefaultRate, delegate {
+                        defaultRate = value;
+                    });
+                }
             }
         }
 
@@ -105,14 +129,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("default_currency")]
         public string DefaultCurrency {
-            get { return defaultCurrency; }
+            get {
+                lock (SyncRoot) {
+                    return defaultCurrency;
+                }
+            }
             set {
-                if (defaultCurrency == value)
-                    return;
+                lock (SyncRoot) {
+                    if (defaultCurrency == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyDefaultCurrency, delegate {
-                    defaultCurrency = value;
-                });
+                    ChangePropertyAndNotify (PropertyDefaultCurrency, delegate {
+                        defaultCurrency = value;
+                    });
+                }
             }
         }
 
@@ -120,17 +150,23 @@ namespace Toggl.Phoebe.Data.Models
         public static readonly string PropertyProjectCreationPrivileges = GetPropertyName ((m) => m.ProjectCreationPrivileges);
 
         public AccessLevel ProjectCreationPrivileges {
-            get { return projectCreationPriv; }
+            get {
+                lock (SyncRoot) {
+                    return projectCreationPriv;
+                }
+            }
             set {
-                if (value != AccessLevel.Admin && value != AccessLevel.Any)
-                    throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
+                lock (SyncRoot) {
+                    if (value != AccessLevel.Admin && value != AccessLevel.Any)
+                        throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
 
-                if (projectCreationPriv == value)
-                    return;
+                    if (projectCreationPriv == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyProjectCreationPrivileges, delegate {
-                    projectCreationPriv = value;
-                });
+                    ChangePropertyAndNotify (PropertyProjectCreationPrivileges, delegate {
+                        projectCreationPriv = value;
+                    });
+                }
             }
         }
 
@@ -144,17 +180,23 @@ namespace Toggl.Phoebe.Data.Models
         public static readonly string PropertyBillableRatesVisibility = GetPropertyName ((m) => m.BillableRatesVisibility);
 
         public AccessLevel BillableRatesVisibility {
-            get { return ratesVisbility; }
+            get {
+                lock (SyncRoot) {
+                    return ratesVisbility;
+                }
+            }
             set {
-                if (value != AccessLevel.Admin && value != AccessLevel.Any)
-                    throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
+                lock (SyncRoot) {
+                    if (value != AccessLevel.Admin && value != AccessLevel.Any)
+                        throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
 
-                if (ratesVisbility == value)
-                    return;
+                    if (ratesVisbility == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyBillableRatesVisibility, delegate {
-                    ratesVisbility = value;
-                });
+                    ChangePropertyAndNotify (PropertyBillableRatesVisibility, delegate {
+                        ratesVisbility = value;
+                    });
+                }
             }
         }
 
@@ -169,14 +211,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("rounding")]
         public RoundingMode RoundingMode {
-            get { return roundingMode; }
+            get {
+                lock (SyncRoot) {
+                    return roundingMode;
+                }
+            }
             set {
-                if (roundingMode == value)
-                    return;
+                lock (SyncRoot) {
+                    if (roundingMode == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyRoundingMode, delegate {
-                    roundingMode = value;
-                });
+                    ChangePropertyAndNotify (PropertyRoundingMode, delegate {
+                        roundingMode = value;
+                    });
+                }
             }
         }
 
@@ -185,14 +233,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("rounding_minutes")]
         public int RoundingPercision {
-            get { return roundingPercision; }
+            get {
+                lock (SyncRoot) {
+                    return roundingPercision;
+                }
+            }
             set {
-                if (roundingPercision == value)
-                    return;
+                lock (SyncRoot) {
+                    if (roundingPercision == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyRoundingPercision, delegate {
-                    roundingPercision = value;
-                });
+                    ChangePropertyAndNotify (PropertyRoundingPercision, delegate {
+                        roundingPercision = value;
+                    });
+                }
             }
         }
 
@@ -201,14 +255,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("logo_url")]
         public string LogoUrl {
-            get { return logoUrl; }
+            get {
+                lock (SyncRoot) {
+                    return logoUrl;
+                }
+            }
             set {
-                if (logoUrl == value)
-                    return;
+                lock (SyncRoot) {
+                    if (logoUrl == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyLogoUrl, delegate {
-                    logoUrl = value;
-                });
+                    ChangePropertyAndNotify (PropertyLogoUrl, delegate {
+                        logoUrl = value;
+                    });
+                }
             }
         }
 
@@ -237,6 +297,5 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         #endregion
-
     }
 }

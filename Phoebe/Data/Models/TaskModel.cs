@@ -62,14 +62,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("name")]
         public string Name {
-            get { return name; }
+            get {
+                lock (SyncRoot) {
+                    return name;
+                }
+            }
             set {
-                if (name == value)
-                    return;
+                lock (SyncRoot) {
+                    if (name == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyName, delegate {
-                    name = value;
-                });
+                    ChangePropertyAndNotify (PropertyName, delegate {
+                        name = value;
+                    });
+                }
             }
         }
 
@@ -78,14 +84,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("active")]
         public bool IsActive {
-            get { return active; }
+            get {
+                lock (SyncRoot) {
+                    return active;
+                }
+            }
             set {
-                if (active == value)
-                    return;
+                lock (SyncRoot) {
+                    if (active == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsActive, delegate {
-                    active = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsActive, delegate {
+                        active = value;
+                    });
+                }
             }
         }
 
@@ -94,14 +106,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("estimated_seconds")]
         public long Estimate {
-            get { return estimate; }
+            get {
+                lock (SyncRoot) {
+                    return estimate;
+                }
+            }
             set {
-                if (estimate == value)
-                    return;
+                lock (SyncRoot) {
+                    if (estimate == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyEstimate, delegate {
-                    estimate = value;
-                });
+                    ChangePropertyAndNotify (PropertyEstimate, delegate {
+                        estimate = value;
+                    });
+                }
             }
         }
 

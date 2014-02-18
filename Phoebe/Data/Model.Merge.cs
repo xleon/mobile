@@ -10,7 +10,9 @@ namespace Toggl.Phoebe.Data
             if (model.GetType () != GetType ())
                 throw new ArgumentException ("Cannot merge models of different kind", "model");
 
-            MergeSimpleOverwrite (model);
+            lock (SyncRoot) {
+                MergeSimpleOverwrite (model);
+            }
         }
 
         protected void MergeSimpleOverwrite (Model other)
@@ -60,13 +62,19 @@ namespace Toggl.Phoebe.Data
         [DontDirty]
         [SQLite.Ignore]
         public bool IsMerging {
-            get { return merging; }
+            get {
+                lock (SyncRoot) {
+                    return merging;
+                }
+            }
             protected set {
-                if (merging == value)
-                    return;
-                ChangePropertyAndNotify (PropertyIsMerging, delegate {
-                    merging = value;
-                });
+                lock (SyncRoot) {
+                    if (merging == value)
+                        return;
+                    ChangePropertyAndNotify (PropertyIsMerging, delegate {
+                        merging = value;
+                    });
+                }
             }
         }
     }

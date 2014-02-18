@@ -10,8 +10,10 @@ namespace Toggl.Phoebe.Data
 
         public bool Validate ()
         {
-            ValidateProperties (null);
-            return IsValid;
+            lock (SyncRoot) {
+                ValidateProperties (null);
+                return IsValid;
+            }
         }
 
         private void Validate (string propertyName)
@@ -44,7 +46,11 @@ namespace Toggl.Phoebe.Data
         [DontDirty]
         [SQLite.Ignore]
         public Dictionary<string, string> Errors {
-            get { return propertyErrors; }
+            get {
+                lock (SyncRoot) {
+                    return propertyErrors;
+                }
+            }
         }
 
         private bool valid = true;
@@ -52,14 +58,20 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         public bool IsValid {
-            get { return valid; }
+            get {
+                lock (SyncRoot) {
+                    return valid;
+                }
+            }
             set {
-                if (valid == value)
-                    return;
+                lock (SyncRoot) {
+                    if (valid == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsValid, delegate {
-                    valid = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsValid, delegate {
+                        valid = value;
+                    });
+                }
             }
         }
     }

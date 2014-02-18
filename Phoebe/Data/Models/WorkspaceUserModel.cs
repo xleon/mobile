@@ -42,14 +42,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("admin")]
         public bool IsAdmin {
-            get { return isAdmin; }
+            get {
+                lock (SyncRoot) {
+                    return isAdmin;
+                }
+            }
             set {
-                if (isAdmin == value)
-                    return;
+                lock (SyncRoot) {
+                    if (isAdmin == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsAdmin, delegate {
-                    isAdmin = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsAdmin, delegate {
+                        isAdmin = value;
+                    });
+                }
             }
         }
 
@@ -58,14 +64,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("active")]
         public bool IsActive {
-            get { return isActive; }
+            get {
+                lock (SyncRoot) {
+                    return isActive;
+                }
+            }
             set {
-                if (isActive == value)
-                    return;
+                lock (SyncRoot) {
+                    if (isActive == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsActive, delegate {
-                    isActive = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsActive, delegate {
+                        isActive = value;
+                    });
+                }
             }
         }
 
@@ -74,15 +86,19 @@ namespace Toggl.Phoebe.Data.Models
         [JsonProperty ("name")]
         private string Name {
             get {
-                if (!IsShared) {
-                    return name;
-                } else {
-                    return To.Name;
+                lock (SyncRoot) {
+                    if (!IsShared) {
+                        return name;
+                    } else {
+                        return To.Name;
+                    }
                 }
             }
             set {
-                if (!IsShared) {
-                    name = value;
+                lock (SyncRoot) {
+                    if (!IsShared) {
+                        name = value;
+                    }
                 }
             }
         }
@@ -92,15 +108,19 @@ namespace Toggl.Phoebe.Data.Models
         [JsonProperty ("email")]
         private string Email {
             get {
-                if (!IsShared) {
-                    return email;
-                } else {
-                    return To.Email;
+                lock (SyncRoot) {
+                    if (!IsShared) {
+                        return email;
+                    } else {
+                        return To.Email;
+                    }
                 }
             }
             set {
-                if (!IsShared) {
-                    email = value;
+                lock (SyncRoot) {
+                    if (!IsShared) {
+                        email = value;
+                    }
                 }
             }
         }

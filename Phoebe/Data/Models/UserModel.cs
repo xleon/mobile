@@ -72,15 +72,17 @@ namespace Toggl.Phoebe.Data.Models
 
         public IEnumerable<ProjectModel> GetAvailableProjects (WorkspaceModel workspace = null)
         {
-            workspace = workspace ?? DefaultWorkspace;
-            if (workspace == null) {
-                throw new ArgumentNullException ("workspace", "Must specify a workspace, when user has no default one.");
-            }
+            lock (SyncRoot) {
+                workspace = workspace ?? DefaultWorkspace;
+                if (workspace == null) {
+                    throw new ArgumentNullException ("workspace", "Must specify a workspace, when user has no default one.");
+                }
 
-            IEnumerable<ProjectModel> projects;
-            projects = workspace.Projects.NotDeleted ().Where ((m) => m.IsPrivate != true);
-            projects = projects.Union (Projects.Select ((m) => m.From));
-            return projects.OrderBy ((m) => m.Name).ToList ();
+                IEnumerable<ProjectModel> projects;
+                projects = workspace.Projects.NotDeleted ().Where ((m) => m.IsPrivate != true);
+                projects = projects.Union (Projects.Select ((m) => m.From));
+                return projects.OrderBy ((m) => m.Name).ToList ();
+            }
         }
 
         #region Data
@@ -90,14 +92,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("fullname")]
         public string Name {
-            get { return name; }
+            get {
+                lock (SyncRoot) {
+                    return name;
+                }
+            }
             set {
-                if (name == value)
-                    return;
+                lock (SyncRoot) {
+                    if (name == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyName, delegate {
-                    name = value;
-                });
+                    ChangePropertyAndNotify (PropertyName, delegate {
+                        name = value;
+                    });
+                }
             }
         }
 
@@ -106,14 +114,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("email")]
         public string Email {
-            get { return email; }
+            get {
+                lock (SyncRoot) {
+                    return email;
+                }
+            }
             set {
-                if (email == value)
-                    return;
+                lock (SyncRoot) {
+                    if (email == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyEmail, delegate {
-                    email = value;
-                });
+                    ChangePropertyAndNotify (PropertyEmail, delegate {
+                        email = value;
+                    });
+                }
             }
         }
 
@@ -123,14 +137,20 @@ namespace Toggl.Phoebe.Data.Models
         [JsonProperty ("password", NullValueHandling = NullValueHandling.Include)]
         [SQLite.Ignore]
         public string Password {
-            get { return password; }
+            get {
+                lock (SyncRoot) {
+                    return password;
+                }
+            }
             set {
-                if (password == value)
-                    return;
+                lock (SyncRoot) {
+                    if (password == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyPassword, delegate {
-                    password = value;
-                });
+                    ChangePropertyAndNotify (PropertyPassword, delegate {
+                        password = value;
+                    });
+                }
             }
         }
 
@@ -141,14 +161,20 @@ namespace Toggl.Phoebe.Data.Models
         [JsonProperty ("api_token", NullValueHandling = NullValueHandling.Ignore)]
         [SQLite.Ignore]
         public string ApiToken {
-            get { return apiToken; }
+            get {
+                lock (SyncRoot) {
+                    return apiToken;
+                }
+            }
             set {
-                if (apiToken == value)
-                    return;
+                lock (SyncRoot) {
+                    if (apiToken == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyApiToken, delegate {
-                    apiToken = value;
-                });
+                    ChangePropertyAndNotify (PropertyApiToken, delegate {
+                        apiToken = value;
+                    });
+                }
             }
         }
 
@@ -157,14 +183,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("beginning_of_week")]
         public DayOfWeek StartOfWeek {
-            get { return startOfWeek; }
+            get {
+                lock (SyncRoot) {
+                    return startOfWeek;
+                }
+            }
             set {
-                if (startOfWeek == value)
-                    return;
+                lock (SyncRoot) {
+                    if (startOfWeek == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyStartOfWeek, delegate {
-                    startOfWeek = value;
-                });
+                    ChangePropertyAndNotify (PropertyStartOfWeek, delegate {
+                        startOfWeek = value;
+                    });
+                }
             }
         }
 
@@ -173,14 +205,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("date_format")]
         public string DateFormat {
-            get { return dateFormat; }
+            get {
+                lock (SyncRoot) {
+                    return dateFormat;
+                }
+            }
             set {
-                if (dateFormat == value)
-                    return;
+                lock (SyncRoot) {
+                    if (dateFormat == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyDateFormat, delegate {
-                    dateFormat = value;
-                });
+                    ChangePropertyAndNotify (PropertyDateFormat, delegate {
+                        dateFormat = value;
+                    });
+                }
             }
         }
 
@@ -189,14 +227,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("timeofday_format")]
         public string TimeFormat {
-            get { return timeFormat; }
+            get {
+                lock (SyncRoot) {
+                    return timeFormat;
+                }
+            }
             set {
-                if (timeFormat == value)
-                    return;
+                lock (SyncRoot) {
+                    if (timeFormat == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyTimeFormat, delegate {
-                    timeFormat = value;
-                });
+                    ChangePropertyAndNotify (PropertyTimeFormat, delegate {
+                        timeFormat = value;
+                    });
+                }
             }
         }
 
@@ -205,14 +249,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("image_url")]
         public string ImageUrl {
-            get { return imageUrl; }
+            get {
+                lock (SyncRoot) {
+                    return imageUrl;
+                }
+            }
             set {
-                if (imageUrl == value)
-                    return;
+                lock (SyncRoot) {
+                    if (imageUrl == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyImageUrl, delegate {
-                    imageUrl = value;
-                });
+                    ChangePropertyAndNotify (PropertyImageUrl, delegate {
+                        imageUrl = value;
+                    });
+                }
             }
         }
 
@@ -221,14 +271,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("language")]
         public string Locale {
-            get { return locale; }
+            get {
+                lock (SyncRoot) {
+                    return locale;
+                }
+            }
             set {
-                if (locale == value)
-                    return;
+                lock (SyncRoot) {
+                    if (locale == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyLocale, delegate {
-                    locale = value;
-                });
+                    ChangePropertyAndNotify (PropertyLocale, delegate {
+                        locale = value;
+                    });
+                }
             }
         }
 
@@ -237,14 +293,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("timezone")]
         public string Timezone {
-            get { return timezone; }
+            get {
+                lock (SyncRoot) {
+                    return timezone;
+                }
+            }
             set {
-                if (timezone == value)
-                    return;
+                lock (SyncRoot) {
+                    if (timezone == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyTimezone, delegate {
-                    timezone = value;
-                });
+                    ChangePropertyAndNotify (PropertyTimezone, delegate {
+                        timezone = value;
+                    });
+                }
             }
         }
 
@@ -253,14 +315,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("send_product_emails")]
         public bool SendProductEmails {
-            get { return sendProductEmails; }
+            get {
+                lock (SyncRoot) {
+                    return sendProductEmails;
+                }
+            }
             set {
-                if (sendProductEmails == value)
-                    return;
+                lock (SyncRoot) {
+                    if (sendProductEmails == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertySendProductEmails, delegate {
-                    sendProductEmails = value;
-                });
+                    ChangePropertyAndNotify (PropertySendProductEmails, delegate {
+                        sendProductEmails = value;
+                    });
+                }
             }
         }
 
@@ -269,14 +337,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("send_timer_notifications")]
         public bool SendTimerNotifications {
-            get { return sendTimerNotifications; }
+            get {
+                lock (SyncRoot) {
+                    return sendTimerNotifications;
+                }
+            }
             set {
-                if (sendTimerNotifications == value)
-                    return;
+                lock (SyncRoot) {
+                    if (sendTimerNotifications == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertySendTimerNotifications, delegate {
-                    sendTimerNotifications = value;
-                });
+                    ChangePropertyAndNotify (PropertySendTimerNotifications, delegate {
+                        sendTimerNotifications = value;
+                    });
+                }
             }
         }
 
@@ -285,14 +359,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("send_weekly_report")]
         public bool SendWeeklyReport {
-            get { return sendWeeklyReport; }
+            get {
+                lock (SyncRoot) {
+                    return sendWeeklyReport;
+                }
+            }
             set {
-                if (sendWeeklyReport == value)
-                    return;
+                lock (SyncRoot) {
+                    if (sendWeeklyReport == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertySendWeeklyReport, delegate {
-                    sendWeeklyReport = value;
-                });
+                    ChangePropertyAndNotify (PropertySendWeeklyReport, delegate {
+                        sendWeeklyReport = value;
+                    });
+                }
             }
         }
 
@@ -300,14 +380,20 @@ namespace Toggl.Phoebe.Data.Models
         public static readonly string PropertyTrackingMode = GetPropertyName ((m) => m.TrackingMode);
 
         public TrackingMode TrackingMode {
-            get { return trackingMode; }
+            get {
+                lock (SyncRoot) {
+                    return trackingMode;
+                }
+            }
             set {
-                if (trackingMode == value)
-                    return;
+                lock (SyncRoot) {
+                    if (trackingMode == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyTrackingMode, delegate {
-                    trackingMode = value;
-                });
+                    ChangePropertyAndNotify (PropertyTrackingMode, delegate {
+                        trackingMode = value;
+                    });
+                }
             }
         }
 
@@ -328,14 +414,20 @@ namespace Toggl.Phoebe.Data.Models
         /// </summary>
         /// <value>The created with string.</value>
         public string CreatedWith {
-            get { return createdWith; }
+            get {
+                lock (SyncRoot) {
+                    return createdWith;
+                }
+            }
             set {
-                if (createdWith == value)
-                    return;
+                lock (SyncRoot) {
+                    if (createdWith == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyCreatedWith, delegate {
-                    createdWith = value;
-                });
+                    ChangePropertyAndNotify (PropertyCreatedWith, delegate {
+                        createdWith = value;
+                    });
+                }
             }
         }
 
@@ -373,6 +465,5 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         #endregion
-
     }
 }

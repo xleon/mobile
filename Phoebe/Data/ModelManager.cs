@@ -19,8 +19,11 @@ namespace Toggl.Phoebe.Data
             where T : Model
         {
             MemoryModelCache cache;
-            if (!caches.TryGetValue (typeof(T), out cache))
-                return Enumerable.Empty<T> ();
+
+            lock (caches) {
+                if (!caches.TryGetValue (typeof(T), out cache))
+                    return Enumerable.Empty<T> ();
+            }
 
             return cache.All<T> ();
         }
@@ -28,8 +31,11 @@ namespace Toggl.Phoebe.Data
         public IEnumerable<Model> Cached (Type type)
         {
             MemoryModelCache cache;
-            if (!caches.TryGetValue (type, out cache))
-                return Enumerable.Empty<Model> ();
+
+            lock (caches) {
+                if (!caches.TryGetValue (type, out cache))
+                    return Enumerable.Empty<Model> ();
+            }
 
             return cache.All<Model> ();
         }
@@ -46,34 +52,36 @@ namespace Toggl.Phoebe.Data
         public T Update<T> (T model)
             where T : Model
         {
-            if (model.IsShared)
-                return model;
+            lock (Model.SyncRoot) {
+                if (model.IsShared)
+                    return model;
 
-            T sharedModel = null;
+                T sharedModel = null;
 
-            // First, try to look-up the shared model based on the Id
-            if (model.Id.HasValue)
-                sharedModel = (T)Get (model.GetType (), model.Id.Value);
-            if (model.RemoteId != null) {
-                if (sharedModel == null) {
-                    // If lookup by id failed, try remote id
-                    sharedModel = (T)GetByRemoteId (model.GetType (), model.RemoteId.Value);
-                } else {
-                    // Enforce integrity, no duplicate RemoteId's
-                    if (GetByRemoteId (model.GetType (), model.RemoteId.Value) != null) {
-                        throw new IntegrityException ("RemoteId is not unique, cannot make shared.");
+                // First, try to look-up the shared model based on the Id
+                if (model.Id.HasValue)
+                    sharedModel = (T)Get (model.GetType (), model.Id.Value);
+                if (model.RemoteId != null) {
+                    if (sharedModel == null) {
+                        // If lookup by id failed, try remote id
+                        sharedModel = (T)GetByRemoteId (model.GetType (), model.RemoteId.Value);
+                    } else {
+                        // Enforce integrity, no duplicate RemoteId's
+                        if (GetByRemoteId (model.GetType (), model.RemoteId.Value) != null) {
+                            throw new IntegrityException ("RemoteId is not unique, cannot make shared.");
+                        }
                     }
                 }
-            }
 
-            if (sharedModel != null) {
-                sharedModel.Merge (model);
-            } else {
-                MakeShared (model);
-                sharedModel = model;
-            }
+                if (sharedModel != null) {
+                    sharedModel.Merge (model);
+                } else {
+                    MakeShared (model);
+                    sharedModel = model;
+                }
 
-            return sharedModel;
+                return sharedModel;
+            }
         }
 
         /// <summary>
@@ -85,12 +93,16 @@ namespace Toggl.Phoebe.Data
         public T Get<T> (Guid id)
             where T : Model
         {
-            return (T)Get (typeof(T), id);
+            lock (Model.SyncRoot) {
+                return (T)Get (typeof(T), id);
+            }
         }
 
         public Model Get (Type type, Guid id)
         {
-            return Get (type, id, true);
+            lock (Model.SyncRoot) {
+                return Get (type, id, true);
+            }
         }
 
         private Model Get (Type type, Guid id, bool autoLoad)
@@ -99,7 +111,10 @@ namespace Toggl.Phoebe.Data
             MemoryModelCache cache;
 
             // Look through in-memory models:
-            if (caches.TryGetValue (type, out cache)) {
+            lock (caches) {
+                caches.TryGetValue (type, out cache);
+            }
+            if (cache != null) {
                 inst = cache.GetById<Model> (id);
             }
 
@@ -125,7 +140,9 @@ namespace Toggl.Phoebe.Data
         public T GetByRemoteId<T> (long remoteId)
             where T : Model
         {
-            return (T)GetByRemoteId (typeof(T), remoteId);
+            lock (Model.SyncRoot) {
+                return (T)GetByRemoteId (typeof(T), remoteId);
+            }
         }
 
         internal Model GetByRemoteId (Type type, long remoteId)
@@ -133,33 +150,40 @@ namespace Toggl.Phoebe.Data
             Model inst = null;
             MemoryModelCache cache;
 
-            // Look through in-memory models:
-            if (caches.TryGetValue (type, out cache)) {
-                inst = cache.GetByRemoteId<Model> (remoteId);
-            }
-
-            // Try to load from database:
-            if (inst == null) {
-                var modelStore = ServiceContainer.Resolve<IModelStore> ();
-                inst = modelStore.GetByRemoteId (type, remoteId);
-                // Check that this model isn't in memory already and having been modified
-                if (inst != null && cache != null && cache.GetById<Model> (inst.Id.Value) != null) {
-                    inst = null;
+            lock (Model.SyncRoot) {
+                // Look through in-memory models:
+                lock (caches) {
+                    caches.TryGetValue (type, out cache);
                 }
-                // Mark the loaded model as shared
-                if (inst != null) {
-                    MakeShared (inst);
+                if (cache != null) {
+                    inst = cache.GetByRemoteId<Model> (remoteId);
                 }
-            }
 
-            return inst;
+                // Try to load from database:
+                if (inst == null) {
+                    var modelStore = ServiceContainer.Resolve<IModelStore> ();
+                    inst = modelStore.GetByRemoteId (type, remoteId);
+                    // Check that this model isn't in memory already and having been modified
+                    if (inst != null && cache != null && cache.GetById<Model> (inst.Id.Value) != null) {
+                        inst = null;
+                    }
+                    // Mark the loaded model as shared
+                    if (inst != null) {
+                        MakeShared (inst);
+                    }
+                }
+
+                return inst;
+            }
         }
 
         public IModelQuery<T> Query<T> (Expression<Func<T, bool>> predicate = null)
             where T : Model, new()
         {
-            var modelStore = ServiceContainer.Resolve<IModelStore> ();
-            return modelStore.Query (predicate, (e) => e.Select (UpdateQueryModel));
+            lock (Model.SyncRoot) {
+                var modelStore = ServiceContainer.Resolve<IModelStore> ();
+                return modelStore.Query (predicate, (e) => e.Select (UpdateQueryModel));
+            }
         }
 
         private T UpdateQueryModel<T> (T model)
@@ -183,8 +207,10 @@ namespace Toggl.Phoebe.Data
             MemoryModelCache cache;
             var type = model.GetType ();
 
-            if (!caches.TryGetValue (type, out cache)) {
-                caches [type] = cache = new MemoryModelCache ();
+            lock (caches) {
+                if (!caches.TryGetValue (type, out cache)) {
+                    caches [type] = cache = new MemoryModelCache ();
+                }
             }
 
             cache.Add (model);
@@ -196,10 +222,15 @@ namespace Toggl.Phoebe.Data
             if (!model.IsShared)
                 return;
 
-            // Update cache index
-            MemoryModelCache cache;
-            if (caches.TryGetValue (model.GetType (), out cache)) {
-                cache.UpdateRemoteId (model, oldValue, newValue);
+            lock (Model.SyncRoot) {
+                // Update cache index
+                MemoryModelCache cache;
+                lock (caches) {
+                    caches.TryGetValue (model.GetType (), out cache);
+                }
+                if (cache != null) {
+                    cache.UpdateRemoteId (model, oldValue, newValue);
+                }
             }
         }
     }

@@ -216,10 +216,12 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             if (merger != null)
                 merger (model, wrap.Data);
@@ -240,10 +242,12 @@ namespace Toggl.Phoebe.Net
             });
             selector = selector ?? Model.Update;
 
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
 
             return selector (wrap.Data);
@@ -258,10 +262,12 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             if (selector != null)
                 wrap.Data = selector (wrap.Data);
@@ -276,10 +282,12 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
 
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
             var models = JsonConvert.DeserializeObject<List<T>> (respData) ?? Enumerable.Empty<T> ();
 
             return models.Select (selector ?? Model.Update).ToList ();
@@ -291,7 +299,8 @@ namespace Toggl.Phoebe.Net
                 Method = HttpMethod.Delete,
                 RequestUri = url,
             });
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
         }
 
@@ -568,10 +577,12 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync ());
+            var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false));
             var data = wrap ["data"] [0].ToObject<WorkspaceUserModel> ();
             model.Merge (data);
             // In case the local model has changed in the mean time (and merge does nothing),
@@ -646,10 +657,12 @@ namespace Toggl.Phoebe.Net
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
                 Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
                     string.Format ("{0}:{1}", username, password))));
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);
 
             return Model.Update (wrap.Data);
@@ -666,10 +679,12 @@ namespace Toggl.Phoebe.Net
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
                 Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
                     string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);
 
             return Model.Update (wrap.Data);
@@ -699,10 +714,12 @@ namespace Toggl.Phoebe.Net
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
-            var httpResp = await httpClient.SendAsync (httpReq);
+            var httpResp = await httpClient.SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
             PrepareResponse (httpResp);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ();
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
             var json = JObject.Parse (respData);
 
             var user = Model.Update (json ["data"].ToObject<UserModel> ());

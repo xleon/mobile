@@ -13,6 +13,12 @@ namespace Toggl.Phoebe.Data
     [JsonObject (MemberSerialization.OptIn)]
     public abstract partial class Model : ObservableObject
     {
+        /// <summary>
+        /// The sync root to lock on when dealing with models. This is to prevent any other thread from interacting
+        /// with the data simultaneously. All public model properties and functions should be wrapped in a lock
+        /// statement.
+        /// </summary>
+        public static readonly object SyncRoot = new object ();
         private static readonly AttributeLookupCache<DontDirtyAttribute> dontDirtyCache =
             new AttributeLookupCache<DontDirtyAttribute> ();
 
@@ -54,9 +60,11 @@ namespace Toggl.Phoebe.Data
 
         public virtual void Delete ()
         {
-            DeletedAt = DateTime.UtcNow;
-            if (RemoteId == null) {
-                IsPersisted = false;
+            lock (SyncRoot) {
+                DeletedAt = DateTime.UtcNow;
+                if (RemoteId == null) {
+                    IsPersisted = false;
+                }
             }
         }
 
@@ -66,16 +74,22 @@ namespace Toggl.Phoebe.Data
         [DontDirty]
         [SQLite.PrimaryKey]
         public Guid? Id {
-            get { return id; }
+            get {
+                lock (SyncRoot) {
+                    return id;
+                }
+            }
             set {
-                if (IsShared)
-                    throw new InvalidOperationException ("Cannot change Id after being promoted to shared status.");
+                lock (SyncRoot) {
+                    if (IsShared)
+                        throw new InvalidOperationException ("Cannot change Id after being promoted to shared status.");
 
-                if (id == value)
-                    return;
-                ChangePropertyAndNotify (PropertyId, delegate {
-                    id = value;
-                });
+                    if (id == value)
+                        return;
+                    ChangePropertyAndNotify (PropertyId, delegate {
+                        id = value;
+                    });
+                }
             }
         }
 
@@ -86,24 +100,30 @@ namespace Toggl.Phoebe.Data
         [JsonProperty ("id", NullValueHandling = NullValueHandling.Ignore)]
         [SQLite.Unique]
         public long? RemoteId {
-            get { return remoteId; }
-            set {
-                if (remoteId == value)
-                    return;
-
-                // Check for constraints
-                if (value != null && IsShared) {
-                    if (Model.Manager.GetByRemoteId (GetType (), value.Value) != null) {
-                        throw new IntegrityException ("Model with such RemoteId already exists.");
-                    }
+            get {
+                lock (SyncRoot) {
+                    return remoteId;
                 }
+            }
+            set {
+                lock (SyncRoot) {
+                    if (remoteId == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyRemoteId, delegate {
-                    var oldId = remoteId;
-                    remoteId = value;
+                    // Check for constraints
+                    if (value != null && IsShared) {
+                        if (Model.Manager.GetByRemoteId (GetType (), value.Value) != null) {
+                            throw new IntegrityException ("Model with such RemoteId already exists.");
+                        }
+                    }
 
-                    Manager.NotifyRemoteIdChanged (this, oldId, remoteId);
-                });
+                    ChangePropertyAndNotify (PropertyRemoteId, delegate {
+                        var oldId = remoteId;
+                        remoteId = value;
+
+                        Manager.NotifyRemoteIdChanged (this, oldId, remoteId);
+                    });
+                }
             }
         }
 
@@ -112,14 +132,21 @@ namespace Toggl.Phoebe.Data
 
         [JsonProperty ("at")]
         public DateTime ModifiedAt {
-            get { return modified; }
+            get {
+                lock (SyncRoot) {
+                    return modified;
+                }
+            }
             set {
                 value = value.ToUtc ();
-                if (modified == value)
-                    return;
-                ChangePropertyAndNotify (PropertyModifiedAt, delegate {
-                    modified = value;
-                });
+
+                lock (SyncRoot) {
+                    if (modified == value)
+                        return;
+                    ChangePropertyAndNotify (PropertyModifiedAt, delegate {
+                        modified = value;
+                    });
+                }
             }
         }
 
@@ -127,14 +154,21 @@ namespace Toggl.Phoebe.Data
         public static readonly string PropertyDeletedAt = GetPropertyName ((m) => m.DeletedAt);
 
         public DateTime? DeletedAt {
-            get { return deleted; }
+            get {
+                lock (SyncRoot) {
+                    return deleted;
+                }
+            }
             set {
                 value = value.ToUtc ();
-                if (deleted == value)
-                    return;
-                ChangePropertyAndNotify (PropertyDeletedAt, delegate {
-                    deleted = value;
-                });
+
+                lock (SyncRoot) {
+                    if (deleted == value)
+                        return;
+                    ChangePropertyAndNotify (PropertyDeletedAt, delegate {
+                        deleted = value;
+                    });
+                }
             }
         }
 
@@ -144,15 +178,22 @@ namespace Toggl.Phoebe.Data
         [JsonProperty ("server_deleted_at", NullValueHandling = NullValueHandling.Ignore)]
         [SQLite.Ignore]
         public DateTime? RemoteDeletedAt {
-            get { return remoteDeleted; }
+            get {
+                lock (SyncRoot) {
+                    return remoteDeleted;
+                }
+            }
             set {
                 value = value.ToUtc ();
-                if (remoteDeleted == value)
-                    return;
 
-                ChangePropertyAndNotify (PropertyRemoteDeletedAt, delegate {
-                    remoteDeleted = value;
-                });
+                lock (SyncRoot) {
+                    if (remoteDeleted == value)
+                        return;
+
+                    ChangePropertyAndNotify (PropertyRemoteDeletedAt, delegate {
+                        remoteDeleted = value;
+                    });
+                }
             }
         }
 
@@ -161,13 +202,19 @@ namespace Toggl.Phoebe.Data
 
         [DontDirty]
         public bool IsDirty {
-            get { return dirty; }
+            get {
+                lock (SyncRoot) {
+                    return dirty;
+                }
+            }
             set {
-                if (dirty == value)
-                    return;
-                ChangePropertyAndNotify (PropertyIsDirty, delegate {
-                    dirty = value;
-                });
+                lock (SyncRoot) {
+                    if (dirty == value)
+                        return;
+                    ChangePropertyAndNotify (PropertyIsDirty, delegate {
+                        dirty = value;
+                    });
+                }
             }
         }
 
@@ -177,17 +224,23 @@ namespace Toggl.Phoebe.Data
         [DontDirty]
         [SQLite.Ignore]
         public bool IsPersisted {
-            get { return persisted; }
+            get {
+                lock (SyncRoot) {
+                    return persisted;
+                }
+            }
             set {
-                if (persisted == value)
-                    return;
-                ChangePropertyAndNotify (PropertyIsPersisted, delegate {
-                    persisted = value;
-                });
+                lock (SyncRoot) {
+                    if (persisted == value)
+                        return;
+                    ChangePropertyAndNotify (PropertyIsPersisted, delegate {
+                        persisted = value;
+                    });
+                }
             }
         }
 
-        private bool sharedInstance;
+        private volatile bool sharedInstance;
         public static readonly string PropertyIsShared = GetPropertyName ((m) => m.IsShared);
 
         [DontDirty]
@@ -195,12 +248,14 @@ namespace Toggl.Phoebe.Data
         public bool IsShared {
             get { return sharedInstance; }
             internal set {
-                if (sharedInstance == value || !value)
+                if (!value || sharedInstance == value)
                     return;
 
-                ChangePropertyAndNotify (PropertyIsShared, delegate {
-                    sharedInstance = value;
-                });
+                lock (SyncRoot) {
+                    ChangePropertyAndNotify (PropertyIsShared, delegate {
+                        sharedInstance = value;
+                    });
+                }
             }
         }
     }

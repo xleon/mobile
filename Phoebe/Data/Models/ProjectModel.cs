@@ -79,14 +79,21 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("active")]
         public bool IsActive {
-            get { return active; }
+            get {
+                lock (SyncRoot) {
+                    return active;
+                }
+            }
             set {
-                if (active == value)
-                    return;
+                lock (SyncRoot) {
 
-                ChangePropertyAndNotify (PropertyIsActive, delegate {
-                    active = value;
-                });
+                    if (active == value)
+                        return;
+
+                    ChangePropertyAndNotify (PropertyIsActive, delegate {
+                        active = value;
+                    });
+                }
             }
         }
 
@@ -95,14 +102,21 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("is_private")]
         public bool IsPrivate {
-            get { return priv; }
+            get {
+                lock (SyncRoot) {
+                    return priv;
+                }
+            }
             set {
-                if (priv == value)
-                    return;
+                lock (SyncRoot) {
 
-                ChangePropertyAndNotify (PropertyIsPrivate, delegate {
-                    priv = value;
-                });
+                    if (priv == value)
+                        return;
+
+                    ChangePropertyAndNotify (PropertyIsPrivate, delegate {
+                        priv = value;
+                    });
+                }
             }
         }
 
@@ -111,14 +125,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("auto_estimates")]
         public bool UseTasksEstimate {
-            get { return taskEstimate; }
+            get {
+                lock (SyncRoot) {
+                    return taskEstimate;
+                }
+            }
             set {
-                if (taskEstimate == value)
-                    return;
+                lock (SyncRoot) {
+                    if (taskEstimate == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyUseTasksEstimate, delegate {
-                    taskEstimate = value;
-                });
+                    ChangePropertyAndNotify (PropertyUseTasksEstimate, delegate {
+                        taskEstimate = value;
+                    });
+                }
             }
         }
 
@@ -127,14 +147,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("billable")]
         public bool IsBillable {
-            get { return billable; }
+            get {
+                lock (SyncRoot) {
+                    return billable;
+                }
+            }
             set {
-                if (billable == value)
-                    return;
+                lock (SyncRoot) {
+                    if (billable == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsBillable, delegate {
-                    billable = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsBillable, delegate {
+                        billable = value;
+                    });
+                }
             }
         }
 
@@ -142,17 +168,22 @@ namespace Toggl.Phoebe.Data.Models
         public static readonly string PropertyColor = GetPropertyName ((m) => m.Color);
 
         public int Color {
-            get { return color; }
+            get {
+                lock (SyncRoot) {
+                    return color;
+                }
+            }
             set {
-                if (color == value)
-                    return;
+                lock (SyncRoot) {
+                    if (color == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyColor, delegate {
-                    color = value;
-                });
+                    ChangePropertyAndNotify (PropertyColor, delegate {
+                        color = value;
+                    });
+                }
             }
         }
-
 
         private static string[] HexColorsIndex = new string[] {
             "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
@@ -174,7 +205,8 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        public String GetHexColor() {
+        public String GetHexColor ()
+        {
             return HexColorsIndex [Color];
         }
 
@@ -183,14 +215,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("template")]
         public bool IsTemplate {
-            get { return template; }
+            get {
+                lock (SyncRoot) {
+                    return template;
+                }
+            }
             set {
-                if (template == value)
-                    return;
+                lock (SyncRoot) {
+                    if (template == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsTemplate, delegate {
-                    template = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsTemplate, delegate {
+                        template = value;
+                    });
+                }
             }
         }
 
@@ -199,14 +237,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("name")]
         public string Name {
-            get { return name; }
+            get {
+                lock (SyncRoot) {
+                    return name;
+                }
+            }
             set {
-                if (name == value)
-                    return;
+                lock (SyncRoot) {
+                    if (name == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyName, delegate {
-                    name = value;
-                });
+                    ChangePropertyAndNotify (PropertyName, delegate {
+                        name = value;
+                    });
+                }
             }
         }
 
@@ -259,6 +303,5 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         #endregion
-
     }
 }

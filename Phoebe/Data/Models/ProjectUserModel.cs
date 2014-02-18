@@ -18,14 +18,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("manager")]
         public bool IsManager {
-            get { return isManager; }
+            get {
+                lock (SyncRoot) {
+                    return isManager;
+                }
+            }
             set {
-                if (isManager == value)
-                    return;
+                lock (SyncRoot) {
+                    if (isManager == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyIsManager, delegate {
-                    isManager = value;
-                });
+                    ChangePropertyAndNotify (PropertyIsManager, delegate {
+                        isManager = value;
+                    });
+                }
             }
         }
 
@@ -34,14 +40,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("rate")]
         public int HourlyRate {
-            get { return rate; }
+            get {
+                lock (SyncRoot) {
+                    return rate;
+                }
+            }
             set {
-                if (rate == value)
-                    return;
+                lock (SyncRoot) {
+                    if (rate == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyHourlyRate, delegate {
-                    rate = value;
-                });
+                    ChangePropertyAndNotify (PropertyHourlyRate, delegate {
+                        rate = value;
+                    });
+                }
             }
         }
 
@@ -64,7 +76,6 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         #endregion
-
     }
 }
 

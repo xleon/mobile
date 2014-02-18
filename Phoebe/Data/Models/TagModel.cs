@@ -39,8 +39,10 @@ namespace Toggl.Phoebe.Data.Models
 
         public override void Delete ()
         {
-            base.Delete ();
-            TimeEntries.Clear ();
+            lock (SyncRoot) {
+                base.Delete ();
+                TimeEntries.Clear ();
+            }
         }
 
         #region Data
@@ -50,14 +52,20 @@ namespace Toggl.Phoebe.Data.Models
 
         [JsonProperty ("name")]
         public string Name {
-            get { return name; }
+            get {
+                lock (SyncRoot) {
+                    return name;
+                }
+            }
             set {
-                if (name == value)
-                    return;
+                lock (SyncRoot) {
+                    if (name == value)
+                        return;
 
-                ChangePropertyAndNotify (PropertyName, delegate {
-                    name = value;
-                });
+                    ChangePropertyAndNotify (PropertyName, delegate {
+                        name = value;
+                    });
+                }
             }
         }
 
@@ -87,6 +95,5 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         #endregion
-
     }
 }

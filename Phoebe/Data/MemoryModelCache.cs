@@ -1,26 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace Toggl.Phoebe.Data
 {
     internal class MemoryModelCache
     {
-        private readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim ();
+        private readonly object syncRoot = new object ();
         private readonly Dictionary<Guid, WeakReference> idIndex = new Dictionary<Guid, WeakReference> ();
         private readonly Dictionary<long, WeakReference> remoteIdIndex = new Dictionary<long, WeakReference> ();
 
         public void Add (Model model)
         {
-            cacheLock.EnterWriteLock ();
-            try {
+            lock (syncRoot) {
                 var weak = new WeakReference (model);
                 idIndex.Add (model.Id.Value, weak);
                 if (model.RemoteId.HasValue)
                     remoteIdIndex.Add (model.RemoteId.Value, weak);
-            } finally {
-                cacheLock.ExitWriteLock ();
             }
         }
 
@@ -34,19 +30,15 @@ namespace Toggl.Phoebe.Data
 
         private void PurgeDead ()
         {
-            cacheLock.EnterWriteLock ();
-            try {
+            lock (syncRoot) {
                 PurgeIndex (idIndex);
                 PurgeIndex (remoteIdIndex);
-            } finally {
-                cacheLock.ExitWriteLock ();
             }
         }
 
         public void UpdateRemoteId (Model model, long? oldValue, long? newValue)
         {
-            cacheLock.EnterWriteLock ();
-            try {
+            lock (syncRoot) {
                 WeakReference weak;
                 if (model.Id == null || !idIndex.TryGetValue (model.Id.Value, out weak))
                     return;
@@ -54,8 +46,6 @@ namespace Toggl.Phoebe.Data
                     remoteIdIndex.Remove (oldValue.Value);
                 if (newValue.HasValue)
                     remoteIdIndex.Add (newValue.Value, weak);
-            } finally {
-                cacheLock.ExitWriteLock ();
             }
         }
 
@@ -64,8 +54,7 @@ namespace Toggl.Phoebe.Data
         {
             var needsPurge = false;
 
-            cacheLock.EnterReadLock ();
-            try {
+            lock (syncRoot) {
                 WeakReference weak;
                 if (idIndex.TryGetValue (id, out weak)) {
                     var inst = weak.Target as T;
@@ -75,8 +64,6 @@ namespace Toggl.Phoebe.Data
                         needsPurge = true;
                     }
                 }
-            } finally {
-                cacheLock.ExitReadLock ();
             }
 
             if (needsPurge) {
@@ -91,8 +78,7 @@ namespace Toggl.Phoebe.Data
         {
             var needsPurge = false;
 
-            cacheLock.EnterReadLock ();
-            try {
+            lock (syncRoot) {
                 WeakReference weak;
                 if (remoteIdIndex.TryGetValue (remoteId, out weak)) {
                     var inst = weak.Target as T;
@@ -102,8 +88,6 @@ namespace Toggl.Phoebe.Data
                         needsPurge = true;
                     }
                 }
-            } finally {
-                cacheLock.ExitReadLock ();
             }
 
             if (needsPurge) {
@@ -116,12 +100,9 @@ namespace Toggl.Phoebe.Data
         public IEnumerable<T> All<T> ()
             where T : Model
         {
-            cacheLock.EnterReadLock ();
-            try {
+            lock (syncRoot) {
                 return idIndex.Values.Select ((r) => r.Target as T)
                     .Where ((m) => m != null).ToList ();
-            } finally {
-                cacheLock.ExitReadLock ();
             }
         }
     }

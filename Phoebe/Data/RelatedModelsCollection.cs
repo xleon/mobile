@@ -48,20 +48,22 @@ namespace Toggl.Phoebe.Data
 
         private Expression<Func<TInter, bool>> InterLookupQuery {
             get {
+                var modelId = model.Id;
                 if (reverse) {
-                    return (inter) => inter.ToId == model.Id;
+                    return (inter) => inter.ToId == modelId;
                 } else {
-                    return (inter) => inter.FromId == model.Id;
+                    return (inter) => inter.FromId == modelId;
                 }
             }
         }
 
         private Func<TInter, bool> InterLookupFunc {
             get {
+                var modelId = model.Id;
                 if (reverse) {
-                    return (inter) => inter.ToId == model.Id;
+                    return (inter) => inter.ToId == modelId;
                 } else {
-                    return (inter) => inter.FromId == model.Id;
+                    return (inter) => inter.FromId == modelId;
                 }
             }
         }
@@ -148,72 +150,82 @@ namespace Toggl.Phoebe.Data
 
         public TInter Add (TRelated relation)
         {
-            if (!model.IsShared)
-                throw new InvalidOperationException ("Cannot add many-to-many relations to non-shared model.");
-            // The fact that we have to enforce persistance is sad, but currently no better way to keep things simple
-            // and fast execution.
-            if (!relation.IsShared)
-                throw new ArgumentException ("Cannot add non-shared related model.", "relation");
+            lock (Model.SyncRoot) {
+                if (!model.IsShared)
+                    throw new InvalidOperationException ("Cannot add many-to-many relations to non-shared model.");
+                // The fact that we have to enforce persistance is sad, but currently no better way to keep things simple
+                // and fast execution.
+                if (!relation.IsShared)
+                    throw new ArgumentException ("Cannot add non-shared related model.", "relation");
 
-            // Check for duplicates
-            EnsureLoaded ();
-            var inter = relations.FirstOrDefault ((m) => (reverse ? m.FromId : m.ToId) == relation.Id);
+                // Check for duplicates
+                EnsureLoaded ();
+                var inter = relations.FirstOrDefault ((m) => (reverse ? m.FromId : m.ToId) == relation.Id);
 
-            // Create new relation
-            if (inter == null) {
-                inter = Model.Update (new TInter () {
-                    From = (TFrom)(reverse ? relation : model),
-                    To = (TTo)(reverse ? model : relation),
-                    IsPersisted = model.IsPersisted && relation.IsPersisted,
-                });
+                // Create new relation
+                if (inter == null) {
+                    inter = Model.Update (new TInter () {
+                        From = (TFrom)(reverse ? relation : model),
+                        To = (TTo)(reverse ? model : relation),
+                        IsPersisted = model.IsPersisted && relation.IsPersisted,
+                    });
+                }
+
+                return inter;
             }
-
-            return inter;
         }
 
         public void Remove (TRelated relation)
         {
-            if (!model.IsShared)
-                throw new InvalidOperationException ("Cannot remove many-to-many relations from a non-shared model.");
-            if (!relation.IsShared)
-                return;
+            lock (Model.SyncRoot) {
+                if (!model.IsShared)
+                    throw new InvalidOperationException ("Cannot remove many-to-many relations from a non-shared model.");
+                if (!relation.IsShared)
+                    return;
 
-            EnsureLoaded ();
+                EnsureLoaded ();
 
-            var inters = relations.Where ((m) => (reverse ? m.FromId : m.ToId) == relation.Id).ToList ();
-            foreach (var inter in inters) {
-                RemoveRelation (inter);
-                inter.Delete ();
+                var inters = relations.Where ((m) => (reverse ? m.FromId : m.ToId) == relation.Id).ToList ();
+                foreach (var inter in inters) {
+                    RemoveRelation (inter);
+                    inter.Delete ();
+                }
             }
         }
 
         public void Clear ()
         {
-            if (!model.IsShared)
-                throw new InvalidOperationException ("Cannot clear many-to-many relations from a non-shared model.");
+            lock (Model.SyncRoot) {
+                if (!model.IsShared)
+                    throw new InvalidOperationException ("Cannot clear many-to-many relations from a non-shared model.");
 
-            EnsureLoaded ();
+                EnsureLoaded ();
 
-            // Delete all inters
-            foreach (var inter in relations.ToList ()) {
-                RemoveRelation (inter);
-                inter.Delete ();
+                // Delete all inters
+                foreach (var inter in relations.ToList ()) {
+                    RemoveRelation (inter);
+                    inter.Delete ();
+                }
             }
         }
 
         public int Count {
             get {
-                if (relations != null) {
-                    return relations.Count;
+                lock (Model.SyncRoot) {
+                    if (relations != null) {
+                        return relations.Count;
+                    }
+                    return Model.Query<TInter> (InterLookupQuery).Count ();
                 }
-                return Model.Query<TInter> (InterLookupQuery).Count ();
             }
         }
 
         public IEnumerator<TInter> GetEnumerator ()
         {
-            EnsureLoaded ();
-            return relations.GetEnumerator ();
+            lock (Model.SyncRoot) {
+                EnsureLoaded ();
+                return relations.ToList ().GetEnumerator ();
+            }
         }
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()

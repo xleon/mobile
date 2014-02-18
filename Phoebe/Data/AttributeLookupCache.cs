@@ -17,17 +17,19 @@ namespace Toggl.Phoebe.Data
 
         public bool HasAttribute (Type type, string property)
         {
-            Dictionary<string, bool> typeRegistry;
-            if (!registry.TryGetValue (type, out typeRegistry)) {
-                registry [type] = typeRegistry = new Dictionary<string, bool> ();
-            }
+            lock (registry) {
+                Dictionary<string, bool> typeRegistry;
+                if (!registry.TryGetValue (type, out typeRegistry)) {
+                    registry [type] = typeRegistry = new Dictionary<string, bool> ();
+                }
 
-            bool hasAttr;
-            if (!typeRegistry.TryGetValue (property, out hasAttr)) {
-                var propInfo = type.GetProperty (property);
-                hasAttr = propInfo.GetCustomAttributes (typeof(T), true).Length > 0;
+                bool hasAttr;
+                if (!typeRegistry.TryGetValue (property, out hasAttr)) {
+                    var propInfo = type.GetProperty (property);
+                    hasAttr = propInfo.GetCustomAttributes (typeof(T), true).Length > 0;
+                }
+                return hasAttr;
             }
-            return hasAttr;
         }
     }
 }

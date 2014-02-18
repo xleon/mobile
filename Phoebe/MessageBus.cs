@@ -9,7 +9,7 @@ namespace Toggl.Phoebe
     {
         private readonly int threadId;
         private readonly SynchronizationContext threadContext;
-        private readonly ReaderWriterLockSlim rwlock = new ReaderWriterLockSlim ();
+        private readonly object syncRoot = new object ();
         private readonly Dictionary<Type, List<WeakReference>> registry =
             new Dictionary<Type, List<WeakReference>> ();
         private readonly Queue<Action> dispatchQueue = new Queue<Action> ();
@@ -38,16 +38,13 @@ namespace Toggl.Phoebe
 
             var subscription = new Subscription<TMessage> (listener, threadSafe);
 
-            rwlock.EnterWriteLock ();
-            try {
+            lock (syncRoot) {
                 List<WeakReference> subscriptions;
                 if (!registry.TryGetValue (typeof(TMessage), out subscriptions)) {
                     subscriptions = new List<WeakReference> ();
                     registry [typeof(TMessage)] = subscriptions;
                 }
                 subscriptions.Add (new WeakReference (subscription));
-            } finally {
-                rwlock.ExitWriteLock ();
             }
 
             return subscription;
@@ -60,13 +57,10 @@ namespace Toggl.Phoebe
         public void Unsubscribe<TMessage> (Subscription<TMessage> subscription)
             where TMessage : Message
         {
-            rwlock.EnterWriteLock ();
-            try {
+            lock (syncRoot) {
                 foreach (var listeners in registry.Values) {
                     listeners.RemoveAll ((weak) => !weak.IsAlive || weak.Target == subscription);
                 }
-            } finally {
-                rwlock.ExitWriteLock ();
             }
         }
 
@@ -87,8 +81,7 @@ namespace Toggl.Phoebe
             var needsPurge = false;
 
             // Process message:
-            rwlock.EnterReadLock ();
-            try {
+            lock (syncRoot) {
                 List<WeakReference> subscriptions;
                 if (registry.TryGetValue (typeof(TMessage), out subscriptions)) {
                     foreach (var weak in subscriptions) {
@@ -112,8 +105,6 @@ namespace Toggl.Phoebe
                         }
                     }
                 }
-            } finally {
-                rwlock.ExitReadLock ();
             }
 
             // Dispatch messages (on this thread):
@@ -125,15 +116,12 @@ namespace Toggl.Phoebe
 
             if (sendMain != null) {
                 // Add to main thread dispatch queue:
-                rwlock.EnterWriteLock ();
-                try {
+                lock (syncRoot) {
                     foreach (var subscription in sendMain) {
                         dispatchQueue.Enqueue (delegate {
                             subscription.Listener (msg);
                         });
                     }
-                } finally {
-                    rwlock.ExitWriteLock ();
                 }
 
                 // Make sure the queue is processed now or in the future
@@ -146,40 +134,32 @@ namespace Toggl.Phoebe
 
             // Purge dead subscriptions
             if (needsPurge) {
-                rwlock.EnterWriteLock ();
-                try {
+                lock (syncRoot) {
                     foreach (var listeners in registry.Values) {
                         listeners.RemoveAll ((weak) => !weak.IsAlive);
                     }
-                } finally {
-                    rwlock.ExitWriteLock ();
                 }
             }
         }
 
         private void ScheduleProcessQueue ()
         {
-            rwlock.EnterWriteLock ();
-            try {
+            lock (syncRoot) {
                 if (isScheduled)
                     return;
 
                 isScheduled = true;
-                threadContext.Post ((s) => {
-                    try {
-                        ProcessQueue ();
-                    } finally {
-                        rwlock.EnterWriteLock ();
-                        try {
-                            isScheduled = false;
-                        } finally {
-                            rwlock.ExitWriteLock ();
-                        }
-                    }
-                }, null);
-            } finally {
-                rwlock.ExitWriteLock ();
             }
+
+            threadContext.Post ((s) => {
+                try {
+                    ProcessQueue ();
+                } finally {
+                    lock (syncRoot) {
+                        isScheduled = false;
+                    }
+                }
+            }, null);
         }
 
         private void ProcessQueue ()
@@ -187,15 +167,12 @@ namespace Toggl.Phoebe
             while (true) {
                 Action act;
 
-                rwlock.EnterWriteLock ();
-                try {
+                lock (syncRoot) {
                     if (dispatchQueue.Count > 0) {
                         act = dispatchQueue.Dequeue ();
                     } else {
                         return;
                     }
-                } finally {
-                    rwlock.ExitWriteLock ();
                 }
 
                 // Need to execute the item outside of lock to prevent recursive locking

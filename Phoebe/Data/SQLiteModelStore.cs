@@ -30,11 +30,13 @@ namespace Toggl.Phoebe.Data
             {
                 base.OnInstanceCreated (obj);
 
-                var model = obj as Model;
-                if (model != null) {
-                    model.IsPersisted = true;
-                    store.createdModels.Add (new WeakReference (model));
-                    store.ScheduleCommit ();
+                lock (Model.SyncRoot) {
+                    var model = obj as Model;
+                    if (model != null) {
+                        model.IsPersisted = true;
+                        store.createdModels.Add (new WeakReference (model));
+                        store.ScheduleCommit ();
+                    }
                 }
             }
         }
@@ -116,7 +118,6 @@ namespace Toggl.Phoebe.Data
         private static readonly AttributeLookupCache<IgnoreAttribute> ignoreCache =
             new AttributeLookupCache<IgnoreAttribute> ();
         private readonly SQLiteConnection conn;
-        private readonly ReaderWriterLockSlim rwlock = new ReaderWriterLockSlim ();
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
         #pragma warning disable 0414
@@ -129,7 +130,7 @@ namespace Toggl.Phoebe.Data
             CreateTables (conn);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            modelChangedSubscription = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage);
+            modelChangedSubscription = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage, threadSafe: true);
         }
 
         protected virtual void CreateTables (SQLiteConnection db)
@@ -157,8 +158,10 @@ namespace Toggl.Phoebe.Data
             if (!type.IsSubclassOf (typeof(Model)))
                 throw new ArgumentException ("Type must be of a subclass of Model.", "type");
 
-            var map = conn.GetMapping (type);
-            return (Model)conn.Query (map, map.GetByPrimaryKeySql, id).FirstOrDefault ();
+            lock (Model.SyncRoot) {
+                var map = conn.GetMapping (type);
+                return (Model)conn.Query (map, map.GetByPrimaryKeySql, id).FirstOrDefault ();
+            }
         }
 
         public T GetByRemoteId<T> (long remoteId)
@@ -172,13 +175,15 @@ namespace Toggl.Phoebe.Data
             if (!type.IsSubclassOf (typeof(Model)))
                 throw new ArgumentException ("Type must be of a subclass of Model.", "type");
 
-            var map = conn.GetMapping (type);
-            var sql = string.Format (
-                          "select * from \"{0}\" where \"{1}\" = ?",
-                          map.TableName,
-                          map.FindColumnWithPropertyName ("RemoteId").Name
-                      );
-            return (Model)conn.Query (map, sql, remoteId).FirstOrDefault ();
+            lock (Model.SyncRoot) {
+                var map = conn.GetMapping (type);
+                var sql = string.Format (
+                              "select * from \"{0}\" where \"{1}\" = ?",
+                              map.TableName,
+                              map.FindColumnWithPropertyName ("RemoteId").Name
+                          );
+                return (Model)conn.Query (map, sql, remoteId).FirstOrDefault ();
+            }
         }
 
         public IModelQuery<T> Query<T> (
@@ -186,70 +191,64 @@ namespace Toggl.Phoebe.Data
             Func<IEnumerable<T>, IEnumerable<T>> filter = null)
             where T : Model, new()
         {
-            IModelQuery<T> query = new DbQuery<T> (conn.Table<T> (), filter);
-            if (predExpr != null)
-                query = query.Where (predExpr);
-            return query;
+            lock (Model.SyncRoot) {
+                IModelQuery<T> query = new DbQuery<T> (conn.Table<T> (), filter);
+                if (predExpr != null)
+                    query = query.Where (predExpr);
+                return query;
+            }
         }
 
         private void OnModelChangedMessage (ModelChangedMessage msg)
         {
-            var model = msg.Model;
-            var property = msg.PropertyName;
+            lock (Model.SyncRoot) {
+                var model = msg.Model;
+                var property = msg.PropertyName;
 
-            if (!model.IsShared)
-                return;
+                if (!model.IsShared)
+                    return;
 
-            if (property == Model.PropertyIsMerging)
-                return;
+                if (property == Model.PropertyIsMerging)
+                    return;
 
-            if (property == Model.PropertyIsShared) {
-                rwlock.EnterReadLock ();
-                try {
+                if (property == Model.PropertyIsShared) {
                     // No need to mark newly created property as changed:
                     if (createdModels.Any ((r) => r.Target == model))
                         return;
-                } finally {
-                    rwlock.ExitReadLock ();
                 }
-            }
 
-            // We only care about persisted models (and models which were just marked as non-persistent)
-            if (property != Model.PropertyIsPersisted && !model.IsPersisted)
-                return;
+                // We only care about persisted models (and models which were just marked as non-persistent)
+                if (property != Model.PropertyIsPersisted && !model.IsPersisted)
+                    return;
 
-            // Ignore changes which we don't store in the database (IsShared && IsPersisted are exceptions)
-            if (property != Model.PropertyIsShared
-                && property != Model.PropertyIsPersisted
-                && ignoreCache.HasAttribute (model, property))
-                return;
+                // Ignore changes which we don't store in the database (IsShared && IsPersisted are exceptions)
+                if (property != Model.PropertyIsShared
+                    && property != Model.PropertyIsPersisted
+                    && ignoreCache.HasAttribute (model, property))
+                    return;
 
-            rwlock.EnterWriteLock ();
-            try {
                 changedModels.Add (model);
-            } finally {
-                rwlock.ExitWriteLock ();
+                ScheduleCommit ();
             }
-            ScheduleCommit ();
         }
 
         public void Commit ()
         {
-            conn.BeginTransaction ();
-            rwlock.EnterWriteLock ();
-            try {
-                foreach (var model in changedModels) {
-                    if (model.IsPersisted) {
-                        conn.InsertOrReplace (model);
-                    } else {
-                        conn.Delete (model);
+            lock (Model.SyncRoot) {
+                conn.BeginTransaction ();
+                try {
+                    foreach (var model in changedModels) {
+                        if (model.IsPersisted) {
+                            conn.InsertOrReplace (model);
+                        } else {
+                            conn.Delete (model);
+                        }
                     }
+                    changedModels.Clear ();
+                    createdModels.Clear ();
+                } finally {
+                    conn.Commit ();
                 }
-                changedModels.Clear ();
-                createdModels.Clear ();
-            } finally {
-                rwlock.ExitWriteLock ();
-                conn.Commit ();
             }
 
             ServiceContainer.Resolve<MessageBus> ().Send (
@@ -260,19 +259,11 @@ namespace Toggl.Phoebe.Data
 
         protected async virtual void ScheduleCommit ()
         {
-            rwlock.EnterUpgradeableReadLock ();
-            try {
+            lock (Model.SyncRoot) {
                 if (IsScheduled)
                     return;
 
-                rwlock.EnterWriteLock ();
-                try {
-                    IsScheduled = true;
-                } catch {
-                    rwlock.ExitWriteLock ();
-                }
-            } finally {
-                rwlock.ExitUpgradeableReadLock ();
+                IsScheduled = true;
             }
 
             try {
@@ -280,11 +271,8 @@ namespace Toggl.Phoebe.Data
                     .ConfigureAwait (continueOnCapturedContext: false);
                 Commit ();
             } finally {
-                rwlock.EnterWriteLock ();
-                try {
+                lock (Model.SyncRoot) {
                     IsScheduled = false;
-                } finally {
-                    rwlock.ExitWriteLock ();
                 }
             }
         }

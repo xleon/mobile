@@ -67,9 +67,25 @@ namespace Toggl.Phoebe.Data.Views
                         Add (entry);
                         Sort ();
                     });
+                } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt
+                           || msg.PropertyName == TimeEntryModel.PropertyIsPersisted) {
+                    if (!entry.IsPersisted || entry.DeletedAt.HasValue) {
+                        ChangeDataAndNotify (delegate {
+                            grp.Remove (entry);
+                            if (grp.IsEmpty) {
+                                data.Remove (grp);
+                            } else {
+                                Sort ();
+                            }
+                        });
+                    }
                 }
                 return;
             }
+
+            // Prevent showing of non-persisted and deleted entries:
+            if (!entry.IsPersisted || entry.DeletedAt.HasValue)
+                return;
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (entry.UserId != authManager.UserId)

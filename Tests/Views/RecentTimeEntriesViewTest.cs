@@ -136,6 +136,138 @@ namespace Toggl.Phoebe.Tests.Views
             );
         }
 
+        [Test]
+        public void TestDeleteGroup ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (2);
+            model.Delete ();
+
+            Assert.AreEqual (3, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestDeleteGroupTop ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (1);
+            model.Delete ();
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestDeleteGroupBottom ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (3);
+            model.Delete ();
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 2, 1 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestUnPersistGroup ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (2);
+            model.IsPersisted = false;
+
+            Assert.AreEqual (3, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestUnPersistGroupTop ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (1);
+            model.IsPersisted = false;
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestUnPersistGroupBottom ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            var model = Model.ByRemoteId<TimeEntryModel> (3);
+            model.IsPersisted = false;
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 2, 1 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestTemporaryShared ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            Model.Update (new TimeEntryModel () {
+                RemoteId = 6,
+                StartTime = new DateTime (2013, 10, 10, 16, 0, 0, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 10, 16, 36, 0, DateTimeKind.Utc),
+                Workspace = workspace,
+                User = user,
+            });
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestDeletedShared ()
+        {
+            var view = new RecentTimeEntriesView ();
+
+            Model.Update (new TimeEntryModel () {
+                RemoteId = 6,
+                StartTime = new DateTime (2013, 10, 10, 16, 0, 0, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 10, 16, 36, 0, DateTimeKind.Utc),
+                Workspace = workspace,
+                User = user,
+                IsPersisted = true,
+                DeletedAt = new DateTime (2013, 10, 10, 16, 39, 0, DateTimeKind.Utc),
+            });
+
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
         private void CreateTestData ()
         {
             workspace = Model.Update (new WorkspaceModel () {

@@ -41,7 +41,8 @@ namespace Toggl.Phoebe.Data.Models
                     done = true;
 
                     lock (SyncRoot) {
-                        var allEntries = Model.Manager.Cached<TimeEntryModel> ().Where ((te) => te.IsRunning);
+                        var allEntries = Model.Manager.Cached<TimeEntryModel> ()
+                            .Where ((te) => te.IsRunning && te.DeletedAt == null && te.IsPersisted);
                         foreach (var entry in allEntries) {
                             entry.UpdateDuration ();
                             done = false;
@@ -620,11 +621,11 @@ namespace Toggl.Phoebe.Data.Models
             lock (SyncRoot) {
                 IEnumerable<TimeEntryModel> entries;
                 entries = Model.Query<TimeEntryModel> ((te) => te.IsRunning)
-                .NotDeleted ().ForCurrentUser ().ToList ();
+                    .NotDeleted ().ForCurrentUser ().ToList ();
 
                 // Find currently running time entry:
                 entries = Model.Manager.Cached<TimeEntryModel> ()
-                    .Where ((te) => te.IsRunning && te.DeletedAt == null)
+                    .Where ((te) => te.IsRunning && te.DeletedAt == null && te.IsPersisted == true)
                     .ForCurrentUser ();
                 return entries.FirstOrDefault ();
             }

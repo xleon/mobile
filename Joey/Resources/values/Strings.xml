@@ -27,4 +27,8 @@
     <string name="DeleteTimeEntriesDialogTitle">Delete?</string>
     <string name="DeleteTimeEntriesDialogDeleteButton">Delete</string>
     <string name="DeleteTimeEntriesDialogCancelButton">Cancel</string>
+    <string name="RunningNotificationNoProject">(no project)</string>
+    <string name="RunningNotificationNoDescription">(no description)</string>
+    <string name="RunningNotificationStopButton">Stop</string>
+    <string name="RunningNotificationEditButton">Edit</string>
 </resources>

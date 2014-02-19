@@ -80,6 +80,7 @@ namespace Toggl.Joey
             openTimeEntriesActivityIntent.SetAction(Intent.ActionMain);
             openTimeEntriesActivityIntent.AddCategory(Intent.CategoryLauncher);
             PendingIntent contentIntent = PendingIntent.GetActivity(ctx, 0, openTimeEntriesActivityIntent, 0);
+            var res = ctx.Resources;
 
             var closeRunningTimeEmtryIntent = new Intent(ctx, typeof(StopTimeEntryBroadcastReceiver));
 
@@ -89,22 +90,30 @@ namespace Toggl.Joey
                 .SetAutoCancel (false)
                 .SetUsesChronometer (true)
                 .SetOngoing (true)
-                .AddAction (Resource.Drawable.IcActionStop, "Stop", pendingIntentClose)
-//                .AddAction (Resource.Drawable.IcActionEdit, "Edit", editIntent)
+                .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingIntentClose)
+//                .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
                 .SetContentIntent (contentIntent);
         }
 
         private void UpdateNotification (TimeEntryModel model)
         {
-            string projectName = "(No project)";
-            if (model.Project != null)
+            string projectName;
+            if (model.Project != null) {
                 projectName = model.Project.Name;
+            } else {
+                projectName = ctx.Resources.GetString (Resource.String.RunningNotificationNoProject);
+            }
+
+            string entryDescription = model.Description;
+            if (String.IsNullOrWhiteSpace (entryDescription)) {
+                entryDescription = ctx.Resources.GetString (Resource.String.RunningNotificationNoDescription);
+            }
 
             notificationBuilder
-                .SetSmallIcon(Resource.Drawable.IcNotificationIcon)
-                .SetContentTitle(projectName)
-                .SetContentText(model.Description)
-                .SetWhen(GetUnixTime(model.StartTime));
+                .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+                .SetContentTitle (projectName)
+                .SetContentText (entryDescription)
+                .SetWhen (GetUnixTime (model.StartTime));
 
             notificationManager.Notify(RunningTimeEntryNotifId, notificationBuilder.Build());
         }

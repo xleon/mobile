@@ -624,7 +624,7 @@ namespace Toggl.Phoebe.Data.Models
 
                 // Find currently running time entry:
                 entries = Model.Manager.Cached<TimeEntryModel> ()
-                    .Where ((te) => te.IsRunning && te.DeletedAt == null)
+                    .Where ((te) => te.IsRunning && te.DeletedAt == null && te.IsPersisted == true)
                     .ForCurrentUser ();
                 return entries.FirstOrDefault ();
             }

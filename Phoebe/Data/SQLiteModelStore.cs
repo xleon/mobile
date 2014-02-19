@@ -97,15 +97,19 @@ namespace Toggl.Phoebe.Data
 
             public int Count ()
             {
-                return query.Count ();
+                lock (Model.SyncRoot) {
+                    return query.Count ();
+                }
             }
 
             public IEnumerator<T> GetEnumerator ()
             {
-                IEnumerable<T> q = query;
-                if (filter != null)
-                    q = filter (q);
-                return q.GetEnumerator ();
+                lock (Model.SyncRoot) {
+                    IEnumerable<T> q = query;
+                    if (filter != null)
+                        q = filter (q);
+                    return q.GetEnumerator ();
+                }
             }
 
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()

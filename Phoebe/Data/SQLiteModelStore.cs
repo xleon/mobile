@@ -35,7 +35,6 @@ namespace Toggl.Phoebe.Data
                     if (model != null) {
                         model.IsPersisted = true;
                         store.createdModels.Add (new WeakReference (model));
-                        store.ScheduleCommit ();
                     }
                 }
             }

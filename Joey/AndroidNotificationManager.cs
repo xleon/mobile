@@ -15,57 +15,72 @@ namespace Toggl.Joey
     class AndroidNotificationManager
     {
         #pragma warning disable 0414
-        private readonly object subscriptionModelChanged;
+        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
         #pragma warning restore 0414
 
         private const int RunningTimeEntryNotifId = 42;
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-
-        private Context ctx;
-        private NotificationCompat.Builder notificationBuilder;
-        private NotificationManager notificationManager;
+        private readonly Context ctx;
+        private readonly NotificationManager notificationManager;
+        private readonly NotificationCompat.Builder notificationBuilder;
         private TimeEntryModel currentTimeEntry;
 
         public AndroidNotificationManager ()
         {
+            ctx = ServiceContainer.Resolve<Context> ();
+            notificationManager = (NotificationManager)ctx.GetSystemService (Context.NotificationService);
+            notificationBuilder = CreateNotificationBuilder (ctx);
+
+            currentTimeEntry = TimeEntryModel.FindRunning ();
+            SyncNotification ();
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-
-            ctx = ServiceContainer.Resolve<Context> ();
-            notificationManager = (NotificationManager)ctx.GetSystemService(Context.NotificationService);
-            CreateNotificationBuilder ();
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
         {
-            var entry = msg.Model as TimeEntryModel;
-            if (entry == null)
-                return;
-
-            if (currentTimeEntry == entry) {
+            if (currentTimeEntry == msg.Model) {
                 if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
                     || msg.PropertyName == TimeEntryModel.PropertyDescription
-                    || msg.PropertyName == TimeEntryModel.PropertyStartTime) {
+                    || msg.PropertyName == TimeEntryModel.PropertyStartTime
+                    || msg.PropertyName == TimeEntryModel.PropertyProjectId
+                    || msg.PropertyName == TimeEntryModel.PropertyTaskId
+                    || msg.PropertyName == TimeEntryModel.PropertyUserId) {
 
-                    if (entry.IsRunning) {
-                        // Description or StartTime of current TW were changed, need to upadte info
-                        UpdateNotification (entry);
-                    } else {
-                        // Current TE was stopped
-                        CancelNotification ();
+                    if (!currentTimeEntry.IsRunning || !ForCurrentUser (currentTimeEntry)) {
+                        currentTimeEntry = null;
                     }
+
+                    SyncNotification ();
                 }
-            } else {
+            } else if (currentTimeEntry != null
+                       && msg.Model.Id == currentTimeEntry.ProjectId
+                       && msg.Model == currentTimeEntry.Project) {
+                if (msg.PropertyName == ProjectModel.PropertyName
+                    || msg.PropertyName == ProjectModel.PropertyClientId) {
+                    SyncNotification ();
+                }
+            } else if (currentTimeEntry != null
+                       && currentTimeEntry.ProjectId != null
+                       && currentTimeEntry.Project != null
+                       && msg.Model.Id == currentTimeEntry.Project.ClientId
+                       && msg.Model == currentTimeEntry.Project.Client) {
+                if (msg.PropertyName == ClientModel.PropertyName) {
+                    SyncNotification ();
+                }
+            } else if (msg.Model is TimeEntryModel) {
+                var entry = (TimeEntryModel)msg.Model;
                 if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
-                    if (ForCurrentUser (entry) && entry.IsRunning) {
-                        // New TE was started by current user
-                        UpdateNotification (entry);
+                    || msg.PropertyName == TimeEntryModel.PropertyIsShared
+                    || msg.PropertyName == TimeEntryModel.PropertyIsPersisted
+                    || msg.PropertyName == TimeEntryModel.PropertyUserId) {
+                    if (entry.IsShared && entry.IsPersisted && entry.IsRunning && ForCurrentUser (entry)) {
                         currentTimeEntry = entry;
+                        SyncNotification ();
                     }
                 }
             }
-
         }
 
         private bool ForCurrentUser (TimeEntryModel model)
@@ -74,60 +89,66 @@ namespace Toggl.Joey
             return model.UserId == authManager.UserId;
         }
 
-        private void CreateNotificationBuilder ()
+        private NotificationCompat.Builder CreateNotificationBuilder (Context ctx)
         {
-            Intent openTimeEntriesActivityIntent = new Intent(ctx, typeof(TimeEntriesActivity));
-            openTimeEntriesActivityIntent.SetAction(Intent.ActionMain);
-            openTimeEntriesActivityIntent.AddCategory(Intent.CategoryLauncher);
-            PendingIntent contentIntent = PendingIntent.GetActivity(ctx, 0, openTimeEntriesActivityIntent, 0);
             var res = ctx.Resources;
 
-            var closeRunningTimeEmtryIntent = new Intent(ctx, typeof(StopTimeEntryBroadcastReceiver));
+            var openIntent = new Intent (ctx, typeof(TimeEntriesActivity));
+            openIntent.SetAction (Intent.ActionMain);
+            openIntent.AddCategory (Intent.CategoryLauncher);
+            var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
 
-            var pendingIntentClose = PendingIntent.GetBroadcast (ctx, 0, closeRunningTimeEmtryIntent, PendingIntentFlags.UpdateCurrent);
+            var closeIntent = new Intent (ctx, typeof(StopTimeEntryBroadcastReceiver));
+            var pendingCloseIntent = PendingIntent.GetBroadcast (ctx, 0, closeIntent, PendingIntentFlags.UpdateCurrent);
 
-            notificationBuilder = new NotificationCompat.Builder (ctx)
+            return new NotificationCompat.Builder (ctx)
                 .SetAutoCancel (false)
                 .SetUsesChronometer (true)
                 .SetOngoing (true)
-                .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingIntentClose)
-//                .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
-                .SetContentIntent (contentIntent);
-        }
-
-        private void UpdateNotification (TimeEntryModel model)
-        {
-            string projectName;
-            if (model.Project != null) {
-                projectName = model.Project.Name;
-            } else {
-                projectName = ctx.Resources.GetString (Resource.String.RunningNotificationNoProject);
-            }
-
-            string entryDescription = model.Description;
-            if (String.IsNullOrWhiteSpace (entryDescription)) {
-                entryDescription = ctx.Resources.GetString (Resource.String.RunningNotificationNoDescription);
-            }
-
-            notificationBuilder
                 .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
-                .SetContentTitle (projectName)
-                .SetContentText (entryDescription)
-                .SetWhen (GetUnixTime (model.StartTime));
-
-            notificationManager.Notify(RunningTimeEntryNotifId, notificationBuilder.Build());
+                .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingCloseIntent)
+//                .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
+                .SetContentIntent (pendingOpenIntent);
         }
 
-        void CancelNotification ()
+        private void SyncNotification ()
         {
-            notificationManager.Cancel (RunningTimeEntryNotifId);
+            if (currentTimeEntry == null) {
+                notificationManager.Cancel (RunningTimeEntryNotifId);
+            } else {
+                notificationBuilder
+                    .SetContentTitle (GetProjectName (currentTimeEntry))
+                    .SetContentText (GetDescription (currentTimeEntry))
+                    .SetWhen (GetUnixTime (currentTimeEntry.StartTime));
+
+                notificationManager.Notify (RunningTimeEntryNotifId, notificationBuilder.Build ());
+            }
+        }
+
+        private string GetProjectName (TimeEntryModel entry)
+        {
+            if (entry == null) {
+                return null;
+            } else if (entry.Project != null) {
+                return entry.Project.Name;
+            } else {
+                return ctx.Resources.GetString (Resource.String.RunningNotificationNoProject);
+            }
+        }
+
+        private string GetDescription (TimeEntryModel entry)
+        {
+            string description = entry.Description;
+            if (String.IsNullOrWhiteSpace (description)) {
+                description = ctx.Resources.GetString (Resource.String.RunningNotificationNoDescription);
+            }
+            return description;
         }
 
         private long GetUnixTime (DateTime startTime)
         {
-            TimeSpan t = startTime.ToUtc() - UnixStart;
-            return (long) t.TotalMilliseconds;
+            TimeSpan t = startTime.ToUtc () - UnixStart;
+            return (long)t.TotalMilliseconds;
         }
     }
 }
-

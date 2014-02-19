@@ -41,7 +41,8 @@ namespace Toggl.Phoebe.Data.Models
                     done = true;
 
                     lock (SyncRoot) {
-                        var allEntries = Model.Manager.Cached<TimeEntryModel> ().Where ((te) => te.IsRunning);
+                        var allEntries = Model.Manager.Cached<TimeEntryModel> ()
+                            .Where ((te) => te.IsRunning && te.DeletedAt == null && te.IsPersisted);
                         foreach (var entry in allEntries) {
                             entry.UpdateDuration ();
                             done = false;

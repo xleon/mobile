@@ -21,7 +21,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
-            var adapter = l.Adapter as RecentTimeEntriesAdapter;
+            var headerAdapter = l.Adapter as HeaderViewListAdapter;
+            RecentTimeEntriesAdapter adapter = null;
+            if (headerAdapter != null)
+                adapter = headerAdapter.WrappedAdapter as RecentTimeEntriesAdapter;
+
             if (adapter == null)
                 return;
 

@@ -37,14 +37,6 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        public override void Delete ()
-        {
-            lock (SyncRoot) {
-                base.Delete ();
-                TimeEntries.Clear ();
-            }
-        }
-
         #region Data
 
         private string name;

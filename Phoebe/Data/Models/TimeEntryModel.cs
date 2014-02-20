@@ -565,7 +565,6 @@ namespace Toggl.Phoebe.Data.Models
                 if (IsShared && IsPersisted && IsRunning)
                     Stop ();
                 base.Delete ();
-                Tags.Clear ();
             }
         }
 

@@ -107,9 +107,6 @@
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\TimerFragment.axml" />
-    <AndroidResource Include="Resources\layout\TimerRunningFragmentState.axml" />
-    <AndroidResource Include="Resources\layout\TimerStoppedFragmentState.axml" />
-    <AndroidResource Include="Resources\layout\TimeEntriesActivity.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
@@ -141,6 +138,7 @@
     <AndroidResource Include="Resources\values-v11\StylesBase.xml" />
     <AndroidResource Include="Resources\layout\TimeTrackingViewPager.axml" />
     <AndroidResource Include="Resources\values\colors.xml" />
+    <AndroidResource Include="Resources\drawable\MainListButton.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

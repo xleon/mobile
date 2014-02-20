@@ -13,7 +13,9 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
+            var headerView = new View (Activity);
+            headerView.SetMinimumHeight (6);
+            ListView.AddHeaderView (headerView);
             ListAdapter = new RecentTimeEntriesAdapter ();
         }
 

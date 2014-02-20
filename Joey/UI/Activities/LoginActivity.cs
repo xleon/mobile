@@ -153,9 +153,21 @@ namespace Toggl.Joey.UI.Activities
                 if (mgr.FindFragmentByTag ("google_auth") != null)
                     return;
 
-                mgr.BeginTransaction ()
-                    .Add (new GoogleAuthFragment (email), "google_auth")
-                    .Commit ();
+                // Find old fragment to replace
+                var frag = mgr.FindFragmentByTag ("google_auth");
+                if (frag != null) {
+                    var authFrag = frag as GoogleAuthFragment;
+                    if (authFrag != null && authFrag.IsAuthenticating) {
+                        // Authentication going on still, do nothing.
+                        return;
+                    }
+                }
+
+                var tx = mgr.BeginTransaction ();
+                if (frag != null)
+                    tx.Remove (frag);
+                tx.Add (new GoogleAuthFragment (email), "google_auth");
+                tx.Commit ();
             }
 
             public GoogleAuthFragment (string email) : base ()
@@ -178,6 +190,7 @@ namespace Toggl.Joey.UI.Activities
                 base.OnCreate (state);
 
                 RetainInstance = true;
+                StartAuth ();
             }
 
             public override void OnActivityCreated (Bundle state)
@@ -188,13 +201,6 @@ namespace Toggl.Joey.UI.Activities
                 var activity = Activity as LoginActivity;
                 if (activity != null)
                     activity.IsAuthenticating = IsAuthenticating;
-            }
-
-            public override void OnStart ()
-            {
-                base.OnStart ();
-
-                StartAuth ();
             }
 
             public override void OnActivityResult (int requestCode, int resultCode, Intent data)

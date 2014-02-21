@@ -11,6 +11,8 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
+using Android.Graphics.Drawables.Shapes;
+using Android.Graphics.Drawables;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -145,7 +147,9 @@ namespace Toggl.Joey.UI.Adapters
                 if (model.Project != null) {
                     color = Color.ParseColor (model.Project.GetHexColor());
                 }
-                ColorView.SetBackgroundColor (color);
+
+                var shape = ColorView.Background as GradientDrawable;
+                shape.SetColor (color);
 
                 if (String.IsNullOrWhiteSpace (model.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);

@@ -11,10 +11,10 @@
         android:layout_marginRight="6dp"
         android:background="@drawable/MainListButton">
         <View
-            android:layout_width="3dip"
+            android:layout_width="4dip"
             android:layout_height="match_parent"
             android:id="@+id/ColorView"
-            android:background="#ff0000" />
+            android:background="@drawable/ColoredSideShape" />
         <TextView
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Client - Project | Task"

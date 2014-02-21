@@ -139,6 +139,7 @@
     <AndroidResource Include="Resources\layout\TimeTrackingViewPager.axml" />
     <AndroidResource Include="Resources\values\colors.xml" />
     <AndroidResource Include="Resources\drawable\MainListButton.9.png" />
+    <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

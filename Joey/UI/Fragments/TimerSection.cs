@@ -16,7 +16,7 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class TimerFragment //: Fragment
+    public class TimerSection //: Fragment
     {
         private object subscriptionModelChanged;
         private TimeEntryModel runningEntry;
@@ -27,26 +27,27 @@ namespace Toggl.Joey.UI.Fragments
         protected View StoppedTimerSection { get; private set; }
         protected View RunningTimerSection { get; private set; }
 
-        private View root;
+        public View Root { get; private set; }
         private Context ctx;
 
         private void FindViews ()
         {
-            RunningTimerSection = root.FindViewById<View> (Resource.Id.RunningTimerSection);
-            StoppedTimerSection = root.FindViewById<View> (Resource.Id.StoppedTimerSection);
-            StartTrackingButton = root.FindViewById<Button> (Resource.Id.StartTrackingButton);
-            StopTrackingButton = root.FindViewById<Button> (Resource.Id.StopTrackingButton);
-            DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView);
+            RunningTimerSection = Root.FindViewById<View> (Resource.Id.RunningTimerSection);
+            StoppedTimerSection = Root.FindViewById<View> (Resource.Id.StoppedTimerSection);
+            StartTrackingButton = Root.FindViewById<Button> (Resource.Id.StartTrackingButton);
+            StopTrackingButton = Root.FindViewById<Button> (Resource.Id.StopTrackingButton);
+            DurationTextView = Root.FindViewById<TextView> (Resource.Id.DurationTextView);
 
             StopTrackingButton.Click += OnStopTrackingButtonClicked;
             StartTrackingButton.Click += OnStartTrackingButtonClicked;
             DurationTextView.Click += OnDurationTextClicked;
         }
 
-        public void OnCreate (View root, Context ctx)
+        public void OnCreate (Context ctx)
         {
-            this.root = root;
             this.ctx = ctx;
+
+            Root = LayoutInflater.From (ctx).Inflate (Resource.Layout.TimerFragment, null);
 
             FindViews ();
         }

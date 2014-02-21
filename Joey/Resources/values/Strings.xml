@@ -17,9 +17,9 @@
     <string name="TimerStopButtonText">Stop</string>
     <string name="LogTimeEntryContextEdit">Edit</string>
     <string name="LogTimeEntryContextDelete">Delete</string>
-    <string-array name="TimeEntriesNavigationList">
+    <string-array name="TimeTrackingTabNames">
         <item>Recent</item>
-        <item>Timeline</item>
+        <item>Log</item>
     </string-array>
     <string name="ChooseProjectTitle">Choose project</string>
     <string name="ProjectsNoClient">(no client)</string>

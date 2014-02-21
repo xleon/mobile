@@ -28,49 +28,37 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.App")]
     public class TimeTrackingActivity : BaseActivity
     {
-        private static readonly string SelectedNavIndexExtra = "com.toggl.android.navigation_index";
         private static readonly int PagesCount = 2;
 
         private ViewPager viewPager;
-        private TimerFragment timerFragment = new TimerFragment ();
+        private TimerSection timerSection = new TimerSection ();
   
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
 
-            SetContentView (Resource.Layout.TimeTrackingViewPager);
+            SetContentView (Resource.Layout.TimeTrackingActivity);
 
             var adapter = new MainPagerAdapter (this, SupportFragmentManager);
             viewPager = FindViewById<ViewPager> (Resource.Id.ViewPager);
             viewPager.Adapter = adapter;
 
+            timerSection.OnCreate (this);
+
             var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
             lp.Gravity = (int) (GravityFlags.Right | GravityFlags.CenterVertical);
-            View customNav = LayoutInflater.From (this).Inflate (Resource.Layout.TimerFragment, null); // layout which contains your button.
-            ActionBar.SetCustomView (customNav, lp);
+
+            ActionBar.SetCustomView (timerSection.Root, lp);
             ActionBar.SetDisplayShowCustomEnabled (true);
-
-            if (bundle != null) {
-                viewPager.SetCurrentItem (bundle.GetInt (SelectedNavIndexExtra), false);
-            }
-
-            timerFragment.OnCreate (customNav, this);
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
         }
 
-        protected override void OnSaveInstanceState (Bundle outState)
-        {
-            base.OnSaveInstanceState (outState);
-
-            outState.PutInt (SelectedNavIndexExtra, viewPager.CurrentItem);
-        }
-
         protected override void OnStart ()
         {
             base.OnStart ();
-            timerFragment.OnStart ();
+            timerSection.OnStart ();
 
             // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
@@ -79,7 +67,7 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnStop ()
         {
             base.OnStop ();
-            timerFragment.OnStop ();
+            timerSection.OnStop ();
         }
 
         private class MainPagerAdapter : FragmentPagerAdapter {
@@ -95,7 +83,7 @@ namespace Toggl.Joey.UI.Activities
 
             public override Java.Lang.ICharSequence GetPageTitleFormatted (int position)
             {
-                var names = ctx.Resources.GetStringArray (Resource.Array.TimeEntriesNavigationList);
+                var names = ctx.Resources.GetStringArray (Resource.Array.TimeTrackingTabNames);
                 if(position >= names.Length)
                   throw new InvalidOperationException ("Unknown tab position");
 

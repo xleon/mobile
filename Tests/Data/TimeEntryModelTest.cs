@@ -198,6 +198,175 @@ namespace Toggl.Phoebe.Tests.Data
             }
         }
 
+        [Test]
+        public void TestNewStartChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
+            });
+            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
+
+            entry.StartTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
+            Assert.AreEqual (TimeSpan.FromHours (2), TimeSpan.FromSeconds (entry.Duration));
+            Assert.AreEqual (new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc), entry.StopTime);
+        }
+
+        [Test]
+        public void TestNewStopChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
+            });
+            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
+
+            entry.StopTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
+            Assert.AreEqual (TimeSpan.FromHours (1), TimeSpan.FromSeconds (entry.Duration));
+            Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc), entry.StartTime);
+        }
+
+        [Test]
+        public void TestNewDurationChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
+            });
+            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
+
+            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            Assert.AreEqual (new DateTime (2013, 10, 1, 12, 12, 30, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc), entry.StopTime);
+        }
+
+        [Test]
+        public void TestRunningStartChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                IsRunning = true,
+                IsPersisted = true,
+            });
+            var oldDuration = entry.Duration;
+            Assert.AreNotEqual (0, oldDuration);
+
+            entry.StartTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
+            Assert.AreEqual (TimeSpan.FromHours (2), TimeSpan.FromSeconds (oldDuration - entry.Duration));
+            Assert.AreEqual (null, entry.StopTime);
+        }
+
+        [Test]
+        public void TestRunningDurationChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                IsRunning = true,
+                IsPersisted = true,
+            });
+            var oldDuration = entry.Duration;
+            Assert.AreNotEqual (0, oldDuration);
+
+            entry.Duration += (long)TimeSpan.FromHours (1).TotalSeconds;
+            Assert.AreEqual (new DateTime (2013, 10, 1, 9, 12, 30, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (null, entry.StopTime);
+        }
+
+        [Test]
+        public void TestStoppedStartChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
+                IsPersisted = true,
+            });
+            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
+
+            // Changing start time should keep the duration constant and adjust stop time
+            entry.StartTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
+            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
+            Assert.AreEqual (new DateTime (2013, 10, 1, 14, 12, 30, DateTimeKind.Utc), entry.StopTime);
+        }
+
+        [Test]
+        public void TestStoppedStopChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
+                IsPersisted = true,
+            });
+            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
+
+            entry.StopTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
+            Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (TimeSpan.FromHours (1), TimeSpan.FromSeconds (entry.Duration));
+        }
+
+        [Test]
+        public void TestStoppedDurationChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
+                IsPersisted = true,
+            });
+            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
+
+            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc), entry.StopTime);
+        }
+
+        [Test]
+        public void TestDuronlyNewDurationChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1).ToUtc (),
+                DurationOnly = true,
+            });
+            Assert.IsNull (entry.StopTime);
+            Assert.AreEqual (0, entry.Duration);
+
+            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            Assert.IsNull (entry.StopTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
+        }
+
+        [Test]
+        public void TestDuronlyRunningDurationChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1).ToUtc (),
+                DurationOnly = true,
+                IsPersisted = true,
+                IsRunning = true,
+            });
+            Assert.IsNull (entry.StopTime);
+            Assert.AreEqual (0, entry.Duration);
+
+            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            Assert.IsNull (entry.StopTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
+        }
+
+        [Test]
+        public void TestDuronlyStoppedDurationChange ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                StartTime = new DateTime (2013, 10, 1).ToUtc (),
+                DurationOnly = true,
+                IsPersisted = true,
+                IsRunning = false,
+            });
+            Assert.IsNull (entry.StopTime);
+            Assert.AreEqual (0, entry.Duration);
+
+            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            Assert.IsNull (entry.StopTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
+        }
+
         private class TestSqliteStore : SQLiteModelStore
         {
             public TestSqliteStore (string path) : base (path)

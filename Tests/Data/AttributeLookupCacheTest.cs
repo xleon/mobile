@@ -30,8 +30,8 @@ namespace Toggl.Phoebe.Tests.Data
             var cache = new AttributeLookupCache<SQLite.IgnoreAttribute> ();
             var entry = new TimeEntryModel ();
             Assert.IsTrue (cache.HasAttribute (entry, TimeEntryModel.PropertyWorkspace));
-            Assert.IsTrue (cache.HasAttribute (entry, TimeEntryModel.PropertyDuration));
-            Assert.IsFalse (cache.HasAttribute (entry, TimeEntryModel.PropertyRawDuration));
+            Assert.IsTrue (cache.HasAttribute (entry, TimeEntryModel.PropertyErrors));
+            Assert.IsFalse (cache.HasAttribute (entry, TimeEntryModel.PropertyStartTime));
         }
     }
 }

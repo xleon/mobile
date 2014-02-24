@@ -79,8 +79,8 @@ namespace Toggl.Phoebe.Data.Models
                 }
 
                 IEnumerable<ProjectModel> projects;
-                projects = workspace.Projects.NotDeleted ().Where ((m) => m.IsPrivate != true);
-                projects = projects.Union (Projects.Select ((m) => m.From));
+                projects = workspace.Projects.NotDeleted ().Where ((m) => m.IsActive && m.IsPrivate != true);
+                projects = projects.Union (Projects.Select ((m) => m.From).Where ((m) => m.IsActive));
                 return projects.OrderBy ((m) => m.Name).ToList ();
             }
         }

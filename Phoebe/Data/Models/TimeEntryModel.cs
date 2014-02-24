@@ -8,12 +8,6 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    /* TODO: Things to test:
-     * - Stopping another time entry works from any angle
-     * - Restoring from database/json gets correct state (ie order of setting the properties shouldn't affect
-     *   the outcome)
-     * - Duration updating
-     */
     public class TimeEntryModel : Model
     {
         private static string GetPropertyName<T> (Expression<Func<TimeEntryModel, T>> expr)

@@ -16,7 +16,6 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         internal static readonly string DefaultTag = "mobile";
-        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
         public static TimeEntryModel StartNew ()
         {
@@ -263,7 +262,7 @@ namespace Toggl.Phoebe.Data.Models
 
                     var duration = (long)GetDuration (now).TotalSeconds;
                     if (State == TimeEntryState.Running) {
-                        return (long)(duration - (now - UnixStart).TotalSeconds);
+                        return (long)(duration - now.ToUnix ().TotalSeconds);
                     } else {
                         return duration;
                     }
@@ -273,7 +272,7 @@ namespace Toggl.Phoebe.Data.Models
                 lock (SyncRoot) {
                     if (value < 0) {
                         State = TimeEntryState.Running;
-                        SetDuration ((DateTime.UtcNow - UnixStart) + TimeSpan.FromSeconds (value));
+                        SetDuration (DateTime.UtcNow.ToUnix () + TimeSpan.FromSeconds (value));
                     } else {
                         State = TimeEntryState.Finished;
                         SetDuration (TimeSpan.FromSeconds (value));

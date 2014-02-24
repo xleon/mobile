@@ -58,13 +58,13 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestStopOthersWhenStartNew ()
         {
             var oldTimeEntry = TimeEntryModel.StartNew ();
-            Assert.IsTrue (oldTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, oldTimeEntry.State);
             Assert.IsNull (oldTimeEntry.StopTime);
 
             var newTimeEntry = TimeEntryModel.StartNew ();
-            Assert.IsTrue (newTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, newTimeEntry.State);
             Assert.IsNull (newTimeEntry.StopTime);
-            Assert.IsFalse (oldTimeEntry.IsRunning, "Old entry still running.");
+            Assert.AreEqual (TimeEntryState.Finished, oldTimeEntry.State, "Old entry hasn't been finished.");
             Assert.IsNotNull (oldTimeEntry.StopTime, "Stop time not set for old entry.");
         }
 
@@ -73,15 +73,16 @@ namespace Toggl.Phoebe.Tests.Data
         {
             var oldTimeEntry = Model.Update (new TimeEntryModel () {
                 User = AuthManager.User,
+                State = TimeEntryState.Finished,
                 StartTime = DateTime.UtcNow,
-                Duration = 60,
+                StopTime = DateTime.UtcNow + TimeSpan.FromSeconds (60),
                 DurationOnly = false,
                 IsPersisted = true,
                 ModifiedAt = new DateTime (),
             });
 
             var newTimeEntry = TimeEntryModel.StartNew ();
-            Assert.IsTrue (newTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, newTimeEntry.State);
             Assert.IsNull (newTimeEntry.StopTime);
 
             // Simulate merge from server
@@ -89,16 +90,15 @@ namespace Toggl.Phoebe.Tests.Data
                 Id = oldTimeEntry.Id,
                 Description = "Old time entry",
                 User = oldTimeEntry.User,
+                State = TimeEntryState.Running,
                 StartTime = oldTimeEntry.StartTime,
-                Duration = oldTimeEntry.Duration,
                 DurationOnly = oldTimeEntry.DurationOnly,
-                IsRunning = true,
                 IsPersisted = oldTimeEntry.IsPersisted,
             });
 
-            Assert.IsTrue (oldTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, oldTimeEntry.State);
             Assert.IsNull (oldTimeEntry.StopTime);
-            Assert.IsFalse (newTimeEntry.IsRunning, "New entry still running.");
+            Assert.AreEqual (TimeEntryState.Finished, newTimeEntry.State, "New entry not finished.");
             Assert.IsNotNull (newTimeEntry.StopTime, "Stop time not set for new entry.");
         }
 
@@ -108,20 +108,21 @@ namespace Toggl.Phoebe.Tests.Data
             var oldTimeEntry = Model.Update (new TimeEntryModel () {
                 Description = "Old time entry",
                 User = AuthManager.User,
+                State = TimeEntryState.Finished,
                 StartTime = DateTime.UtcNow,
-                Duration = 60,
+                StopTime = DateTime.UtcNow + TimeSpan.FromSeconds (60),
                 DurationOnly = false,
                 IsPersisted = true,
             });
             var runningTimeEntry = TimeEntryModel.StartNew ();
-            Assert.IsTrue (runningTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, runningTimeEntry.State);
             Assert.IsNull (runningTimeEntry.StopTime);
 
             var newTimeEntry = oldTimeEntry.Continue ();
             Assert.AreNotSame (oldTimeEntry, newTimeEntry);
-            Assert.IsTrue (newTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, newTimeEntry.State);
             Assert.IsNull (newTimeEntry.StopTime);
-            Assert.IsFalse (runningTimeEntry.IsRunning, "Old entry still running.");
+            Assert.AreEqual (TimeEntryState.Finished, runningTimeEntry.State, "Old entry wasn't stopped.");
             Assert.IsNotNull (runningTimeEntry.StopTime, "Stop time not set for old entry.");
         }
 
@@ -131,20 +132,21 @@ namespace Toggl.Phoebe.Tests.Data
             var oldTimeEntry = Model.Update (new TimeEntryModel () {
                 Description = "Old time entry",
                 User = AuthManager.User,
+                State = TimeEntryState.Finished,
                 StartTime = DateTime.UtcNow,
-                Duration = 60,
+                StopTime = DateTime.UtcNow + TimeSpan.FromSeconds (60),
                 DurationOnly = true,
                 IsPersisted = true,
             });
             var runningTimeEntry = TimeEntryModel.StartNew ();
-            Assert.IsTrue (runningTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, runningTimeEntry.State);
             Assert.IsNull (runningTimeEntry.StopTime);
 
             var newTimeEntry = oldTimeEntry.Continue ();
             Assert.AreSame (oldTimeEntry, newTimeEntry);
-            Assert.IsTrue (newTimeEntry.IsRunning);
+            Assert.AreEqual (TimeEntryState.Running, newTimeEntry.State);
             Assert.IsNull (newTimeEntry.StopTime);
-            Assert.IsFalse (runningTimeEntry.IsRunning, "Old entry still running.");
+            Assert.AreEqual (TimeEntryState.Finished, runningTimeEntry.State, "Old entry not finished.");
             Assert.IsNotNull (runningTimeEntry.StopTime, "Stop time not set for old entry.");
         }
 
@@ -168,14 +170,21 @@ namespace Toggl.Phoebe.Tests.Data
             var models = new TimeEntryModel[] {
                 new TimeEntryModel () {
                     Id = Guid.NewGuid (),
-                    RemoteId = 123,
+                    State = TimeEntryState.New,
                     StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
-                    IsRunning = true,
-                    Duration = 1000,
+                    StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
+                    Description = "Test #2",
+                },
+                new TimeEntryModel () {
+                    Id = Guid.NewGuid (),
+                    RemoteId = 123,
+                    State = TimeEntryState.Running,
+                    StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                     Description = "Test #1",
                 },
                 new TimeEntryModel () {
                     Id = Guid.NewGuid (),
+                    State = TimeEntryState.Finished,
                     StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                     StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
                     Description = "Test #3",
@@ -192,7 +201,7 @@ namespace Toggl.Phoebe.Tests.Data
 
                     // Test if all values are exactly the same as before
                     foreach (var propInfo in props) {
-                        Assert.AreEqual (propInfo.GetValue (model), propInfo.GetValue (newModel));
+                        Assert.AreEqual (propInfo.GetValue (model), propInfo.GetValue (newModel), String.Format ("Property {0} is invalid.", propInfo.Name));
                     }
                 }
             }
@@ -202,13 +211,12 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestNewStartChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.New,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                 StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
             });
-            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
 
             entry.StartTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
-            Assert.AreEqual (TimeSpan.FromHours (2), TimeSpan.FromSeconds (entry.Duration));
             Assert.AreEqual (new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc), entry.StopTime);
         }
 
@@ -216,13 +224,12 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestNewStopChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.New,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                 StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
             });
-            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
 
             entry.StopTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
-            Assert.AreEqual (TimeSpan.FromHours (1), TimeSpan.FromSeconds (entry.Duration));
             Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc), entry.StartTime);
         }
 
@@ -230,12 +237,12 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestNewDurationChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.New,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                 StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
             });
-            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
 
-            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            entry.SetDuration (TimeSpan.FromHours (1));
             Assert.AreEqual (new DateTime (2013, 10, 1, 12, 12, 30, DateTimeKind.Utc), entry.StartTime);
             Assert.AreEqual (new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc), entry.StopTime);
         }
@@ -244,15 +251,15 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestRunningStartChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.Running,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
-                IsRunning = true,
-                IsPersisted = true,
             });
-            var oldDuration = entry.Duration;
+            var oldDuration = (long)entry.GetDuration ().TotalSeconds;
             Assert.AreNotEqual (0, oldDuration);
 
-            entry.StartTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
-            Assert.AreEqual (TimeSpan.FromHours (2), TimeSpan.FromSeconds (oldDuration - entry.Duration));
+            entry.StartTime = new DateTime (2013, 10, 1, 12, 12, 30, DateTimeKind.Utc);
+            var newDuration = (long)entry.GetDuration ().TotalSeconds;
+            Assert.AreEqual ((long)TimeSpan.FromHours (2).TotalSeconds, oldDuration - newDuration);
             Assert.AreEqual (null, entry.StopTime);
         }
 
@@ -260,14 +267,13 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestRunningDurationChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.Running,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
-                IsRunning = true,
-                IsPersisted = true,
             });
-            var oldDuration = entry.Duration;
+            var oldDuration = entry.GetDuration ();
             Assert.AreNotEqual (0, oldDuration);
 
-            entry.Duration += (long)TimeSpan.FromHours (1).TotalSeconds;
+            entry.SetDuration (oldDuration + TimeSpan.FromHours (1));
             Assert.AreEqual (new DateTime (2013, 10, 1, 9, 12, 30, DateTimeKind.Utc), entry.StartTime);
             Assert.AreEqual (null, entry.StopTime);
         }
@@ -276,15 +282,13 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestStoppedStartChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.Finished,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                 StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
-                IsPersisted = true,
             });
-            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
 
             // Changing start time should keep the duration constant and adjust stop time
             entry.StartTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
-            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
             Assert.AreEqual (new DateTime (2013, 10, 1, 14, 12, 30, DateTimeKind.Utc), entry.StopTime);
         }
 
@@ -292,28 +296,25 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestStoppedStopChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.Finished,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                 StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
-                IsPersisted = true,
             });
-            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
 
             entry.StopTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
             Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc), entry.StartTime);
-            Assert.AreEqual (TimeSpan.FromHours (1), TimeSpan.FromSeconds (entry.Duration));
         }
 
         [Test]
         public void TestStoppedDurationChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.Finished,
                 StartTime = new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc),
                 StopTime = new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc),
-                IsPersisted = true,
             });
-            Assert.AreEqual (TimeSpan.FromHours (3), TimeSpan.FromSeconds (entry.Duration));
 
-            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            entry.SetDuration (TimeSpan.FromHours (1));
             Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 30, DateTimeKind.Utc), entry.StartTime);
             Assert.AreEqual (new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc), entry.StopTime);
         }
@@ -322,49 +323,46 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestDuronlyNewDurationChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.New,
                 StartTime = new DateTime (2013, 10, 1).ToUtc (),
                 DurationOnly = true,
             });
             Assert.IsNull (entry.StopTime);
-            Assert.AreEqual (0, entry.Duration);
 
-            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            entry.SetDuration (TimeSpan.FromHours (1));
             Assert.IsNull (entry.StopTime);
-            Assert.AreEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
+            Assert.AreNotEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
         }
 
         [Test]
         public void TestDuronlyRunningDurationChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.Running,
                 StartTime = new DateTime (2013, 10, 1).ToUtc (),
                 DurationOnly = true,
-                IsPersisted = true,
-                IsRunning = true,
             });
             Assert.IsNull (entry.StopTime);
-            Assert.AreEqual (0, entry.Duration);
 
-            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
+            entry.SetDuration (TimeSpan.FromHours (1));
             Assert.IsNull (entry.StopTime);
-            Assert.AreEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
+            Assert.AreNotEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
         }
 
         [Test]
         public void TestDuronlyStoppedDurationChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {
-                StartTime = new DateTime (2013, 10, 1).ToUtc (),
+                State = TimeEntryState.Finished,
+                StartTime = new DateTime (2013, 10, 1, 10, 12, 0, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 10, 1, 12, 12, 0, DateTimeKind.Utc),
                 DurationOnly = true,
-                IsPersisted = true,
-                IsRunning = false,
             });
-            Assert.IsNull (entry.StopTime);
-            Assert.AreEqual (0, entry.Duration);
+            Assert.AreEqual (TimeSpan.FromHours (2), entry.GetDuration ());
 
-            entry.Duration = (long)TimeSpan.FromHours (1).TotalSeconds;
-            Assert.IsNull (entry.StopTime);
-            Assert.AreEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
+            entry.SetDuration (TimeSpan.FromHours (1));
+            Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 0, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1, 11, 12, 0, DateTimeKind.Utc), entry.StopTime);
         }
 
         private class TestSqliteStore : SQLiteModelStore

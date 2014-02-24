@@ -17,42 +17,6 @@ namespace Toggl.Phoebe.Data.Models
 
         internal static readonly string DefaultTag = "mobile";
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-        private static bool UpdateScheduled = false;
-
-        private static async void EnsureLiveDurations ()
-        {
-            lock (SyncRoot) {
-                if (UpdateScheduled)
-                    return;
-
-                UpdateScheduled = true;
-            }
-
-            try {
-                bool done = false;
-
-                while (!done) {
-                    done = true;
-
-                    lock (SyncRoot) {
-                        var allEntries = Model.Manager.Cached<TimeEntryModel> ()
-                            .Where ((te) => te.IsRunning && te.DeletedAt == null && te.IsPersisted);
-                        foreach (var entry in allEntries) {
-                            entry.UpdateDuration ();
-                            done = false;
-                        }
-                    }
-
-                    if (!done)
-                        await System.Threading.Tasks.Task.Delay (TimeSpan.FromMilliseconds (500))
-                            .ConfigureAwait (continueOnCapturedContext: false);
-                }
-            } finally {
-                lock (SyncRoot) {
-                    UpdateScheduled = false;
-                }
-            }
-        }
 
         public static TimeEntryModel StartNew ()
         {
@@ -92,7 +56,7 @@ namespace Toggl.Phoebe.Data.Models
                     StartTime = DateTime.UtcNow,
                     DurationOnly = user.TrackingMode == TrackingMode.Continue,
                     StringTags = new List<string> () { DefaultTag },
-                    IsRunning = true,
+                    State = TimeEntryState.Running,
                     IsPersisted = true,
                 });
             }
@@ -154,6 +118,10 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
+        private bool LogicEnabled {
+            get { return IsShared && !IsMerging; }
+        }
+
         #region Data
 
         private string description;
@@ -211,15 +179,23 @@ namespace Toggl.Phoebe.Data.Models
                 }
             }
             set {
-                value = value.ToUtc ();
+                value = value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
 
                 lock (SyncRoot) {
                     if (startTime == value)
                         return;
 
+                    var duration = GetDuration ();
+
                     ChangePropertyAndNotify (PropertyStartTime, delegate {
                         startTime = value;
                     });
+
+                    if (LogicEnabled) {
+                        if (State == TimeEntryState.Finished && StopTime.HasValue) {
+                            SetDuration (duration);
+                        }
+                    }
                 }
             }
         }
@@ -235,7 +211,8 @@ namespace Toggl.Phoebe.Data.Models
                 }
             }
             set {
-                value = value.ToUtc ();
+                value = value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+
                 lock (SyncRoot) {
                     if (stopTime == value)
                         return;
@@ -243,71 +220,64 @@ namespace Toggl.Phoebe.Data.Models
                     ChangePropertyAndNotify (PropertyStopTime, delegate {
                         stopTime = value;
                     });
-
-                    IsRunning = stopTime == null;
                 }
             }
         }
 
-        private long duration;
-        public static readonly string PropertyDuration = GetPropertyName ((m) => m.Duration);
+        public TimeSpan GetDuration ()
+        {
+            return GetDuration (DateTime.UtcNow);
+        }
 
-        [DontDirty]
-        [SQLite.Ignore]
-        public long Duration {
-            get {
-                lock (SyncRoot) {
-                    return duration;
+        private TimeSpan GetDuration (DateTime now)
+        {
+            lock (SyncRoot) {
+                var duration = (StopTime ?? now) - StartTime;
+                if (duration < TimeSpan.Zero) {
+                    duration = TimeSpan.Zero;
+                }
+                return duration;
+            }
+        }
+
+        public void SetDuration (TimeSpan value)
+        {
+            lock (SyncRoot) {
+                var now = DateTime.UtcNow;
+
+                if (State == TimeEntryState.Finished) {
+                    StopTime = StartTime + value;
+                } else if (State == TimeEntryState.New && StopTime.HasValue) {
+                    StartTime = StopTime.Value - value;
+                } else {
+                    StartTime = now - value;
                 }
             }
-            set {
+        }
+
+        [JsonProperty ("duration")]
+        private long EncodedDuration {
+            get {
                 lock (SyncRoot) {
-                    if (duration == value)
-                        return;
+                    var now = DateTime.UtcNow;
 
-                    ChangePropertyAndNotify (PropertyDuration, delegate {
-                        duration = value;
-                    });
-
-                    if (RawDuration < 0) {
-                        RawDuration = (long)(value - (DateTime.UtcNow - UnixStart).TotalSeconds);
+                    var duration = (long)GetDuration (now).TotalSeconds;
+                    if (State == TimeEntryState.Running) {
+                        return (long)(duration - (now - UnixStart).TotalSeconds);
                     } else {
-                        RawDuration = value;
+                        return duration;
                     }
                 }
             }
-        }
-
-        private void UpdateDuration ()
-        {
-            if (RawDuration < 0) {
-                Duration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds + RawDuration);
-            } else {
-                Duration = RawDuration;
-            }
-        }
-
-        private long rawDuration;
-        public static readonly string PropertyRawDuration = GetPropertyName ((m) => m.RawDuration);
-
-        [JsonProperty ("duration")]
-        public long RawDuration {
-            get {
-                lock (SyncRoot) {
-                    return rawDuration;
-                }
-            }
             set {
                 lock (SyncRoot) {
-                    if (rawDuration == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyRawDuration, delegate {
-                        rawDuration = value;
-                    });
-
-                    IsRunning = value < 0;
-                    UpdateDuration ();
+                    if (value < 0) {
+                        State = TimeEntryState.Running;
+                        SetDuration ((DateTime.UtcNow - UnixStart) + TimeSpan.FromSeconds (value));
+                    } else {
+                        State = TimeEntryState.Finished;
+                        SetDuration (TimeSpan.FromSeconds (value));
+                    }
                 }
             }
         }
@@ -362,39 +332,23 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        private bool running;
-        public static readonly string PropertyIsRunning = GetPropertyName ((m) => m.IsRunning);
+        private TimeEntryState state = TimeEntryState.New;
+        public static readonly string PropertyState = GetPropertyName ((m) => m.State);
 
-        [DontDirty]
-        public bool IsRunning {
+        public TimeEntryState State {
             get {
                 lock (SyncRoot) {
-                    return running;
+                    return state;
                 }
             }
             set {
                 lock (SyncRoot) {
-                    if (running == value)
+                    if (state == value)
                         return;
 
-                    ChangePropertyAndNotify (PropertyIsRunning, delegate {
-                        running = value;
+                    ChangePropertyAndNotify (PropertyState, delegate {
+                        state = value;
                     });
-
-                    if (IsRunning)
-                        EnsureLiveDurations ();
-
-                    if (IsRunning && RawDuration >= 0) {
-                        RawDuration = (long)(RawDuration - (DateTime.UtcNow - UnixStart).TotalSeconds);
-                    } else if (!IsRunning && RawDuration < 0) {
-                        RawDuration = (long)((DateTime.UtcNow - UnixStart).TotalSeconds + RawDuration);
-                    }
-
-                    if (IsRunning) {
-                        StopTime = null;
-                    } else {
-                        StopTime = StartTime + TimeSpan.FromSeconds (RawDuration);
-                    }
                 }
             }
         }
@@ -529,26 +483,24 @@ namespace Toggl.Phoebe.Data.Models
             }
 
             if (property == PropertyIsShared
-                || property == PropertyIsRunning
+                || property == PropertyState
                 || property == PropertyIsPersisted) {
-                if (IsShared && IsRunning && IsPersisted) {
+                if (IsShared && State == TimeEntryState.Running && IsPersisted) {
                     // Make sure that this is the only time entry running:
-                    var entries = Model.Manager.Cached<TimeEntryModel> ().Where ((m) => m.UserId == UserId && m.IsRunning);
+                    var entries = Model.Manager.Cached<TimeEntryModel> ().Where ((m) => m.UserId == UserId && m.State == TimeEntryState.Running);
                     foreach (var entry in entries) {
                         if (entry == this)
                             continue;
-                        entry.IsRunning = false;
+                        entry.Stop ();
                     }
 
                     // Double check the database as well:
                     entries = Model.Query<TimeEntryModel> (
-                        (m) => m.UserId == UserId && m.IsRunning && m.Id != Id)
+                        (m) => m.UserId == UserId && m.State == TimeEntryState.Running && m.Id != Id)
                         .NotDeleted ();
                     foreach (var entry in entries) {
-                        entry.IsRunning = false;
+                        entry.Stop ();
                     }
-
-                    EnsureLiveDurations ();
                 }
             }
         }
@@ -556,7 +508,7 @@ namespace Toggl.Phoebe.Data.Models
         public override void Delete ()
         {
             lock (SyncRoot) {
-                if (IsShared && IsPersisted && IsRunning)
+                if (IsShared && IsPersisted && State == TimeEntryState.Running)
                     Stop ();
                 base.Delete ();
             }
@@ -568,11 +520,8 @@ namespace Toggl.Phoebe.Data.Models
                 if (!IsShared || !IsPersisted)
                     throw new InvalidOperationException ("Model needs to be the shared and persisted.");
 
-                if (DurationOnly) {
-                    IsRunning = false;
-                } else {
-                    StopTime = DateTime.UtcNow;
-                }
+                StopTime = DateTime.UtcNow;
+                State = TimeEntryState.Finished;
             }
         }
 
@@ -583,12 +532,16 @@ namespace Toggl.Phoebe.Data.Models
                     throw new InvalidOperationException ("Model needs to be the shared and persisted.");
 
                 // Time entry is already running, nothing to continue
-                if (IsRunning)
+                if (State == TimeEntryState.Running)
                     return this;
 
                 if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
-                    IsRunning = true;
-                    return this;
+                    if (RemoteId == null) {
+                        StartTime = DateTime.UtcNow - GetDuration ();
+                        StopTime = null;
+                        State = TimeEntryState.Running;
+                        return this;
+                    }
                 }
 
                 return Model.Update (new TimeEntryModel () {
@@ -601,7 +554,7 @@ namespace Toggl.Phoebe.Data.Models
                     DurationOnly = DurationOnly,
                     StringTags = StringTags,
                     IsBillable = IsBillable,
-                    IsRunning = true,
+                    State = TimeEntryState.Running,
                     IsPersisted = true,
                 });
             }
@@ -613,12 +566,12 @@ namespace Toggl.Phoebe.Data.Models
         {
             lock (SyncRoot) {
                 IEnumerable<TimeEntryModel> entries;
-                entries = Model.Query<TimeEntryModel> ((te) => te.IsRunning)
+                entries = Model.Query<TimeEntryModel> ((te) => te.State == TimeEntryState.Running)
                     .NotDeleted ().ForCurrentUser ().ToList ();
 
                 // Find currently running time entry:
                 entries = Model.Manager.Cached<TimeEntryModel> ()
-                    .Where ((te) => te.IsRunning && te.DeletedAt == null && te.IsPersisted == true)
+                    .Where ((te) => te.State == TimeEntryState.Running && te.DeletedAt == null && te.IsPersisted == true)
                     .ForCurrentUser ();
                 return entries.FirstOrDefault ();
             }

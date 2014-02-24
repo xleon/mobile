@@ -19,6 +19,18 @@ namespace Toggl.Phoebe
                 return val.ToUniversalTime ();
             }
         }
+
+        public static DateTime? Truncate (this DateTime? val, long percisionTicks)
+        {
+            if (val == null)
+                return null;
+            return val.Value.Truncate (percisionTicks);
+        }
+
+        public static DateTime Truncate (this DateTime val, long percisionTicks)
+        {
+            return val.AddTicks (-(val.Ticks % percisionTicks));
+        }
     }
 }
 

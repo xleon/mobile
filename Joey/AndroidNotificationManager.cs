@@ -19,7 +19,6 @@ namespace Toggl.Joey
         #pragma warning restore 0414
 
         private const int RunningTimeEntryNotifId = 42;
-        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Context ctx;
         private readonly NotificationManager notificationManager;
         private readonly NotificationCompat.Builder notificationBuilder;
@@ -41,14 +40,14 @@ namespace Toggl.Joey
         private void OnModelChanged (ModelChangedMessage msg)
         {
             if (currentTimeEntry == msg.Model) {
-                if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
+                if (msg.PropertyName == TimeEntryModel.PropertyState
                     || msg.PropertyName == TimeEntryModel.PropertyDescription
                     || msg.PropertyName == TimeEntryModel.PropertyStartTime
                     || msg.PropertyName == TimeEntryModel.PropertyProjectId
                     || msg.PropertyName == TimeEntryModel.PropertyTaskId
                     || msg.PropertyName == TimeEntryModel.PropertyUserId) {
 
-                    if (!currentTimeEntry.IsRunning || !ForCurrentUser (currentTimeEntry)) {
+                    if (currentTimeEntry.State != TimeEntryState.Running || !ForCurrentUser (currentTimeEntry)) {
                         currentTimeEntry = null;
                     }
 
@@ -71,11 +70,11 @@ namespace Toggl.Joey
                 }
             } else if (msg.Model is TimeEntryModel) {
                 var entry = (TimeEntryModel)msg.Model;
-                if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
+                if (msg.PropertyName == TimeEntryModel.PropertyState
                     || msg.PropertyName == TimeEntryModel.PropertyIsShared
                     || msg.PropertyName == TimeEntryModel.PropertyIsPersisted
                     || msg.PropertyName == TimeEntryModel.PropertyUserId) {
-                    if (entry.IsShared && entry.IsPersisted && entry.IsRunning && ForCurrentUser (entry)) {
+                    if (entry.IsShared && entry.IsPersisted && entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
                         currentTimeEntry = entry;
                         SyncNotification ();
                     }
@@ -119,7 +118,7 @@ namespace Toggl.Joey
                 notificationBuilder
                     .SetContentTitle (GetProjectName (currentTimeEntry))
                     .SetContentText (GetDescription (currentTimeEntry))
-                    .SetWhen (GetUnixTime (currentTimeEntry.StartTime));
+                    .SetWhen ((long)currentTimeEntry.StartTime.ToUnix ().TotalMilliseconds);
 
                 notificationManager.Notify (RunningTimeEntryNotifId, notificationBuilder.Build ());
             }
@@ -143,12 +142,6 @@ namespace Toggl.Joey
                 description = ctx.Resources.GetString (Resource.String.RunningNotificationNoDescription);
             }
             return description;
-        }
-
-        private long GetUnixTime (DateTime startTime)
-        {
-            TimeSpan t = startTime.ToUtc () - UnixStart;
-            return (long)t.TotalMilliseconds;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Linq;
 using System.Text;
 using Android.Content;
@@ -18,14 +18,15 @@ namespace Toggl.Joey.UI.Adapters
     public class LogTimeEntriesAdapter : BaseModelsViewAdapter<TimeEntryModel>
     {
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
-
         private readonly List<HeaderPosition> headers = new List<HeaderPosition> ();
 
-        private class HeaderPosition{ 
+        private class HeaderPosition
+        {
             public int Position { get; set; }
+
             public DateTime Date { get; set; }
 
-            public HeaderPosition(int position, DateTime date)
+            public HeaderPosition (int position, DateTime date)
             {
                 this.Position = position;
                 this.Date = date;
@@ -67,7 +68,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private HeaderPosition GetHeaderAt(int position)
+        private HeaderPosition GetHeaderAt (int position)
         {
             return headers.FirstOrDefault ((h) => h.Position == position);
         }
@@ -95,7 +96,7 @@ namespace Toggl.Joey.UI.Adapters
         public override TimeEntryModel GetModel (int position)
         {
             var modelIndex = GetIndexForPosition (position);
-            if (modelIndex >= ModelsView.Models.Count())
+            if (modelIndex >= ModelsView.Models.Count ())
                 return null;
             
             return ModelsView.Models.ElementAt (modelIndex);
@@ -103,7 +104,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (GetIndexForPosition(position) == ModelsView.Count && ModelsView.IsLoading)
+            if (GetIndexForPosition (position) == ModelsView.Count && ModelsView.IsLoading)
                 return ViewTypeLoaderPlaceholder;
 
             if (GetHeaderAt (position) == null)
@@ -140,7 +141,7 @@ namespace Toggl.Joey.UI.Adapters
                         Resource.Layout.LogTimeEntryListItem, parent, false);
                     view.Tag = new TimeEntryListItemHolder (view);
                 }
-                var holder = (TimeEntryListItemHolder) view.Tag;
+                var holder = (TimeEntryListItemHolder)view.Tag;
                 holder.Bind (model);
             }
 
@@ -195,7 +196,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (model == msg.Model) {
                     if (msg.PropertyName == TimeEntryModel.PropertyStartTime
                         || msg.PropertyName == TimeEntryModel.PropertyIsBillable
-                        || msg.PropertyName == TimeEntryModel.PropertyIsRunning
+                        || msg.PropertyName == TimeEntryModel.PropertyState
                         || msg.PropertyName == TimeEntryModel.PropertyDescription
                         || msg.PropertyName == TimeEntryModel.PropertyProjectId
                         || msg.PropertyName == TimeEntryModel.PropertyTaskId)
@@ -261,7 +262,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 var color = Color.Transparent;
                 if (model.Project != null) {
-                    color = Color.ParseColor (model.Project.GetHexColor());
+                    color = Color.ParseColor (model.Project.GetHexColor ());
                 }
                 ColorView.SetBackgroundColor (color);
 

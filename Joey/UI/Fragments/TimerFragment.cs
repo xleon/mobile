@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Android.App;
@@ -18,8 +18,10 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class TimerFragment : Fragment
     {
+        private readonly Handler handler = new Handler ();
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private TimeEntryModel runningEntry;
+        private bool canRebind;
 
         protected View RunningStateView { get; private set; }
 
@@ -40,17 +42,20 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnStart ();
 
-            runningEntry = TimeEntryModel.FindRunning();
+            runningEntry = TimeEntryModel.FindRunning ();
 
             // Start listening for changes model changes
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
 
+            canRebind = true;
             Rebind ();
         }
 
         public override void OnStop ()
         {
+            canRebind = false;
+
             // Stop listening for changes model changes
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Unsubscribe (subscriptionModelChanged);
@@ -63,19 +68,19 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (msg.Model != runningEntry) {
                 // When some other time entry becomes IsRunning we need to switch over to that
-                if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
+                if (msg.PropertyName == TimeEntryModel.PropertyState
                     || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
                     var entry = msg.Model as TimeEntryModel;
-                    if (entry != null && entry.IsRunning && ForCurrentUser (entry)) {
+                    if (entry != null && entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
                         runningEntry = entry;
                         Rebind ();
                     }
                 }
             } else {
                 // Listen for changes regarding current running entry
-                if (msg.PropertyName == TimeEntryModel.PropertyIsRunning
-                    || msg.PropertyName == TimeEntryModel.PropertyDuration) {
-                    if (!runningEntry.IsRunning)
+                if (msg.PropertyName == TimeEntryModel.PropertyState
+                    || msg.PropertyName == TimeEntryModel.PropertyStartTime) {
+                    if (runningEntry.State != TimeEntryState.Running)
                         runningEntry = null;
                     Rebind ();
                 }
@@ -102,26 +107,26 @@ namespace Toggl.Joey.UI.Fragments
                 StopTrackingButton = RunningStateView.FindViewById<Button> (Resource.Id.StopTrackingButton);
 
                 StopTrackingButton.Click += OnStopTrackingButtonClicked;
-                DurationTextView.Click += OnDurationTextClicked;
+                DurationTextView.Click += OnDurationTextViewClicked;
             }
 
             RunningStateView.Visibility = ViewStates.Visible;
         }
 
-        void OnDurationTextClicked (object sender, EventArgs e)
+        void OnDurationTextViewClicked (object sender, EventArgs e)
         {
+            long duration = (long)runningEntry.GetDuration ().TotalSeconds;
             long minutesInHours = 60 * 60;
-            int hours = (int) (runningEntry.Duration / minutesInHours);
-            int minutes = (int) ((runningEntry.Duration % minutesInHours) / 60);
+            int hours = (int)(duration / minutesInHours);
+            int minutes = (int)((duration % minutesInHours) / 60);
             var dialog = new TimePickerDialog (Activity, OnDurationSelected, hours, minutes, true);
             dialog.Show ();
         }
 
         void OnDurationSelected (object sender, TimePickerDialog.TimeSetEventArgs timeSetArgs)
         {
-            runningEntry.Duration = timeSetArgs.HourOfDay * 60  * 60 + timeSetArgs.Minute * 60;
-            //TODO Next line here just to make it work somehow, magic of changing start/stop time after duration change will be in Model
-            runningEntry.StartTime.Subtract (new TimeSpan (timeSetArgs.HourOfDay, timeSetArgs.Minute, 0));
+            runningEntry.SetDuration (TimeSpan.FromSeconds (timeSetArgs.HourOfDay * 60 * 60 + timeSetArgs.Minute * 60));
+            Rebind ();
         }
 
         private void ShowStoppedState ()
@@ -144,10 +149,17 @@ namespace Toggl.Joey.UI.Fragments
 
         private void Rebind ()
         {
+            if (!canRebind)
+                return;
+
             if (runningEntry != null) {
                 ShowRunningState ();
 
-                DurationTextView.Text = TimeSpan.FromSeconds (runningEntry.Duration).ToString ();
+                var duration = runningEntry.GetDuration ();
+                DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
+
+                // Schedule next rebind:
+                handler.PostDelayed (Rebind, 1000 - duration.Milliseconds);
             } else {
                 ShowStoppedState ();
             }
@@ -156,7 +168,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnStopTrackingButtonClicked (object sender, EventArgs e)
         {
             if (runningEntry != null)
-                runningEntry.IsRunning = false;
+                runningEntry.Stop ();
         }
 
         private void OnStartTrackingButtonClicked (object sender, EventArgs e)

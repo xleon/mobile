@@ -17,10 +17,11 @@
     <string name="TimerStopButtonText">Stop</string>
     <string name="LogTimeEntryContextEdit">Edit</string>
     <string name="LogTimeEntryContextDelete">Delete</string>
-    <string-array name="TimeTrackingTabNames">
-        <item>Recent</item>
-        <item>Log</item>
-    </string-array>
+    <string name="TimeTrackingNewTab">New</string>
+    <string name="TimeTrackingRunningTab">Running</string>
+    <string name="TimeTrackingWelcomeTab">Welcome</string>
+    <string name="TimeTrackingRecentTab">Recent</string>
+    <string name="TimeTrackingLogTab">Log</string>
     <string name="ChooseProjectTitle">Choose project</string>
     <string name="ProjectsNoClient">(no client)</string>
     <string name="ProjectsNoProject">Without project</string>

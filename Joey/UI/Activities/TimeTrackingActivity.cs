@@ -28,11 +28,10 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.App")]
     public class TimeTrackingActivity : BaseActivity
     {
-        private static readonly int PagesCount = 2;
-
+        private static readonly int PagesCount = 3;
         private ViewPager viewPager;
         private TimerComponent timerSection = new TimerComponent ();
-  
+
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
@@ -42,6 +41,7 @@ namespace Toggl.Joey.UI.Activities
             var adapter = new MainPagerAdapter (this, SupportFragmentManager);
             viewPager = FindViewById<ViewPager> (Resource.Id.ViewPager);
             viewPager.Adapter = adapter;
+            viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
 
             timerSection.OnCreate (this);
 
@@ -70,40 +70,67 @@ namespace Toggl.Joey.UI.Activities
             timerSection.OnStop ();
         }
 
-        private class MainPagerAdapter : FragmentPagerAdapter {
+        private class MainPagerAdapter : FragmentPagerAdapter
+        {
+            public const int EditPosition = 0;
+            public const int RecentPosition = 1;
+            public const int LogPosition = 2;
             private Context ctx;
+            private readonly CurrentTimeEntryEditFragment editFragment = new CurrentTimeEntryEditFragment ();
+            private readonly RecentTimeEntriesListFragment recentFragment = new RecentTimeEntriesListFragment ();
+            private readonly LogTimeEntriesListFragment logFragment = new LogTimeEntriesListFragment ();
 
-            public MainPagerAdapter(Context ctx, FragmentManager fm) : base(fm) {
+            public MainPagerAdapter (Context ctx, FragmentManager fm) : base (fm)
+            {
                 this.ctx = ctx;
             }
 
             public override int Count {
-                get {return PagesCount;}
+                get { return PagesCount; }
             }
 
             public override Java.Lang.ICharSequence GetPageTitleFormatted (int position)
             {
-                var names = ctx.Resources.GetStringArray (Resource.Array.TimeTrackingTabNames);
-                if(position >= names.Length)
-                  throw new InvalidOperationException ("Unknown tab position");
+                var res = ctx.Resources;
 
-                return new Java.Lang.String(names [position].ToUpper());
-            }
-
-            public override Fragment GetItem(int position) {
-                Fragment fragment;
                 switch (position) {
-                case 0:
-                    fragment = new RecentTimeEntriesListFragment ();
-                    break;
-                case 1:
-                    fragment = new LogTimeEntriesListFragment ();
-                    break;
+                case EditPosition:
+                    // TODO: Determine if there are any running time entries
+                    var isRunning = false;
+
+                    if (isRunning) {
+                        return res.GetTextFormatted (Resource.String.TimeTrackingRunningTab);
+                    } else {
+                        return res.GetTextFormatted (Resource.String.TimeTrackingNewTab);
+                    }
+                case RecentPosition:
+                    // TODO: Determine if first run:
+                    var firstRun = false;
+
+                    if (firstRun) {
+                        return res.GetTextFormatted (Resource.String.TimeTrackingWelcomeTab);
+                    } else {
+                        return res.GetTextFormatted (Resource.String.TimeTrackingRecentTab);
+                    }
+                case LogPosition:
+                    return res.GetTextFormatted (Resource.String.TimeTrackingLogTab);
                 default:
                     throw new InvalidOperationException ("Unknown tab position");
                 }
+            }
 
-                return fragment;
+            public override Fragment GetItem (int position)
+            {
+                switch (position) {
+                case EditPosition:
+                    return editFragment;
+                case RecentPosition:
+                    return recentFragment;
+                case LogPosition:
+                    return logFragment;
+                default:
+                    throw new InvalidOperationException ("Unknown tab position");
+                }
             }
         }
     }

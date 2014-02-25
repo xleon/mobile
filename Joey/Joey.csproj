@@ -93,6 +93,7 @@
     <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
     <Compile Include="UI\Activities\TimeTrackingActivity.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
+    <Compile Include="UI\Fragments\CurrentTimeEntryEditFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

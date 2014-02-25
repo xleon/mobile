@@ -106,10 +106,6 @@
     <AndroidResource Include="Resources\drawable\login_logo.png" />
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
-<<<<<<< HEAD
-=======
-    <AndroidResource Include="Resources\layout\TimerFragment.axml" />
->>>>>>> am-proper-list-ui
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
@@ -140,13 +136,10 @@
     <AndroidResource Include="Resources\values\StylesBase.xml" />
     <AndroidResource Include="Resources\values-v11\StylesBase.xml" />
     <AndroidResource Include="Resources\values\colors.xml" />
-<<<<<<< HEAD
     <AndroidResource Include="Resources\layout\TimeTrackingActivity.axml" />
     <AndroidResource Include="Resources\layout\TimerComponent.axml" />
-=======
     <AndroidResource Include="Resources\drawable\MainListButton.9.png" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
->>>>>>> am-proper-list-ui
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

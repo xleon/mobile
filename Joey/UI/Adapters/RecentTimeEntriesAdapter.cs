@@ -3,6 +3,8 @@ using System.Linq;
 using System.Text;
 using Android.Content;
 using Android.Graphics;
+using Android.Graphics.Drawables;
+using Android.Graphics.Drawables.Shapes;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -11,8 +13,6 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using Android.Graphics.Drawables.Shapes;
-using Android.Graphics.Drawables;
 
 namespace Toggl.Joey.UI.Adapters
 {

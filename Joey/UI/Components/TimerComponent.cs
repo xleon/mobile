@@ -16,7 +16,7 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class TimerSection //: Fragment
+    public class TimerComponent
     {
         private object subscriptionModelChanged;
         private TimeEntryModel runningEntry;
@@ -47,7 +47,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             this.ctx = ctx;
 
-            Root = LayoutInflater.From (ctx).Inflate (Resource.Layout.TimerFragment, null);
+            Root = LayoutInflater.From (ctx).Inflate (Resource.Layout.TimerComponent, null);
 
             FindViews ();
         }

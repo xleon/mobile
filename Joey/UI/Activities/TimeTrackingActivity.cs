@@ -4,21 +4,21 @@ using System.Linq;
 using System.Text;
 using Android.App;
 using Android.Content;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
-using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
-using ActionBar = Android.Support.V7.App.ActionBar;
-using ViewPager = Android.Support.V4.View.ViewPager;
-using Fragment = Android.Support.V4.App.Fragment;
-using FragmentManager = Android.Support.V4.App.FragmentManager;
-using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
-using Toggl.Joey.UI.Fragments;
-using Android.Graphics.Drawables;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Phoebe;
+using Toggl.Joey.UI.Fragments;
+using ActionBar = Android.Support.V7.App.ActionBar;
+using Fragment = Android.Support.V4.App.Fragment;
+using FragmentManager = Android.Support.V4.App.FragmentManager;
+using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
+using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
+using ViewPager = Android.Support.V4.View.ViewPager;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -31,7 +31,7 @@ namespace Toggl.Joey.UI.Activities
         private static readonly int PagesCount = 2;
 
         private ViewPager viewPager;
-        private TimerSection timerSection = new TimerSection ();
+        private TimerComponent timerSection = new TimerComponent ();
   
         protected override void OnCreate (Bundle bundle)
         {

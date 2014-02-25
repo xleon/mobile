@@ -92,7 +92,7 @@
     <Compile Include="UI\Utils\MultipleModalChoiceGB.cs" />
     <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
     <Compile Include="UI\Activities\TimeTrackingActivity.cs" />
-    <Compile Include="UI\Fragments\TimerSection.cs" />
+    <Compile Include="UI\Components\TimerComponent.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -106,10 +106,6 @@
     <AndroidResource Include="Resources\drawable\login_logo.png" />
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\layout\TimerFragment.axml" />
-    <AndroidResource Include="Resources\layout\TimerRunningFragmentState.axml" />
-    <AndroidResource Include="Resources\layout\TimerStoppedFragmentState.axml" />
-    <AndroidResource Include="Resources\layout\TimeEntriesActivity.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
@@ -141,6 +137,7 @@
     <AndroidResource Include="Resources\values-v11\StylesBase.xml" />
     <AndroidResource Include="Resources\values\colors.xml" />
     <AndroidResource Include="Resources\layout\TimeTrackingActivity.axml" />
+    <AndroidResource Include="Resources\layout\TimerComponent.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -166,6 +163,7 @@
     <Folder Include="Resources\drawable-xxhdpi\" />
     <Folder Include="UI\Utils\" />
     <Folder Include="Resources\values-v11\" />
+    <Folder Include="UI\Components\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservicesgingerbread">

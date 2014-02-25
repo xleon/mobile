@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Android.OS;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
@@ -14,7 +15,8 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
             var headerView = new View (Activity);
-            headerView.SetMinimumHeight (6);
+            int headerWidth = (int) TypedValue.ApplyDimension (ComplexUnitType.Dip, 6, Resources.DisplayMetrics);
+            headerView.SetMinimumHeight (headerWidth);
             ListView.AddHeaderView (headerView);
             ListAdapter = new RecentTimeEntriesAdapter ();
         }

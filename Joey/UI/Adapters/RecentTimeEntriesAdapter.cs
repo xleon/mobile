@@ -156,12 +156,6 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     DescriptionTextView.Text = model.Description;
                 }
-
-                // TODO: Use user defined date format
-//                DateTextView.Text = model.StartTime.ToShortDateString ();
-//
-//                TagsTextView.Visibility = model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
-//                BillableTextView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
             }
         }
     }

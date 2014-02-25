@@ -33,7 +33,7 @@ namespace Toggl.Joey.UI.Fragments
                 adapter = (RecentTimeEntriesAdapter)l.Adapter;
             }
 
-            if (adapter == null)
+            if (adapter == null || position < 0 || position >= adapter.Count)
                 return;
 
             var model = adapter.GetModel (position);

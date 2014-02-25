@@ -53,7 +53,6 @@ namespace Toggl.Phoebe.Data.Views
                         Sort ();
                     });
                 } else if (msg.PropertyName == TimeEntryModel.PropertyDescription
-                           || msg.PropertyName == TimeEntryModel.PropertyIsBillable
                            || msg.PropertyName == TimeEntryModel.PropertyTaskId
                            || msg.PropertyName == TimeEntryModel.PropertyProjectId) {
                     ChangeDataAndNotify (delegate {
@@ -195,26 +194,15 @@ namespace Toggl.Phoebe.Data.Views
         private class Group : IEnumerable<TimeEntryModel>
         {
             private readonly string description;
-            private readonly bool isBillable;
             private readonly Guid? taskId;
             private readonly Guid? projectId;
-            private readonly List<Guid> tags;
             private readonly List<GroupItem> items = new List<GroupItem> ();
-
-            private static IEnumerable<Guid> GetTags (TimeEntryModel entry)
-            {
-                return entry.Tags
-                        .Where ((m) => m.To.Name != TimeEntryModel.DefaultTag)
-                        .Select ((e) => e.ToId.Value);
-            }
 
             public Group (TimeEntryModel entry)
             {
                 description = entry.Description;
-                isBillable = entry.IsBillable;
                 taskId = entry.TaskId;
                 projectId = entry.ProjectId;
-                tags = GetTags (entry).ToList ();
 
                 Add (entry);
             }
@@ -235,13 +223,8 @@ namespace Toggl.Phoebe.Data.Views
             {
                 // Check data:
                 if (description != entry.Description
-                    || isBillable != entry.IsBillable
                     || taskId != entry.TaskId
                     || projectId != entry.ProjectId)
-                    return false;
-
-                // Check tags:
-                if (tags.Intersect (GetTags (entry)).Any ())
                     return false;
 
                 return true;

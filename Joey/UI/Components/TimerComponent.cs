@@ -16,31 +16,38 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class TimerFragment : Fragment
+    public class TimerComponent
     {
         private readonly Handler handler = new Handler ();
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private TimeEntryModel runningEntry;
         private bool canRebind;
 
-        protected View RunningStateView { get; private set; }
-
         protected TextView DurationTextView { get; private set; }
-
         protected Button StopTrackingButton { get; private set; }
-
-        protected View StoppedStateView { get; private set; }
-
         protected Button StartTrackingButton { get; private set; }
+        protected View StoppedTimerSection { get; private set; }
+        protected View RunningTimerSection { get; private set; }
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public View Root { get; private set; }
+        private Context ctx;
+
+        private void FindViews ()
         {
-            return inflater.Inflate (Resource.Layout.TimerFragment, container, false);
+            RunningTimerSection = Root.FindViewById<View> (Resource.Id.RunningTimerSection);
+            StoppedTimerSection = Root.FindViewById<View> (Resource.Id.StoppedTimerSection);
+            StartTrackingButton = Root.FindViewById<Button> (Resource.Id.StartTrackingButton);
+            StopTrackingButton = Root.FindViewById<Button> (Resource.Id.StopTrackingButton);
+            DurationTextView = Root.FindViewById<TextView> (Resource.Id.DurationTextView);
+
+            StopTrackingButton.Click += OnStopTrackingButtonClicked;
+            StartTrackingButton.Click += OnStartTrackingButtonClicked;
+            DurationTextView.Click += OnDurationTextClicked;
         }
 
-        public override void OnStart ()
+        public void OnCreate (Context ctx)
         {
-            base.OnStart ();
+            this.ctx = ctx;
 
             runningEntry = TimeEntryModel.FindRunning ();
 
@@ -52,7 +59,7 @@ namespace Toggl.Joey.UI.Fragments
             Rebind ();
         }
 
-        public override void OnStop ()
+        public void OnStop ()
         {
             canRebind = false;
 
@@ -60,8 +67,6 @@ namespace Toggl.Joey.UI.Fragments
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Unsubscribe (subscriptionModelChanged);
             subscriptionModelChanged = null;
-
-            base.OnStop ();
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
@@ -115,10 +120,10 @@ namespace Toggl.Joey.UI.Fragments
 
         void OnDurationTextViewClicked (object sender, EventArgs e)
         {
-            long duration = (long)runningEntry.GetDuration ().TotalSeconds;
+            long duration = (long)runningEntry.Duration;
             long minutesInHours = 60 * 60;
-            int hours = (int)(duration / minutesInHours);
-            int minutes = (int)((duration % minutesInHours) / 60);
+            int hours = (int) (duration / minutesInHours);
+            int minutes = (int) ((duration % minutesInHours) / 60);
             var dialog = new TimePickerDialog (Activity, OnDurationSelected, hours, minutes, true);
             dialog.Show ();
         }
@@ -131,20 +136,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ShowStoppedState ()
         {
-            // Hide other states
-            if (RunningStateView != null) {
-                RunningStateView.Visibility = ViewStates.Gone;
-            }
-
-            // Lazy initialise stopped state
-            if (StoppedStateView == null) {
-                StoppedStateView = View.FindViewById<ViewStub> (Resource.Id.TimerStoppedViewStub).Inflate ();
-                StartTrackingButton = StoppedStateView.FindViewById<Button> (Resource.Id.StartTrackingButton);
-
-                StartTrackingButton.Click += OnStartTrackingButtonClicked;
-            }
-
-            StoppedStateView.Visibility = ViewStates.Visible;
+            RunningTimerSection.Visibility = ViewStates.Gone;
+            StoppedTimerSection.Visibility = ViewStates.Visible;
         }
 
         private void Rebind ()
@@ -178,9 +171,9 @@ namespace Toggl.Joey.UI.Fragments
 
             if (hasProjects) {
                 var entry = TimeEntryModel.StartNew ();
-                var intent = new Intent (Activity, typeof(ChooseProjectActivity));
+                var intent = new Intent (ctx, typeof(ChooseProjectActivity));
                 intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, entry.Id.ToString ());
-                StartActivity (intent);
+                ctx.StartActivity (intent);
             } else {
                 TimeEntryModel.StartNew ();
             }

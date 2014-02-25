@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using Android.Content;
 using Android.Views;
 using Android.Widget;
@@ -28,15 +28,16 @@ namespace Toggl.Joey.UI.Activities
         {
             ToggleProgressBar(false);
             if(msg.HadErrors) {
-                if (menu != null && menu.FindItem (SyncErrorMenuItemId) == null) {
-                    menu.Add (Menu.None, SyncErrorMenuItemId, Menu.None, "Sync error")
-                        .SetIcon (Resource.Drawable.IcDialogAlertHoloLight)
-                        .SetShowAsAction (ShowAsAction.Always);
-                }
+                //TODO Show some identificator
+//                if (menu != null && menu.FindItem (SyncErrorMenuItemId) == null) {
+//                    menu.Add (Menu.None, SyncErrorMenuItemId, Menu.None, "Sync error")
+//                        .SetIcon (Resource.Drawable.IcDialogAlertHoloLight)
+//                        .SetShowAsAction (ShowAsAction.Always);
+//                }
             } else {
-                if (menu != null && menu.FindItem (SyncErrorMenuItemId) != null) {
-                    menu.RemoveItem (SyncErrorMenuItemId);
-                }
+//                if (menu != null && menu.FindItem (SyncErrorMenuItemId) != null) {
+//                    menu.RemoveItem (SyncErrorMenuItemId);
+//                }
             }
         }
 
@@ -50,7 +51,9 @@ namespace Toggl.Joey.UI.Activities
             if (Handle == IntPtr.Zero)
                 return;
 
-            SetProgressBarIndeterminateVisibility (switchOn);
+            // For some reason It's not enought to make it in OnCreate.
+            SetSupportProgressBarIndeterminate (true);
+            SetSupportProgressBarVisibility (switchOn);
         }
 
         protected virtual bool RequireAuth {
@@ -82,8 +85,9 @@ namespace Toggl.Joey.UI.Activities
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
-            RequestWindowFeature(WindowFeatures.IndeterminateProgress);
+            RequestWindowFeature (WindowFeatures.Progress);
             BugsnagClient.OnActivityCreated (this);
+            SetSupportProgressBarIndeterminate (true);
             CheckAuth ();
         }
 

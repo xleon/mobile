@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dark_gray">#333333</color>
+    <color name="bright_green">#94cc3e</color>
+    <color name="bright_red">#ff3c47</color>
+    <color name="action_bar_duration_time">#858585</color>
+</resources>

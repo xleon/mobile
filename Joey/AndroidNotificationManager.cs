@@ -90,7 +90,10 @@ namespace Toggl.Joey
 
         private NotificationCompat.Builder CreateNotificationBuilder (Context ctx)
         {
-            var res = ctx.Resources;
+            Intent openTimeEntriesActivityIntent = new Intent(ctx, typeof(TimeTrackingActivity));
+            openTimeEntriesActivityIntent.SetAction(Intent.ActionMain);
+            openTimeEntriesActivityIntent.AddCategory(Intent.CategoryLauncher);
+            PendingIntent contentIntent = PendingIntent.GetActivity(ctx, 0, openTimeEntriesActivityIntent, 0);
 
             var openIntent = new Intent (ctx, typeof(TimeEntriesActivity));
             openIntent.SetAction (Intent.ActionMain);

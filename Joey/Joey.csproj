@@ -141,6 +141,7 @@
     <AndroidResource Include="Resources\layout\TimerComponent.axml" />
     <AndroidResource Include="Resources\drawable\MainListButton.9.png" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
+    <AndroidResource Include="Resources\layout\CurrentTimeEntryEditFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

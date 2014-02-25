@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/DurationTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="00:00:00"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/StartTimeEditText"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:editable="false"
+            android:text="00:00" />
+        <EditText
+            android:id="@+id/StopTimeEditText"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:editable="false"
+            android:text="00:00" />
+    </LinearLayout>
+    <EditText
+        android:id="@+id/DateEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Today"
+        android:editable="false" />
+    <EditText
+        android:id="@+id/DescriptionEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/CurrentTimeEntryEditDescriptionHint" />
+    <EditText
+        android:id="@+id/ProjectEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:editable="false"
+        android:hint="@string/CurrentTimeEntryEditProjectHint" />
+    <EditText
+        android:id="@+id/TagsEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:editable="false"
+        android:hint="@string/CurrentTimeEntryEditTagsHint" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <CheckBox
+            android:id="@+id/BillableCheckBox"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/CurrentTimeEntryEditBillableUnchecked"
+            android:gravity="center_vertical" />
+        <Button
+            android:id="@+id/DeleteButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical" />
+    </LinearLayout>
+</LinearLayout>

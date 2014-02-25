@@ -22,6 +22,7 @@ namespace Toggl.Phoebe.Data.Views
 
         private readonly int batchSize = 25;
         private int querySkip;
+        private DateTime queryStartDate;
         private IModelQuery<TimeEntryModel> query;
         private readonly List<Group> data = new List<Group> ();
         #pragma warning disable 0414
@@ -47,11 +48,21 @@ namespace Toggl.Phoebe.Data.Views
 
             if (grp != null) {
                 if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
-                    // Update group and resort data:
-                    ChangeDataAndNotify (delegate {
-                        grp.Update (entry);
-                        Sort ();
-                    });
+                    if (entry.StartTime >= queryStartDate) {
+                        // Update group and resort data:
+                        ChangeDataAndNotify (delegate {
+                            grp.Update (entry);
+                            Sort ();
+                        });
+                    } else {
+                        // Out side of date range, remove from list
+                        grp.Remove (entry);
+                        if (grp.IsEmpty) {
+                            data.Remove (grp);
+                        } else {
+                            Sort ();
+                        }
+                    }
                 } else if (msg.PropertyName == TimeEntryModel.PropertyDescription
                            || msg.PropertyName == TimeEntryModel.PropertyTaskId
                            || msg.PropertyName == TimeEntryModel.PropertyProjectId) {
@@ -82,8 +93,8 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            // Prevent showing of non-persisted and deleted entries:
-            if (!entry.IsPersisted || entry.DeletedAt.HasValue)
+            // Prevent showing of non-persisted, deleted entries and entries outside of the date range:
+            if (!entry.IsPersisted || entry.DeletedAt.HasValue || entry.StartTime < queryStartDate)
                 return;
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -107,10 +118,14 @@ namespace Toggl.Phoebe.Data.Views
 
         public override void Reload ()
         {
+            // Group only items in the past 9 days
+            queryStartDate = DateTime.UtcNow - TimeSpan.FromDays (9);
+
             // TODO: Add support for multiple workspaces
             query = Model.Query<TimeEntryModel> ()
                 .NotDeleted ()
                 .ForCurrentUser ()
+                .Where ((e) => e.StartTime >= queryStartDate)
                 .OrderBy ((e) => e.StartTime, false);
             querySkip = 0;
 

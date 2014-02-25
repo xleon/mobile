@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Android.OS;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
@@ -13,13 +14,20 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
+            var headerView = new View (Activity);
+            int headerWidth = (int) TypedValue.ApplyDimension (ComplexUnitType.Dip, 6, Resources.DisplayMetrics);
+            headerView.SetMinimumHeight (headerWidth);
+            ListView.AddHeaderView (headerView);
             ListAdapter = new RecentTimeEntriesAdapter ();
         }
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
-            var adapter = l.Adapter as RecentTimeEntriesAdapter;
+            var headerAdapter = l.Adapter as HeaderViewListAdapter;
+            RecentTimeEntriesAdapter adapter = null;
+            if (headerAdapter != null)
+                adapter = headerAdapter.WrappedAdapter as RecentTimeEntriesAdapter;
+
             if (adapter == null)
                 return;
 

@@ -1,70 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
-    android:background="?attr/activatedBackgroundIndicator"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="60dp">
-    <View
-        android:layout_width="3dip"
+    android:layout_height="60dp"
+    android:paddingLeft="6dp"
+    android:paddingRight="6dp">
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/ColorView"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="6dp" />
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_marginLeft="6dip"
-        android:layout_marginRight="6dip"
-        android:gravity="center_vertical">
+        android:layout_marginLeft="6dp"
+        android:layout_marginRight="6dp"
+        android:background="@drawable/MainListButton">
+        <View
+            android:layout_width="3dip"
+            android:layout_height="match_parent"
+            android:id="@+id/ColorView"
+            android:background="#ff0000" />
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/ColorView"
+            android:layout_toLeftOf="@+id/ContinueButton"
+            android:layout_marginLeft="6dp"
+            android:layout_marginTop="6dp"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
+            android:id="@+id/TopRow">
             <TextView
-                android:text="Client - Project | Task"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:text="Client - Project | Task"
                 android:id="@+id/ProjectTextView"
-                android:layout_weight="1"
-                android:layout_marginRight="6dip"
                 android:lines="1"
-                android:ellipsize="end" />
-            <TextView
-                android:text="16 may"
-                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:ellipsize="end"
+                android:textColor="@color/dark_gray_text"
+                android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:id="@+id/DateTextView" />
-        </LinearLayout>
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                android:layout_weight="1" />
             <TextView
-                android:text="@string/RecentTimeEntryNoDescription"
                 android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text=""
+                android:fontFamily="sans-serif-light"
+                android:textColor="@color/dark_gray_text"
+                android:textStyle="normal"
+                android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
                 android:id="@+id/DescriptionTextView"
-                android:layout_weight="1"
-                android:layout_marginRight="6dip"
                 android:lines="1"
-                android:ellipsize="end" />
-            <TextView
-                android:text="[T]"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:id="@+id/TagsTextView" />
-            <TextView
-                android:text="[B]"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:id="@+id/BillableTextView" />
+                android:ellipsize="end"
+                android:layout_marginRight="6dp"
+                android:layout_weight="1" />
         </LinearLayout>
-    </LinearLayout>
-</LinearLayout>
+        <Button
+            android:text="C"
+            android:layout_width="48dp"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
+            android:id="@+id/ContinueButton"
+            style="?android:attr/borderlessButtonStyle"
+            android:textColor="@color/dark_gray" />
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="04:15:34"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@color/dark_gray_text"
+            android:textStyle="normal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/DurationTextView"
+            android:lines="1"
+            android:layout_marginLeft="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_toRightOf="@+id/ColorView"
+            android:layout_alignParentBottom="true" />
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="[B]"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@color/dark_gray_text"
+            android:textStyle="normal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/BillableTextView"
+            android:lines="1"
+            android:layout_marginLeft="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_toRightOf="@+id/DurationTextView"
+            android:layout_alignParentBottom="true" />
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="[T]"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@color/dark_gray_text"
+            android:textStyle="normal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/TagsTextView"
+            android:lines="1"
+            android:layout_marginLeft="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_toRightOf="@+id/BillableTextView"
+            android:layout_alignParentBottom="true" />
+    </RelativeLayout>
+</FrameLayout>

@@ -3,15 +3,22 @@
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
         <item name="android:actionBarStyle">@style/Theme.Toggl.ActionBar</item>
         <item name="actionBarStyle">@style/Theme.Toggl.ActionBar</item>
+
+        <item name="android:listViewStyle">@style/Theme.Toggl.ListView</item>
+
+        <item name="android:windowBackground">@color/background_light_gray</item>
     </style>
     <style name="Theme.Toggl.Login" parent="Theme.Toggl.Base">
         <item name="android:windowNoTitle">true</item>
     </style>
-
+    <style name="Theme.Toggl.ListView" parent="@android:style/Widget.ListView">
+        <item name="android:divider">@android:color/transparent</item>
+        <item name="android:dividerHeight">2dp</item>
+        <item name="android:clipToPadding">false</item>
+    </style>
     <style name="Theme.Toggl.ActionBar" parent="@style/Widget.AppCompat.ActionBar">
         <item name="android:background">@color/dark_gray</item>
         <item name="android:titleTextStyle">@android:color/white</item>
-
         <item name="background">@color/dark_gray</item>
         <item name="titleTextStyle">@android:color/white</item>
     </style>

@@ -160,8 +160,6 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView ProjectTextView { get; private set; }
 
-            public TextView DateTextView { get; private set; }
-
             public TextView DescriptionTextView { get; private set; }
 
             public TextView TagsTextView { get; private set; }
@@ -182,7 +180,6 @@ namespace Toggl.Joey.UI.Adapters
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
-                DateTextView = root.FindViewById<TextView> (Resource.Id.DateTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
                 TagsTextView = root.FindViewById<TextView> (Resource.Id.TagsTextView);
                 BillableTextView = root.FindViewById<TextView> (Resource.Id.BillableTextView);
@@ -271,9 +268,6 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     DescriptionTextView.Text = model.Description;
                 }
-
-                // TODO: Use user defined date format
-                DateTextView.Text = model.StartTime.ToShortDateString ();
 
                 TagsTextView.Visibility = model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
                 BillableTextView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Gone;

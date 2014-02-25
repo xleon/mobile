@@ -11,6 +11,8 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
+using Android.Graphics.Drawables.Shapes;
+using Android.Graphics.Drawables;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -45,13 +47,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView ProjectTextView { get; private set; }
 
-            public TextView DateTextView { get; private set; }
-
             public TextView DescriptionTextView { get; private set; }
-
-            public TextView TagsTextView { get; private set; }
-
-            public TextView BillableTextView { get; private set; }
 
             public RecentTimeEntryListItemHolder (View root)
             {
@@ -67,10 +63,7 @@ namespace Toggl.Joey.UI.Adapters
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
-                DateTextView = root.FindViewById<TextView> (Resource.Id.DateTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
-                TagsTextView = root.FindViewById<TextView> (Resource.Id.TagsTextView);
-                BillableTextView = root.FindViewById<TextView> (Resource.Id.BillableTextView);
             }
 
             private void OnModelChanged (ModelChangedMessage msg)
@@ -154,19 +147,15 @@ namespace Toggl.Joey.UI.Adapters
                 if (model.Project != null) {
                     color = Color.ParseColor (model.Project.GetHexColor());
                 }
-                ColorView.SetBackgroundColor (color);
+
+                var shape = ColorView.Background as GradientDrawable;
+                shape.SetColor (color);
 
                 if (String.IsNullOrWhiteSpace (model.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                 } else {
                     DescriptionTextView.Text = model.Description;
                 }
-
-                // TODO: Use user defined date format
-                DateTextView.Text = model.StartTime.ToShortDateString ();
-
-                TagsTextView.Visibility = model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
-                BillableTextView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
             }
         }
     }

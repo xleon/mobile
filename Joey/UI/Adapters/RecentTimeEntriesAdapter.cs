@@ -73,7 +73,6 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (model == msg.Model) {
                     if (msg.PropertyName == TimeEntryModel.PropertyStartTime
-                        || msg.PropertyName == TimeEntryModel.PropertyIsBillable
                         || msg.PropertyName == TimeEntryModel.PropertyDescription
                         || msg.PropertyName == TimeEntryModel.PropertyProjectId
                         || msg.PropertyName == TimeEntryModel.PropertyTaskId)

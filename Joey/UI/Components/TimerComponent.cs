@@ -49,6 +49,13 @@ namespace Toggl.Joey.UI.Fragments
         {
             this.ctx = ctx;
 
+            Root = LayoutInflater.From (ctx).Inflate (Resource.Layout.TimerComponent, null);
+
+            FindViews ();
+        }
+
+        public void OnStart ()
+        {
             runningEntry = TimeEntryModel.FindRunning ();
 
             // Start listening for changes model changes
@@ -100,31 +107,13 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ShowRunningState ()
         {
-            // Hide other states
-            if (StoppedStateView != null) {
-                StoppedStateView.Visibility = ViewStates.Gone;
+            StoppedTimerSection.Visibility = ViewStates.Gone;
+            RunningTimerSection.Visibility = ViewStates.Visible;
             }
 
-            // Lazy initialise running state
-            if (RunningStateView == null) {
-                RunningStateView = View.FindViewById<ViewStub> (Resource.Id.TimerRunningViewStub).Inflate ();
-                DurationTextView = RunningStateView.FindViewById<TextView> (Resource.Id.DurationTextView);
-                StopTrackingButton = RunningStateView.FindViewById<Button> (Resource.Id.StopTrackingButton);
-
-                StopTrackingButton.Click += OnStopTrackingButtonClicked;
-                DurationTextView.Click += OnDurationTextViewClicked;
-            }
-
-            RunningStateView.Visibility = ViewStates.Visible;
-        }
-
-        void OnDurationTextViewClicked (object sender, EventArgs e)
+        void OnDurationTextClicked (object sender, EventArgs e)
         {
-            long duration = (long)runningEntry.Duration;
-            long minutesInHours = 60 * 60;
-            int hours = (int) (duration / minutesInHours);
-            int minutes = (int) ((duration % minutesInHours) / 60);
-            var dialog = new TimePickerDialog (Activity, OnDurationSelected, hours, minutes, true);
+            var dialog = new TimePickerDialog (ctx, OnDurationSelected, runningEntry.GetDuration().Hours, runningEntry.GetDuration().Minutes, true);
             dialog.Show ();
         }
 

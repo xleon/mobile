@@ -249,7 +249,7 @@ namespace Toggl.Joey.UI.Fragments
             if (Model.StopTime.HasValue) {
                 StopTimeEditText.Text = Model.StopTime.Value.ToLocalTime ().ToShortTimeString ();
             } else {
-                StopTimeEditText.Text = String.Empty;
+                StopTimeEditText.Text = DateTime.Now.ToShortTimeString ();
             }
 
             ProjectEditText.Text = Model.Project != null ? Model.Project.Name : String.Empty;

@@ -81,7 +81,7 @@ namespace Toggl.Joey.UI.Adapters
                     if (msg.PropertyName == ProjectModel.PropertyName
                         || msg.PropertyName == ProjectModel.PropertyColor)
                         Rebind ();
-                } else if (model.ProjectId.HasValue
+                } else if (model.ProjectId.HasValue && model.Project != null
                            && model.Project.ClientId.HasValue
                            && model.Project.ClientId == msg.Model.Id) {
                     if (msg.PropertyName == ClientModel.PropertyName)
@@ -144,7 +144,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 var color = Color.Transparent;
                 if (model.Project != null) {
-                    color = Color.ParseColor (model.Project.GetHexColor());
+                    color = Color.ParseColor (model.Project.GetHexColor ());
                 }
 
                 var shape = ColorView.Background as GradientDrawable;

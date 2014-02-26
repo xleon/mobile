@@ -211,24 +211,36 @@ namespace Toggl.Joey.UI.Fragments
             if (Model == null || !canRebind)
                 return;
 
-            var duration = Model.GetDuration ();
-            DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
+            if (Model.StartTime == DateTime.MinValue) {
+                var now = DateTime.Now;
+
+                DurationTextView.Text = TimeSpan.Zero.ToString ();
+                StartTimeEditText.Text = now.ToShortTimeString ();
+                DateEditText.Text = now.ToShortDateString ();
+
+                // Make sure that we display accurate time:
+                handler.PostDelayed (Rebind, 5000);
+            } else {
+                var duration = Model.GetDuration ();
+                DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
+
+                StartTimeEditText.Text = Model.StartTime.ToShortTimeString ();
+                DateEditText.Text = Model.StartTime.ToShortDateString ();
+
+                if (Model.State == TimeEntryState.Running) {
+                    handler.PostDelayed (Rebind, 1000 - duration.Milliseconds);
+                }
+            }
 
             // Only update DescriptionEditText when content differs, else the user is unable to edit it
             if (!descriptionChanging && DescriptionEditText.Text != Model.Description) {
                 DescriptionEditText.Text = Model.Description;
             }
 
-            StartTimeEditText.Text = Model.StartTime.ToShortTimeString ();
             StopTimeEditText.Text = Model.StopTime.HasValue ? Model.StopTime.Value.ToShortTimeString () : String.Empty;
-            DateEditText.Text = Model.StartTime.ToShortDateString ();
             ProjectEditText.Text = Model.Project != null ? Model.Project.Name : String.Empty;
             TagsEditText.Text = String.Join (", ", Model.Tags.Select ((t) => t.To.Name));
             BillableCheckBox.Checked = Model.IsBillable;
-
-            if (Model.State == TimeEntryState.Running) {
-                handler.PostDelayed (Rebind, 1000 - duration.Milliseconds);
-            }
         }
 
         private static bool ForCurrentUser (TimeEntryModel model)

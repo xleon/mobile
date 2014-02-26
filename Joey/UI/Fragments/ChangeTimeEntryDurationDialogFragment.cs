@@ -66,7 +66,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (model != null) {
                 var duration = model.GetDuration ();
-                duration = new TimeSpan (0, e.HourOfDay, e.Minute, duration.Seconds, duration.Milliseconds);
+                if (model.State == TimeEntryState.New) {
+                    duration = new TimeSpan (e.HourOfDay, e.Minute, 0);
+                } else {
+                    // Keep the current seconds and milliseconds
+                    duration = new TimeSpan (0, e.HourOfDay, e.Minute, duration.Seconds, duration.Milliseconds);
+                }
                 model.SetDuration (duration);
             }
             Dismiss ();

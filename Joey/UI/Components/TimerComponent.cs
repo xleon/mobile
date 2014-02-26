@@ -24,13 +24,18 @@ namespace Toggl.Joey.UI.Fragments
         private bool canRebind;
 
         protected TextView DurationTextView { get; private set; }
+
         protected Button StopTrackingButton { get; private set; }
+
         protected Button StartTrackingButton { get; private set; }
+
         protected View StoppedTimerSection { get; private set; }
+
         protected View RunningTimerSection { get; private set; }
 
         public View Root { get; private set; }
-        private Context ctx;
+
+        private BaseActivity activity;
 
         private void FindViews ()
         {
@@ -45,11 +50,11 @@ namespace Toggl.Joey.UI.Fragments
             DurationTextView.Click += OnDurationTextClicked;
         }
 
-        public void OnCreate (Context ctx)
+        public void OnCreate (BaseActivity activity)
         {
-            this.ctx = ctx;
+            this.activity = activity;
 
-            Root = LayoutInflater.From (ctx).Inflate (Resource.Layout.TimerComponent, null);
+            Root = LayoutInflater.From (activity).Inflate (Resource.Layout.TimerComponent, null);
 
             FindViews ();
         }
@@ -109,18 +114,13 @@ namespace Toggl.Joey.UI.Fragments
         {
             StoppedTimerSection.Visibility = ViewStates.Gone;
             RunningTimerSection.Visibility = ViewStates.Visible;
-            }
+        }
 
         void OnDurationTextClicked (object sender, EventArgs e)
         {
-            var dialog = new TimePickerDialog (ctx, OnDurationSelected, runningEntry.GetDuration().Hours, runningEntry.GetDuration().Minutes, true);
-            dialog.Show ();
-        }
-
-        void OnDurationSelected (object sender, TimePickerDialog.TimeSetEventArgs timeSetArgs)
-        {
-            runningEntry.SetDuration (TimeSpan.FromSeconds (timeSetArgs.HourOfDay * 60 * 60 + timeSetArgs.Minute * 60));
-            Rebind ();
+            if (runningEntry == null)
+                return;
+            new ChangeTimeEntryDurationDialogFragment (runningEntry).Show (activity.FragmentManager, "duration_dialog");
         }
 
         private void ShowStoppedState ()
@@ -160,9 +160,9 @@ namespace Toggl.Joey.UI.Fragments
 
             if (hasProjects) {
                 var entry = TimeEntryModel.StartNew ();
-                var intent = new Intent (ctx, typeof(ChooseProjectActivity));
+                var intent = new Intent (activity, typeof(ChooseProjectActivity));
                 intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, entry.Id.ToString ());
-                ctx.StartActivity (intent);
+                activity.StartActivity (intent);
             } else {
                 TimeEntryModel.StartNew ();
             }

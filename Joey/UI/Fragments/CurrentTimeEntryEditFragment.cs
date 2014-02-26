@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Android.App;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -60,11 +61,19 @@ namespace Toggl.Joey.UI.Fragments
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox);
             DeleteButton = view.FindViewById<Button> (Resource.Id.DeleteButton);
 
+            DurationTextView.Click += OnDurationTextViewClick;
             DescriptionEditText.TextChanged += OnDescriptionTextChanged;
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
 
             return view;
+        }
+
+        private void OnDurationTextViewClick (object sender, EventArgs e)
+        {
+            if (model == null)
+                return;
+            new ChangeTimeEntryDurationDialogFragment (model).Show (FragmentManager, "duration_dialog");
         }
 
         private void OnDescriptionTextChanged (object sender, Android.Text.TextChangedEventArgs e)

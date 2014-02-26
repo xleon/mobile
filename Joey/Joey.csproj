@@ -94,6 +94,7 @@
     <Compile Include="UI\Activities\TimeTrackingActivity.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\CurrentTimeEntryEditFragment.cs" />
+    <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

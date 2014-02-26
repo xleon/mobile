@@ -47,6 +47,10 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView ProjectTextView { get; private set; }
 
+            public TextView ClientTextView { get; private set; }
+
+            public TextView TaskTextView { get; private set; }
+
             public TextView DescriptionTextView { get; private set; }
 
             public RecentTimeEntryListItemHolder (View root)
@@ -64,6 +68,8 @@ namespace Toggl.Joey.UI.Adapters
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView);
+                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView);
             }
 
             private void OnModelChanged (ModelChangedMessage msg)
@@ -98,53 +104,31 @@ namespace Toggl.Joey.UI.Adapters
                 Rebind ();
             }
 
-            private string GetProjectText ()
-            {
-                var ctx = ServiceContainer.Resolve<Context> ();
-                stringBuilder.Clear ();
-
-                if (model.Project == null) {
-                    return ctx.GetString (Resource.String.RecentTimeEntryNoProject);
-                }
-
-                if (model.Project.Client != null
-                    && !String.IsNullOrWhiteSpace (model.Project.Client.Name)) {
-                    stringBuilder.Append (model.Project.Client.Name);
-                }
-
-                if (!String.IsNullOrWhiteSpace (model.Project.Name)) {
-                    if (stringBuilder.Length > 0) {
-                        stringBuilder.Append (" - ");
-                    }
-                    stringBuilder.Append (model.Project.Name);
-                }
-
-                if (model.Task != null
-                    && !String.IsNullOrWhiteSpace (model.Task.Name)) {
-                    if (stringBuilder.Length > 0) {
-                        stringBuilder.Append (" | ");
-                    }
-                    stringBuilder.Append (model.Task.Name);
-                }
-
-                return stringBuilder.ToString ();
-            }
-
             private void Rebind ()
             {
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (model.Project == null) {
-                    ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
-                } else if (model.Task != null) {
-                    ProjectTextView.Text = String.Format ("{0} | {1}", model.Project.Name, model.Task.Name);
+                if (model.Project != null && model.Project.Client != null) {
+                    ClientTextView.Text = model.Project.Client.Name;
                 } else {
-                    ProjectTextView.Text = model.Project.Name;
+                    ClientTextView.Text = "";
+                }
+
+                if (model.Task != null) {
+                    //Can't use margin, because with empty task description will still be margined
+                    TaskTextView.Text = model.Task.Name + "  ";
+                } else {
+                    TaskTextView.Text = "";
                 }
 
                 var color = Color.Transparent;
                 if (model.Project != null) {
-                    color = Color.ParseColor (model.Project.GetHexColor());
+                    color = Color.ParseColor (model.Project.GetHexColor ());
+                    ProjectTextView.SetTextColor (color);
+                    ProjectTextView.Text = model.Project.Name;
+                } else {
+                    ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
+                    ProjectTextView.SetTextColor (ctx.Resources.GetColor(Resource.Color.dark_gray_text));
                 }
 
                 var shape = ColorView.Background as GradientDrawable;

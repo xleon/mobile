@@ -274,7 +274,7 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.AreNotEqual (0, oldDuration);
 
             entry.SetDuration (oldDuration + TimeSpan.FromHours (1));
-            Assert.AreEqual (new DateTime (2013, 10, 1, 9, 12, 30, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1, 9, 12, 30, DateTimeKind.Utc), entry.StartTime.Truncate (TimeSpan.TicksPerSecond));
             Assert.AreEqual (null, entry.StopTime);
         }
 

@@ -330,7 +330,7 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.IsNull (entry.StopTime);
 
             entry.SetDuration (TimeSpan.FromHours (1));
-            Assert.IsNull (entry.StopTime);
+            Assert.IsNotNull (entry.StopTime);
             Assert.AreNotEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
         }
 

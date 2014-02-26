@@ -246,8 +246,16 @@ namespace Toggl.Phoebe.Data.Models
 
                 if (State == TimeEntryState.Finished) {
                     StopTime = StartTime + value;
-                } else if (State == TimeEntryState.New && StopTime.HasValue) {
-                    StartTime = StopTime.Value - value;
+                } else if (State == TimeEntryState.New) {
+                    if (value == TimeSpan.Zero) {
+                        StartTime = DateTime.MinValue;
+                        StopTime = null;
+                    } else if (StopTime.HasValue) {
+                        StartTime = StopTime.Value - value;
+                    } else {
+                        StartTime = now - value;
+                        StopTime = now;
+                    }
                 } else {
                     StartTime = now - value;
                 }

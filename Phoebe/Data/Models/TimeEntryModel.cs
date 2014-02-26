@@ -576,6 +576,22 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
+        public static TimeEntryModel GetDraft ()
+        {
+            lock (SyncRoot) {
+                var model = Model.Manager.Cached<TimeEntryModel> ()
+                    .FirstOrDefault ((m) => m.State == TimeEntryState.New);
+
+                if (model == null) {
+                    // Create new draft:
+                    model = Model.Update (new TimeEntryModel () {
+                    });
+                }
+
+                return model;
+            }
+        }
+
         public class TagsCollection : RelatedModelsCollection<TagModel, TimeEntryTagModel, TimeEntryModel, TagModel>
         {
             private readonly TimeEntryModel model;

@@ -10,6 +10,8 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
@@ -47,7 +49,7 @@ namespace Toggl.Joey.UI.Activities
             timerSection.OnCreate (this);
 
             var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
-            lp.Gravity = (int) (GravityFlags.Right | GravityFlags.CenterVertical);
+            lp.Gravity = (int)(GravityFlags.Right | GravityFlags.CenterVertical);
 
             ActionBar.SetCustomView (timerSection.Root, lp);
             ActionBar.SetDisplayShowCustomEnabled (true);
@@ -77,6 +79,10 @@ namespace Toggl.Joey.UI.Activities
             public const int RecentPosition = 1;
             public const int LogPosition = 2;
             private Context ctx;
+            private TimeEntryModel currentTimeEntry;
+            #pragma warning disable 0414
+            private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
+            #pragma warning restore 0414
             private readonly CurrentTimeEntryEditFragment editFragment = new CurrentTimeEntryEditFragment ();
             private readonly RecentTimeEntriesListFragment recentFragment = new RecentTimeEntriesListFragment ();
             private readonly LogTimeEntriesListFragment logFragment = new LogTimeEntriesListFragment ();
@@ -84,6 +90,40 @@ namespace Toggl.Joey.UI.Activities
             public MainPagerAdapter (Context ctx, FragmentManager fm) : base (fm)
             {
                 this.ctx = ctx;
+
+                currentTimeEntry = TimeEntryModel.FindRunning () ?? TimeEntryModel.GetDraft ();
+
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            }
+
+            private void OnModelChanged (ModelChangedMessage msg)
+            {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
+                if (msg.Model == currentTimeEntry) {
+                    // Listen for changes regarding current running entry
+                    if (msg.PropertyName == TimeEntryModel.PropertyState
+                        || msg.PropertyName == TimeEntryModel.PropertyStopTime
+                        || msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
+                        if (currentTimeEntry.State == TimeEntryState.Finished || currentTimeEntry.DeletedAt.HasValue) {
+                            currentTimeEntry = TimeEntryModel.GetDraft ();
+                        }
+                        NotifyDataSetChanged ();
+                    }
+                } else if (msg.Model is TimeEntryModel) {
+                    // When some other time entry becomes IsRunning we need to switch over to that
+                    if (msg.PropertyName == TimeEntryModel.PropertyState
+                        || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
+                        var entry = (TimeEntryModel)msg.Model;
+                        if (entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
+                            currentTimeEntry = entry;
+                            NotifyDataSetChanged ();
+                        }
+                    }
+                }
             }
 
             public override int Count {
@@ -96,14 +136,14 @@ namespace Toggl.Joey.UI.Activities
 
                 switch (position) {
                 case EditPosition:
-                    // TODO: Determine if there are any running time entries
-                    var isRunning = false;
-
-                    if (isRunning) {
-                        return res.GetTextFormatted (Resource.String.TimeTrackingRunningTab);
-                    } else {
-                        return res.GetTextFormatted (Resource.String.TimeTrackingNewTab);
+                    if (currentTimeEntry != null) {
+                        if (currentTimeEntry.State == TimeEntryState.Running) {
+                            return res.GetTextFormatted (Resource.String.TimeTrackingRunningTab);
+                        } else if (currentTimeEntry.State == TimeEntryState.New && currentTimeEntry.StopTime.HasValue) {
+                            return res.GetTextFormatted (Resource.String.TimeTrackingManualTab);
+                        }
                     }
+                    return res.GetTextFormatted (Resource.String.TimeTrackingNewTab);
                 case RecentPosition:
                     // TODO: Determine if first run:
                     var firstRun = false;
@@ -132,6 +172,12 @@ namespace Toggl.Joey.UI.Activities
                 default:
                     throw new InvalidOperationException ("Unknown tab position");
                 }
+            }
+
+            private static bool ForCurrentUser (TimeEntryModel model)
+            {
+                var authManager = ServiceContainer.Resolve<AuthManager> ();
+                return model.UserId == authManager.UserId;
             }
         }
     }

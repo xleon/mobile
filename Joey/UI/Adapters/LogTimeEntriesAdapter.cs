@@ -187,6 +187,10 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnModelChanged (ModelChangedMessage msg)
             {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
                 if (model == null)
                     return;
 

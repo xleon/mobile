@@ -239,6 +239,10 @@ namespace Toggl.Phoebe.Data.Models
         private TimeSpan GetDuration (DateTime now)
         {
             lock (SyncRoot) {
+                if (StartTime == DateTime.MinValue) {
+                    return TimeSpan.Zero;
+                }
+
                 var duration = (StopTime ?? now) - StartTime;
                 if (duration < TimeSpan.Zero) {
                     duration = TimeSpan.Zero;

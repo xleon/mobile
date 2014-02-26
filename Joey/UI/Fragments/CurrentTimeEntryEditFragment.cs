@@ -224,8 +224,9 @@ namespace Toggl.Joey.UI.Fragments
                 var duration = Model.GetDuration ();
                 DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
 
-                StartTimeEditText.Text = Model.StartTime.ToShortTimeString ();
-                DateEditText.Text = Model.StartTime.ToShortDateString ();
+                var startTime = Model.StartTime.ToLocalTime ();
+                StartTimeEditText.Text = startTime.ToShortTimeString ();
+                DateEditText.Text = startTime.ToShortDateString ();
 
                 if (Model.State == TimeEntryState.Running) {
                     handler.PostDelayed (Rebind, 1000 - duration.Milliseconds);
@@ -237,7 +238,12 @@ namespace Toggl.Joey.UI.Fragments
                 DescriptionEditText.Text = Model.Description;
             }
 
-            StopTimeEditText.Text = Model.StopTime.HasValue ? Model.StopTime.Value.ToShortTimeString () : String.Empty;
+            if (Model.StopTime.HasValue) {
+                StopTimeEditText.Text = Model.StopTime.Value.ToLocalTime ().ToShortTimeString ();
+            } else {
+                StopTimeEditText.Text = String.Empty;
+            }
+
             ProjectEditText.Text = Model.Project != null ? Model.Project.Name : String.Empty;
             TagsEditText.Text = String.Join (", ", Model.Tags.Select ((t) => t.To.Name));
             BillableCheckBox.Checked = Model.IsBillable;

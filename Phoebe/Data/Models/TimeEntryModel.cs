@@ -580,7 +580,7 @@ namespace Toggl.Phoebe.Data.Models
         {
             lock (SyncRoot) {
                 var model = Model.Manager.Cached<TimeEntryModel> ()
-                    .FirstOrDefault ((m) => m.State == TimeEntryState.New);
+                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null);
 
                 if (model == null) {
                     // Create new draft:

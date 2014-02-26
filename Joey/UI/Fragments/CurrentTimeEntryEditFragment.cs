@@ -91,9 +91,9 @@ namespace Toggl.Joey.UI.Fragments
         private void OnDescriptionEditorAction (object sender, TextView.EditorActionEventArgs e)
         {
             if (e.ActionId == Android.Views.InputMethods.ImeAction.Done) {
-                e.Handled = true;
                 CommitDescriptionChanges ();
             }
+            e.Handled = false;
         }
 
         private void CommitDescriptionChanges ()

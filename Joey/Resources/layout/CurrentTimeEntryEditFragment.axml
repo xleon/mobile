@@ -22,6 +22,8 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:editable="false"
+            android:cursorVisible="false"
+            android:focusableInTouchMode="false"
             android:text="00:00" />
         <EditText
             android:id="@+id/StopTimeEditText"
@@ -29,6 +31,8 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:editable="false"
+            android:cursorVisible="false"
+            android:focusableInTouchMode="false"
             android:text="00:00" />
     </LinearLayout>
     <EditText
@@ -36,23 +40,32 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Today"
-        android:editable="false" />
+        android:editable="false"
+        android:cursorVisible="false"
+        android:focusableInTouchMode="false" />
     <EditText
         android:id="@+id/DescriptionEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/CurrentTimeEntryEditDescriptionHint" />
+        android:inputType="textCapSentences"
+        android:singleLine="true"
+        android:hint="@string/CurrentTimeEntryEditDescriptionHint"
+        android:imeOptions="actionDone" />
     <EditText
         android:id="@+id/ProjectEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:editable="false"
+        android:cursorVisible="false"
+        android:focusableInTouchMode="false"
         android:hint="@string/CurrentTimeEntryEditProjectHint" />
     <EditText
         android:id="@+id/TagsEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:editable="false"
+        android:cursorVisible="false"
+        android:focusableInTouchMode="false"
         android:hint="@string/CurrentTimeEntryEditTagsHint" />
     <LinearLayout
         android:orientation="horizontal"

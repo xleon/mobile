@@ -66,6 +66,7 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
+            DeleteButton.Click += OnDeleteButtonClick;
 
             return view;
         }
@@ -103,6 +104,17 @@ namespace Toggl.Joey.UI.Fragments
                 return;
 
             Model.IsBillable = BillableCheckBox.Checked;
+        }
+
+        private void OnDeleteButtonClick (object sender, EventArgs e)
+        {
+            if (Model == null)
+                return;
+
+            Model.Delete ();
+            Model = TimeEntryModel.GetDraft ();
+
+            Toast.MakeText (Activity, Resource.String.CurrentTimeEntryEditDeleteToast, ToastLength.Short).Show ();
         }
 
         private void CommitDescriptionChanges ()
@@ -154,8 +166,9 @@ namespace Toggl.Joey.UI.Fragments
                     || msg.PropertyName == TimeEntryModel.PropertyDescription
                     || msg.PropertyName == TimeEntryModel.PropertyIsBillable
                     || msg.PropertyName == TimeEntryModel.PropertyProjectId
-                    || msg.PropertyName == TimeEntryModel.PropertyTaskId) {
-                    if (Model.State == TimeEntryState.Finished) {
+                    || msg.PropertyName == TimeEntryModel.PropertyTaskId
+                    || msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
+                    if (Model.State == TimeEntryState.Finished || Model.DeletedAt.HasValue) {
                         Model = TimeEntryModel.GetDraft ();
                     }
                     Rebind ();

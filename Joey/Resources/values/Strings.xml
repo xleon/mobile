@@ -37,4 +37,5 @@
     <string name="CurrentTimeEntryEditTagsHint">Add tags&#8230;</string>
     <string name="CurrentTimeEntryEditBillableChecked">Billable</string>
     <string name="CurrentTimeEntryEditBillableUnchecked">Non-billable</string>
+    <string name="CurrentTimeEntryEditDeleteToast">Time entry has been discarded</string>
 </resources>

@@ -65,6 +65,7 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.TextChanged += OnDescriptionTextChanged;
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
+            BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
 
             return view;
         }
@@ -94,6 +95,14 @@ namespace Toggl.Joey.UI.Fragments
                 CommitDescriptionChanges ();
             }
             e.Handled = false;
+        }
+
+        private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)
+        {
+            if (Model == null)
+                return;
+
+            Model.IsBillable = BillableCheckBox.Checked;
         }
 
         private void CommitDescriptionChanges ()

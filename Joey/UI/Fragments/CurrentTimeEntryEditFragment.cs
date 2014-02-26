@@ -62,6 +62,7 @@ namespace Toggl.Joey.UI.Fragments
             DeleteButton = view.FindViewById<Button> (Resource.Id.DeleteButton);
 
             DurationTextView.Click += OnDurationTextViewClick;
+            DateEditText.Click += OnDateEditTextClick;
             DescriptionEditText.TextChanged += OnDescriptionTextChanged;
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
@@ -76,6 +77,13 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null)
                 return;
             new ChangeTimeEntryDurationDialogFragment (model).Show (FragmentManager, "duration_dialog");
+        }
+
+        private void OnDateEditTextClick (object sender, EventArgs e)
+        {
+            if (model == null)
+                return;
+            new ChangeTimeEntryDateDialogFragment (model).Show (FragmentManager, "date_dialog");
         }
 
         private void OnDescriptionTextChanged (object sender, Android.Text.TextChangedEventArgs e)

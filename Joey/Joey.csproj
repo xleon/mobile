@@ -95,6 +95,7 @@
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\CurrentTimeEntryEditFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
+    <Compile Include="UI\Fragments\ChangeTimeEntryDateDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

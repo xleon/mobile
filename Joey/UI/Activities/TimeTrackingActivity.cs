@@ -25,6 +25,7 @@ namespace Toggl.Joey.UI.Activities
     [Activity (
         Label = "@string/EntryName",
         MainLauncher = true,
+        WindowSoftInputMode = SoftInput.AdjustPan,
         Theme = "@style/Theme.Toggl.App")]
     public class TimeTrackingActivity : BaseActivity
     {

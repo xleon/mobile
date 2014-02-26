@@ -186,17 +186,25 @@ namespace Toggl.Phoebe.Data.Models
 
                     var duration = GetDuration ();
 
-                    ChangePropertyAndNotify (PropertyStartTime, delegate {
-                        startTime = value;
-                    });
+                    SetStartTime (value);
 
                     if (LogicEnabled) {
-                        if (State == TimeEntryState.Finished && StopTime.HasValue) {
-                            SetDuration (duration);
+                        if (State != TimeEntryState.Running) {
+                            StopTime = startTime + duration;
                         }
                     }
                 }
             }
+        }
+
+        private void SetStartTime (DateTime value)
+        {
+            if (startTime == value)
+                return;
+
+            ChangePropertyAndNotify (PropertyStartTime, delegate {
+                startTime = value;
+            });
         }
 
         private DateTime? stopTime;
@@ -248,16 +256,16 @@ namespace Toggl.Phoebe.Data.Models
                     StopTime = StartTime + value;
                 } else if (State == TimeEntryState.New) {
                     if (value == TimeSpan.Zero) {
-                        StartTime = DateTime.MinValue;
+                        SetStartTime (DateTime.MinValue);
                         StopTime = null;
                     } else if (StopTime.HasValue) {
-                        StartTime = StopTime.Value - value;
+                        SetStartTime (StopTime.Value - value);
                     } else {
-                        StartTime = now - value;
+                        SetStartTime (now - value);
                         StopTime = now;
                     }
                 } else {
-                    StartTime = now - value;
+                    SetStartTime (now - value);
                 }
             }
         }

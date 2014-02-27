@@ -130,11 +130,13 @@ namespace Toggl.Joey.UI.Adapters
             var model = GetModel (position);
 
             if (GetHeaderAt (position) != null) {
+                view = view as LinearLayout;
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
                 }
-                view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).Text = GetHeaderAt (position).Date.ToShortDateString ();
+                TextView headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView);
+                headerTextView.Text = GetHeaderAt (position).Date.ToShortDateString ();
             } else {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -160,11 +162,19 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView ProjectTextView { get; private set; }
 
+            public TextView ClientTextView { get; private set; }
+
+            public TextView TaskTextView { get; private set; }
+
             public TextView DescriptionTextView { get; private set; }
 
-            public TextView TagsTextView { get; private set; }
+            public View TagsView { get; private set; }
 
-            public TextView BillableTextView { get; private set; }
+            public View BillableView { get; private set; }
+
+            public TextView DurationTextView { get; private set; }
+
+            public Button ContinueButton { get; private set; }
 
             public TimeEntryListItemHolder (View root)
             {
@@ -180,9 +190,22 @@ namespace Toggl.Joey.UI.Adapters
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView);
+                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
-                TagsTextView = root.FindViewById<TextView> (Resource.Id.TagsTextView);
-                BillableTextView = root.FindViewById<TextView> (Resource.Id.BillableTextView);
+                TagsView = root.FindViewById<View> (Resource.Id.TagsIcon);
+                BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
+                DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView);
+                ContinueButton = root.FindViewById<Button> (Resource.Id.ContinueButton);
+
+                ContinueButton.Click += OnContinueButtonClicked;
+            }
+
+            void OnContinueButtonClicked (object sender, EventArgs e)
+            {
+                if (model == null)
+                    return;
+                model.Continue ();
             }
 
             private void OnModelChanged (ModelChangedMessage msg)
@@ -202,7 +225,8 @@ namespace Toggl.Joey.UI.Adapters
                     if (msg.PropertyName == ProjectModel.PropertyName
                         || msg.PropertyName == ProjectModel.PropertyColor)
                         Rebind ();
-                } else if (model.ProjectId.HasValue
+                } else if (model.ProjectId.HasValue 
+                            && model.Project != null
                            && model.Project.ClientId.HasValue
                            && model.Project.ClientId == msg.Model.Id) {
                     if (msg.PropertyName == ClientModel.PropertyName)
@@ -219,47 +243,31 @@ namespace Toggl.Joey.UI.Adapters
                 Rebind ();
             }
 
-            private string GetProjectText ()
-            {
-                var ctx = ServiceContainer.Resolve<Context> ();
-                stringBuilder.Clear ();
-
-                if (model.Project == null) {
-                    return ctx.GetString (Resource.String.RecentTimeEntryNoProject);
-                }
-
-                if (model.Project.Client != null
-                    && !String.IsNullOrWhiteSpace (model.Project.Client.Name)) {
-                    stringBuilder.Append (model.Project.Client.Name);
-                }
-
-                if (!String.IsNullOrWhiteSpace (model.Project.Name)) {
-                    if (stringBuilder.Length > 0) {
-                        stringBuilder.Append (" - ");
-                    }
-                    stringBuilder.Append (model.Project.Name);
-                }
-
-                if (model.Task != null
-                    && !String.IsNullOrWhiteSpace (model.Task.Name)) {
-                    if (stringBuilder.Length > 0) {
-                        stringBuilder.Append (" | ");
-                    }
-                    stringBuilder.Append (model.Task.Name);
-                }
-
-                return stringBuilder.ToString ();
-            }
-
             private void Rebind ()
             {
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                ProjectTextView.Text = GetProjectText ();
+                if (model.Project != null && model.Project.Client != null) {
+                    ClientTextView.Text = model.Project.Client.Name;
+                } else {
+                    ClientTextView.Text = "";
+                }
+
+                if (model.Task != null) {
+                    //Can't use margin, because with empty task description will still be margined
+                    TaskTextView.Text = model.Task.Name + "  ";
+                } else {
+                    TaskTextView.Text = "";
+                }
 
                 var color = Color.Transparent;
                 if (model.Project != null) {
                     color = Color.ParseColor (model.Project.GetHexColor ());
+                    ProjectTextView.SetTextColor (color);
+                    ProjectTextView.Text = model.Project.Name;
+                } else {
+                    ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
+                    ProjectTextView.SetTextColor (ctx.Resources.GetColor(Resource.Color.dark_gray_text));
                 }
                 ColorView.SetBackgroundColor (color);
 
@@ -269,8 +277,10 @@ namespace Toggl.Joey.UI.Adapters
                     DescriptionTextView.Text = model.Description;
                 }
 
-                TagsTextView.Visibility = model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
-                BillableTextView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
+                TagsView.Visibility = model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Invisible;
+                BillableView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Invisible;
+
+                DurationTextView.Text = model.GetDuration ().ToString ();
             }
         }
     }

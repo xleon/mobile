@@ -15,23 +15,28 @@ namespace Toggl.Phoebe.Data.Models
             return expr.ToPropertyName ();
         }
 
+        private static readonly string LogTag = "TimeEntryModel";
         internal static readonly string DefaultTag = "mobile";
 
+        [Obsolete ("Use draft based time entry creation instead.")]
         public static TimeEntryModel StartNew ()
         {
             return StartNew (null, null, null);
         }
 
+        [Obsolete ("Use draft based time entry creation instead.")]
         public static TimeEntryModel StartNew (WorkspaceModel workspace)
         {
             return StartNew (workspace, null, null);
         }
 
+        [Obsolete ("Use draft based time entry creation instead.")]
         public static TimeEntryModel StartNew (ProjectModel project)
         {
             return StartNew (project.Workspace, project, null);
         }
 
+        [Obsolete ("Use draft based time entry creation instead.")]
         public static TimeEntryModel StartNew (TaskModel task)
         {
             return StartNew (task.Project.Workspace, task.Project, task);
@@ -510,7 +515,12 @@ namespace Toggl.Phoebe.Data.Models
                     foreach (var entry in entries) {
                         if (entry == this)
                             continue;
-                        entry.Stop ();
+                        try {
+                            entry.Stop ();
+                        } catch (InvalidOperationException ex) {
+                            var log = ServiceContainer.Resolve<Logger> ();
+                            log.Debug (LogTag, ex, "Failed to stop time entry in memory.");
+                        }
                     }
 
                     // Double check the database as well:
@@ -518,7 +528,12 @@ namespace Toggl.Phoebe.Data.Models
                         (m) => m.UserId == UserId && m.State == TimeEntryState.Running && m.Id != Id)
                         .NotDeleted ();
                     foreach (var entry in entries) {
-                        entry.Stop ();
+                        try {
+                            entry.Stop ();
+                        } catch (InvalidOperationException ex) {
+                            var log = ServiceContainer.Resolve<Logger> ();
+                            log.Debug (LogTag, ex, "Failed to stop time entry from store.");
+                        }
                     }
                 }
             }
@@ -527,32 +542,116 @@ namespace Toggl.Phoebe.Data.Models
         public override void Delete ()
         {
             lock (SyncRoot) {
-                if (IsShared && IsPersisted && State == TimeEntryState.Running)
-                    Stop ();
+                if (IsShared && IsPersisted && State == TimeEntryState.Running) {
+                    try {
+                        Stop ();
+                    } catch (InvalidOperationException ex) {
+                        var log = ServiceContainer.Resolve<Logger> ();
+                        log.Debug (LogTag, ex, "Failed to stop time entry before deleting it.");
+                    }
+                }
                 base.Delete ();
             }
         }
 
+        /// <summary>
+        /// Stores the draft time entry in model store as a running time entry.
+        /// </summary>
+        public void Start ()
+        {
+            lock (SyncRoot) {
+                if (!IsShared)
+                    throw new InvalidOperationException ("Model needs to be the shared.");
+                if (State != TimeEntryState.New)
+                    throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", State));
+                if (StartTime != DateTime.MinValue || StopTime.HasValue)
+                    throw new InvalidOperationException ("Cannot start tracking time entry with start/stop time set already.");
+
+                if (Task != null) {
+                    Project = Task.Project;
+                }
+                if (Project != null) {
+                    Workspace = Project.Workspace;
+                }
+                if (Workspace == null && User != null) {
+                    Workspace = User.DefaultWorkspace;
+                }
+                if (Workspace == null) {
+                    throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
+                }
+
+                StartTime = DateTime.UtcNow;
+                IsPersisted = true;
+                State = TimeEntryState.Running;
+            }
+        }
+
+        /// <summary>
+        /// Stores the draft time entry in model store as a finished time entry.
+        /// </summary>
+        public void Store ()
+        {
+            lock (SyncRoot) {
+                if (!IsShared)
+                    throw new InvalidOperationException ("Model needs to be the shared.");
+                if (State != TimeEntryState.New)
+                    throw new InvalidOperationException (String.Format ("Cannot store a time entry in {0} state.", State));
+                if (StartTime == DateTime.MinValue || StopTime == null)
+                    throw new InvalidOperationException ("Cannot store time entry with start/stop time not set.");
+
+                if (Task != null) {
+                    Project = Task.Project;
+                }
+                if (Project != null) {
+                    Workspace = Project.Workspace;
+                }
+                if (Workspace == null && User != null) {
+                    Workspace = User.DefaultWorkspace;
+                }
+                if (Workspace == null) {
+                    throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
+                }
+
+                IsPersisted = true;
+                State = TimeEntryState.Finished;
+            }
+        }
+
+        /// <summary>
+        /// Marks the currently running time entry as finished.
+        /// </summary>
         public void Stop ()
         {
             lock (SyncRoot) {
                 if (!IsShared || !IsPersisted)
                     throw new InvalidOperationException ("Model needs to be the shared and persisted.");
 
+                if (State != TimeEntryState.Running)
+                    throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", State));
+
                 StopTime = DateTime.UtcNow;
                 State = TimeEntryState.Finished;
             }
         }
 
+        /// <summary>
+        /// Continues the finished time entry, either by creating a new time entry or restarting the current one.
+        /// </summary>
         public TimeEntryModel Continue ()
         {
             lock (SyncRoot) {
                 if (!IsShared || !IsPersisted)
                     throw new InvalidOperationException ("Model needs to be the shared and persisted.");
 
-                // Time entry is already running, nothing to continue
-                if (State == TimeEntryState.Running)
+                // Validate the current state
+                switch (State) {
+                case TimeEntryState.Running:
                     return this;
+                case TimeEntryState.Finished:
+                    break;
+                default:
+                    throw new InvalidOperationException (String.Format ("Cannot continue a time entry in {0} state.", State));
+                }
 
                 if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
                     if (RemoteId == null) {
@@ -599,12 +698,18 @@ namespace Toggl.Phoebe.Data.Models
         public static TimeEntryModel GetDraft ()
         {
             lock (SyncRoot) {
+                var user = ServiceContainer.Resolve<AuthManager> ().User;
+
                 var model = Model.Manager.Cached<TimeEntryModel> ()
-                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null);
+                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.User == user);
 
                 if (model == null) {
                     // Create new draft:
                     model = Model.Update (new TimeEntryModel () {
+                        State = TimeEntryState.New,
+                        User = user,
+                        DurationOnly = user.TrackingMode == TrackingMode.Continue,
+                        StringTags = new List<string> () { DefaultTag },
                     });
                 }
 

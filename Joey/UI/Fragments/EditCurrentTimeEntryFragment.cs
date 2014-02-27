@@ -64,6 +64,8 @@ namespace Toggl.Joey.UI.Fragments
             DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
 
             DurationTextView.Click += OnDurationTextViewClick;
+            StartTimeEditText.Click += OnStartTimeEditTextClick;
+            StopTimeEditText.Click += OnStopTimeEditTextClick;
             DateEditText.Click += OnDateEditTextClick;
             DescriptionEditText.TextChanged += OnDescriptionTextChanged;
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
@@ -80,6 +82,20 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null)
                 return;
             new ChangeTimeEntryDurationDialogFragment (model).Show (FragmentManager, "duration_dialog");
+        }
+
+        private void OnStartTimeEditTextClick (object sender, EventArgs e)
+        {
+            if (model == null)
+                return;
+            new ChangeTimeEntryStartTimeDialogFragment (model).Show (FragmentManager, "time_dialog");
+        }
+
+        private void OnStopTimeEditTextClick (object sender, EventArgs e)
+        {
+            if (model == null || model.State == TimeEntryState.Running)
+                return;
+            new ChangeTimeEntryStopTimeDialogFragment (model).Show (FragmentManager, "time_dialog");
         }
 
         private void OnDateEditTextClick (object sender, EventArgs e)

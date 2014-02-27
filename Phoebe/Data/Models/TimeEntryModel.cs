@@ -762,6 +762,10 @@ namespace Toggl.Phoebe.Data.Models
                             WorkspaceId = model.WorkspaceId,
                             IsPersisted = true,
                         });
+                        // Since we're auto creating this, we want to be sure that there wouldn't be any conflicts
+                        // with server-side data. Having modified at as something in the very past allows server data
+                        // to take precedence.
+                        tagModel.ModifiedAt = DateTime.MinValue;
                     }
 
                     return Add (tagModel);

@@ -280,7 +280,7 @@ namespace Toggl.Joey.UI.Adapters
                 TagsView.Visibility = model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Invisible;
                 BillableView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Invisible;
 
-                DurationTextView.Text = model.GetDuration ().ToString ();
+                DurationTextView.Text = model.GetDuration ().ToString(@"hh\:mm\:ss"); 
             }
         }
     }

@@ -37,8 +37,7 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null)
                 return;
 
-            model.IsPersisted = true;
-            model.Continue ();
+            // TODO Call Edit screen for this row
         }
 
         private void OnItemChecked (object sender, MultipleModalChoiceShim.ItemCheckedEventArgs e)

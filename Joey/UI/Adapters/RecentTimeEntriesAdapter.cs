@@ -37,7 +37,6 @@ namespace Toggl.Joey.UI.Adapters
 
         private class RecentTimeEntryListItemHolder : Java.Lang.Object
         {
-            private readonly StringBuilder stringBuilder = new StringBuilder ();
             #pragma warning disable 0414
             private readonly object subscriptionModelChanged;
             #pragma warning restore 0414

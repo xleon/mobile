@@ -138,7 +138,6 @@
     <AndroidResource Include="Resources\values\colors.xml" />
     <AndroidResource Include="Resources\layout\TimeTrackingActivity.axml" />
     <AndroidResource Include="Resources\layout\TimerComponent.axml" />
-    <AndroidResource Include="Resources\drawable\MainListButton.9.png" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTagsMiniGray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcTagsMiniGray.png" />
@@ -158,8 +157,6 @@
     <AndroidResource Include="Resources\drawable-hdpi\Ic_logo_top_hdpi.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_drawer_gray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_warning_gray.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\bg_card_white.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\bg_card_white_pressed.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_timer_gray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_reports_gray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_projects_gray.png" />
@@ -167,7 +164,6 @@
     <AndroidResource Include="Resources\drawable-hdpi\Ic_workspace_gray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_subscription_gray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_arrow_down_gray.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcBillableMiniGray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_dots_gray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_tick_green.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_loading_green.png" />
@@ -178,8 +174,6 @@
     <AndroidResource Include="Resources\drawable-mdpi\Ic_logo_top.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_drawer_gray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_warning_gray.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\bg_card_white.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\bg_card_white_pressed.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_timer_gray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_reports_gray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_projects_gray.png" />
@@ -199,8 +193,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_logo_top.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_drawer_gray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_warning_gray.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\bg_card_white.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\bg_card_white_pressed.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_timer_gray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_reports_gray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_projects_gray.png" />
@@ -219,8 +211,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_logo_top.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_drawer_gray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_warning_gray_xxhdpi.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\bg_card_white.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\bg_card_white_pressed.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_timer_gray_xxhdpi.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_reports_gray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_projects_gray.png" />
@@ -228,6 +218,18 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_workspace_gray_xxhdpi.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_subscription_gray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_arrow_down_gray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcBillableMiniGray.png" />
+    <AndroidResource Include="Resources\drawable\BgMainListButton.9.png" />
+    <AndroidResource Include="Resources\drawable\BgMainListButtonPressed.9.png" />
+    <AndroidResource Include="Resources\drawable\MainListButton.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\BgMainListButton.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\BgMainListButtonPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\BgMainListButton.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\BgMainListButtonPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\BgMainListButton.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\BgMainListButtonPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\BgMainListButton.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\BgMainListButtonPressed.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

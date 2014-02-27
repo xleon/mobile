@@ -1,93 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="64dp">
-    <RelativeLayout
-        android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:background="@drawable/MainListButton">
+    <View
+        android:layout_width="4dip"
         android:layout_height="match_parent"
-        android:background="@drawable/MainListButton">
-        <View
-            android:layout_width="4dip"
-            android:layout_height="match_parent"
-            android:id="@+id/ColorView"
-            android:background="@drawable/ColoredSideShape" />
+        android:id="@+id/ColorView"
+        android:background="@drawable/ColoredSideShape" />
+    <TextView
+        android:text="Project"
+        android:id="@+id/ProjectTextView"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_toStartOf="@+id/ClientTextView"
+        style="@style/TimeEntryListItem.Title.Project" />
+    <TextView
+        android:text="Client"
+        android:id="@+id/ClientTextView"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/TagsIcon"
+        android:layout_alignBaseline="@+id/ProjectTextView"
+        style="@style/TimeEntryListItem.Title.Client" />
+    <ImageView
+        android:id="@+id/TagsIcon"
+        android:src="@drawable/IcTagsMiniGray"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:layout_toLeftOf="@+id/BillableIcon"
+        android:layout_alignBottom="@+id/ClientTextView" />
+    <ImageView
+        android:id="@+id/BillableIcon"
+        android:src="@drawable/IcBillableMiniGray"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="2dp"
+        android:layout_toLeftOf="@+id/DurationTextView"
+        android:layout_alignBottom="@+id/ClientTextView" />
+    <TextView
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="04:15:34"
+        android:fontFamily="sans-serif-light"
+        android:textColor="@color/dark_gray_text"
+        android:textStyle="normal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/DurationTextView"
+        android:lines="1"
+        android:layout_marginBottom="6dp"
+        android:layout_marginLeft="6dp"
+        android:layout_toStartOf="@+id/ContinueButton"
+        android:layout_alignBaseline="@+id/ProjectTextView"
+        android:layout_alignParentTop="true" />
+    <Button
+        android:text="C"
+        android:layout_width="48dp"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:id="@+id/ContinueButton"
+        style="?android:attr/borderlessButtonStyle"
+        android:focusable="false"
+        android:textColor="@color/dark_gray" />
+    <LinearLayout
+        android:layout_toStartOf="@+id/ContinueButton"
+        android:layout_alignLeft="@+id/ProjectTextView"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
         <TextView
-            android:text="Project"
-            android:id="@+id/ProjectTextView"
+            android:id="@+id/TaskTextView"
+            android:text="Super Task"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"
-            android:layout_toStartOf="@+id/ClientTextView"
-            style="@style/TimeEntryListItem.Title.Project" />
+            style="@style/TimeEntryListItem.Description.Task" />
         <TextView
-            android:text="Client"
-            android:id="@+id/ClientTextView"
+            android:id="@+id/DescriptionTextView"
+            android:text="@string/RecentTimeEntryNoDescription"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_toLeftOf="@+id/TagsIcon"
-            android:layout_alignBaseline="@+id/ProjectTextView"
-            style="@style/TimeEntryListItem.Title.Client" />
-        <ImageView
-            android:id="@+id/TagsIcon"
-            android:src="@drawable/IcTagsMiniGray"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="4dp"
-            android:layout_toLeftOf="@+id/BillableIcon"
-            android:layout_alignBottom="@+id/ClientTextView" />
-        <ImageView
-            android:id="@+id/BillableIcon"
-            android:src="@drawable/IcBillableMiniGray"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="2dp"
-            android:layout_toLeftOf="@+id/DurationTextView"
-            android:layout_alignBottom="@+id/ClientTextView" />
-        <TextView
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="04:15:34"
-            android:fontFamily="sans-serif-light"
-            android:textColor="@color/dark_gray_text"
-            android:textStyle="normal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/DurationTextView"
-            android:lines="1"
-            android:layout_marginBottom="6dp"
-            android:layout_marginLeft="6dp"
-            android:layout_toStartOf="@+id/ContinueButton"
-            android:layout_alignBaseline="@+id/ProjectTextView"
-            android:layout_alignParentTop="true" />
-        <Button
-            android:text="C"
-            android:layout_width="48dp"
-            android:layout_height="fill_parent"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:id="@+id/ContinueButton"
-            style="?android:attr/borderlessButtonStyle"
-            android:textColor="@color/dark_gray" />
-        <LinearLayout
-            android:layout_toStartOf="@+id/ContinueButton"
-            android:layout_alignLeft="@+id/ProjectTextView"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/TaskTextView"
-                android:text="Super Task"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                style="@style/TimeEntryListItem.Description.Task" />
-            <TextView
-                android:id="@+id/DescriptionTextView"
-                android:text="@string/RecentTimeEntryNoDescription"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                style="@style/TimeEntryListItem.Description" />
-        </LinearLayout>
-    </RelativeLayout>
-</FrameLayout>
+            style="@style/TimeEntryListItem.Description" />
+    </LinearLayout>
+</RelativeLayout>

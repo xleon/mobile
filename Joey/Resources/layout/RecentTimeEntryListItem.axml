@@ -1,50 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="64dp">
-    <RelativeLayout
-        android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:background="@drawable/MainListButton">
+    <View
+        android:layout_width="4dip"
         android:layout_height="match_parent"
-        android:background="@drawable/MainListButton">
-        <View
-            android:layout_width="4dip"
-            android:layout_height="match_parent"
-            android:id="@+id/ColorView"
-            android:background="@drawable/ColoredSideShape" />
-        <TextView
-            android:text="Project"
-            android:id="@+id/ProjectTextView"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@+id/ColorView"
-            style="@style/TimeEntryListItem.Title.Project" />
-        <TextView
-            android:text="Client"
-            android:id="@+id/ClientTextView"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_toRightOf="@+id/ProjectTextView"
-            android:layout_alignBaseline="@+id/ProjectTextView"
-            style="@style/TimeEntryListItem.Title.Client" />
-        <TextView
-            android:id="@+id/TaskTextView"
-            android:text="Super Task "
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:layout_alignLeft="@+id/ProjectTextView"
-            android:layout_alignParentBottom="true"
-            style="@style/TimeEntryListItem.Description.Task" />
-        <TextView
-            android:id="@+id/DescriptionTextView"
-            android:text="@string/RecentTimeEntryNoDescription"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:layout_toRightOf="@+id/TaskTextView"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            style="@style/TimeEntryListItem.Description" />
-    </RelativeLayout>
-</FrameLayout>
+        android:id="@+id/ColorView"
+        android:background="@drawable/ColoredSideShape" />
+    <TextView
+        android:text="Project"
+        android:id="@+id/ProjectTextView"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/ColorView"
+        style="@style/TimeEntryListItem.Title.Project" />
+    <TextView
+        android:text="Client"
+        android:id="@+id/ClientTextView"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_toRightOf="@+id/ProjectTextView"
+        android:layout_alignBaseline="@+id/ProjectTextView"
+        style="@style/TimeEntryListItem.Title.Client" />
+    <TextView
+        android:id="@+id/TaskTextView"
+        android:text="Super Task "
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_alignLeft="@+id/ProjectTextView"
+        android:layout_alignParentBottom="true"
+        style="@style/TimeEntryListItem.Description.Task" />
+    <TextView
+        android:id="@+id/DescriptionTextView"
+        android:text="@string/RecentTimeEntryNoDescription"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_toRightOf="@+id/TaskTextView"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        style="@style/TimeEntryListItem.Description" />
+</RelativeLayout>

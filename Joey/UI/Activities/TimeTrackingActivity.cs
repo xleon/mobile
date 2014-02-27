@@ -44,6 +44,7 @@ namespace Toggl.Joey.UI.Activities
             viewPager = FindViewById<ViewPager> (Resource.Id.ViewPager);
             viewPager.Adapter = adapter;
             viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
+            viewPager.PageSelected += OnViewPagerPageSelected;
 
             timerSection.OnCreate (this);
 
@@ -55,6 +56,11 @@ namespace Toggl.Joey.UI.Activities
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+        }
+
+        private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
+        {
+            timerSection.HideDuration = e.Position == MainPagerAdapter.EditPosition;
         }
 
         protected override void OnStart ()

@@ -560,8 +560,8 @@ namespace Toggl.Phoebe.Data.Models
         public void Start ()
         {
             lock (SyncRoot) {
-                if (!IsShared)
-                    throw new InvalidOperationException ("Model needs to be the shared.");
+                if (!IsShared || !IsPersisted)
+                    throw new InvalidOperationException ("Model needs to be the shared and persisted.");
                 if (State != TimeEntryState.New)
                     throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", State));
                 if (StartTime != DateTime.MinValue || StopTime.HasValue)
@@ -581,7 +581,6 @@ namespace Toggl.Phoebe.Data.Models
                 }
 
                 StartTime = DateTime.UtcNow;
-                IsPersisted = true;
                 State = TimeEntryState.Running;
             }
         }
@@ -592,8 +591,8 @@ namespace Toggl.Phoebe.Data.Models
         public void Store ()
         {
             lock (SyncRoot) {
-                if (!IsShared)
-                    throw new InvalidOperationException ("Model needs to be the shared.");
+                if (!IsShared || !IsPersisted)
+                    throw new InvalidOperationException ("Model needs to be the shared and persisted.");
                 if (State != TimeEntryState.New)
                     throw new InvalidOperationException (String.Format ("Cannot store a time entry in {0} state.", State));
                 if (StartTime == DateTime.MinValue || StopTime == null)
@@ -612,7 +611,6 @@ namespace Toggl.Phoebe.Data.Models
                     throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
                 }
 
-                IsPersisted = true;
                 State = TimeEntryState.Finished;
             }
         }
@@ -699,9 +697,16 @@ namespace Toggl.Phoebe.Data.Models
         {
             lock (SyncRoot) {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
+                var userId = user != null ? user.Id : null;
 
                 var model = Model.Manager.Cached<TimeEntryModel> ()
-                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.User == user);
+                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == userId);
+
+                if (model == null) {
+                    model = Model.Query<TimeEntryModel> ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == userId)
+                        .ToList ()
+                        .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == userId);
+                }
 
                 if (model == null) {
                     // Create new draft:
@@ -710,6 +715,7 @@ namespace Toggl.Phoebe.Data.Models
                         User = user,
                         DurationOnly = user.TrackingMode == TrackingMode.Continue,
                         StringTags = new List<string> () { DefaultTag },
+                        IsPersisted = true,
                     });
                 }
 

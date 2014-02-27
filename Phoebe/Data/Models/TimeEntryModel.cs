@@ -392,7 +392,7 @@ namespace Toggl.Phoebe.Data.Models
             }
             set {
                 lock (SyncRoot) {
-                    if (IsShared && value != null) {
+                    if (IsShared && value != null && Workspace != null) {
                         stringTagsList = null;
                         foreach (var inter in Tags.ToList()) {
                             if (!value.Remove (inter.To.Name)) {
@@ -500,8 +500,9 @@ namespace Toggl.Phoebe.Data.Models
 
             // Make sure the string tags are converted into actual relations as soon as possible:
             if (property == PropertyIsShared
-                || property == PropertyIsPersisted) {
-                if (IsShared && IsPersisted && stringTagsList != null) {
+                || property == PropertyIsPersisted
+                || property == PropertyWorkspaceId) {
+                if (IsShared && IsPersisted && stringTagsList != null && Workspace != null) {
                     StringTags = stringTagsList;
                 }
             }
@@ -581,6 +582,7 @@ namespace Toggl.Phoebe.Data.Models
                 }
 
                 StartTime = DateTime.UtcNow;
+                Tags.Add (DefaultTag);
                 State = TimeEntryState.Running;
             }
         }
@@ -611,6 +613,7 @@ namespace Toggl.Phoebe.Data.Models
                     throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
                 }
 
+                Tags.Add (DefaultTag);
                 State = TimeEntryState.Finished;
             }
         }
@@ -697,15 +700,16 @@ namespace Toggl.Phoebe.Data.Models
         {
             lock (SyncRoot) {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
-                var userId = user != null ? user.Id : null;
+                if (user == null)
+                    return null;
 
                 var model = Model.Manager.Cached<TimeEntryModel> ()
-                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == userId);
+                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.User == user);
 
                 if (model == null) {
-                    model = Model.Query<TimeEntryModel> ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == userId)
+                    model = Model.Query<TimeEntryModel> ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
                         .ToList ()
-                        .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == userId);
+                        .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.User == user);
                 }
 
                 if (model == null) {
@@ -713,6 +717,7 @@ namespace Toggl.Phoebe.Data.Models
                     model = Model.Update (new TimeEntryModel () {
                         State = TimeEntryState.New,
                         User = user,
+                        Workspace = user.DefaultWorkspace,
                         DurationOnly = user.TrackingMode == TrackingMode.Continue,
                         StringTags = new List<string> () { DefaultTag },
                         IsPersisted = true,

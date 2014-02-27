@@ -217,7 +217,7 @@ namespace Toggl.Phoebe.Tests.Data
             });
 
             entry.StartTime = new DateTime (2013, 10, 1, 11, 12, 30, DateTimeKind.Utc);
-            Assert.AreEqual (new DateTime (2013, 10, 1, 13, 12, 30, DateTimeKind.Utc), entry.StopTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1, 14, 12, 30, DateTimeKind.Utc), entry.StopTime);
         }
 
         [Test]
@@ -274,7 +274,7 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.AreNotEqual (0, oldDuration);
 
             entry.SetDuration (oldDuration + TimeSpan.FromHours (1));
-            Assert.AreEqual (new DateTime (2013, 10, 1, 9, 12, 30, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (new DateTime (2013, 10, 1, 9, 12, 30, DateTimeKind.Utc), entry.StartTime.Truncate (TimeSpan.TicksPerSecond));
             Assert.AreEqual (null, entry.StopTime);
         }
 
@@ -330,7 +330,7 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.IsNull (entry.StopTime);
 
             entry.SetDuration (TimeSpan.FromHours (1));
-            Assert.IsNull (entry.StopTime);
+            Assert.IsNotNull (entry.StopTime);
             Assert.AreNotEqual (new DateTime (2013, 10, 1).ToUtc (), entry.StartTime);
         }
 

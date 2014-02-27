@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="10dp">
+        <TextView
+            android:id="@+id/DurationTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="00:00:00"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:layout_marginBottom="3dp"
+            android:textSize="32dp"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textStyle="normal" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="3dp">
+            <EditText
+                android:id="@+id/StartTimeEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:editable="false"
+                android:cursorVisible="false"
+                android:focusableInTouchMode="false"
+                android:text="00:00" />
+            <EditText
+                android:id="@+id/StopTimeEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:editable="false"
+                android:cursorVisible="false"
+                android:focusableInTouchMode="false"
+                android:text="00:00" />
+        </LinearLayout>
+        <EditText
+            android:id="@+id/DateEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Today"
+            android:editable="false"
+            android:cursorVisible="false"
+            android:focusableInTouchMode="false"
+            android:layout_marginBottom="3dp" />
+        <EditText
+            android:id="@+id/DescriptionEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapSentences"
+            android:singleLine="true"
+            android:hint="@string/CurrentTimeEntryEditDescriptionHint"
+            android:imeOptions="actionDone"
+            android:layout_marginBottom="3dp" />
+        <EditText
+            android:id="@+id/ProjectEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:editable="false"
+            android:cursorVisible="false"
+            android:focusableInTouchMode="false"
+            android:hint="@string/CurrentTimeEntryEditProjectHint"
+            android:layout_marginBottom="3dp" />
+        <EditText
+            android:id="@+id/TagsEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:editable="false"
+            android:cursorVisible="false"
+            android:focusableInTouchMode="false"
+            android:hint="@string/CurrentTimeEntryEditTagsHint"
+            android:layout_marginBottom="3dp" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <CheckBox
+                android:id="@+id/BillableCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/CurrentTimeEntryEditBillableUnchecked"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/BillableTextColor"
+                android:gravity="center_vertical"
+                android:button="@null"
+                android:drawableLeft="@drawable/IcBillable"
+                android:drawablePadding="5dp"
+                android:paddingLeft="10dp" />
+            <ImageButton
+                android:id="@+id/DeleteImageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:src="@drawable/IcDelete"
+                android:background="@drawable/ButtonNoFrame" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

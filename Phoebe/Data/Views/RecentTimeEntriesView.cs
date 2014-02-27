@@ -94,7 +94,7 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             // Prevent showing of non-persisted, deleted entries and entries outside of the date range:
-            if (!entry.IsPersisted || entry.DeletedAt.HasValue || entry.StartTime < queryStartDate)
+            if (!entry.IsPersisted || entry.DeletedAt.HasValue || entry.State == TimeEntryState.New || entry.StartTime < queryStartDate)
                 return;
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -125,7 +125,7 @@ namespace Toggl.Phoebe.Data.Views
             query = Model.Query<TimeEntryModel> ()
                 .NotDeleted ()
                 .ForCurrentUser ()
-                .Where ((e) => e.StartTime >= queryStartDate)
+                .Where ((e) => e.State != TimeEntryState.New && e.StartTime >= queryStartDate)
                 .OrderBy ((e) => e.StartTime, false);
             querySkip = 0;
 

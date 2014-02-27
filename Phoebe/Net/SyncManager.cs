@@ -128,7 +128,7 @@ namespace Toggl.Phoebe.Net
                         .Union (QueryDirtyModels<ProjectModel> ())
                         .Union (QueryDirtyModels<ProjectUserModel> ())
                         .Union (QueryDirtyModels<TaskModel> ())
-                        .Union (QueryDirtyModels<TimeEntryModel> ().ForCurrentUser ()));
+                        .Union (QueryDirtyModels<TimeEntryModel> ().ForCurrentUser ().Where ((m) => m.State != TimeEntryState.New)));
 
                     // Purge invalid nodes:
                     var models = graph.Nodes.Where ((m) => !m.IsValid && m.RemoteId == null).ToList ();

@@ -83,10 +83,11 @@ namespace Toggl.Phoebe.Data
             if (fk.Id != null) {
                 // Lazy loading, try to load the value from shared models, or database.
                 var inst = Model.Manager.Get (fk.InstanceType, fk.Id.Value);
-
-                ChangePropertyAndNotify (fk.InstanceProperty, delegate {
-                    fk.Instance = inst;
-                });
+                if (inst != null) {
+                    ChangePropertyAndNotify (fk.InstanceProperty, delegate {
+                        fk.Instance = inst;
+                    });
+                }
             }
 
             return fk.Instance;

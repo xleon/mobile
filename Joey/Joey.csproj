@@ -93,6 +93,11 @@
     <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
     <Compile Include="UI\Activities\TimeTrackingActivity.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
+    <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
+    <Compile Include="UI\Fragments\ChangeTimeEntryDateDialogFragment.cs" />
+    <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
+    <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
+    <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -149,8 +154,6 @@
     <AndroidResource Include="Resources\drawable-hdpi\Ic_dots_gray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_tick_green.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_loading_green.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\Ic_discard_gray.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\Ic_billable_gray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\bg_login_hdpi.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_logo_hdpi.png" />
     <AndroidResource Include="Resources\drawable-hdpi\Ic_logo_top_mini.png" />
@@ -167,8 +170,6 @@
     <AndroidResource Include="Resources\drawable-mdpi\Ic_dots_gray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_tick_green.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_loading_green.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\Ic_discard_gray.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\Ic_billable_gray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\bg_login.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_logo.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Ic_logo_top.png" />
@@ -184,8 +185,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_dots_gray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_tick_green.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_loading_green.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\Ic_discard_gray.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\Ic_billable_gray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\bg_login.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_logo.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Ic_logo_xhdpi.png" />
@@ -203,9 +202,7 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_dots_gray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_tick_green_xxhdpi.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_loading_green.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\Ic_discard_gray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\bg_login_xxhdpi.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\Ic_billable_gray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_logo.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_logo_top_mini.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Ic_logo_top.png" />
@@ -230,6 +227,31 @@
     <AndroidResource Include="Resources\drawable-xhdpi\BgMainListButtonPressed.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\BgMainListButton.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\BgMainListButtonPressed.9.png" />
+    <AndroidResource Include="Resources\drawable\IcBillable.xml" />
+    <AndroidResource Include="Resources\color\BillableTextColor.xml" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable\IcDelete.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable\ButtonNoFrame.xml" />
+    <AndroidResource Include="Resources\layout\EditCurrentTimeEntryFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -256,6 +278,7 @@
     <Folder Include="UI\Utils\" />
     <Folder Include="Resources\values-v11\" />
     <Folder Include="UI\Components\" />
+    <Folder Include="Resources\color\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservicesgingerbread">

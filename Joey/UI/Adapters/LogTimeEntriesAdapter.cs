@@ -210,6 +210,10 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnModelChanged (ModelChangedMessage msg)
             {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
                 if (model == null)
                     return;
 
@@ -225,8 +229,7 @@ namespace Toggl.Joey.UI.Adapters
                     if (msg.PropertyName == ProjectModel.PropertyName
                         || msg.PropertyName == ProjectModel.PropertyColor)
                         Rebind ();
-                } else if (model.ProjectId.HasValue 
-                            && model.Project != null
+                } else if (model.ProjectId.HasValue && model.Project != null
                            && model.Project.ClientId.HasValue
                            && model.Project.ClientId == msg.Model.Id) {
                     if (msg.PropertyName == ClientModel.PropertyName)

@@ -227,6 +227,7 @@ namespace Toggl.Joey.UI.Fragments
                 DateEditText.Text = now.ToShortDateString ();
 
                 // Make sure that we display accurate time:
+                handler.RemoveCallbacks (Rebind);
                 handler.PostDelayed (Rebind, 5000);
             } else {
                 var duration = Model.GetDuration ();
@@ -237,6 +238,7 @@ namespace Toggl.Joey.UI.Fragments
                 DateEditText.Text = startTime.ToShortDateString ();
 
                 if (Model.State == TimeEntryState.Running) {
+                    handler.RemoveCallbacks (Rebind);
                     handler.PostDelayed (Rebind, 1000 - duration.Milliseconds);
                 }
             }

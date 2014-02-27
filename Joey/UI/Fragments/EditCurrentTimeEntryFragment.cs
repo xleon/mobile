@@ -15,7 +15,7 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class CurrentTimeEntryEditFragment : Fragment
+    public class EditCurrentTimeEntryFragment : Fragment
     {
         private readonly Handler handler = new Handler ();
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
@@ -51,7 +51,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle state)
         {
-            var view = inflater.Inflate (Resource.Layout.CurrentTimeEntryEditFragment, container, false);
+            var view = inflater.Inflate (Resource.Layout.EditCurrentTimeEntryFragment, container, false);
 
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText);

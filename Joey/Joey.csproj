@@ -93,9 +93,9 @@
     <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
     <Compile Include="UI\Activities\TimeTrackingActivity.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
-    <Compile Include="UI\Fragments\CurrentTimeEntryEditFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDateDialogFragment.cs" />
+    <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -143,7 +143,6 @@
     <AndroidResource Include="Resources\layout\TimerComponent.axml" />
     <AndroidResource Include="Resources\drawable\MainListButton.9.png" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
-    <AndroidResource Include="Resources\layout\CurrentTimeEntryEditFragment.axml" />
     <AndroidResource Include="Resources\drawable\IcBillable.xml" />
     <AndroidResource Include="Resources\color\BillableTextColor.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcMiniBillable.png" />
@@ -172,6 +171,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\ButtonNoFramePressed.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ButtonNoFramePressed.9.png" />
     <AndroidResource Include="Resources\drawable\ButtonNoFrame.xml" />
+    <AndroidResource Include="Resources\layout\EditCurrentTimeEntryFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

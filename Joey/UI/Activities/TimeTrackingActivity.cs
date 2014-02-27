@@ -88,7 +88,7 @@ namespace Toggl.Joey.UI.Activities
             #pragma warning disable 0414
             private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
             #pragma warning restore 0414
-            private readonly CurrentTimeEntryEditFragment editFragment = new CurrentTimeEntryEditFragment ();
+            private readonly EditCurrentTimeEntryFragment editFragment = new EditCurrentTimeEntryFragment ();
             private readonly RecentTimeEntriesListFragment recentFragment = new RecentTimeEntriesListFragment ();
             private readonly LogTimeEntriesListFragment logFragment = new LogTimeEntriesListFragment ();
 

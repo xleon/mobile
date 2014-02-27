@@ -144,6 +144,34 @@
     <AndroidResource Include="Resources\drawable\MainListButton.9.png" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
     <AndroidResource Include="Resources\layout\CurrentTimeEntryEditFragment.axml" />
+    <AndroidResource Include="Resources\drawable\IcBillable.xml" />
+    <AndroidResource Include="Resources\color\BillableTextColor.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcMiniBillable.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcMiniBillable.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcMiniBillable.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcMiniBillable.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcBillableDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcBillablePressed.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDeleteDefault.png" />
+    <AndroidResource Include="Resources\drawable\IcDelete.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDeletePressed.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonNoFramePressed.9.png" />
+    <AndroidResource Include="Resources\drawable\ButtonNoFrame.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -170,6 +198,7 @@
     <Folder Include="UI\Utils\" />
     <Folder Include="Resources\values-v11\" />
     <Folder Include="UI\Components\" />
+    <Folder Include="Resources\color\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservicesgingerbread">

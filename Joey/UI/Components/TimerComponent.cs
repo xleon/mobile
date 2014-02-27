@@ -121,7 +121,7 @@ namespace Toggl.Joey.UI.Fragments
             if (currentEntry.State == TimeEntryState.New && currentEntry.StopTime.HasValue) {
                 // Save button
                 ActionButton.Text = res.GetString (Resource.String.TimerSaveButtonText);
-                ActionButton.SetBackgroundColor (res.GetColor (Resource.Color.light_gray));
+                ActionButton.SetBackgroundColor (res.GetColor (Resource.Color.gray));
             } else if (currentEntry.State == TimeEntryState.Running) {
                 // Stop button
                 ActionButton.Text = res.GetString (Resource.String.TimerStopButtonText);

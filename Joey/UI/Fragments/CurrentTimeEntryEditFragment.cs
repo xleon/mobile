@@ -45,7 +45,7 @@ namespace Toggl.Joey.UI.Fragments
 
         protected CheckBox BillableCheckBox { get; private set; }
 
-        protected Button DeleteButton { get; private set; }
+        protected ImageButton DeleteImageButton { get; private set; }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle state)
         {
@@ -59,7 +59,7 @@ namespace Toggl.Joey.UI.Fragments
             ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText);
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText);
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox);
-            DeleteButton = view.FindViewById<Button> (Resource.Id.DeleteButton);
+            DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
 
             DurationTextView.Click += OnDurationTextViewClick;
             DateEditText.Click += OnDateEditTextClick;
@@ -67,7 +67,7 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
-            DeleteButton.Click += OnDeleteButtonClick;
+            DeleteImageButton.Click += OnDeleteImageButtonClick;
 
             return view;
         }
@@ -111,10 +111,10 @@ namespace Toggl.Joey.UI.Fragments
             if (Model == null)
                 return;
 
-            Model.IsBillable = BillableCheckBox.Checked;
+            Model.IsBillable = !BillableCheckBox.Checked;
         }
 
-        private void OnDeleteButtonClick (object sender, EventArgs e)
+        private void OnDeleteImageButtonClick (object sender, EventArgs e)
         {
             if (Model == null)
                 return;
@@ -256,7 +256,12 @@ namespace Toggl.Joey.UI.Fragments
 
             ProjectEditText.Text = Model.Project != null ? Model.Project.Name : String.Empty;
             TagsEditText.Text = String.Join (", ", Model.Tags.Select ((t) => t.To.Name));
-            BillableCheckBox.Checked = Model.IsBillable;
+            BillableCheckBox.Checked = !Model.IsBillable;
+            if (Model.IsBillable) {
+                BillableCheckBox.SetText (Resource.String.CurrentTimeEntryEditBillableChecked);
+            } else {
+                BillableCheckBox.SetText (Resource.String.CurrentTimeEntryEditBillableUnchecked);
+            }
         }
 
         private static bool ForCurrentUser (TimeEntryModel model)

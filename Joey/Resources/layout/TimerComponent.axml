@@ -3,42 +3,22 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@color/dark_gray"
-    android:orientation="vertical"
-    android:measureWithLargestChild="false">
-    <LinearLayout
+    android:orientation="horizontal">
+    <TextView
+        android:text="00:00:00"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:id="@+id/RunningTimerSection">
-        <TextView
-            android:text="00:00:00"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:id="@+id/DurationTextView"
-            android:textColor="@color/action_bar_duration_time"
-            android:layout_marginRight="25dp" />
-        <Button
-            android:text="@string/TimerStopButtonText"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:id="@+id/StopTrackingButton"
-            android:background="@color/bright_red"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/StoppedTimerSection"
-        android:gravity="right">
-        <Button
-            android:text="@string/TimerStartButtonText"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:id="@+id/StartTrackingButton"
-            android:background="@color/bright_green"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:id="@+id/DurationTextView"
+        android:textColor="@color/action_bar_duration_time"
+        android:layout_marginRight="25dp" />
+    <Button
+        android:text="@string/TimerStopButtonText"
+        android:layout_width="100dp"
+        android:layout_height="match_parent"
+        android:id="@+id/ActionButton"
+        android:background="@color/bright_red"
+        android:textColor="@android:color/white" />
 </LinearLayout>

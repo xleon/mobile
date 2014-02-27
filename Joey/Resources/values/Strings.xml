@@ -15,6 +15,7 @@
     <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
     <string name="TimerStartButtonText">Start</string>
     <string name="TimerStopButtonText">Stop</string>
+    <string name="TimerSaveButtonText">Save</string>
     <string name="LogTimeEntryContextEdit">Edit</string>
     <string name="LogTimeEntryContextDelete">Delete</string>
     <string name="TimeTrackingNewTab">New</string>

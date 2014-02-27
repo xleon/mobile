@@ -18,20 +18,16 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class TimerComponent
     {
+        private static readonly string LogTag = "TimerComponent";
         private readonly Handler handler = new Handler ();
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
-        private TimeEntryModel runningEntry;
+        private TimeEntryModel currentEntry;
         private bool canRebind;
+        private bool hideDuration;
 
         protected TextView DurationTextView { get; private set; }
 
-        protected Button StopTrackingButton { get; private set; }
-
-        protected Button StartTrackingButton { get; private set; }
-
-        protected View StoppedTimerSection { get; private set; }
-
-        protected View RunningTimerSection { get; private set; }
+        protected Button ActionButton { get; private set; }
 
         public View Root { get; private set; }
 
@@ -39,14 +35,10 @@ namespace Toggl.Joey.UI.Fragments
 
         private void FindViews ()
         {
-            RunningTimerSection = Root.FindViewById<View> (Resource.Id.RunningTimerSection);
-            StoppedTimerSection = Root.FindViewById<View> (Resource.Id.StoppedTimerSection);
-            StartTrackingButton = Root.FindViewById<Button> (Resource.Id.StartTrackingButton);
-            StopTrackingButton = Root.FindViewById<Button> (Resource.Id.StopTrackingButton);
+            ActionButton = Root.FindViewById<Button> (Resource.Id.ActionButton);
             DurationTextView = Root.FindViewById<TextView> (Resource.Id.DurationTextView);
 
-            StopTrackingButton.Click += OnStopTrackingButtonClicked;
-            StartTrackingButton.Click += OnStartTrackingButtonClicked;
+            ActionButton.Click += OnActionButtonClicked;
             DurationTextView.Click += OnDurationTextClicked;
         }
 
@@ -61,7 +53,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnStart ()
         {
-            runningEntry = TimeEntryModel.FindRunning ();
+            currentEntry = TimeEntryModel.FindRunning () ?? TimeEntryModel.GetDraft ();
 
             // Start listening for changes model changes
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -83,23 +75,26 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnModelChanged (ModelChangedMessage msg)
         {
-            if (msg.Model != runningEntry) {
-                // When some other time entry becomes IsRunning we need to switch over to that
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
-                    var entry = msg.Model as TimeEntryModel;
-                    if (entry != null && entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
-                        runningEntry = entry;
-                        Rebind ();
-                    }
-                }
-            } else {
+            if (msg.Model == currentEntry) {
                 // Listen for changes regarding current running entry
                 if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyStartTime) {
-                    if (runningEntry.State != TimeEntryState.Running)
-                        runningEntry = null;
+                    || msg.PropertyName == TimeEntryModel.PropertyStartTime
+                    || msg.PropertyName == TimeEntryModel.PropertyStopTime
+                    || msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
+                    if (currentEntry.State == TimeEntryState.Finished || currentEntry.DeletedAt.HasValue) {
+                        currentEntry = TimeEntryModel.GetDraft ();
+                    }
                     Rebind ();
+                }
+            } else if (msg.Model is TimeEntryModel) {
+                // When some other time entry becomes Running we need to switch over to that
+                if (msg.PropertyName == TimeEntryModel.PropertyState
+                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
+                    var entry = (TimeEntryModel)msg.Model;
+                    if (entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
+                        currentEntry = entry;
+                        Rebind ();
+                    }
                 }
             }
         }
@@ -110,61 +105,88 @@ namespace Toggl.Joey.UI.Fragments
             return model.UserId == authManager.UserId;
         }
 
-        private void ShowRunningState ()
-        {
-            StoppedTimerSection.Visibility = ViewStates.Gone;
-            RunningTimerSection.Visibility = ViewStates.Visible;
-        }
-
         void OnDurationTextClicked (object sender, EventArgs e)
         {
-            if (runningEntry == null)
+            if (currentEntry == null)
                 return;
-            new ChangeTimeEntryDurationDialogFragment (runningEntry).Show (activity.FragmentManager, "duration_dialog");
-        }
-
-        private void ShowStoppedState ()
-        {
-            RunningTimerSection.Visibility = ViewStates.Gone;
-            StoppedTimerSection.Visibility = ViewStates.Visible;
+            new ChangeTimeEntryDurationDialogFragment (currentEntry).Show (activity.FragmentManager, "duration_dialog");
         }
 
         private void Rebind ()
         {
-            if (!canRebind)
+            if (!canRebind || currentEntry == null)
                 return;
 
-            if (runningEntry != null) {
-                ShowRunningState ();
+            var res = activity.Resources;
+            if (currentEntry.State == TimeEntryState.New && currentEntry.StopTime.HasValue) {
+                // Save button
+                ActionButton.Text = res.GetString (Resource.String.TimerSaveButtonText);
+                ActionButton.SetBackgroundColor (res.GetColor (Resource.Color.light_gray));
+            } else if (currentEntry.State == TimeEntryState.Running) {
+                // Stop button
+                ActionButton.Text = res.GetString (Resource.String.TimerStopButtonText);
+                ActionButton.SetBackgroundColor (res.GetColor (Resource.Color.bright_red));
+            } else {
+                // Start button
+                ActionButton.Text = res.GetString (Resource.String.TimerStartButtonText);
+                ActionButton.SetBackgroundColor (res.GetColor (Resource.Color.bright_green));
+            }
 
-                var duration = runningEntry.GetDuration ();
+            if (currentEntry.State == TimeEntryState.Running && !HideDuration) {
+                var duration = currentEntry.GetDuration ();
                 DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
+                DurationTextView.Visibility = ViewStates.Visible;
 
                 // Schedule next rebind:
+                handler.RemoveCallbacks (Rebind);
                 handler.PostDelayed (Rebind, 1000 - duration.Milliseconds);
             } else {
-                ShowStoppedState ();
+                DurationTextView.Visibility = ViewStates.Gone;
             }
         }
 
-        private void OnStopTrackingButtonClicked (object sender, EventArgs e)
-        {
-            if (runningEntry != null)
-                runningEntry.Stop ();
+        public bool HideDuration {
+            get { return hideDuration; }
+            set {
+                if (hideDuration != value) {
+                    hideDuration = value;
+                    Rebind ();
+                }
+            }
         }
 
-        private void OnStartTrackingButtonClicked (object sender, EventArgs e)
+        private void OnActionButtonClicked (object sender, EventArgs e)
         {
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-            var hasProjects = user.GetAvailableProjects ().Any ();
+            if (currentEntry == null)
+                return;
 
-            if (hasProjects) {
-                var entry = TimeEntryModel.StartNew ();
-                var intent = new Intent (activity, typeof(ChooseProjectActivity));
-                intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, entry.Id.ToString ());
-                activity.StartActivity (intent);
-            } else {
-                TimeEntryModel.StartNew ();
+            var startedEntry = false;
+
+            try {
+                if (currentEntry.State == TimeEntryState.New && currentEntry.StopTime.HasValue) {
+                    currentEntry.Store ();
+                } else if (currentEntry.State == TimeEntryState.Running) {
+                    currentEntry.Stop ();
+                } else {
+                    currentEntry.Start ();
+                    startedEntry = true;
+                }
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Warning (LogTag, ex, "Failed to change time entry state.");
+            }
+
+            if (startedEntry && currentEntry.Project == null) {
+                var user = ServiceContainer.Resolve<AuthManager> ().User;
+                var hasProjects = user.GetAvailableProjects ().Any ();
+
+                if (hasProjects) {
+                    var intent = new Intent (activity, typeof(ChooseProjectActivity));
+                    intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, currentEntry.Id.ToString ());
+                    activity.StartActivity (intent);
+                }
+
+                // TODO: Notify outside world that this component started the timer (thus the pager could act)
             }
         }
     }

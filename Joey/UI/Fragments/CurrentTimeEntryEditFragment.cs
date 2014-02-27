@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Android.App;
+using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -9,6 +10,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Activities;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -66,6 +68,7 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.TextChanged += OnDescriptionTextChanged;
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
+            ProjectEditText.Click += OnProjectEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
             DeleteImageButton.Click += OnDeleteImageButtonClick;
 
@@ -104,6 +107,16 @@ namespace Toggl.Joey.UI.Fragments
                 CommitDescriptionChanges ();
             }
             e.Handled = false;
+        }
+
+        private void OnProjectEditTextClick (object sender, EventArgs e)
+        {
+            if (Model == null)
+                return;
+
+            var intent = new Intent (Activity, typeof(ChooseProjectActivity));
+            intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, Model.Id.ToString ());
+            Activity.StartActivity (intent);
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)

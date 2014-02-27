@@ -42,7 +42,7 @@ namespace Toggl.Phoebe.Data.Views
             if (entry == null)
                 return;
 
-            if (entry.DeletedAt == null) {
+            if (entry.DeletedAt == null && entry.State != TimeEntryState.New) {
                 if (!data.Contains (entry)) {
                     ChangeDataAndNotify (delegate {
                         data.Add (entry);
@@ -125,7 +125,7 @@ namespace Toggl.Phoebe.Data.Views
                 // Fall back to local data:
                 if (useLocal) {
                     var entries = Model.Query<TimeEntryModel> (
-                                      (te) => te.StartTime <= endTime && te.StartTime > startTime)
+                                      (te) => te.StartTime <= endTime && te.StartTime > startTime && te.State != TimeEntryState.New)
                         .NotDeleted ()
                         .ForCurrentUser ();
                     foreach (var entry in entries) {

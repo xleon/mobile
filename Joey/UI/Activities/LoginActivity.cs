@@ -75,7 +75,7 @@ namespace Toggl.Joey.UI.Activities
         void ViewTreeObserver.IOnGlobalLayoutListener.OnGlobalLayout ()
         {
             // Make sure that the on every resize we scroll to the bottom
-            ScrollView.FullScroll (FocusSearchDirection.Down);
+            ScrollView.ScrollTo (0, ScrollView.Bottom);
         }
 
         protected override void OnCreate (Bundle bundle)

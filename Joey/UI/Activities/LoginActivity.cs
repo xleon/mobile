@@ -157,7 +157,6 @@ namespace Toggl.Joey.UI.Activities
 
         public class GoogleAuthFragment : Fragment
         {
-            private static readonly string Tag = "LoginActivity.GoogleAuthFragment";
             private static readonly int GoogleAuthRequestCode = 1;
             private static readonly string GoogleOAuthScope =
                 "oauth2:https://www.googleapis.com/auth/userinfo.profile " +

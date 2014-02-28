@@ -60,6 +60,10 @@ namespace Toggl.Joey.UI.Activities
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.IsAuthenticated) {
+                // Try to avoid flickering of buttons during activity transition by
+                // faking that we're still authenticating
+                IsAuthenticating = true;
+
                 var intent = new Intent (this, typeof(TimeTrackingActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);
                 StartActivity (intent);

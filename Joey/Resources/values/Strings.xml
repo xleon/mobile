@@ -3,11 +3,15 @@
     <string name="AppName">Toggl Time Tracker</string>
     <string name="AppDescription">Simple one-click time tracking.</string>
     <string name="EntryName">Toggl</string>
+    <string name="LoginHeaderText">Time tracking made easy</string>
+    <string name="LoginLoginTabText">Log in</string>
+    <string name="LoginSignupTabText">Create account</string>
     <string name="LoginEmailHint">Email</string>
     <string name="LoginPasswordHint">Password</string>
-    <string name="LoginButtonText">Login</string>
+    <string name="LoginButtonText">Let\'s go</string>
+    <string name="LoginButtonProgressText">Logging in&#8230;</string>
     <string name="LoginIsUnsuccessful">Invalid username/password combination</string>
-    <string name="LoginGoogleButtonText">Login with Google</string>
+    <string name="LoginGoogleButtonText">Log in with Google Account</string>
     <string name="LoginAccountsDialogTitle">Select account</string>
     <string name="LoginAccountsDialogCancelButton">Cancel</string>
     <string name="RecentTimeEntryNoDescription">(no description)</string>

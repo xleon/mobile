@@ -21,9 +21,14 @@ namespace Toggl.Joey.UI.Activities
 {
     [Activity (
         Exported = false,
+        WindowSoftInputMode = SoftInput.StateHidden,
         Theme = "@style/Theme.Toggl.Login")]
-    public class LoginActivity : BaseActivity
+    public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
+        private bool hasGoogleAccounts;
+
+        protected ScrollView ScrollView { get; private set; }
+
         protected AutoCompleteTextView EmailEditText { get; private set; }
 
         protected EditText PasswordEditText { get; private set; }
@@ -32,15 +37,13 @@ namespace Toggl.Joey.UI.Activities
 
         protected Button GoogleLoginButton { get; private set; }
 
-        protected ProgressBar LoginProgressBar { get; private set; }
-
         private void FindViews ()
         {
+            ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton);
-            LoginProgressBar = FindViewById<ProgressBar> (Resource.Id.LoginProgressBar);
         }
 
         protected override bool RequireAuth {
@@ -69,6 +72,12 @@ namespace Toggl.Joey.UI.Activities
             return new ArrayAdapter<string> (this, Android.Resource.Layout.SelectDialogItem, emails);
         }
 
+        void ViewTreeObserver.IOnGlobalLayoutListener.OnGlobalLayout ()
+        {
+            // Make sure that the on every resize we scroll to the bottom
+            ScrollView.FullScroll (FocusSearchDirection.Down);
+        }
+
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
@@ -78,10 +87,15 @@ namespace Toggl.Joey.UI.Activities
             SetContentView (Resource.Layout.LoginActivity);
             FindViews ();
 
+            ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener (this);
+
             LoginButton.Click += OnLoginButtonClick;
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
             EmailEditText.Adapter = MakeEmailsAdapter ();
             EmailEditText.Threshold = 1;
+
+            hasGoogleAccounts = GoogleAccounts.Count > 0;
+            GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
         }
 
         protected override void OnResume ()
@@ -100,7 +114,7 @@ namespace Toggl.Joey.UI.Activities
 
             if (!success) {
                 PasswordEditText.Text = String.Empty;
-                EmailEditText.SetError (Resources.GetString(Resource.String.LoginIsUnsuccessful), Resources.GetDrawable(Resource.Drawable.IcNotificationIcon));
+                EmailEditText.SetError (Resources.GetString (Resource.String.LoginIsUnsuccessful), Resources.GetDrawable (Resource.Drawable.IcNotificationIcon));
             }
 
             CheckAuth ();
@@ -134,8 +148,8 @@ namespace Toggl.Joey.UI.Activities
                 EmailEditText.Enabled = !value;
                 PasswordEditText.Enabled = !value;
                 LoginButton.Enabled = !value;
+                LoginButton.SetText (value ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
                 GoogleLoginButton.Enabled = !value;
-                LoginProgressBar.Visibility = value ? ViewStates.Visible : ViewStates.Invisible;
             }
         }
 

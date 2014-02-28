@@ -64,15 +64,33 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:layout_marginTop="10dp" />
-        <EditText
-            android:id="@+id/PasswordEditText"
-            android:inputType="textVisiblePassword"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/LoginPasswordHint"
-            android:imeOptions="actionDone"
-            android:layout_marginRight="10dp"
-            android:layout_marginLeft="10dp" />
+            android:layout_height="wrap_content">
+            <EditText
+                android:id="@+id/PasswordEditText"
+                android:inputType="textVisiblePassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/LoginPasswordHint"
+                android:imeOptions="actionDone"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:paddingRight="60dp" />
+            <Button
+                android:id="@+id/PasswordToggleButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="right|center_vertical"
+                android:focusable="false"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/LoginHideButtonText"
+                android:background="@null"
+                android:minWidth="70dp"
+                android:minHeight="0dp"
+                android:gravity="center"
+                android:paddingRight="15dp" />
+        </FrameLayout>
         <Button
             android:id="@+id/LoginButton"
             style="@style/Button.Green"

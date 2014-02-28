@@ -8,6 +8,8 @@
     <string name="LoginSignupTabText">Create account</string>
     <string name="LoginEmailHint">Email</string>
     <string name="LoginPasswordHint">Password</string>
+    <string name="LoginHideButtonText">HIDE</string>
+    <string name="LoginShowButtonText">SHOW</string>
     <string name="LoginButtonText">Let\'s go</string>
     <string name="LoginButtonProgressText">Logging in&#8230;</string>
     <string name="LoginGoogleButtonText">Log in with Google Account</string>

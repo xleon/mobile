@@ -8,6 +8,7 @@ using Android.Content;
 using Android.Gms.Auth;
 using Android.Gms.Common;
 using Android.OS;
+using Android.Text;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
@@ -25,13 +26,17 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
+        private static readonly string ExtraHidePassword = "com.toggl.android.hide_password";
         private bool hasGoogleAccounts;
+        private bool hidePassword;
 
         protected ScrollView ScrollView { get; private set; }
 
         protected AutoCompleteTextView EmailEditText { get; private set; }
 
         protected EditText PasswordEditText { get; private set; }
+
+        protected Button PasswordToggleButton { get; private set; }
 
         protected Button LoginButton { get; private set; }
 
@@ -42,6 +47,7 @@ namespace Toggl.Joey.UI.Activities
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
+            PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton);
         }
@@ -93,9 +99,23 @@ namespace Toggl.Joey.UI.Activities
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
             EmailEditText.Adapter = MakeEmailsAdapter ();
             EmailEditText.Threshold = 1;
+            PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
+            PasswordToggleButton.Click += OnPasswordToggleButtonClick;
 
             hasGoogleAccounts = GoogleAccounts.Count > 0;
             GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
+
+            if (bundle != null) {
+                hidePassword = bundle.GetBoolean (ExtraHidePassword);
+            }
+
+            SyncPasswordVisibility ();
+        }
+
+        protected override void OnSaveInstanceState (Bundle outState)
+        {
+            base.OnSaveInstanceState (outState);
+            outState.PutBoolean (ExtraHidePassword, hidePassword);
         }
 
         protected override void OnResume ()
@@ -103,6 +123,44 @@ namespace Toggl.Joey.UI.Activities
             base.OnResume ();
 
             CheckAuth ();
+        }
+
+        private void SyncPasswordVisibility ()
+        {
+            if (PasswordEditText.Text.Length == 0) {
+                // Reset buttons and mask
+                PasswordToggleButton.Visibility = ViewStates.Gone;
+                hidePassword = false;
+            } else if (hidePassword) {
+                PasswordToggleButton.SetText (Resource.String.LoginShowButtonText);
+                PasswordToggleButton.Visibility = ViewStates.Visible;
+            } else {
+                PasswordToggleButton.SetText (Resource.String.LoginHideButtonText);
+                PasswordToggleButton.Visibility = ViewStates.Visible;
+            }
+
+            int selectionStart = PasswordEditText.SelectionStart;
+            int selectionEnd = PasswordEditText.SelectionEnd;
+
+            if (hidePassword) {
+                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationVisiblePassword) | InputTypes.TextVariationPassword;
+            } else {
+                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationPassword) | InputTypes.TextVariationVisiblePassword;
+            }
+
+            // Restore cursor position:
+            PasswordEditText.SetSelection (selectionStart, selectionEnd);
+        }
+
+        private void OnPasswordEditTextTextChanged (object sender, Android.Text.TextChangedEventArgs e)
+        {
+            SyncPasswordVisibility ();
+        }
+
+        private void OnPasswordToggleButtonClick (object sender, EventArgs e)
+        {
+            hidePassword = !hidePassword;
+            SyncPasswordVisibility ();
         }
 
         private async void OnLoginButtonClick (object sender, EventArgs e)

@@ -10,10 +10,12 @@
     <string name="LoginPasswordHint">Password</string>
     <string name="LoginButtonText">Let\'s go</string>
     <string name="LoginButtonProgressText">Logging in&#8230;</string>
-    <string name="LoginIsUnsuccessful">Invalid username/password combination</string>
     <string name="LoginGoogleButtonText">Log in with Google Account</string>
     <string name="LoginAccountsDialogTitle">Select account</string>
     <string name="LoginAccountsDialogCancelButton">Cancel</string>
+    <string name="LoginInvalidCredentialsDialogTitle">Log in failed</string>
+    <string name="LoginInvalidCredentialsDialogText">Invalid username/password combination. Please try again.</string>
+    <string name="LoginInvalidCredentialsDialogOk">Ok</string>
     <string name="RecentTimeEntryNoDescription">(no description)</string>
     <string name="RecentTimeEntryNoProject">(no project)</string>
     <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>

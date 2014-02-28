@@ -114,7 +114,9 @@ namespace Toggl.Joey.UI.Activities
 
             if (!success) {
                 PasswordEditText.Text = String.Empty;
-                EmailEditText.SetError (Resources.GetString (Resource.String.LoginIsUnsuccessful), Resources.GetDrawable (Resource.Drawable.IcNotificationIcon));
+                PasswordEditText.RequestFocus ();
+
+                new InvalidCredentialsDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
             }
 
             CheckAuth ();
@@ -340,6 +342,23 @@ namespace Toggl.Joey.UI.Activities
                                     .ToList ();
 
                 return new ArrayAdapter<string> (Activity, Android.Resource.Layout.SimpleListItem1, emails);
+            }
+        }
+
+        public class InvalidCredentialsDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                        .SetTitle (Resource.String.LoginInvalidCredentialsDialogTitle)
+                        .SetMessage (Resource.String.LoginInvalidCredentialsDialogText)
+                        .SetPositiveButton (Resource.String.LoginInvalidCredentialsDialogOk, OnOkButtonClicked)
+                        .Create ();
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                Dismiss ();
             }
         }
     }

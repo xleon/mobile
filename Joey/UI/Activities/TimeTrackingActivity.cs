@@ -21,6 +21,7 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
+using Toggl.Joey.UI.Adapters;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -38,7 +39,7 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnCreate (bundle);
 
-            SetContentView (Resource.Layout.TimeTrackingActivity);
+            SetContentView (Resource.Layout.MainDrawerLayout);
 
             var adapter = new MainPagerAdapter (this, SupportFragmentManager);
             viewPager = FindViewById<ViewPager> (Resource.Id.ViewPager);
@@ -53,6 +54,9 @@ namespace Toggl.Joey.UI.Activities
 
             ActionBar.SetCustomView (timerSection.Root, lp);
             ActionBar.SetDisplayShowCustomEnabled (true);
+
+            var drawerList = FindViewById<ListView> (Resource.Id.LeftDrawer);
+            drawerList.Adapter = new DrawerListAdapter ();
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);

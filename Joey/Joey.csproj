@@ -98,6 +98,7 @@
     <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
+    <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -192,6 +193,24 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\ButtonNoFramePressed.9.png" />
     <AndroidResource Include="Resources\drawable\ButtonNoFrame.xml" />
     <AndroidResource Include="Resources\layout\EditCurrentTimeEntryFragment.axml" />
+    <AndroidResource Include="Resources\layout\MainDrawerLayout.xml" />
+    <AndroidResource Include="Resources\layout\MainDrawerListItem.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcSettingsGray.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

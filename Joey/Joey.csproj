@@ -211,6 +211,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcSettingsGray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcLogoutGray.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\layout\MainDrawerListHeader.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

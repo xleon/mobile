@@ -768,6 +768,10 @@ namespace Toggl.Phoebe.Net
             if (tag != null) {
                 // Merge with existing:
                 tag.Merge (model);
+                // Make sure the remote ID is set for this tag, even if the merge failed
+                if (tag.RemoteId == null) {
+                    tag.RemoteId = model.RemoteId;
+                }
             } else {
                 // Nothing to merge with, insert
                 tag = Model.Update (model);

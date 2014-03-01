@@ -6,7 +6,7 @@
     <string name="LoginHeaderText">Time tracking made easy</string>
     <string name="LoginLoginTabText">Log in</string>
     <string name="LoginSignupTabText">Create account</string>
-    <string name="LoginEmailHint">Email</string>
+    <string name="LoginEmailHint">Email address</string>
     <string name="LoginPasswordHint">Password</string>
     <string name="LoginHideButtonText">HIDE</string>
     <string name="LoginShowButtonText">SHOW</string>

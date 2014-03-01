@@ -108,7 +108,6 @@
   <ItemGroup>
     <AndroidResource Include="Resources\values\Strings.xml" />
     <AndroidResource Include="Resources\drawable\Icon.png" />
-    <AndroidResource Include="Resources\drawable\login_logo.png" />
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
@@ -151,10 +150,6 @@
     <AndroidResource Include="Resources\drawable-hdpi\IcBillableMiniGray.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcBillableMiniGray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcBillableMiniGray.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\bg_login_hdpi.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\bg_login.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\bg_login.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\bg_login_xxhdpi.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcBillableMiniGray.png" />
     <AndroidResource Include="Resources\drawable\BgMainListButton.9.png" />
     <AndroidResource Include="Resources\drawable\BgMainListButtonPressed.9.png" />
@@ -192,6 +187,38 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\ButtonNoFramePressed.9.png" />
     <AndroidResource Include="Resources\drawable\ButtonNoFrame.xml" />
     <AndroidResource Include="Resources\layout\EditCurrentTimeEntryFragment.axml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\LoginHeader.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\LoginHeader.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\LoginHeader.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\LoginHeader.png" />
+    <AndroidResource Include="Resources\color\RadioTabTextColor.xml" />
+    <AndroidResource Include="Resources\drawable\RadioButtonTab.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\LogoBig.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\LogoBig.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\LogoBig.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\LogoBig.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ButtonGreenDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ButtonGreenDisabled.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ButtonGreenPressed.9.png" />
+    <AndroidResource Include="Resources\drawable\ButtonGreen.xml" />
+    <AndroidResource Include="Resources\drawable-mdpi\RadioButtonTabDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\RadioButtonTabPressed.9.png" />
+    <AndroidResource Include="Resources\color\ButtonGreenTextColor.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\ButtonGreenDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ButtonGreenDisabled.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ButtonGreenPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\RadioButtonTabDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\RadioButtonTabPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ButtonGreenDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ButtonGreenDisabled.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ButtonGreenPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\RadioButtonTabDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\RadioButtonTabPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonGreenDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonGreenDisabled.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonGreenPressed.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\RadioButtonTabDefault.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\RadioButtonTabPressed.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

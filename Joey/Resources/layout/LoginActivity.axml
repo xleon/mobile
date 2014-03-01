@@ -1,48 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:minWidth="25px"
-    android:minHeight="25px"
-    android:paddingRight="16dp"
-    android:paddingLeft="16dp">
-    <ImageView
-        android:src="@drawable/login_logo"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ScrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="119.0dp"
-        android:layout_marginTop="50dp" />
-    <AutoCompleteTextView
-        android:inputType="textEmailAddress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/EmailAutoCompleteTextView"
-        android:hint="@string/LoginEmailHint" />
-    <EditText
-        android:inputType="textVisiblePassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/PasswordEditText"
-        android:hint="@string/LoginPasswordHint" />
-    <Button
-        android:text="@string/LoginButtonText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/LoginButton" />
-    <ProgressBar
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/LoginProgressBar"
-        android:indeterminate="true"
-        android:layout_marginTop="-8dp"
-        android:layout_marginLeft="4dp"
-        android:layout_marginRight="4dp"
-        android:visibility="invisible" />
-    <Button
-        android:text="@string/LoginGoogleButtonText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/GoogleLoginButton"
-        android:layout_marginTop="50dip" />
-</LinearLayout>
+        android:layout_height="match_parent">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="-5dp"
+            android:background="@android:color/black">
+            <ImageView
+                android:src="@drawable/LoginHeader"
+                android:scaleType="fitXY"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center">
+                <ImageView
+                    android:src="@drawable/LogoBig"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginBottom="5dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="@string/LoginHeaderText"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+        </FrameLayout>
+        <RadioGroup
+            android:id="@+id/TabsRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
+            <RadioButton
+                android:id="@+id/LoginTabRadioButton"
+                style="@style/RadioButtonTab"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/LoginLoginTabText" />
+        </RadioGroup>
+        <AutoCompleteTextView
+            android:id="@+id/EmailAutoCompleteTextView"
+            android:inputType="textEmailAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/LoginEmailHint"
+            android:imeOptions="actionNext"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <EditText
+                android:id="@+id/PasswordEditText"
+                android:inputType="textVisiblePassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/LoginPasswordHint"
+                android:imeOptions="actionDone"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:paddingRight="60dp" />
+            <Button
+                android:id="@+id/PasswordToggleButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="right|center_vertical"
+                android:focusable="false"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/LoginHideButtonText"
+                android:background="@null"
+                android:minWidth="70dp"
+                android:minHeight="0dp"
+                android:gravity="center"
+                android:paddingRight="15dp" />
+        </FrameLayout>
+        <Button
+            android:id="@+id/LoginButton"
+            style="@style/Button.Green"
+            android:text="@string/LoginButtonText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="15dp" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+        <Button
+            android:id="@+id/GoogleLoginButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@null"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/LoginGoogleButtonText" />
+    </LinearLayout>
+</ScrollView>

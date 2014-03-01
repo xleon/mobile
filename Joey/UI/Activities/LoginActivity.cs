@@ -8,6 +8,7 @@ using Android.Content;
 using Android.Gms.Auth;
 using Android.Gms.Common;
 using Android.OS;
+using Android.Text;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
@@ -21,26 +22,34 @@ namespace Toggl.Joey.UI.Activities
 {
     [Activity (
         Exported = false,
+        WindowSoftInputMode = SoftInput.StateHidden,
         Theme = "@style/Theme.Toggl.Login")]
-    public class LoginActivity : BaseActivity
+    public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
+        private static readonly string ExtraHidePassword = "com.toggl.android.hide_password";
+        private bool hasGoogleAccounts;
+        private bool hidePassword;
+
+        protected ScrollView ScrollView { get; private set; }
+
         protected AutoCompleteTextView EmailEditText { get; private set; }
 
         protected EditText PasswordEditText { get; private set; }
+
+        protected Button PasswordToggleButton { get; private set; }
 
         protected Button LoginButton { get; private set; }
 
         protected Button GoogleLoginButton { get; private set; }
 
-        protected ProgressBar LoginProgressBar { get; private set; }
-
         private void FindViews ()
         {
+            ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
+            PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton);
-            LoginProgressBar = FindViewById<ProgressBar> (Resource.Id.LoginProgressBar);
         }
 
         protected override bool RequireAuth {
@@ -51,6 +60,10 @@ namespace Toggl.Joey.UI.Activities
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.IsAuthenticated) {
+                // Try to avoid flickering of buttons during activity transition by
+                // faking that we're still authenticating
+                IsAuthenticating = true;
+
                 var intent = new Intent (this, typeof(TimeTrackingActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);
                 StartActivity (intent);
@@ -69,6 +82,12 @@ namespace Toggl.Joey.UI.Activities
             return new ArrayAdapter<string> (this, Android.Resource.Layout.SelectDialogItem, emails);
         }
 
+        void ViewTreeObserver.IOnGlobalLayoutListener.OnGlobalLayout ()
+        {
+            // Make sure that the on every resize we scroll to the bottom
+            ScrollView.ScrollTo (0, ScrollView.Bottom);
+        }
+
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
@@ -78,10 +97,29 @@ namespace Toggl.Joey.UI.Activities
             SetContentView (Resource.Layout.LoginActivity);
             FindViews ();
 
+            ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener (this);
+
             LoginButton.Click += OnLoginButtonClick;
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
             EmailEditText.Adapter = MakeEmailsAdapter ();
             EmailEditText.Threshold = 1;
+            PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
+            PasswordToggleButton.Click += OnPasswordToggleButtonClick;
+
+            hasGoogleAccounts = GoogleAccounts.Count > 0;
+            GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
+
+            if (bundle != null) {
+                hidePassword = bundle.GetBoolean (ExtraHidePassword);
+            }
+
+            SyncPasswordVisibility ();
+        }
+
+        protected override void OnSaveInstanceState (Bundle outState)
+        {
+            base.OnSaveInstanceState (outState);
+            outState.PutBoolean (ExtraHidePassword, hidePassword);
         }
 
         protected override void OnResume ()
@@ -89,6 +127,44 @@ namespace Toggl.Joey.UI.Activities
             base.OnResume ();
 
             CheckAuth ();
+        }
+
+        private void SyncPasswordVisibility ()
+        {
+            if (PasswordEditText.Text.Length == 0) {
+                // Reset buttons and mask
+                PasswordToggleButton.Visibility = ViewStates.Gone;
+                hidePassword = false;
+            } else if (hidePassword) {
+                PasswordToggleButton.SetText (Resource.String.LoginShowButtonText);
+                PasswordToggleButton.Visibility = ViewStates.Visible;
+            } else {
+                PasswordToggleButton.SetText (Resource.String.LoginHideButtonText);
+                PasswordToggleButton.Visibility = ViewStates.Visible;
+            }
+
+            int selectionStart = PasswordEditText.SelectionStart;
+            int selectionEnd = PasswordEditText.SelectionEnd;
+
+            if (hidePassword) {
+                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationVisiblePassword) | InputTypes.TextVariationPassword;
+            } else {
+                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationPassword) | InputTypes.TextVariationVisiblePassword;
+            }
+
+            // Restore cursor position:
+            PasswordEditText.SetSelection (selectionStart, selectionEnd);
+        }
+
+        private void OnPasswordEditTextTextChanged (object sender, Android.Text.TextChangedEventArgs e)
+        {
+            SyncPasswordVisibility ();
+        }
+
+        private void OnPasswordToggleButtonClick (object sender, EventArgs e)
+        {
+            hidePassword = !hidePassword;
+            SyncPasswordVisibility ();
         }
 
         private async void OnLoginButtonClick (object sender, EventArgs e)
@@ -100,7 +176,9 @@ namespace Toggl.Joey.UI.Activities
 
             if (!success) {
                 PasswordEditText.Text = String.Empty;
-                EmailEditText.SetError (Resources.GetString(Resource.String.LoginIsUnsuccessful), Resources.GetDrawable(Resource.Drawable.IcNotificationIcon));
+                PasswordEditText.RequestFocus ();
+
+                new InvalidCredentialsDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
             }
 
             CheckAuth ();
@@ -134,14 +212,13 @@ namespace Toggl.Joey.UI.Activities
                 EmailEditText.Enabled = !value;
                 PasswordEditText.Enabled = !value;
                 LoginButton.Enabled = !value;
+                LoginButton.SetText (value ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
                 GoogleLoginButton.Enabled = !value;
-                LoginProgressBar.Visibility = value ? ViewStates.Visible : ViewStates.Invisible;
             }
         }
 
         public class GoogleAuthFragment : Fragment
         {
-            private static readonly string Tag = "LoginActivity.GoogleAuthFragment";
             private static readonly int GoogleAuthRequestCode = 1;
             private static readonly string GoogleOAuthScope =
                 "oauth2:https://www.googleapis.com/auth/userinfo.profile " +
@@ -326,6 +403,23 @@ namespace Toggl.Joey.UI.Activities
                                     .ToList ();
 
                 return new ArrayAdapter<string> (Activity, Android.Resource.Layout.SimpleListItem1, emails);
+            }
+        }
+
+        public class InvalidCredentialsDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                        .SetTitle (Resource.String.LoginInvalidCredentialsDialogTitle)
+                        .SetMessage (Resource.String.LoginInvalidCredentialsDialogText)
+                        .SetPositiveButton (Resource.String.LoginInvalidCredentialsDialogOk, OnOkButtonClicked)
+                        .Create ();
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                Dismiss ();
             }
         }
     }

@@ -10,6 +10,7 @@
     </style>
     <style name="Theme.Toggl.Login" parent="Theme.Toggl.Base">
         <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/white</item>
     </style>
     <style name="Theme.Toggl.ListView" parent="@android:style/Widget.ListView">
         <item name="android:divider">@android:color/transparent</item>
@@ -24,6 +25,23 @@
         <item name="android:titleTextStyle">@android:color/white</item>
         <item name="background">@color/dark_gray</item>
         <item name="titleTextStyle">@android:color/white</item>
+    </style>
+
+    <style name="RadioButtonTab">
+        <item name="android:button">@null</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/radiotabtextcolor</item>
+        <item name="android:background">@drawable/radiobuttontab</item>
+        <item name="android:paddingTop">15dp</item>
+        <item name="android:paddingBottom">10dp</item>
+    </style>
+
+    <style name="Button">
+    </style>
+
+    <style name="Button.Green">
+        <item name="android:background">@drawable/buttongreen</item>
+        <item name="android:textColor">@color/buttongreentextcolor</item>
     </style>
 
     <style name="TimeEntryListItem" parent="@android:style/TextAppearance">

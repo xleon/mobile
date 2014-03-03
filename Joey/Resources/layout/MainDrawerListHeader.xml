@@ -2,8 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="48dp"
-    android:orientation="horizontal">
-    <ImageView
+    android:orientation="horizontal"
+    android:background="@android:color/black">
+    <Toggl.Joey.UI.Components.ProfileImageView
         android:id="@+id/Icon"
         android:src="@drawable/IcReportsGray"
         android:layout_height="match_parent"
@@ -15,5 +16,6 @@
         android:text="Settings"
         android:gravity="left|center_vertical"
         android:layout_width="fill_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:textColor="@android:color/white" />
 </LinearLayout>

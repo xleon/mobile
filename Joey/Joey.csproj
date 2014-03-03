@@ -99,6 +99,7 @@
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
+    <Compile Include="UI\Components\ProfileImageView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

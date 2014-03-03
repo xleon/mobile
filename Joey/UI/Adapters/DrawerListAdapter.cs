@@ -11,20 +11,21 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Components;
 
 namespace Toggl.Joey.UI.Adapters
 {
     class DrawerListAdapter : BaseAdapter
     {
+        private static readonly string LogTag = "DrawerListAdapter";
         protected static readonly int ViewTypeDrawerHeader = 0;
         protected static readonly int ViewTypeDrawerItem = 1;
 
         private JavaList<DrawerItem> rowItems = new JavaList<DrawerItem> ();
         private AuthManager authManager = null;
-        private Bitmap userImageBitmap = null;
-        private String userImageUrl = null;
 
         public DrawerListAdapter()
         {
@@ -50,20 +51,6 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private async Task<Bitmap> GetImage(String url) {
-            var request = WebRequest.Create (url);
-            var stream = await request.GetRequestStreamAsync ();
-            return BitmapFactory.DecodeStream(stream);
-        }
-
-        private async void SetImage(ImageView view) {
-            if (userImageUrl == null || userImageBitmap == null || userImageUrl != authManager.User.ImageUrl) {
-                userImageBitmap = await GetImage (authManager.User.ImageUrl);
-                userImageUrl = authManager.User.ImageUrl;
-            }
-            view.SetImageBitmap (userImageBitmap);
-        }
-
         public override View GetView (int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
@@ -73,7 +60,7 @@ namespace Toggl.Joey.UI.Adapters
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.MainDrawerListHeader, parent, false);
             
-                    SetImage (view.FindViewById<ImageView> (Resource.Id.Icon));
+                    view.FindViewById<ProfileImageView> (Resource.Id.Icon).ImageUrl = authManager.User.ImageUrl;
                     view.FindViewById<TextView> (Resource.Id.Title).Text = authManager.User.Name;
 
                 } else if (GetItemViewType(position) == ViewTypeDrawerItem) {

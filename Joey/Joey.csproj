@@ -98,6 +98,7 @@
     <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
+    <Compile Include="UI\Adapters\TagsAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -219,6 +220,12 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\ButtonGreenPressed.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\RadioButtonTabDefault.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\RadioButtonTabPressed.9.png" />
+    <AndroidResource Include="Resources\layout\TagListItem.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcTickBlue.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcTickBlue.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcTickBlue.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcTickBlue.png" />
+    <AndroidResource Include="Resources\drawable\TickBlueBox.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

@@ -42,8 +42,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-            ListAdapter = new ProjectsAdapter (user.GetAvailableProjects ().ToView ());
+            ListAdapter = new ProjectsAdapter ();
         }
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
@@ -52,7 +51,7 @@ namespace Toggl.Joey.UI.Fragments
             if (adapter == null)
                 return;
 
-            var model = adapter.GetModel (position);
+            var model = adapter.GetModel (position) as ProjectModel;
             if (model != null) {
                 if (timeEntry == null) {
                     TimeEntryModel.StartNew (model);

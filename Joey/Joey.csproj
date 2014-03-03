@@ -113,7 +113,6 @@
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
     <AndroidResource Include="Resources\values\Plurals.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDialogAlertHoloLight.png" />
@@ -227,6 +226,9 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcTickBlue.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTickBlue.png" />
     <AndroidResource Include="Resources\drawable\TickBlueBox.xml" />
+    <AndroidResource Include="Resources\layout\ProjectListProjectItem.axml" />
+    <AndroidResource Include="Resources\layout\ProjectListWorkspaceItem.axml" />
+    <AndroidResource Include="Resources\layout\ProjectListTaskItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

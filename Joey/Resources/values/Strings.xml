@@ -34,7 +34,7 @@
     <string name="TimeTrackingLogTab">LOG</string>
     <string name="ChooseProjectTitle">Choose project</string>
     <string name="ProjectsNoClient">(no client)</string>
-    <string name="ProjectsNoProject">Without project</string>
+    <string name="ProjectsTasks">TASKS</string>
     <string name="DeleteTimeEntriesDialogTitle">Delete?</string>
     <string name="DeleteTimeEntriesDialogDeleteButton">Delete</string>
     <string name="DeleteTimeEntriesDialogCancelButton">Cancel</string>

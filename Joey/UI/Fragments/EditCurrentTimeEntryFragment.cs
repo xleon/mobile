@@ -237,7 +237,11 @@ namespace Toggl.Joey.UI.Fragments
             } else if (Model != null && msg.Model is TimeEntryTagModel) {
                 var inter = (TimeEntryTagModel)msg.Model;
                 if (inter.FromId == Model.Id) {
-                    Rebind ();
+                    // Schedule rebind, as if we do it right away the RelatedModelsCollection will not
+                    // have been updated yet
+                    Android.App.Application.SynchronizationContext.Post ((state) => {
+                        Rebind ();
+                    }, null);
                 }
             } else if (msg.Model is TimeEntryModel) {
                 // When some other time entry becomes IsRunning we need to switch over to that

@@ -71,6 +71,7 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
             ProjectEditText.Click += OnProjectEditTextClick;
+            TagsEditText.Click += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
             DeleteImageButton.Click += OnDeleteImageButtonClick;
 
@@ -133,6 +134,14 @@ namespace Toggl.Joey.UI.Fragments
             var intent = new Intent (Activity, typeof(ChooseProjectActivity));
             intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, Model.Id.ToString ());
             Activity.StartActivity (intent);
+        }
+
+        private void OnTagsEditTextClick (object sender, EventArgs e)
+        {
+            if (Model == null)
+                return;
+
+            new ChooseTimeEntryTagsDialogFragment (Model).Show (FragmentManager, "tags_dialog");
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)
@@ -228,7 +237,11 @@ namespace Toggl.Joey.UI.Fragments
             } else if (Model != null && msg.Model is TimeEntryTagModel) {
                 var inter = (TimeEntryTagModel)msg.Model;
                 if (inter.FromId == Model.Id) {
-                    Rebind ();
+                    // Schedule rebind, as if we do it right away the RelatedModelsCollection will not
+                    // have been updated yet
+                    Android.App.Application.SynchronizationContext.Post ((state) => {
+                        Rebind ();
+                    }, null);
                 }
             } else if (msg.Model is TimeEntryModel) {
                 // When some other time entry becomes IsRunning we need to switch over to that

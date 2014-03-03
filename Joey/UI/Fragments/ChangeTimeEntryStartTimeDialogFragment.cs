@@ -56,10 +56,12 @@ namespace Toggl.Joey.UI.Fragments
             var clockType = Settings.System.GetString (Activity.ContentResolver, Settings.System.Time1224);
             var is24h = !(clockType == null || clockType == "12");
 
-            return new TimePickerDialog (
-                Activity, OnTimeSelected,
-                time.Hour, time.Minute, is24h
-            );
+            var dia = new TimePickerDialog (
+                          Activity, OnTimeSelected,
+                          time.Hour, time.Minute, is24h
+                      );
+            dia.SetTitle (Resource.String.ChangeTimeEntryStartTimeDialogTitle);
+            return dia;
         }
 
         private void OnTimeSelected (object sender, TimePickerDialog.TimeSetEventArgs e)

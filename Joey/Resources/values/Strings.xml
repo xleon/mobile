@@ -48,4 +48,8 @@
     <string name="CurrentTimeEntryEditBillableChecked">Billable</string>
     <string name="CurrentTimeEntryEditBillableUnchecked">Non-billable</string>
     <string name="CurrentTimeEntryEditDeleteToast">Time entry has been discarded</string>
+    <string name="ChangeTimeEntryDurationDialogTitle">Set duration</string>
+    <string name="ChangeTimeEntryStartTimeDialogTitle">Set start time</string>
+    <string name="ChangeTimeEntryStopTimeDialogTitle">Set stop time</string>
+    <string name="ChangeTimeEntryDateDialogTitle">Set date</string>
 </resources>

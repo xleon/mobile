@@ -56,10 +56,12 @@ namespace Toggl.Joey.UI.Fragments
                 minutes = duration.Minutes;
             }
 
-            return new TimePickerDialog (
-                Activity, OnDurationSelected,
-                hours, minutes, true
-            );
+            var dia = new TimePickerDialog (
+                          Activity, OnDurationSelected,
+                          hours, minutes, true
+                      );
+            dia.SetTitle (Resource.String.ChangeTimeEntryDurationDialogTitle);
+            return dia;
         }
 
         private void OnDurationSelected (object sender, TimePickerDialog.TimeSetEventArgs e)

@@ -53,10 +53,12 @@ namespace Toggl.Joey.UI.Fragments
                 date = model.StartTime.ToLocalTime ().Date;
             }
 
-            return new DatePickerDialog (
-                Activity, OnDateSelected,
-                date.Year, date.Month - 1, date.Day
-            );
+            var dia = new DatePickerDialog (
+                          Activity, OnDateSelected,
+                          date.Year, date.Month - 1, date.Day
+                      );
+            dia.SetTitle (Resource.String.ChangeTimeEntryDateDialogTitle);
+            return dia;
         }
 
         private void OnDateSelected (object sender, DatePickerDialog.DateSetEventArgs e)

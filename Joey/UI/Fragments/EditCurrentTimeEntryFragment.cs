@@ -71,6 +71,7 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
             ProjectEditText.Click += OnProjectEditTextClick;
+            TagsEditText.Click += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
             DeleteImageButton.Click += OnDeleteImageButtonClick;
 
@@ -133,6 +134,14 @@ namespace Toggl.Joey.UI.Fragments
             var intent = new Intent (Activity, typeof(ChooseProjectActivity));
             intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, Model.Id.ToString ());
             Activity.StartActivity (intent);
+        }
+
+        private void OnTagsEditTextClick (object sender, EventArgs e)
+        {
+            if (Model == null)
+                return;
+
+            new ChooseTimeEntryTagsDialogFragment (Model).Show (FragmentManager, "tags_dialog");
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)

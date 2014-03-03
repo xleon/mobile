@@ -98,6 +98,7 @@
     <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
+    <Compile Include="UI\Fragments\ChooseTimeEntryTagsDialogFragment.cs" />
     <Compile Include="UI\Adapters\TagsAdapter.cs" />
   </ItemGroup>
   <ItemGroup>

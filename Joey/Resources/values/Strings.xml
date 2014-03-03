@@ -52,4 +52,7 @@
     <string name="ChangeTimeEntryStartTimeDialogTitle">Set start time</string>
     <string name="ChangeTimeEntryStopTimeDialogTitle">Set stop time</string>
     <string name="ChangeTimeEntryDateDialogTitle">Set date</string>
+    <string name="ChooseTimeEntryTagsDialogTitle">Select tags</string>
+    <string name="ChooseTimeEntryTagsDialogCancel">Cancel</string>
+    <string name="ChooseTimeEntryTagsDialogOk">Ok</string>
 </resources>

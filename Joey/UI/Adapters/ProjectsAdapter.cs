@@ -11,6 +11,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Utils;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -453,39 +454,29 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class WorkspaceListItemHolder : Java.Lang.Object
+        private class WorkspaceListItemHolder : ModelViewHolder<WorkspaceWrapper>
         {
-            #pragma warning disable 0414
-            private readonly object subscriptionModelChanged;
-            #pragma warning restore 0414
-            private WorkspaceModel model;
-
             public TextView WorkspaceTextView { get; private set; }
 
-            public WorkspaceListItemHolder (View root)
-            {
-                FindViews (root);
-
-                // Cannot use model.OnPropertyChanged callback directly as it would most probably leak memory,
-                // thus the global ModelChangedMessage is used instead.
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            private WorkspaceModel Model {
+                get {
+                    if (DataSource == null)
+                        return null;
+                    return DataSource.Model;
+                }
             }
 
-            private void FindViews (View root)
+            public WorkspaceListItemHolder (View root) : base (root)
             {
                 WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView);
             }
 
-            private void OnModelChanged (ModelChangedMessage msg)
+            protected override void OnModelChanged (ModelChangedMessage msg)
             {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
-                    return;
-                if (model == null)
+                if (Model == null)
                     return;
 
-                if (model == msg.Model) {
+                if (Model == msg.Model) {
                     if (msg.PropertyName == ProjectModel.PropertyName
                         || msg.PropertyName == ProjectModel.PropertyColor
                         || msg.PropertyName == ProjectModel.PropertyClientId)
@@ -493,26 +484,17 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            public void Bind (WorkspaceWrapper wrapper)
+            protected override void Rebind ()
             {
-                this.model = wrapper.Model;
-                Rebind ();
-            }
+                if (Model == null)
+                    return;
 
-            private void Rebind ()
-            {
-                WorkspaceTextView.Text = model.Name;
+                WorkspaceTextView.Text = Model.Name;
             }
         }
 
-        private class ProjectListItemHolder : Java.Lang.Object
+        private class ProjectListItemHolder : ModelViewHolder<ProjectWrapper>
         {
-            #pragma warning disable 0414
-            private readonly object subscriptionModelChanged;
-            #pragma warning restore 0414
-            private ProjectModel model;
-            private ProjectWrapper wrapper;
-
             public View ColorView { get; private set; }
 
             public TextView ProjectTextView { get; private set; }
@@ -525,17 +507,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageView TasksImageView { get; private set; }
 
-            public ProjectListItemHolder (View root)
-            {
-                FindViews (root);
-
-                // Cannot use model.OnPropertyChanged callback directly as it would most probably leak memory,
-                // thus the global ModelChangedMessage is used instead.
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-            }
-
-            private void FindViews (View root)
+            public ProjectListItemHolder (View root) : base (root)
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
@@ -545,15 +517,20 @@ namespace Toggl.Joey.UI.Adapters
                 TasksImageView = root.FindViewById<ImageView> (Resource.Id.TasksImageView);
             }
 
-            private void OnModelChanged (ModelChangedMessage msg)
+            private ProjectModel Model {
+                get {
+                    if (DataSource == null)
+                        return null;
+                    return DataSource.Model;
+                }
+            }
+
+            protected override void OnModelChanged (ModelChangedMessage msg)
             {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
-                    return;
-                if (model == null)
+                if (Model == null)
                     return;
 
-                if (model == msg.Model) {
+                if (Model == msg.Model) {
                     if (msg.PropertyName == ProjectModel.PropertyName
                         || msg.PropertyName == ProjectModel.PropertyColor
                         || msg.PropertyName == ProjectModel.PropertyClientId)
@@ -561,65 +538,46 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            public void Bind (ProjectWrapper wrapper)
+            protected override void Rebind ()
             {
-                this.wrapper = wrapper;
-                this.model = wrapper.Model;
-                Rebind ();
-            }
+                if (Model == null)
+                    return;
 
-            private void Rebind ()
-            {
-                var color = Color.ParseColor (model.GetHexColor ());
+                var color = Color.ParseColor (Model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);
-                ProjectTextView.Text = model.Name;
-                if (model.Client != null) {
-                    ClientTextView.Text = model.Client.Name;
+                ProjectTextView.Text = Model.Name;
+                if (Model.Client != null) {
+                    ClientTextView.Text = Model.Client.Name;
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
-                TasksFrameLayout.Visibility = wrapper.TaskCount == 0 ? ViewStates.Gone : ViewStates.Visible;
-                TasksTextView.Visibility = wrapper.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
-                TasksImageView.Visibility = !wrapper.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
+                TasksFrameLayout.Visibility = DataSource.TaskCount == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TasksTextView.Visibility = DataSource.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
+                TasksImageView.Visibility = !DataSource.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
             }
         }
 
-        private class TaskListItemHolder : Java.Lang.Object
+        private class TaskListItemHolder : ModelViewHolder<TaskModel>
         {
-            #pragma warning disable 0414
-            private readonly object subscriptionModelChanged;
-            #pragma warning restore 0414
-            private TaskModel model;
-
             public TextView TaskTextView { get; private set; }
 
-            public TaskListItemHolder (View root)
-            {
-                FindViews (root);
-
-                // Cannot use model.OnPropertyChanged callback directly as it would most probably leak memory,
-                // thus the global ModelChangedMessage is used instead.
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            public TaskModel Model {
+                get { return DataSource; }
             }
 
-            private void FindViews (View root)
+            public TaskListItemHolder (View root) : base (root)
             {
                 TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView);
             }
 
-            private void OnModelChanged (ModelChangedMessage msg)
+            protected override void OnModelChanged (ModelChangedMessage msg)
             {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (DataSource == null)
                     return;
 
-                if (model == null)
-                    return;
-
-                if (model == msg.Model) {
+                if (DataSource == msg.Model) {
                     if (msg.PropertyName == ProjectModel.PropertyName
                         || msg.PropertyName == ProjectModel.PropertyColor
                         || msg.PropertyName == ProjectModel.PropertyClientId)
@@ -627,15 +585,12 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            public void Bind (TaskModel model)
+            protected override void Rebind ()
             {
-                this.model = model;
-                Rebind ();
-            }
+                if (DataSource == null)
+                    return;
 
-            private void Rebind ()
-            {
-                TaskTextView.Text = model.Name;
+                TaskTextView.Text = DataSource.Name;
             }
         }
     }

@@ -72,8 +72,10 @@ namespace Toggl.Joey.UI.Fragments
                 var m = adapter.GetModel (args.Which);
                 var task = m as TaskModel;
                 var project = task != null ? task.Project : m as ProjectModel;
+                var workspace = project != null ? project.Workspace : m as WorkspaceModel;
 
-                if (project != null || task != null) {
+                if (project != null || task != null || workspace != null) {
+                    model.Workspace = workspace;
                     model.Project = project;
                     model.Task = task;
                 }

@@ -20,11 +20,9 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeWorkspace = 0;
         protected static readonly int ViewTypeProject = 1;
         protected static readonly int ViewTypeTask = 2;
-        #pragma warning disable 0414
-        private readonly object subscriptionModelChanged;
-        #pragma warning restore 0414
         private readonly List<object> data = new List<object> ();
         private readonly List<WorkspaceWrapper> workspaces = new List<WorkspaceWrapper> ();
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private bool dataStale = true;
         private bool workspacesStale = true;
 
@@ -34,12 +32,36 @@ namespace Toggl.Joey.UI.Adapters
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
         }
 
+        protected override void Dispose (bool disposing)
+        {
+            if (disposing) {
+                ClearWorkspaces ();
+
+                if (subscriptionModelChanged != null) {
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    bus.Unsubscribe (subscriptionModelChanged);
+                    subscriptionModelChanged = null;
+                }
+            }
+
+            base.Dispose (disposing);
+        }
+
+        private void ClearWorkspaces ()
+        {
+            foreach (var workspace in workspaces) {
+                workspace.Dispose ();
+            }
+            workspaces.Clear ();
+            workspacesStale = true;
+        }
+
         private void EnsureWorkspaces ()
         {
             if (!workspacesStale)
                 return;
 
-            workspaces.Clear ();
+            ClearWorkspaces ();
             workspaces.AddRange (Model.Query<WorkspaceModel> ()
                 .NotDeleted ()
                 .Select ((m) => new WorkspaceWrapper (this, m)));
@@ -254,17 +276,14 @@ namespace Toggl.Joey.UI.Adapters
             NotifyDataSetInvalidated ();
         }
 
-        private class WorkspaceWrapper
+        private abstract class ModelWrapper<T> : IDisposable
+            where T : Model
         {
-            private readonly ProjectsAdapter adapter;
-            private readonly WorkspaceModel model;
-            private readonly List<ProjectWrapper> projects = new List<ProjectWrapper> ();
-            #pragma warning disable 0414
-            private readonly object subscriptionModelChanged;
-            #pragma warning restore 0414
-            private bool projectsStale = true;
+            protected readonly ProjectsAdapter adapter;
+            protected readonly T model;
+            private Subscription<ModelChangedMessage> subscriptionModelChanged;
 
-            public WorkspaceWrapper (ProjectsAdapter adapter, WorkspaceModel model)
+            public ModelWrapper (ProjectsAdapter adapter, T model)
             {
                 this.adapter = adapter;
                 this.model = model;
@@ -273,18 +292,71 @@ namespace Toggl.Joey.UI.Adapters
                 subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
             }
 
-            public WorkspaceModel Model {
-                get { return model; }
+            ~ModelWrapper ()
+            {
+                Dispose (false);
             }
 
-            public void EnsureProjects ()
+            public void Dispose ()
+            {
+                Dispose (true);
+                GC.SuppressFinalize (this);
+            }
+
+            protected virtual void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (subscriptionModelChanged != null) {
+                        var bus = ServiceContainer.Resolve<MessageBus> ();
+                        bus.Unsubscribe (subscriptionModelChanged);
+                        subscriptionModelChanged = null;
+                    }
+                }
+            }
+
+            protected abstract void OnModelChanged (ModelChangedMessage msg);
+
+            public T Model {
+                get { return model; }
+            }
+        }
+
+        private class WorkspaceWrapper : ModelWrapper<WorkspaceModel>
+        {
+            private readonly List<ProjectWrapper> projects = new List<ProjectWrapper> ();
+            private bool projectsStale = true;
+
+            public WorkspaceWrapper (ProjectsAdapter adapter, WorkspaceModel model) : base (adapter, model)
+            {
+            }
+
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    ClearProjects ();
+                }
+
+                base.Dispose (disposing);
+            }
+
+            private void ClearProjects ()
+            {
+                foreach (var project in projects) {
+                    project.Dispose ();
+                }
+                projects.Clear ();
+
+                projectsStale = true;
+            }
+
+            private void EnsureProjects ()
             {
                 if (!projectsStale)
                     return;
 
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
 
-                projects.Clear ();
+                ClearProjects ();
                 if (user != null) {
                     projects.AddRange (user.GetAvailableProjects (model).Select ((m) => new ProjectWrapper (adapter, m)));
                 }
@@ -307,7 +379,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            private void OnModelChanged (ModelChangedMessage msg)
+            protected override void OnModelChanged (ModelChangedMessage msg)
             {
                 if (projectsStale)
                     return;
@@ -355,24 +427,29 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class ProjectWrapper
+        private class ProjectWrapper : ModelWrapper<ProjectModel>
         {
-            private readonly ProjectsAdapter adapter;
-            private readonly ProjectModel model;
-            #pragma warning disable 0414
-            private readonly object subscriptionModelChanged;
-            #pragma warning restore 0414
             private readonly List<TaskModel> tasks = new List<TaskModel> ();
             private bool tasksStale = true;
             private bool expanded = false;
 
-            public ProjectWrapper (ProjectsAdapter adapter, ProjectModel model)
+            public ProjectWrapper (ProjectsAdapter adapter, ProjectModel model) : base (adapter, model)
             {
-                this.adapter = adapter;
-                this.model = model;
+            }
 
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    ClearTasks ();
+                }
+
+                base.Dispose (disposing);
+            }
+
+            private void ClearTasks ()
+            {
+                tasks.Clear ();
+                tasksStale = true;
             }
 
             private void EnsureTasks ()
@@ -380,15 +457,11 @@ namespace Toggl.Joey.UI.Adapters
                 if (!tasksStale)
                     return;
 
-                tasks.Clear ();
+                ClearTasks ();
                 tasks.AddRange (model.Tasks.NotDeleted ().Where ((t) => t.IsActive));
                 tasks.Sort (TaskComparison);
 
                 tasksStale = true;
-            }
-
-            public ProjectModel Model {
-                get { return model; }
             }
 
             public bool IsExpanded {
@@ -415,7 +488,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            private void OnModelChanged (ModelChangedMessage msg)
+            protected override void OnModelChanged (ModelChangedMessage msg)
             {
                 if (tasksStale)
                     return;

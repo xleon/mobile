@@ -13,6 +13,7 @@ using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Activities;
 using Fragment = Android.Support.V4.App.Fragment;
+using Activity = Android.Support.V4.App.FragmentActivity;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -31,7 +32,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public View Root { get; private set; }
 
-        private BaseActivity activity;
+        private Activity activity;
 
         private void FindViews ()
         {
@@ -42,7 +43,7 @@ namespace Toggl.Joey.UI.Fragments
             DurationTextView.Click += OnDurationTextClicked;
         }
 
-        public void OnCreate (BaseActivity activity)
+        public void OnCreate (Activity activity)
         {
             this.activity = activity;
 
@@ -109,7 +110,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (currentEntry == null)
                 return;
-            new ChangeTimeEntryDurationDialogFragment (currentEntry).Show (activity.FragmentManager, "duration_dialog");
+            new ChangeTimeEntryDurationDialogFragment (currentEntry).Show (activity.SupportFragmentManager, "duration_dialog");
         }
 
         private void Rebind ()

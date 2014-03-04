@@ -20,19 +20,23 @@ namespace Toggl.Joey.UI.Adapters
 {
     class DrawerListAdapter : BaseAdapter
     {
-        private static readonly string LogTag = "DrawerListAdapter";
         protected static readonly int ViewTypeDrawerHeader = 0;
         protected static readonly int ViewTypeDrawerItem = 1;
+
+        public static readonly int TimerPageId = 0;
+        public static readonly int ReportsPageId = 1;
+        public static readonly int SettingsPageId = 2;
+        public static readonly int LogoutPageId = 3;
 
         private JavaList<DrawerItem> rowItems = new JavaList<DrawerItem> ();
         private AuthManager authManager = null;
 
         public DrawerListAdapter()
         {
-            rowItems.Add (new DrawerItem (){TextResId = Resource.String.MainDrawerTimer, ImageResId = Resource.Drawable.IcTimerGray});
-            rowItems.Add (new DrawerItem (){TextResId = Resource.String.MainDrawerReports, ImageResId = Resource.Drawable.IcReportsGray});
-            rowItems.Add (new DrawerItem (){TextResId = Resource.String.MainDrawerSettings, ImageResId = Resource.Drawable.IcSettingsGray});
-            rowItems.Add (new DrawerItem (){TextResId = Resource.String.MainDrawerLogout, ImageResId = Resource.Drawable.IcLogoutGray});
+            rowItems.Add (TimerPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerTimer, ImageResId = Resource.Drawable.IcTimerGray});
+            rowItems.Add (ReportsPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerReports, ImageResId = Resource.Drawable.IcReportsGray});
+            rowItems.Add (SettingsPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerSettings, ImageResId = Resource.Drawable.IcSettingsGray});
+            rowItems.Add (LogoutPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerLogout, ImageResId = Resource.Drawable.IcLogoutGray});
             authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 
@@ -82,11 +86,13 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         public override int Count {
-            get{ return rowItems.Size(); }
+            get{ return rowItems.Size() + 1; } // + 1 is for header
         }
+
         public override Java.Lang.Object GetItem(int position) {
             return rowItems.Get(position - 1); //Header is 0
         }
+
         public override long GetItemId(int position) {
             if (GetItemViewType (position) == ViewTypeDrawerHeader) {
                 return -1;

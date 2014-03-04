@@ -92,7 +92,7 @@ namespace Toggl.Joey
         {
             var res = ctx.Resources;
 
-            var openIntent = new Intent (ctx, typeof(TimeTrackingActivity));
+            var openIntent = new Intent (ctx, typeof(MainDrawerActivity));
             openIntent.SetAction (Intent.ActionMain);
             openIntent.AddCategory (Intent.CategoryLauncher);
             var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);

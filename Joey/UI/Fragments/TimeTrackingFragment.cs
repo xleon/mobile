@@ -1,10 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Android.App;
 using Android.Content;
-using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -14,52 +13,56 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.UI.Fragments;
+using Toggl.Joey.UI.Adapters;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
-using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Activities;
 
-namespace Toggl.Joey.UI.Activities
+namespace Toggl.Joey.UI.Fragments
 {
-    [Activity (
-        Label = "@string/EntryName",
-        MainLauncher = true,
-        Theme = "@style/Theme.Toggl.App")]
-    public class TimeTrackingActivity : BaseActivity
+    public class TimeTrackingFragment : Fragment
     {
         private static readonly int PagesCount = 3;
         private ViewPager viewPager;
         private TimerComponent timerSection = new TimerComponent ();
 
-        protected override void OnCreate (Bundle bundle)
+        public override void OnActivityCreated (Bundle savedInstanceState)
         {
-            base.OnCreate (bundle);
+            base.OnCreate (savedInstanceState);
 
-            SetContentView (Resource.Layout.MainDrawerLayout);
+            Android.Support.V7.App.ActionBarActivity actionBarActivity = (Android.Support.V7.App.ActionBarActivity)Activity;
 
-            var adapter = new MainPagerAdapter (this, SupportFragmentManager);
-            viewPager = FindViewById<ViewPager> (Resource.Id.ViewPager);
+            var adapter = new MainPagerAdapter (Activity, Activity.SupportFragmentManager);
+            viewPager = Activity.FindViewById<ViewPager> (Resource.Id.ViewPager);
             viewPager.Adapter = adapter;
             viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
             viewPager.PageSelected += OnViewPagerPageSelected;
 
-            timerSection.OnCreate (this);
+            timerSection.OnCreate (Activity);
 
             var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
             lp.Gravity = (int)(GravityFlags.Right | GravityFlags.CenterVertical);
 
-            ActionBar.SetCustomView (timerSection.Root, lp);
-            ActionBar.SetDisplayShowCustomEnabled (true);
-
-            var drawerList = FindViewById<ListView> (Resource.Id.LeftDrawer);
-            drawerList.Adapter = new DrawerListAdapter ();
+            actionBarActivity.SupportActionBar.SetCustomView (timerSection.Root, lp);
+            actionBarActivity.SupportActionBar.SetDisplayShowCustomEnabled (true);
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+        }
+
+        public override void OnResume ()
+        {
+            base.OnResume ();
+
+        }
+
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        {
+            return inflater.Inflate (Resource.Layout.TimeTrackingFragment, container, false);
         }
 
         private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
@@ -67,7 +70,7 @@ namespace Toggl.Joey.UI.Activities
             timerSection.HideDuration = e.Position == MainPagerAdapter.EditPosition;
         }
 
-        protected override void OnStart ()
+        public override void OnStart ()
         {
             base.OnStart ();
             timerSection.OnStart ();
@@ -76,7 +79,7 @@ namespace Toggl.Joey.UI.Activities
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
         }
 
-        protected override void OnStop ()
+        public override void OnDestroy ()
         {
             base.OnStop ();
             timerSection.OnStop ();

@@ -46,7 +46,7 @@ namespace Toggl.Joey.UI.Activities
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             if (item.ItemId == Android.Resource.Id.Home) {
-                var intent = new Intent (this, typeof(TimeTrackingActivity));
+                var intent = new Intent (this, typeof(MainDrawerActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);
                 Finish ();
                 return true;

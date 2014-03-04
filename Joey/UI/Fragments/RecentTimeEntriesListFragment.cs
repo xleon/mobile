@@ -21,6 +21,11 @@ namespace Toggl.Joey.UI.Fragments
             ListAdapter = new RecentTimeEntriesAdapter ();
         }
 
+        public override void OnDestroyView ()
+        {
+            base.OnDestroyView ();
+        }
+
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
             RecentTimeEntriesAdapter adapter = null;

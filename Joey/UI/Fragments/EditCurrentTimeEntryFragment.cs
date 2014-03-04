@@ -131,9 +131,7 @@ namespace Toggl.Joey.UI.Fragments
             if (Model == null)
                 return;
 
-            var intent = new Intent (Activity, typeof(ChooseProjectActivity));
-            intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, Model.Id.ToString ());
-            Activity.StartActivity (intent);
+            new ChooseTimeEntryProjectDialogFragment (Model).Show (FragmentManager, "projects_dialog");
         }
 
         private void OnTagsEditTextClick (object sender, EventArgs e)

@@ -3,4 +3,7 @@
     <declare-styleable name="Theme">
         <attr name="activatedBackgroundIndicator" format="reference" />
     </declare-styleable>
+    <declare-styleable name="FadeLinearLayout">
+        <attr name="fadeLength" format="dimension" />
+    </declare-styleable>
 </resources>

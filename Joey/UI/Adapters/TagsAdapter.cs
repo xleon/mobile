@@ -1,11 +1,12 @@
 ﻿using System;
 using Android.Views;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Views;
 using Android.Widget;
-using XPlatUtils;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
+using Toggl.Joey.UI.Utils;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -28,58 +29,37 @@ namespace Toggl.Joey.UI.Adapters
             return view;
         }
 
-        private class TagListItemHolder : Java.Lang.Object
+        private class TagListItemHolder : ModelViewHolder<TagModel>
         {
-            #pragma warning disable 0414
-            private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-            #pragma warning restore 0414
-            private TagModel model;
+            private TagModel Model {
+                get { return DataSource; }
+            }
 
             public CheckedTextView NameCheckedTextView { get; private set; }
 
-            public TagListItemHolder (View root)
-            {
-                FindViews (root);
-
-                // Cannot use model.OnPropertyChanged callback directly as it would most probably leak memory,
-                // thus the global ModelChangedMessage is used instead.
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-            }
-
-            private void FindViews (View root)
+            public TagListItemHolder (View root) : base (root)
             {
                 NameCheckedTextView = root.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView);
             }
 
-            private void OnModelChanged (ModelChangedMessage msg)
+            protected override void OnModelChanged (ModelChangedMessage msg)
             {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Model == null)
                     return;
 
-                if (model == null)
-                    return;
-
-                if (model == msg.Model) {
+                if (Model == msg.Model) {
                     if (msg.PropertyName == TagModel.PropertyName) {
                         Rebind ();
                     }
                 }
             }
 
-            public void Bind (TagModel model)
+            protected override void Rebind ()
             {
-                this.model = model;
-                Rebind ();
-            }
-
-            private void Rebind ()
-            {
-                if (model == null)
+                if (Model == null)
                     return;
 
-                NameCheckedTextView.Text = model.Name;
+                NameCheckedTextView.Text = Model.Name;
             }
         }
     }

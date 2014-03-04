@@ -86,6 +86,8 @@ namespace Toggl.Joey.UI.Adapters
                     data.Add (workspace);
                 }
 
+                data.Add (new NoProjectWrapper (workspace.Model));
+
                 foreach (var projects in workspace.Projects) {
                     data.Add (projects);
 
@@ -161,6 +163,10 @@ namespace Toggl.Joey.UI.Adapters
             if (project != null)
                 return project.Model;
 
+            var noProject = obj as NoProjectWrapper;
+            if (noProject != null)
+                return noProject.Workspace;
+
             var task = obj as TaskModel;
             if (task != null)
                 return task;
@@ -193,7 +199,7 @@ namespace Toggl.Joey.UI.Adapters
                 throw new ArgumentOutOfRangeException ("position");
 
             var obj = data [position];
-            if (obj is ProjectWrapper) {
+            if (obj is ProjectWrapper || obj is NoProjectWrapper) {
                 return ViewTypeProject;
             } else if (obj is TaskModel) {
                 return ViewTypeTask;
@@ -227,7 +233,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (ProjectListItemHolder)view.Tag;
-                holder.Bind ((ProjectWrapper)data [position]);
+                holder.Bind (data [position] as ProjectWrapper);
             } else if (viewType == ViewTypeTask) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -502,6 +508,20 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private class NoProjectWrapper
+        {
+            private readonly WorkspaceModel workspace;
+
+            public NoProjectWrapper (WorkspaceModel workspace)
+            {
+                this.workspace = workspace;
+            }
+
+            public WorkspaceModel Workspace {
+                get { return workspace; }
+            }
+        }
+
         #endregion
 
         #region View holders
@@ -601,8 +621,13 @@ namespace Toggl.Joey.UI.Adapters
 
             protected override void Rebind ()
             {
-                if (Model == null)
+                if (Model == null) {
+                    ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
+                    ProjectTextView.SetText (Resource.String.ProjectsNoProject);
+                    ClientTextView.Visibility = ViewStates.Gone;
+                    TasksFrameLayout.Visibility = ViewStates.Gone;
                     return;
+                }
 
                 var color = Color.ParseColor (Model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);

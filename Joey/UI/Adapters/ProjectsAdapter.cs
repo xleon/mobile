@@ -541,7 +541,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (Model == null)
                     return;
 
-                WorkspaceTextView.Text = Model.Name;
+                WorkspaceTextView.Text = (Model.Name ?? String.Empty).ToUpper ();
             }
         }
 
@@ -567,6 +567,15 @@ namespace Toggl.Joey.UI.Adapters
                 TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
                 TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView);
                 TasksImageView = root.FindViewById<ImageView> (Resource.Id.TasksImageView);
+
+                TasksFrameLayout.Click += OnTasksFrameLayoutClick;
+            }
+
+            private void OnTasksFrameLayoutClick (object sender, EventArgs e)
+            {
+                if (DataSource == null)
+                    return;
+                DataSource.IsExpanded = !DataSource.IsExpanded;
             }
 
             private ProjectModel Model {

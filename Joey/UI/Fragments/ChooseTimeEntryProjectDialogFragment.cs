@@ -51,11 +51,14 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle state)
         {
             adapter = new ProjectsAdapter ();
-            return new AlertDialog.Builder (Activity)
+            var dia = new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle)
                     .SetAdapter (adapter, OnItemSelected)
                 .SetNegativeButton (Resource.String.ChooseTimeEntryProjectDialogCancel, OnCancelButtonClicked)
                 .Create ();
+
+            dia.ListView.Divider = Activity.Resources.GetDrawable (Resource.Drawable.dividerhorizontalopaque);
+            return dia;
         }
 
         private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)

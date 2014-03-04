@@ -229,6 +229,10 @@
     <AndroidResource Include="Resources\layout\ProjectListProjectItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListWorkspaceItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListTaskItem.axml" />
+    <AndroidResource Include="Resources\drawable-xhdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\DividerHorizontalOpaque.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

@@ -15,7 +15,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginRight="6dip"
+        android:layout_marginLeft="10dp"
         android:gravity="center_vertical">
         <TextView
             android:textAppearance="?android:attr/textAppearanceMedium"
@@ -33,7 +33,7 @@
             android:id="@+id/ClientTextView"
             android:singleLine="true"
             android:ellipsize="none"
-            android:layout_marginLeft="6dp" />
+            android:layout_marginLeft="10dp" />
     </LinearLayout>
     <View
         android:layout_width="5dp"
@@ -51,12 +51,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginRight="8dp"
-            android:layout_marginLeft="8dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginLeft="10dp"
             android:singleLine="true" />
         <ImageView
             android:id="@+id/TasksImageView"
-            android:src="@android:drawable/ic_menu_gallery"
+            android:src="@android:drawable/arrow_up_float"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center" />

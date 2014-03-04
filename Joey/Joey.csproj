@@ -233,6 +233,11 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\DividerHorizontalOpaque.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\DividerHorizontalOpaque.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable\ListItemButtonRight.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\DividerVerticalLeftOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\DividerVerticalLeftOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\DividerVerticalLeftOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\DividerVerticalLeftOpaque.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

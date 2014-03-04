@@ -41,9 +41,11 @@
         android:minWidth="5dp"
         android:layout_marginLeft="-5dp" />
     <FrameLayout
+        android:id="@+id/TasksFrameLayout"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:id="@+id/TasksFrameLayout">
+        android:background="@drawable/ListItemButtonRight"
+        android:paddingRight="1dp">
         <TextView
             android:id="@+id/TasksTextView"
             android:text="@string/ProjectsTasks"

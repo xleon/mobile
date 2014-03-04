@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Android.Graphics;
-using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
@@ -102,6 +100,78 @@ namespace Toggl.Joey.UI.Adapters
             dataStale = false;
         }
 
+        private void Rebind ()
+        {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero)
+                return;
+
+            dataStale = true;
+            NotifyDataSetInvalidated ();
+        }
+
+        private void OnModelChanged (ModelChangedMessage msg)
+        {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero)
+                return;
+
+            if (workspacesStale)
+                return;
+
+            if (msg.Model is UserModel
+                && msg.PropertyName == UserModel.PropertyDefaultWorkspaceId) {
+                workspaces.Sort (WorkspaceComparison);
+                Rebind ();
+            } else if (msg.Model is WorkspaceModel) {
+                if (msg.PropertyName == WorkspaceModel.PropertyName
+                    || msg.PropertyName == WorkspaceModel.PropertyIsShared
+                    || msg.PropertyName == WorkspaceModel.PropertyDeletedAt) {
+
+                    var model = (WorkspaceModel)msg.Model;
+                    if (model.IsShared && model.DeletedAt != null) {
+                        if (!workspaces.Any ((w) => w.Model == model)) {
+                            workspacesStale = true;
+                        } else {
+                            workspaces.Sort (WorkspaceComparison);
+                            Rebind ();
+                        }
+                    } else {
+                        if (workspaces.Any ((w) => w.Model == model)) {
+                            workspacesStale = true;
+                        }
+                    }
+                }
+            }
+
+            if (workspacesStale) {
+                Rebind ();
+            }
+        }
+
+        public Model GetModel (int position)
+        {
+            EnsureData ();
+            if (position < 0 || position >= data.Count)
+                return null;
+
+            var obj = data [position];
+
+            var project = obj as ProjectWrapper;
+            if (project != null)
+                return project.Model;
+
+            var task = obj as TaskModel;
+            if (task != null)
+                return task;
+
+            var workspace = obj as WorkspaceWrapper;
+            if (workspace != null)
+                return workspace.Model;
+
+            return null;
+        }
+
         public override Java.Lang.Object GetItem (int position)
         {
             return null;
@@ -110,6 +180,28 @@ namespace Toggl.Joey.UI.Adapters
         public override long GetItemId (int position)
         {
             return position;
+        }
+
+        public override int ViewTypeCount {
+            get { return 3; }
+        }
+
+        public override int GetItemViewType (int position)
+        {
+            EnsureData ();
+            if (position < 0 || position >= data.Count)
+                throw new ArgumentOutOfRangeException ("position");
+
+            var obj = data [position];
+            if (obj is ProjectWrapper) {
+                return ViewTypeProject;
+            } else if (obj is TaskModel) {
+                return ViewTypeTask;
+            } else if (obj is WorkspaceWrapper) {
+                return ViewTypeWorkspace;
+            }
+
+            throw new NotSupportedException ("No view type defined for given object.");
         }
 
         public override View GetView (int position, View convertView, ViewGroup parent)
@@ -152,111 +244,12 @@ namespace Toggl.Joey.UI.Adapters
             return view;
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero)
-                return;
-
-            if (workspacesStale)
-                return;
-
-            if (msg.Model is UserModel
-                && msg.PropertyName == UserModel.PropertyDefaultWorkspaceId) {
-                workspaces.Sort (WorkspaceComparison);
-                Rebind ();
-            } else if (msg.Model is WorkspaceModel) {
-                if (msg.PropertyName == WorkspaceModel.PropertyName
-                    || msg.PropertyName == WorkspaceModel.PropertyIsShared
-                    || msg.PropertyName == WorkspaceModel.PropertyDeletedAt) {
-
-                    var model = (WorkspaceModel)msg.Model;
-                    if (model.IsShared && model.DeletedAt != null) {
-                        if (!workspaces.Any ((w) => w.Model == model)) {
-                            workspacesStale = true;
-                        } else {
-                            workspaces.Sort (WorkspaceComparison);
-                            Rebind ();
-                        }
-                    } else {
-                        if (workspaces.Any ((w) => w.Model == model)) {
-                            workspacesStale = true;
-                        }
-                    }
-                }
-            }
-
-            if (workspacesStale) {
-                Rebind ();
-            }
-        }
-
-        private int WorkspaceComparison (WorkspaceWrapper a, WorkspaceWrapper b)
-        {
-            // Make sure the default workspace is first:
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-            if (user != null) {
-                if (a.Model.Id == user.DefaultWorkspaceId) {
-                    return -1;
-                } else if (b.Model.Id == user.DefaultWorkspaceId) {
-                    return 1;
-                }
-            }
-
-            return a.Model.Name.CompareTo (b.Model.Name);
-        }
-
         public override bool IsEnabled (int position)
         {
             EnsureData ();
             if (position < 0 || position >= data.Count)
                 throw new ArgumentOutOfRangeException ("position");
             return !(data [position] is WorkspaceWrapper);
-        }
-
-        public override int GetItemViewType (int position)
-        {
-            EnsureData ();
-            if (position < 0 || position >= data.Count)
-                throw new ArgumentOutOfRangeException ("position");
-
-            var obj = data [position];
-            if (obj is ProjectWrapper) {
-                return ViewTypeProject;
-            } else if (obj is TaskModel) {
-                return ViewTypeTask;
-            } else if (obj is WorkspaceWrapper) {
-                return ViewTypeWorkspace;
-            }
-
-            throw new NotSupportedException ("No view type defined for given object.");
-        }
-
-        public Model GetModel (int position)
-        {
-            EnsureData ();
-            if (position < 0 || position >= data.Count)
-                return null;
-
-            var obj = data [position];
-
-            var project = obj as ProjectWrapper;
-            if (project != null)
-                return project.Model;
-
-            var task = obj as TaskModel;
-            if (task != null)
-                return task;
-
-            var workspace = obj as WorkspaceWrapper;
-            if (workspace != null)
-                return workspace.Model;
-
-            return null;
-        }
-
-        public override int ViewTypeCount {
-            get { return 3; }
         }
 
         public override int Count {
@@ -266,15 +259,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private void Rebind ()
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero)
-                return;
-
-            dataStale = true;
-            NotifyDataSetInvalidated ();
-        }
+        #region Model wrappers
 
         private abstract class ModelWrapper<T> : IDisposable
             where T : Model
@@ -420,11 +405,6 @@ namespace Toggl.Joey.UI.Adapters
                     adapter.Rebind ();
                 }
             }
-
-            private int ProjectComparison (ProjectWrapper a, ProjectWrapper b)
-            {
-                return (a.Model.Name ?? String.Empty).CompareTo (b.Model.Name ?? String.Empty);
-            }
         }
 
         private class ProjectWrapper : ModelWrapper<ProjectModel>
@@ -520,12 +500,11 @@ namespace Toggl.Joey.UI.Adapters
                     adapter.Rebind ();
                 }
             }
-
-            private int TaskComparison (TaskModel a, TaskModel b)
-            {
-                return (a.Name ?? String.Empty).CompareTo (b.Name ?? String.Empty);
-            }
         }
+
+        #endregion
+
+        #region View holders
 
         private class WorkspaceListItemHolder : ModelViewHolder<WorkspaceWrapper>
         {
@@ -666,5 +645,36 @@ namespace Toggl.Joey.UI.Adapters
                 TaskTextView.Text = DataSource.Name;
             }
         }
+
+        #endregion
+
+        #region Sorting functions
+
+        private static int WorkspaceComparison (WorkspaceWrapper a, WorkspaceWrapper b)
+        {
+            // Make sure the default workspace is first:
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            if (user != null) {
+                if (a.Model.Id == user.DefaultWorkspaceId) {
+                    return -1;
+                } else if (b.Model.Id == user.DefaultWorkspaceId) {
+                    return 1;
+                }
+            }
+
+            return a.Model.Name.CompareTo (b.Model.Name);
+        }
+
+        private static int ProjectComparison (ProjectWrapper a, ProjectWrapper b)
+        {
+            return (a.Model.Name ?? String.Empty).CompareTo (b.Model.Name ?? String.Empty);
+        }
+
+        private static int TaskComparison (TaskModel a, TaskModel b)
+        {
+            return (a.Name ?? String.Empty).CompareTo (b.Name ?? String.Empty);
+        }
+
+        #endregion
     }
 }

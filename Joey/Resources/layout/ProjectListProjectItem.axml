@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:gravity="center_vertical">
+    <View
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:id="@+id/ColorView"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginLeft="10dp"
+        android:gravity="center_vertical">
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/ProjectTextView"
+            android:singleLine="true"
+            android:text="Project name"
+            android:ellipsize="none" />
+        <TextView
+            android:text="Client name"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/ClientTextView"
+            android:singleLine="true"
+            android:ellipsize="none"
+            android:layout_marginLeft="10dp" />
+    </LinearLayout>
+    <View
+        android:layout_width="5dp"
+        android:layout_height="match_parent"
+        android:minWidth="5dp"
+        android:layout_marginLeft="-5dp" />
+    <FrameLayout
+        android:id="@+id/TasksFrameLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/ListItemButtonRight"
+        android:paddingRight="1dp">
+        <TextView
+            android:id="@+id/TasksTextView"
+            android:text="@string/ProjectsTasks"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginRight="10dp"
+            android:layout_marginLeft="10dp"
+            android:singleLine="true" />
+        <ImageView
+            android:id="@+id/TasksImageView"
+            android:src="@android:drawable/arrow_up_float"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+    </FrameLayout>
+</LinearLayout>

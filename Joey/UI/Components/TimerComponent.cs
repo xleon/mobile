@@ -181,9 +181,7 @@ namespace Toggl.Joey.UI.Fragments
                 var hasProjects = user.GetAvailableProjects ().Any ();
 
                 if (hasProjects) {
-                    var intent = new Intent (activity, typeof(ChooseProjectActivity));
-                    intent.PutExtra (ChooseProjectActivity.TimeEntryIdExtra, currentEntry.Id.ToString ());
-                    activity.StartActivity (intent);
+                    new ChooseTimeEntryProjectDialogFragment (currentEntry).Show (activity.FragmentManager, "projects_dialog");
                 }
 
                 // TODO: Notify outside world that this component started the timer (thus the pager could act)

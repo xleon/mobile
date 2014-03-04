@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/WorkspaceTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Workspace name"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:gravity="bottom"
+        android:paddingBottom="8dp"
+        android:paddingLeft="12dp"
+        android:singleLine="true"
+        android:textColor="#5F5F5F"
+        android:ellipsize="none" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@drawable/DividerHorizontalOpaque" />
+</LinearLayout>

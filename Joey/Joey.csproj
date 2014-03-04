@@ -86,8 +86,6 @@
     <Compile Include="AndroidLogger.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopTimeEntryBroadcastReceiver.cs" />
-    <Compile Include="UI\Activities\ChooseProjectActivity.cs" />
-    <Compile Include="UI\Fragments\ChooseTimeEntryProjectListFragment.cs" />
     <Compile Include="UI\Utils\MultipleModalChoiceShim.cs" />
     <Compile Include="UI\Utils\MultipleModalChoiceGB.cs" />
     <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
@@ -100,6 +98,9 @@
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryTagsDialogFragment.cs" />
     <Compile Include="UI\Adapters\TagsAdapter.cs" />
+    <Compile Include="UI\Utils\BindableViewHolder.cs" />
+    <Compile Include="UI\Utils\ModelViewHolder.cs" />
+    <Compile Include="UI\Fragments\ChooseTimeEntryProjectDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -113,7 +114,6 @@
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\layout\ProjectListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
     <AndroidResource Include="Resources\values\Plurals.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDialogAlertHoloLight.png" />
@@ -136,7 +136,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcActionEdit.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionStop.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionEdit.png" />
-    <AndroidResource Include="Resources\layout\ChooseProjectActivity.axml" />
     <AndroidResource Include="Resources\values\Attrs.xml" />
     <AndroidResource Include="Resources\values\Styles.xml" />
     <AndroidResource Include="Resources\values\StylesBase.xml" />
@@ -227,6 +226,18 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcTickBlue.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTickBlue.png" />
     <AndroidResource Include="Resources\drawable\TickBlueBox.xml" />
+    <AndroidResource Include="Resources\layout\ProjectListProjectItem.axml" />
+    <AndroidResource Include="Resources\layout\ProjectListWorkspaceItem.axml" />
+    <AndroidResource Include="Resources\layout\ProjectListTaskItem.axml" />
+    <AndroidResource Include="Resources\drawable-xhdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\DividerHorizontalOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable\ListItemButtonRight.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\DividerVerticalLeftOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\DividerVerticalLeftOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\DividerVerticalLeftOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\DividerVerticalLeftOpaque.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

@@ -107,7 +107,7 @@ namespace Toggl.Joey.UI.Adapters
                 return;
 
             dataStale = true;
-            NotifyDataSetInvalidated ();
+            NotifyDataSetChanged ();
         }
 
         private void OnModelChanged (ModelChangedMessage msg)

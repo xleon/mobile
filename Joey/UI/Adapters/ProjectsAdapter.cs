@@ -183,6 +183,14 @@ namespace Toggl.Joey.UI.Adapters
             return a.Model.Name.CompareTo (b.Model.Name);
         }
 
+        public override bool IsEnabled (int position)
+        {
+            EnsureData ();
+            if (position < 0 || position >= data.Count)
+                throw new ArgumentOutOfRangeException ("position");
+            return !(data [position] is WorkspaceWrapper);
+        }
+
         public override int GetItemViewType (int position)
         {
             EnsureData ();

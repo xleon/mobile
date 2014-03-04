@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/TaskTextView"
+<toggl.joey.ui.views.FadeLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res/com.toggl.android"
     android:layout_width="match_parent"
     android:layout_height="48dp"
-    android:text="Task name"
-    android:textAppearance="?android:attr/textAppearanceSmall"
-    android:paddingLeft="24dp"
-    android:gravity="center_vertical"
-    android:singleLine="true"
-    android:textColor="#878787"
-    android:ellipsize="none" />
+    android:orientation="horizontal"
+    app:fadeLength="15dp">
+    <TextView
+        android:id="@+id/TaskTextView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Task name"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:paddingLeft="24dp"
+        android:gravity="center_vertical"
+        android:singleLine="true"
+        android:textColor="#878787"
+        android:ellipsize="none" />
+</toggl.joey.ui.views.FadeLinearLayout>

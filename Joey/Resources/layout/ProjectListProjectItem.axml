@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res/com.toggl.android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="48dp"
@@ -10,13 +11,15 @@
         android:id="@+id/ColorView"
         android:layout_marginTop="6dp"
         android:layout_marginBottom="6dp" />
-    <LinearLayout
+    <toggl.joey.ui.views.FadeLinearLayout
         android:orientation="horizontal"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginLeft="10dp"
-        android:gravity="center_vertical">
+        android:layout_marginRight="2dp"
+        android:gravity="center_vertical"
+        app:fadeLength="15dp">
         <TextView
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:layout_width="wrap_content"
@@ -34,12 +37,7 @@
             android:singleLine="true"
             android:ellipsize="none"
             android:layout_marginLeft="10dp" />
-    </LinearLayout>
-    <View
-        android:layout_width="5dp"
-        android:layout_height="match_parent"
-        android:minWidth="5dp"
-        android:layout_marginLeft="-5dp" />
+    </toggl.joey.ui.views.FadeLinearLayout>
     <FrameLayout
         android:id="@+id/TasksFrameLayout"
         android:layout_width="wrap_content"

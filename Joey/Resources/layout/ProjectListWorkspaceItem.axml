@@ -1,21 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res/com.toggl.android"
     android:layout_width="match_parent"
     android:layout_height="48dp"
     android:orientation="vertical">
-    <TextView
-        android:id="@+id/WorkspaceTextView"
+    <toggl.joey.ui.views.FadeLinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="Workspace name"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:gravity="bottom"
-        android:paddingBottom="8dp"
-        android:paddingLeft="12dp"
-        android:singleLine="true"
-        android:textColor="#5F5F5F"
-        android:ellipsize="none" />
+        android:orientation="horizontal"
+        app:fadeLength="15dp">
+        <TextView
+            android:id="@+id/WorkspaceTextView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="Workspace name"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:gravity="bottom"
+            android:paddingBottom="8dp"
+            android:paddingLeft="12dp"
+            android:singleLine="true"
+            android:textColor="#5F5F5F"
+            android:ellipsize="none" />
+    </toggl.joey.ui.views.FadeLinearLayout>
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

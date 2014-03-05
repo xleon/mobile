@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using Android.App;
-using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -12,9 +9,10 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Activities;
+using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
 
-namespace Toggl.Joey.UI.Fragments
+namespace Toggl.Joey.UI.Components
 {
     public class TimerComponent
     {

@@ -14,6 +14,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Fragment = Android.Support.V4.App.Fragment;

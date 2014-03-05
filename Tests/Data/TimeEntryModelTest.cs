@@ -55,13 +55,63 @@ namespace Toggl.Phoebe.Tests.Data
         }
 
         [Test]
+        public void TestStart ()
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            var entry = Model.Update (new TimeEntryModel () {
+                User = user,
+                IsPersisted = true,
+            });
+
+            entry.Start ();
+            Assert.IsNull (entry.Task);
+            Assert.IsNull (entry.Project);
+            Assert.AreEqual (user.DefaultWorkspace, entry.Workspace);
+            Assert.AreEqual (TimeEntryState.Running, entry.State);
+            Assert.AreNotEqual (new DateTime (), entry.StartTime);
+            Assert.IsNull (entry.StopTime);
+        }
+
+        [Test]
+        public void TestStore ()
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            var entry = Model.Update (new TimeEntryModel () {
+                User = user,
+                StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
+                IsPersisted = true,
+            });
+
+            entry.Store ();
+            Assert.IsNull (entry.Task);
+            Assert.IsNull (entry.Project);
+            Assert.AreEqual (user.DefaultWorkspace, entry.Workspace);
+            Assert.AreEqual (TimeEntryState.Finished, entry.State);
+            Assert.AreEqual (new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc), entry.StartTime);
+            Assert.AreEqual (new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc), entry.StopTime);
+        }
+
+        private TimeEntryModel StartNew ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                User = ServiceContainer.Resolve<AuthManager> ().User,
+                IsPersisted = true,
+            });
+            entry.Start ();
+            return entry;
+        }
+
+        [Test]
         public void TestStopOthersWhenStartNew ()
         {
-            var oldTimeEntry = TimeEntryModel.StartNew ();
+            var oldTimeEntry = StartNew ();
             Assert.AreEqual (TimeEntryState.Running, oldTimeEntry.State);
             Assert.IsNull (oldTimeEntry.StopTime);
 
-            var newTimeEntry = TimeEntryModel.StartNew ();
+            var newTimeEntry = StartNew ();
             Assert.AreEqual (TimeEntryState.Running, newTimeEntry.State);
             Assert.IsNull (newTimeEntry.StopTime);
             Assert.AreEqual (TimeEntryState.Finished, oldTimeEntry.State, "Old entry hasn't been finished.");
@@ -81,7 +131,7 @@ namespace Toggl.Phoebe.Tests.Data
                 ModifiedAt = new DateTime (),
             });
 
-            var newTimeEntry = TimeEntryModel.StartNew ();
+            var newTimeEntry = StartNew ();
             Assert.AreEqual (TimeEntryState.Running, newTimeEntry.State);
             Assert.IsNull (newTimeEntry.StopTime);
 
@@ -114,7 +164,7 @@ namespace Toggl.Phoebe.Tests.Data
                 DurationOnly = false,
                 IsPersisted = true,
             });
-            var runningTimeEntry = TimeEntryModel.StartNew ();
+            var runningTimeEntry = StartNew ();
             Assert.AreEqual (TimeEntryState.Running, runningTimeEntry.State);
             Assert.IsNull (runningTimeEntry.StopTime);
 
@@ -138,7 +188,7 @@ namespace Toggl.Phoebe.Tests.Data
                 DurationOnly = true,
                 IsPersisted = true,
             });
-            var runningTimeEntry = TimeEntryModel.StartNew ();
+            var runningTimeEntry = StartNew ();
             Assert.AreEqual (TimeEntryState.Running, runningTimeEntry.State);
             Assert.IsNull (runningTimeEntry.StopTime);
 

@@ -13,6 +13,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
+using Android.Graphics.Drawables;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -234,15 +235,16 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (Model.Project != null && Model.Project.Client != null) {
                     ClientTextView.Text = Model.Project.Client.Name;
+                    ClientTextView.Visibility = ViewStates.Visible;
                 } else {
-                    ClientTextView.Text = "";
+                    ClientTextView.Visibility = ViewStates.Gone;
                 }
 
                 if (Model.Task != null) {
-                    //Can't use margin, because with empty task description will still be margined
-                    TaskTextView.Text = Model.Task.Name + "  ";
+                    TaskTextView.Text = Model.Task.Name;
+                    TaskTextView.Visibility = ViewStates.Visible;
                 } else {
-                    TaskTextView.Text = "";
+                    TaskTextView.Visibility = ViewStates.Gone;
                 }
 
                 var color = Color.Transparent;
@@ -254,16 +256,26 @@ namespace Toggl.Joey.UI.Adapters
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
-                ColorView.SetBackgroundColor (color);
 
-                if (String.IsNullOrWhiteSpace (Model.Description)) {
-                    DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
-                } else {
-                    DescriptionTextView.Text = Model.Description;
+                var shape = ColorView.Background as GradientDrawable;
+                if (shape != null) {
+                    shape.SetColor (color);
                 }
 
-                TagsView.Visibility = Model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Invisible;
-                BillableView.Visibility = Model.IsBillable ? ViewStates.Visible : ViewStates.Invisible;
+                if (String.IsNullOrWhiteSpace (Model.Description)) {
+                    if (Model.Task == null) {
+                        DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
+                        DescriptionTextView.Visibility = ViewStates.Visible;
+                    } else {
+                        DescriptionTextView.Visibility = ViewStates.Gone;
+                    }
+                } else {
+                    DescriptionTextView.Text = Model.Description;
+                    DescriptionTextView.Visibility = ViewStates.Visible;
+                }
+
+                TagsView.Visibility = Model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
+                BillableView.Visibility = Model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
                 DurationTextView.Text = Model.GetDuration ().ToString (@"hh\:mm\:ss");
             }

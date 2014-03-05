@@ -100,15 +100,16 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (Model.Project != null && Model.Project.Client != null) {
                     ClientTextView.Text = Model.Project.Client.Name;
+                    ClientTextView.Visibility = ViewStates.Visible;
                 } else {
-                    ClientTextView.Text = "";
+                    ClientTextView.Visibility = ViewStates.Gone;
                 }
 
                 if (Model.Task != null) {
-                    //Can't use margin, because with empty task description will still be margined
-                    TaskTextView.Text = Model.Task.Name + "  ";
+                    TaskTextView.Text = Model.Task.Name;
+                    TaskTextView.Visibility = ViewStates.Visible;
                 } else {
-                    TaskTextView.Text = "";
+                    TaskTextView.Visibility = ViewStates.Gone;
                 }
 
                 var color = Color.Transparent;
@@ -122,12 +123,20 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var shape = ColorView.Background as GradientDrawable;
-                shape.SetColor (color);
+                if (shape != null) {
+                    shape.SetColor (color);
+                }
 
                 if (String.IsNullOrWhiteSpace (Model.Description)) {
-                    DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
+                    if (Model.Task == null) {
+                        DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
+                        DescriptionTextView.Visibility = ViewStates.Visible;
+                    } else {
+                        DescriptionTextView.Visibility = ViewStates.Gone;
+                    }
                 } else {
                     DescriptionTextView.Text = Model.Description;
+                    DescriptionTextView.Visibility = ViewStates.Visible;
                 }
             }
         }

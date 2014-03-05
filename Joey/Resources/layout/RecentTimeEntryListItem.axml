@@ -1,46 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="64dp"
+    android:orientation="horizontal"
     android:background="@drawable/MainListButton">
     <View
-        android:layout_width="4dip"
-        android:layout_height="match_parent"
         android:id="@+id/ColorView"
+        android:layout_width="4dp"
+        android:layout_height="match_parent"
         android:background="@drawable/ColoredSideShape" />
-    <TextView
-        android:text="Project"
-        android:id="@+id/ProjectTextView"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/ColorView"
-        style="@style/TimeEntryListItem.Title.Project" />
-    <TextView
-        android:text="Client"
-        android:id="@+id/ClientTextView"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_toRightOf="@+id/ProjectTextView"
-        android:layout_alignBaseline="@+id/ProjectTextView"
-        style="@style/TimeEntryListItem.Title.Client" />
-    <TextView
-        android:id="@+id/TaskTextView"
-        android:text="Super Task "
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_alignLeft="@+id/ProjectTextView"
-        android:layout_alignParentBottom="true"
-        style="@style/TimeEntryListItem.Description.Task" />
-    <TextView
-        android:id="@+id/DescriptionTextView"
-        android:text="@string/RecentTimeEntryNoDescription"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_toRightOf="@+id/TaskTextView"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        style="@style/TimeEntryListItem.Description" />
-</RelativeLayout>
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginLeft="12dp"
+        android:paddingBottom="4dp"
+        android:orientation="vertical"
+        android:gravity="center_vertical">
+        <toggl.joey.ui.views.FadeLinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp"
+            android:orientation="horizontal"
+            android:baselineAligned="true"
+            app:fadeLength="15dp">
+            <TextView
+                android:id="@+id/ProjectTextView"
+                style="@style/TimeEntryListItem.Text.Project"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="Project" />
+            <TextView
+                android:id="@+id/ClientTextView"
+                style="@style/TimeEntryListItem.Text.Client"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:text="Client" />
+        </toggl.joey.ui.views.FadeLinearLayout>
+        <toggl.joey.ui.views.FadeLinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:baselineAligned="true"
+            app:fadeLength="15dp">
+            <TextView
+                android:id="@+id/TaskTextView"
+                style="@style/TimeEntryListItem.Text.Task"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_marginRight="8dp"
+                android:text="Super Task" />
+            <TextView
+                android:id="@+id/DescriptionTextView"
+                style="@style/TimeEntryListItem.Text.Description"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/RecentTimeEntryNoDescription" />
+        </toggl.joey.ui.views.FadeLinearLayout>
+    </LinearLayout>
+</LinearLayout>

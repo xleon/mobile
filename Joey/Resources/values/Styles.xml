@@ -44,30 +44,32 @@
         <item name="android:textColor">@color/buttongreentextcolor</item>
     </style>
 
-    <style name="TimeEntryListItem" parent="@android:style/TextAppearance">
-        <item name="android:ellipsize">end</item>
-        <item name="android:textColor">@color/dark_gray_text</item>
-        <item name="android:lines">1</item>
+    <style name="TimeEntryListItem">
     </style>
-    <style name="TimeEntryListItem.Title">
-        <item name="android:layout_marginTop">8dp</item>
+
+    <style name="TimeEntryListItem.Text" parent="@android:style/TextAppearance">
+        <item name="android:textColor">@color/dark_gray_text</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">none</item>
+    </style>
+    <style name="TimeEntryListItem.Text.Project">
         <item name="android:textSize">18sp</item>
     </style>
-    <style name="TimeEntryListItem.Title.Project">
-        <item name="android:layout_marginLeft">12dp</item>
-    </style>
-    <style name="TimeEntryListItem.Title.Client">
-        <item name="android:layout_marginLeft">6dp</item>
-        <item name="android:layout_marginRight">8dp</item>
+    <style name="TimeEntryListItem.Text.Client">
         <item name="android:textSize">14sp</item>
     </style>
-    <style name="TimeEntryListItem.Description">
+    <style name="TimeEntryListItem.Text.Description">
         <item name="android:textSize">14sp</item>
         <item name="android:fontFamily">sans-serif-light</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:layout_marginBottom">10dp</item>
     </style>
-    <style name="TimeEntryListItem.Description.Task">
+    <style name="TimeEntryListItem.Text.Task">
+        <item name="android:textSize">14sp</item>
         <item name="android:fontFamily">sans-serif</item>
+    </style>
+    <style name="TimeEntryListItem.Text.Duration">
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textStyle">normal</item>
     </style>
 </resources>

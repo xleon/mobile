@@ -21,6 +21,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
+            ListView.SetClipToPadding (false);
             ListAdapter = new LogTimeEntriesAdapter ();
             shim = MultipleModalChoiceShim.Create (Activity as Activity, ListView, this);
             shim.ItemClick += OnItemClick;

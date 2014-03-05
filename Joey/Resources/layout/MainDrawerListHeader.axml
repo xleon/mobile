@@ -4,7 +4,7 @@
     android:layout_height="48dp"
     android:orientation="horizontal"
     android:background="@android:color/black">
-    <Toggl.Joey.UI.Components.ProfileImageView
+    <Toggl.Joey.UI.Views.ProfileImageView
         android:id="@+id/Icon"
         android:src="@drawable/IcReportsGray"
         android:layout_height="match_parent"

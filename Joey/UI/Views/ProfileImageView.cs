@@ -16,7 +16,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
-namespace Toggl.Joey.UI.Components
+namespace Toggl.Joey.UI.Views
 {
     class ProfileImageView : ImageView
     {
@@ -26,9 +26,8 @@ namespace Toggl.Joey.UI.Components
         public ProfileImageView(Context context) : base(context) {}
         public ProfileImageView(Context context, IAttributeSet attrs) : base(context, attrs) {}
         public ProfileImageView(Context context, IAttributeSet attrs, int defStyle) : base(context, attrs, defStyle) {}
-        private String imageUrl;
-        private Bitmap bitmap;
 
+        private String imageUrl;
 
         public String ImageUrl {
             get{ return imageUrl; }
@@ -37,25 +36,27 @@ namespace Toggl.Joey.UI.Components
             }
         }
 
-        private async Task GetImage (String url)
+        private async Task<Bitmap> GetImage (String url)
         {
             try {
                 var request = HttpWebRequest.Create (url);
                 var resp = await request.GetResponseAsync ()
                     .ConfigureAwait (continueOnCapturedContext: false);
                 var stream = resp.GetResponseStream ();
-                bitmap = BitmapFactory.DecodeStream (stream);
-                scaleImage ();
-                cropImage ();
-                makeImageRound ();
+                Bitmap bitmap = BitmapFactory.DecodeStream (stream);
+                bitmap = scaleImage (bitmap);
+                bitmap = cropImage (bitmap);
+                bitmap = makeImageRound (bitmap);
+                return bitmap;
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Debug (LogTag, ex, "Failed to get user profile image.");
+                return null;
             }
         }
 
         //Scaling image so that it has at least one of the sides be RectSize
-        private void scaleImage ()
+        private Bitmap scaleImage (Bitmap bitmap)
         {
             int rectSizePx = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, RectSize, Resources.DisplayMetrics);
             float minSize = (int)Math.Min (bitmap.Width, bitmap.Height);
@@ -63,19 +64,23 @@ namespace Toggl.Joey.UI.Components
             int scaledWidth = (int)Math.Floor (scaleFactor * bitmap.Width);
             int scaledHeight = (int)Math.Floor (scaleFactor * bitmap.Height);
             bitmap = Bitmap.CreateScaledBitmap (bitmap, scaledWidth, scaledHeight, false);
+
+            return bitmap;
         }
 
         //Make image rectangular
-        private void cropImage ()
+        private Bitmap cropImage (Bitmap bitmap)
         {
             if (bitmap.Width >= bitmap.Height) {
                 bitmap = Bitmap.CreateBitmap (bitmap, bitmap.Width / 2 - bitmap.Height / 2, 0, bitmap.Height, bitmap.Height);
             } else {
                 bitmap = Bitmap.CreateBitmap (bitmap, 0, bitmap.Height / 2 - bitmap.Width / 2, bitmap.Width, bitmap.Width);
             }
+
+            return bitmap;
         }
 
-        private void makeImageRound ()
+        private Bitmap makeImageRound (Bitmap bitmap)
         {
             float roundPx = RectSize;
 
@@ -96,14 +101,16 @@ namespace Toggl.Joey.UI.Components
 
             canvas.DrawBitmap (bitmap, rect, rect, paint);
 
-            bitmap = output;
+            return output;
         }
 
         private async void SetImage(String newImageUrl) {
-            if (imageUrl == null || bitmap == null || imageUrl != newImageUrl) {
-                await GetImage (newImageUrl);
-                imageUrl = newImageUrl;
-                SetImageBitmap (bitmap);
+            if (imageUrl == null || imageUrl != newImageUrl) {
+                Bitmap bitmap = await GetImage (newImageUrl);
+                if (bitmap != null) {
+                    imageUrl = newImageUrl;
+                    SetImageBitmap (bitmap);
+                }
             }
         }
     }

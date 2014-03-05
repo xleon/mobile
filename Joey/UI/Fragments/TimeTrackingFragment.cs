@@ -13,6 +13,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -20,7 +21,6 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
-using Toggl.Joey.UI.Activities;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -32,11 +32,9 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnActivityCreated (Bundle savedInstanceState)
         {
-            base.OnCreate (savedInstanceState);
+            base.OnActivityCreated (savedInstanceState);
 
-            Android.Support.V7.App.ActionBarActivity actionBarActivity = (Android.Support.V7.App.ActionBarActivity)Activity;
-
-            var adapter = new MainPagerAdapter (Activity, Activity.SupportFragmentManager);
+            var adapter = new MainPagerAdapter (Activity, ChildFragmentManager);
             viewPager = Activity.FindViewById<ViewPager> (Resource.Id.ViewPager);
             viewPager.Adapter = adapter;
             viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
@@ -47,17 +45,23 @@ namespace Toggl.Joey.UI.Fragments
             var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
             lp.Gravity = (int)(GravityFlags.Right | GravityFlags.CenterVertical);
 
-            actionBarActivity.SupportActionBar.SetCustomView (timerSection.Root, lp);
-            actionBarActivity.SupportActionBar.SetDisplayShowCustomEnabled (true);
+            var actionBar = ((BaseActivity) Activity).ActionBar;
+            actionBar.SetCustomView (timerSection.Root, lp);
+            actionBar.SetDisplayShowCustomEnabled (true);
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
         }
 
+        public override void OnDetach ()
+        {
+            base.OnDetach ();
+        }
+
         public override void OnResume ()
         {
             base.OnResume ();
-
+            viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -77,6 +81,11 @@ namespace Toggl.Joey.UI.Fragments
 
             // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
+        }
+
+        public override void OnDestroyView ()
+        {
+            base.OnDestroyView ();
         }
 
         public override void OnDestroy ()
@@ -170,6 +179,11 @@ namespace Toggl.Joey.UI.Fragments
                 default:
                     throw new InvalidOperationException ("Unknown tab position");
                 }
+            }
+
+            public override Java.Lang.Object InstantiateItem (ViewGroup container, int position)
+            {
+                return base.InstantiateItem (container, position);
             }
 
             public override Fragment GetItem (int position)

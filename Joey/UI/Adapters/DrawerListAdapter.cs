@@ -14,7 +14,7 @@ using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.UI.Components;
+using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -28,15 +28,15 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int SettingsPageId = 2;
         public static readonly int LogoutPageId = 3;
 
-        private JavaList<DrawerItem> rowItems = new JavaList<DrawerItem> ();
+        private List<DrawerItem> rowItems = new List<DrawerItem> ();
         private AuthManager authManager = null;
 
         public DrawerListAdapter()
         {
-            rowItems.Add (TimerPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerTimer, ImageResId = Resource.Drawable.IcTimerGray});
-            rowItems.Add (ReportsPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerReports, ImageResId = Resource.Drawable.IcReportsGray});
-            rowItems.Add (SettingsPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerSettings, ImageResId = Resource.Drawable.IcSettingsGray});
-            rowItems.Add (LogoutPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerLogout, ImageResId = Resource.Drawable.IcLogoutGray});
+            rowItems.Insert (TimerPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerTimer, ImageResId = Resource.Drawable.IcTimerGray});
+            rowItems.Insert (ReportsPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerReports, ImageResId = Resource.Drawable.IcReportsGray});
+            rowItems.Insert (SettingsPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerSettings, ImageResId = Resource.Drawable.IcSettingsGray});
+            rowItems.Insert (LogoutPageId, new DrawerItem (){TextResId = Resource.String.MainDrawerLogout, ImageResId = Resource.Drawable.IcLogoutGray});
             authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 
@@ -76,7 +76,7 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             if (GetItemViewType (position) == ViewTypeDrawerItem) {
-                DrawerItem item = (DrawerItem) GetItem (position);
+                DrawerItem item = GetDrawerItem (position);
                 view.FindViewById<ImageView> (Resource.Id.Icon).SetImageResource (item.ImageResId);
                 view.FindViewById<TextView> (Resource.Id.Title).SetText (item.TextResId);
             }
@@ -86,25 +86,30 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         public override int Count {
-            get{ return rowItems.Size() + 1; } // + 1 is for header
+            get{ return rowItems.Count + 1; } // + 1 is for header
+        }
+            
+        public override Java.Lang.Object GetItem (int position)
+        {
+            throw new NotImplementedException ("User method GetDrawerItem instead!");
         }
 
-        public override Java.Lang.Object GetItem(int position) {
-            return rowItems.Get(position - 1); //Header is 0
+        private DrawerItem GetDrawerItem(int position) {
+            return rowItems[position - 1]; //Header is 0
         }
 
         public override long GetItemId(int position) {
             if (GetItemViewType (position) == ViewTypeDrawerHeader) {
                 return -1;
             } else {
-                return rowItems.IndexOf (GetItem (position));
+                return rowItems.IndexOf (GetDrawerItem (position));
             }
         }
 
-        private class DrawerItem : Java.Lang.Object
+        private struct DrawerItem
         {
-            public int TextResId {get; set;}
-            public int ImageResId {get; set;}
+            public int TextResId;
+            public int ImageResId;
         }
     }
 }

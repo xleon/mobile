@@ -6,8 +6,11 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.V4.Widget;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe;
+using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -18,46 +21,58 @@ namespace Toggl.Joey.UI.Activities
         Label = "@string/EntryName",
         MainLauncher = true,
         Theme = "@style/Theme.Toggl.App")]
-    public class MainDrawerActivity : BaseDrawerActivity
+    public class MainDrawerActivity : BaseActivity
     {
         private static readonly string LogTag = "MainDrawerActivity";
 
-        private TimeTrackingFragment timeTrackingFragment;
-        private SettingsFragment settingsFragment;
-        private Fragment currentFragment;
+        protected Logger log;
+        protected DrawerLayout DrawerLayout;
 
         protected override void OnCreate (Bundle bundle)
         {
             base.OnCreate (bundle);
 
-            timeTrackingFragment = new TimeTrackingFragment ();
-            settingsFragment = new SettingsFragment ();
+            SetContentView (Resource.Layout.MainDrawerActivity);
 
+            DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
+            var drawerList = FindViewById<ListView> (Resource.Id.DrawerListView);
+            drawerList.Adapter = new DrawerListAdapter ();
+            drawerList.ItemClick += OnDrawerItemClick;
+
+            log = ServiceContainer.Resolve<Logger> ();
         }
 
         protected override void OnResume ()
         {
             base.OnResume ();
-            OpenFragment (timeTrackingFragment);
+            OpenTimeTracking ();
+        }
+
+        private void OpenTimeTracking()
+        {
+            OpenFragment (new TimeTrackingFragment ());
+        }
+
+        private void OpenSettings()
+        {
+            OpenFragment (new SettingsFragment ());
         }
 
         private void OpenFragment(Fragment fragment)
         {
-            var fragmentTransaction = SupportFragmentManager.BeginTransaction ();
-            fragmentTransaction.Replace (Resource.Id.ContentFrame, fragment);
-            fragmentTransaction.AddToBackStack (null);
-            fragmentTransaction.Commit ();
+            var fragmentTransaction = FragmentManager.BeginTransaction ();
+            fragmentTransaction.Replace (Resource.Id.ContentFrameLayout, fragment).Commit();
         }
 
-        protected override void OnDrawerItemClick(object sender, ListView.ItemClickEventArgs e)
+        private void OnDrawerItemClick(object sender, ListView.ItemClickEventArgs e)
         {
             log.Debug (LogTag, "Drawer item clicked " + e.Id);
 
             if (e.Id == DrawerListAdapter.TimerPageId) {
-                OpenFragment (timeTrackingFragment);
+                OpenTimeTracking ();
 
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
-                OpenFragment (settingsFragment);
+                OpenSettings ();
 
             }
 

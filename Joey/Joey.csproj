@@ -97,12 +97,11 @@
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
-    <Compile Include="UI\Components\ProfileImageView.cs" />
-    <Compile Include="UI\Activities\BaseDrawerActivity.cs" />
     <Compile Include="UI\Fragments\TimeTrackingFragment.cs" />
     <Compile Include="UI\Activities\MainDrawerActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="UI\Fragments\SettingsFragment.cs" />
+    <Compile Include="UI\Views\ProfileImageView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -215,8 +214,8 @@
     <AndroidResource Include="Resources\layout\TimeTrackingFragment.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerListItem.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerListHeader.axml" />
-    <AndroidResource Include="Resources\layout\MainDrawerLayout.axml" />
     <AndroidResource Include="Resources\layout\SettingsComponent.axml" />
+    <AndroidResource Include="Resources\layout\MainDrawerActivity.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -244,6 +243,7 @@
     <Folder Include="Resources\values-v11\" />
     <Folder Include="UI\Components\" />
     <Folder Include="Resources\color\" />
+    <Folder Include="UI\Views\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservicesgingerbread">

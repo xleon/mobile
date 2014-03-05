@@ -40,7 +40,7 @@ namespace Toggl.Joey.UI.Views
 
         private async Task<Bitmap> GetImage (String url)
         {
-            Bitmap bitmap = CachingUtil.GetBitmapFromCache (url, Context);
+            Bitmap bitmap = CachingUtil.GetBitmapFromCacheByUrl (url, Context);
             if (bitmap != null) {
                 return bitmap;
             }
@@ -55,7 +55,7 @@ namespace Toggl.Joey.UI.Views
                 bitmap = CropImage (bitmap);
                 bitmap = MakeImageRound (bitmap);
 
-                CachingUtil.PutBitmapToCache (url, bitmap, Context);
+                CachingUtil.PutBitmapToCacheByUrl (url, bitmap, Context);
                 return bitmap;
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();

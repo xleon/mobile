@@ -34,21 +34,21 @@ namespace Toggl.Joey.UI.Utils
             return sBuilder.ToString ();
         }
 
-        private static string GetCachePath (string url, Context ctx)
+        private static string GetCachePathForUrl (string url, Context ctx)
         {
-            return GetCachePath (url, "UserContent", ctx);
+            return GetCachePathForUrl (url, "UserContent", ctx);
         }
 
-        private static string GetCachePath (string url, String directoryName, Context ctx)
+        private static string GetCachePathForUrl (string url, String directoryName, Context ctx)
         {
             var hash = GetMd5Hash (url);
             return FilePath.Combine (ctx.ExternalCacheDir.AbsolutePath, directoryName, hash);
         }
 
-        public static Bitmap GetBitmapFromCache (string url, Context ctx)
+        public static Bitmap GetBitmapFromCacheByUrl (string url, Context ctx)
         {
             try {
-                var imagePath = GetCachePath (url, "UserImages", ctx) + ".png";
+                var imagePath = GetCachePathForUrl (url, "UserImages", ctx) + ".png";
                 return File.Exists (imagePath) ? BitmapFactory.DecodeFile (imagePath) : null;
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
@@ -57,9 +57,9 @@ namespace Toggl.Joey.UI.Utils
             }
         }
 
-        public static bool PutBitmapToCache (string url, Bitmap bitmap, Context ctx)
+        public static bool PutBitmapToCacheByUrl (string url, Bitmap bitmap, Context ctx)
         {
-            var imagePath = GetCachePath (url, "UserImages", ctx);
+            var imagePath = GetCachePathForUrl (url, "UserImages", ctx);
 
             try {
                 Directory.CreateDirectory (FilePath.GetDirectoryName (imagePath));

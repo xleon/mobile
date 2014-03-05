@@ -102,6 +102,7 @@
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="UI\Fragments\SettingsFragment.cs" />
     <Compile Include="UI\Views\ProfileImageView.cs" />
+    <Compile Include="UI\Utils\CachingUtil.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

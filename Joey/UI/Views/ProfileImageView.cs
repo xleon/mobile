@@ -1,52 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using Android.App;
 using Android.Content;
 using Android.Graphics;
-using Android.OS;
-using Android.Runtime;
 using Android.Util;
-using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Utils;
 
 namespace Toggl.Joey.UI.Views
 {
     class ProfileImageView : ImageView
     {
         private static readonly string LogTag = "ProfileImageView";
-        private static readonly int RectSize = 30; //In DP!
+        private static readonly int RectSize = 30;
+        //In DP!
+        public ProfileImageView (Context context) : base (context)
+        {
+        }
 
-        public ProfileImageView(Context context) : base(context) {}
-        public ProfileImageView(Context context, IAttributeSet attrs) : base(context, attrs) {}
-        public ProfileImageView(Context context, IAttributeSet attrs, int defStyle) : base(context, attrs, defStyle) {}
+        public ProfileImageView (Context context, IAttributeSet attrs) : base (context, attrs)
+        {
+        }
+
+        public ProfileImageView (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
+        {
+        }
 
         private String imageUrl;
 
         public String ImageUrl {
             get{ return imageUrl; }
-            set{
+            set {
                 SetImage (value);
             }
         }
 
         private async Task<Bitmap> GetImage (String url)
         {
+            Bitmap bitmap = CachingUtil.GetBitmapFromCache (url, Context);
+            if (bitmap != null) {
+                return bitmap;
+            }
             try {
                 var request = HttpWebRequest.Create (url);
                 var resp = await request.GetResponseAsync ()
                     .ConfigureAwait (continueOnCapturedContext: false);
                 var stream = resp.GetResponseStream ();
-                Bitmap bitmap = BitmapFactory.DecodeStream (stream);
+
+                bitmap = BitmapFactory.DecodeStream (stream);
                 bitmap = scaleImage (bitmap);
                 bitmap = cropImage (bitmap);
                 bitmap = makeImageRound (bitmap);
+
+                CachingUtil.PutBitmapToCache (url, bitmap, Context);
                 return bitmap;
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
@@ -54,7 +63,6 @@ namespace Toggl.Joey.UI.Views
                 return null;
             }
         }
-
         //Scaling image so that it has at least one of the sides be RectSize
         private Bitmap scaleImage (Bitmap bitmap)
         {
@@ -67,7 +75,6 @@ namespace Toggl.Joey.UI.Views
 
             return bitmap;
         }
-
         //Make image rectangular
         private Bitmap cropImage (Bitmap bitmap)
         {
@@ -104,7 +111,8 @@ namespace Toggl.Joey.UI.Views
             return output;
         }
 
-        private async void SetImage(String newImageUrl) {
+        private async void SetImage (String newImageUrl)
+        {
             if (imageUrl == null || imageUrl != newImageUrl) {
                 Bitmap bitmap = await GetImage (newImageUrl);
                 if (bitmap != null) {

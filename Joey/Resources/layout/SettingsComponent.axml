@@ -5,7 +5,7 @@
     android:minHeight="25px"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/MainLinearLayout">
+    android:id="@+id/LinearLayout">
     <TextView
         android:text="Not Implemented"
         android:textAppearance="?android:attr/textAppearanceMedium"

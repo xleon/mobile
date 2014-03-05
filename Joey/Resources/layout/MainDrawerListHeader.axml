@@ -5,14 +5,14 @@
     android:orientation="horizontal"
     android:background="@android:color/black">
     <Toggl.Joey.UI.Views.ProfileImageView
-        android:id="@+id/Icon"
+        android:id="@+id/ProfileImageViewIcon"
         android:src="@drawable/IcReportsGray"
         android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp" />
     <TextView
-        android:id="@+id/Title"
+        android:id="@+id/TextViewTitle"
         android:text="Settings"
         android:gravity="left|center_vertical"
         android:layout_width="fill_parent"

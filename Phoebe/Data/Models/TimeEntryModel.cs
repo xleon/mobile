@@ -17,55 +17,6 @@ namespace Toggl.Phoebe.Data.Models
 
         private static readonly string LogTag = "TimeEntryModel";
         internal static readonly string DefaultTag = "mobile";
-
-        [Obsolete ("Use draft based time entry creation instead.")]
-        public static TimeEntryModel StartNew ()
-        {
-            return StartNew (null, null, null);
-        }
-
-        [Obsolete ("Use draft based time entry creation instead.")]
-        public static TimeEntryModel StartNew (WorkspaceModel workspace)
-        {
-            return StartNew (workspace, null, null);
-        }
-
-        [Obsolete ("Use draft based time entry creation instead.")]
-        public static TimeEntryModel StartNew (ProjectModel project)
-        {
-            return StartNew (project.Workspace, project, null);
-        }
-
-        [Obsolete ("Use draft based time entry creation instead.")]
-        public static TimeEntryModel StartNew (TaskModel task)
-        {
-            return StartNew (task.Project.Workspace, task.Project, task);
-        }
-
-        private static TimeEntryModel StartNew (WorkspaceModel workspace, ProjectModel project, TaskModel task)
-        {
-            lock (SyncRoot) {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-
-                workspace = workspace ?? user.DefaultWorkspace;
-                if (workspace == null) {
-                    throw new ArgumentNullException ("workspace", "A time entry must be started in a workspace.");
-                }
-
-                return Model.Update (new TimeEntryModel () {
-                    Workspace = workspace,
-                    Project = project,
-                    Task = task,
-                    User = user,
-                    StartTime = DateTime.UtcNow,
-                    DurationOnly = user.TrackingMode == TrackingMode.Continue,
-                    StringTags = new List<string> () { DefaultTag },
-                    State = TimeEntryState.Running,
-                    IsPersisted = true,
-                });
-            }
-        }
-
         private readonly int workspaceRelationId;
         private readonly int projectRelationId;
         private readonly int taskRelationId;

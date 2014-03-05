@@ -581,9 +581,10 @@ namespace Toggl.Phoebe.Data.Models
                     throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
                 }
 
-                StartTime = DateTime.UtcNow;
                 Tags.Add (DefaultTag);
                 State = TimeEntryState.Running;
+                StartTime = DateTime.UtcNow;
+                StopTime = null;
             }
         }
 

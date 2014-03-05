@@ -47,6 +47,10 @@
     <string name="CurrentTimeEntryEditBillableChecked">Billable</string>
     <string name="CurrentTimeEntryEditBillableUnchecked">Non-billable</string>
     <string name="CurrentTimeEntryEditDeleteToast">Time entry has been discarded</string>
+    <string name="MainDrawerTimer">Timer</string>
+    <string name="MainDrawerReports">Reports</string>
+    <string name="MainDrawerSettings">Settings</string>
+    <string name="MainDrawerLogout">Log out</string>
     <string name="ChangeTimeEntryDurationDialogTitle">Set duration</string>
     <string name="ChangeTimeEntryStartTimeDialogTitle">Set start time</string>
     <string name="ChangeTimeEntryStopTimeDialogTitle">Set stop time</string>

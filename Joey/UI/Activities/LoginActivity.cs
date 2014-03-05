@@ -64,7 +64,7 @@ namespace Toggl.Joey.UI.Activities
                 // faking that we're still authenticating
                 IsAuthenticating = true;
 
-                var intent = new Intent (this, typeof(TimeTrackingActivity));
+                var intent = new Intent (this, typeof(LinearLayout));
                 intent.AddFlags (ActivityFlags.ClearTop);
                 StartActivity (intent);
                 Finish ();

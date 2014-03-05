@@ -8,9 +8,9 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
+using Activity = Android.Support.V4.App.FragmentActivity;
 
 namespace Toggl.Joey.UI.Components
 {
@@ -29,7 +29,7 @@ namespace Toggl.Joey.UI.Components
 
         public View Root { get; private set; }
 
-        private BaseActivity activity;
+        private Activity activity;
 
         private void FindViews ()
         {
@@ -40,7 +40,7 @@ namespace Toggl.Joey.UI.Components
             DurationTextView.Click += OnDurationTextClicked;
         }
 
-        public void OnCreate (BaseActivity activity)
+        public void OnCreate (Activity activity)
         {
             this.activity = activity;
 
@@ -107,7 +107,7 @@ namespace Toggl.Joey.UI.Components
         {
             if (currentEntry == null)
                 return;
-            new ChangeTimeEntryDurationDialogFragment (currentEntry).Show (activity.FragmentManager, "duration_dialog");
+            new ChangeTimeEntryDurationDialogFragment (currentEntry).Show (activity.SupportFragmentManager, "duration_dialog");
         }
 
         private void Rebind ()
@@ -179,7 +179,7 @@ namespace Toggl.Joey.UI.Components
                 var hasProjects = user.GetAvailableProjects ().Any ();
 
                 if (hasProjects) {
-                    new ChooseTimeEntryProjectDialogFragment (currentEntry).Show (activity.FragmentManager, "projects_dialog");
+                    new ChooseTimeEntryProjectDialogFragment (currentEntry).Show (activity.SupportFragmentManager, "projects_dialog");
                 }
 
                 // TODO: Notify outside world that this component started the timer (thus the pager could act)

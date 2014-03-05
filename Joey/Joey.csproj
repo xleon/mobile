@@ -61,7 +61,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\Activities\LoginActivity.cs" />
     <Compile Include="AndroidApp.cs" />
@@ -89,13 +88,19 @@
     <Compile Include="UI\Utils\MultipleModalChoiceShim.cs" />
     <Compile Include="UI\Utils\MultipleModalChoiceGB.cs" />
     <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
-    <Compile Include="UI\Activities\TimeTrackingActivity.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDateDialogFragment.cs" />
     <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
+    <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
+    <Compile Include="UI\Fragments\TimeTrackingFragment.cs" />
+    <Compile Include="UI\Activities\MainDrawerActivity.cs" />
+    <Compile Include="Resources\Resource.designer.cs" />
+    <Compile Include="UI\Fragments\SettingsFragment.cs" />
+    <Compile Include="UI\Views\ProfileImageView.cs" />
+    <Compile Include="UI\Utils\CachingUtil.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryTagsDialogFragment.cs" />
     <Compile Include="UI\Adapters\TagsAdapter.cs" />
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
@@ -142,7 +147,6 @@
     <AndroidResource Include="Resources\values\StylesBase.xml" />
     <AndroidResource Include="Resources\values-v11\StylesBase.xml" />
     <AndroidResource Include="Resources\values\colors.xml" />
-    <AndroidResource Include="Resources\layout\TimeTrackingActivity.axml" />
     <AndroidResource Include="Resources\layout\TimerComponent.axml" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTagsMiniGray.png" />
@@ -239,6 +243,27 @@
     <AndroidResource Include="Resources\drawable-mdpi\DividerVerticalLeftOpaque.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\DividerVerticalLeftOpaque.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\DividerVerticalLeftOpaque.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcReportsGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcTimerGray.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcLogoutGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcSettingsGray.png" />
+    <AndroidResource Include="Resources\layout\TimeTrackingFragment.axml" />
+    <AndroidResource Include="Resources\layout\MainDrawerListItem.axml" />
+    <AndroidResource Include="Resources\layout\MainDrawerListHeader.axml" />
+    <AndroidResource Include="Resources\layout\SettingsComponent.axml" />
+    <AndroidResource Include="Resources\layout\MainDrawerActivity.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

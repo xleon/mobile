@@ -1,10 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Android.App;
 using Android.Content;
-using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -14,6 +13,8 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Activities;
+using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using ActionBar = Android.Support.V7.App.ActionBar;
@@ -23,40 +24,51 @@ using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
 
-namespace Toggl.Joey.UI.Activities
+namespace Toggl.Joey.UI.Fragments
 {
-    [Activity (
-        Label = "@string/EntryName",
-        MainLauncher = true,
-        Theme = "@style/Theme.Toggl.App")]
-    public class TimeTrackingActivity : BaseActivity
+    public class TimeTrackingFragment : Fragment
     {
         private static readonly int PagesCount = 3;
         private ViewPager viewPager;
         private TimerComponent timerSection = new TimerComponent ();
 
-        protected override void OnCreate (Bundle bundle)
+        public override void OnActivityCreated (Bundle savedInstanceState)
         {
-            base.OnCreate (bundle);
+            base.OnActivityCreated (savedInstanceState);
 
-            SetContentView (Resource.Layout.TimeTrackingActivity);
-
-            var adapter = new MainPagerAdapter (this, SupportFragmentManager);
-            viewPager = FindViewById<ViewPager> (Resource.Id.ViewPager);
+            var adapter = new MainPagerAdapter (Activity, ChildFragmentManager);
+            viewPager = Activity.FindViewById<ViewPager> (Resource.Id.ViewPager);
             viewPager.Adapter = adapter;
             viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
             viewPager.PageSelected += OnViewPagerPageSelected;
 
-            timerSection.OnCreate (this);
+            timerSection.OnCreate (Activity);
 
             var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
             lp.Gravity = (int)(GravityFlags.Right | GravityFlags.CenterVertical);
 
-            ActionBar.SetCustomView (timerSection.Root, lp);
-            ActionBar.SetDisplayShowCustomEnabled (true);
+            var actionBar = ((BaseActivity) Activity).ActionBar;
+            actionBar.SetCustomView (timerSection.Root, lp);
+            actionBar.SetDisplayShowCustomEnabled (true);
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+        }
+
+        public override void OnDetach ()
+        {
+            base.OnDetach ();
+        }
+
+        public override void OnResume ()
+        {
+            base.OnResume ();
+            viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
+        }
+
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        {
+            return inflater.Inflate (Resource.Layout.TimeTrackingFragment, container, false);
         }
 
         private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
@@ -64,7 +76,7 @@ namespace Toggl.Joey.UI.Activities
             timerSection.HideDuration = e.Position == MainPagerAdapter.EditPosition;
         }
 
-        protected override void OnStart ()
+        public override void OnStart ()
         {
             base.OnStart ();
             timerSection.OnStart ();
@@ -73,7 +85,12 @@ namespace Toggl.Joey.UI.Activities
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
         }
 
-        protected override void OnStop ()
+        public override void OnDestroyView ()
+        {
+            base.OnDestroyView ();
+        }
+
+        public override void OnDestroy ()
         {
             base.OnStop ();
             timerSection.OnStop ();
@@ -164,6 +181,11 @@ namespace Toggl.Joey.UI.Activities
                 default:
                     throw new InvalidOperationException ("Unknown tab position");
                 }
+            }
+
+            public override Java.Lang.Object InstantiateItem (ViewGroup container, int position)
+            {
+                return base.InstantiateItem (container, position);
             }
 
             public override Fragment GetItem (int position)

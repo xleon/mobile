@@ -233,8 +233,9 @@ namespace Toggl.Phoebe.Tests.Views
 
             Model.Update (new TimeEntryModel () {
                 RemoteId = 6,
-                StartTime = new DateTime (2013, 10, 10, 16, 0, 0, DateTimeKind.Utc),
-                StopTime = new DateTime (2013, 10, 10, 16, 36, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (16, 0),
+                StopTime = MakeTime (16, 36),
                 Workspace = workspace,
                 User = user,
             });
@@ -253,14 +254,36 @@ namespace Toggl.Phoebe.Tests.Views
 
             Model.Update (new TimeEntryModel () {
                 RemoteId = 6,
-                StartTime = new DateTime (2013, 10, 10, 16, 0, 0, DateTimeKind.Utc),
-                StopTime = new DateTime (2013, 10, 10, 16, 36, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (16, 0),
+                StopTime = MakeTime (16, 36),
                 Workspace = workspace,
                 User = user,
                 IsPersisted = true,
-                DeletedAt = new DateTime (2013, 10, 10, 16, 39, 0, DateTimeKind.Utc),
+                DeletedAt = MakeTime (16, 39),
             });
 
+            Assert.AreEqual (4, view.Count);
+            Assert.AreEqual (
+                new long[] { 5, 4, 3, 2 },
+                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+            );
+        }
+
+        [Test]
+        public void TestPastEntryHidden ()
+        {
+            Model.Update (new TimeEntryModel () {
+                RemoteId = 6,
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (16, 0).AddDays (-10),
+                StopTime = MakeTime (16, 36).AddDays (-10),
+                Workspace = workspace,
+                User = user,
+                IsPersisted = true,
+            });
+
+            var view = new RecentTimeEntriesView ();
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
@@ -293,8 +316,9 @@ namespace Toggl.Phoebe.Tests.Views
             Model.Update (new TimeEntryModel () {
                 RemoteId = 1,
                 Description = "Initial concept",
-                StartTime = new DateTime (2013, 10, 10, 09, 12, 0, DateTimeKind.Utc),
-                StopTime = new DateTime (2013, 10, 10, 10, 1, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (09, 12),
+                StopTime = MakeTime (10, 1),
                 Project = project,
                 Workspace = workspace,
                 User = user,
@@ -304,8 +328,9 @@ namespace Toggl.Phoebe.Tests.Views
             Model.Update (new TimeEntryModel () {
                 RemoteId = 2,
                 Description = "Breakfast",
-                StartTime = new DateTime (2013, 10, 10, 10, 5, 0, DateTimeKind.Utc),
-                StopTime = new DateTime (2013, 10, 10, 10, 30, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (10, 5),
+                StopTime = MakeTime (10, 30),
                 Workspace = workspace,
                 User = user,
                 IsPersisted = true,
@@ -314,8 +339,9 @@ namespace Toggl.Phoebe.Tests.Views
             Model.Update (new TimeEntryModel () {
                 RemoteId = 3,
                 Description = "Initial concept",
-                StartTime = new DateTime (2013, 10, 10, 10, 35, 0, DateTimeKind.Utc),
-                StopTime = new DateTime (2013, 10, 10, 12, 21, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (10, 35),
+                StopTime = MakeTime (12, 21),
                 Workspace = workspace,
                 Project = project,
                 User = user,
@@ -324,8 +350,9 @@ namespace Toggl.Phoebe.Tests.Views
 
             Model.Update (new TimeEntryModel () {
                 RemoteId = 4,
-                StartTime = new DateTime (2013, 10, 10, 12, 25, 0, DateTimeKind.Utc),
-                StopTime = new DateTime (2013, 10, 10, 13, 57, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (12, 25),
+                StopTime = MakeTime (13, 57),
                 Workspace = workspace,
                 Project = project,
                 User = user,
@@ -334,12 +361,21 @@ namespace Toggl.Phoebe.Tests.Views
 
             Model.Update (new TimeEntryModel () {
                 RemoteId = 5,
-                StartTime = new DateTime (2013, 10, 10, 14, 0, 0, DateTimeKind.Utc),
-                StopTime = new DateTime (2013, 10, 10, 14, 36, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (14, 0),
+                StopTime = MakeTime (14, 36),
                 Workspace = workspace,
                 User = user,
                 IsPersisted = true,
             });
+        }
+
+        private DateTime MakeTime (int hour, int minute, int second = 0)
+        {
+            return DateTime.UtcNow.Date
+                    .AddHours (hour)
+                    .AddMinutes (minute)
+                    .AddSeconds (second);
         }
 
         private class TestSqliteStore : SQLiteModelStore

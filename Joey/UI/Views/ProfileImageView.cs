@@ -45,15 +45,15 @@ namespace Toggl.Joey.UI.Views
                 return bitmap;
             }
             try {
-                var request = HttpWebRequest.Create (url);
+                var request = WebRequest.Create (url);
                 var resp = await request.GetResponseAsync ()
                     .ConfigureAwait (continueOnCapturedContext: false);
                 var stream = resp.GetResponseStream ();
 
                 bitmap = BitmapFactory.DecodeStream (stream);
-                bitmap = scaleImage (bitmap);
-                bitmap = cropImage (bitmap);
-                bitmap = makeImageRound (bitmap);
+                bitmap = ScaleImage (bitmap, Resources.DisplayMetrics);
+                bitmap = CropImage (bitmap);
+                bitmap = MakeImageRound (bitmap);
 
                 CachingUtil.PutBitmapToCache (url, bitmap, Context);
                 return bitmap;
@@ -64,19 +64,18 @@ namespace Toggl.Joey.UI.Views
             }
         }
         //Scaling image so that it has at least one of the sides be RectSize
-        private Bitmap scaleImage (Bitmap bitmap)
+        private static Bitmap ScaleImage (Bitmap bitmap, DisplayMetrics metrics)
         {
-            int rectSizePx = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, RectSize, Resources.DisplayMetrics);
+            int rectSizePx = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, RectSize, metrics);
             float minSize = (int)Math.Min (bitmap.Width, bitmap.Height);
             var scaleFactor = rectSizePx / minSize;
             int scaledWidth = (int)Math.Floor (scaleFactor * bitmap.Width);
             int scaledHeight = (int)Math.Floor (scaleFactor * bitmap.Height);
-            bitmap = Bitmap.CreateScaledBitmap (bitmap, scaledWidth, scaledHeight, false);
 
-            return bitmap;
+            return Bitmap.CreateScaledBitmap (bitmap, scaledWidth, scaledHeight, false);
         }
         //Make image rectangular
-        private Bitmap cropImage (Bitmap bitmap)
+        private static Bitmap CropImage (Bitmap bitmap)
         {
             if (bitmap.Width >= bitmap.Height) {
                 bitmap = Bitmap.CreateBitmap (bitmap, bitmap.Width / 2 - bitmap.Height / 2, 0, bitmap.Height, bitmap.Height);
@@ -87,17 +86,17 @@ namespace Toggl.Joey.UI.Views
             return bitmap;
         }
 
-        private Bitmap makeImageRound (Bitmap bitmap)
+        private static Bitmap MakeImageRound (Bitmap bitmap)
         {
             float roundPx = RectSize;
 
             Bitmap output = Bitmap.CreateBitmap (bitmap.Width, bitmap.Height, Bitmap.Config.Argb8888);
-            Canvas canvas = new Canvas (output);
+            var canvas = new Canvas (output);
 
-            Rect rect = new Rect (0, 0, bitmap.Width, bitmap.Height);
-            RectF rectF = new RectF (rect);
+            var rect = new Rect (0, 0, bitmap.Width, bitmap.Height);
+            var rectF = new RectF (rect);
 
-            Paint paint = new Paint ();
+            var paint = new Paint ();
             paint.AntiAlias = true;
             paint.Color = Color.Black;
 

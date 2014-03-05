@@ -10,7 +10,7 @@ using FilePath = System.IO.Path;
 
 namespace Toggl.Joey.UI.Utils
 {
-    public class CachingUtil
+    public static class CachingUtil
     {
         private static readonly string LogTag = "CachingUtil";
 
@@ -36,23 +36,30 @@ namespace Toggl.Joey.UI.Utils
 
         private static string GetCachePath (string url, Context ctx)
         {
+            return GetCachePath (url, "UserContent", ctx);
+        }
+
+        private static string GetCachePath (string url, String directoryName, Context ctx)
+        {
             var hash = GetMd5Hash (url);
-            return FilePath.Combine (ctx.ExternalCacheDir.AbsolutePath, "UserImageryContent", hash);
+            return FilePath.Combine (ctx.ExternalCacheDir.AbsolutePath, directoryName, hash);
         }
 
         public static Bitmap GetBitmapFromCache (string url, Context ctx)
         {
-            var imagePath = GetCachePath (url, ctx) + ".png";
-            if (File.Exists (imagePath)) {
-                return BitmapFactory.DecodeFile (imagePath);
-            } else {
+            try {
+                var imagePath = GetCachePath (url, "UserImages", ctx) + ".png";
+                return File.Exists (imagePath) ? BitmapFactory.DecodeFile (imagePath) : null;
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Warning (LogTag, ex, "Failed to load bitmap from cache."); 
                 return null;
             }
         }
 
         public static bool PutBitmapToCache (string url, Bitmap bitmap, Context ctx)
         {
-            var imagePath = GetCachePath (url, ctx);
+            var imagePath = GetCachePath (url, "UserImages", ctx);
 
             try {
                 Directory.CreateDirectory (FilePath.GetDirectoryName (imagePath));
@@ -62,7 +69,7 @@ namespace Toggl.Joey.UI.Utils
                 return true;
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
-                log.Warning (LogTag, ex, "Failed to save stream to cache."); 
+                log.Warning (LogTag, ex, "Failed to save bitmap to cache."); 
                 return false;
             }
         }

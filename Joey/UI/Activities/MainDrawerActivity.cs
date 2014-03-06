@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Android.App;
-using Android.Content;
+﻿using Android.App;
 using Android.OS;
-using Android.Runtime;
+using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
-using Android.Support.V4.App;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -100,6 +95,11 @@ namespace Toggl.Joey.UI.Activities
 
             if (e.Id == DrawerListAdapter.TimerPageId) {
                 OpenTimeTracking ();
+
+            } else if (e.Id == DrawerListAdapter.LogoutPageId) {
+                var authManager = ServiceContainer.Resolve<AuthManager> ();
+                authManager.Forget ();
+                CheckAuth ();
 
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
                 OpenSettings ();

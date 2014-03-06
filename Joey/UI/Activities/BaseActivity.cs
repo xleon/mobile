@@ -1,7 +1,6 @@
-﻿﻿using System;
+﻿using System;
 using Android.Content;
 using Android.Views;
-using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -16,7 +15,6 @@ namespace Toggl.Joey.UI.Activities
     {
         private Subscription<SyncStartedMessage> subscriptionSyncStarted;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private IMenu menu;
         private const int SyncErrorMenuItemId = 0;
 
         private void OnSyncStarted (SyncStartedMessage msg)
@@ -26,8 +24,8 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
-            ToggleProgressBar(false);
-            if(msg.HadErrors) {
+            ToggleProgressBar (false);
+            if (msg.HadErrors) {
                 //TODO Show some identificator
 //                if (menu != null && menu.FindItem (SyncErrorMenuItemId) == null) {
 //                    menu.Add (Menu.None, SyncErrorMenuItemId, Menu.None, "Sync error")
@@ -47,7 +45,8 @@ namespace Toggl.Joey.UI.Activities
             return base.OnCreateOptionsMenu (menu);
         }
 
-        private void ToggleProgressBar(bool switchOn){
+        private void ToggleProgressBar (bool switchOn)
+        {
             if (Handle == IntPtr.Zero)
                 return;
 
@@ -60,7 +59,7 @@ namespace Toggl.Joey.UI.Activities
             get { return true; }
         }
 
-        private void CheckAuth ()
+        protected void CheckAuth ()
         {
             if (!RequireAuth)
                 return;

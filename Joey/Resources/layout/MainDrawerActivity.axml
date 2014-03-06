@@ -17,6 +17,7 @@
         android:choiceMode="singleChoice"
         android:divider="@color/drawer_serparator_gray"
         android:dividerHeight="1dp"
+        android:paddingTop="0dp"
         android:paddingLeft="0dp"
         android:paddingRight="0dp"
         android:background="@android:color/white" />

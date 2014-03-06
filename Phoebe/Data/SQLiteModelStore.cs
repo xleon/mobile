@@ -142,7 +142,9 @@ namespace Toggl.Phoebe.Data
         protected virtual void ClearTables (SQLiteConnection db)
         {
             foreach (var t in Model.GetAllModels()) {
-                db.DeleteAll (t);
+                var map = db.GetMapping (t);
+                var query = string.Format ("delete from \"{0}\"", map.TableName);
+                db.Execute (query);
             }
         }
 
@@ -238,7 +240,7 @@ namespace Toggl.Phoebe.Data
 
             lock (Model.SyncRoot) {
                 // Wipe database on logout
-                ClearTables ();
+                ClearTables (conn);
             }
         }
 

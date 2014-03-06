@@ -267,6 +267,14 @@
     <AndroidResource Include="Resources\drawable-mdpi\Icon.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\Icon.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\Icon.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\DrawerShadow.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDrawer.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\DrawerShadow.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDrawer.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\DrawerShadow.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDrawer.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\DrawerShadow.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDrawer.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

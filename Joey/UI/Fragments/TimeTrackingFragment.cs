@@ -1,23 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Runtime;
 using Android.Views;
-using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.UI.Activities;
-using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
-using ActionBar = Android.Support.V7.App.ActionBar;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
@@ -45,9 +37,9 @@ namespace Toggl.Joey.UI.Fragments
             timerSection.OnCreate (Activity);
 
             var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
-            lp.Gravity = (int)(GravityFlags.Right | GravityFlags.CenterVertical);
+            lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
 
-            var actionBar = ((BaseActivity) Activity).ActionBar;
+            var actionBar = Activity.ActionBar;
             actionBar.SetCustomView (timerSection.Root, lp);
             actionBar.SetDisplayShowCustomEnabled (true);
 

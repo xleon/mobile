@@ -51,13 +51,16 @@
     </Reference>
     <Reference Include="System.Net.Http" />
     <Reference Include="GooglePlayServicesLib">
-      <HintPath>..\Components\googleplayservicesgingerbread-13.0\lib\android\GooglePlayServicesLib.dll</HintPath>
+      <HintPath>..\Components\googleplayservices-15.0.1\lib\android\GooglePlayServicesLib.dll</HintPath>
     </Reference>
     <Reference Include="Xamarin.Android.Support.v4">
-      <HintPath>..\Components\googleplayservicesgingerbread-13.0\lib\android\Xamarin.Android.Support.v4.dll</HintPath>
+      <HintPath>..\Components\googleplayservices-15.0.1\lib\android\Xamarin.Android.Support.v4.dll</HintPath>
     </Reference>
     <Reference Include="Xamarin.Android.Support.v7.AppCompat">
-      <HintPath>..\Components\googleplayservicesgingerbread-13.0\lib\android\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
+      <HintPath>..\Components\googleplayservices-15.0.1\lib\android\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
+      <HintPath>..\Components\googleplayservices-15.0.1\lib\android\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -85,9 +88,6 @@
     <Compile Include="AndroidLogger.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopTimeEntryBroadcastReceiver.cs" />
-    <Compile Include="UI\Utils\MultipleModalChoiceShim.cs" />
-    <Compile Include="UI\Utils\MultipleModalChoiceGB.cs" />
-    <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDateDialogFragment.cs" />
@@ -143,8 +143,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionEdit.png" />
     <AndroidResource Include="Resources\values\Attrs.xml" />
     <AndroidResource Include="Resources\values\Styles.xml" />
-    <AndroidResource Include="Resources\values\StylesBase.xml" />
-    <AndroidResource Include="Resources\values-v11\StylesBase.xml" />
     <AndroidResource Include="Resources\values\colors.xml" />
     <AndroidResource Include="Resources\layout\TimerComponent.axml" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
@@ -300,14 +298,13 @@
     <Folder Include="Bugsnag\Json\" />
     <Folder Include="Resources\drawable-xxhdpi\" />
     <Folder Include="UI\Utils\" />
-    <Folder Include="Resources\values-v11\" />
     <Folder Include="UI\Components\" />
     <Folder Include="Resources\color\" />
     <Folder Include="UI\Views\" />
   </ItemGroup>
   <ItemGroup>
-    <XamarinComponentReference Include="googleplayservicesgingerbread">
-      <Version>13.0</Version>
+    <XamarinComponentReference Include="googleplayservices">
+      <Version>15.0.1</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>

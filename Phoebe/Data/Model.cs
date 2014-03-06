@@ -6,10 +6,6 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
-    /**
-     * TODO: Test for:
-     * - correct MarkDirty behaviour
-     */
     [JsonObject (MemberSerialization.OptIn)]
     public abstract partial class Model : ObservableObject
     {

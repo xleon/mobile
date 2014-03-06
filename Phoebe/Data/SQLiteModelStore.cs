@@ -8,12 +8,6 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
-    /**
-     * What to test for here:
-     * - Loading a model, such that it wouldn't be added into the changes queue
-     * - Non-persisted shared model exists, new instance is loaded from db and merged into it (persisted or not?)
-     * - Creating a new persisted model just by having the IsPersisted set before making shared
-     */
     public class SQLiteModelStore : IModelStore
     {
         private class DbCommand : SQLiteCommand

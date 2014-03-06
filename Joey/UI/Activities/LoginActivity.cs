@@ -14,6 +14,8 @@ using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
@@ -45,11 +47,13 @@ namespace Toggl.Joey.UI.Activities
         private void FindViews ()
         {
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
-            EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView);
-            PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText);
-            PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton);
-            LoginButton = FindViewById<Button> (Resource.Id.LoginButton);
-            GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton);
+            FindViewById<TextView> (Resource.Id.SloganTextView).SetFont (Font.RobotoLight);
+            FindViewById<RadioButton> (Resource.Id.LoginTabRadioButton).SetFont (Font.Roboto);
+            EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
+            PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
+            PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont (Font.Roboto);
+            LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont (Font.Roboto);
+            GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
         }
 
         protected override bool RequireAuth {
@@ -151,6 +155,8 @@ namespace Toggl.Joey.UI.Activities
             } else {
                 PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationPassword) | InputTypes.TextVariationVisiblePassword;
             }
+            // Need to reset font after changing input type
+            PasswordEditText.SetFont (Font.RobotoLight);
 
             // Restore cursor position:
             PasswordEditText.SetSelection (selectionStart, selectionEnd);

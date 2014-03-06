@@ -33,7 +33,9 @@ namespace Toggl.Joey.Net
             try {
                 var extras = intent.Extras;
                 var entryId = Convert.ToInt64 (extras.GetString ("task_id", String.Empty));
-                var modifiedAt = DateTime.Parse (extras.GetString ("updated_at", String.Empty)).ToUtc ();
+                // updated_at is null (usually) when the time entry was just created, in that
+                // case we assign modifiedAt the default DateTime value (start of time)
+                var modifiedAt = ParseDate (extras.GetString ("updated_at", String.Empty));
 
                 var entry = Model.ByRemoteId<TimeEntryModel> (entryId);
                 if (entry != null && modifiedAt <= entry.ModifiedAt) {
@@ -90,6 +92,13 @@ namespace Toggl.Joey.Net
             }
             schedule.Clear ();
             base.OnDestroy ();
+        }
+
+        private static DateTime ParseDate (string value)
+        {
+            DateTime dt;
+            DateTime.TryParse (value, out dt);
+            return dt.ToUtc ();
         }
 
         private class ScheduledSync

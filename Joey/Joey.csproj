@@ -143,8 +143,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcActionEdit.png" />
     <AndroidResource Include="Resources\values\Attrs.xml" />
     <AndroidResource Include="Resources\values\Styles.xml" />
-    <AndroidResource Include="Resources\values\StylesBase.xml" />
-    <AndroidResource Include="Resources\values-v11\StylesBase.xml" />
     <AndroidResource Include="Resources\values\colors.xml" />
     <AndroidResource Include="Resources\layout\TimerComponent.axml" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
@@ -300,7 +298,6 @@
     <Folder Include="Bugsnag\Json\" />
     <Folder Include="Resources\drawable-xxhdpi\" />
     <Folder Include="UI\Utils\" />
-    <Folder Include="Resources\values-v11\" />
     <Folder Include="UI\Components\" />
     <Folder Include="Resources\color\" />
     <Folder Include="UI\Views\" />

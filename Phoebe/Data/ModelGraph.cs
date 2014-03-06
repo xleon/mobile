@@ -50,12 +50,12 @@ namespace Toggl.Phoebe.Data
                 return;
 
             // Remove children
-            foreach (var child in node.Children) {
+            foreach (var child in node.Children.ToList ()) {
                 Remove (child, deleted);
             }
 
             // Detach from parents
-            foreach (var parent in node.Parents) {
+            foreach (var parent in node.Parents.ToList ()) {
                 nodes [parent].Children.Remove (model);
             }
 

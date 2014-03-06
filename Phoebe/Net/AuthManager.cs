@@ -93,7 +93,7 @@ namespace Toggl.Phoebe.Net
 
         public void Forget ()
         {
-            if (IsAuthenticated)
+            if (!IsAuthenticated)
                 throw new InvalidOperationException ("Cannot forget credentials which don't exist.");
 
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();

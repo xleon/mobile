@@ -9,6 +9,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -50,10 +51,10 @@ namespace Toggl.Joey.UI.Adapters
             public RecentTimeEntryListItemHolder (View root) : base (root)
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
-                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
-                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
-                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView);
-                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.RobotoLight);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
+                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.Roboto);
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)

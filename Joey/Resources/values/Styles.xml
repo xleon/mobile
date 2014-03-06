@@ -62,17 +62,12 @@
     </style>
     <style name="TimeEntryListItem.Text.Description">
         <item name="android:textSize">14sp</item>
-        <item name="android:fontFamily">sans-serif-light</item>
-        <item name="android:textStyle">normal</item>
     </style>
     <style name="TimeEntryListItem.Text.Task">
         <item name="android:textSize">14sp</item>
-        <item name="android:fontFamily">sans-serif</item>
     </style>
     <style name="TimeEntryListItem.Text.Duration">
         <item name="android:textSize">14sp</item>
-        <item name="android:fontFamily">sans-serif-light</item>
-        <item name="android:textStyle">normal</item>
     </style>
 
     <style name="ChangeDurationDialog">

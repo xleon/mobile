@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Android.Content;
 using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
@@ -10,7 +11,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
-using Android.Graphics.Drawables;
+using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -129,12 +130,14 @@ namespace Toggl.Joey.UI.Adapters
             var model = GetModel (position);
 
             if (GetHeaderAt (position) != null) {
-                view = view as LinearLayout;
+                TextView headerTextView;
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
+                    headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoLight);
+                } else {
+                    headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView);
                 }
-                TextView headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView);
                 headerTextView.Text = GetHeaderAt (position).Date.ToShortDateString ();
             } else {
                 if (view == null) {
@@ -176,13 +179,13 @@ namespace Toggl.Joey.UI.Adapters
             public TimeEntryListItemHolder (View root) : base (root)
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
-                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
-                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView);
-                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView);
-                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
+                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.Roboto);
+                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.RobotoLight);
                 TagsView = root.FindViewById<View> (Resource.Id.TagsIcon);
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
-                DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView);
+                DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueButton = root.FindViewById<Button> (Resource.Id.ContinueButton);
 
                 ContinueButton.Click += OnContinueButtonClicked;

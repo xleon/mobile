@@ -49,6 +49,7 @@
     <Compile Include="Data\SqliteModelStoreTest.cs" />
     <Compile Include="Bugsnag\CombiningStreamTest.cs" />
     <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
+    <Compile Include="Data\ModelGraphTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

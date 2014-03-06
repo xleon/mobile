@@ -20,12 +20,15 @@
     <string name="LoginInvalidCredentialsDialogOk">Ok</string>
     <string name="RecentTimeEntryNoDescription">(no description)</string>
     <string name="RecentTimeEntryNoProject">(no project)</string>
+    <string name="RecentTimeEntryNoItemsTitle">No recent entries</string>
+    <string name="NoItemsText">Start tracking and your activity will appear here.</string>
     <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
     <string name="TimerStartButtonText">Start</string>
     <string name="TimerStopButtonText">Stop</string>
     <string name="TimerSaveButtonText">Save</string>
     <string name="LogTimeEntryContextEdit">Edit</string>
     <string name="LogTimeEntryContextDelete">Delete</string>
+    <string name="LogTimeEntryNoItemsTitle">Nothing logged yet</string>
     <string name="TimeTrackingNewTab">NEW</string>
     <string name="TimeTrackingRunningTab">RUNNING</string>
     <string name="TimeTrackingManualTab">MANUAL</string>

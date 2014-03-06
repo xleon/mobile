@@ -8,6 +8,13 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class RecentTimeEntriesListFragment : ListFragment
     {
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        {
+            var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
+            view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetText (Resource.String.RecentTimeEntryNoItemsTitle);
+            return view;
+        }
+
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);

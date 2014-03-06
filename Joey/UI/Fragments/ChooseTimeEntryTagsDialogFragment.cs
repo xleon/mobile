@@ -4,7 +4,6 @@ using System.Linq;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;

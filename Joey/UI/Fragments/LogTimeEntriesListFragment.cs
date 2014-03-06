@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Android.OS;
 using Android.Views;
 using Android.Widget;

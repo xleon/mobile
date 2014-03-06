@@ -9,8 +9,10 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
-using Fragment = Android.Support.V4.App.Fragment;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Activity = Android.Support.V4.App.FragmentActivity;
+using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Components
 {
@@ -33,8 +35,8 @@ namespace Toggl.Joey.UI.Components
 
         private void FindViews ()
         {
-            ActionButton = Root.FindViewById<Button> (Resource.Id.ActionButton);
-            DurationTextView = Root.FindViewById<TextView> (Resource.Id.DurationTextView);
+            ActionButton = Root.FindViewById<Button> (Resource.Id.ActionButton).SetFont (Font.Roboto);
+            DurationTextView = Root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
 
             ActionButton.Click += OnActionButtonClicked;
             DurationTextView.Click += OnDurationTextClicked;

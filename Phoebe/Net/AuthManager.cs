@@ -104,8 +104,6 @@ namespace Toggl.Phoebe.Net
             Token = null;
             UserId = null;
 
-            // TODO: Clear database
-
             ServiceContainer.Resolve<MessageBus> ().Send (
                 new AuthChangedMessage (this));
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
@@ -9,6 +10,15 @@ namespace Toggl.Phoebe.Data
     public class ModelManager
     {
         private readonly Dictionary<Type, MemoryModelCache> caches = new Dictionary<Type, MemoryModelCache> ();
+        #pragma warning disable 0414
+        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
+        #pragma warning restore 0414
+
+        public ModelManager ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
+        }
 
         /// <summary>
         /// Returns all of the cached shared models.
@@ -231,6 +241,17 @@ namespace Toggl.Phoebe.Data
                 if (cache != null) {
                     cache.UpdateRemoteId (model, oldValue, newValue);
                 }
+            }
+        }
+
+        private void OnAuthChanged (AuthChangedMessage msg)
+        {
+            if (msg.AuthManager.IsAuthenticated)
+                return;
+
+            lock (Model.SyncRoot) {
+                // Wipe caches on logout
+                caches.Clear ();
             }
         }
     }

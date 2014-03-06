@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SQLite;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
@@ -118,6 +119,7 @@ namespace Toggl.Phoebe.Data
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
         #pragma warning disable 0414
         private readonly Subscription<ModelChangedMessage> modelChangedSubscription;
+        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
         #pragma warning restore 0414
 
         public SQLiteModelStore (string dbPath)
@@ -127,12 +129,20 @@ namespace Toggl.Phoebe.Data
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             modelChangedSubscription = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage, threadSafe: true);
+            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
         }
 
         protected virtual void CreateTables (SQLiteConnection db)
         {
             foreach (var t in Model.GetAllModels()) {
                 db.CreateTable (t);
+            }
+        }
+
+        protected virtual void ClearTables (SQLiteConnection db)
+        {
+            foreach (var t in Model.GetAllModels()) {
+                db.DeleteAll (t);
             }
         }
 
@@ -218,6 +228,17 @@ namespace Toggl.Phoebe.Data
 
                 changedModels.Add (model);
                 ScheduleCommit ();
+            }
+        }
+
+        private void OnAuthChanged (AuthChangedMessage msg)
+        {
+            if (msg.AuthManager.IsAuthenticated)
+                return;
+
+            lock (Model.SyncRoot) {
+                // Wipe database on logout
+                ClearTables ();
             }
         }
 

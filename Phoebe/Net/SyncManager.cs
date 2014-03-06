@@ -14,17 +14,28 @@ namespace Toggl.Phoebe.Net
         private static readonly string Tag = "SyncManager";
         #pragma warning disable 0414
         private readonly Subscription<ModelsCommittedMessage> subscriptionModelsCommited;
+        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
         #pragma warning restore 0414
 
         public SyncManager ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelsCommited = bus.Subscribe<ModelsCommittedMessage> (OnModelsCommited);
+            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
         }
 
         private void OnModelsCommited (ModelsCommittedMessage msg)
         {
             Run (SyncMode.Auto);
+        }
+
+        private void OnAuthChanged (AuthChangedMessage msg)
+        {
+            if (msg.AuthManager.IsAuthenticated)
+                return;
+
+            // Reset last run on logout
+            LastRun = null;
         }
 
         public async void Run (SyncMode mode = SyncMode.Full)

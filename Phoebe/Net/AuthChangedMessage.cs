@@ -7,5 +7,9 @@ namespace Toggl.Phoebe.Net
         public AuthChangedMessage (AuthManager manager) : base (manager)
         {
         }
+
+        public AuthManager AuthManager {
+            get { return (AuthManager)Sender; }
+        }
     }
 }

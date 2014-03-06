@@ -88,9 +88,6 @@
     <Compile Include="AndroidLogger.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopTimeEntryBroadcastReceiver.cs" />
-    <Compile Include="UI\Utils\MultipleModalChoiceShim.cs" />
-    <Compile Include="UI\Utils\MultipleModalChoiceGB.cs" />
-    <Compile Include="UI\Utils\MultipleModalChoiceHC.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDateDialogFragment.cs" />

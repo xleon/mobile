@@ -301,11 +301,17 @@
     <Folder Include="UI\Components\" />
     <Folder Include="Resources\color\" />
     <Folder Include="UI\Views\" />
+    <Folder Include="Assets\fonts\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">
       <Version>15.0.1</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />
+    <AndroidAsset Include="Assets\fonts\Roboto-Medium.ttf" />
+    <AndroidAsset Include="Assets\fonts\Roboto-Regular.ttf" />
   </ItemGroup>
 </Project>

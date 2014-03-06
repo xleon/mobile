@@ -6,8 +6,6 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Joey.UI.Adapters;
-using Toggl.Joey.UI.Utils;
-using Activity = Android.Support.V7.App.ActionBarActivity;
 using ListFragment = Android.Support.V4.App.ListFragment;
 
 namespace Toggl.Joey.UI.Fragments

@@ -7,7 +7,7 @@ using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Bugsnag;
 using ActionBar = Android.Support.V7.App.ActionBar;
-using Activity = Android.Support.V7.App.ActionBarActivity;
+using Activity = Android.Support.V4.App.FragmentActivity;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Activities
@@ -47,13 +47,14 @@ namespace Toggl.Joey.UI.Activities
             return base.OnCreateOptionsMenu (menu);
         }
 
-        private void ToggleProgressBar(bool switchOn){
+        private void ToggleProgressBar (bool switchOn)
+        {
             if (Handle == IntPtr.Zero)
                 return;
 
             // For some reason It's not enought to make it in OnCreate.
-            SetSupportProgressBarIndeterminate (true);
-            SetSupportProgressBarVisibility (switchOn);
+            SetProgressBarIndeterminate (true);
+            SetProgressBarVisibility (switchOn);
         }
 
         protected virtual bool RequireAuth {
@@ -87,7 +88,7 @@ namespace Toggl.Joey.UI.Activities
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             RequestWindowFeature (WindowFeatures.Progress);
             BugsnagClient.OnActivityCreated (this);
-            SetSupportProgressBarIndeterminate (true);
+            SetProgressBarIndeterminate (true);
             CheckAuth ();
         }
 
@@ -111,10 +112,6 @@ namespace Toggl.Joey.UI.Activities
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Unsubscribe (subscriptionSyncStarted);
             bus.Unsubscribe (subscriptionSyncFinished);
-        }
-
-        public new ActionBar ActionBar {
-            get { return SupportActionBar; }
         }
 
         public new FragmentManager FragmentManager {

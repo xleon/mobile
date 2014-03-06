@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Threading;
 using System.Threading.Tasks;
 using SQLite;
 using XPlatUtils;
@@ -138,14 +137,7 @@ namespace Toggl.Phoebe.Data
 
         protected virtual void CreateTables (SQLiteConnection db)
         {
-            var modelType = typeof(Model);
-            var modelsNamespace = typeof(Toggl.Phoebe.Data.Models.TimeEntryModel).Namespace;
-            // Auto-discover models in single assembly namespace
-            var modelSubtypes =
-                from t in modelType.Assembly.GetTypes ()
-                            where t.Namespace == modelsNamespace && t.IsSubclassOf (modelType)
-                            select t;
-            foreach (var t in modelSubtypes) {
+            foreach (var t in Model.GetAllModels()) {
                 db.CreateTable (t);
             }
         }

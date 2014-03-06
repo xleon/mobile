@@ -27,6 +27,16 @@ namespace Toggl.Phoebe.Data
             return expr.ToPropertyName ();
         }
 
+        public static IEnumerable<Type> GetAllModels ()
+        {
+            var modelType = typeof(Model);
+            var modelsNamespace = typeof(Toggl.Phoebe.Data.Models.TimeEntryModel).Namespace;
+            // Auto-discover models in single assembly namespace
+            return from t in modelType.Assembly.GetTypes ()
+                            where t.Namespace == modelsNamespace && t.IsSubclassOf (modelType)
+                            select t;
+        }
+
         protected override void OnPropertyChanged (string property)
         {
             base.OnPropertyChanged (property);

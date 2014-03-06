@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using Android.OS;
-using Android.Util;
+﻿using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;

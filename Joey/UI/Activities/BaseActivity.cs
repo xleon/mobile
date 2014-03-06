@@ -39,12 +39,6 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        public override bool OnCreateOptionsMenu (IMenu menu)
-        {
-            this.menu = menu;
-            return base.OnCreateOptionsMenu (menu);
-        }
-
         private void ToggleProgressBar (bool switchOn)
         {
             if (Handle == IntPtr.Zero)

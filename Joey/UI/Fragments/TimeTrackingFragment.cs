@@ -77,11 +77,6 @@ namespace Toggl.Joey.UI.Fragments
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
         }
 
-        public override void OnDestroyView ()
-        {
-            base.OnDestroyView ();
-        }
-
         public override void OnDestroy ()
         {
             base.OnStop ();
@@ -173,11 +168,6 @@ namespace Toggl.Joey.UI.Fragments
                 default:
                     throw new InvalidOperationException ("Unknown tab position");
                 }
-            }
-
-            public override Java.Lang.Object InstantiateItem (ViewGroup container, int position)
-            {
-                return base.InstantiateItem (container, position);
             }
 
             public override Fragment GetItem (int position)

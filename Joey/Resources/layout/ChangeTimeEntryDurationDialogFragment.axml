@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:stretchColumns="0,1,2">
+    <TableRow>
+        <TextView
+            android:id="@+id/DurationTextView"
+            android:layout_gravity="center_vertical"
+            android:layout_column="0"
+            android:layout_span="2"
+            android:text="00:00"
+            android:paddingLeft="20dp"
+            android:textSize="32sp" />
+        <ImageButton
+            android:id="@+id/DeleteImageButton"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="2"
+            android:src="@android:drawable/ic_input_delete" />
+    </TableRow>
+    <TableRow>
+        <Button
+            android:id="@+id/Num1Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="0"
+            android:text="1" />
+        <Button
+            android:id="@+id/Num2Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="1"
+            android:text="2" />
+        <Button
+            android:id="@+id/Num3Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="2"
+            android:text="3" />
+    </TableRow>
+    <TableRow>
+        <Button
+            android:id="@+id/Num4Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="0"
+            android:text="4" />
+        <Button
+            android:id="@+id/Num5Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="1"
+            android:text="5" />
+        <Button
+            android:id="@+id/Num6Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="2"
+            android:text="6" />
+    </TableRow>
+    <TableRow>
+        <Button
+            android:id="@+id/Num7Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="0"
+            android:text="7" />
+        <Button
+            android:id="@+id/Num8Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="1"
+            android:text="8" />
+        <Button
+            android:id="@+id/Num9Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="2"
+            android:text="9" />
+    </TableRow>
+    <TableRow>
+        <Button
+            android:id="@+id/Add5Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="0"
+            android:text="@string/ChooseTimeEntryDurationDialogAdd5Text" />
+        <Button
+            android:id="@+id/Num0Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="1"
+            android:text="0" />
+        <Button
+            android:id="@+id/Add30Button"
+            style="@style/ChangeDurationDialog.Button"
+            android:layout_column="2"
+            android:text="@string/ChooseTimeEntryDurationDialogAdd30Text" />
+    </TableRow>
+</TableLayout>

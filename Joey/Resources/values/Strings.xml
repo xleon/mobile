@@ -52,6 +52,10 @@
     <string name="MainDrawerSettings">Settings</string>
     <string name="MainDrawerLogout">Log out</string>
     <string name="ChangeTimeEntryDurationDialogTitle">Set duration</string>
+    <string name="ChangeTimeEntryDurationDialogCancel">Cancel</string>
+    <string name="ChangeTimeEntryDurationDialogOk">Ok</string>
+    <string name="ChooseTimeEntryDurationDialogAdd5Text">+5s</string>
+    <string name="ChooseTimeEntryDurationDialogAdd30Text">+30s</string>
     <string name="ChangeTimeEntryStartTimeDialogTitle">Set start time</string>
     <string name="ChangeTimeEntryStopTimeDialogTitle">Set stop time</string>
     <string name="ChangeTimeEntryDateDialogTitle">Set date</string>

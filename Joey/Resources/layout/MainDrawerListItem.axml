@@ -4,7 +4,7 @@
     android:layout_height="48dp"
     android:orientation="horizontal">
     <ImageView
-        android:id="@+id/ImageViewIcon"
+        android:id="@+id/IconImageView"
         android:src="@drawable/IcReportsGray"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
@@ -12,7 +12,7 @@
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp" />
     <TextView
-        android:id="@+id/TextViewTitle"
+        android:id="@+id/TitleTextView"
         android:text="Settings"
         android:gravity="left|center_vertical"
         android:layout_width="fill_parent"

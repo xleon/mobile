@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
@@ -16,34 +17,38 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int ReportsPageId = 1;
         public static readonly int SettingsPageId = 2;
         public static readonly int LogoutPageId = 3;
-        private List<DrawerItem> rowItems = new List<DrawerItem> ();
-        private AuthManager authManager = null;
+        private readonly List<DrawerItem> rowItems;
+        private readonly AuthManager authManager;
 
         public DrawerListAdapter ()
         {
-            rowItems.Insert (TimerPageId, new DrawerItem () {
-                TextResId = Resource.String.MainDrawerTimer,
-                ImageResId = Resource.Drawable.IcTimerGray
-            });
-            rowItems.Insert (ReportsPageId, new DrawerItem () {
-                TextResId = Resource.String.MainDrawerReports,
-                ImageResId = Resource.Drawable.IcReportsGray
-            });
-            rowItems.Insert (SettingsPageId, new DrawerItem () {
-                TextResId = Resource.String.MainDrawerSettings,
-                ImageResId = Resource.Drawable.IcSettingsGray
-            });
-            rowItems.Insert (LogoutPageId, new DrawerItem () {
-                TextResId = Resource.String.MainDrawerLogout,
-                ImageResId = Resource.Drawable.IcLogoutGray
-            });
+            rowItems = new List<DrawerItem> () {
+                new DrawerItem () {
+                    Id = TimerPageId,
+                    TextResId = Resource.String.MainDrawerTimer,
+                    ImageResId = Resource.Drawable.IcTimerGray
+                },
+                new DrawerItem () {
+                    Id = ReportsPageId,
+                    TextResId = Resource.String.MainDrawerReports,
+                    ImageResId = Resource.Drawable.IcReportsGray
+                },
+                new DrawerItem () {
+                    Id = SettingsPageId,
+                    TextResId = Resource.String.MainDrawerSettings,
+                    ImageResId = Resource.Drawable.IcSettingsGray
+                },
+                new DrawerItem () {
+                    Id = LogoutPageId,
+                    TextResId = Resource.String.MainDrawerLogout,
+                    ImageResId = Resource.Drawable.IcLogoutGray
+                }
+            };
             authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 
         public override int ViewTypeCount {
-            get {
-                return 2;
-            }
+            get { return 2; }
         }
 
         public override int GetItemViewType (int position)
@@ -59,28 +64,25 @@ namespace Toggl.Joey.UI.Adapters
         {
             View view = convertView;
 
-            if (view == null) {
-                if (GetItemViewType (position) == ViewTypeDrawerHeader) {
+            if (GetItemViewType (position) == ViewTypeDrawerHeader) {
+                if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.MainDrawerListHeader, parent, false);
-            
-                    view.FindViewById<ProfileImageView> (Resource.Id.ProfileImageViewIcon).ImageUrl = authManager.User.ImageUrl;
-                    view.FindViewById<TextView> (Resource.Id.TextViewTitle).Text = authManager.User.Name;
+                    view.Tag = new HeaderViewHolder (view);
+                }
 
-                } else if (GetItemViewType (position) == ViewTypeDrawerItem) {
+                var holder = (HeaderViewHolder)view.Tag;
+                holder.Bind (authManager.User);
+            } else {
+                if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.MainDrawerListItem, parent, false);
-
-
+                    view.Tag = new DrawerItemViewHolder (view);
                 }
-            }
 
-            if (GetItemViewType (position) == ViewTypeDrawerItem) {
-                DrawerItem item = GetDrawerItem (position);
-                view.FindViewById<ImageView> (Resource.Id.ImageViewIcon).SetImageResource (item.ImageResId);
-                view.FindViewById<TextView> (Resource.Id.TextViewTitle).SetText (item.TextResId);
+                var holder = (DrawerItemViewHolder)view.Tag;
+                holder.Bind (GetDrawerItem (position));
             }
-
 
             return view;
         }
@@ -91,11 +93,13 @@ namespace Toggl.Joey.UI.Adapters
 
         public override Java.Lang.Object GetItem (int position)
         {
-            throw new NotImplementedException ("User method GetDrawerItem instead!");
+            return null;
         }
 
         private DrawerItem GetDrawerItem (int position)
         {
+            if (position == 0)
+                return null;
             return rowItems [position - 1]; //Header is 0
         }
 
@@ -104,14 +108,78 @@ namespace Toggl.Joey.UI.Adapters
             if (GetItemViewType (position) == ViewTypeDrawerHeader) {
                 return -1;
             } else {
-                return rowItems.IndexOf (GetDrawerItem (position));
+                return GetDrawerItem (position).Id;
             }
         }
 
-        private struct DrawerItem
+        public override bool IsEnabled (int position)
         {
+            return GetItemViewType (position) == ViewTypeDrawerItem;
+        }
+
+        private class DrawerItem
+        {
+            public int Id;
             public int TextResId;
             public int ImageResId;
+        }
+
+        private class HeaderViewHolder : ModelViewHolder<UserModel>
+        {
+            public ProfileImageView IconProfileImageView { get; private set; }
+
+            public TextView TitleTextView { get; private set; }
+
+            protected UserModel Model {
+                get { return DataSource; }
+            }
+
+            public HeaderViewHolder (View root) : base (root)
+            {
+                IconProfileImageView = root.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
+            }
+
+            protected override void OnModelChanged (Toggl.Phoebe.Data.ModelChangedMessage msg)
+            {
+                if (msg.Model != Model)
+                    return;
+
+                if (msg.PropertyName == UserModel.PropertyName
+                    || msg.PropertyName == UserModel.PropertyImageUrl) {
+                    Rebind ();
+                }
+            }
+
+            protected override void Rebind ()
+            {
+                if (Model == null)
+                    return;
+
+                IconProfileImageView.ImageUrl = Model.ImageUrl;
+                TitleTextView.Text = Model.Name;
+            }
+        }
+
+        private class DrawerItemViewHolder : BindableViewHolder<DrawerItem>
+        {
+            public ImageView IconImageView { get; private set; }
+
+            public TextView TitleTextView { get; private set; }
+
+            public DrawerItemViewHolder (View root) : base (root)
+            {
+                IconImageView = root.FindViewById<ImageView> (Resource.Id.IconImageView);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
+            }
+
+            protected override void Rebind ()
+            {
+                if (DataSource == null)
+                    return;
+                IconImageView.SetImageResource (DataSource.ImageResId);
+                TitleTextView.SetText (DataSource.TextResId);
+            }
         }
     }
 }

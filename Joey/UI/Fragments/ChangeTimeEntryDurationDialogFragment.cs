@@ -9,6 +9,8 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -75,20 +77,20 @@ namespace Toggl.Joey.UI.Fragments
 
             var view = LayoutInflater.From (Activity)
                 .Inflate (Resource.Layout.ChangeTimeEntryDurationDialogFragment, null);
-            DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
+            DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.Roboto);
             DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
-            Add5Button = view.FindViewById<Button> (Resource.Id.Add5Button);
-            Add30Button = view.FindViewById<Button> (Resource.Id.Add30Button);
-            numButtons [0] = view.FindViewById<Button> (Resource.Id.Num0Button);
-            numButtons [1] = view.FindViewById<Button> (Resource.Id.Num1Button);
-            numButtons [2] = view.FindViewById<Button> (Resource.Id.Num2Button);
-            numButtons [3] = view.FindViewById<Button> (Resource.Id.Num3Button);
-            numButtons [4] = view.FindViewById<Button> (Resource.Id.Num4Button);
-            numButtons [5] = view.FindViewById<Button> (Resource.Id.Num5Button);
-            numButtons [6] = view.FindViewById<Button> (Resource.Id.Num6Button);
-            numButtons [7] = view.FindViewById<Button> (Resource.Id.Num7Button);
-            numButtons [8] = view.FindViewById<Button> (Resource.Id.Num8Button);
-            numButtons [9] = view.FindViewById<Button> (Resource.Id.Num9Button);
+            Add5Button = view.FindViewById<Button> (Resource.Id.Add5Button).SetFont (Font.RobotoLight);
+            Add30Button = view.FindViewById<Button> (Resource.Id.Add30Button).SetFont (Font.RobotoLight);
+            numButtons [0] = view.FindViewById<Button> (Resource.Id.Num0Button).SetFont (Font.RobotoLight);
+            numButtons [1] = view.FindViewById<Button> (Resource.Id.Num1Button).SetFont (Font.RobotoLight);
+            numButtons [2] = view.FindViewById<Button> (Resource.Id.Num2Button).SetFont (Font.RobotoLight);
+            numButtons [3] = view.FindViewById<Button> (Resource.Id.Num3Button).SetFont (Font.RobotoLight);
+            numButtons [4] = view.FindViewById<Button> (Resource.Id.Num4Button).SetFont (Font.RobotoLight);
+            numButtons [5] = view.FindViewById<Button> (Resource.Id.Num5Button).SetFont (Font.RobotoLight);
+            numButtons [6] = view.FindViewById<Button> (Resource.Id.Num6Button).SetFont (Font.RobotoLight);
+            numButtons [7] = view.FindViewById<Button> (Resource.Id.Num7Button).SetFont (Font.RobotoLight);
+            numButtons [8] = view.FindViewById<Button> (Resource.Id.Num8Button).SetFont (Font.RobotoLight);
+            numButtons [9] = view.FindViewById<Button> (Resource.Id.Num9Button).SetFont (Font.RobotoLight);
 
             DeleteImageButton.Click += OnDeleteImageButtonClick;
             DeleteImageButton.LongClick += OnDeleteImageButtonLongClick;

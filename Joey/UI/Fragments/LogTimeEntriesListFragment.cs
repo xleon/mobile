@@ -51,7 +51,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var checkedCount = ListView.CheckedItemCount;
             mode.Title = String.Format ("{0} selected", checkedCount);
-            mode.Menu.FindItem (Resource.Id.EditMenuItem).SetEnabled (checkedCount == 1);
+//            mode.Menu.FindItem (Resource.Id.EditMenuItem).SetEnabled (checkedCount == 1);
         }
 
         bool ActionMode.ICallback.OnCreateActionMode (ActionMode mode, IMenu menu)
@@ -72,9 +72,9 @@ namespace Toggl.Joey.UI.Fragments
                 DeleteCheckedTimeEntries ();
                 mode.Finish ();
                 return true;
-            case Resource.Id.EditMenuItem:
-                // TODO: Show time entry editing
-                return true;
+//            case Resource.Id.EditMenuItem:
+            // TODO: Show time entry editing
+//                return true;
             default:
                 return false;
             }

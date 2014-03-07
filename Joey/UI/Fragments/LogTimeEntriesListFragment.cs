@@ -5,6 +5,8 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using ListFragment = Android.Support.V4.App.ListFragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -14,7 +16,11 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
-            view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetText (Resource.String.LogTimeEntryNoItemsTitle);
+            view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView)
+                .SetFont (Font.Roboto)
+                .SetText (Resource.String.LogTimeEntryNoItemsTitle);
+            view.FindViewById<TextView> (Resource.Id.EmptyTextTextView)
+                .SetFont (Font.RobotoLight);
             return view;
         }
 

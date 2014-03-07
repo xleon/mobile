@@ -22,6 +22,7 @@
             android:gravity="center"
             style="@android:style/TextAppearance.Medium" />
         <TextView
+            android:id="@+id/EmptyTextTextView"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:text="@string/NoItemsText"

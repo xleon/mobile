@@ -4,6 +4,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -36,7 +37,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public TagListItemHolder (View root) : base (root)
             {
-                NameCheckedTextView = root.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView);
+                NameCheckedTextView = root.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView).SetFont (Font.Roboto);
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)

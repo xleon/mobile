@@ -10,6 +10,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -540,7 +541,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public WorkspaceListItemHolder (View root) : base (root)
             {
-                WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView);
+                WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView).SetFont (Font.RobotoMedium);
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)
@@ -582,10 +583,10 @@ namespace Toggl.Joey.UI.Adapters
             public ProjectListItemHolder (View root) : base (root)
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
-                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
-                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
                 TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
-                TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView);
+                TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView).SetFont (Font.RobotoMedium);
                 TasksImageView = root.FindViewById<ImageView> (Resource.Id.TasksImageView);
 
                 TasksFrameLayout.Click += OnTasksFrameLayoutClick;
@@ -655,7 +656,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public TaskListItemHolder (View root) : base (root)
             {
-                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView);
+                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoLight);
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)

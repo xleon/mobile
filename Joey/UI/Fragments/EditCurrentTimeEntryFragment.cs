@@ -8,6 +8,8 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -50,14 +52,14 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.EditCurrentTimeEntryFragment, container, false);
 
-            DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
-            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText);
-            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText);
-            DateEditText = view.FindViewById<EditText> (Resource.Id.DateEditText);
-            DescriptionEditText = view.FindViewById<EditText> (Resource.Id.DescriptionEditText);
-            ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText);
-            TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText);
-            BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox);
+            DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.Roboto);
+            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.RobotoLight);
+            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.RobotoLight);
+            DateEditText = view.FindViewById<EditText> (Resource.Id.DateEditText).SetFont (Font.RobotoLight);
+            DescriptionEditText = view.FindViewById<EditText> (Resource.Id.DescriptionEditText).SetFont (Font.RobotoLight);
+            ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText).SetFont (Font.RobotoLight);
+            TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText).SetFont (Font.RobotoLight);
+            BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
             DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
 
             DurationTextView.Click += OnDurationTextViewClick;

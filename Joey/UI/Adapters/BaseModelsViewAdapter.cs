@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Linq;
 using Android.Views;
+using Android.Views.Animations;
 using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Views;
@@ -83,9 +84,14 @@ namespace Toggl.Joey.UI.Adapters
             if (convertView != null)
                 return convertView;
             // TODO: Implement default loading indicator view
-            return new TextView (parent.Context) {
-                Text = "Loading more.."
-            };
+            var view = LayoutInflater.FromContext (parent.Context).Inflate (
+                           Resource.Layout.TimeEntryListLoadingItem, parent, false);
+
+            ImageView spinningImage = view.FindViewById<ImageView> (Resource.Id.LoadingImageView);
+            Animation spinningImageAnimation = AnimationUtils.LoadAnimation (parent.Context, Resource.Animation.SpinningAnimation);
+            spinningImage.StartAnimation (spinningImageAnimation);
+
+            return view;
         }
 
         protected abstract View GetModelView (int position, View convertView, ViewGroup parent);

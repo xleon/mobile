@@ -277,6 +277,12 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcDrawer.png" />
     <AndroidResource Include="Resources\layout\ChangeTimeEntryDurationDialogFragment.axml" />
     <AndroidResource Include="Resources\layout\TimeEntriesListFragment.axml" />
+    <AndroidResource Include="Resources\layout\TimeEntryListLoadingItem.axml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcSyncGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcSyncGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcSyncGray.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcSyncGray.png" />
+    <AndroidResource Include="Resources\anim\SpinningAnimation.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -305,6 +311,7 @@
     <Folder Include="Resources\color\" />
     <Folder Include="UI\Views\" />
     <Folder Include="Assets\fonts\" />
+    <Folder Include="Resources\anim\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">

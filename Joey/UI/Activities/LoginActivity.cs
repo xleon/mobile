@@ -28,7 +28,7 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
-        private static readonly string ExtraHidePassword = "com.toggl.android.hide_password";
+        private static readonly string ExtraHidePassword = "com.toggl.timer.hide_password";
         private bool hasGoogleAccounts;
         private bool hidePassword;
 
@@ -229,7 +229,7 @@ namespace Toggl.Joey.UI.Activities
             private static readonly string GoogleOAuthScope =
                 "oauth2:https://www.googleapis.com/auth/userinfo.profile " +
                 "https://www.googleapis.com/auth/userinfo.email";
-            private static readonly string EmailArgument = "com.toggl.android.email";
+            private static readonly string EmailArgument = "com.toggl.timer.email";
 
             public static void Start (FragmentManager mgr, string email)
             {

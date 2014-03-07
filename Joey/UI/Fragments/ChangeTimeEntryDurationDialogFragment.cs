@@ -17,7 +17,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ChangeTimeEntryDurationDialogFragment : DialogFragment
     {
-        private static readonly string TimeEntryIdArgument = "com.toggl.android.time_entry_id";
+        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
 
         public ChangeTimeEntryDurationDialogFragment (TimeEntryModel model) : base ()
         {

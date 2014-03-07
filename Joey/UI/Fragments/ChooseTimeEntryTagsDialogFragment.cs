@@ -18,7 +18,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ChooseTimeEntryTagsDialogFragment : DialogFragment
     {
-        private static readonly string TimeEntryIdArgument = "com.toggl.android.time_entry_id";
+        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
         #pragma warning disable 0414
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
         #pragma warning restore 0414

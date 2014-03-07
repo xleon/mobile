@@ -12,7 +12,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class DeleteTimeEntriesPromptDialogFragment : DialogFragment
     {
-        private static readonly string TimeEntryIdsArgument = "com.toggl.android.time_entry_ids";
+        private static readonly string TimeEntryIdsArgument = "com.toggl.timer.time_entry_ids";
 
         public DeleteTimeEntriesPromptDialogFragment () : base ()
         {

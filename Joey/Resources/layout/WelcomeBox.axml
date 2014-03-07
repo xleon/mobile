@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="@drawable/MainListButton"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+            <ImageView
+                android:src="@drawable/IcArrowForward"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="-10dp"
+                android:layout_marginEnd="5dp" />
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                style="@style/TimeEntryListItem.Text.Task"
+                android:text="@string/WelcomeBoxTapToStart" />
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/DividerHorizontalLight" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+            <ImageView
+                android:src="@drawable/IcArrowBack"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="-10dp"
+                android:layout_marginEnd="5dp" />
+            <TextView
+                android:id="@+id/SwipeLeftTextView"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                style="@style/TimeEntryListItem.Text.Task"
+                android:text="@string/WelcomeBoxSwipeLeft" />
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/DividerHorizontalLight" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+            <ImageView
+                android:src="@drawable/IcArrowForward"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="-10dp"
+                android:layout_marginEnd="5dp" />
+            <TextView
+                android:id="@+id/SwipeRightTextView"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                style="@style/TimeEntryListItem.Text.Task"
+                android:text="@string/WelcomeBoxSwipeRight" />
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/DividerHorizontalLight" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
+            <ImageView
+                android:src="@drawable/IcArrowBack"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="-10dp"
+                android:layout_marginEnd="5dp" />
+            <TextView
+                android:id="@+id/TapToContinueTextView"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                style="@style/TimeEntryListItem.Text.Task"
+                android:text="@string/WelcomeBoxContinue" />
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/DividerHorizontalLight" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:drawablePadding="10dp"
+                android:drawableLeft="@drawable/IcTickBlue"
+                style="?android:attr/borderlessButtonStyle"
+                android:id="@+id/GotItButton"
+                android:text="@string/WelcomeBoxGotIt"
+                android:paddingRight="40dp"
+                android:paddingLeft="40dp"
+                android:textColor="@color/bright_green" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

@@ -1,6 +1,9 @@
-﻿using Android.OS;
+﻿using System;
+using Android.OS;
 using Android.Views;
 using Android.Widget;
+using XPlatUtils;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -10,15 +13,42 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class RecentTimeEntriesListFragment : ListFragment
     {
+        private ViewGroup welcomeFrameLayout;
+        private SettingsStore settingsStore;
+        private ViewGroup mainLayout;
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
-            view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView)
+            mainLayout = (ViewGroup)inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
+            mainLayout.FindViewById<TextView> (Resource.Id.EmptyTitleTextView)
                 .SetFont (Font.Roboto)
                 .SetText (Resource.String.RecentTimeEntryNoItemsTitle);
-            view.FindViewById<TextView> (Resource.Id.EmptyTextTextView)
+            mainLayout.FindViewById<TextView> (Resource.Id.EmptyTextTextView)
                 .SetFont (Font.RobotoLight);
-            return view;
+
+
+            welcomeFrameLayout = mainLayout.FindViewById<FrameLayout> (Resource.Id.WelcomeScreenFrameLayout);
+            settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            if (!settingsStore.GotWelcomeMessage) {
+                ShowWelcomeView (inflater);
+            }
+
+            return mainLayout;
+        }
+
+        private void ShowWelcomeView (LayoutInflater inflater)
+        {
+            var welcomeView = inflater.Inflate (Resource.Layout.WelcomeBox, welcomeFrameLayout, true);
+            welcomeView.FindViewById<TextView> (Resource.Id.SwipeLeftTextView).SetFont (Font.RobotoLight);
+            welcomeView.FindViewById<TextView> (Resource.Id.SwipeRightTextView).SetFont (Font.RobotoLight);
+            welcomeView.FindViewById<TextView> (Resource.Id.TapToContinueTextView).SetFont (Font.RobotoLight);
+            welcomeView.FindViewById<Button> (Resource.Id.GotItButton).Click += OnGotItButtonClick;
+        }
+
+        private void OnGotItButtonClick (object sender, EventArgs e)
+        {
+            settingsStore.GotWelcomeMessage = true;
+            mainLayout.RemoveView (welcomeFrameLayout);
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)

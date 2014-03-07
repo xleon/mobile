@@ -283,6 +283,17 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcSyncGray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcSyncGray.png" />
     <AndroidResource Include="Resources\anim\SpinningAnimation.xml" />
+    <AndroidResource Include="Resources\layout\WelcomeBox.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcArrowBack.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcArrowBack.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcArrowBack.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcArrowBack.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcArrowForward.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcArrowForward.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcArrowForward.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcArrowForward.png" />
+    <AndroidResource Include="Resources\drawable\BottomBorder.xml" />
+    <AndroidResource Include="Resources\drawable\DividerHorizontalLight.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

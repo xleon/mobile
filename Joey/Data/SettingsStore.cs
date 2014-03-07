@@ -18,6 +18,7 @@ namespace Toggl.Joey.Data
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
+        private const string GotWelcomeMessageKey = "gotWelcomeMessage";
         private readonly ISharedPreferences prefs;
 
         public SettingsStore (Context ctx)
@@ -126,6 +127,11 @@ namespace Toggl.Joey.Data
         DateTime? ISettingsStore.SyncLastRun {
             get { return GetDateTime (PhoebeSyncLastRunKey); }
             set { SetDateTime (PhoebeSyncLastRunKey, value); }
+        }
+
+        public bool GotWelcomeMessage {
+            get { return GetInt (GotWelcomeMessageKey) == 1; }
+            set { SetInt (GotWelcomeMessageKey, value ? 1 : 0); }
         }
     }
 }

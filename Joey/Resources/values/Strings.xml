@@ -67,4 +67,9 @@
     <string name="ChooseTimeEntryTagsDialogOk">Ok</string>
     <string name="ChooseTimeEntryProjectDialogTitle">Select project</string>
     <string name="ChooseTimeEntryProjectDialogCancel">Cancel</string>
+    <string name="WelcomeBoxTapToStart">Tap on the start button to start tracking</string>
+    <string name="WelcomeBoxSwipeLeft">Swipe left to up a time entry</string>
+    <string name="WelcomeBoxSwipeRight">Swipe right to see your previous entries</string>
+    <string name="WelcomeBoxContinue">Continue recent entry by tapping on it</string>
+    <string name="WelcomeBoxGotIt">Got it</string>
 </resources>

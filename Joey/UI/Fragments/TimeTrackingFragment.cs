@@ -65,6 +65,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
+            if (e.Position != MainPagerAdapter.LogPosition) {
+                ((MainPagerAdapter)viewPager.Adapter).LogFragment.CloseActionMode ();
+            }
             timerSection.HideDuration = e.Position == MainPagerAdapter.EditPosition;
         }
 
@@ -93,9 +96,10 @@ namespace Toggl.Joey.UI.Fragments
             #pragma warning disable 0414
             private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
             #pragma warning restore 0414
-            private readonly EditCurrentTimeEntryFragment editFragment = new EditCurrentTimeEntryFragment ();
-            private readonly RecentTimeEntriesListFragment recentFragment = new RecentTimeEntriesListFragment ();
-            private readonly LogTimeEntriesListFragment logFragment = new LogTimeEntriesListFragment ();
+
+            public readonly EditCurrentTimeEntryFragment EditFragment = new EditCurrentTimeEntryFragment ();
+            public readonly RecentTimeEntriesListFragment RecentFragment = new RecentTimeEntriesListFragment ();
+            public readonly LogTimeEntriesListFragment LogFragment = new LogTimeEntriesListFragment ();
 
             public MainPagerAdapter (Context ctx, FragmentManager fm) : base (fm)
             {
@@ -174,11 +178,11 @@ namespace Toggl.Joey.UI.Fragments
             {
                 switch (position) {
                 case EditPosition:
-                    return editFragment;
+                    return EditFragment;
                 case RecentPosition:
-                    return recentFragment;
+                    return RecentFragment;
                 case LogPosition:
-                    return logFragment;
+                    return LogFragment;
                 default:
                     throw new InvalidOperationException ("Unknown tab position");
                 }

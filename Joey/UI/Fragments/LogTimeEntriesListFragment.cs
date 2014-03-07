@@ -13,6 +13,8 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : ListFragment, AbsListView.IMultiChoiceModeListener
     {
+        private ActionMode actionMode;
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
@@ -51,6 +53,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var checkedCount = ListView.CheckedItemCount;
             mode.Title = String.Format ("{0} selected", checkedCount);
+            actionMode = mode;
 //            mode.Menu.FindItem (Resource.Id.EditMenuItem).SetEnabled (checkedCount == 1);
         }
 
@@ -82,6 +85,7 @@ namespace Toggl.Joey.UI.Fragments
 
         void ActionMode.ICallback.OnDestroyActionMode (ActionMode mode)
         {
+            actionMode = null;
         }
 
         private void DeleteCheckedTimeEntries ()
@@ -109,6 +113,19 @@ namespace Toggl.Joey.UI.Fragments
             // Delete models:
             var dia = new DeleteTimeEntriesPromptDialogFragment (toDelete);
             dia.Show (FragmentManager, "dialog");
+        }
+
+        public void CloseActionMode ()
+        {
+            if (actionMode != null) {
+                actionMode.Finish ();
+            }
+        }
+
+        public override void OnStop ()
+        {
+            base.OnStop ();
+            CloseActionMode ();
         }
     }
 }

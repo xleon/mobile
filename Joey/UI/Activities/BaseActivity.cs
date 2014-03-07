@@ -1,5 +1,6 @@
 ﻿using System;
 using Android.Content;
+using Android.OS;
 using Android.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
@@ -13,38 +14,33 @@ namespace Toggl.Joey.UI.Activities
 {
     public abstract class BaseActivity : Activity
     {
+        private const int SyncErrorMenuItemId = 0;
+        protected readonly Handler Handler = new Handler ();
         private Subscription<SyncStartedMessage> subscriptionSyncStarted;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private const int SyncErrorMenuItemId = 0;
 
         private void OnSyncStarted (SyncStartedMessage msg)
         {
-            ToggleProgressBar (true);
+            if (Handle == IntPtr.Zero)
+                return;
+            Handler.PostDelayed (ResetSyncProgressBar, 2500);
         }
 
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
+            if (Handle == IntPtr.Zero)
+                return;
             ToggleProgressBar (false);
-            if (msg.HadErrors) {
-                //TODO Show some identificator
-//                if (menu != null && menu.FindItem (SyncErrorMenuItemId) == null) {
-//                    menu.Add (Menu.None, SyncErrorMenuItemId, Menu.None, "Sync error")
-//                        .SetIcon (Resource.Drawable.IcDialogAlertHoloLight)
-//                        .SetShowAsAction (ShowAsAction.Always);
-//                }
-            } else {
-//                if (menu != null && menu.FindItem (SyncErrorMenuItemId) != null) {
-//                    menu.RemoveItem (SyncErrorMenuItemId);
-//                }
-            }
+        }
+
+        private void ResetSyncProgressBar ()
+        {
+            var syncManager = ServiceContainer.Resolve<SyncManager> ();
+            ToggleProgressBar (syncManager.IsRunning);
         }
 
         private void ToggleProgressBar (bool switchOn)
         {
-            if (Handle == IntPtr.Zero)
-                return;
-
-            // For some reason It's not enought to make it in OnCreate.
             SetProgressBarIndeterminate (true);
             SetProgressBarVisibility (switchOn);
         }
@@ -72,15 +68,16 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        protected override void OnCreate (Android.OS.Bundle state)
+        protected override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
+            BugsnagClient.OnActivityCreated (this);
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+
             RequestWindowFeature (WindowFeatures.Progress);
-            BugsnagClient.OnActivityCreated (this);
-            SetProgressBarIndeterminate (true);
             CheckAuth ();
         }
 
@@ -89,6 +86,8 @@ namespace Toggl.Joey.UI.Activities
             base.OnResume ();
             BugsnagClient.OnActivityResumed (this);
             CheckAuth ();
+
+            ResetSyncProgressBar ();
         }
 
         protected override void OnPause ()
@@ -101,6 +100,7 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnDestroy ();
             BugsnagClient.OnActivityDestroyed (this);
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Unsubscribe (subscriptionSyncStarted);
             bus.Unsubscribe (subscriptionSyncFinished);

@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SQLite;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Threading;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
@@ -91,19 +92,15 @@ namespace Toggl.Phoebe.Data
 
             public int Count ()
             {
-                lock (Model.SyncRoot) {
-                    return query.Count ();
-                }
+                return query.Count ();
             }
 
             public IEnumerator<T> GetEnumerator ()
             {
-                lock (Model.SyncRoot) {
-                    IEnumerable<T> q = query;
-                    if (filter != null)
-                        q = filter (q);
-                    return q.GetEnumerator ();
-                }
+                IEnumerable<T> q = query;
+                if (filter != null)
+                    q = filter (q);
+                return q.GetEnumerator ();
             }
 
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
@@ -114,7 +111,7 @@ namespace Toggl.Phoebe.Data
 
         private static readonly AttributeLookupCache<IgnoreAttribute> ignoreCache =
             new AttributeLookupCache<IgnoreAttribute> ();
-        private readonly SQLiteConnection conn;
+        private readonly ThreadWeakLocal<SQLiteConnection> connection;
         private readonly HashSet<Model> changedModels = new HashSet<Model> ();
         private readonly List<WeakReference> createdModels = new List<WeakReference> ();
         #pragma warning disable 0414
@@ -124,8 +121,12 @@ namespace Toggl.Phoebe.Data
 
         public SQLiteModelStore (string dbPath)
         {
-            conn = new DbConnection (this, dbPath);
-            CreateTables (conn);
+            connection = new ThreadWeakLocal<SQLiteConnection> (delegate {
+                var conn = new DbConnection (this, dbPath);
+                conn.BusyTimeout = TimeSpan.FromSeconds (1);
+                return conn;
+            });
+            CreateTables (connection.Value);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             modelChangedSubscription = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage, threadSafe: true);
@@ -159,10 +160,9 @@ namespace Toggl.Phoebe.Data
             if (!type.IsSubclassOf (typeof(Model)))
                 throw new ArgumentException ("Type must be of a subclass of Model.", "type");
 
-            lock (Model.SyncRoot) {
-                var map = conn.GetMapping (type);
-                return (Model)conn.Query (map, map.GetByPrimaryKeySql, id).FirstOrDefault ();
-            }
+            var conn = connection.Value;
+            var map = conn.GetMapping (type);
+            return (Model)conn.Query (map, map.GetByPrimaryKeySql, id).FirstOrDefault ();
         }
 
         public T GetByRemoteId<T> (long remoteId)
@@ -176,15 +176,14 @@ namespace Toggl.Phoebe.Data
             if (!type.IsSubclassOf (typeof(Model)))
                 throw new ArgumentException ("Type must be of a subclass of Model.", "type");
 
-            lock (Model.SyncRoot) {
-                var map = conn.GetMapping (type);
-                var sql = string.Format (
-                              "select * from \"{0}\" where \"{1}\" = ?",
-                              map.TableName,
-                              map.FindColumnWithPropertyName ("RemoteId").Name
-                          );
-                return (Model)conn.Query (map, sql, remoteId).FirstOrDefault ();
-            }
+            var conn = connection.Value;
+            var map = conn.GetMapping (type);
+            var sql = string.Format (
+                          "select * from \"{0}\" where \"{1}\" = ?",
+                          map.TableName,
+                          map.FindColumnWithPropertyName ("RemoteId").Name
+                      );
+            return (Model)conn.Query (map, sql, remoteId).FirstOrDefault ();
         }
 
         public IModelQuery<T> Query<T> (
@@ -192,12 +191,11 @@ namespace Toggl.Phoebe.Data
             Func<IEnumerable<T>, IEnumerable<T>> filter = null)
             where T : Model, new()
         {
-            lock (Model.SyncRoot) {
-                IModelQuery<T> query = new DbQuery<T> (conn.Table<T> (), filter);
-                if (predExpr != null)
-                    query = query.Where (predExpr);
-                return query;
-            }
+            var conn = connection.Value;
+            IModelQuery<T> query = new DbQuery<T> (conn.Table<T> (), filter);
+            if (predExpr != null)
+                query = query.Where (predExpr);
+            return query;
         }
 
         private void OnModelChangedMessage (ModelChangedMessage msg)
@@ -240,12 +238,13 @@ namespace Toggl.Phoebe.Data
 
             lock (Model.SyncRoot) {
                 // Wipe database on logout
-                ClearTables (conn);
+                ClearTables (connection.Value);
             }
         }
 
         public void Commit ()
         {
+            var conn = connection.Value;
             lock (Model.SyncRoot) {
                 conn.BeginTransaction ();
                 try {

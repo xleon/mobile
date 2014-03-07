@@ -31,6 +31,7 @@
         <TextView
             android:text="Client name"
             android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/project_list_gray"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/ClientTextView"
@@ -47,7 +48,8 @@
         <TextView
             android:id="@+id/TasksTextView"
             android:text="@string/ProjectsTasks"
-            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textSize="11dp"
+            android:textColor="@color/project_list_gray"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

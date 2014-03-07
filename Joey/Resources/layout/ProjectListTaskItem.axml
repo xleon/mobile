@@ -14,6 +14,6 @@
         android:paddingLeft="24dp"
         android:gravity="center_vertical"
         android:singleLine="true"
-        android:textColor="#878787"
+        android:textColor="@color/project_list_gray"
         android:ellipsize="none" />
 </toggl.joey.ui.views.FadeLinearLayout>

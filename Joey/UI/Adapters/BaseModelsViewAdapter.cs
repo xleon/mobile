@@ -67,7 +67,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override View GetView (int position, View convertView, ViewGroup parent)
         {
-            if (position + LoadMoreOffset > modelsView.Count && modelsView.HasMore && !modelsView.IsLoading) {
+            if (position + LoadMoreOffset > Count && modelsView.HasMore && !modelsView.IsLoading) {
                 modelsView.LoadMore ();
             }
 

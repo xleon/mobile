@@ -29,6 +29,9 @@
     <string name="LogTimeEntryContextEdit">Edit</string>
     <string name="LogTimeEntryContextDelete">Delete</string>
     <string name="LogTimeEntryNoItemsTitle">Nothing logged yet</string>
+    <string name="Today">Today</string>
+    <string name="Yesterday">Yesterday</string>
+    <string name="Tomorrow">Tomorrow</string>
     <string name="TimeTrackingNewTab">NEW</string>
     <string name="TimeTrackingRunningTab">RUNNING</string>
     <string name="TimeTrackingManualTab">MANUAL</string>

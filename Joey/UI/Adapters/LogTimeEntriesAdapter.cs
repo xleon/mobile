@@ -125,6 +125,22 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private static string GetRelativeDateString (DateTime dateTime)
+        {
+            var ctx = ServiceContainer.Resolve<Context> ();
+            var ts = DateTime.Now.Date - dateTime.Date;
+            switch (ts.Days) {
+            case 0:
+                return ctx.Resources.GetString (Resource.String.Today);
+            case 1:
+                return ctx.Resources.GetString (Resource.String.Yesterday);
+            case -1:
+                return ctx.Resources.GetString (Resource.String.Tomorrow);
+            default:
+                return dateTime.ToShortDateString ();
+            }
+        }
+
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
@@ -140,7 +156,7 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView);
                 }
-                headerTextView.Text = GetHeaderAt (position).Date.ToShortDateString ();
+                headerTextView.Text = GetRelativeDateString (GetHeaderAt (position).Date);
             } else {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (

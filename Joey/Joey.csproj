@@ -109,6 +109,7 @@
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
     <Compile Include="UI\Utils\Font.cs" />
+    <Compile Include="Data\UserTimeEntryStateChangeMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

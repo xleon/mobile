@@ -1,5 +1,4 @@
 ﻿using System;
-using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -8,6 +7,8 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.Data;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -22,7 +23,7 @@ namespace Toggl.Joey.UI.Fragments
     {
         private static readonly int PagesCount = 3;
         private ViewPager viewPager;
-        private TimerComponent timerSection = new TimerComponent ();
+        private Subscription<UserTimeEntryStateChangeMessage> subscriptionUserTimeEntryStateChange;
 
         public override void OnActivityCreated (Bundle savedInstanceState)
         {
@@ -33,15 +34,6 @@ namespace Toggl.Joey.UI.Fragments
             viewPager.Adapter = adapter;
             viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
             viewPager.PageSelected += OnViewPagerPageSelected;
-
-            timerSection.OnCreate (Activity);
-
-            var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
-            lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
-
-            var actionBar = Activity.ActionBar;
-            actionBar.SetCustomView (timerSection.Root, lp);
-            actionBar.SetDisplayShowCustomEnabled (true);
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
@@ -56,6 +48,20 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnResume ();
             viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionUserTimeEntryStateChange = bus.Subscribe<UserTimeEntryStateChangeMessage> (OnUserTimeEntryStateChange);
+        }
+
+        public override void OnPause ()
+        {
+            if (subscriptionUserTimeEntryStateChange != null) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Unsubscribe (subscriptionUserTimeEntryStateChange);
+                subscriptionUserTimeEntryStateChange = null;
+            }
+
+            base.OnPause ();
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -68,22 +74,46 @@ namespace Toggl.Joey.UI.Fragments
             if (e.Position != MainPagerAdapter.LogPosition) {
                 ((MainPagerAdapter)viewPager.Adapter).LogFragment.CloseActionMode ();
             }
-            timerSection.HideDuration = e.Position == MainPagerAdapter.EditPosition;
+
+            ToggleTimerDuration ();
+        }
+
+        private void ToggleTimerDuration ()
+        {
+            var timer = Timer;
+            if (timer != null) {
+                timer.HideDuration = viewPager.CurrentItem == MainPagerAdapter.EditPosition;
+            }
+        }
+
+        private TimerComponent Timer {
+            get {
+                var activity = Activity as MainDrawerActivity;
+                if (activity != null) {
+                    return activity.Timer;
+                }
+                return null;
+            }
         }
 
         public override void OnStart ()
         {
             base.OnStart ();
-            timerSection.OnStart ();
+
+            ToggleTimerDuration ();
 
             // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
         }
 
-        public override void OnDestroy ()
+        private void OnUserTimeEntryStateChange (UserTimeEntryStateChangeMessage msg)
         {
-            base.OnStop ();
-            timerSection.OnStop ();
+            if (msg.Model.State == TimeEntryState.Running) {
+                viewPager.CurrentItem = MainPagerAdapter.EditPosition;
+            } else if (msg.Model.State == TimeEntryState.Finished
+                       && viewPager.CurrentItem == MainPagerAdapter.EditPosition) {
+                viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
+            }
         }
 
         private class MainPagerAdapter : FragmentPagerAdapter

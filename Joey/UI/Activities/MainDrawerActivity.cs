@@ -8,6 +8,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
 
@@ -25,6 +26,7 @@ namespace Toggl.Joey.UI.Activities
     {
         private static readonly string LogTag = "MainDrawerActivity";
         protected Logger log;
+        private readonly TimerComponent barTimer = new TimerComponent ();
         private DrawerLayout DrawerLayout;
         protected ActionBarDrawerToggle DrawerToggle;
 
@@ -44,6 +46,12 @@ namespace Toggl.Joey.UI.Activities
             DrawerLayout.SetDrawerShadow (Resource.Drawable.drawershadow, (int)GravityFlags.Start);
             DrawerLayout.SetDrawerListener (DrawerToggle);
 
+            Timer.OnCreate (this);
+            var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
+            lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
+
+            ActionBar.SetCustomView (Timer.Root, lp);
+            ActionBar.SetDisplayShowCustomEnabled (true);
             ActionBar.SetDisplayHomeAsUpEnabled (true);
             ActionBar.SetHomeButtonEnabled (true);
 
@@ -71,10 +79,22 @@ namespace Toggl.Joey.UI.Activities
             return base.OnOptionsItemSelected (item);
         }
 
+        protected override void OnStart ()
+        {
+            base.OnStart ();
+            Timer.OnStart ();
+        }
+
         protected override void OnResume ()
         {
             base.OnResume ();
             OpenTimeTracking ();
+        }
+
+        protected override void OnStop ()
+        {
+            base.OnStop ();
+            Timer.OnStop ();
         }
 
         private void OpenTimeTracking ()
@@ -97,6 +117,14 @@ namespace Toggl.Joey.UI.Activities
         {
             log.Debug (LogTag, "Drawer item clicked " + e.Id);
 
+            // Configure timer component for selected page:
+            if (e.Id != DrawerListAdapter.TimerPageId) {
+                Timer.HideAction = true;
+                Timer.HideDuration = false;
+            } else {
+                Timer.HideAction = false;
+            }
+
             if (e.Id == DrawerListAdapter.TimerPageId) {
                 OpenTimeTracking ();
 
@@ -111,6 +139,10 @@ namespace Toggl.Joey.UI.Activities
             }
 
             DrawerLayout.CloseDrawers ();
+        }
+
+        public TimerComponent Timer {
+            get { return barTimer; }
         }
     }
 }

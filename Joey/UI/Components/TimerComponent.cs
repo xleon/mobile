@@ -8,6 +8,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -24,6 +25,7 @@ namespace Toggl.Joey.UI.Components
         private TimeEntryModel currentEntry;
         private bool canRebind;
         private bool hideDuration;
+        private bool hideAction;
 
         protected TextView DurationTextView { get; private set; }
 
@@ -132,6 +134,8 @@ namespace Toggl.Joey.UI.Components
                 ActionButton.SetBackgroundColor (res.GetColor (Resource.Color.bright_green));
             }
 
+            ActionButton.Visibility = HideAction ? ViewStates.Gone : ViewStates.Visible;
+
             if (currentEntry.State == TimeEntryState.Running && !HideDuration) {
                 var duration = currentEntry.GetDuration ();
                 DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
@@ -155,20 +159,31 @@ namespace Toggl.Joey.UI.Components
             }
         }
 
+        public bool HideAction {
+            get { return hideAction; }
+            set {
+                if (hideAction != value) {
+                    hideAction = value;
+                    Rebind ();
+                }
+            }
+        }
+
         private void OnActionButtonClicked (object sender, EventArgs e)
         {
-            if (currentEntry == null)
+            var entry = currentEntry;
+            if (entry == null)
                 return;
 
             var startedEntry = false;
 
             try {
-                if (currentEntry.State == TimeEntryState.New && currentEntry.StopTime.HasValue) {
-                    currentEntry.Store ();
-                } else if (currentEntry.State == TimeEntryState.Running) {
-                    currentEntry.Stop ();
+                if (entry.State == TimeEntryState.New && entry.StopTime.HasValue) {
+                    entry.Store ();
+                } else if (entry.State == TimeEntryState.Running) {
+                    entry.Stop ();
                 } else {
-                    currentEntry.Start ();
+                    entry.Start ();
                     startedEntry = true;
                 }
             } catch (Exception ex) {
@@ -176,16 +191,17 @@ namespace Toggl.Joey.UI.Components
                 log.Warning (LogTag, ex, "Failed to change time entry state.");
             }
 
-            if (startedEntry && currentEntry.Project == null) {
+            if (startedEntry && entry.Project == null) {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
                 var hasProjects = user.GetAvailableProjects ().Any ();
 
                 if (hasProjects) {
-                    new ChooseTimeEntryProjectDialogFragment (currentEntry).Show (activity.SupportFragmentManager, "projects_dialog");
+                    new ChooseTimeEntryProjectDialogFragment (entry).Show (activity.SupportFragmentManager, "projects_dialog");
                 }
-
-                // TODO: Notify outside world that this component started the timer (thus the pager could act)
             }
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
         }
     }
 }

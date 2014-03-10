@@ -2,6 +2,7 @@
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe;
 using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Adapters;
@@ -77,7 +78,10 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null)
                 return;
 
-            model.Continue ();
+            var entry = model.Continue ();
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
         }
     }
 }

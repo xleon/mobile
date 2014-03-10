@@ -7,6 +7,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
@@ -22,6 +23,7 @@ namespace Toggl.Joey.UI.Fragments
     {
         private static readonly int PagesCount = 3;
         private ViewPager viewPager;
+        private Subscription<UserTimeEntryStateChangeMessage> subscriptionUserTimeEntryStateChange;
 
         public override void OnActivityCreated (Bundle savedInstanceState)
         {
@@ -46,6 +48,20 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnResume ();
             viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionUserTimeEntryStateChange = bus.Subscribe<UserTimeEntryStateChangeMessage> (OnUserTimeEntryStateChange);
+        }
+
+        public override void OnPause ()
+        {
+            if (subscriptionUserTimeEntryStateChange != null) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Unsubscribe (subscriptionUserTimeEntryStateChange);
+                subscriptionUserTimeEntryStateChange = null;
+            }
+
+            base.OnPause ();
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -88,6 +104,16 @@ namespace Toggl.Joey.UI.Fragments
 
             // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
+        }
+
+        private void OnUserTimeEntryStateChange (UserTimeEntryStateChangeMessage msg)
+        {
+            if (msg.Model.State == TimeEntryState.Running) {
+                viewPager.CurrentItem = MainPagerAdapter.EditPosition;
+            } else if (msg.Model.State == TimeEntryState.Finished
+                       && viewPager.CurrentItem == MainPagerAdapter.EditPosition) {
+                viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
+            }
         }
 
         private class MainPagerAdapter : FragmentPagerAdapter

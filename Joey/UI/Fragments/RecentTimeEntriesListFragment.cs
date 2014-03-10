@@ -14,9 +14,8 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class RecentTimeEntriesListFragment : ListFragment
     {
-        private ViewGroup welcomeFrameLayout;
-        private SettingsStore settingsStore;
         private ViewGroup mainLayout;
+        private ViewGroup welcomeView;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -27,9 +26,7 @@ namespace Toggl.Joey.UI.Fragments
             mainLayout.FindViewById<TextView> (Resource.Id.EmptyTextTextView)
                 .SetFont (Font.RobotoLight);
 
-
-            welcomeFrameLayout = mainLayout.FindViewById<FrameLayout> (Resource.Id.WelcomeScreenFrameLayout);
-            settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             if (!settingsStore.GotWelcomeMessage) {
                 ShowWelcomeView (inflater);
             }
@@ -39,7 +36,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ShowWelcomeView (LayoutInflater inflater)
         {
-            var welcomeView = inflater.Inflate (Resource.Layout.WelcomeBox, welcomeFrameLayout, true);
+            welcomeView = (ViewGroup)inflater.Inflate (Resource.Layout.WelcomeBox, null);
             welcomeView.FindViewById<TextView> (Resource.Id.SwipeLeftTextView).SetFont (Font.RobotoLight);
             welcomeView.FindViewById<TextView> (Resource.Id.SwipeRightTextView).SetFont (Font.RobotoLight);
             welcomeView.FindViewById<TextView> (Resource.Id.TapToContinueTextView).SetFont (Font.RobotoLight);
@@ -48,14 +45,18 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnGotItButtonClick (object sender, EventArgs e)
         {
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             settingsStore.GotWelcomeMessage = true;
-            mainLayout.RemoveView (welcomeFrameLayout);
+            ListView.RemoveHeaderView (welcomeView);
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
             ListView.SetClipToPadding (false);
+            if (welcomeView != null) {
+                ListView.AddHeaderView (welcomeView);
+            }
             ListAdapter = new RecentTimeEntriesAdapter ();
         }
 

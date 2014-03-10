@@ -50,6 +50,7 @@
     <Compile Include="Bugsnag\CombiningStreamTest.cs" />
     <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
     <Compile Include="Data\ModelGraphTest.cs" />
+    <Compile Include="MessageBusTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

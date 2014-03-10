@@ -14,6 +14,7 @@ namespace Toggl.Phoebe
             new Dictionary<Type, List<WeakReference>> ();
         private readonly Queue<Action> dispatchQueue = new Queue<Action> ();
         private volatile bool isScheduled;
+        private bool isProcessing;
 
         public MessageBus ()
         {
@@ -164,19 +165,28 @@ namespace Toggl.Phoebe
 
         private void ProcessQueue ()
         {
-            while (true) {
-                Action act;
+            // Make sure we don't start processing the remainder of the queue when a subscriber generates new messages
+            if (isProcessing)
+                return;
 
-                lock (syncRoot) {
-                    if (dispatchQueue.Count > 0) {
-                        act = dispatchQueue.Dequeue ();
-                    } else {
-                        return;
+            isProcessing = true;
+            try {
+                while (true) {
+                    Action act;
+
+                    lock (syncRoot) {
+                        if (dispatchQueue.Count > 0) {
+                            act = dispatchQueue.Dequeue ();
+                        } else {
+                            return;
+                        }
                     }
-                }
 
-                // Need to execute the item outside of lock to prevent recursive locking
-                act ();
+                    // Need to execute the item outside of lock to prevent recursive locking
+                    act ();
+                }
+            } finally {
+                isProcessing = false;
             }
         }
     }

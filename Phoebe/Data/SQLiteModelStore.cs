@@ -12,6 +12,8 @@ namespace Toggl.Phoebe.Data
 {
     public class SQLiteModelStore : IModelStore
     {
+        private static readonly string LogTag = "SQLiteModelStore";
+
         private class DbCommand : SQLiteCommand
         {
             private readonly SQLiteModelStore store;
@@ -277,14 +279,29 @@ namespace Toggl.Phoebe.Data
                 IsScheduled = true;
             }
 
+            var reschedule = false;
+
             try {
                 await Task.Delay (TimeSpan.FromMilliseconds (250))
                     .ConfigureAwait (continueOnCapturedContext: false);
                 Commit ();
+            } catch (SQLiteException ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                if (ex.Result == SQLite3.Result.Busy) {
+                    log.Info (LogTag, ex, "Database busy, rescheduling.");
+                    reschedule = true;
+                } else {
+                    log.Warning (LogTag, ex, "Failed to commit changes.");
+                    reschedule = true;
+                }
             } finally {
                 lock (Model.SyncRoot) {
                     IsScheduled = false;
                 }
+            }
+
+            if (reschedule) {
+                ScheduleCommit ();
             }
         }
     }

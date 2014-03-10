@@ -6,10 +6,12 @@ using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 
@@ -195,7 +197,10 @@ namespace Toggl.Joey.UI.Adapters
             {
                 if (Model == null)
                     return;
-                Model.Continue ();
+                var entry = Model.Continue ();
+
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)

@@ -80,6 +80,10 @@ namespace Toggl.Joey.UI.Fragments
 
             var entry = model.Continue ();
 
+            // Scroll to top (where the new model will appear)
+            ListView.SmoothScrollToPosition (0);
+
+            // Notify that the user explicitly started something
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
         }

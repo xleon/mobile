@@ -155,6 +155,7 @@ namespace Toggl.Phoebe.Data.Models
 
         private void SetStartTime (DateTime value)
         {
+            value = value.Truncate (TimeSpan.TicksPerSecond);
             if (startTime == value)
                 return;
 

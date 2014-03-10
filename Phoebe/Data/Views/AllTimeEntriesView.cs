@@ -71,6 +71,7 @@ namespace Toggl.Phoebe.Data.Views
             ChangeDataAndNotify (delegate {
                 data.Clear ();
             });
+            HasMore = true;
 
             LoadMore ();
         }
@@ -86,7 +87,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async override void LoadMore ()
         {
-            if (IsLoading)
+            if (IsLoading || !HasMore)
                 return;
 
             IsLoading = true;
@@ -104,17 +105,26 @@ namespace Toggl.Phoebe.Data.Views
 
                 // Try with latest data from server first:
                 if (!useLocal) {
+                    const int numDays = 5;
                     try {
-                        var entries = await client.ListTimeEntries (startTime, endTime);
+                        var minStart = endTime;
+                        var entries = await client.ListTimeEntries (endTime, numDays);
                         foreach (var entry in entries) {
                             // OnModelChanged catches the newly created time entries and adds them to the dataset
+
+                            if (entry.StartTime < minStart) {
+                                minStart = entry.StartTime;
+                            }
                         }
+
+                        startTime = minStart;
+                        HasMore = (endTime.Date - minStart.Date).Days > 0;
                     } catch (Exception exc) {
                         var log = ServiceContainer.Resolve<Logger> ();
                         if (exc is System.Net.Http.HttpRequestException) {
-                            log.Info (Tag, exc, "Failed to fetch time entries from {0} to {1}", startTime, endTime);
+                            log.Info (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
                         } else {
-                            log.Warning (Tag, exc, "Failed to fetch time entries from {0} to {1}", startTime, endTime);
+                            log.Warning (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
                         }
 
                         HasError = true;
@@ -131,6 +141,8 @@ namespace Toggl.Phoebe.Data.Views
                     foreach (var entry in entries) {
                         // OnModelChanged catches the newly created time entries and adds them to the dataset
                     }
+
+                    HasMore = Model.Query<TimeEntryModel> ((te) => te.StartTime <= startTime && te.State != TimeEntryState.New).Count () > 0;
                 }
 
                 OnPropertyChanged (PropertyModels);

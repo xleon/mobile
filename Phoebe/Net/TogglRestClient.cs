@@ -495,6 +495,19 @@ namespace Toggl.Phoebe.Net
             });
         }
 
+        public Task<List<TimeEntryModel>> ListTimeEntries (DateTime end, int days)
+        {
+            var url = new Uri (v8Url,
+                          String.Format ("time_entries?end_date={0}&num_of_days={1}",
+                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
+                              days));
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            return ListModels<TimeEntryModel> (url, (te) => {
+                te.User = user;
+                return Model.Update (te);
+            });
+        }
+
         public Task UpdateTimeEntry (TimeEntryModel model)
         {
             var url = new Uri (v8Url, String.Format ("time_entries/{0}", model.RemoteId.Value.ToString ()));

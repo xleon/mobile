@@ -24,6 +24,7 @@ namespace Toggl.Joey.UI.Components
         private TimeEntryModel currentEntry;
         private bool canRebind;
         private bool hideDuration;
+        private bool hideAction;
 
         protected TextView DurationTextView { get; private set; }
 
@@ -132,6 +133,8 @@ namespace Toggl.Joey.UI.Components
                 ActionButton.SetBackgroundColor (res.GetColor (Resource.Color.bright_green));
             }
 
+            ActionButton.Visibility = HideAction ? ViewStates.Gone : ViewStates.Visible;
+
             if (currentEntry.State == TimeEntryState.Running && !HideDuration) {
                 var duration = currentEntry.GetDuration ();
                 DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
@@ -150,6 +153,16 @@ namespace Toggl.Joey.UI.Components
             set {
                 if (hideDuration != value) {
                     hideDuration = value;
+                    Rebind ();
+                }
+            }
+        }
+
+        public bool HideAction {
+            get { return hideAction; }
+            set {
+                if (hideAction != value) {
+                    hideAction = value;
                     Rebind ();
                 }
             }

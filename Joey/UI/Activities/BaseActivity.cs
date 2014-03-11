@@ -6,7 +6,6 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Bugsnag;
-using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V4.App.FragmentActivity;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 

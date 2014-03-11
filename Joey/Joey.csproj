@@ -264,10 +264,6 @@
     <AndroidResource Include="Resources\layout\MainDrawerListHeader.axml" />
     <AndroidResource Include="Resources\layout\SettingsComponent.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerActivity.axml" />
-    <AndroidResource Include="Resources\drawable-hdpi\Icon.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\Icon.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\Icon.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\Icon.png" />
     <AndroidResource Include="Resources\drawable-hdpi\DrawerShadow.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDrawer.png" />
     <AndroidResource Include="Resources\drawable-mdpi\DrawerShadow.9.png" />
@@ -295,6 +291,10 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcArrowForward.png" />
     <AndroidResource Include="Resources\drawable\BottomBorder.xml" />
     <AndroidResource Include="Resources\drawable\DividerHorizontalLight.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\Icon.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\Icon.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\Icon.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\Icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

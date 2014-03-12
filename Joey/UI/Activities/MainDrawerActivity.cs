@@ -1,4 +1,5 @@
-﻿using Android.App;
+﻿using System;
+using Android.App;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
@@ -29,6 +30,8 @@ namespace Toggl.Joey.UI.Activities
         protected Logger log;
         private readonly TimerComponent barTimer = new TimerComponent ();
         private DrawerLayout DrawerLayout;
+        private readonly Lazy<TimeTrackingFragment> trackingFragment = new Lazy<TimeTrackingFragment> ();
+        private readonly Lazy<SettingsFragment> settingsFragment = new Lazy<SettingsFragment> ();
         protected ActionBarDrawerToggle DrawerToggle;
 
         protected override void OnCreate (Bundle bundle)
@@ -55,6 +58,8 @@ namespace Toggl.Joey.UI.Activities
             ActionBar.SetDisplayShowCustomEnabled (true);
             ActionBar.SetDisplayHomeAsUpEnabled (true);
             ActionBar.SetHomeButtonEnabled (true);
+
+            OpenTimeTracking ();
 
             log = ServiceContainer.Resolve<Logger> ();
         }
@@ -89,7 +94,6 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnResume ()
         {
             base.OnResume ();
-            OpenTimeTracking ();
         }
 
         protected override void OnStop ()
@@ -100,18 +104,29 @@ namespace Toggl.Joey.UI.Activities
 
         private void OpenTimeTracking ()
         {
-            OpenFragment (new TimeTrackingFragment ());
+            OpenFragment (trackingFragment.Value);
         }
 
         private void OpenSettings ()
         {
-            OpenFragment (new SettingsFragment ());
+            OpenFragment (settingsFragment.Value);
         }
 
         private void OpenFragment (Fragment fragment)
         {
-            var fragmentTransaction = FragmentManager.BeginTransaction ();
-            fragmentTransaction.Replace (Resource.Id.ContentFrameLayout, fragment).Commit ();
+            var old = FragmentManager.FindFragmentById (Resource.Id.ContentFrameLayout);
+            if (old == null) {
+                FragmentManager.BeginTransaction ()
+                    .Add (Resource.Id.ContentFrameLayout, fragment)
+                    .Commit ();
+            } else {
+                // The detach/attach is a workaround for https://code.google.com/p/android/issues/detail?id=42601
+                FragmentManager.BeginTransaction ()
+                    .Detach (old)
+                    .Replace (Resource.Id.ContentFrameLayout, fragment)
+                    .Attach (fragment)
+                    .Commit ();
+            }
         }
 
         private void OnDrawerItemClick (object sender, ListView.ItemClickEventArgs e)

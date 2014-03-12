@@ -594,12 +594,13 @@ namespace Toggl.Phoebe.Data.Models
         public TimeEntryModel Continue ()
         {
             lock (SyncRoot) {
-                if (!IsShared || !IsPersisted)
-                    throw new InvalidOperationException ("Model needs to be the shared and persisted.");
+                if (!IsShared)
+                    throw new InvalidOperationException ("Model needs to be the shared.");
 
                 // Validate the current state
                 switch (State) {
                 case TimeEntryState.Running:
+                    IsPersisted = true;
                     return this;
                 case TimeEntryState.Finished:
                     break;
@@ -609,6 +610,7 @@ namespace Toggl.Phoebe.Data.Models
 
                 if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
                     if (RemoteId == null) {
+                        IsPersisted = true;
                         StartTime = DateTime.UtcNow - GetDuration ();
                         StopTime = null;
                         State = TimeEntryState.Running;

@@ -54,9 +54,6 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
             ListView.SetClipToPadding (false);
-            if (welcomeView != null) {
-                ListView.AddHeaderView (welcomeView);
-            }
         }
 
         public override void OnResume ()
@@ -104,7 +101,10 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureAdapter ()
         {
-            if (ListAdapter == null && UserVisibleHint) {
+            if (ListAdapter == null && UserVisibleHint && IsAdded) {
+                if (welcomeView != null) {
+                    ListView.AddHeaderView (welcomeView);
+                }
                 ListAdapter = new RecentTimeEntriesAdapter ();
             }
         }

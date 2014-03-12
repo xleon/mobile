@@ -26,14 +26,25 @@ namespace Toggl.Joey.UI.Fragments
         private ViewPager viewPager;
         private Subscription<UserTimeEntryStateChangeMessage> subscriptionUserTimeEntryStateChange;
 
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        {
+            var view = inflater.Inflate (Resource.Layout.TimeTrackingFragment, container, false);
+            viewPager = view.FindViewById<ViewPager> (Resource.Id.ViewPager);
+            viewPager.PageSelected += OnViewPagerPageSelected;
+            return view;
+        }
+
+        public override void OnDestroyView ()
+        {
+            viewPager.PageSelected -= OnViewPagerPageSelected;
+            base.OnDestroyView ();
+        }
+
         public override void OnActivityCreated (Bundle savedInstanceState)
         {
             base.OnActivityCreated (savedInstanceState);
 
-            var adapter = new MainPagerAdapter (Activity, ChildFragmentManager);
-            viewPager = Activity.FindViewById<ViewPager> (Resource.Id.ViewPager);
-            viewPager.Adapter = adapter;
-            viewPager.PageSelected += OnViewPagerPageSelected;
+            viewPager.Adapter = new MainPagerAdapter (Activity, ChildFragmentManager);
 
             if (savedInstanceState != null) {
                 viewPager.CurrentItem = savedInstanceState.GetInt (ExtraPage, (int)MainPagerAdapter.RecentPosition);
@@ -49,6 +60,16 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnSaveInstanceState (outState);
             outState.PutInt (ExtraPage, viewPager.CurrentItem);
+        }
+
+        public override void OnStart ()
+        {
+            base.OnStart ();
+
+            ToggleTimerDuration ();
+
+            // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
+            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
         }
 
         public override void OnResume ()
@@ -70,11 +91,6 @@ namespace Toggl.Joey.UI.Fragments
             base.OnPause ();
         }
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-        {
-            return inflater.Inflate (Resource.Layout.TimeTrackingFragment, container, false);
-        }
-
         private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
             if (e.Position != MainPagerAdapter.LogPosition) {
@@ -82,6 +98,16 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             ToggleTimerDuration ();
+        }
+
+        private void OnUserTimeEntryStateChange (UserTimeEntryStateChangeMessage msg)
+        {
+            if (msg.Model.State == TimeEntryState.Running) {
+                viewPager.CurrentItem = MainPagerAdapter.EditPosition;
+            } else if (msg.Model.State == TimeEntryState.Finished
+                       && viewPager.CurrentItem == MainPagerAdapter.EditPosition) {
+                viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
+            }
         }
 
         private void ToggleTimerDuration ()
@@ -99,26 +125,6 @@ namespace Toggl.Joey.UI.Fragments
                     return activity.Timer;
                 }
                 return null;
-            }
-        }
-
-        public override void OnStart ()
-        {
-            base.OnStart ();
-
-            ToggleTimerDuration ();
-
-            // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
-            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
-        }
-
-        private void OnUserTimeEntryStateChange (UserTimeEntryStateChangeMessage msg)
-        {
-            if (msg.Model.State == TimeEntryState.Running) {
-                viewPager.CurrentItem = MainPagerAdapter.EditPosition;
-            } else if (msg.Model.State == TimeEntryState.Finished
-                       && viewPager.CurrentItem == MainPagerAdapter.EditPosition) {
-                viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
             }
         }
 

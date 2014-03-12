@@ -304,6 +304,10 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcTickGreen.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcTickGreen.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTickGreen.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcContinue.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcContinue.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcContinue.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcContinue.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

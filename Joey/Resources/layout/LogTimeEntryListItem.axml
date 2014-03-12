@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="64dp"
     android:orientation="horizontal"
+    android:descendantFocusability="blocksDescendants"
     android:background="@drawable/MainListButton">
     <View
         android:id="@+id/ColorView"
@@ -90,14 +91,17 @@
                 android:text="@string/RecentTimeEntryNoDescription" />
         </toggl.joey.ui.views.FadeLinearLayout>
     </LinearLayout>
-    <Button
-        android:text="C"
-        android:layout_width="48dp"
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="#ECECEC"
+        android:layout_marginLeft="10dp" />
+    <ImageButton
+        android:src="@drawable/IcContinue"
+        android:layout_width="35dp"
         android:layout_height="fill_parent"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
-        android:id="@+id/ContinueButton"
-        style="?android:attr/borderlessButtonStyle"
-        android:focusable="false"
-        android:textColor="@color/dark_gray" />
+        android:id="@+id/ContinueImageButton"
+        style="?android:attr/borderlessButtonStyle" />
 </LinearLayout>

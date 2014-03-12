@@ -188,7 +188,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView DurationTextView { get; private set; }
 
-            public Button ContinueButton { get; private set; }
+            public ImageButton ContinueImageButton { get; private set; }
 
             private TimeEntryModel Model {
                 get { return DataSource; }
@@ -204,9 +204,9 @@ namespace Toggl.Joey.UI.Adapters
                 TagsView = root.FindViewById<View> (Resource.Id.TagsIcon);
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
-                ContinueButton = root.FindViewById<Button> (Resource.Id.ContinueButton);
+                ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
 
-                ContinueButton.Click += OnContinueButtonClicked;
+                ContinueImageButton.Click += OnContinueButtonClicked;
             }
 
             void OnContinueButtonClicked (object sender, EventArgs e)

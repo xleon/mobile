@@ -162,6 +162,7 @@ namespace Toggl.Joey.UI.Fragments
             private TimeEntryModel currentTimeEntry;
             #pragma warning disable 0414
             private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
+            private readonly Subscription<WelcomeMessageDisabledMessage> subscriptionWelcomeMessageDisabled;
             #pragma warning restore 0414
 
             public readonly EditCurrentTimeEntryFragment EditFragment = new EditCurrentTimeEntryFragment ();
@@ -176,6 +177,7 @@ namespace Toggl.Joey.UI.Fragments
 
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+                subscriptionWelcomeMessageDisabled = bus.Subscribe<WelcomeMessageDisabledMessage> (OnWelcomeMessageDisabled);
             }
 
             private void OnModelChanged (ModelChangedMessage msg)
@@ -207,6 +209,11 @@ namespace Toggl.Joey.UI.Fragments
                 }
             }
 
+            private void OnWelcomeMessageDisabled (WelcomeMessageDisabledMessage msg)
+            {
+                NotifyDataSetChanged ();
+            }
+
             public override int Count {
                 get { return PagesCount; }
             }
@@ -226,10 +233,8 @@ namespace Toggl.Joey.UI.Fragments
                     }
                     return res.GetTextFormatted (Resource.String.TimeTrackingNewTab);
                 case RecentPosition:
-                    // TODO: Determine if first run:
-                    var firstRun = false;
-
-                    if (firstRun) {
+                    var settings = ServiceContainer.Resolve<SettingsStore> ();
+                    if (!settings.GotWelcomeMessage) {
                         return res.GetTextFormatted (Resource.String.TimeTrackingWelcomeTab);
                     } else {
                         return res.GetTextFormatted (Resource.String.TimeTrackingRecentTab);

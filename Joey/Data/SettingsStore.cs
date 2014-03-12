@@ -2,6 +2,7 @@
 using Android.Content;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using XPlatUtils;
 
 namespace Toggl.Joey.Data
 {
@@ -131,7 +132,13 @@ namespace Toggl.Joey.Data
 
         public bool GotWelcomeMessage {
             get { return GetInt (GotWelcomeMessageKey) == 1; }
-            set { SetInt (GotWelcomeMessageKey, value ? 1 : 0); }
+            set {
+                SetInt (GotWelcomeMessageKey, value ? 1 : 0);
+                if (value) {
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    bus.Send (new WelcomeMessageDisabledMessage (this));
+                }
+            }
         }
     }
 }

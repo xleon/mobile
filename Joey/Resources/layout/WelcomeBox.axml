@@ -29,7 +29,7 @@
             <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                style="@style/TimeEntryListItem.Text.Task"
+                style="@style/TimeEntryListItem.Text.Tutorial"
                 android:text="@string/WelcomeBoxTapToStart" />
         </LinearLayout>
         <View
@@ -56,7 +56,7 @@
                 android:id="@+id/SwipeLeftTextView"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                style="@style/TimeEntryListItem.Text.Task"
+                style="@style/TimeEntryListItem.Text.Tutorial"
                 android:text="@string/WelcomeBoxSwipeLeft" />
         </LinearLayout>
         <View
@@ -83,7 +83,7 @@
                 android:id="@+id/SwipeRightTextView"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                style="@style/TimeEntryListItem.Text.Task"
+                style="@style/TimeEntryListItem.Text.Tutorial"
                 android:text="@string/WelcomeBoxSwipeRight" />
         </LinearLayout>
         <View
@@ -111,7 +111,7 @@
                 android:id="@+id/TapToContinueTextView"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                style="@style/TimeEntryListItem.Text.Task"
+                style="@style/TimeEntryListItem.Text.Tutorial"
                 android:text="@string/WelcomeBoxContinue" />
         </LinearLayout>
         <View

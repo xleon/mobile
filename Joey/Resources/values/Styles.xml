@@ -69,6 +69,9 @@
     <style name="TimeEntryListItem.Text.Duration">
         <item name="android:textSize">14sp</item>
     </style>
+    <style name="TimeEntryListItem.Text.Tutorial">
+        <item name="android:textSize">13sp</item>
+    </style>
 
     <style name="ChangeDurationDialog">
     </style>

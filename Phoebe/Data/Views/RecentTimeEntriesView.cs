@@ -28,6 +28,7 @@ namespace Toggl.Phoebe.Data.Views
         #pragma warning disable 0414
         private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
         #pragma warning restore 0414
+        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 
         public RecentTimeEntriesView (int batchSize = 25)
         {
@@ -134,6 +135,34 @@ namespace Toggl.Phoebe.Data.Views
             });
 
             LoadMore ();
+
+            if (Count == 0) {
+                SetLoadingForSync ();
+            }
+        }
+
+        private void SetLoadingForSync ()
+        {
+            if (subscriptionSyncFinished != null)
+                return;
+
+            var syncManager = ServiceContainer.Resolve<SyncManager> ();
+            if (!syncManager.IsRunning)
+                return;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            IsLoading = true;
+        }
+
+        private void OnSyncFinished (SyncFinishedMessage msg)
+        {
+            IsLoading = false;
+            if (subscriptionSyncFinished != null) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Unsubscribe (subscriptionSyncFinished);
+                subscriptionSyncFinished = null;
+            }
         }
 
         private void Sort ()

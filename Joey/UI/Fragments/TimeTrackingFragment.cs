@@ -22,6 +22,7 @@ namespace Toggl.Joey.UI.Fragments
     public class TimeTrackingFragment : Fragment
     {
         private static readonly int PagesCount = 3;
+        private static readonly string ExtraPage = "com.toggl.timer.page";
         private ViewPager viewPager;
         private Subscription<UserTimeEntryStateChangeMessage> subscriptionUserTimeEntryStateChange;
 
@@ -32,22 +33,27 @@ namespace Toggl.Joey.UI.Fragments
             var adapter = new MainPagerAdapter (Activity, ChildFragmentManager);
             viewPager = Activity.FindViewById<ViewPager> (Resource.Id.ViewPager);
             viewPager.Adapter = adapter;
-            viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
             viewPager.PageSelected += OnViewPagerPageSelected;
+
+            if (savedInstanceState != null) {
+                viewPager.CurrentItem = savedInstanceState.GetInt (ExtraPage, (int)MainPagerAdapter.RecentPosition);
+            } else {
+                viewPager.CurrentItem = (int)MainPagerAdapter.RecentPosition;
+            }
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
         }
 
-        public override void OnDetach ()
+        public override void OnSaveInstanceState (Bundle outState)
         {
-            base.OnDetach ();
+            base.OnSaveInstanceState (outState);
+            outState.PutInt (ExtraPage, viewPager.CurrentItem);
         }
 
         public override void OnResume ()
         {
             base.OnResume ();
-            viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionUserTimeEntryStateChange = bus.Subscribe<UserTimeEntryStateChangeMessage> (OnUserTimeEntryStateChange);

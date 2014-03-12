@@ -33,7 +33,12 @@ namespace Toggl.Joey.UI.Fragments
             ListView.SetClipToPadding (false);
             ListView.ChoiceMode = (ChoiceMode)AbsListViewChoiceMode.MultipleModal;
             ListView.SetMultiChoiceModeListener (this);
-            ListAdapter = new LogTimeEntriesAdapter ();
+        }
+
+        public override void OnResume ()
+        {
+            EnsureAdapter ();
+            base.OnResume ();
         }
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
@@ -47,6 +52,21 @@ namespace Toggl.Joey.UI.Fragments
                 return;
 
             // TODO Call Edit screen for this row
+        }
+
+        public override bool UserVisibleHint {
+            get { return base.UserVisibleHint; }
+            set {
+                base.UserVisibleHint = value;
+                EnsureAdapter ();
+            }
+        }
+
+        private void EnsureAdapter ()
+        {
+            if (ListAdapter == null && UserVisibleHint) {
+                ListAdapter = new LogTimeEntriesAdapter ();
+            }
         }
 
         void AbsListView.IMultiChoiceModeListener.OnItemCheckedStateChanged (ActionMode mode, int position, long id, bool @checked)

@@ -30,6 +30,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.TimeTrackingFragment, container, false);
             viewPager = view.FindViewById<ViewPager> (Resource.Id.ViewPager);
+            viewPager.PageScrolled += OnViewPagerPageScrolled;
             viewPager.PageSelected += OnViewPagerPageSelected;
             return view;
         }
@@ -37,6 +38,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroyView ()
         {
             viewPager.PageSelected -= OnViewPagerPageSelected;
+            viewPager.PageScrolled -= OnViewPagerPageScrolled;
             base.OnDestroyView ();
         }
 
@@ -89,6 +91,29 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             base.OnPause ();
+        }
+
+        private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
+        {
+            var current = viewPager.CurrentItem;
+            var pos = e.Position + e.PositionOffset;
+            int idx;
+            if (pos + 0.05f < current) {
+                // Moving to the left
+                idx = (int)Math.Floor (pos);
+            } else if (pos - 0.05f > current) {
+                // Moving to the right
+                idx = (int)Math.Ceiling (pos);
+            } else {
+                return;
+            }
+
+            // Make sure the fragment knows that it's about to become visible
+            var adapter = (MainPagerAdapter)viewPager.Adapter;
+            if (adapter != null) {
+                var frag = adapter.GetItem (idx);
+                frag.UserVisibleHint = true;
+            }
         }
 
         private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)

@@ -16,6 +16,7 @@ namespace Toggl.Joey.UI.Activities
 {
     [Activity (
         Label = "@string/EntryName",
+        Exported = true,
         #if DEBUG
         // The actual entry-point is defined in manifest via activity-alias, this here is just to
         // make adb launch the activity automatically when developing.

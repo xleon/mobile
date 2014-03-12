@@ -300,6 +300,10 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcUpArrow.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcUpArrow.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcUpArrow.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcTickGreen.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcTickGreen.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcTickGreen.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcTickGreen.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

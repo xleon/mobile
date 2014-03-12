@@ -37,10 +37,12 @@ namespace Toggl.Joey.UI.Fragments
         private void ShowWelcomeView (LayoutInflater inflater)
         {
             welcomeView = (ViewGroup)inflater.Inflate (Resource.Layout.WelcomeBox, null);
+            welcomeView.FindViewById<TextView> (Resource.Id.StartTextView).SetFont (Font.Roboto);
             welcomeView.FindViewById<TextView> (Resource.Id.SwipeLeftTextView).SetFont (Font.RobotoLight);
             welcomeView.FindViewById<TextView> (Resource.Id.SwipeRightTextView).SetFont (Font.RobotoLight);
             welcomeView.FindViewById<TextView> (Resource.Id.TapToContinueTextView).SetFont (Font.RobotoLight);
-            welcomeView.FindViewById<Button> (Resource.Id.GotItButton).Click += OnGotItButtonClick;
+            welcomeView.FindViewById<Button> (Resource.Id.GotItButton)
+                .SetFont (Font.Roboto).Click += OnGotItButtonClick;
         }
 
         private void OnGotItButtonClick (object sender, EventArgs e)

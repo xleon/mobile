@@ -282,14 +282,6 @@
     <AndroidResource Include="Resources\drawable-hdpi\IcSyncGray.png" />
     <AndroidResource Include="Resources\anim\SpinningAnimation.xml" />
     <AndroidResource Include="Resources\layout\WelcomeBox.axml" />
-    <AndroidResource Include="Resources\drawable-hdpi\IcArrowBack.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\IcArrowBack.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\IcArrowBack.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcArrowBack.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\IcArrowForward.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\IcArrowForward.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\IcArrowForward.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcArrowForward.png" />
     <AndroidResource Include="Resources\drawable\BottomBorder.xml" />
     <AndroidResource Include="Resources\drawable\DividerHorizontalLight.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Icon.png" />
@@ -308,6 +300,26 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcContinue.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcContinue.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcContinue.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcWelcomeArrowD.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcWelcomeArrowL.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcWelcomeArrowR.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcWelcomeArrowTR.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcWelcomeArrowD.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcWelcomeArrowL.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcWelcomeArrowR.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcWelcomeArrowTR.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcWelcomeArrowD.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcWelcomeArrowL.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcWelcomeArrowR.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcWelcomeArrowTR.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcWelcomeArrowD.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcWelcomeArrowL.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcWelcomeArrowR.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcWelcomeArrowTR.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\BgWelcome.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\BgWelcome.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\BgWelcome.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\BgWelcome.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

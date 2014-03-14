@@ -323,6 +323,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\BgWelcome.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\BgWelcome.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\BgWelcome.9.png" />
+    <AndroidResource Include="Resources\layout\LogTimeEntryListExpandedItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

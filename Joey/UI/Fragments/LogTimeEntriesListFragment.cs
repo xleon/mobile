@@ -51,7 +51,7 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null)
                 return;
 
-            // TODO Call Edit screen for this row
+            adapter.ExpandedPosition = adapter.ExpandedPosition != position ? position : (int?)null;
         }
 
         public override bool UserVisibleHint {

@@ -213,6 +213,10 @@ namespace Toggl.Joey.UI.Fragments
 
             private void OnWelcomeMessageDisabled (WelcomeMessageDisabledMessage msg)
             {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
                 NotifyDataSetChanged ();
             }
 

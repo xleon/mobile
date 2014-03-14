@@ -61,7 +61,9 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnSaveInstanceState (Bundle outState)
         {
             base.OnSaveInstanceState (outState);
-            outState.PutInt (ExtraPage, viewPager.CurrentItem);
+            if (viewPager != null) {
+                outState.PutInt (ExtraPage, viewPager.CurrentItem);
+            }
         }
 
         public override void OnStart ()

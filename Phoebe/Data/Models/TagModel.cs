@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
 
@@ -19,22 +18,6 @@ namespace Toggl.Phoebe.Data.Models
         {
             workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
             timeEntriesCollection = new RelatedModelsCollection<TimeEntryModel, TimeEntryTagModel, TimeEntryModel, TagModel> (this);
-        }
-
-        protected override void Validate (ValidationContext ctx)
-        {
-            base.Validate (ctx);
-
-            if (ctx.HasChanged (PropertyName)) {
-                if (String.IsNullOrWhiteSpace (Name)) {
-                    ctx.AddError (PropertyName, "Cannot be empty.");
-                } else {
-                    var duplicates = Model.Query<TagModel> ((t) => t.Name == Name && t.Id != Id).Count ();
-                    if (duplicates != 0) {
-                        ctx.AddError (PropertyName, "Must be unique.");
-                    }
-                }
-            }
         }
 
         #region Data

@@ -41,13 +41,6 @@ namespace Toggl.Phoebe.Data
             if (IsShared) {
                 ServiceContainer.Resolve<MessageBus> ().Send (new ModelChangedMessage (this, property));
 
-                if (property == PropertyIsShared) {
-                    // Validate whole model when being promoted to shared
-                    Validate ();
-                } else {
-                    Validate (property);
-                }
-
                 // Automatically mark the object dirty, if property doesn't explicitly disable it
                 if (!dontDirtyCache.HasAttribute (GetType (), property)) {
                     MarkDirty (property != PropertyModifiedAt);

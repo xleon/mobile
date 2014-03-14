@@ -140,22 +140,12 @@ namespace Toggl.Phoebe.Net
                         .Union (QueryDirtyModels<TaskModel> ())
                         .Union (QueryDirtyModels<TimeEntryModel> ().ForCurrentUser ().Where ((m) => m.State != TimeEntryState.New)));
 
-                    // Purge invalid nodes:
-                    var models = graph.Nodes.Where ((m) => !m.IsValid && m.RemoteId == null).ToList ();
-                    foreach (var model in models) {
-                        graph.RemoveBranch (model);
-                    }
-                    models = graph.Nodes.Where ((m) => !m.IsValid && m.RemoteId != null).ToList ();
-                    foreach (var model in models) {
-                        graph.Remove (model);
-                    }
-
                     // Start pushing the dependencies from the end nodes up
                     var tasks = new List<Task<Exception>> ();
                     while (true) {
                         tasks.Clear ();
 
-                        models = graph.EndNodes.ToList ();
+                        var models = graph.EndNodes.ToList ();
                         if (models.Count == 0)
                             break;
 

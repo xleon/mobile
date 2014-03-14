@@ -18,34 +18,6 @@ namespace Toggl.Phoebe.Data.Models
             workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
         }
 
-        protected override void Validate (ValidationContext ctx)
-        {
-            base.Validate (ctx);
-
-            if (ctx.HasChanged (PropertyName)) {
-                if (String.IsNullOrWhiteSpace (Name)) {
-                    ctx.AddError (PropertyName, "Client name cannot be empty.");
-                } else if (Model.Query<ClientModel> (
-                               (m) => m.Name == Name
-                               && m.WorkspaceId == WorkspaceId
-                               && m.Id != Id
-                           ).NotDeleted ().Count () > 0) {
-                    ctx.AddError (PropertyName, "Client with such name already exists.");
-                }
-            }
-
-            if (ctx.HasChanged (PropertyWorkspaceId)) {
-                ctx.ClearErrors (PropertyWorkspaceId);
-                ctx.ClearErrors (PropertyWorkspace);
-
-                if (WorkspaceId == null) {
-                    ctx.AddError (PropertyWorkspaceId, "Client must be associated with a workspace.");
-                } else if (Workspace == null) {
-                    ctx.AddError (PropertyWorkspace, "Associated workspace could not be found.");
-                }
-            }
-        }
-
         #region Data
 
         private string name;

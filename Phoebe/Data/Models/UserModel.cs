@@ -3,7 +3,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Phoebe.Data.Models
 {
@@ -23,51 +22,6 @@ namespace Toggl.Phoebe.Data.Models
             defaultWorkspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyDefaultWorkspaceId, PropertyDefaultWorkspace);
             workspacesCollection = new RelatedModelsCollection<WorkspaceModel, WorkspaceUserModel, WorkspaceModel, UserModel> (this);
             projectsCollection = new RelatedModelsCollection<ProjectModel, ProjectUserModel, ProjectModel, UserModel> (this);
-        }
-
-        protected override void Validate (ValidationContext ctx)
-        {
-            base.Validate (ctx);
-
-            if (ctx.HasChanged (PropertyName)) {
-                if (String.IsNullOrWhiteSpace (Name)) {
-                    ctx.AddError (PropertyName, "User name cannot be empty.");
-                }
-            }
-
-            if (ctx.HasChanged (PropertyEmail)) {
-                if (String.IsNullOrWhiteSpace (Email)) {
-                    ctx.AddError (PropertyName, "User email cannot be empty.");
-                } else if (!Email.Contains ("@")) {
-                    ctx.AddError (PropertyName, "Invalid email address");
-                }
-            }
-
-            if (ctx.HasChanged (PropertyPassword)) {
-                if (String.IsNullOrEmpty (Password) && RemoteId != null) {
-                    // User doesn't have to enter anything to keep old password
-                } else if (String.IsNullOrWhiteSpace (Password)) {
-                    ctx.AddError (PropertyName, "User password cannot be empty.");
-                } else if (Password.Length <= 5) {
-                    ctx.AddError (PropertyName, "Password must be at least 5 characters.");
-                }
-            }
-
-            // TODO: More validation for User model
-
-            if (ctx.HasChanged (PropertyDefaultWorkspaceId)) {
-                ctx.ClearErrors (PropertyDefaultWorkspaceId);
-                ctx.ClearErrors (PropertyDefaultWorkspace);
-
-                if (RemoteId == null) {
-                    // No need to specify default workspace when signing up
-                } else if (DefaultWorkspaceId == null) {
-                    ctx.AddError (PropertyDefaultWorkspaceId, "User must have a default workspace.");
-                } else if (DefaultWorkspace == null) {
-                    ctx.AddError (PropertyDefaultWorkspace, "Associated default workspace could not be found.");
-                }
-            }
-
         }
 
         public IEnumerable<ProjectModel> GetAvailableProjects (WorkspaceModel workspace = null)

@@ -37,42 +37,6 @@ namespace Toggl.Phoebe.Data.Models
             return expr.ToPropertyName (this);
         }
 
-        protected override void Validate (ValidationContext ctx)
-        {
-            base.Validate (ctx);
-
-            if (ctx.HasChanged (PropertyWorkspaceId)
-                || ctx.HasChanged (PropertyIsBillable)) {
-
-                ctx.ClearErrors (PropertyWorkspaceId);
-                ctx.ClearErrors (PropertyWorkspace);
-
-                if (WorkspaceId == null) {
-                    ctx.AddError (PropertyWorkspaceId, "Time entry must be associated with a workspace.");
-                } else if (Workspace == null) {
-                    ctx.AddError (PropertyWorkspace, "Associated workspace could not be found.");
-                }
-
-                // Check premium feature usage
-                if (IsBillable && Workspace != null && !Workspace.IsPremium) {
-                    ctx.AddError (PropertyIsBillable, "Billable time entries can only exist in premium workspaces.");
-                } else {
-                    ctx.ClearErrors (PropertyIsBillable);
-                }
-            }
-
-            if (ctx.HasChanged (PropertyUserId)) {
-                ctx.ClearErrors (PropertyUserId);
-                ctx.ClearErrors (PropertyUser);
-
-                if (WorkspaceId == null) {
-                    ctx.AddError (PropertyUserId, "Time entry must be associated with a user.");
-                } else if (Workspace == null) {
-                    ctx.AddError (PropertyUser, "Associated user could not be found.");
-                }
-            }
-        }
-
         private bool LogicEnabled {
             get { return IsShared && !IsMerging; }
         }

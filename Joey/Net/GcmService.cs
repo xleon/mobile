@@ -30,6 +30,8 @@ namespace Toggl.Joey.Net
 
         public override void OnStart (Intent intent, int startId)
         {
+            ((AndroidApp)Application).InitializeComponents ();
+
             try {
                 var extras = intent.Extras;
                 var entryId = Convert.ToInt64 (extras.GetString ("task_id", String.Empty));

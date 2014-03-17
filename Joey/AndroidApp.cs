@@ -22,6 +22,8 @@ namespace Toggl.Joey
         Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo
     {
+        bool componentsInitialized = false;
+
         public AndroidApp () : base ()
         {
         }
@@ -35,6 +37,7 @@ namespace Toggl.Joey
             base.OnCreate ();
 
             RegisterComponents ();
+            InitializeStartupComponents ();
         }
 
         private void RegisterComponents ()
@@ -58,16 +61,31 @@ namespace Toggl.Joey
                 var path = System.IO.Path.Combine (folder, "toggl.db");
                 return new SQLiteModelStore (path);
             });
-            ServiceContainer.Register<GcmRegistrationManager> (new GcmRegistrationManager ());
-            ServiceContainer.Register<AndroidNotificationManager> (new AndroidNotificationManager ());
-
-            // Setup Bugsnag:
-            ServiceContainer.Register<BugsnagClient> (
-                new Toggl.Joey.Bugsnag.BugsnagClient (this, Build.BugsnagApiKey) {
+            ServiceContainer.Register (() => new GcmRegistrationManager ());
+            ServiceContainer.Register (() => new AndroidNotificationManager ());
+            ServiceContainer.Register<BugsnagClient> (delegate {
+                return new Toggl.Joey.Bugsnag.BugsnagClient (this, Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
-                });
-            ServiceContainer.Register (new BugsnagUserManager ());
+                };
+            });
+            ServiceContainer.Register (() => new BugsnagUserManager ());
+        }
+
+        private void InitializeStartupComponents ()
+        {
+            ServiceContainer.Resolve<BugsnagClient> ();
+            ServiceContainer.Resolve<BugsnagUserManager> ();
+        }
+
+        public void InitializeComponents ()
+        {
+            if (componentsInitialized)
+                return;
+
+            componentsInitialized = true;
+            ServiceContainer.Resolve<GcmRegistrationManager> ();
+            ServiceContainer.Resolve<AndroidNotificationManager> ();
         }
 
         public override void OnTrimMemory (TrimMemory level)

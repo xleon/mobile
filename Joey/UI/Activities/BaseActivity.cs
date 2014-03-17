@@ -87,6 +87,9 @@ namespace Toggl.Joey.UI.Activities
             CheckAuth ();
 
             ResetSyncProgressBar ();
+
+            // Make sure that the components are initialized
+            ((AndroidApp)Application).InitializeComponents ();
         }
 
         protected override void OnPause ()

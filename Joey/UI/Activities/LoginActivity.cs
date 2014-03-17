@@ -28,7 +28,7 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
-        private static readonly string ExtraShowPassword = "com.toggl.timer.hide_password";
+        private static readonly string ExtraShowPassword = "com.toggl.timer.show_password";
         private bool hasGoogleAccounts;
         private bool showPassword;
 

@@ -137,17 +137,27 @@ namespace Toggl.Phoebe.Data
 
         protected virtual void CreateTables (SQLiteConnection db)
         {
-            foreach (var t in Model.GetAllModels()) {
-                db.CreateTable (t);
+            db.BeginTransaction ();
+            try {
+                foreach (var t in Model.GetAllModels ()) {
+                    db.CreateTable (t);
+                }
+            } finally {
+                db.Commit ();
             }
         }
 
         protected virtual void ClearTables (SQLiteConnection db)
         {
-            foreach (var t in Model.GetAllModels()) {
-                var map = db.GetMapping (t);
-                var query = string.Format ("delete from \"{0}\"", map.TableName);
-                db.Execute (query);
+            db.BeginTransaction ();
+            try {
+                foreach (var t in Model.GetAllModels()) {
+                    var map = db.GetMapping (t);
+                    var query = string.Format ("delete from \"{0}\"", map.TableName);
+                    db.Execute (query);
+                }
+            } finally {
+                db.Commit ();
             }
         }
 

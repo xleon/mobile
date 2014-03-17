@@ -28,9 +28,9 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
-        private static readonly string ExtraHidePassword = "com.toggl.timer.hide_password";
+        private static readonly string ExtraShowPassword = "com.toggl.timer.hide_password";
         private bool hasGoogleAccounts;
-        private bool hidePassword;
+        private bool showPassword;
 
         protected ScrollView ScrollView { get; private set; }
 
@@ -114,7 +114,7 @@ namespace Toggl.Joey.UI.Activities
             GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
 
             if (bundle != null) {
-                hidePassword = bundle.GetBoolean (ExtraHidePassword);
+                showPassword = bundle.GetBoolean (ExtraShowPassword);
             }
 
             SyncPasswordVisibility ();
@@ -123,7 +123,7 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnSaveInstanceState (Bundle outState)
         {
             base.OnSaveInstanceState (outState);
-            outState.PutBoolean (ExtraHidePassword, hidePassword);
+            outState.PutBoolean (ExtraShowPassword, showPassword);
         }
 
         protected override void OnResume ()
@@ -138,22 +138,22 @@ namespace Toggl.Joey.UI.Activities
             if (PasswordEditText.Text.Length == 0) {
                 // Reset buttons and mask
                 PasswordToggleButton.Visibility = ViewStates.Gone;
-                hidePassword = false;
-            } else if (hidePassword) {
-                PasswordToggleButton.SetText (Resource.String.LoginShowButtonText);
+                showPassword = false;
+            } else if (showPassword) {
+                PasswordToggleButton.SetText (Resource.String.LoginHideButtonText);
                 PasswordToggleButton.Visibility = ViewStates.Visible;
             } else {
-                PasswordToggleButton.SetText (Resource.String.LoginHideButtonText);
+                PasswordToggleButton.SetText (Resource.String.LoginShowButtonText);
                 PasswordToggleButton.Visibility = ViewStates.Visible;
             }
 
             int selectionStart = PasswordEditText.SelectionStart;
             int selectionEnd = PasswordEditText.SelectionEnd;
 
-            if (hidePassword) {
-                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationVisiblePassword) | InputTypes.TextVariationPassword;
-            } else {
+            if (showPassword) {
                 PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationPassword) | InputTypes.TextVariationVisiblePassword;
+            } else {
+                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationVisiblePassword) | InputTypes.TextVariationPassword;
             }
             // Need to reset font after changing input type
             PasswordEditText.SetFont (Font.RobotoLight);
@@ -169,7 +169,7 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnPasswordToggleButtonClick (object sender, EventArgs e)
         {
-            hidePassword = !hidePassword;
+            showPassword = !showPassword;
             SyncPasswordVisibility ();
         }
 

@@ -60,7 +60,7 @@ namespace Toggl.Joey.UI.Activities
             get { return false; }
         }
 
-        private void CheckAuth ()
+        private new void CheckAuth ()
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.IsAuthenticated) {

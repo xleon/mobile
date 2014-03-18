@@ -26,8 +26,6 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.App")]
     public class MainDrawerActivity : BaseActivity
     {
-        private static readonly string LogTag = "MainDrawerActivity";
-        protected Logger log;
         private readonly TimerComponent barTimer = new TimerComponent ();
         private DrawerLayout DrawerLayout;
         private readonly Lazy<TimeTrackingFragment> trackingFragment = new Lazy<TimeTrackingFragment> ();
@@ -60,8 +58,6 @@ namespace Toggl.Joey.UI.Activities
             ActionBar.SetHomeButtonEnabled (true);
 
             OpenTimeTracking ();
-
-            log = ServiceContainer.Resolve<Logger> ();
         }
 
         protected override void OnPostCreate (Bundle savedInstanceState)
@@ -131,8 +127,6 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnDrawerItemClick (object sender, ListView.ItemClickEventArgs e)
         {
-            log.Debug (LogTag, "Drawer item clicked " + e.Id);
-
             // Configure timer component for selected page:
             if (e.Id != DrawerListAdapter.TimerPageId) {
                 Timer.HideAction = true;

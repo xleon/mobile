@@ -32,9 +32,9 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<SettingsFragment> settingsFragment = new Lazy<SettingsFragment> ();
         protected ActionBarDrawerToggle DrawerToggle;
 
-        protected override void OnCreate (Bundle bundle)
+        protected override void OnCreateActivity (Bundle bundle)
         {
-            base.OnCreate (bundle);
+            base.OnCreateActivity (bundle);
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
@@ -87,11 +87,6 @@ namespace Toggl.Joey.UI.Activities
             Timer.OnStart ();
         }
 
-        protected override void OnResume ()
-        {
-            base.OnResume ();
-        }
-
         protected override void OnStop ()
         {
             base.OnStop ();
@@ -141,7 +136,7 @@ namespace Toggl.Joey.UI.Activities
             } else if (e.Id == DrawerListAdapter.LogoutPageId) {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
                 authManager.Forget ();
-                CheckAuth ();
+                StartAuthActivity ();
 
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
                 OpenSettings ();

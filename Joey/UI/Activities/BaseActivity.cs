@@ -44,21 +44,18 @@ namespace Toggl.Joey.UI.Activities
             SetProgressBarVisibility (switchOn);
         }
 
-        protected virtual bool RequireAuth {
-            get { return true; }
-        }
-
-        protected void CheckAuth ()
+        protected virtual bool StartAuthActivity ()
         {
-            if (!RequireAuth)
-                return;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (!authManager.IsAuthenticated) {
                 var intent = new Intent (this, typeof(LoginActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);
                 StartActivity (intent);
                 Finish ();
+                return true;
             }
+
+            return false;
         }
 
         private BugsnagClient BugsnagClient {
@@ -67,9 +64,17 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        protected override void OnCreate (Bundle state)
+        protected sealed override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
+
+            if (!StartAuthActivity ()) {
+                OnCreateActivity (state);
+            }
+        }
+
+        protected virtual void OnCreateActivity (Bundle state)
+        {
             BugsnagClient.OnActivityCreated (this);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -77,14 +82,19 @@ namespace Toggl.Joey.UI.Activities
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
 
             RequestWindowFeature (WindowFeatures.Progress);
-            CheckAuth ();
         }
 
-        protected override void OnResume ()
+        protected sealed override void OnResume ()
         {
             base.OnResume ();
+            if (!StartAuthActivity ()) {
+                OnResumeActivity ();
+            }
+        }
+
+        protected virtual void OnResumeActivity ()
+        {
             BugsnagClient.OnActivityResumed (this);
-            CheckAuth ();
 
             ResetSyncProgressBar ();
 
@@ -104,8 +114,14 @@ namespace Toggl.Joey.UI.Activities
             BugsnagClient.OnActivityDestroyed (this);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Unsubscribe (subscriptionSyncStarted);
-            bus.Unsubscribe (subscriptionSyncFinished);
+            if (subscriptionSyncStarted != null) {
+                bus.Unsubscribe (subscriptionSyncStarted);
+                subscriptionSyncStarted = null;
+            }
+            if (subscriptionSyncFinished != null) {
+                bus.Unsubscribe (subscriptionSyncFinished);
+                subscriptionSyncFinished = null;
+            }
         }
 
         public new FragmentManager FragmentManager {

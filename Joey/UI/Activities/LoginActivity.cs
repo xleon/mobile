@@ -56,11 +56,7 @@ namespace Toggl.Joey.UI.Activities
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
         }
 
-        protected override bool RequireAuth {
-            get { return false; }
-        }
-
-        private new void CheckAuth ()
+        protected override bool StartAuthActivity ()
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.IsAuthenticated) {
@@ -72,7 +68,10 @@ namespace Toggl.Joey.UI.Activities
                 intent.AddFlags (ActivityFlags.ClearTop);
                 StartActivity (intent);
                 Finish ();
+                return true;
             }
+
+            return false;
         }
 
         private ArrayAdapter<string> MakeEmailsAdapter ()
@@ -92,11 +91,9 @@ namespace Toggl.Joey.UI.Activities
             ScrollView.ScrollTo (0, ScrollView.Bottom);
         }
 
-        protected override void OnCreate (Bundle bundle)
+        protected override void OnCreateActivity (Bundle bundle)
         {
-            base.OnCreate (bundle);
-
-            CheckAuth ();
+            base.OnCreateActivity (bundle);
 
             SetContentView (Resource.Layout.LoginActivity);
             FindViews ();
@@ -124,13 +121,6 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnSaveInstanceState (outState);
             outState.PutBoolean (ExtraShowPassword, showPassword);
-        }
-
-        protected override void OnResume ()
-        {
-            base.OnResume ();
-
-            CheckAuth ();
         }
 
         private void SyncPasswordVisibility ()
@@ -187,7 +177,7 @@ namespace Toggl.Joey.UI.Activities
                 new InvalidCredentialsDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
             }
 
-            CheckAuth ();
+            StartAuthActivity ();
         }
 
         private void OnGoogleLoginButtonClick (object sender, EventArgs e)
@@ -348,7 +338,7 @@ namespace Toggl.Joey.UI.Activities
                 // Try to make the activity recheck auth status
                 var activity = Activity as LoginActivity;
                 if (activity != null) {
-                    activity.CheckAuth ();
+                    activity.StartAuthActivity ();
                 }
             }
 

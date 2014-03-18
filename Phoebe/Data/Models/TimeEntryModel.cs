@@ -286,8 +286,14 @@ namespace Toggl.Phoebe.Data.Models
                     if (state == value)
                         return;
 
+                    var shouldInvalidate = state == TimeEntryState.Running || value == TimeEntryState.Running;
+
                     ChangePropertyAndNotify (PropertyState, delegate {
                         state = value;
+
+                        if (shouldInvalidate) {
+                            RunningCache.Invalidate ();
+                        }
                     });
                 }
             }
@@ -423,6 +429,12 @@ namespace Toggl.Phoebe.Data.Models
                 }
             }
 
+            if (property == PropertyDeletedAt) {
+                if (State == TimeEntryState.Running) {
+                    RunningCache.Invalidate ();
+                }
+            }
+
             if (property == PropertyIsShared
                 || property == PropertyState
                 || property == PropertyIsPersisted) {
@@ -452,6 +464,8 @@ namespace Toggl.Phoebe.Data.Models
                             log.Debug (LogTag, ex, "Failed to stop time entry from store.");
                         }
                     }
+
+                    RunningCache.Invalidate ();
                 }
             }
         }
@@ -468,6 +482,7 @@ namespace Toggl.Phoebe.Data.Models
                     }
                 }
                 base.Delete ();
+                RunningCache.Invalidate ();
             }
         }
 
@@ -602,17 +617,7 @@ namespace Toggl.Phoebe.Data.Models
 
         public static TimeEntryModel FindRunning ()
         {
-            lock (SyncRoot) {
-                IEnumerable<TimeEntryModel> entries;
-                entries = Model.Query<TimeEntryModel> ((te) => te.State == TimeEntryState.Running)
-                    .NotDeleted ().ForCurrentUser ().ToList ();
-
-                // Find currently running time entry:
-                entries = Model.Manager.Cached<TimeEntryModel> ()
-                    .Where ((te) => te.State == TimeEntryState.Running && te.DeletedAt == null && te.IsPersisted == true)
-                    .ForCurrentUser ();
-                return entries.FirstOrDefault ();
-            }
+            return RunningCache.Get ();
         }
 
         public static TimeEntryModel GetDraft ()
@@ -708,6 +713,63 @@ namespace Toggl.Phoebe.Data.Models
                     lock (SyncRoot) {
                         return this.Where ((m) => m.To.Name != TimeEntryModel.DefaultTag).Any ();
                     }
+                }
+            }
+        }
+
+        static class RunningCache
+        {
+            static readonly object cacheSyncRoot = new object ();
+            static WeakReference<TimeEntryModel> weakModel;
+            static bool needsRequery = true;
+            static Guid? userId;
+
+            public static TimeEntryModel Get ()
+            {
+                var currentUserId = ServiceContainer.Resolve<AuthManager> ().UserId;
+                TimeEntryModel model;
+
+                // Try from cached
+                lock (cacheSyncRoot) {
+                    if (userId != currentUserId) {
+                        needsRequery = true;
+                    }
+                    if (!needsRequery && weakModel != null && weakModel.TryGetTarget (out model)) {
+                        return model;
+                    }
+                    needsRequery = true;
+                }
+
+                lock (SyncRoot) {
+                    IEnumerable<TimeEntryModel> entries;
+                    entries = Model.Query<TimeEntryModel> ((te) => te.State == TimeEntryState.Running && te.UserId == userId && te.DeletedAt == null).ToList ();
+
+                    // Find currently running time entry:
+                    entries = Model.Manager.Cached<TimeEntryModel> ()
+                        .Where ((te) => te.State == TimeEntryState.Running && te.DeletedAt == null && te.IsPersisted == true && te.UserId == userId);
+                    model = entries.FirstOrDefault ();
+                }
+
+                lock (cacheSyncRoot) {
+                    // Update cache
+                    if (model == null) {
+                        weakModel = null;
+                    } else if (weakModel == null) {
+                        weakModel = new WeakReference<TimeEntryModel> (model);
+                    } else {
+                        weakModel.SetTarget (model);
+                    }
+                    userId = currentUserId;
+                    needsRequery = false;
+                }
+
+                return model;
+            }
+
+            public static void Invalidate ()
+            {
+                lock (cacheSyncRoot) {
+                    needsRequery = true;
                 }
             }
         }

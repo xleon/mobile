@@ -109,5 +109,9 @@ namespace Toggl.Joey
         public string AppVersion {
             get { return PackageManager.GetPackageInfo (PackageName, 0).VersionName; }
         }
+
+        public bool ComponentsInitialized {
+            get { return componentsInitialized; }
+        }
     }
 }

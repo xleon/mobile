@@ -98,8 +98,13 @@ namespace Toggl.Joey.UI.Activities
 
             ResetSyncProgressBar ();
 
-            // Make sure that the components are initialized
-            ((AndroidApp)Application).InitializeComponents ();
+            // Make sure that the components are initialized (and that this initialisation wouldn't cause a lag)
+            var app = (AndroidApp)Application;
+            if (!app.ComponentsInitialized) {
+                Handler.PostDelayed (delegate {
+                    app.InitializeComponents ();
+                }, 5000);
+            }
         }
 
         protected override void OnPause ()

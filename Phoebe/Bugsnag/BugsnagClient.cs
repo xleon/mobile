@@ -150,26 +150,31 @@ namespace Toggl.Phoebe.Bugsnag
             get { return httpClient; }
         }
 
-        public void TrackUser ()
+        public async void TrackUser ()
         {
-            var data = JsonConvert.SerializeObject (new UserMetrics () {
+            var metrics = new UserMetrics () {
                 ApiKey = apiKey,
                 User = GetUserInfo (),
                 App = GetAppInfo (),
                 System = GetSystemInfo (),
-            });
-
-            var req = new HttpRequestMessage () {
-                RequestUri = new Uri (baseUrl, "metrics"),
-                Method = HttpMethod.Post,
-                Content = new StringContent (data, System.Text.Encoding.UTF8, "application/json"),
             };
 
-            httpClient.SendAsync (req).ContinueWith ((t) => {
-                if (t.IsFaulted) {
-                    LogError (String.Format ("Failed to track user: {0}", t.Exception));
-                }
-            });
+            // Do the serialization and sending on the thread pool
+            try {
+                await Task.Factory.StartNew (async delegate {
+                    var data = JsonConvert.SerializeObject (metrics);
+
+                    var req = new HttpRequestMessage () {
+                        RequestUri = new Uri (baseUrl, "metrics"),
+                        Method = HttpMethod.Post,
+                        Content = new StringContent (data, System.Text.Encoding.UTF8, "application/json"),
+                    };
+
+                    await httpClient.SendAsync (req);
+                }).ConfigureAwait (continueOnCapturedContext: false);
+            } catch (Exception exc) {
+                LogError (String.Format ("Failed to track user: {0}", exc));
+            }
         }
 
         protected bool ShouldNotify {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -20,20 +21,13 @@ namespace Toggl.Phoebe.Data.Views
             return expr.ToPropertyName ();
         }
 
-        private readonly int batchSize = 25;
-        private int querySkip;
         private DateTime queryStartDate;
-        private IModelQuery<TimeEntryModel> query;
-        private readonly List<Group> data = new List<Group> ();
-        #pragma warning disable 0414
-        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-        #pragma warning restore 0414
+        private GroupContainer data = new GroupContainer ();
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 
-        public RecentTimeEntriesView (int batchSize = 25)
+        public RecentTimeEntriesView ()
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
             Reload ();
         }
 
@@ -45,7 +39,7 @@ namespace Toggl.Phoebe.Data.Views
             if (entry == null)
                 return;
 
-            var grp = FindGroup (entry);
+            var grp = data.FindGroup (entry);
 
             if (grp != null) {
                 if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
@@ -53,7 +47,7 @@ namespace Toggl.Phoebe.Data.Views
                         // Update group and resort data:
                         ChangeDataAndNotify (delegate {
                             grp.Update (entry);
-                            Sort ();
+                            data.Sort ();
                         });
                     } else {
                         // Out side of date range, remove from list
@@ -61,7 +55,7 @@ namespace Toggl.Phoebe.Data.Views
                         if (grp.IsEmpty) {
                             data.Remove (grp);
                         } else {
-                            Sort ();
+                            data.Sort ();
                         }
                     }
                 } else if (msg.PropertyName == TimeEntryModel.PropertyDescription
@@ -75,8 +69,8 @@ namespace Toggl.Phoebe.Data.Views
                         }
 
                         // Add entry to correct group
-                        Add (entry);
-                        Sort ();
+                        data.Add (entry);
+                        data.Sort ();
                     });
                 } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt
                            || msg.PropertyName == TimeEntryModel.PropertyIsPersisted) {
@@ -86,7 +80,7 @@ namespace Toggl.Phoebe.Data.Views
                             if (grp.IsEmpty) {
                                 data.Remove (grp);
                             } else {
-                                Sort ();
+                                data.Sort ();
                             }
                         });
                     }
@@ -103,8 +97,8 @@ namespace Toggl.Phoebe.Data.Views
                 return;
 
             ChangeDataAndNotify (delegate {
-                Add (entry);
-                Sort ();
+                data.Add (entry);
+                data.Sort ();
             });
         }
 
@@ -117,47 +111,51 @@ namespace Toggl.Phoebe.Data.Views
             OnPropertyChanged (PropertyCount);
         }
 
-        public override void Reload ()
+        public override async void Reload ()
         {
-            // Group only items in the past 9 days
-            queryStartDate = DateTime.UtcNow - TimeSpan.FromDays (9);
+            if (IsLoading)
+                return;
 
-            // TODO: Add support for multiple workspaces
-            query = Model.Query<TimeEntryModel> ()
-                .NotDeleted ()
-                .ForCurrentUser ()
-                .Where ((e) => e.State != TimeEntryState.New && e.StartTime >= queryStartDate)
-                .OrderBy ((e) => e.StartTime, false);
-            querySkip = 0;
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionModelChanged != null) {
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
 
             ChangeDataAndNotify (delegate {
                 data.Clear ();
             });
 
-            LoadMore ();
-
-            if (Count == 0) {
-                SetLoadingForSync ();
-            }
-        }
-
-        private void SetLoadingForSync ()
-        {
-            if (subscriptionSyncFinished != null)
-                return;
-
-            var syncManager = ServiceContainer.Resolve<SyncManager> ();
-            if (!syncManager.IsRunning)
-                return;
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             IsLoading = true;
+
+            // Group only items in the past 9 days
+            queryStartDate = DateTime.UtcNow - TimeSpan.FromDays (9);
+            var query = Model.Query<TimeEntryModel> ()
+                .NotDeleted ()
+                .ForCurrentUser ()
+                .Where ((e) => e.State != TimeEntryState.New && e.StartTime >= queryStartDate)
+                .OrderBy ((e) => e.StartTime, false);
+
+            // Get new data
+            var groups = await Task.Factory.StartNew (() => FromQuery (query));
+            ChangeDataAndNotify (delegate {
+                data = groups;
+            });
+            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+
+            // Determine if sync is running, if so, delay setting IsLoading to false
+            var syncManager = ServiceContainer.Resolve<SyncManager> ();
+            if (!syncManager.IsRunning) {
+                IsLoading = false;
+            } else {
+                subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            }
         }
 
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
             IsLoading = false;
+
             if (subscriptionSyncFinished != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionSyncFinished);
@@ -165,66 +163,29 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private void Sort ()
-        {
-            data.Sort ((a, b) => b.RecentStartTime.CompareTo (a.RecentStartTime));
-        }
-
-        private Group FindGroup (TimeEntryModel entry)
-        {
-            return data.FirstOrDefault ((g) => g.Contains (entry));
-        }
-
-        private bool Contains (TimeEntryModel entry)
-        {
-            return FindGroup (entry) != null;
-        }
-
-        private void Add (TimeEntryModel entry)
-        {
-            var grp = data.FirstOrDefault ((g) => g.CanContain (entry));
-            if (grp == null) {
-                grp = new Group (entry);
-                data.Add (grp);
-            } else {
-                grp.Add (entry);
-            }
-        }
-
         public override void LoadMore ()
         {
-            int oldCount = data.Count;
-            bool hasData = true;
-            HasError = false;
+        }
+
+        private static GroupContainer FromQuery (IModelQuery<TimeEntryModel> query)
+        {
+            var groups = new GroupContainer ();
 
             try {
-                ChangeDataAndNotify (delegate {
-                    while (hasData && oldCount + batchSize > data.Count) {
-                        var q = query.Skip (querySkip).Take (batchSize);
-                        querySkip += batchSize;
-                        hasData = false;
-
-                        // Find unique time entries and add them to the list
-                        foreach (var entry in q) {
-                            hasData = true;
-
-                            if (Contains (entry)) {
-                                continue;
-                            }
-                            Add (entry);
-                        }
+                // Find unique time entries and add them to the list
+                foreach (var entry in query) {
+                    if (groups.Contains (entry)) {
+                        continue;
                     }
+                    groups.Add (entry);
+                }
 
-                    Sort ();
-                });
-
-                HasMore = hasData;
+                groups.Sort ();
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, "Failed to compose recent time entries");
-
-                HasError = true;
             }
+            return groups;
         }
 
         public override IEnumerable<TimeEntryModel> Models {
@@ -233,6 +194,61 @@ namespace Toggl.Phoebe.Data.Views
 
         public override long Count {
             get { return data.Count; }
+        }
+
+        private class GroupContainer : IEnumerable<Group>
+        {
+            readonly List<Group> data = new List<Group> ();
+
+            public void Sort ()
+            {
+                data.Sort ((a, b) => b.RecentStartTime.CompareTo (a.RecentStartTime));
+            }
+
+            public Group FindGroup (TimeEntryModel entry)
+            {
+                return data.FirstOrDefault ((g) => g.Contains (entry));
+            }
+
+            public bool Contains (TimeEntryModel entry)
+            {
+                return FindGroup (entry) != null;
+            }
+
+            public void Add (TimeEntryModel entry)
+            {
+                var grp = data.FirstOrDefault ((g) => g.CanContain (entry));
+                if (grp == null) {
+                    grp = new Group (entry);
+                    data.Add (grp);
+                } else {
+                    grp.Add (entry);
+                }
+            }
+
+            public void Clear ()
+            {
+                data.Clear ();
+            }
+
+            public bool Remove (Group item)
+            {
+                return data.Remove (item);
+            }
+
+            public IEnumerator<Group> GetEnumerator ()
+            {
+                return data.GetEnumerator ();
+            }
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
+            {
+                return GetEnumerator ();
+            }
+
+            public int Count {
+                get { return data.Count; }
+            }
         }
 
         private class Group : IEnumerable<TimeEntryModel>

@@ -61,15 +61,15 @@ namespace Toggl.Joey
                 var path = System.IO.Path.Combine (folder, "toggl.db");
                 return new SQLiteModelStore (path);
             });
-            ServiceContainer.Register (() => new GcmRegistrationManager ());
-            ServiceContainer.Register (() => new AndroidNotificationManager ());
+            ServiceContainer.Register<GcmRegistrationManager> ();
+            ServiceContainer.Register<AndroidNotificationManager> ();
             ServiceContainer.Register<BugsnagClient> (delegate {
                 return new Toggl.Joey.Bugsnag.BugsnagClient (this, Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };
             });
-            ServiceContainer.Register (() => new BugsnagUserManager ());
+            ServiceContainer.Register<BugsnagUserManager> ();
         }
 
         private void InitializeStartupComponents ()

@@ -21,6 +21,7 @@ namespace Toggl.Joey.UI.Fragments
         private TimeEntryModel model;
         private bool canRebind;
         private bool descriptionChanging;
+        private bool autoCommitScheduled;
 
         private TimeEntryModel Model {
             get { return model; }
@@ -109,6 +110,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Mark description as changed
             descriptionChanging = Model != null && DescriptionEditText.Text != Model.Description;
+
+            // Make sure that we're commiting 1 second after the user has stopped typing
+            CancelDescriptionChangeAutoCommit ();
+            ScheduleDescriptionChangeAutoCommit ();
         }
 
         private void OnDescriptionFocusChange (object sender, View.FocusChangeEventArgs e)
@@ -160,17 +165,46 @@ namespace Toggl.Joey.UI.Fragments
             Toast.MakeText (Activity, Resource.String.CurrentTimeEntryEditDeleteToast, ToastLength.Short).Show ();
         }
 
+        private void AutoCommitDescriptionChanges ()
+        {
+            if (!autoCommitScheduled)
+                return;
+            autoCommitScheduled = false;
+            CommitDescriptionChanges ();
+        }
+
+        private void ScheduleDescriptionChangeAutoCommit ()
+        {
+            if (autoCommitScheduled)
+                return;
+
+            autoCommitScheduled = true;
+            handler.PostDelayed (AutoCommitDescriptionChanges, 1000);
+        }
+
+        private void CancelDescriptionChangeAutoCommit ()
+        {
+            if (!autoCommitScheduled)
+                return;
+
+            handler.RemoveCallbacks (AutoCommitDescriptionChanges);
+            autoCommitScheduled = false;
+        }
+
         private void CommitDescriptionChanges ()
         {
+            Console.WriteLine ("Committing description changes @ {0}", DateTime.UtcNow.ToLongTimeString ());
             if (Model != null && descriptionChanging) {
                 Model.Description = DescriptionEditText.Text;
             }
             descriptionChanging = false;
+            CancelDescriptionChangeAutoCommit ();
         }
 
         private void DiscardDescriptionChanges ()
         {
             descriptionChanging = false;
+            CancelDescriptionChangeAutoCommit ();
         }
 
         public override void OnStart ()
@@ -196,6 +230,16 @@ namespace Toggl.Joey.UI.Fragments
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionModelChanged);
                 subscriptionModelChanged = null;
+            }
+        }
+
+        public override bool UserVisibleHint {
+            get { return base.UserVisibleHint; }
+            set {
+                if (!value) {
+                    CommitDescriptionChanges ();
+                }
+                base.UserVisibleHint = value;
             }
         }
 

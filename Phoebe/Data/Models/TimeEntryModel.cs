@@ -435,6 +435,12 @@ namespace Toggl.Phoebe.Data.Models
                 }
             }
 
+            if (property == PropertyProjectId) {
+                if (IsShared && !IsMerging && Project != null) {
+                    IsBillable = Project.IsBillable;
+                }
+            }
+
             if (property == PropertyIsShared
                 || property == PropertyState
                 || property == PropertyIsPersisted) {

@@ -193,7 +193,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private void CommitDescriptionChanges ()
         {
-            Console.WriteLine ("Committing description changes @ {0}", DateTime.UtcNow.ToLongTimeString ());
             if (Model != null && descriptionChanging) {
                 Model.Description = DescriptionEditText.Text;
             }

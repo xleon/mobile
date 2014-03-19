@@ -44,6 +44,7 @@ namespace Toggl.Joey.UI.Adapters
                     ImageResId = Resource.Drawable.IcLogoutGray
                 }
             };
+            rowItems.RemoveAll (di => di.Id == ReportsPageId || di.Id == SettingsPageId);
             authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 

@@ -9,14 +9,13 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
-using DialogFragment = Android.Support.V4.App.DialogFragment;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
-using Toggl.Phoebe.Net;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ChooseTimeEntryTagsDialogFragment : DialogFragment
+    public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
         #pragma warning disable 0414

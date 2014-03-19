@@ -113,6 +113,7 @@
     <Compile Include="Data\WelcomeMessageDisabledMessage.cs" />
     <Compile Include="Net\SyncService.cs" />
     <Compile Include="Net\SyncMonitor.cs" />
+    <Compile Include="UI\Fragments\BaseDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

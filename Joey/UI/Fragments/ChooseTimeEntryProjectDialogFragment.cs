@@ -5,11 +5,10 @@ using Android.OS;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Joey.UI.Adapters;
-using DialogFragment = Android.Support.V4.App.DialogFragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ChooseTimeEntryProjectDialogFragment : DialogFragment
+    public class ChooseTimeEntryProjectDialogFragment : BaseDialogFragment
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
         private ProjectsAdapter adapter;

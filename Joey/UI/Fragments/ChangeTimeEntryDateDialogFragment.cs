@@ -3,11 +3,10 @@ using Android.App;
 using Android.OS;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using DialogFragment = Android.Support.V4.App.DialogFragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ChangeTimeEntryDateDialogFragment : DialogFragment
+    public class ChangeTimeEntryDateDialogFragment : BaseDialogFragment
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
 

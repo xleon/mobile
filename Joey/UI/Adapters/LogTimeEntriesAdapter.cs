@@ -14,6 +14,10 @@ using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Android.Provider;
+using Android.Text;
+using Android.Text.Style;
+using Toggl.Joey.UI.Text;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -328,21 +332,15 @@ namespace Toggl.Joey.UI.Adapters
 
         private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
         {
+            private readonly bool timeIs24h;
+
             public View ColorView { get; private set; }
 
             public TextView ProjectTextView { get; private set; }
 
-            public TextView ClientTextView { get; private set; }
-
-            public TextView TaskTextView { get; private set; }
-
             public TextView DescriptionTextView { get; private set; }
 
-            public View TagsView { get; private set; }
-
-            public View BillableView { get; private set; }
-
-            public TextView DurationTextView { get; private set; }
+            public TextView TimeTextView { get; private set; }
 
             private TimeEntryModel Model {
                 get { return DataSource; }
@@ -351,13 +349,13 @@ namespace Toggl.Joey.UI.Adapters
             public ExpandedListItemHolder (View root) : base (root)
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
-                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
-                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
-                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.Roboto);
-                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.RobotoLight);
-                TagsView = root.FindViewById<View> (Resource.Id.TagsIcon);
-                BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
-                DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
+                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
+                TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
+
+                var ctx = ServiceContainer.Resolve<Context> ();
+                var clockType = Settings.System.GetString (ctx.ContentResolver, Settings.System.Time1224);
+                timeIs24h = !(clockType == null || clockType == "12");
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)
@@ -395,28 +393,12 @@ namespace Toggl.Joey.UI.Adapters
 
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (Model.Project != null && Model.Project.Client != null) {
-                    ClientTextView.Text = Model.Project.Client.Name;
-                    ClientTextView.Visibility = ViewStates.Visible;
-                } else {
-                    ClientTextView.Visibility = ViewStates.Gone;
-                }
-
-                if (Model.Task != null) {
-                    TaskTextView.Text = Model.Task.Name;
-                    TaskTextView.Visibility = ViewStates.Visible;
-                } else {
-                    TaskTextView.Visibility = ViewStates.Gone;
-                }
+                RebindProjectTextView (ctx);
+                RebindDescriptionTextView (ctx);
 
                 var color = Color.Transparent;
                 if (Model.Project != null) {
                     color = Color.ParseColor (Model.Project.GetHexColor ());
-                    ProjectTextView.SetTextColor (color);
-                    ProjectTextView.Text = Model.Project.Name;
-                } else {
-                    ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
-                    ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
 
                 var shape = ColorView.Background as GradientDrawable;
@@ -424,22 +406,90 @@ namespace Toggl.Joey.UI.Adapters
                     shape.SetColor (color);
                 }
 
-                if (String.IsNullOrWhiteSpace (Model.Description)) {
-                    if (Model.Task == null) {
-                        DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
-                        DescriptionTextView.Visibility = ViewStates.Visible;
+                if (Model.StopTime.HasValue) {
+                    TimeTextView.Text = String.Format ("{0} - {1}", FormatTime (Model.StartTime), FormatTime (Model.StopTime.Value));
+                } else {
+                    TimeTextView.Text = FormatTime (Model.StartTime);
+                }
+            }
+
+            private void RebindProjectTextView (Context ctx)
+            {
+                String text;
+                int projectLength = 0;
+                int clientLength = 0;
+                var mode = SpanTypes.InclusiveExclusive;
+
+                if (Model.Project != null) {
+                    projectLength = Model.Project.Name.Length;
+                    if (Model.Project.Client != null) {
+                        clientLength = Model.Project.Client.Name.Length;
+                        text = String.Concat (Model.Project.Name, "   ", Model.Project.Client.Name);
                     } else {
-                        DescriptionTextView.Visibility = ViewStates.Gone;
+                        text = Model.Project.Name;
                     }
                 } else {
-                    DescriptionTextView.Text = Model.Description;
-                    DescriptionTextView.Visibility = ViewStates.Visible;
+                    text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
+                    projectLength = text.Length;
                 }
 
-                TagsView.Visibility = Model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
-                BillableView.Visibility = Model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
+                var start = 0;
+                var end = start + projectLength;
 
-                DurationTextView.Text = Model.GetDuration ().ToString (@"hh\:mm\:ss");
+                var spannable = new SpannableString (text);
+                spannable.SetSpan (new FontSpan (Font.Roboto), start, end, mode);
+                spannable.SetSpan (new AbsoluteSizeSpan (18, true), start, end, mode);
+                if (clientLength > 0) {
+                    start = projectLength + 3;
+                    end = start + clientLength;
+
+                    spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
+                    spannable.SetSpan (new AbsoluteSizeSpan (14, true), start, end, mode);
+                }
+                ProjectTextView.SetText (spannable, TextView.BufferType.Spannable);
+            }
+
+            private void RebindDescriptionTextView (Context ctx)
+            {
+                String text;
+                int taskLength = 0;
+                int descriptionLength = 0;
+                var mode = SpanTypes.InclusiveExclusive;
+
+                if (String.IsNullOrWhiteSpace (Model.Description)) {
+                    text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
+                    descriptionLength = text.Length;
+                } else {
+                    text = Model.Description;
+                    descriptionLength = Model.Description.Length;
+                }
+
+                if (Model.Task != null && !String.IsNullOrEmpty (Model.Task.Name)) {
+                    taskLength = Model.Task.Name.Length;
+                    text = String.Concat (Model.Task.Name, "  ", text);
+                }
+
+                var spannable = new SpannableString (text);
+                var start = 0;
+                var end = taskLength;
+
+                if (taskLength > 0) {
+                    spannable.SetSpan (new FontSpan (Font.Roboto), start, end, mode);
+                }
+
+                start = taskLength > 0 ? taskLength + 2 : 0;
+                end = start + descriptionLength;
+                spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
+
+                DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
+            }
+
+            private string FormatTime (DateTime time)
+            {
+                if (timeIs24h) {
+                    return time.ToString ("HH:mm:ss");
+                }
+                return time.ToString ("h:mm:ss tt");
             }
         }
     }

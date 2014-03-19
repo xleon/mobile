@@ -98,7 +98,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override bool IsEnabled (int position)
         {
-            return GetHeaderAt (position) == null;
+            return GetHeaderAt (position) == null && ExpandedPosition != position;
         }
 
         public override TimeEntryModel GetModel (int position)

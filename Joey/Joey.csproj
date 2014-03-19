@@ -114,6 +114,7 @@
     <Compile Include="Net\SyncService.cs" />
     <Compile Include="Net\SyncMonitor.cs" />
     <Compile Include="UI\Fragments\BaseDialogFragment.cs" />
+    <Compile Include="UI\Text\FontSpan.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -323,6 +324,28 @@
     <AndroidResource Include="Resources\drawable-xhdpi\BgWelcome.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\BgWelcome.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\BgWelcome.9.png" />
+    <AndroidResource Include="Resources\layout\LogTimeEntryListExpandedItem.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDetailsDuration.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDetailsEntry.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcDetailsProject.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcTickGray.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDetailsDuration.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDetailsEntry.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcDetailsProject.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcTickGray.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDetailsDuration.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDetailsEntry.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcDetailsProject.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcTickGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDetailsDuration.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDetailsEntry.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcDetailsProject.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcTickGray.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\BgEntryDetails.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\BgEntryDetails.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\BgEntryDetails.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\BgEntryDetails.9.png" />
+    <AndroidResource Include="Resources\drawable\DetailsListBackground.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -352,6 +375,7 @@
     <Folder Include="UI\Views\" />
     <Folder Include="Assets\fonts\" />
     <Folder Include="Resources\anim\" />
+    <Folder Include="UI\Text\" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">

@@ -51,7 +51,7 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null)
                 return;
 
-            // TODO Call Edit screen for this row
+            adapter.ExpandedPosition = adapter.ExpandedPosition != position ? position : (int?)null;
         }
 
         public override bool UserVisibleHint {
@@ -65,8 +65,16 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureAdapter ()
         {
             if (ListAdapter == null && UserVisibleHint) {
-                ListAdapter = new LogTimeEntriesAdapter ();
+                var adapter = new LogTimeEntriesAdapter ();
+                adapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
+                ListAdapter = adapter;
             }
+        }
+
+        private void ConfirmTimeEntryDeletion (TimeEntryModel model)
+        {
+            var dia = new DeleteTimeEntriesPromptDialogFragment (new List<TimeEntryModel> () { model });
+            dia.Show (FragmentManager, "confirm_delete");
         }
 
         void AbsListView.IMultiChoiceModeListener.OnItemCheckedStateChanged (ActionMode mode, int position, long id, bool @checked)
@@ -132,7 +140,7 @@ namespace Toggl.Joey.UI.Fragments
 
             // Delete models:
             var dia = new DeleteTimeEntriesPromptDialogFragment (toDelete);
-            dia.Show (FragmentManager, "dialog");
+            dia.Show (FragmentManager, "confirm_delete");
         }
 
         public void CloseActionMode ()

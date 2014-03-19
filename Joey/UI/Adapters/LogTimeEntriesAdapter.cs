@@ -14,13 +14,19 @@ using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Android.Provider;
+using Android.Text;
+using Android.Text.Style;
+using Toggl.Joey.UI.Text;
 
 namespace Toggl.Joey.UI.Adapters
 {
     public class LogTimeEntriesAdapter : BaseModelsViewAdapter<TimeEntryModel>
     {
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
+        protected static readonly int ViewTypeExpanded = ViewTypeContent + 2;
         private readonly List<HeaderPosition> headers = new List<HeaderPosition> ();
+        private int? expandedPos;
 
         private class HeaderPosition
         {
@@ -92,7 +98,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override bool IsEnabled (int position)
         {
-            return GetHeaderAt (position) == null;
+            return GetHeaderAt (position) == null && ExpandedPosition != position;
         }
 
         public override TimeEntryModel GetModel (int position)
@@ -109,14 +115,17 @@ namespace Toggl.Joey.UI.Adapters
             if (GetIndexForPosition (position) == ModelsView.Count && ModelsView.IsLoading)
                 return ViewTypeLoaderPlaceholder;
 
-            if (GetHeaderAt (position) == null)
+            if (GetHeaderAt (position) == null) {
+                if (expandedPos == position) {
+                    return ViewTypeExpanded;
+                }
                 return ViewTypeContent;
-            else
-                return ViewTypeDateHeader;
+            }
+            return ViewTypeDateHeader;
         }
 
         public override int ViewTypeCount {
-            get { return base.ViewTypeCount + 1; }
+            get { return base.ViewTypeCount + 2; }
         }
 
         public override int Count {
@@ -124,6 +133,26 @@ namespace Toggl.Joey.UI.Adapters
                 return base.Count + headers.Count;
             }
         }
+
+        public int? ExpandedPosition {
+            get { return expandedPos; }
+            set {
+                if (expandedPos == value)
+                    return;
+                expandedPos = value;
+                NotifyDataSetChanged ();
+            }
+        }
+
+        private void OnDeleteTimeEntry (TimeEntryModel model)
+        {
+            var handler = HandleTimeEntryDeletion;
+            if (handler != null) {
+                handler (model);
+            }
+        }
+
+        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
 
         private static string GetRelativeDateString (DateTime dateTime)
         {
@@ -146,8 +175,9 @@ namespace Toggl.Joey.UI.Adapters
             View view = convertView;
 
             var model = GetModel (position);
+            var viewType = GetItemViewType (position);
 
-            if (GetHeaderAt (position) != null) {
+            if (viewType == ViewTypeDateHeader) {
                 TextView headerTextView;
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -157,6 +187,14 @@ namespace Toggl.Joey.UI.Adapters
                     headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView);
                 }
                 headerTextView.Text = GetRelativeDateString (GetHeaderAt (position).Date);
+            } else if (viewType == ViewTypeExpanded) {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.LogTimeEntryListExpandedItem, parent, false);
+                    view.Tag = new ExpandedListItemHolder (this, view);
+                }
+                var holder = (ExpandedListItemHolder)view.Tag;
+                holder.Bind (model);
             } else {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -299,6 +337,192 @@ namespace Toggl.Joey.UI.Adapters
                 BillableView.Visibility = Model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
                 DurationTextView.Text = Model.GetDuration ().ToString (@"hh\:mm\:ss");
+            }
+        }
+
+        private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
+        {
+            private readonly bool timeIs24h;
+            private readonly LogTimeEntriesAdapter adapter;
+
+            public View ColorView { get; private set; }
+
+            public TextView ProjectTextView { get; private set; }
+
+            public TextView DescriptionTextView { get; private set; }
+
+            public TextView TimeTextView { get; private set; }
+
+            public ImageButton DeleteImageButton { get; private set; }
+
+            public ImageButton CloseImageButton { get; private set; }
+
+            private TimeEntryModel Model {
+                get { return DataSource; }
+            }
+
+            public ExpandedListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
+            {
+                this.adapter = adapter;
+
+                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
+                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
+                TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
+                DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
+                CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
+
+                var ctx = ServiceContainer.Resolve<Context> ();
+                var clockType = Settings.System.GetString (ctx.ContentResolver, Settings.System.Time1224);
+                timeIs24h = !(clockType == null || clockType == "12");
+
+                DeleteImageButton.Click += OnDeleteImageButton;
+                CloseImageButton.Click += OnCloseImageButton;
+            }
+
+            private void OnDeleteImageButton (object sender, EventArgs e)
+            {
+                adapter.OnDeleteTimeEntry (Model);
+                adapter.ExpandedPosition = null;
+            }
+
+            private void OnCloseImageButton (object sender, EventArgs e)
+            {
+                adapter.ExpandedPosition = null;
+            }
+
+            protected override void OnModelChanged (ModelChangedMessage msg)
+            {
+                if (Model == null)
+                    return;
+
+                if (Model == msg.Model) {
+                    if (msg.PropertyName == TimeEntryModel.PropertyStartTime
+                        || msg.PropertyName == TimeEntryModel.PropertyIsBillable
+                        || msg.PropertyName == TimeEntryModel.PropertyState
+                        || msg.PropertyName == TimeEntryModel.PropertyDescription
+                        || msg.PropertyName == TimeEntryModel.PropertyProjectId
+                        || msg.PropertyName == TimeEntryModel.PropertyTaskId)
+                        Rebind ();
+                } else if (Model.ProjectId.HasValue && Model.ProjectId == msg.Model.Id) {
+                    if (msg.PropertyName == ProjectModel.PropertyName
+                        || msg.PropertyName == ProjectModel.PropertyColor)
+                        Rebind ();
+                } else if (Model.ProjectId.HasValue && Model.Project != null
+                           && Model.Project.ClientId.HasValue
+                           && Model.Project.ClientId == msg.Model.Id) {
+                    if (msg.PropertyName == ClientModel.PropertyName)
+                        Rebind ();
+                } else if (Model.TaskId.HasValue && Model.TaskId == msg.Model.Id) {
+                    if (msg.PropertyName == TaskModel.PropertyName)
+                        Rebind ();
+                }
+            }
+
+            protected override void Rebind ()
+            {
+                if (Model == null)
+                    return;
+
+                var ctx = ServiceContainer.Resolve<Context> ();
+
+                RebindProjectTextView (ctx);
+                RebindDescriptionTextView (ctx);
+
+                var color = Color.Transparent;
+                if (Model.Project != null) {
+                    color = Color.ParseColor (Model.Project.GetHexColor ());
+                }
+
+                var shape = ColorView.Background as GradientDrawable;
+                if (shape != null) {
+                    shape.SetColor (color);
+                }
+
+                if (Model.StopTime.HasValue) {
+                    TimeTextView.Text = String.Format ("{0} - {1}", FormatTime (Model.StartTime), FormatTime (Model.StopTime.Value));
+                } else {
+                    TimeTextView.Text = FormatTime (Model.StartTime);
+                }
+            }
+
+            private void RebindProjectTextView (Context ctx)
+            {
+                String text;
+                int projectLength = 0;
+                int clientLength = 0;
+                var mode = SpanTypes.InclusiveExclusive;
+
+                if (Model.Project != null) {
+                    projectLength = Model.Project.Name.Length;
+                    if (Model.Project.Client != null) {
+                        clientLength = Model.Project.Client.Name.Length;
+                        text = String.Concat (Model.Project.Name, "   ", Model.Project.Client.Name);
+                    } else {
+                        text = Model.Project.Name;
+                    }
+                } else {
+                    text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
+                    projectLength = text.Length;
+                }
+
+                var start = 0;
+                var end = start + projectLength;
+
+                var spannable = new SpannableString (text);
+                spannable.SetSpan (new FontSpan (Font.Roboto), start, end, mode);
+                spannable.SetSpan (new AbsoluteSizeSpan (18, true), start, end, mode);
+                if (clientLength > 0) {
+                    start = projectLength + 3;
+                    end = start + clientLength;
+
+                    spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
+                    spannable.SetSpan (new AbsoluteSizeSpan (14, true), start, end, mode);
+                }
+                ProjectTextView.SetText (spannable, TextView.BufferType.Spannable);
+            }
+
+            private void RebindDescriptionTextView (Context ctx)
+            {
+                String text;
+                int taskLength = 0;
+                int descriptionLength = 0;
+                var mode = SpanTypes.InclusiveExclusive;
+
+                if (String.IsNullOrWhiteSpace (Model.Description)) {
+                    text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
+                    descriptionLength = text.Length;
+                } else {
+                    text = Model.Description;
+                    descriptionLength = Model.Description.Length;
+                }
+
+                if (Model.Task != null && !String.IsNullOrEmpty (Model.Task.Name)) {
+                    taskLength = Model.Task.Name.Length;
+                    text = String.Concat (Model.Task.Name, "  ", text);
+                }
+
+                var spannable = new SpannableString (text);
+                var start = 0;
+                var end = taskLength;
+
+                if (taskLength > 0) {
+                    spannable.SetSpan (new FontSpan (Font.Roboto), start, end, mode);
+                }
+
+                start = taskLength > 0 ? taskLength + 2 : 0;
+                end = start + descriptionLength;
+                spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
+
+                DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
+            }
+
+            private string FormatTime (DateTime time)
+            {
+                if (timeIs24h) {
+                    return time.ToString ("HH:mm:ss");
+                }
+                return time.ToString ("h:mm:ss tt");
             }
         }
     }

@@ -61,6 +61,7 @@ namespace Toggl.Joey
                 var path = System.IO.Path.Combine (folder, "toggl.db");
                 return new SQLiteModelStore (path);
             });
+            ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
             ServiceContainer.Register<BugsnagClient> (delegate {
@@ -84,6 +85,7 @@ namespace Toggl.Joey
                 return;
 
             componentsInitialized = true;
+            ServiceContainer.Resolve<SyncMonitor> ();
             ServiceContainer.Resolve<GcmRegistrationManager> ();
             ServiceContainer.Resolve<AndroidNotificationManager> ();
         }

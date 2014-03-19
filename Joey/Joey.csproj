@@ -111,6 +111,8 @@
     <Compile Include="UI\Utils\Font.cs" />
     <Compile Include="Data\UserTimeEntryStateChangeMessage.cs" />
     <Compile Include="Data\WelcomeMessageDisabledMessage.cs" />
+    <Compile Include="Net\SyncService.cs" />
+    <Compile Include="Net\SyncMonitor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

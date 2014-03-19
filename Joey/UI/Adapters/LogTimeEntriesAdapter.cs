@@ -144,6 +144,16 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private void OnDeleteTimeEntry (TimeEntryModel model)
+        {
+            var handler = HandleTimeEntryDeletion;
+            if (handler != null) {
+                handler (model);
+            }
+        }
+
+        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
+
         private static string GetRelativeDateString (DateTime dateTime)
         {
             var ctx = ServiceContainer.Resolve<Context> ();
@@ -181,7 +191,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListExpandedItem, parent, false);
-                    view.Tag = new ExpandedListItemHolder (view);
+                    view.Tag = new ExpandedListItemHolder (this, view);
                 }
                 var holder = (ExpandedListItemHolder)view.Tag;
                 holder.Bind (model);
@@ -333,6 +343,7 @@ namespace Toggl.Joey.UI.Adapters
         private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
         {
             private readonly bool timeIs24h;
+            private readonly LogTimeEntriesAdapter adapter;
 
             public View ColorView { get; private set; }
 
@@ -342,20 +353,42 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView TimeTextView { get; private set; }
 
+            public ImageButton DeleteImageButton { get; private set; }
+
+            public ImageButton CloseImageButton { get; private set; }
+
             private TimeEntryModel Model {
                 get { return DataSource; }
             }
 
-            public ExpandedListItemHolder (View root) : base (root)
+            public ExpandedListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
             {
+                this.adapter = adapter;
+
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
                 TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
+                DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
+                CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
 
                 var ctx = ServiceContainer.Resolve<Context> ();
                 var clockType = Settings.System.GetString (ctx.ContentResolver, Settings.System.Time1224);
                 timeIs24h = !(clockType == null || clockType == "12");
+
+                DeleteImageButton.Click += OnDeleteImageButton;
+                CloseImageButton.Click += OnCloseImageButton;
+            }
+
+            private void OnDeleteImageButton (object sender, EventArgs e)
+            {
+                adapter.OnDeleteTimeEntry (Model);
+                adapter.ExpandedPosition = null;
+            }
+
+            private void OnCloseImageButton (object sender, EventArgs e)
+            {
+                adapter.ExpandedPosition = null;
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)

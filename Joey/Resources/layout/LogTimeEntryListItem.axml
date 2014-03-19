@@ -98,7 +98,7 @@
         android:layout_marginLeft="10dp" />
     <ImageButton
         android:src="@drawable/IcContinue"
-        android:layout_width="35dp"
+        android:layout_width="40dp"
         android:layout_height="fill_parent"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"

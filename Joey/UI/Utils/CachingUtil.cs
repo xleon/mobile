@@ -63,13 +63,22 @@ namespace Toggl.Joey.UI.Utils
 
             try {
                 Directory.CreateDirectory (FilePath.GetDirectoryName (imagePath));
-                var fileStream = new FileStream (imagePath + ".png", FileMode.Create);
-                bitmap.Compress (Bitmap.CompressFormat.Png, 90, fileStream);
-                fileStream.Close ();
+                using (var fileStream = new FileStream (imagePath + ".png", FileMode.Create)) {
+                    bitmap.Compress (Bitmap.CompressFormat.Png, 90, fileStream);
+                }
                 return true;
+            } catch (IOException ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                if (ex.Message.StartsWith ("Sharing violation on")) {
+                    // Treat FAT filesystem related failure as expected behaviour
+                    log.Info (LogTag, ex, "Failed to save bitmap to cache.");
+                } else {
+                    log.Warning (LogTag, ex, "Failed to save bitmap to cache.");
+                }
+                return false;
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
-                log.Warning (LogTag, ex, "Failed to save bitmap to cache."); 
+                log.Warning (LogTag, ex, "Failed to save bitmap to cache.");
                 return false;
             }
         }

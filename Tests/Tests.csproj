@@ -42,7 +42,6 @@
     <Compile Include="Test.cs" />
     <Compile Include="Data\ModelTest.cs" />
     <Compile Include="Data\ModelManagerTest.cs" />
-    <Compile Include="Data\ModelValidationTest.cs" />
     <Compile Include="Data\RelatedModelsCollectionTest.cs" />
     <Compile Include="Data\TimeEntryModelTest.cs" />
     <Compile Include="Data\AttributeLookupCacheTest.cs" />

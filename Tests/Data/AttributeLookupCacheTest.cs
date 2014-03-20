@@ -20,8 +20,6 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.IsTrue (cache.HasAttribute (typeof(Model), Model.PropertyIsMerging));
             Assert.IsTrue (cache.HasAttribute (typeof(Model), Model.PropertyIsPersisted));
             Assert.IsTrue (cache.HasAttribute (typeof(Model), Model.PropertyIsShared));
-            Assert.IsTrue (cache.HasAttribute (typeof(Model), Model.PropertyIsValid));
-            Assert.IsTrue (cache.HasAttribute (typeof(Model), Model.PropertyErrors));
         }
 
         [Test]
@@ -30,7 +28,6 @@ namespace Toggl.Phoebe.Tests.Data
             var cache = new AttributeLookupCache<SQLite.IgnoreAttribute> ();
             var entry = new TimeEntryModel ();
             Assert.IsTrue (cache.HasAttribute (entry, TimeEntryModel.PropertyWorkspace));
-            Assert.IsTrue (cache.HasAttribute (entry, TimeEntryModel.PropertyErrors));
             Assert.IsFalse (cache.HasAttribute (entry, TimeEntryModel.PropertyStartTime));
         }
     }

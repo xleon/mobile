@@ -26,8 +26,6 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.IsFalse (model.IsMerging, "IsMerging must be false");
             Assert.IsNull (model.DeletedAt, "DeletedAt must be null");
             Assert.IsNull (model.RemoteDeletedAt, "RemoteDeletedAt must be null");
-            Assert.IsEmpty (model.Errors, "Errors must be empty");
-            Assert.IsTrue (model.IsValid, "IsValid must be true");
         }
 
         [Test]

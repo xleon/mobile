@@ -35,6 +35,11 @@
         <item name="android:paddingTop">15dp</item>
         <item name="android:paddingBottom">10dp</item>
     </style>
+    <style name="RadioButtonTab.Dialog">
+        <item name="android:textColor">@color/radiodialogtabtextcolor</item>
+        <item name="android:paddingTop">20dp</item>
+        <item name="android:paddingBottom">15dp</item>
+    </style>
 
     <style name="Button">
     </style>

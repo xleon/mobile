@@ -63,6 +63,7 @@
     <string name="ChooseTimeEntryDurationDialogAdd5Text">+5m</string>
     <string name="ChooseTimeEntryDurationDialogAdd30Text">+30m</string>
     <string name="ChangeTimeEntryStartTimeDialogTitle">Set start time</string>
+    <string name="ChangeTimeEntryStartTimeDialogOk">Done</string>
     <string name="ChangeTimeEntryStopTimeDialogTitle">Set stop time</string>
     <string name="ChangeTimeEntryDateDialogTitle">Set date</string>
     <string name="ChooseTimeEntryTagsDialogTitle">Select tags</string>

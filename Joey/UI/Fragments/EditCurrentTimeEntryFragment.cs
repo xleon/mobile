@@ -66,7 +66,6 @@ namespace Toggl.Joey.UI.Fragments
             DurationTextView.Click += OnDurationTextViewClick;
             StartTimeEditText.Click += OnStartTimeEditTextClick;
             StopTimeEditText.Click += OnStopTimeEditTextClick;
-            DateEditText.Click += OnDateEditTextClick;
             DescriptionEditText.TextChanged += OnDescriptionTextChanged;
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
@@ -97,13 +96,6 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null || model.State == TimeEntryState.Running)
                 return;
             new ChangeTimeEntryStopTimeDialogFragment (model).Show (FragmentManager, "time_dialog");
-        }
-
-        private void OnDateEditTextClick (object sender, EventArgs e)
-        {
-            if (model == null)
-                return;
-            new ChangeTimeEntryDateDialogFragment (model).Show (FragmentManager, "date_dialog");
         }
 
         private void OnDescriptionTextChanged (object sender, Android.Text.TextChangedEventArgs e)

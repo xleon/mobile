@@ -90,7 +90,6 @@
     <Compile Include="StopTimeEntryBroadcastReceiver.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ChangeTimeEntryDateDialogFragment.cs" />
     <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
@@ -346,6 +345,8 @@
     <AndroidResource Include="Resources\drawable-mdpi\BgEntryDetails.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\BgEntryDetails.9.png" />
     <AndroidResource Include="Resources\drawable\DetailsListBackground.xml" />
+    <AndroidResource Include="Resources\layout\ChangeTimeEntryStartTimeDialogFragment.axml" />
+    <AndroidResource Include="Resources\color\RadioDialogTabTextColor.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

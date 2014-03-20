@@ -31,13 +31,13 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        protected TextView DateTextView { get; private set; }
+
         protected TextView DurationTextView { get; private set; }
 
         protected EditText StartTimeEditText { get; private set; }
 
         protected EditText StopTimeEditText { get; private set; }
-
-        protected EditText DateEditText { get; private set; }
 
         protected EditText DescriptionEditText { get; private set; }
 
@@ -53,10 +53,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.EditCurrentTimeEntryFragment, container, false);
 
+            DateTextView = view.FindViewById<TextView> (Resource.Id.DateTextView).SetFont (Font.Roboto);
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.Roboto);
-            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.RobotoLight);
-            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.RobotoLight);
-            DateEditText = view.FindViewById<EditText> (Resource.Id.DateEditText).SetFont (Font.RobotoLight);
+            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
+            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
             DescriptionEditText = view.FindViewById<EditText> (Resource.Id.DescriptionEditText).SetFont (Font.RobotoLight);
             ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText).SetFont (Font.RobotoLight);
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText).SetFont (Font.RobotoLight);
@@ -293,28 +293,35 @@ namespace Toggl.Joey.UI.Fragments
             if (Model == null || !canRebind)
                 return;
 
+            var res = Resources;
+
+            var startTime = Model.StartTime;
             if (Model.StartTime == DateTime.MinValue) {
-                var now = DateTime.Now;
+                startTime = DateTime.Now;
 
                 DurationTextView.Text = TimeSpan.Zero.ToString ();
-                StartTimeEditText.Text = now.ToShortTimeString ();
-                DateEditText.Text = now.ToShortDateString ();
 
                 // Make sure that we display accurate time:
                 handler.RemoveCallbacks (Rebind);
                 handler.PostDelayed (Rebind, 5000);
             } else {
+                startTime = Model.StartTime.ToLocalTime ();
+
                 var duration = Model.GetDuration ();
                 DurationTextView.Text = TimeSpan.FromSeconds ((long)duration.TotalSeconds).ToString ();
-
-                var startTime = Model.StartTime.ToLocalTime ();
-                StartTimeEditText.Text = startTime.ToShortTimeString ();
-                DateEditText.Text = startTime.ToShortDateString ();
 
                 if (Model.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (Rebind);
                     handler.PostDelayed (Rebind, 1000 - duration.Milliseconds);
                 }
+            }
+
+            StartTimeEditText.Text = startTime.ToShortTimeString ();
+            if (startTime.Date != DateTime.Now.Date) {
+                DateTextView.Text = startTime.ToShortDateString ();
+                DateTextView.Visibility = ViewStates.Visible;
+            } else {
+                DateTextView.Visibility = ViewStates.Invisible;
             }
 
             // Only update DescriptionEditText when content differs, else the user is unable to edit it
@@ -324,8 +331,14 @@ namespace Toggl.Joey.UI.Fragments
 
             if (Model.StopTime.HasValue) {
                 StopTimeEditText.Text = Model.StopTime.Value.ToLocalTime ().ToShortTimeString ();
+                StopTimeEditText.Visibility = ViewStates.Visible;
             } else {
                 StopTimeEditText.Text = DateTime.Now.ToShortTimeString ();
+                if (Model.StartTime == DateTime.MinValue || Model.State == TimeEntryState.Running) {
+                    StopTimeEditText.Visibility = ViewStates.Invisible;
+                } else {
+                    StopTimeEditText.Visibility = ViewStates.Visible;
+                }
             }
 
             ProjectEditText.Text = Model.Project != null ? Model.Project.Name : String.Empty;

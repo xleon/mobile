@@ -8,50 +8,55 @@
         android:layout_height="match_parent"
         android:padding="10dp">
         <TextView
-            android:id="@+id/DurationTextView"
+            android:id="@+id/DateTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="Today"
+            android:textSize="12dp"
             android:gravity="center"
-            android:text="00:00:00"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
-            android:layout_marginBottom="3dp"
-            android:textSize="32dp"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textStyle="normal" />
+            android:layout_marginBottom="2dp" />
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="3dp">
+            android:layout_marginBottom="5dp"
+            android:paddingBottom="12dp"
+            android:gravity="center_vertical">
             <EditText
                 android:id="@+id/StartTimeEditText"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:paddingLeft="7dp"
+                android:paddingRight="7dp"
                 android:editable="false"
                 android:cursorVisible="false"
                 android:focusableInTouchMode="false"
-                android:text="00:00" />
+                android:textSize="12dp"
+                android:text="12:59 AM" />
+            <TextView
+                android:id="@+id/DurationTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="00:00:00"
+                android:singleLine="true"
+                android:textSize="32dp"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textStyle="normal" />
             <EditText
                 android:id="@+id/StopTimeEditText"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:paddingLeft="7dp"
+                android:paddingRight="7dp"
                 android:editable="false"
                 android:cursorVisible="false"
                 android:focusableInTouchMode="false"
-                android:text="00:00" />
+                android:textSize="12dp"
+                android:text="12:59 AM" />
         </LinearLayout>
-        <EditText
-            android:id="@+id/DateEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Today"
-            android:editable="false"
-            android:cursorVisible="false"
-            android:focusableInTouchMode="false"
-            android:layout_marginBottom="3dp" />
         <EditText
             android:id="@+id/DescriptionEditText"
             android:layout_width="match_parent"
@@ -60,7 +65,7 @@
             android:singleLine="true"
             android:hint="@string/CurrentTimeEntryEditDescriptionHint"
             android:imeOptions="actionDone"
-            android:layout_marginBottom="3dp" />
+            android:layout_marginBottom="5dp" />
         <EditText
             android:id="@+id/ProjectEditText"
             android:layout_width="match_parent"
@@ -69,7 +74,7 @@
             android:cursorVisible="false"
             android:focusableInTouchMode="false"
             android:hint="@string/CurrentTimeEntryEditProjectHint"
-            android:layout_marginBottom="3dp" />
+            android:layout_marginBottom="5dp" />
         <EditText
             android:id="@+id/TagsEditText"
             android:layout_width="match_parent"
@@ -79,7 +84,7 @@
             android:cursorVisible="false"
             android:focusableInTouchMode="false"
             android:hint="@string/CurrentTimeEntryEditTagsHint"
-            android:layout_marginBottom="3dp" />
+            android:layout_marginBottom="5dp" />
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"

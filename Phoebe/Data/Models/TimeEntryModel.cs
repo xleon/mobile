@@ -113,9 +113,12 @@ namespace Toggl.Phoebe.Data.Models
                             if (StopTime.HasValue) {
                                 StopTime = startTime + duration;
                             } else {
-                                var stopTime = DateTime.UtcNow
-                                    .Truncate (TimeSpan.TicksPerMinute)
-                                    .AddSeconds (value.Second);
+                                var now = DateTime.UtcNow;
+
+                                var stopTime = startTime.Date
+                                    .AddHours (now.Hour)
+                                    .AddMinutes (now.Minute)
+                                    .AddSeconds (startTime.Second);
 
                                 if (stopTime < startTime) {
                                     StopTime = startTime + duration;

@@ -271,6 +271,28 @@ namespace Toggl.Phoebe.Tests.Data
         }
 
         [Test]
+        public void TestNewStartChangeNoStop ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.New,
+            });
+
+            entry.StartTime = DateTime.UtcNow.AddHours (-1);
+            Assert.AreEqual (entry.StartTime.AddHours (1), entry.StopTime);
+        }
+
+        [Test]
+        public void TestNewFutureStartChangeNoStop ()
+        {
+            var entry = Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.New,
+            });
+
+            entry.StartTime = DateTime.UtcNow.AddHours (1);
+            Assert.AreEqual (entry.StartTime, entry.StopTime);
+        }
+
+        [Test]
         public void TestNewStopChange ()
         {
             var entry = Model.Update (new TimeEntryModel () {

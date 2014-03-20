@@ -110,7 +110,19 @@ namespace Toggl.Phoebe.Data.Models
 
                     if (LogicEnabled) {
                         if (State != TimeEntryState.Running) {
-                            StopTime = startTime + duration;
+                            if (StopTime.HasValue) {
+                                StopTime = startTime + duration;
+                            } else {
+                                var stopTime = DateTime.UtcNow
+                                    .Truncate (TimeSpan.TicksPerMinute)
+                                    .AddSeconds (value.Second);
+
+                                if (stopTime < startTime) {
+                                    StopTime = startTime + duration;
+                                } else {
+                                    StopTime = stopTime;
+                                }
+                            }
                         }
                     }
                 }

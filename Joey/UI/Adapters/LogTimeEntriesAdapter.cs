@@ -310,7 +310,11 @@ namespace Toggl.Joey.UI.Adapters
                 if (Model.Project != null) {
                     color = Color.ParseColor (Model.Project.GetHexColor ());
                     ProjectTextView.SetTextColor (color);
-                    ProjectTextView.Text = Model.Project.Name;
+                    if (String.IsNullOrWhiteSpace (Model.Project.Name)) {
+                        ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
+                    } else {
+                        ProjectTextView.Text = Model.Project.Name;
+                    }
                 } else {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
@@ -454,12 +458,17 @@ namespace Toggl.Joey.UI.Adapters
                 var mode = SpanTypes.InclusiveExclusive;
 
                 if (Model.Project != null) {
-                    projectLength = Model.Project.Name.Length;
-                    if (Model.Project.Client != null) {
+                    var projectName = Model.Project.Name;
+                    if (String.IsNullOrWhiteSpace (projectName)) {
+                        projectName = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
+                    }
+
+                    projectLength = projectName.Length;
+                    if (Model.Project.Client != null && !String.IsNullOrWhiteSpace (Model.Project.Client.Name)) {
                         clientLength = Model.Project.Client.Name.Length;
-                        text = String.Concat (Model.Project.Name, "   ", Model.Project.Client.Name);
+                        text = String.Concat (projectName, "   ", Model.Project.Client.Name);
                     } else {
-                        text = Model.Project.Name;
+                        text = projectName;
                     }
                 } else {
                     text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);

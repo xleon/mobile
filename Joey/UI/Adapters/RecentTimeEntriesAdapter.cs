@@ -112,7 +112,11 @@ namespace Toggl.Joey.UI.Adapters
                 if (Model.Project != null) {
                     color = Color.ParseColor (Model.Project.GetHexColor ());
                     ProjectTextView.SetTextColor (color);
-                    ProjectTextView.Text = Model.Project.Name;
+                    if (String.IsNullOrWhiteSpace (Model.Project.Name)) {
+                        ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
+                    } else {
+                        ProjectTextView.Text = Model.Project.Name;
+                    }
                 } else {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));

@@ -368,7 +368,7 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListFocusedHolo.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
-  <Import Project="Proguard.targets" />
+  <Import Project="Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.Android.csproj">
       <Project>{FF67B529-C11B-4FE0-AA1B-CD77141816BB}</Project>

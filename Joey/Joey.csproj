@@ -347,6 +347,23 @@
     <AndroidResource Include="Resources\drawable\DetailsListBackground.xml" />
     <AndroidResource Include="Resources\layout\ChangeTimeEntryStartTimeDialogFragment.axml" />
     <AndroidResource Include="Resources\color\RadioDialogTabTextColor.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\AndroidListLongpressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\AndroidListPressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\AndroidListLongpressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\AndroidListPressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\AndroidListLongpressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\AndroidListPressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListLongpressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListPressedHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable\AndroidListSelectorBackgroundTransitionHoloLight.xml" />
+    <AndroidResource Include="Resources\drawable\AndroidListSelectorHoloLight.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\AndroidListFocusedHolo.9.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\AndroidListSelectorDisabledHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\AndroidListFocusedHolo.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\AndroidListSelectorDisabledHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\AndroidListFocusedHolo.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\AndroidListSelectorDisabledHoloLight.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListFocusedHolo.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

@@ -25,6 +25,7 @@
     <style name="Theme.Toggl.ActionBar" parent="@android:style/Widget.Holo.ActionBar">
         <item name="android:background">@color/dark_gray</item>
         <item name="android:titleTextStyle">@android:color/white</item>
+        <item name="android:progressBarPadding">0dip</item>
     </style>
 
     <style name="RadioButtonTab">

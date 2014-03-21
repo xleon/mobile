@@ -1,0 +1,22 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+<Target Name="_RunProguard"
+  DependsOnTargets="_CompileJava">
+  <Exec Command="$(_AndroidSdkDirectory)tools\proguard\bin\proguard.sh -injars $(IntermediateOutputPath)android\bin\classes -injars @(_AdditionalJavaLibraryReferences, ':') -libraryjars $(JavaPlatformJarPath) -libraryjars $(IntermediateOutputPath)android\bin\mono.android.jar -outjar $(IntermediateOutputPath)proguard -include $(ProjectDir)Proguard.cfg" />
+</Target>
+
+<Target Name="_FindCompiledJavaFiles" DependsOnTargets="_CompileJava;_RunProguard">
+  <CreateItem
+    Include="$(IntermediateOutputPath)proguard\\**\*.class">
+    <Output TaskParameter="Include" ItemName="_CompiledJavaFiles" />
+  </CreateItem>
+  <ItemGroup>
+   <_AdditionalJavaLibraryReferences Remove="@(_AdditionalJavaLibraryReferences)"/>
+  </ItemGroup>
+  <CreateItem
+    Include="$(IntermediateOutputPath)proguard\*.jar">
+    <Output TaskParameter="Include" ItemName="_AdditionalJavaLibraryReferences" />
+  </CreateItem>
+</Target>
+
+</Project>

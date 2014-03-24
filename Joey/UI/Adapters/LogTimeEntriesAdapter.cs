@@ -528,6 +528,7 @@ namespace Toggl.Joey.UI.Adapters
 
             private string FormatTime (DateTime time)
             {
+                time = time.ToLocalTime ();
                 if (timeIs24h) {
                     return time.ToString ("HH:mm:ss");
                 }

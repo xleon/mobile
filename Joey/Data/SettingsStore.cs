@@ -184,7 +184,7 @@ namespace Toggl.Joey.Data
         public static readonly string PropertyChooseProjectForNew = GetPropertyName (s => s.ChooseProjectForNew);
 
         public bool ChooseProjectForNew {
-            get { return GetInt (ChooseProjectForNewKey) == 1; }
+            get { return (GetInt (ChooseProjectForNewKey) ?? 1) == 1; }
             set {
                 SetInt (ChooseProjectForNewKey, value ? 1 : 0);
                 OnSettingChanged (PropertyChooseProjectForNew);
@@ -194,7 +194,7 @@ namespace Toggl.Joey.Data
         public static readonly string PropertyUseDefaultTag = GetPropertyName (s => s.UseDefaultTag);
 
         public bool UseDefaultTag {
-            get { return GetInt (PhoebeUseDefaultTagKey) == 1; }
+            get { return (GetInt (PhoebeUseDefaultTagKey) ?? 1) == 1; }
             set {
                 SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
                 OnSettingChanged (PropertyUseDefaultTag);

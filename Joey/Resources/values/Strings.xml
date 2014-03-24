@@ -77,4 +77,11 @@
     <string name="WelcomeBoxSwipeRight">Swipe right to see all of your entries</string>
     <string name="WelcomeBoxContinue">Continue recent ones with a tap</string>
     <string name="WelcomeBoxGotIt">Got it</string>
+    <string name="SettingsGeneralHeader">GENERAL</string>
+    <string name="SettingsGeneralNotifTitle">Idle notification</string>
+    <string name="SettingsGeneralNotifDesc">Show a notification when the timer is stopped.</string>
+    <string name="SettingsGeneralAskProjectTitle">Ask for project</string>
+    <string name="SettingsGeneralAskProjectDesc">Starting a new time entry asks for project.</string>
+    <string name="SettingsGeneralMobileTagTitle">\"Mobile\" tag</string>
+    <string name="SettingsGeneralMobileTagDesc">Automatically tag created time entries with \"mobile\" tag.</string>
 </resources>

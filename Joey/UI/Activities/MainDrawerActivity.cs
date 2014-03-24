@@ -28,7 +28,7 @@ namespace Toggl.Joey.UI.Activities
     {
         private readonly TimerComponent barTimer = new TimerComponent ();
         private readonly Lazy<TimeTrackingFragment> trackingFragment = new Lazy<TimeTrackingFragment> ();
-        private readonly Lazy<SettingsFragment> settingsFragment = new Lazy<SettingsFragment> ();
+        private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
         private DrawerListAdapter drawerAdapter;
 
         private ListView DrawerListView { get; set; }

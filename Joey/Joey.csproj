@@ -99,7 +99,6 @@
     <Compile Include="UI\Fragments\TimeTrackingFragment.cs" />
     <Compile Include="UI\Activities\MainDrawerActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
-    <Compile Include="UI\Fragments\SettingsFragment.cs" />
     <Compile Include="UI\Views\ProfileImageView.cs" />
     <Compile Include="UI\Utils\CachingUtil.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryTagsDialogFragment.cs" />
@@ -115,6 +114,8 @@
     <Compile Include="Net\SyncMonitor.cs" />
     <Compile Include="UI\Fragments\BaseDialogFragment.cs" />
     <Compile Include="UI\Text\FontSpan.cs" />
+    <Compile Include="UI\Adapters\SettingsAdapter.cs" />
+    <Compile Include="UI\Fragments\SettingsListFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -252,7 +253,6 @@
     <AndroidResource Include="Resources\layout\TimeTrackingFragment.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerListItem.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerListHeader.axml" />
-    <AndroidResource Include="Resources\layout\SettingsComponent.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerActivity.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\DrawerShadow.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDrawer.png" />
@@ -387,6 +387,9 @@
     <AndroidResource Include="Resources\drawable\IcNavSettings.xml" />
     <AndroidResource Include="Resources\drawable\IcNavTimer.xml" />
     <AndroidResource Include="Resources\color\DrawerTextColor.xml" />
+    <AndroidResource Include="Resources\layout\SettingsListHeaderItem.axml" />
+    <AndroidResource Include="Resources\layout\SettingsListCheckboxItem.axml" />
+    <AndroidResource Include="Resources\layout\SettingsListFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

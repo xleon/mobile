@@ -17,10 +17,13 @@ namespace Toggl.Joey.Data
         private const string PhoebeUserIdKey = "phoebeUserId";
         private const string PhoebeApiTokenKey = "phoebeApiToken";
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
+        private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
         private const string GotWelcomeMessageKey = "gotWelcomeMessage";
+        private const string IdleNotificationKey = "idleNotification";
+        private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -165,6 +168,36 @@ namespace Toggl.Joey.Data
             set {
                 SetDateTime (PhoebeSyncLastRunKey, value);
                 OnSettingChanged (PropertySyncLastRun);
+            }
+        }
+
+        public static readonly string PropertyIdleNotification = GetPropertyName (s => s.IdleNotification);
+
+        public bool IdleNotification {
+            get { return GetInt (IdleNotificationKey) == 1; }
+            set {
+                SetInt (IdleNotificationKey, value ? 1 : 0);
+                OnSettingChanged (PropertyIdleNotification);
+            }
+        }
+
+        public static readonly string PropertyChooseProjectForNew = GetPropertyName (s => s.ChooseProjectForNew);
+
+        public bool ChooseProjectForNew {
+            get { return GetInt (ChooseProjectForNewKey) == 1; }
+            set {
+                SetInt (ChooseProjectForNewKey, value ? 1 : 0);
+                OnSettingChanged (PropertyChooseProjectForNew);
+            }
+        }
+
+        public static readonly string PropertyUseDefaultTag = GetPropertyName (s => s.UseDefaultTag);
+
+        public bool UseDefaultTag {
+            get { return GetInt (PhoebeUseDefaultTagKey) == 1; }
+            set {
+                SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
+                OnSettingChanged (PropertyUseDefaultTag);
             }
         }
 

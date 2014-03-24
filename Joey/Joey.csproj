@@ -387,6 +387,7 @@
     <AndroidResource Include="Resources\drawable\IcNavReports.xml" />
     <AndroidResource Include="Resources\drawable\IcNavSettings.xml" />
     <AndroidResource Include="Resources\drawable\IcNavTimer.xml" />
+    <AndroidResource Include="Resources\color\DrawerTextColor.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

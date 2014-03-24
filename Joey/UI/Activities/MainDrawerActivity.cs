@@ -27,10 +27,15 @@ namespace Toggl.Joey.UI.Activities
     public class MainDrawerActivity : BaseActivity
     {
         private readonly TimerComponent barTimer = new TimerComponent ();
-        private DrawerLayout DrawerLayout;
         private readonly Lazy<TimeTrackingFragment> trackingFragment = new Lazy<TimeTrackingFragment> ();
         private readonly Lazy<SettingsFragment> settingsFragment = new Lazy<SettingsFragment> ();
-        protected ActionBarDrawerToggle DrawerToggle;
+        private DrawerListAdapter drawerAdapter;
+
+        private ListView DrawerListView { get; set; }
+
+        private DrawerLayout DrawerLayout { get; set; }
+
+        protected ActionBarDrawerToggle DrawerToggle { get; private set; }
 
         protected override void OnCreateActivity (Bundle bundle)
         {
@@ -38,9 +43,9 @@ namespace Toggl.Joey.UI.Activities
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
-            var drawerList = FindViewById<ListView> (Resource.Id.DrawerListView);
-            drawerList.Adapter = new DrawerListAdapter ();
-            drawerList.ItemClick += OnDrawerItemClick;
+            DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
+            DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
+            DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
             DrawerToggle = new ActionBarDrawerToggle (this, DrawerLayout, Resource.Drawable.IcDrawer, Resource.String.EntryName, Resource.String.EntryName);
@@ -57,7 +62,9 @@ namespace Toggl.Joey.UI.Activities
             ActionBar.SetDisplayHomeAsUpEnabled (true);
             ActionBar.SetHomeButtonEnabled (true);
 
-            OpenTimeTracking ();
+            if (bundle == null) {
+                OpenTimeTracking ();
+            }
         }
 
         protected override void OnPostCreate (Bundle savedInstanceState)
@@ -95,11 +102,13 @@ namespace Toggl.Joey.UI.Activities
 
         private void OpenTimeTracking ()
         {
+            DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.TimerPageId), true);
             OpenFragment (trackingFragment.Value);
         }
 
         private void OpenSettings ()
         {
+            DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.SettingsPageId), true);
             OpenFragment (settingsFragment.Value);
         }
 
@@ -120,7 +129,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void OnDrawerItemClick (object sender, ListView.ItemClickEventArgs e)
+        private void OnDrawerListViewItemClick (object sender, ListView.ItemClickEventArgs e)
         {
             // Configure timer component for selected page:
             if (e.Id != DrawerListAdapter.TimerPageId) {

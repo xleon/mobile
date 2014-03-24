@@ -26,25 +26,28 @@ namespace Toggl.Joey.UI.Adapters
                 new DrawerItem () {
                     Id = TimerPageId,
                     TextResId = Resource.String.MainDrawerTimer,
-                    ImageResId = Resource.Drawable.IcNavTimer
+                    ImageResId = Resource.Drawable.IcNavTimer,
+                    IsEnabled = true,
                 },
                 new DrawerItem () {
                     Id = ReportsPageId,
                     TextResId = Resource.String.MainDrawerReports,
-                    ImageResId = Resource.Drawable.IcNavReports
+                    ImageResId = Resource.Drawable.IcNavReports,
+                    IsEnabled = false,
                 },
                 new DrawerItem () {
                     Id = SettingsPageId,
                     TextResId = Resource.String.MainDrawerSettings,
-                    ImageResId = Resource.Drawable.IcNavSettings
+                    ImageResId = Resource.Drawable.IcNavSettings,
+                    IsEnabled = false,
                 },
                 new DrawerItem () {
                     Id = LogoutPageId,
                     TextResId = Resource.String.MainDrawerLogout,
-                    ImageResId = Resource.Drawable.IcNavLogout
+                    ImageResId = Resource.Drawable.IcNavLogout,
+                    IsEnabled = true,
                 }
             };
-            rowItems.RemoveAll (di => di.Id == ReportsPageId || di.Id == SettingsPageId);
             authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 
@@ -97,6 +100,12 @@ namespace Toggl.Joey.UI.Adapters
             return null;
         }
 
+        public int GetItemPosition (int id)
+        {
+            var idx = rowItems.FindIndex (i => i.Id == id);
+            return idx >= 0 ? idx + 1 : -1;
+        }
+
         private DrawerItem GetDrawerItem (int position)
         {
             if (position == 0)
@@ -115,7 +124,8 @@ namespace Toggl.Joey.UI.Adapters
 
         public override bool IsEnabled (int position)
         {
-            return GetItemViewType (position) == ViewTypeDrawerItem;
+            var item = GetDrawerItem (position);
+            return item != null && item.IsEnabled;
         }
 
         private class DrawerItem
@@ -123,6 +133,7 @@ namespace Toggl.Joey.UI.Adapters
             public int Id;
             public int TextResId;
             public int ImageResId;
+            public bool IsEnabled;
         }
 
         private class HeaderViewHolder : ModelViewHolder<UserModel>
@@ -180,6 +191,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 IconImageView.SetImageResource (DataSource.ImageResId);
                 TitleTextView.SetText (DataSource.TextResId);
+                TitleTextView.Enabled = DataSource.IsEnabled;
             }
         }
     }

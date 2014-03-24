@@ -6,16 +6,17 @@
     android:background="?android:attr/selectableItemBackground">
     <ImageView
         android:id="@+id/IconImageView"
-        android:src="@drawable/IcNavReports"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp" />
+        android:layout_marginRight="16dp"
+        android:src="@drawable/IcNavReports" />
     <TextView
         android:id="@+id/TitleTextView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:text="Settings"
-        android:gravity="left|center_vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="match_parent" />
+        android:textColor="@color/drawertextcolor"
+        android:gravity="left|center_vertical" />
 </LinearLayout>

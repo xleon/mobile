@@ -61,18 +61,18 @@ namespace Toggl.Joey.UI.Adapters
 
             TimeEntryModel model = ModelsView.Models.ElementAt (0);
 
-            headers.Add (new HeaderPosition (0, model.StartTime));
+            var date = model.StartTime.ToLocalTime ().Date;
+            headers.Add (new HeaderPosition (0, date));
 
-            TimeEntryModel prevModel = model;
-
+            var prevDate = date;
             for (int i = 1; i < ModelsView.Count; i++) {
                 model = ModelsView.Models.ElementAt (i);
-                var date = model.StartTime.Date;
-                var isNewDay = prevModel.StartTime.Date.CompareTo (date) != 0;
+                date = model.StartTime.ToLocalTime ().Date;
+                var isNewDay = prevDate.CompareTo (date) != 0;
                 if (isNewDay) {
                     headers.Add (new HeaderPosition (i + headers.Count, date));
                 }
-                prevModel = model;
+                prevDate = date;
             }
         }
 

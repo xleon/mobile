@@ -26,22 +26,22 @@ namespace Toggl.Joey.UI.Adapters
                 new DrawerItem () {
                     Id = TimerPageId,
                     TextResId = Resource.String.MainDrawerTimer,
-                    ImageResId = Resource.Drawable.IcTimerGray
+                    ImageResId = Resource.Drawable.IcNavTimer
                 },
                 new DrawerItem () {
                     Id = ReportsPageId,
                     TextResId = Resource.String.MainDrawerReports,
-                    ImageResId = Resource.Drawable.IcReportsGray
+                    ImageResId = Resource.Drawable.IcNavReports
                 },
                 new DrawerItem () {
                     Id = SettingsPageId,
                     TextResId = Resource.String.MainDrawerSettings,
-                    ImageResId = Resource.Drawable.IcSettingsGray
+                    ImageResId = Resource.Drawable.IcNavSettings
                 },
                 new DrawerItem () {
                     Id = LogoutPageId,
                     TextResId = Resource.String.MainDrawerLogout,
-                    ImageResId = Resource.Drawable.IcLogoutGray
+                    ImageResId = Resource.Drawable.IcNavLogout
                 }
             };
             rowItems.RemoveAll (di => di.Id == ReportsPageId || di.Id == SettingsPageId);

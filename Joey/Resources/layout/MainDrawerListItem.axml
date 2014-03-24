@@ -6,7 +6,7 @@
     android:background="?android:attr/selectableItemBackground">
     <ImageView
         android:id="@+id/IconImageView"
-        android:src="@drawable/IcReportsGray"
+        android:src="@drawable/IcNavReports"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_gravity="center_vertical"

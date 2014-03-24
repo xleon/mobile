@@ -6,7 +6,7 @@
     android:background="@android:color/black">
     <Toggl.Joey.UI.Views.ProfileImageView
         android:id="@+id/IconProfileImageView"
-        android:src="@drawable/IcReportsGray"
+        android:src="@drawable/IcNavReports"
         android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:layout_marginLeft="16dp"

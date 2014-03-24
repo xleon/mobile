@@ -164,7 +164,7 @@ namespace Toggl.Joey.UI.Fragments
             private TimeEntryModel currentTimeEntry;
             #pragma warning disable 0414
             private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-            private readonly Subscription<WelcomeMessageDisabledMessage> subscriptionWelcomeMessageDisabled;
+            private readonly Subscription<SettingChangedMessage> subscriptionSettingChanged;
             #pragma warning restore 0414
 
             public readonly EditCurrentTimeEntryFragment EditFragment = new EditCurrentTimeEntryFragment ();
@@ -179,7 +179,7 @@ namespace Toggl.Joey.UI.Fragments
 
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-                subscriptionWelcomeMessageDisabled = bus.Subscribe<WelcomeMessageDisabledMessage> (OnWelcomeMessageDisabled);
+                subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
             }
 
             private void OnModelChanged (ModelChangedMessage msg)
@@ -211,13 +211,15 @@ namespace Toggl.Joey.UI.Fragments
                 }
             }
 
-            private void OnWelcomeMessageDisabled (WelcomeMessageDisabledMessage msg)
+            private void OnSettingChanged (SettingChangedMessage msg)
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero)
                     return;
 
-                NotifyDataSetChanged ();
+                if (msg.Name == SettingsStore.PropertyGotWelcomeMessage) {
+                    NotifyDataSetChanged ();
+                }
             }
 
             public override int Count {

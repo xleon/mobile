@@ -111,7 +111,6 @@
     <Compile Include="UI\Views\TextViewExtensions.cs" />
     <Compile Include="UI\Utils\Font.cs" />
     <Compile Include="Data\UserTimeEntryStateChangeMessage.cs" />
-    <Compile Include="Data\WelcomeMessageDisabledMessage.cs" />
     <Compile Include="Net\SyncService.cs" />
     <Compile Include="Net\SyncMonitor.cs" />
     <Compile Include="UI\Fragments\BaseDialogFragment.cs" />

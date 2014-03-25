@@ -15,6 +15,12 @@ namespace Toggl.Phoebe.Data.Models
             return expr.ToPropertyName ();
         }
 
+        private static bool ShouldAddDefaultTag {
+            get {
+                return ServiceContainer.Resolve<ISettingsStore> ().UseDefaultTag;
+            }
+        }
+
         private static readonly string LogTag = "TimeEntryModel";
         internal static readonly string DefaultTag = "mobile";
         private readonly int workspaceRelationId;
@@ -533,7 +539,9 @@ namespace Toggl.Phoebe.Data.Models
                     throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
                 }
 
-                Tags.Add (DefaultTag);
+                if (ShouldAddDefaultTag) {
+                    Tags.Add (DefaultTag);
+                }
                 State = TimeEntryState.Running;
                 StartTime = DateTime.UtcNow;
                 StopTime = null;
@@ -566,7 +574,9 @@ namespace Toggl.Phoebe.Data.Models
                     throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
                 }
 
-                Tags.Add (DefaultTag);
+                if (ShouldAddDefaultTag) {
+                    Tags.Add (DefaultTag);
+                }
                 State = TimeEntryState.Finished;
             }
         }
@@ -659,12 +669,16 @@ namespace Toggl.Phoebe.Data.Models
 
                 if (model == null) {
                     // Create new draft:
+                    List<string> tags = null;
+                    if (ShouldAddDefaultTag) {
+                        tags = new List<string> () { DefaultTag };
+                    }
                     model = Model.Update (new TimeEntryModel () {
                         State = TimeEntryState.New,
                         User = user,
                         Workspace = user.DefaultWorkspace,
                         DurationOnly = user.TrackingMode == TrackingMode.Continue,
-                        StringTags = new List<string> () { DefaultTag },
+                        StringTags = tags,
                         IsPersisted = true,
                     });
                 }

@@ -9,5 +9,7 @@ namespace Toggl.Phoebe.Data
         string ApiToken { get; set; }
 
         DateTime? SyncLastRun { get; set; }
+
+        bool UseDefaultTag { get; set; }
     }
 }

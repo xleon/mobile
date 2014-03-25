@@ -39,7 +39,7 @@ namespace Toggl.Joey.UI.Adapters
                     Id = SettingsPageId,
                     TextResId = Resource.String.MainDrawerSettings,
                     ImageResId = Resource.Drawable.IcNavSettings,
-                    IsEnabled = false,
+                    IsEnabled = true,
                 },
                 new DrawerItem () {
                     Id = LogoutPageId,

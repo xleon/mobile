@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using Android.Content;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
@@ -16,10 +17,19 @@ namespace Toggl.Joey.Data
         private const string PhoebeUserIdKey = "phoebeUserId";
         private const string PhoebeApiTokenKey = "phoebeApiToken";
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
+        private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
         private const string GotWelcomeMessageKey = "gotWelcomeMessage";
+        private const string IdleNotificationKey = "idleNotification";
+        private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
+
+        private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
+        {
+            return expr.ToPropertyName ();
+        }
+
         private readonly ISharedPreferences prefs;
 
         public SettingsStore (Context ctx)
@@ -94,6 +104,12 @@ namespace Toggl.Joey.Data
             }
         }
 
+        protected void OnSettingChanged (string name)
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (new SettingChangedMessage (this, name));
+        }
+
         public string InstallId {
             get {
                 var val = GetString (JoeyInstallIdKey);
@@ -105,39 +121,93 @@ namespace Toggl.Joey.Data
             }
         }
 
+        public static readonly string PropertyGcmRegistrationId = GetPropertyName (s => s.GcmRegistrationId);
+
         public string GcmRegistrationId {
             get { return GetString (JoeyGcmRegistrationIdKey); }
-            set { SetString (JoeyGcmRegistrationIdKey, value); }
+            set {
+                SetString (JoeyGcmRegistrationIdKey, value);
+                OnSettingChanged (PropertyGcmRegistrationId);
+            }
         }
+
+        public static readonly string PropertyGcmAppVersion = GetPropertyName (s => s.GcmAppVersion);
 
         public int? GcmAppVersion {
             get { return GetInt (JoeyGcmAppVersionKey); }
-            set { SetInt (JoeyGcmAppVersionKey, value); }
+            set {
+                SetInt (JoeyGcmAppVersionKey, value);
+                OnSettingChanged (PropertyGcmAppVersion);
+            }
         }
 
-        Guid? ISettingsStore.UserId {
+        public static readonly string PropertyUserId = GetPropertyName (s => s.UserId);
+
+        public Guid? UserId {
             get { return GetGuid (PhoebeUserIdKey); }
-            set { SetGuid (PhoebeUserIdKey, value); }
+            set {
+                SetGuid (PhoebeUserIdKey, value);
+                OnSettingChanged (PropertyUserId);
+            }
         }
 
-        string ISettingsStore.ApiToken {
+        public static readonly string PropertyApiToken = GetPropertyName (s => s.ApiToken);
+
+        public string ApiToken {
             get { return GetString (PhoebeApiTokenKey); }
-            set { SetString (PhoebeApiTokenKey, value); }
+            set {
+                SetString (PhoebeApiTokenKey, value);
+                OnSettingChanged (PropertyApiToken);
+            }
         }
 
-        DateTime? ISettingsStore.SyncLastRun {
+        public static readonly string PropertySyncLastRun = GetPropertyName (s => s.SyncLastRun);
+
+        public DateTime? SyncLastRun {
             get { return GetDateTime (PhoebeSyncLastRunKey); }
-            set { SetDateTime (PhoebeSyncLastRunKey, value); }
+            set {
+                SetDateTime (PhoebeSyncLastRunKey, value);
+                OnSettingChanged (PropertySyncLastRun);
+            }
         }
+
+        public static readonly string PropertyIdleNotification = GetPropertyName (s => s.IdleNotification);
+
+        public bool IdleNotification {
+            get { return GetInt (IdleNotificationKey) == 1; }
+            set {
+                SetInt (IdleNotificationKey, value ? 1 : 0);
+                OnSettingChanged (PropertyIdleNotification);
+            }
+        }
+
+        public static readonly string PropertyChooseProjectForNew = GetPropertyName (s => s.ChooseProjectForNew);
+
+        public bool ChooseProjectForNew {
+            get { return (GetInt (ChooseProjectForNewKey) ?? 1) == 1; }
+            set {
+                SetInt (ChooseProjectForNewKey, value ? 1 : 0);
+                OnSettingChanged (PropertyChooseProjectForNew);
+            }
+        }
+
+        public static readonly string PropertyUseDefaultTag = GetPropertyName (s => s.UseDefaultTag);
+
+        public bool UseDefaultTag {
+            get { return (GetInt (PhoebeUseDefaultTagKey) ?? 1) == 1; }
+            set {
+                SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
+                OnSettingChanged (PropertyUseDefaultTag);
+            }
+        }
+
+        public static readonly string PropertyGotWelcomeMessage = GetPropertyName (s => s.GotWelcomeMessage);
 
         public bool GotWelcomeMessage {
             get { return GetInt (GotWelcomeMessageKey) == 1; }
             set {
                 SetInt (GotWelcomeMessageKey, value ? 1 : 0);
-                if (value) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    bus.Send (new WelcomeMessageDisabledMessage (this));
-                }
+                OnSettingChanged (PropertyGotWelcomeMessage);
             }
         }
     }

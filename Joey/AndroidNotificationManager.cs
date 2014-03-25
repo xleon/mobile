@@ -7,34 +7,50 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using NotificationCompat = Android.Support.V4.App.NotificationCompat;
 
 namespace Toggl.Joey
 {
-    class AndroidNotificationManager
+    sealed class AndroidNotificationManager : IDisposable
     {
-        #pragma warning disable 0414
-        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-        #pragma warning restore 0414
-
-        private const int RunningTimeEntryNotifId = 42;
+        private const int IdleNotifId = 40;
+        private const int RunningNotifId = 42;
         private readonly Context ctx;
         private readonly NotificationManager notificationManager;
-        private readonly NotificationCompat.Builder notificationBuilder;
+        private readonly NotificationCompat.Builder runningBuilder;
+        private readonly NotificationCompat.Builder idleBuilder;
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private TimeEntryModel currentTimeEntry;
 
         public AndroidNotificationManager ()
         {
             ctx = ServiceContainer.Resolve<Context> ();
             notificationManager = (NotificationManager)ctx.GetSystemService (Context.NotificationService);
-            notificationBuilder = CreateNotificationBuilder (ctx);
+            runningBuilder = CreateRunningNotificationBuilder (ctx);
+            idleBuilder = CreateIdleNotificationBuilder (ctx);
 
             currentTimeEntry = TimeEntryModel.FindRunning ();
             SyncNotification ();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
+        }
+
+        public void Dispose ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionModelChanged != null) {
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
+            if (subscriptionSettingChanged != null) {
+                bus.Unsubscribe (subscriptionSettingChanged);
+                subscriptionSettingChanged = null;
+            }
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
@@ -82,45 +98,37 @@ namespace Toggl.Joey
             }
         }
 
+        private void OnSettingChanged (SettingChangedMessage msg)
+        {
+            if (msg.Name == SettingsStore.PropertyIdleNotification) {
+                SyncNotification ();
+            }
+        }
+
         private bool ForCurrentUser (TimeEntryModel model)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             return model.UserId == authManager.UserId;
         }
 
-        private NotificationCompat.Builder CreateNotificationBuilder (Context ctx)
-        {
-            var res = ctx.Resources;
-
-            var openIntent = new Intent (ctx, typeof(MainDrawerActivity));
-            openIntent.SetAction (Intent.ActionMain);
-            openIntent.AddCategory (Intent.CategoryLauncher);
-            var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
-
-            var closeIntent = new Intent (ctx, typeof(StopTimeEntryBroadcastReceiver));
-            var pendingCloseIntent = PendingIntent.GetBroadcast (ctx, 0, closeIntent, PendingIntentFlags.UpdateCurrent);
-
-            return new NotificationCompat.Builder (ctx)
-                .SetAutoCancel (false)
-                .SetUsesChronometer (true)
-                .SetOngoing (true)
-                .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
-                .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingCloseIntent)
-//                .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
-                .SetContentIntent (pendingOpenIntent);
-        }
-
         private void SyncNotification ()
         {
             if (currentTimeEntry == null) {
-                notificationManager.Cancel (RunningTimeEntryNotifId);
+                notificationManager.Cancel (RunningNotifId);
+                var settings = ServiceContainer.Resolve<SettingsStore> ();
+                if (settings.IdleNotification) {
+                    notificationManager.Notify (IdleNotifId, idleBuilder.Build ());
+                } else {
+                    notificationManager.Cancel (IdleNotifId);
+                }
             } else {
-                notificationBuilder
+                notificationManager.Cancel (IdleNotifId);
+                runningBuilder
                     .SetContentTitle (GetProjectName (currentTimeEntry))
                     .SetContentText (GetDescription (currentTimeEntry))
                     .SetWhen ((long)currentTimeEntry.StartTime.ToUnix ().TotalMilliseconds);
 
-                notificationManager.Notify (RunningTimeEntryNotifId, notificationBuilder.Build ());
+                notificationManager.Notify (RunningNotifId, runningBuilder.Build ());
             }
         }
 
@@ -142,6 +150,46 @@ namespace Toggl.Joey
                 description = ctx.Resources.GetString (Resource.String.RunningNotificationNoDescription);
             }
             return description;
+        }
+
+        private static NotificationCompat.Builder CreateRunningNotificationBuilder (Context ctx)
+        {
+            var res = ctx.Resources;
+
+            var openIntent = new Intent (ctx, typeof(MainDrawerActivity));
+            openIntent.SetAction (Intent.ActionMain);
+            openIntent.AddCategory (Intent.CategoryLauncher);
+            var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
+
+            var stopIntent = new Intent (ctx, typeof(StopTimeEntryBroadcastReceiver));
+            var pendingStopIntent = PendingIntent.GetBroadcast (ctx, 0, stopIntent, PendingIntentFlags.UpdateCurrent);
+
+            return new NotificationCompat.Builder (ctx)
+                    .SetAutoCancel (false)
+                    .SetUsesChronometer (true)
+                    .SetOngoing (true)
+                    .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+                    .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
+//                    .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
+                    .SetContentIntent (pendingOpenIntent);
+        }
+
+        private static NotificationCompat.Builder CreateIdleNotificationBuilder (Context ctx)
+        {
+            var res = ctx.Resources;
+
+            var openIntent = new Intent (ctx, typeof(MainDrawerActivity));
+            openIntent.SetAction (Intent.ActionMain);
+            openIntent.AddCategory (Intent.CategoryLauncher);
+            var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
+
+            return new NotificationCompat.Builder (ctx)
+                    .SetAutoCancel (false)
+                    .SetOngoing (true)
+                    .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+                    .SetContentIntent (pendingOpenIntent)
+                    .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
+                    .SetContentText (res.GetString (Resource.String.IdleNotificationText));
         }
     }
 }

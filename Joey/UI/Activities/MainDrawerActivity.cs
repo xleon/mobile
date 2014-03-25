@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.App;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
@@ -26,9 +26,11 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.App")]
     public class MainDrawerActivity : BaseActivity
     {
+        private const string PageStackExtra = "com.toggl.timer.page_stack";
         private readonly TimerComponent barTimer = new TimerComponent ();
         private readonly Lazy<TimeTrackingFragment> trackingFragment = new Lazy<TimeTrackingFragment> ();
-        private readonly Lazy<SettingsFragment> settingsFragment = new Lazy<SettingsFragment> ();
+        private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
+        private readonly List<int> pageStack = new List<int> ();
         private DrawerListAdapter drawerAdapter;
 
         private ListView DrawerListView { get; set; }
@@ -63,8 +65,21 @@ namespace Toggl.Joey.UI.Activities
             ActionBar.SetHomeButtonEnabled (true);
 
             if (bundle == null) {
-                OpenTimeTracking ();
+                OpenPage (DrawerListAdapter.TimerPageId);
+            } else {
+                // Restore page stack
+                pageStack.Clear ();
+                var arr = bundle.GetIntArray (PageStackExtra);
+                if (arr != null) {
+                    pageStack.AddRange (arr);
+                }
             }
+        }
+
+        protected override void OnSaveInstanceState (Bundle outState)
+        {
+            outState.PutIntArray (PageStackExtra, pageStack.ToArray ());
+            base.OnSaveInstanceState (outState);
         }
 
         protected override void OnPostCreate (Bundle savedInstanceState)
@@ -100,16 +115,33 @@ namespace Toggl.Joey.UI.Activities
             Timer.OnStop ();
         }
 
-        private void OpenTimeTracking ()
+        public override void OnBackPressed ()
         {
-            DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.TimerPageId), true);
-            OpenFragment (trackingFragment.Value);
+            if (pageStack.Count > 0) {
+                pageStack.RemoveAt (pageStack.Count - 1);
+                var pageId = pageStack.Count > 0 ? pageStack [pageStack.Count - 1] : DrawerListAdapter.TimerPageId;
+                OpenPage (pageId);
+            } else {
+                base.OnBackPressed ();
+            }
         }
 
-        private void OpenSettings ()
+        private void OpenPage (int id)
         {
-            DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.SettingsPageId), true);
-            OpenFragment (settingsFragment.Value);
+            if (id == DrawerListAdapter.SettingsPageId) {
+                DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.SettingsPageId), true);
+                OpenFragment (settingsFragment.Value);
+            } else {
+                DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.TimerPageId), true);
+                OpenFragment (trackingFragment.Value);
+            }
+
+            pageStack.Remove (id);
+            pageStack.Add (id);
+            // Make sure we don't store the timer page as the first page (this is implied)
+            if (pageStack.Count == 1 && id == DrawerListAdapter.TimerPageId) {
+                pageStack.Clear ();
+            }
         }
 
         private void OpenFragment (Fragment fragment)
@@ -140,7 +172,7 @@ namespace Toggl.Joey.UI.Activities
             }
 
             if (e.Id == DrawerListAdapter.TimerPageId) {
-                OpenTimeTracking ();
+                OpenPage (DrawerListAdapter.TimerPageId);
 
             } else if (e.Id == DrawerListAdapter.LogoutPageId) {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -148,7 +180,7 @@ namespace Toggl.Joey.UI.Activities
                 StartAuthActivity ();
 
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
-                OpenSettings ();
+                OpenPage (DrawerListAdapter.SettingsPageId);
 
             }
 

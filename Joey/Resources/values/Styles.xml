@@ -6,6 +6,7 @@
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
         <item name="android:actionBarStyle">@style/Theme.Toggl.ActionBar</item>
         <item name="android:listViewStyle">@style/Theme.Toggl.ListView</item>
+        <item name="android:listChoiceIndicatorMultiple">@drawable/androidbtncheckhololight</item>
         <item name="android:windowBackground">@color/background_light_gray</item>
     </style>
     <style name="Theme.Toggl.Login" parent="Theme.Toggl.Base">

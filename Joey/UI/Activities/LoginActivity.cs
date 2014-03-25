@@ -298,6 +298,12 @@ namespace Toggl.Joey.UI.Activities
                     var authManager = ServiceContainer.Resolve<AuthManager> ();
                     var ctx = Activity;
 
+                    // Workaround for Android linker bug which forgets to register JNI types
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GoogleAuthException", typeof(GoogleAuthException));
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GooglePlayServicesAvailabilityException", typeof(GooglePlayServicesAvailabilityException));
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableAuthException", typeof(UserRecoverableAuthException));
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableNotifiedException", typeof(UserRecoverableNotifiedException));
+
                     String token = null;
                     try {
                         token = await Task.Factory.StartNew (() => GoogleAuthUtil.GetToken (ctx, Email, GoogleOAuthScope));

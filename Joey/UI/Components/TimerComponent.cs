@@ -191,7 +191,7 @@ namespace Toggl.Joey.UI.Components
                 log.Warning (LogTag, ex, "Failed to change time entry state.");
             }
 
-            if (startedEntry && entry.Project == null) {
+            if (startedEntry && entry.Project == null && ChooseProjectForNew) {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
                 var hasProjects = user.GetAvailableProjects ().Any ();
 
@@ -202,6 +202,12 @@ namespace Toggl.Joey.UI.Components
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+        }
+
+        private bool ChooseProjectForNew {
+            get {
+                return ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew;
+            }
         }
     }
 }

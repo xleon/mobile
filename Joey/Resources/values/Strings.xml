@@ -48,6 +48,8 @@
     <string name="RunningNotificationNoDescription">(no description)</string>
     <string name="RunningNotificationStopButton">Stop</string>
     <string name="RunningNotificationEditButton">Edit</string>
+    <string name="IdleNotificationTitle">Toggl</string>
+    <string name="IdleNotificationText">What are you working on?</string>
     <string name="CurrentTimeEntryEditDescriptionHint">What are you working on?</string>
     <string name="CurrentTimeEntryEditProjectHint">Add project&#8230;</string>
     <string name="CurrentTimeEntryEditTagsHint">Add tags&#8230;</string>

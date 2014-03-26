@@ -6,12 +6,10 @@ using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Android.Provider;
@@ -152,7 +150,17 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private void OnContinueTimeEntry (TimeEntryModel model)
+        {
+            var handler = HandleTimeEntryContinue;
+            if (handler != null) {
+                handler (model);
+            }
+        }
+
         public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
+
+        public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
 
         private static string GetRelativeDateString (DateTime dateTime)
         {
@@ -199,7 +207,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListItem, parent, false);
-                    view.Tag = new TimeEntryListItemHolder (view);
+                    view.Tag = new TimeEntryListItemHolder (this, view);
                 }
                 var holder = (TimeEntryListItemHolder)view.Tag;
                 holder.Bind (model);
@@ -210,6 +218,8 @@ namespace Toggl.Joey.UI.Adapters
 
         private class TimeEntryListItemHolder : ModelViewHolder<TimeEntryModel>
         {
+            private readonly LogTimeEntriesAdapter adapter;
+
             public View ColorView { get; private set; }
 
             public TextView ProjectTextView { get; private set; }
@@ -232,8 +242,10 @@ namespace Toggl.Joey.UI.Adapters
                 get { return DataSource; }
             }
 
-            public TimeEntryListItemHolder (View root) : base (root)
+            public TimeEntryListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
             {
+                this.adapter = adapter;
+
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
@@ -251,10 +263,7 @@ namespace Toggl.Joey.UI.Adapters
             {
                 if (Model == null)
                     return;
-                var entry = Model.Continue ();
-
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+                adapter.OnContinueTimeEntry (Model);
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)

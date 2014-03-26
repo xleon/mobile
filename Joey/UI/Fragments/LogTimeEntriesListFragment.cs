@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -51,6 +54,16 @@ namespace Toggl.Joey.UI.Fragments
             adapter.ExpandedPosition = adapter.ExpandedPosition != position ? position : (int?)null;
         }
 
+        private void ContinueTimeEntry (TimeEntryModel model)
+        {
+            var entry = model.Continue ();
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+
+            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
+        }
+
         public override bool UserVisibleHint {
             get { return base.UserVisibleHint; }
             set {
@@ -64,6 +77,7 @@ namespace Toggl.Joey.UI.Fragments
             if (ListAdapter == null && UserVisibleHint) {
                 var adapter = new LogTimeEntriesAdapter ();
                 adapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
+                adapter.HandleTimeEntryContinue = ContinueTimeEntry;
                 ListAdapter = adapter;
             }
         }

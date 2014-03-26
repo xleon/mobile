@@ -89,4 +89,7 @@
     <string name="ForcedUpgradeDialogTitle">Update time!</string>
     <string name="ForcedUpgradeDialogMessage">It seems that you haven\'t updated your Toggl app in a while...\n\nNow is the time as this version is no longer supported.</string>
     <string name="ForcedUpgradeDialogUpdate">Open Play Store</string>
+    <string name="DurOnlyNoticeDialogTitle">About continuing...</string>
+    <string name="DurOnlyNoticeDialogMessage">Duration only tracking is not supported on mobile.\nWill use start and stop times for time entries.</string>
+    <string name="DurOnlyNoticeDialogOk">Got it</string>
 </resources>

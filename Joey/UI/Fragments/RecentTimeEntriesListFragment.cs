@@ -74,6 +74,8 @@ namespace Toggl.Joey.UI.Fragments
             // Notify that the user explicitly started something
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+
+            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
         }
 
         public override bool UserVisibleHint {

@@ -22,6 +22,7 @@ namespace Toggl.Joey.Data
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
         private const string GotWelcomeMessageKey = "gotWelcomeMessage";
+        private const string ReadDurOnlyNoticeKey = "readDurOnlyNotice";
         private const string IdleNotificationKey = "idleNotification";
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
 
@@ -208,6 +209,16 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (GotWelcomeMessageKey, value ? 1 : 0);
                 OnSettingChanged (PropertyGotWelcomeMessage);
+            }
+        }
+
+        public static readonly string PropertyReadDurOnlyNotice = GetPropertyName (s => s.ReadDurOnlyNotice);
+
+        public bool ReadDurOnlyNotice {
+            get { return GetInt (ReadDurOnlyNoticeKey) == 1; }
+            set {
+                SetInt (ReadDurOnlyNoticeKey, value ? 1 : 0);
+                OnSettingChanged (PropertyReadDurOnlyNotice);
             }
         }
     }

@@ -4,18 +4,19 @@ using System.Linq;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.OS;
+using Android.Provider;
+using Android.Text;
+using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
+using Toggl.Joey.UI.Text;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Android.Provider;
-using Android.Text;
-using Android.Text.Style;
-using Toggl.Joey.UI.Text;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -23,6 +24,7 @@ namespace Toggl.Joey.UI.Adapters
     {
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         protected static readonly int ViewTypeExpanded = ViewTypeContent + 2;
+        private readonly Handler handler = new Handler ();
         private readonly List<HeaderPosition> headers = new List<HeaderPosition> ();
         private int? expandedPos;
 
@@ -207,7 +209,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListItem, parent, false);
-                    view.Tag = new TimeEntryListItemHolder (this, view);
+                    view.Tag = new TimeEntryListItemHolder (handler, this, view);
                 }
                 var holder = (TimeEntryListItemHolder)view.Tag;
                 holder.Bind (model);
@@ -218,6 +220,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private class TimeEntryListItemHolder : ModelViewHolder<TimeEntryModel>
         {
+            private readonly Handler handler;
             private readonly LogTimeEntriesAdapter adapter;
 
             public View ColorView { get; private set; }
@@ -242,8 +245,9 @@ namespace Toggl.Joey.UI.Adapters
                 get { return DataSource; }
             }
 
-            public TimeEntryListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
+            public TimeEntryListItemHolder (Handler handler, LogTimeEntriesAdapter adapter, View root) : base (root)
             {
+                this.handler = handler;
                 this.adapter = adapter;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
@@ -349,7 +353,21 @@ namespace Toggl.Joey.UI.Adapters
                 TagsView.Visibility = Model.Tags.HasNonDefault ? ViewStates.Visible : ViewStates.Gone;
                 BillableView.Visibility = Model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
-                DurationTextView.Text = Model.GetDuration ().ToString (@"hh\:mm\:ss");
+                RebindDuration ();
+            }
+
+            private void RebindDuration ()
+            {
+                if (Model == null || Handle == IntPtr.Zero)
+                    return;
+
+                var duration = Model.GetDuration ();
+                DurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
+
+                if (Model.State == TimeEntryState.Running) {
+                    handler.RemoveCallbacks (RebindDuration);
+                    handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
+                }
             }
         }
 

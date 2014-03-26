@@ -23,6 +23,7 @@ namespace Toggl.Joey
         private readonly NotificationCompat.Builder idleBuilder;
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
+        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private TimeEntryModel currentTimeEntry;
 
         public AndroidNotificationManager ()
@@ -38,6 +39,7 @@ namespace Toggl.Joey
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
+            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
         }
 
         public void Dispose ()
@@ -50,6 +52,10 @@ namespace Toggl.Joey
             if (subscriptionSettingChanged != null) {
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
+            }
+            if (subscriptionAuthChanged != null) {
+                bus.Unsubscribe (subscriptionAuthChanged);
+                subscriptionAuthChanged = null;
             }
         }
 
@@ -105,6 +111,11 @@ namespace Toggl.Joey
             }
         }
 
+        private void OnAuthChanged (AuthChangedMessage msg)
+        {
+            SyncNotification ();
+        }
+
         private bool ForCurrentUser (TimeEntryModel model)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -113,7 +124,12 @@ namespace Toggl.Joey
 
         private void SyncNotification ()
         {
-            if (currentTimeEntry == null) {
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+
+            if (!authManager.IsAuthenticated) {
+                notificationManager.Cancel (RunningNotifId);
+                notificationManager.Cancel (IdleNotifId);
+            } else if (currentTimeEntry == null) {
                 notificationManager.Cancel (RunningNotifId);
                 var settings = ServiceContainer.Resolve<SettingsStore> ();
                 if (settings.IdleNotification) {

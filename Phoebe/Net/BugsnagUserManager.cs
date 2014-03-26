@@ -51,7 +51,7 @@ namespace Toggl.Joey.Net
                 bugsnag.SetUser (null, null, null);
             } else {
                 string id = currentUser.RemoteId.HasValue ? currentUser.RemoteId.ToString () : null;
-                bugsnag.SetUser (id, currentUser.Email, currentUser.Name);
+                bugsnag.SetUser (id, null, currentUser.Name);
             }
         }
     }

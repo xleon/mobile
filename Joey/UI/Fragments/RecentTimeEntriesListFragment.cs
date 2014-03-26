@@ -14,42 +14,16 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class RecentTimeEntriesListFragment : ListFragment
     {
+        private WelcomeBoxManager welcomeManager;
         private ViewGroup mainLayout;
-        private ViewGroup welcomeView;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            mainLayout = (ViewGroup)inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
-            mainLayout.FindViewById<TextView> (Resource.Id.EmptyTitleTextView)
-                .SetFont (Font.Roboto)
-                .SetText (Resource.String.RecentTimeEntryNoItemsTitle);
-            mainLayout.FindViewById<TextView> (Resource.Id.EmptyTextTextView)
-                .SetFont (Font.RobotoLight);
-
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            if (!settingsStore.GotWelcomeMessage) {
-                ShowWelcomeView (inflater);
-            }
+            mainLayout = (ViewGroup)inflater.Inflate (Resource.Layout.RecentTimeEntriesListFragment, container, false);
+            mainLayout.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
+            mainLayout.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
 
             return mainLayout;
-        }
-
-        private void ShowWelcomeView (LayoutInflater inflater)
-        {
-            welcomeView = (ViewGroup)inflater.Inflate (Resource.Layout.WelcomeBox, null);
-            welcomeView.FindViewById<TextView> (Resource.Id.StartTextView).SetFont (Font.Roboto);
-            welcomeView.FindViewById<TextView> (Resource.Id.SwipeLeftTextView).SetFont (Font.RobotoLight);
-            welcomeView.FindViewById<TextView> (Resource.Id.SwipeRightTextView).SetFont (Font.RobotoLight);
-            welcomeView.FindViewById<TextView> (Resource.Id.TapToContinueTextView).SetFont (Font.RobotoLight);
-            welcomeView.FindViewById<Button> (Resource.Id.GotItButton)
-                .SetFont (Font.Roboto).Click += OnGotItButtonClick;
-        }
-
-        private void OnGotItButtonClick (object sender, EventArgs e)
-        {
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            settingsStore.GotWelcomeMessage = true;
-            ListView.RemoveHeaderView (welcomeView);
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)
@@ -62,6 +36,15 @@ namespace Toggl.Joey.UI.Fragments
         {
             EnsureAdapter ();
             base.OnResume ();
+        }
+
+        public override void OnDestroy ()
+        {
+            if (welcomeManager != null) {
+                welcomeManager.Dispose ();
+                welcomeManager = null;
+            }
+            base.OnDestroy ();
         }
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
@@ -104,10 +87,131 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureAdapter ()
         {
             if (ListAdapter == null && UserVisibleHint && IsAdded) {
-                if (welcomeView != null) {
-                    ListView.AddHeaderView (welcomeView);
+                var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+                if (!settingsStore.GotWelcomeMessage) {
+                    welcomeManager = new WelcomeBoxManager (ListView);
                 }
-                ListAdapter = new RecentTimeEntriesAdapter ();
+
+                var adapter = new RecentTimeEntriesAdapter ();
+                ListAdapter = adapter;
+                if (welcomeManager != null) {
+                    welcomeManager.Attach (adapter);
+                }
+            }
+        }
+
+        private class WelcomeBoxManager : Android.Database.DataSetObserver
+        {
+            private readonly ListView listView;
+            private IListAdapter adapter;
+            private View root;
+            private Parent parent;
+
+            public WelcomeBoxManager (ListView listView)
+            {
+                this.listView = listView;
+
+                Inflate (LayoutInflater.FromContext (listView.Context));
+                listView.AddHeaderView (root);
+                parent = Parent.ListView;
+            }
+
+            public void Attach (IListAdapter adapter)
+            {
+                if (this.adapter != null) {
+                    this.adapter.UnregisterDataSetObserver (this);
+                }
+
+                this.adapter = adapter;
+                ReparentRoot ();
+
+                if (this.adapter != null) {
+                    this.adapter.RegisterDataSetObserver (this);
+                }
+            }
+
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (adapter != null) {
+                        adapter.UnregisterDataSetObserver (this);
+                    }
+                }
+                base.Dispose (disposing);
+            }
+
+            private void Inflate (LayoutInflater inflater)
+            {
+                root = inflater.Inflate (Resource.Layout.WelcomeBox, null);
+                root.FindViewById<TextView> (Resource.Id.StartTextView).SetFont (Font.Roboto);
+                root.FindViewById<TextView> (Resource.Id.SwipeLeftTextView).SetFont (Font.RobotoLight);
+                root.FindViewById<TextView> (Resource.Id.SwipeRightTextView).SetFont (Font.RobotoLight);
+                root.FindViewById<TextView> (Resource.Id.TapToContinueTextView).SetFont (Font.RobotoLight);
+                root.FindViewById<Button> (Resource.Id.GotItButton)
+                    .SetFont (Font.Roboto).Click += OnGotItButtonClick;
+            }
+
+            private void ReparentRoot ()
+            {
+                var fromParent = parent;
+
+                // Determine where to show the welcome message
+                var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+                if (settingsStore.GotWelcomeMessage) {
+                    parent = Parent.Orphan;
+                } else {
+                    if (adapter == null || adapter.Count == 0) {
+                        parent = Parent.EmptyView;
+                    } else {
+                        parent = Parent.ListView;
+                    }
+                }
+
+                if (fromParent == parent)
+                    return;
+
+                // Remove from old parent:
+                switch (fromParent) {
+                case Parent.ListView:
+                    listView.RemoveHeaderView (root);
+                    break;
+                default:
+                    var vg = root.Parent as ViewGroup;
+                    if (vg != null) {
+                        vg.RemoveView (root);
+                    }
+                    break;
+                }
+
+                // Add to correct parent:
+                switch (parent) {
+                case Parent.ListView:
+                    listView.AddHeaderView (root);
+                    break;
+                case Parent.EmptyView:
+                    var cont = listView.EmptyView.FindViewById<LinearLayout> (Resource.Id.EmptyLinearLayout);
+                    cont.AddView (root, 0);
+                    break;
+                }
+            }
+
+            private void OnGotItButtonClick (object sender, EventArgs e)
+            {
+                var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+                settingsStore.GotWelcomeMessage = true;
+                ReparentRoot ();
+            }
+
+            public override void OnChanged ()
+            {
+                ReparentRoot ();
+            }
+
+            private enum Parent
+            {
+                Orphan,
+                ListView,
+                EmptyView,
             }
         }
     }

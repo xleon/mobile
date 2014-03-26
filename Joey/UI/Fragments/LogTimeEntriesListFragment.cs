@@ -17,12 +17,9 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
-            view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView)
-                .SetFont (Font.Roboto)
-                .SetText (Resource.String.LogTimeEntryNoItemsTitle);
-            view.FindViewById<TextView> (Resource.Id.EmptyTextTextView)
-                .SetFont (Font.RobotoLight);
+            var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
+            view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
+            view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
             return view;
         }
 

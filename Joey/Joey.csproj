@@ -263,7 +263,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\DrawerShadow.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcDrawer.png" />
     <AndroidResource Include="Resources\layout\ChangeTimeEntryDurationDialogFragment.axml" />
-    <AndroidResource Include="Resources\layout\TimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\TimeEntryListLoadingItem.axml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcSyncGray.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcSyncGray.png" />
@@ -438,6 +437,8 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidBtnCheckOnHoloLight.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidBtnCheckOnPressedHoloLight.png" />
     <AndroidResource Include="Resources\drawable\AndroidBtnCheckHoloLight.xml" />
+    <AndroidResource Include="Resources\layout\LogTimeEntriesListFragment.axml" />
+    <AndroidResource Include="Resources\layout\RecentTimeEntriesListFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

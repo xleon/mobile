@@ -6,6 +6,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Bugsnag;
+using Toggl.Joey.UI.Fragments;
 using Activity = Android.Support.V4.App.FragmentActivity;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
@@ -17,6 +18,7 @@ namespace Toggl.Joey.UI.Activities
         protected readonly Handler Handler = new Handler ();
         private Subscription<SyncStartedMessage> subscriptionSyncStarted;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+        private Subscription<TogglHttpResponseMessage> subscriptionTogglHttpResponse;
 
         private void OnSyncStarted (SyncStartedMessage msg)
         {
@@ -30,6 +32,15 @@ namespace Toggl.Joey.UI.Activities
             if (Handle == IntPtr.Zero)
                 return;
             ToggleProgressBar (false);
+        }
+
+        private void OnTogglHttpResponse (TogglHttpResponseMessage msg)
+        {
+            if (Handle == IntPtr.Zero)
+                return;
+            if (msg.StatusCode == System.Net.HttpStatusCode.Gone) {
+                new ForcedUpgradeDialogFragment ().Show (FragmentManager, "upgrade_dialog");
+            }
         }
 
         private void ResetSyncProgressBar ()
@@ -80,6 +91,7 @@ namespace Toggl.Joey.UI.Activities
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            subscriptionTogglHttpResponse = bus.Subscribe<TogglHttpResponseMessage> (OnTogglHttpResponse);
 
             RequestWindowFeature (WindowFeatures.Progress);
         }
@@ -126,6 +138,10 @@ namespace Toggl.Joey.UI.Activities
             if (subscriptionSyncFinished != null) {
                 bus.Unsubscribe (subscriptionSyncFinished);
                 subscriptionSyncFinished = null;
+            }
+            if (subscriptionTogglHttpResponse != null) {
+                bus.Unsubscribe (subscriptionTogglHttpResponse);
+                subscriptionTogglHttpResponse = null;
             }
         }
 

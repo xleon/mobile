@@ -116,6 +116,7 @@
     <Compile Include="UI\Text\FontSpan.cs" />
     <Compile Include="UI\Adapters\SettingsAdapter.cs" />
     <Compile Include="UI\Fragments\SettingsListFragment.cs" />
+    <Compile Include="UI\Fragments\ForcedUpgradeDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

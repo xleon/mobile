@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Android.App;
 using Android.Content;
+using Google.Analytics.Tracking;
+using Toggl.Joey.Net;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
-using Toggl.Joey.Net;
 
 namespace Toggl.Joey
 {
@@ -71,6 +71,15 @@ namespace Toggl.Joey
                 };
             });
             ServiceContainer.Register<BugsnagUserManager> ();
+            ServiceContainer.Register<EasyTracker> (delegate {
+                #if DEBUG
+                GoogleAnalytics.GetInstance (this).SetDryRun (true);
+                #endif
+
+                var tracker = EasyTracker.GetInstance (this);
+                tracker.Set (Fields.TrackingId, Build.GoogleAnalyticsId);
+                return tracker;
+            });
         }
 
         private void InitializeStartupComponents ()

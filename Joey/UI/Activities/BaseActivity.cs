@@ -2,6 +2,7 @@
 using Android.Content;
 using Android.OS;
 using Android.Views;
+using Google.Analytics.Tracking;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -96,6 +97,13 @@ namespace Toggl.Joey.UI.Activities
             RequestWindowFeature (WindowFeatures.Progress);
         }
 
+        protected override void OnStart ()
+        {
+            base.OnStart ();
+
+            ServiceContainer.Resolve<EasyTracker> ().ActivityStart (this);
+        }
+
         protected sealed override void OnResume ()
         {
             base.OnResume ();
@@ -123,6 +131,13 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnPause ();
             BugsnagClient.OnActivityPaused (this);
+        }
+
+        protected override void OnStop ()
+        {
+            base.OnStop ();
+
+            ServiceContainer.Resolve<EasyTracker> ().ActivityStop (this);
         }
 
         protected override void OnDestroy ()

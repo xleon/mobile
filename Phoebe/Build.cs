@@ -18,6 +18,7 @@ namespace Toggl.Phoebe
         public static readonly string GcmSenderId = "";
         public static readonly string BugsnagApiKey = "";
         public static readonly string GooglePlayUrl = "";
+        public static readonly string GoogleAnalyticsId = "";
         #endif
         #endregion
 
@@ -25,6 +26,7 @@ namespace Toggl.Phoebe
 
         #if __IOS__
         public static readonly string AppIdentifier = "TogglRoss";
+        public static readonly string GoogleAnalyticsId = "";
         #endif
         #endregion
 

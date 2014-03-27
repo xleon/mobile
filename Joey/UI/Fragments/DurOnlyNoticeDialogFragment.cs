@@ -12,6 +12,14 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class DurOnlyNoticeDialogFragment : BaseDialogFragment
     {
+        public DurOnlyNoticeDialogFragment ()
+        {
+        }
+
+        public DurOnlyNoticeDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
         public static bool TryShow (FragmentManager fragmentManager)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();

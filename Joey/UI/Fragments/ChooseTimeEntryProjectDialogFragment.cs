@@ -21,6 +21,10 @@ namespace Toggl.Joey.UI.Fragments
             Arguments = args;
         }
 
+        public ChooseTimeEntryProjectDialogFragment ()
+        {
+        }
+
         public ChooseTimeEntryProjectDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
         }

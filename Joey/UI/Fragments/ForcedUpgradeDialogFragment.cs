@@ -8,6 +8,14 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ForcedUpgradeDialogFragment : BaseDialogFragment, View.IOnClickListener
     {
+        public ForcedUpgradeDialogFragment ()
+        {
+        }
+
+        public ForcedUpgradeDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             Cancelable = false;

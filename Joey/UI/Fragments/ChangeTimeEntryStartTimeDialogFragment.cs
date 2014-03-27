@@ -27,6 +27,10 @@ namespace Toggl.Joey.UI.Fragments
             Arguments = args;
         }
 
+        public ChangeTimeEntryStartTimeDialogFragment ()
+        {
+        }
+
         public ChangeTimeEntryStartTimeDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
         }

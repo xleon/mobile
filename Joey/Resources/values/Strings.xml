@@ -96,4 +96,5 @@
     <string name="CreateProjectDialogTitle">Add project</string>
     <string name="CreateProjectDialogHint">Project name&#8230;</string>
     <string name="CreateProjectDialogOk">Create</string>
+    <string name="ActionBarDoneButton">Done</string>
 </resources>

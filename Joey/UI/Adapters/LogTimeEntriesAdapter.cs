@@ -152,6 +152,14 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private void OnEditTimeEntry (TimeEntryModel model)
+        {
+            var handler = HandleTimeEntryEditing;
+            if (handler != null) {
+                handler (model);
+            }
+        }
+
         private void OnContinueTimeEntry (TimeEntryModel model)
         {
             var handler = HandleTimeEntryContinue;
@@ -161,6 +169,8 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
+
+        public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
 
         public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
 
@@ -388,6 +398,8 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton CloseImageButton { get; private set; }
 
+            public ImageButton EditImageButton { get; private set; }
+
             private TimeEntryModel Model {
                 get { return DataSource; }
             }
@@ -402,6 +414,7 @@ namespace Toggl.Joey.UI.Adapters
                 TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
                 DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
                 CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
+                EditImageButton = root.FindViewById<ImageButton> (Resource.Id.EditImageButton);
 
                 var ctx = ServiceContainer.Resolve<Context> ();
                 var clockType = Settings.System.GetString (ctx.ContentResolver, Settings.System.Time1224);
@@ -409,6 +422,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 DeleteImageButton.Click += OnDeleteImageButton;
                 CloseImageButton.Click += OnCloseImageButton;
+                EditImageButton.Click += OnEditImageButton;
             }
 
             private void OnDeleteImageButton (object sender, EventArgs e)
@@ -419,6 +433,12 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnCloseImageButton (object sender, EventArgs e)
             {
+                adapter.ExpandedPosition = null;
+            }
+
+            private void OnEditImageButton (object sender, EventArgs e)
+            {
+                adapter.OnEditTimeEntry (Model);
                 adapter.ExpandedPosition = null;
             }
 

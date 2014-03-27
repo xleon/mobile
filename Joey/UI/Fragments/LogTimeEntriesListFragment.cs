@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -7,6 +8,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.Data;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -77,6 +79,7 @@ namespace Toggl.Joey.UI.Fragments
             if (ListAdapter == null && UserVisibleHint) {
                 var adapter = new LogTimeEntriesAdapter ();
                 adapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
+                adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
                 adapter.HandleTimeEntryContinue = ContinueTimeEntry;
                 ListAdapter = adapter;
             }
@@ -84,8 +87,21 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ConfirmTimeEntryDeletion (TimeEntryModel model)
         {
+            // Make sure that the time entry being edited is persisted (so the changes would actually sync back)
+            model.IsPersisted = true;
+
             var dia = new DeleteTimeEntriesPromptDialogFragment (new List<TimeEntryModel> () { model });
             dia.Show (FragmentManager, "confirm_delete");
+        }
+
+        private void OpenTimeEntryEdit (TimeEntryModel model)
+        {
+            // Make sure that the time entry being edited is persisted (so the changes would actually sync back)
+            model.IsPersisted = true;
+
+            var i = new Intent (Activity, typeof(EditTimeEntryActivity));
+            i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
+            StartActivity (i);
         }
 
         void AbsListView.IMultiChoiceModeListener.OnItemCheckedStateChanged (ActionMode mode, int position, long id, bool @checked)

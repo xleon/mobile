@@ -122,6 +122,8 @@
     <Compile Include="UI\Fragments\ForcedUpgradeDialogFragment.cs" />
     <Compile Include="UI\Fragments\DurOnlyNoticeDialogFragment.cs" />
     <Compile Include="UI\Fragments\CreateProjectDialogFragment.cs" />
+    <Compile Include="UI\Activities\EditTimeEntryActivity.cs" />
+    <Compile Include="UI\Fragments\EditTimeEntryFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -205,7 +207,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\ButtonNoFramePressed.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ButtonNoFramePressed.9.png" />
     <AndroidResource Include="Resources\drawable\ButtonNoFrame.xml" />
-    <AndroidResource Include="Resources\layout\EditCurrentTimeEntryFragment.axml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\LoginHeader.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\LoginHeader.png" />
     <AndroidResource Include="Resources\drawable-mdpi\LoginHeader.png" />
@@ -448,6 +449,12 @@
     <AndroidResource Include="Resources\layout\ProjectListNoProjectItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListNewProjectItem.axml" />
     <AndroidResource Include="Resources\values\analytics.xml" />
+    <AndroidResource Include="Resources\layout\DoneActionBarView.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcActionDone.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcActionDone.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcActionDone.png" />
+    <AndroidResource Include="Resources\layout\EditTimeEntryActivity.axml" />
+    <AndroidResource Include="Resources\layout\EditTimeEntryFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

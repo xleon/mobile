@@ -64,6 +64,9 @@
     <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
       <HintPath>..\Components\googleplayservices-15.0.2\lib\android\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
     </Reference>
+    <Reference Include="GoogleAnalytics.Android">
+      <HintPath>..\Components\googleanalytics-3.0.3.2\lib\android\GoogleAnalytics.Android.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -483,8 +486,11 @@
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">
-      <InstallationInProgress>True</InstallationInProgress>
       <Version>15.0.2</Version>
+      <Visible>False</Visible>
+    </XamarinComponentReference>
+    <XamarinComponentReference Include="googleanalytics">
+      <Version>3.0.3.2</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>

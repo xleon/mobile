@@ -118,6 +118,7 @@
     <Compile Include="UI\Fragments\SettingsListFragment.cs" />
     <Compile Include="UI\Fragments\ForcedUpgradeDialogFragment.cs" />
     <Compile Include="UI\Fragments\DurOnlyNoticeDialogFragment.cs" />
+    <Compile Include="UI\Fragments\CreateProjectDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -441,6 +442,8 @@
     <AndroidResource Include="Resources\drawable\AndroidBtnCheckHoloLight.xml" />
     <AndroidResource Include="Resources\layout\LogTimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntriesListFragment.axml" />
+    <AndroidResource Include="Resources\layout\ProjectListNoProjectItem.axml" />
+    <AndroidResource Include="Resources\layout\ProjectListNewProjectItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

@@ -73,11 +73,16 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (model != null) {
                 var m = adapter.GetModel (args.Which);
+
                 var task = m as TaskModel;
                 var project = task != null ? task.Project : m as ProjectModel;
                 var workspace = project != null ? project.Workspace : m as WorkspaceModel;
 
-                if (project != null || task != null || workspace != null) {
+                if (!project.IsShared) {
+                    // Show create project dialog instead
+                    new CreateProjectDialogFragment (model, project.Workspace, project.Color)
+                        .Show (FragmentManager, "new_project_dialog");
+                } else if (project != null || task != null || workspace != null) {
                     model.Workspace = workspace;
                     model.Project = project;
                     model.Task = task;

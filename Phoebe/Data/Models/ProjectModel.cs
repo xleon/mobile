@@ -125,6 +125,7 @@ namespace Toggl.Phoebe.Data.Models
             }
             set {
                 lock (SyncRoot) {
+                    value = value % HexColorsIndex.Length;
                     if (color == value)
                         return;
 

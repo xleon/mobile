@@ -17,18 +17,22 @@ namespace Toggl.Joey.UI.Adapters
     public class ProjectsAdapter : BaseAdapter
     {
         protected static readonly int ViewTypeWorkspace = 0;
-        protected static readonly int ViewTypeProject = 1;
-        protected static readonly int ViewTypeTask = 2;
+        protected static readonly int ViewTypeNoProject = 1;
+        protected static readonly int ViewTypeProject = 2;
+        protected static readonly int ViewTypeNewProject = 3;
+        protected static readonly int ViewTypeTask = 4;
         private readonly List<object> data = new List<object> ();
         private readonly List<WorkspaceWrapper> workspaces = new List<WorkspaceWrapper> ();
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private bool dataStale = true;
         private bool workspacesStale = true;
+        private int firstNewColor;
 
         public ProjectsAdapter () : base ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            firstNewColor = new Random ().Next ();
         }
 
         protected override void Dispose (bool disposing)
@@ -81,6 +85,7 @@ namespace Toggl.Joey.UI.Adapters
 
             // If there are more than 1 visible workspace, we need to display workspaces
             var addWorkspaces = workspaces.Where ((m) => m.ProjectCount > 0).Count () > 1;
+            var workspaceIdx = 0;
 
             foreach (var workspace in workspaces) {
                 if (addWorkspaces) {
@@ -98,6 +103,9 @@ namespace Toggl.Joey.UI.Adapters
                         }
                     }
                 }
+
+                data.Add (new NewProjectWrapper (workspace.Model, firstNewColor + workspaceIdx));
+                workspaceIdx += 1;
             }
 
             dataStale = false;
@@ -168,6 +176,10 @@ namespace Toggl.Joey.UI.Adapters
             if (noProject != null)
                 return noProject.Workspace;
 
+            var newProject = obj as NewProjectWrapper;
+            if (newProject != null)
+                return newProject.Model;
+
             var task = obj as TaskModel;
             if (task != null)
                 return task;
@@ -190,7 +202,7 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         public override int ViewTypeCount {
-            get { return 3; }
+            get { return 5; }
         }
 
         public override int GetItemViewType (int position)
@@ -200,8 +212,12 @@ namespace Toggl.Joey.UI.Adapters
                 throw new ArgumentOutOfRangeException ("position");
 
             var obj = data [position];
-            if (obj is ProjectWrapper || obj is NoProjectWrapper) {
+            if (obj is ProjectWrapper) {
                 return ViewTypeProject;
+            } else if (obj is NoProjectWrapper) {
+                return ViewTypeNoProject;
+            } else if (obj is NewProjectWrapper) {
+                return ViewTypeNewProject;
             } else if (obj is TaskModel) {
                 return ViewTypeTask;
             } else if (obj is WorkspaceWrapper) {
@@ -234,7 +250,25 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (ProjectListItemHolder)view.Tag;
-                holder.Bind (data [position] as ProjectWrapper);
+                holder.Bind ((ProjectWrapper)data [position]);
+            } else if (viewType == ViewTypeNoProject) {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.ProjectListNoProjectItem, parent, false);
+                    view.Tag = new NoProjectListItemHolder (view);
+                }
+
+                var holder = (NoProjectListItemHolder)view.Tag;
+                holder.Bind ((NoProjectWrapper)data [position]);
+            } else if (viewType == ViewTypeNewProject) {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.ProjectListNewProjectItem, parent, false);
+                    view.Tag = new NewProjectListItemHolder (view);
+                }
+
+                var holder = (NewProjectListItemHolder)view.Tag;
+                holder.Bind ((NewProjectWrapper)data [position]);
             } else if (viewType == ViewTypeTask) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -523,6 +557,23 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private class NewProjectWrapper
+        {
+            private readonly ProjectModel model;
+
+            public NewProjectWrapper (WorkspaceModel workspace, int color)
+            {
+                model = new ProjectModel () {
+                    Workspace = workspace,
+                    Color = color,
+                };
+            }
+
+            public ProjectModel Model {
+                get { return model; }
+            }
+        }
+
         #endregion
 
         #region View holders
@@ -643,6 +694,53 @@ namespace Toggl.Joey.UI.Adapters
                 TasksFrameLayout.Visibility = DataSource.TaskCount == 0 ? ViewStates.Gone : ViewStates.Visible;
                 TasksTextView.Visibility = DataSource.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
                 TasksImageView.Visibility = !DataSource.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
+            }
+        }
+
+        private class NoProjectListItemHolder : BindableViewHolder<NoProjectWrapper>
+        {
+            public View ColorView { get; private set; }
+
+            public TextView ProjectTextView { get; private set; }
+
+            public NoProjectListItemHolder (View root) : base (root)
+            {
+                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+            }
+
+            protected override void Rebind ()
+            {
+                ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
+                ProjectTextView.SetText (Resource.String.ProjectsNoProject);
+            }
+        }
+
+        private class NewProjectListItemHolder : BindableViewHolder<NewProjectWrapper>
+        {
+            public View ColorView { get; private set; }
+
+            public TextView ProjectTextView { get; private set; }
+
+            public NewProjectListItemHolder (View root) : base (root)
+            {
+                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+            }
+
+            private ProjectModel Model {
+                get {
+                    if (DataSource == null)
+                        return null;
+                    return DataSource.Model;
+                }
+            }
+
+            protected override void Rebind ()
+            {
+                var color = Color.ParseColor (Model.GetHexColor ());
+                ColorView.SetBackgroundColor (color);
+                ProjectTextView.SetText (Resource.String.ProjectsNewProject);
             }
         }
 

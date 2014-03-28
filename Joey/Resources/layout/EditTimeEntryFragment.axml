@@ -93,7 +93,6 @@
                 android:id="@+id/BillableCheckBox"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:text="@string/CurrentTimeEntryEditBillableUnchecked"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="@color/BillableTextColor"
@@ -102,6 +101,10 @@
                 android:drawableLeft="@drawable/IcBillable"
                 android:drawablePadding="5dp"
                 android:paddingLeft="10dp" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
             <ImageButton
                 android:id="@+id/DeleteImageButton"
                 android:layout_width="wrap_content"

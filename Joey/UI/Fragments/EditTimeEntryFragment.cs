@@ -375,6 +375,11 @@ namespace Toggl.Joey.UI.Fragments
             } else {
                 BillableCheckBox.SetText (Resource.String.CurrentTimeEntryEditBillableUnchecked);
             }
+            if (TimeEntry.Workspace == null || !TimeEntry.Workspace.IsPremium) {
+                BillableCheckBox.Visibility = ViewStates.Gone;
+            } else {
+                BillableCheckBox.Visibility = ViewStates.Visible;
+            }
         }
 
         protected static bool ForCurrentUser (TimeEntryModel model)

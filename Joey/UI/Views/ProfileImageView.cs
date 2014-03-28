@@ -110,14 +110,25 @@ namespace Toggl.Joey.UI.Views
             return output;
         }
 
-        private async void SetImage (String newImageUrl)
+        private async void SetImage (String imageUrl)
         {
-            if (imageUrl == null || imageUrl != newImageUrl) {
-                Bitmap bitmap = await GetImage (newImageUrl);
-                if (bitmap != null) {
-                    imageUrl = newImageUrl;
-                    SetImageBitmap (bitmap);
-                }
+            if (this.imageUrl == imageUrl)
+                return;
+            this.imageUrl = imageUrl;
+
+            Bitmap bitmap = null;
+            if (imageUrl != null) {
+                bitmap = await GetImage (imageUrl);
+            }
+
+            // Protect against setting old image to the view
+            if (this.imageUrl != imageUrl)
+                return;
+
+            if (bitmap != null) {
+                SetImageBitmap (bitmap);
+            } else {
+                SetImageDrawable (null);
             }
         }
     }

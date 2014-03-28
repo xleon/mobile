@@ -6,14 +6,13 @@
     android:background="@android:color/black">
     <Toggl.Joey.UI.Views.ProfileImageView
         android:id="@+id/IconProfileImageView"
-        android:src="@drawable/IcNavReports"
         android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp" />
     <TextView
         android:id="@+id/TitleTextView"
-        android:text="Settings"
+        android:text="John Smith"
         android:gravity="left|center_vertical"
         android:layout_width="fill_parent"
         android:layout_height="match_parent"

@@ -78,7 +78,7 @@ namespace Toggl.Joey.UI.Fragments
                 var project = task != null ? task.Project : m as ProjectModel;
                 var workspace = project != null ? project.Workspace : m as WorkspaceModel;
 
-                if (!project.IsShared) {
+                if (project != null && !project.IsShared) {
                     // Show create project dialog instead
                     new CreateProjectDialogFragment (model, project.Workspace, project.Color)
                         .Show (FragmentManager, "new_project_dialog");

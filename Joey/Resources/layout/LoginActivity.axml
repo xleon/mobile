@@ -50,10 +50,18 @@
             <RadioButton
                 android:id="@+id/LoginTabRadioButton"
                 style="@style/RadioButtonTab"
-                android:layout_width="150dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:checked="true"
                 android:text="@string/LoginLoginTabText" />
+            <RadioButton
+                android:id="@+id/SignupTabRadioButton"
+                style="@style/RadioButtonTab"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/LoginSignupTabText" />
         </RadioGroup>
         <AutoCompleteTextView
             android:id="@+id/EmailAutoCompleteTextView"
@@ -102,6 +110,18 @@
             android:layout_marginRight="20dp"
             android:layout_marginTop="15dp"
             android:layout_marginBottom="15dp" />
+        <TextView
+            android:id="@+id/LegalTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:text="By signing up you agree to Toggl's Terms and Privacy Policy"
+            android:textSize="12sp"
+            android:textColorLink="@color/green" />
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"

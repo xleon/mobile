@@ -9,6 +9,7 @@ using Android.Gms.Auth;
 using Android.Gms.Common;
 using Android.OS;
 using Android.Text;
+using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
@@ -31,8 +32,16 @@ namespace Toggl.Joey.UI.Activities
         private static readonly string ExtraShowPassword = "com.toggl.timer.show_password";
         private bool hasGoogleAccounts;
         private bool showPassword;
+        private bool isAuthenticating;
+        private ISpannable formattedLegalText;
 
         protected ScrollView ScrollView { get; private set; }
+
+        protected RadioGroup TabsRadioGroup { get; private set; }
+
+        protected RadioButton LoginTabRadioButton { get; private set; }
+
+        protected RadioButton SignupTabRadioButton { get; private set; }
 
         protected AutoCompleteTextView EmailEditText { get; private set; }
 
@@ -42,17 +51,22 @@ namespace Toggl.Joey.UI.Activities
 
         protected Button LoginButton { get; private set; }
 
+        protected TextView LegalTextView { get; private set; }
+
         protected Button GoogleLoginButton { get; private set; }
 
         private void FindViews ()
         {
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
             FindViewById<TextView> (Resource.Id.SloganTextView).SetFont (Font.RobotoLight);
-            FindViewById<RadioButton> (Resource.Id.LoginTabRadioButton).SetFont (Font.Roboto);
+            TabsRadioGroup = FindViewById<RadioGroup> (Resource.Id.TabsRadioGroup);
+            LoginTabRadioButton = FindViewById<RadioButton> (Resource.Id.LoginTabRadioButton).SetFont (Font.Roboto);
+            SignupTabRadioButton = FindViewById<RadioButton> (Resource.Id.SignupTabRadioButton).SetFont (Font.Roboto);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
             PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont (Font.Roboto);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont (Font.Roboto);
+            LegalTextView = FindViewById<TextView> (Resource.Id.LegalTextView).SetFont (Font.RobotoLight);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
         }
 
@@ -100,10 +114,12 @@ namespace Toggl.Joey.UI.Activities
 
             ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener (this);
 
+            TabsRadioGroup.CheckedChange += OnTabsRadioGroupCheckedChange;
             LoginButton.Click += OnLoginButtonClick;
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
             EmailEditText.Adapter = MakeEmailsAdapter ();
             EmailEditText.Threshold = 1;
+            EmailEditText.TextChanged += OnEmailEditTextTextChanged;
             PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
             PasswordToggleButton.Click += OnPasswordToggleButtonClick;
 
@@ -114,6 +130,7 @@ namespace Toggl.Joey.UI.Activities
                 showPassword = bundle.GetBoolean (ExtraShowPassword);
             }
 
+            SyncContent ();
             SyncPasswordVisibility ();
         }
 
@@ -121,6 +138,49 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnSaveInstanceState (outState);
             outState.PutBoolean (ExtraShowPassword, showPassword);
+        }
+
+        private void OnTabsRadioGroupCheckedChange (object sender, RadioGroup.CheckedChangeEventArgs e)
+        {
+            SyncContent ();
+        }
+
+        private void SyncContent ()
+        {
+            if (CurrentMode == Mode.Login) {
+                LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
+                LegalTextView.Visibility = ViewStates.Gone;
+                GoogleLoginButton.SetText (Resource.String.LoginGoogleButtonText);
+            } else {
+                LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonSignupProgressText : Resource.String.LoginSignupButtonText);
+                LegalTextView.SetText (FormattedLegalText, TextView.BufferType.Spannable);
+                LegalTextView.MovementMethod = Android.Text.Method.LinkMovementMethod.Instance;
+                LegalTextView.Visibility = ViewStates.Visible;
+                GoogleLoginButton.SetText (Resource.String.LoginSignupGoogleButtonText);
+            }
+
+            LoginTabRadioButton.Enabled = !isAuthenticating;
+            SignupTabRadioButton.Enabled = !isAuthenticating;
+            TabsRadioGroup.Enabled = !isAuthenticating;
+            EmailEditText.Enabled = !isAuthenticating;
+            PasswordEditText.Enabled = !isAuthenticating;
+            GoogleLoginButton.Enabled = !isAuthenticating;
+
+            SyncLoginButton ();
+        }
+
+        private void SyncLoginButton ()
+        {
+            var enabled = !isAuthenticating;
+            if (CurrentMode == Mode.Signup) {
+                if (String.IsNullOrWhiteSpace (EmailEditText.Text) || !EmailEditText.Text.Contains ('@')) {
+                    enabled = false;
+                } else if (String.IsNullOrWhiteSpace (PasswordEditText.Text) || PasswordEditText.Text.Length < 6) {
+                    enabled = false;
+                }
+            }
+
+            LoginButton.Enabled = enabled;
         }
 
         private void SyncPasswordVisibility ()
@@ -152,9 +212,15 @@ namespace Toggl.Joey.UI.Activities
             PasswordEditText.SetSelection (selectionStart, selectionEnd);
         }
 
-        private void OnPasswordEditTextTextChanged (object sender, Android.Text.TextChangedEventArgs e)
+        private void OnEmailEditTextTextChanged (object sender, TextChangedEventArgs e)
+        {
+            SyncLoginButton ();
+        }
+
+        private void OnPasswordEditTextTextChanged (object sender, TextChangedEventArgs e)
         {
             SyncPasswordVisibility ();
+            SyncLoginButton ();
         }
 
         private void OnPasswordToggleButtonClick (object sender, EventArgs e)
@@ -163,7 +229,16 @@ namespace Toggl.Joey.UI.Activities
             SyncPasswordVisibility ();
         }
 
-        private async void OnLoginButtonClick (object sender, EventArgs e)
+        private void OnLoginButtonClick (object sender, EventArgs e)
+        {
+            if (CurrentMode == Mode.Login) {
+                TryLoginPassword ();
+            } else {
+                TrySignupPassword ();
+            }
+        }
+
+        private async void TryLoginPassword ()
         {
             IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -175,6 +250,22 @@ namespace Toggl.Joey.UI.Activities
                 PasswordEditText.RequestFocus ();
 
                 new InvalidCredentialsDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+            }
+
+            StartAuthActivity ();
+        }
+
+        private async void TrySignupPassword ()
+        {
+            IsAuthenticating = true;
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            var success = await authManager.Signup (EmailEditText.Text, PasswordEditText.Text);
+            IsAuthenticating = false;
+
+            if (!success) {
+                EmailEditText.RequestFocus ();
+
+                new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
             }
 
             StartAuthActivity ();
@@ -205,12 +296,58 @@ namespace Toggl.Joey.UI.Activities
 
         private bool IsAuthenticating {
             set {
-                EmailEditText.Enabled = !value;
-                PasswordEditText.Enabled = !value;
-                LoginButton.Enabled = !value;
-                LoginButton.SetText (value ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
-                GoogleLoginButton.Enabled = !value;
+                if (isAuthenticating == value)
+                    return;
+                isAuthenticating = value;
+                SyncContent ();
             }
+        }
+
+        private ISpannable FormattedLegalText {
+            get {
+                if (formattedLegalText == null) {
+                    var template = Resources.GetText (Resource.String.LoginSignupLegalText);
+                    var arg0 = Resources.GetText (Resource.String.LoginSignupLegalTermsText);
+                    var arg1 = Resources.GetText (Resource.String.LoginSignupLegalPrivacyText);
+
+                    var arg0idx = String.Format (template, "{0}", arg1).IndexOf ("{0}", StringComparison.Ordinal);
+                    var arg1idx = String.Format (template, arg0, "{1}").IndexOf ("{1}", StringComparison.Ordinal);
+
+                    var s = formattedLegalText = new SpannableString (String.Format (template, arg0, arg1));
+                    var mode = SpanTypes.InclusiveExclusive;
+                    s.SetSpan (
+                        new URLSpan (Phoebe.Build.TermsOfServiceUrl.ToString ()),
+                        arg0idx,
+                        arg0idx + arg0.Length,
+                        mode
+                    );
+                    s.SetSpan (
+                        new URLSpan (Phoebe.Build.PrivacyPolicyUrl.ToString ()),
+                        arg1idx,
+                        arg1idx + arg1.Length,
+                        mode
+                    );
+                }
+
+                return formattedLegalText;
+            }
+        }
+
+        private Mode CurrentMode {
+            get {
+                switch (TabsRadioGroup.CheckedRadioButtonId) {
+                case Resource.Id.SignupTabRadioButton:
+                    return Mode.Signup;
+                default:
+                    return Mode.Login;
+                }
+            }
+        }
+
+        private enum Mode
+        {
+            Login,
+            Signup
         }
 
         public class GoogleAuthFragment : Fragment
@@ -326,6 +463,8 @@ namespace Toggl.Joey.UI.Activities
                     var success = await authManager.AuthenticateWithGoogle (token);
                     if (!success) {
                         GoogleAuthUtil.InvalidateToken (ctx, token);
+
+                        new NoAccountDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
                     }
                 } finally {
                     IsAuthenticating = false;
@@ -413,6 +552,40 @@ namespace Toggl.Joey.UI.Activities
                         .SetTitle (Resource.String.LoginInvalidCredentialsDialogTitle)
                         .SetMessage (Resource.String.LoginInvalidCredentialsDialogText)
                         .SetPositiveButton (Resource.String.LoginInvalidCredentialsDialogOk, OnOkButtonClicked)
+                        .Create ();
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                Dismiss ();
+            }
+        }
+
+        public class SignupFailedDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                        .SetTitle (Resource.String.LoginSignupFailedDialogTitle)
+                        .SetMessage (Resource.String.LoginSignupFailedDialogText)
+                        .SetPositiveButton (Resource.String.LoginSignupFailedDialogOk, OnOkButtonClicked)
+                        .Create ();
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                Dismiss ();
+            }
+        }
+
+        public class NoAccountDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                        .SetTitle (Resource.String.LoginNoAccountDialogTitle)
+                        .SetMessage (Resource.String.LoginNoAccountDialogText)
+                        .SetPositiveButton (Resource.String.LoginNoAccountDialogOk, OnOkButtonClicked)
                         .Create ();
             }
 

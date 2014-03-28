@@ -108,6 +108,29 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
+        private string googleAccessToken;
+        public static readonly string PropertyGoogleAccessToken = GetPropertyName ((m) => m.GoogleAccessToken);
+
+        [JsonProperty ("google_access_token", NullValueHandling = NullValueHandling.Ignore)]
+        [SQLite.Ignore]
+        public string GoogleAccessToken {
+            get {
+                lock (SyncRoot) {
+                    return googleAccessToken;
+                }
+            }
+            set {
+                lock (SyncRoot) {
+                    if (googleAccessToken == value)
+                        return;
+
+                    ChangePropertyAndNotify (PropertyGoogleAccessToken, delegate {
+                        googleAccessToken = value;
+                    });
+                }
+            }
+        }
+
         private string apiToken;
         public static readonly string PropertyApiToken = GetPropertyName ((m) => m.ApiToken);
 

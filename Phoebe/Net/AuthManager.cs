@@ -91,6 +91,41 @@ namespace Toggl.Phoebe.Net
             return Authenticate (() => client.GetUser (accessToken));
         }
 
+        public Task<bool> Signup (string email, string password)
+        {
+            var client = ServiceContainer.Resolve<ITogglClient> ();
+            return Authenticate (async delegate {
+                var m = Model.Update (new UserModel () {
+                    Email = email,
+                    Password = password,
+                    Timezone = TimeZone.CurrentTimeZone.StandardName,
+                    ModifiedAt = DateTime.MinValue,
+                });
+
+                await client.Create (m);
+
+                m.IsPersisted = true;
+                return m;
+            });
+        }
+
+        public Task<bool> Signup (string accessToken)
+        {
+            var client = ServiceContainer.Resolve<ITogglClient> ();
+            return Authenticate (async delegate {
+                var m = Model.Update (new UserModel () {
+                    GoogleAccessToken = accessToken,
+                    Timezone = TimeZone.CurrentTimeZone.StandardName,
+                    ModifiedAt = DateTime.MinValue,
+                });
+
+                await client.Create (m);
+
+                m.IsPersisted = true;
+                return m;
+            });
+        }
+
         public void Forget ()
         {
             if (!IsAuthenticated)

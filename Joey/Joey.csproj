@@ -455,6 +455,10 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcActionDone.png" />
     <AndroidResource Include="Resources\layout\EditTimeEntryActivity.axml" />
     <AndroidResource Include="Resources\layout\EditTimeEntryFragment.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcEdit.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcEdit.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcEdit.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcEdit.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

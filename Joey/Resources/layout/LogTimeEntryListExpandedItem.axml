@@ -101,7 +101,7 @@
                 android:paddingBottom="15dp"
                 android:paddingLeft="15dp"
                 android:paddingRight="15dp"
-                android:src="@drawable/IcActionEdit"
+                android:src="@drawable/IcEdit"
                 android:background="@drawable/ButtonNoFrame" />
         </FrameLayout>
     </LinearLayout>

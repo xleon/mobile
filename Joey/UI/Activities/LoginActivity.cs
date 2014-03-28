@@ -427,6 +427,8 @@ namespace Toggl.Joey.UI.Activities
                     return;
                 IsAuthenticating = true;
 
+                LoginActivity activity;
+
                 try {
                     var log = ServiceContainer.Resolve<Logger> ();
                     var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -459,12 +461,23 @@ namespace Toggl.Joey.UI.Activities
                         return;
                     }
 
-                    // Authenticate client
-                    var success = await authManager.AuthenticateWithGoogle (token);
-                    if (!success) {
-                        GoogleAuthUtil.InvalidateToken (ctx, token);
+                    activity = Activity as LoginActivity;
+                    if (activity != null && activity.CurrentMode == Mode.Signup) {
+                        // Signup with Google
+                        var success = await authManager.SignupWithGoogle (token);
+                        if (!success) {
+                            GoogleAuthUtil.InvalidateToken (ctx, token);
 
-                        new NoAccountDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                            new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                        }
+                    } else {
+                        // Authenticate client
+                        var success = await authManager.AuthenticateWithGoogle (token);
+                        if (!success) {
+                            GoogleAuthUtil.InvalidateToken (ctx, token);
+
+                            new NoAccountDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                        }
                     }
                 } finally {
                     IsAuthenticating = false;
@@ -478,7 +491,7 @@ namespace Toggl.Joey.UI.Activities
                 }
 
                 // Try to make the activity recheck auth status
-                var activity = Activity as LoginActivity;
+                activity = Activity as LoginActivity;
                 if (activity != null) {
                     activity.StartAuthActivity ();
                 }

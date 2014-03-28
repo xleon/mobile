@@ -644,7 +644,7 @@ namespace Toggl.Phoebe.Net
 
         public Task CreateUser (UserModel model)
         {
-            var url = new Uri (v8Url, "signups");
+            var url = new Uri (v8Url, model.GoogleAccessToken != null ? "signups?app_name=toggl_mobile" : "signups");
             model.CreatedWith = Platform.DefaultCreatedWith;
             return CreateModel (url, model);
         }

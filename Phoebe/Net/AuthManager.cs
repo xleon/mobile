@@ -109,7 +109,7 @@ namespace Toggl.Phoebe.Net
             });
         }
 
-        public Task<bool> Signup (string accessToken)
+        public Task<bool> SignupWithGoogle (string accessToken)
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
             return Authenticate (async delegate {

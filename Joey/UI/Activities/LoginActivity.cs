@@ -223,9 +223,6 @@ namespace Toggl.Joey.UI.Activities
 
             public static void Start (FragmentManager mgr, string email)
             {
-                if (mgr.FindFragmentByTag ("google_auth") != null)
-                    return;
-
                 // Find old fragment to replace
                 var frag = mgr.FindFragmentByTag ("google_auth");
                 if (frag != null) {

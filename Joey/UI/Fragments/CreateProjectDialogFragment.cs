@@ -102,7 +102,12 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnStart ()
         {
-            base.OnStart ();
+            // TODO: Remove workaround after support library upgrade!
+            // base.OnStart ();
+            Android.Runtime.JNIEnv.CallNonvirtualVoidMethod (Handle, ThresholdClass,
+                Android.Runtime.JNIEnv.GetMethodID (ThresholdClass, "onStart", "()V"));
+            // End of workaround
+
             positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
             SyncButton ();
         }

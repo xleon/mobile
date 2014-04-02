@@ -76,7 +76,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnStart ()
         {
-            base.OnStart ();
+            // TODO: Remove workaround after support library upgrade!
+            // base.OnStart ();
+            Android.Runtime.JNIEnv.CallNonvirtualVoidMethod (Handle, ThresholdClass,
+                Android.Runtime.JNIEnv.GetMethodID (ThresholdClass, "onStart", "()V"));
+            // End of workaround
 
             if (models.Count == 0) {
                 Dismiss ();

@@ -95,7 +95,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnStart ()
         {
-            base.OnStart ();
+            // TODO: Remove workaround after support library upgrade!
+            // base.OnStart ();
+            Android.Runtime.JNIEnv.CallNonvirtualVoidMethod (Handle, ThresholdClass,
+                Android.Runtime.JNIEnv.GetMethodID (ThresholdClass, "onStart", "()V"));
+            // End of workaround
 
             modelsView.WorkspaceId = WorkspaceId;
 
@@ -116,7 +120,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnStop ()
         {
-            base.OnStop ();
+            // TODO: Remove workaround after support library upgrade!
+            // base.OnStop ();
+            Android.Runtime.JNIEnv.CallNonvirtualVoidMethod (Handle, ThresholdClass,
+                Android.Runtime.JNIEnv.GetMethodID (ThresholdClass, "onStop", "()V"));
+            // End of workaround
 
             if (subscriptionModelChanged != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();

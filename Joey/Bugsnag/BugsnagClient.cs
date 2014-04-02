@@ -17,7 +17,7 @@ namespace Toggl.Joey.Bugsnag
     {
         private static readonly TimeSpan IdleTimeForSessionEnd = TimeSpan.FromSeconds (10);
         private static readonly TimeSpan StateCacheTimeToLive = TimeSpan.FromSeconds (1);
-        private static readonly string Tag = "Bugsense";
+        private static readonly string Tag = "Bugsnag";
         private readonly Context androidContext;
         private readonly List<WeakReference> activityStack = new List<WeakReference> ();
         private readonly bool sendMetrics;

@@ -247,7 +247,7 @@ namespace Toggl.Phoebe.Bugsnag
                 Stack = trace.GetFrames ().Select ((frame) => {
                     var method = frame.GetMethod ();
                     return new StackInfo () {
-                        Method = String.Format ("{0}:{1}", method.DeclaringType.Name, method.Name),
+                        Method = String.Format ("{0}:{1}", method.DeclaringType.FullName, method.Name),
                         File = frame.GetFileName () ?? "Unknown",
                         Line = frame.GetFileLineNumber (),
                         Column = frame.GetFileColumnNumber (),

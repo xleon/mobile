@@ -188,9 +188,17 @@ namespace Toggl.Joey.UI.Fragments
                 // Add to correct parent:
                 switch (parent) {
                 case Parent.ListView:
+                    root.LayoutParameters = new ListView.LayoutParams (
+                        ListView.LayoutParams.MatchParent,
+                        ListView.LayoutParams.WrapContent
+                    );
                     listView.AddHeaderView (root);
                     break;
                 case Parent.EmptyView:
+                    root.LayoutParameters = new LinearLayout.LayoutParams (
+                        LinearLayout.LayoutParams.MatchParent,
+                        LinearLayout.LayoutParams.WrapContent
+                    );
                     var cont = listView.EmptyView.FindViewById<LinearLayout> (Resource.Id.EmptyLinearLayout);
                     cont.AddView (root, 0);
                     break;

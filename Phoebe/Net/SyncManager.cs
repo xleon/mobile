@@ -59,6 +59,7 @@ namespace Toggl.Phoebe.Net
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var log = ServiceContainer.Resolve<Logger> ();
+            var modelStore = ServiceContainer.Resolve<IModelStore> ();
 
             // Resolve automatic sync mode to actual mode
             if (mode == SyncMode.Auto) {
@@ -126,6 +127,9 @@ namespace Toggl.Phoebe.Net
                         }
                     }
                     LastRun = changes.Timestamp;
+
+                    // Make sure that the changes are persisted
+                    modelStore.Commit ();
                 }
 
                 if (mode.HasFlag (SyncMode.Push)) {
@@ -182,6 +186,9 @@ namespace Toggl.Phoebe.Net
                             }
                         }
                     }
+
+                    // Make sure that the changes are persisted
+                    modelStore.Commit ();
                 }
             } catch (Exception e) {
                 if (e is System.Net.Http.HttpRequestException) {

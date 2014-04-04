@@ -236,7 +236,7 @@ namespace Toggl.Phoebe.Bugsnag
             return list;
         }
 
-        private ExceptionInfo ConvertException (Exception ex)
+        protected virtual ExceptionInfo ConvertException (Exception ex)
         {
             var type = ex.GetType ();
             var trace = new StackTrace (ex, true);

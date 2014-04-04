@@ -458,6 +458,40 @@ namespace Toggl.Joey.Bugsnag
             };
         }
 
+        protected override ExceptionInfo ConvertException (Exception ex)
+        {
+            var t = ex as Java.Lang.Throwable;
+            if (t != null) {
+                return ConvertThrowable (t);
+            }
+            return base.ConvertException (ex);
+        }
+
+        private ExceptionInfo ConvertThrowable (Java.Lang.Throwable ex)
+        {
+            var type = ex.GetType ();
+
+            return new ExceptionInfo () {
+                Name = type.Name,
+                Message = ex.LocalizedMessage,
+                Stack = ex.GetStackTrace ().Select ((frame) => new StackInfo () {
+                    Method = String.Format ("{0}:{1}", frame.ClassName, frame.MethodName),
+                    File = frame.FileName ?? "Unknown",
+                    Line = frame.LineNumber,
+                    InProject = IsInProject (frame.ClassName),
+                }).ToList (),
+            };
+        }
+
+        private bool IsInProject (string javaName)
+        {
+            var namespaces = ProjectNamespaces;
+            if (namespaces == null)
+                return false;
+
+            return namespaces.Any ((ns) => javaName.StartsWith (ns));
+        }
+
         protected override void LogError (string msg)
         {
             Log.Error (Tag, msg);

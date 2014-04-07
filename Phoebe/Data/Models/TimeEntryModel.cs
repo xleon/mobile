@@ -61,6 +61,8 @@ namespace Toggl.Phoebe.Data.Models
             }
             set {
                 lock (SyncRoot) {
+                    // Make sure that description is never null, but an empty string (prevents weird sync loops)
+                    value = value ?? String.Empty;
                     if (description == value)
                         return;
 

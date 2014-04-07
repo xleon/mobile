@@ -256,6 +256,7 @@ namespace Toggl.Phoebe.Data
 
         public void Commit ()
         {
+            var hadChanges = false;
             var conn = connection.Value;
             lock (Model.SyncRoot) {
                 conn.BeginTransaction ();
@@ -266,6 +267,7 @@ namespace Toggl.Phoebe.Data
                         } else {
                             conn.Delete (model);
                         }
+                        hadChanges = true;
                     }
                     changedModels.Clear ();
                     createdModels.Clear ();
@@ -274,8 +276,10 @@ namespace Toggl.Phoebe.Data
                 }
             }
 
-            ServiceContainer.Resolve<MessageBus> ().Send (
-                new ModelsCommittedMessage (this));
+            if (hadChanges) {
+                ServiceContainer.Resolve<MessageBus> ().Send (
+                    new ModelsCommittedMessage (this));
+            }
         }
 
         private bool IsScheduled { get; set; }

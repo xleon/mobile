@@ -12,15 +12,15 @@ namespace Toggl.Phoebe.Net
     {
         private static readonly string Tag = "SyncManager";
         #pragma warning disable 0414
-        private readonly Subscription<ModelsCommittedMessage> subscriptionModelsCommited;
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
         #pragma warning restore 0414
+        private Subscription<ModelsCommittedMessage> subscriptionModelsCommited;
 
         public SyncManager ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelsCommited = bus.Subscribe<ModelsCommittedMessage> (OnModelsCommited);
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
+            subscriptionModelsCommited = bus.Subscribe<ModelsCommittedMessage> (OnModelsCommited);
         }
 
         private void OnModelsCommited (ModelsCommittedMessage msg)
@@ -44,12 +44,21 @@ namespace Toggl.Phoebe.Net
             if (IsRunning)
                 return;
 
+            var bus = ServiceContainer.Resolve<MessageBus> ();
             IsRunning = true;
+
+            // Unsubscribe from models commited messages (our actions trigger them as well,
+            // so need to ignore them to prevent infinite recursion.
+            if (subscriptionModelsCommited != null) {
+                bus.Unsubscribe (subscriptionModelsCommited);
+                subscriptionModelsCommited = null;
+            }
 
             try {
                 await RunInBackground (mode);
             } finally {
                 IsRunning = false;
+                subscriptionModelsCommited = bus.Subscribe<ModelsCommittedMessage> (OnModelsCommited);
             }
         }
 
@@ -125,10 +134,11 @@ namespace Toggl.Phoebe.Net
                             m.IsPersisted = true;
                         }
                     }
-                    LastRun = changes.Timestamp;
 
-                    // Make sure that the changes are persisted
-                    modelStore.Commit ();
+                    if (modelStore.TryCommit ()) {
+                        // Update LastRun incase the data was persisted successfully
+                        LastRun = changes.Timestamp;
+                    }
                 }
 
                 if (mode.HasFlag (SyncMode.Push)) {
@@ -186,8 +196,8 @@ namespace Toggl.Phoebe.Net
                         }
                     }
 
-                    // Make sure that the changes are persisted
-                    modelStore.Commit ();
+                    // Attempt to persist changes
+                    modelStore.TryCommit ();
                 }
             } catch (Exception e) {
                 var isExpected = GetExceptionTree (e).Any (

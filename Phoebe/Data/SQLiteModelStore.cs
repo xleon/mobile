@@ -282,6 +282,22 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        public bool TryCommit ()
+        {
+            try {
+                Commit ();
+            } catch (SQLiteException ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                if (ex.Result == SQLite3.Result.Busy) {
+                    log.Info (LogTag, ex, "Database busy, rescheduling.");
+                } else {
+                    log.Warning (LogTag, ex, "Failed to commit changes.");
+                }
+                return false;
+            }
+            return true;
+        }
+
         private bool IsScheduled { get; set; }
 
         protected async virtual void ScheduleCommit ()
@@ -298,16 +314,7 @@ namespace Toggl.Phoebe.Data
             try {
                 await Task.Delay (TimeSpan.FromMilliseconds (250))
                     .ConfigureAwait (continueOnCapturedContext: false);
-                Commit ();
-            } catch (SQLiteException ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
-                if (ex.Result == SQLite3.Result.Busy) {
-                    log.Info (LogTag, ex, "Database busy, rescheduling.");
-                    reschedule = true;
-                } else {
-                    log.Warning (LogTag, ex, "Failed to commit changes.");
-                    reschedule = true;
-                }
+                reschedule = !TryCommit ();
             } finally {
                 lock (Model.SyncRoot) {
                     IsScheduled = false;

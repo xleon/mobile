@@ -22,5 +22,7 @@ namespace Toggl.Phoebe.Data
             where T : Model, new();
 
         void Commit ();
+
+        bool TryCommit ();
     }
 }

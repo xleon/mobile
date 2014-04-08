@@ -108,10 +108,14 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="monotouch" />
+    <Reference Include="PixateFreestyle">
+      <HintPath>..\Components\PixateFreestyle-2.1.2\lib\ios\PixateFreestyle.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Default-568h%402x.png" />
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
+    <BundleResource Include="Resources\default.css" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -137,5 +141,11 @@
     <Folder Include="Data\" />
     <Folder Include="ViewControllers\" />
     <Folder Include="Resources\en.lproj\" />
+  </ItemGroup>
+  <ItemGroup>
+    <XamarinComponentReference Include="PixateFreestyle">
+      <Version>2.1.2</Version>
+      <Visible>False</Visible>
+    </XamarinComponentReference>
   </ItemGroup>
 </Project>

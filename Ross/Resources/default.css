@@ -1,3 +1,7 @@
-﻿view {
+﻿.screen {
     background-color: white;
+}
+
+.screen > button {
+    background-color: gray;
 }

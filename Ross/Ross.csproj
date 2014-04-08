@@ -111,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Default-568h%402x.png" />
+    <BundleResource Include="Resources\en.lproj\Localizable.strings" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -123,6 +124,7 @@
     <Compile Include="ViewControllers\AppViewController.cs" />
     <Compile Include="ViewControllers\MainViewController.cs" />
     <Compile Include="ViewControllers\LoginViewController.cs" />
+    <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -134,5 +136,6 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="ViewControllers\" />
+    <Folder Include="Resources\en.lproj\" />
   </ItemGroup>
 </Project>

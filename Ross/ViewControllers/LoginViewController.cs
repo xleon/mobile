@@ -14,7 +14,7 @@ namespace Toggl.Ross.ViewControllers
             View = new UILabel () {
                 BackgroundColor = UIColor.White,
                 TextAlignment = UITextAlignment.Center,
-                Text = "Login",
+                Text = "LoginHeaderText".Tr (),
             };
         }
     }

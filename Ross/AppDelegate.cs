@@ -1,6 +1,7 @@
 using System;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using PixateFreestyleLib;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
@@ -22,8 +23,13 @@ namespace Toggl.Ross
         {
             RegisterComponents ();
 
+            #if DEBUG
+            SetupDevelopmentStyles ();
+            #endif
+
             // Start app
             window = new UIWindow (UIScreen.MainScreen.Bounds);
+            window.SetStyleMode (PXStylingMode.PXStylingNormal);
             window.RootViewController = new AppViewController ();
             window.MakeKeyAndVisible ();
             
@@ -50,6 +56,19 @@ namespace Toggl.Ross
                 var path = System.IO.Path.Combine (folder, "toggl.db");
                 return new SQLiteModelStore (path);
             });
+        }
+
+        private void SetupDevelopmentStyles ()
+        {
+            // You should create a symbolic link of the Resources directory to /tmp/ross-resources
+            var cssPath = "/tmp/ross-resources/default.css";
+            if (System.IO.File.Exists (cssPath)) {
+                PixateFreestyle.StyleSheetFromFilePathWithOrigin (cssPath, PXStylesheetOrigin.PXStylesheetOriginApplication);
+            }
+
+            var stylesheet = PixateFreestyle.CurrentApplicationStylesheet ();
+            stylesheet.MonitorChanges = true;
+            Console.WriteLine ("Monitoring {0} for changes...", stylesheet.FilePath);
         }
 
         string IPlatformInfo.AppIdentifier {

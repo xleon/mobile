@@ -120,6 +120,9 @@
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
     <Compile Include="Data\SettingsStore.cs" />
+    <Compile Include="ViewControllers\AppViewController.cs" />
+    <Compile Include="ViewControllers\MainViewController.cs" />
+    <Compile Include="ViewControllers\LoginViewController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -130,5 +133,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
+    <Folder Include="ViewControllers\" />
   </ItemGroup>
 </Project>

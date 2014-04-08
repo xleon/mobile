@@ -6,6 +6,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Data;
+using Toggl.Ross.ViewControllers;
 
 namespace Toggl.Ross
 {
@@ -15,26 +16,15 @@ namespace Toggl.Ross
     [Register ("AppDelegate")]
     public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
-        // class-level declarations
-        UIWindow window;
-        //
-        // This method is invoked when the application has loaded and is ready to run. In this
-        // method you should instantiate the window, load the UI into it and then make the window
-        // visible.
-        //
-        // You have 17 seconds to return from this method, or iOS will terminate your application.
-        //
+        private UIWindow window;
+
         public override bool FinishedLaunching (UIApplication app, NSDictionary options)
         {
             RegisterComponents ();
 
-            // create a new window instance based on the screen size
+            // Start app
             window = new UIWindow (UIScreen.MainScreen.Bounds);
-
-            // If you have defined a root view controller, set it here:
-            // window.RootViewController = myViewController;
-            
-            // make the window visible
+            window.RootViewController = new AppViewController ();
             window.MakeKeyAndVisible ();
             
             return true;

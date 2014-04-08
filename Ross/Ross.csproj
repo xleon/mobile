@@ -136,6 +136,10 @@
       <Project>{F968924D-3FFA-4927-B03E-EC0C3BFF87BC}</Project>
       <Name>Phoebe.iOS</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Contrib\Cirrious.FluentLayout\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj">
+      <Project>{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}</Project>
+      <Name>Cirrious.FluentLayouts.Touch</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />

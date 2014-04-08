@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ross", "Ross\Ross.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{DA7A8763-3AB4-46CB-84A0-DB40A1CD8BFC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Contrib", "Contrib", "{D9D618F5-BDB0-4273-8FE0-164C2B699D1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirrious.FluentLayouts.Touch", "Contrib\Cirrious.FluentLayout\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj", "{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -41,6 +45,22 @@ Global
 		{735F910D-2550-48D1-B577-735721EFE6DF}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
 		{735F910D-2550-48D1-B577-735721EFE6DF}.Release|x86.ActiveCfg = Release|Any CPU
 		{735F910D-2550-48D1-B577-735721EFE6DF}.Release|x86.Build.0 = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Ad-Hoc|iPhone.ActiveCfg = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Ad-Hoc|iPhone.Build.0 = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.AppStore|iPhone.ActiveCfg = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.AppStore|iPhone.Build.0 = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Debug|x86.Build.0 = Debug|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|iPhone.Build.0 = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|x86.ActiveCfg = Release|Any CPU
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|x86.Build.0 = Release|Any CPU
 		{C50664AF-B4E8-4B23-A3E4-67162EA6D895}.Ad-Hoc|iPhone.ActiveCfg = Debug|Any CPU
 		{C50664AF-B4E8-4B23-A3E4-67162EA6D895}.Ad-Hoc|iPhone.Build.0 = Debug|Any CPU
 		{C50664AF-B4E8-4B23-A3E4-67162EA6D895}.AppStore|iPhone.ActiveCfg = Debug|Any CPU
@@ -121,6 +141,9 @@ Global
 		{FF67B529-C11B-4FE0-AA1B-CD77141816BB}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
 		{FF67B529-C11B-4FE0-AA1B-CD77141816BB}.Release|x86.ActiveCfg = Release|Any CPU
 		{FF67B529-C11B-4FE0-AA1B-CD77141816BB}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F} = {D9D618F5-BDB0-4273-8FE0-164C2B699D1F}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Joey\Joey.csproj

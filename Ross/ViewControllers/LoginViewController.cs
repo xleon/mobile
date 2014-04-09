@@ -1,7 +1,6 @@
 ﻿using System;
 using Cirrious.FluentLayouts.Touch;
 using MonoTouch.UIKit;
-using PixateFreestyleLib;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -19,8 +18,6 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             View = new UIView ();
-            View.SetStyleId ("loginView");
-            View.AddStyleClass ("screen");
 
             View.Add (headerLabel = new UILabel () {
                 Text = "LoginHeaderText".Tr (),
@@ -53,12 +50,10 @@ namespace Toggl.Ross.ViewControllers
 
             View.Add (passwordActionButton = new UIButton ());
             passwordActionButton.SetTitle ("LoginLoginButtonText".Tr (), UIControlState.Normal);
-            passwordActionButton.SetStyleId ("passwordLoginButton");
             passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 
             View.Add (googleActionButton = new UIButton ());
             googleActionButton.SetTitle ("LoginGoogleButtonText".Tr (), UIControlState.Normal);
-            googleActionButton.SetStyleId ("googleLoginButton");
 
             View.AddConstraints (
                 headerLabel.AtTopOf (View, 80f),

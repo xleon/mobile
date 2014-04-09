@@ -6,7 +6,6 @@ namespace Toggl.Ross
     {
         static void Main (string[] args)
         {
-            PixateFreestyleLib.PixateFreestyle.InitializePixateFreestyle ();
             UIApplication.Main (args, null, "AppDelegate");
         }
     }

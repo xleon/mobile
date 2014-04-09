@@ -3,6 +3,7 @@ using Cirrious.FluentLayouts.Touch;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -17,7 +18,8 @@ namespace Toggl.Ross.ViewControllers
 
         public override void LoadView ()
         {
-            View = new UIView ();
+            View = new UIView ()
+                .ApplyStyle (Style.Screen);
 
             View.Add (headerLabel = new UILabel () {
                 Text = "LoginHeaderText".Tr (),
@@ -48,11 +50,13 @@ namespace Toggl.Ross.ViewControllers
                 ShouldReturn = HandleShouldReturn,
             });
 
-            View.Add (passwordActionButton = new UIButton ());
+            View.Add (passwordActionButton = new UIButton ()
+                .ApplyStyle (Style.Login.PasswordButton));
             passwordActionButton.SetTitle ("LoginLoginButtonText".Tr (), UIControlState.Normal);
             passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 
-            View.Add (googleActionButton = new UIButton ());
+            View.Add (googleActionButton = new UIButton ()
+                .ApplyStyle (Style.Login.GoogleButton));
             googleActionButton.SetTitle ("LoginGoogleButtonText".Tr (), UIControlState.Normal);
 
             View.AddConstraints (
@@ -112,7 +116,6 @@ namespace Toggl.Ross.ViewControllers
 
             try {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
-                await System.Threading.Tasks.Task.Delay (TimeSpan.FromSeconds (5));
                 var success = await authManager.Authenticate (emailTextField.Text, passwordTextField.Text);
 
                 if (!success) {

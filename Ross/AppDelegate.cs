@@ -22,6 +22,8 @@ namespace Toggl.Ross
         {
             RegisterComponents ();
 
+            Toggl.Ross.Theme.Style.Initialize ();
+
             // Start app
             window = new UIWindow (UIScreen.MainScreen.Bounds);
             window.RootViewController = new AppViewController ();

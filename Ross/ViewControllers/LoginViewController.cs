@@ -1,12 +1,16 @@
-﻿using Cirrious.FluentLayouts.Touch;
+﻿using System;
+using Cirrious.FluentLayouts.Touch;
 using MonoTouch.UIKit;
 using PixateFreestyleLib;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class LoginViewController : UIViewController
     {
         private UILabel headerLabel;
+        private UISegmentedControl actionSegmentedControl;
         private UITextField emailTextField;
         private UITextField passwordTextField;
         private UIButton passwordActionButton;
@@ -20,6 +24,13 @@ namespace Toggl.Ross.ViewControllers
 
             View.Add (headerLabel = new UILabel () {
                 Text = "LoginHeaderText".Tr (),
+            });
+
+            View.Add (actionSegmentedControl = new UISegmentedControl (new object[] {
+                "LoginLoginTabText".Tr (),
+                "LoginSignupTabText".Tr (),
+            }) {
+                SelectedSegment = 0,
             });
 
             View.Add (emailTextField = new UITextField () {
@@ -43,16 +54,21 @@ namespace Toggl.Ross.ViewControllers
             View.Add (passwordActionButton = new UIButton ());
             passwordActionButton.SetTitle ("LoginLoginButtonText".Tr (), UIControlState.Normal);
             passwordActionButton.SetStyleId ("passwordLoginButton");
+            passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 
             View.Add (googleActionButton = new UIButton ());
             googleActionButton.SetTitle ("LoginGoogleButtonText".Tr (), UIControlState.Normal);
             googleActionButton.SetStyleId ("googleLoginButton");
 
             View.AddConstraints (
-                headerLabel.AtTopOf (View, 50f),
+                headerLabel.AtTopOf (View, 80f),
                 headerLabel.WithSameCenterX (View),
 
-                emailTextField.Below (headerLabel, 40f),
+                actionSegmentedControl.Below (headerLabel, 40f),
+                actionSegmentedControl.AtLeftOf (View, 10f),
+                actionSegmentedControl.AtRightOf (View, 10f),
+
+                emailTextField.Below (actionSegmentedControl, 20f),
                 emailTextField.AtLeftOf (View, 10f),
                 emailTextField.AtRightOf (View, 10f),
 
@@ -78,11 +94,53 @@ namespace Toggl.Ross.ViewControllers
                 passwordTextField.BecomeFirstResponder ();
             } else if (textField == passwordTextField) {
                 textField.ResignFirstResponder ();
+
                 // TODO: Start login
+                TryPasswordAuth ();
             } else {
                 return false;
             }
             return true;
+        }
+
+        private void OnPasswordActionButtonTouchUpInside (object sender, EventArgs e)
+        {
+            TryPasswordAuth ();
+        }
+
+        private async void TryPasswordAuth ()
+        {
+            if (IsAuthenticating)
+                return;
+
+            IsAuthenticating = true;
+
+            try {
+                var authManager = ServiceContainer.Resolve<AuthManager> ();
+                await System.Threading.Tasks.Task.Delay (TimeSpan.FromSeconds (5));
+                var success = await authManager.Authenticate (emailTextField.Text, passwordTextField.Text);
+
+                if (!success) {
+                    // TODO: Show error
+                }
+            } finally {
+                IsAuthenticating = false;
+            }
+        }
+
+        private bool isAuthenticating;
+
+        private bool IsAuthenticating {
+            get { return isAuthenticating; }
+            set {
+                isAuthenticating = value;
+                emailTextField.Enabled = !isAuthenticating;
+                passwordTextField.Enabled = !isAuthenticating;
+                passwordActionButton.Enabled = !isAuthenticating;
+                googleActionButton.Enabled = !isAuthenticating;
+
+                passwordActionButton.SetTitle ("LoginLoginProgressText".Tr (), UIControlState.Disabled);
+            }
         }
     }
 }

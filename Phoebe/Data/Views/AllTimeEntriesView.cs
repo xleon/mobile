@@ -1,9 +1,10 @@
 ﻿using System;
-using XPlatUtils;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -11,10 +12,10 @@ namespace Toggl.Phoebe.Data.Views
     /// This view combines IModelStore data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
-    public class AllTimeEntriesView : IDataView<TimeEntryModel>, IDisposable
+    public class AllTimeEntriesView : IDataView<object>, IDisposable
     {
         private static readonly string Tag = "AllTimeEntriesView";
-        private readonly List<TimeEntryModel> data = new List<TimeEntryModel> ();
+        private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private DateTime startFrom;
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
 
@@ -45,20 +46,67 @@ namespace Toggl.Phoebe.Data.Views
                 return;
 
             if (entry.DeletedAt == null && entry.State != TimeEntryState.New) {
-                if (!data.Contains (entry)) {
-                    data.Add (entry);
-                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                var grp = FindGroupWith (entry);
+                if (grp == null) {
+                    grp = GetGroupFor (entry);
+                    grp.Models.Add (entry);
+                    grp.UpdateTotalDuration ();
+                    Sort ();
                     OnUpdated ();
                 } else if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
-                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                    // Check that the entry is still in the correct group:
+                    var date = entry.StartTime.ToLocalTime ().Date;
+                    if (grp.Date != date) {
+                        // Need to move entry:
+                        grp.Models.Remove (entry);
+                        grp.UpdateTotalDuration ();
+
+                        grp = GetGroupFor (entry);
+                        grp.Models.Add (entry);
+                    }
+                    grp.UpdateTotalDuration ();
+                    Sort ();
                     OnUpdated ();
+                } else if (msg.PropertyName == TimeEntryModel.PropertyStopTime) {
+                    if (grp.UpdateTotalDuration ()) {
+                        OnUpdated ();
+                    }
                 }
             } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
-                if (data.Contains (entry)) {
-                    data.Remove (entry);
+                var grp = FindGroupWith (entry);
+                if (grp != null) {
+                    grp.Models.Remove (entry);
+                    grp.UpdateTotalDuration ();
+                    if (grp.Models.Count == 0) {
+                        dateGroups.Remove (grp);
+                    }
                     OnUpdated ();
                 }
             }
+        }
+
+        private DateGroup FindGroupWith (TimeEntryModel model)
+        {
+            return dateGroups.FirstOrDefault (g => g.Models.Contains (model));
+        }
+
+        private DateGroup GetGroupFor (TimeEntryModel model)
+        {
+            var date = model.StartTime.ToLocalTime ().Date;
+            var grp = dateGroups.FirstOrDefault (g => g.Date == date);
+            if (grp == null) {
+                grp = new DateGroup (date);
+                dateGroups.Add (grp);
+            }
+            return grp;
+        }
+
+        private void Sort ()
+        {
+            foreach (var grp in dateGroups) {
+                grp.Models.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+            }
+            dateGroups.Sort ((a, b) => b.Date.CompareTo (a.Date));
         }
 
         public event EventHandler Updated;
@@ -77,7 +125,7 @@ namespace Toggl.Phoebe.Data.Views
                 return;
 
             startFrom = DateTime.UtcNow;
-            data.Clear ();
+            dateGroups.Clear ();
             HasMore = true;
 
             LoadMore ();
@@ -148,16 +196,66 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public IEnumerable<TimeEntryModel> Data {
-            get { return data; }
+        public IEnumerable<object> Data {
+            get {
+                foreach (var grp in dateGroups) {
+                    yield return grp;
+                    foreach (var model in grp.Models) {
+                        yield return model;
+                    }
+                }
+            }
         }
 
         public long Count {
-            get { return data.Count; }
+            get { return dateGroups.Count + dateGroups.Sum (g => g.Models.Count); }
         }
 
         public bool HasMore { get; private set; }
 
         public bool IsLoading { get; private set; }
+
+        public class DateGroup : ObservableObject
+        {
+            private static string GetPropertyName<T> (Expression<Func<DateGroup, T>> expr)
+            {
+                return expr.ToPropertyName ();
+            }
+
+            private readonly DateTime date;
+            private readonly List<TimeEntryModel> models = new List<TimeEntryModel> ();
+            private TimeSpan totalDuration;
+
+            public DateGroup (DateTime date)
+            {
+                this.date = date.Date;
+            }
+
+            public bool UpdateTotalDuration ()
+            {
+                var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
+                if (totalDuration != duration) {
+                    ChangePropertyAndNotify (PropertyTotalDuration, delegate {
+                        totalDuration = duration;
+                    });
+                    return true;
+                }
+                return false;
+            }
+
+            public DateTime Date {
+                get { return date; }
+            }
+
+            public static readonly string PropertyTotalDuration = GetPropertyName ((m) => m.TotalDuration);
+
+            public TimeSpan TotalDuration {
+                get { return totalDuration; }
+            }
+
+            public List<TimeEntryModel> Models {
+                get { return models; }
+            }
+        }
     }
 }

@@ -300,7 +300,7 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             public WorkspaceModel WorkspaceModel {
-                get { return model != null ? model.Workspace : WorkspaceModel; }
+                get { return model != null ? model.Workspace : workspaceModel; }
             }
 
             public ProjectModel Model {

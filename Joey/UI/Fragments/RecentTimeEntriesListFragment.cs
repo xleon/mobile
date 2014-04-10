@@ -62,7 +62,7 @@ namespace Toggl.Joey.UI.Fragments
             if (adapter == null || position < 0 || position >= adapter.Count)
                 return;
 
-            var model = adapter.GetModel (position);
+            var model = adapter.GetEntry (position);
             if (model == null)
                 return;
 

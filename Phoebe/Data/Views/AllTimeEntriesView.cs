@@ -1,9 +1,10 @@
 ﻿using System;
-using XPlatUtils;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -11,27 +12,30 @@ namespace Toggl.Phoebe.Data.Views
     /// This view combines IModelStore data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
-    public class AllTimeEntriesView : ModelsView<TimeEntryModel>
+    public class AllTimeEntriesView : IDataView<object>, IDisposable
     {
         private static readonly string Tag = "AllTimeEntriesView";
-
-        private static string GetPropertyName<K> (Expression<Func<AllTimeEntriesView, K>> expr)
-        {
-            return expr.ToPropertyName ();
-        }
-
+        private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
+        private UpdateMode updateMode = UpdateMode.Immediate;
         private DateTime startFrom;
-        private readonly List<TimeEntryModel> data = new List<TimeEntryModel> ();
-        #pragma warning disable 0414
-        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-        #pragma warning restore 0414
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
 
         public AllTimeEntriesView ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+
             HasMore = true;
             Reload ();
+        }
+
+        public void Dispose ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionModelChanged != null) {
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
@@ -43,56 +47,112 @@ namespace Toggl.Phoebe.Data.Views
                 return;
 
             if (entry.DeletedAt == null && entry.State != TimeEntryState.New) {
-                if (!data.Contains (entry)) {
-                    ChangeDataAndNotify (delegate {
-                        data.Add (entry);
-                        data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                    });
+                var grp = FindGroupWith (entry);
+                if (grp == null) {
+                    grp = GetGroupFor (entry);
+                    grp.Models.Add (entry);
+                    Sort ();
+                    OnUpdated ();
                 } else if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
-                    ChangeDataAndNotify (delegate {
-                        data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                    });
+                    // Check that the entry is still in the correct group:
+                    var date = entry.StartTime.ToLocalTime ().Date;
+                    if (grp.Date != date) {
+                        // Need to move entry:
+                        grp.Models.Remove (entry);
+
+                        grp = GetGroupFor (entry);
+                        grp.Models.Add (entry);
+                    }
+                    Sort ();
+                    OnUpdated ();
                 }
             } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
-                if (data.Contains (entry)) {
-                    ChangeDataAndNotify (delegate {
-                        data.Remove (entry);
-                    });
+                var grp = FindGroupWith (entry);
+                if (grp != null) {
+                    grp.Models.Remove (entry);
+                    if (grp.Models.Count == 0) {
+                        dateGroups.Remove (grp);
+                    }
+                    OnUpdated ();
                 }
             }
         }
 
-        public override void Reload ()
+        private DateGroup FindGroupWith (TimeEntryModel model)
+        {
+            return dateGroups.FirstOrDefault (g => g.Models.Contains (model));
+        }
+
+        private DateGroup GetGroupFor (TimeEntryModel model)
+        {
+            var date = model.StartTime.ToLocalTime ().Date;
+            var grp = dateGroups.FirstOrDefault (g => g.Date == date);
+            if (grp == null) {
+                grp = new DateGroup (date);
+                dateGroups.Add (grp);
+            }
+            return grp;
+        }
+
+        private void Sort ()
+        {
+            foreach (var grp in dateGroups) {
+                grp.Models.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+            }
+            dateGroups.Sort ((a, b) => b.Date.CompareTo (a.Date));
+        }
+
+        public event EventHandler Updated;
+
+        private void OnUpdated ()
+        {
+            if (updateMode != UpdateMode.Immediate) {
+                updateMode = UpdateMode.BatchWithChanges;
+                return;
+            }
+
+            var handler = Updated;
+            if (handler != null) {
+                handler (this, EventArgs.Empty);
+            }
+        }
+
+        private void BeginUpdate ()
+        {
+            if (updateMode != UpdateMode.Immediate)
+                return;
+            updateMode = UpdateMode.Batch;
+        }
+
+        private void EndUpdate ()
+        {
+            var shouldUpdate = updateMode == UpdateMode.BatchWithChanges;
+            updateMode = UpdateMode.Immediate;
+            if (shouldUpdate) {
+                OnUpdated ();
+            }
+        }
+
+        public void Reload ()
         {
             if (IsLoading)
                 return;
 
             startFrom = DateTime.UtcNow;
-            ChangeDataAndNotify (delegate {
-                data.Clear ();
-            });
+            dateGroups.Clear ();
             HasMore = true;
 
             LoadMore ();
         }
 
-        private void ChangeDataAndNotify (Action change)
-        {
-            OnPropertyChanging (PropertyCount);
-            OnPropertyChanging (PropertyModels);
-            change ();
-            OnPropertyChanged (PropertyModels);
-            OnPropertyChanged (PropertyCount);
-        }
-
-        public async override void LoadMore ()
+        public async void LoadMore ()
         {
             if (IsLoading || !HasMore)
                 return;
 
             IsLoading = true;
             var client = ServiceContainer.Resolve<ITogglClient> ();
-            HasError = false;
+            OnUpdated ();
 
             try {
                 var endTime = startFrom;
@@ -100,15 +160,13 @@ namespace Toggl.Phoebe.Data.Views
 
                 bool useLocal = false;
 
-                OnPropertyChanging (PropertyCount);
-                OnPropertyChanging (PropertyModels);
-
                 // Try with latest data from server first:
                 if (!useLocal) {
                     const int numDays = 5;
                     try {
                         var minStart = endTime;
                         var entries = await client.ListTimeEntries (endTime, numDays);
+                        BeginUpdate ();
                         foreach (var entry in entries) {
                             // OnModelChanged catches the newly created time entries and adds them to the dataset
 
@@ -127,7 +185,6 @@ namespace Toggl.Phoebe.Data.Views
                             log.Warning (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
                         }
 
-                        HasError = true;
                         useLocal = true;
                     }
                 }
@@ -138,31 +195,65 @@ namespace Toggl.Phoebe.Data.Views
                                       (te) => te.StartTime <= endTime && te.StartTime > startTime && te.State != TimeEntryState.New)
                         .NotDeleted ()
                         .ForCurrentUser ();
+                    BeginUpdate ();
                     foreach (var entry in entries) {
                         // OnModelChanged catches the newly created time entries and adds them to the dataset
                     }
 
                     HasMore = Model.Query<TimeEntryModel> ((te) => te.StartTime <= startTime && te.State != TimeEntryState.New).Count () > 0;
                 }
-
-                OnPropertyChanged (PropertyModels);
-                OnPropertyChanged (PropertyCount);
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, "Failed to fetch time entries");
-
-                HasError = true;
             } finally {
                 IsLoading = false;
+                EndUpdate ();
             }
         }
 
-        public override IEnumerable<TimeEntryModel> Models {
-            get { return data; }
+        public IEnumerable<object> Data {
+            get {
+                foreach (var grp in dateGroups) {
+                    yield return grp;
+                    foreach (var model in grp.Models) {
+                        yield return model;
+                    }
+                }
+            }
         }
 
-        public override long Count {
-            get { return data.Count; }
+        public long Count {
+            get { return dateGroups.Count + dateGroups.Sum (g => g.Models.Count); }
+        }
+
+        public bool HasMore { get; private set; }
+
+        public bool IsLoading { get; private set; }
+
+        public class DateGroup
+        {
+            private readonly DateTime date;
+            private readonly List<TimeEntryModel> models = new List<TimeEntryModel> ();
+
+            public DateGroup (DateTime date)
+            {
+                this.date = date.Date;
+            }
+
+            public DateTime Date {
+                get { return date; }
+            }
+
+            public List<TimeEntryModel> Models {
+                get { return models; }
+            }
+        }
+
+        private enum UpdateMode
+        {
+            Immediate,
+            Batch,
+            BatchWithChanges
         }
     }
 }

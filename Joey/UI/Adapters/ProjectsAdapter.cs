@@ -4,234 +4,68 @@ using System.Linq;
 using Android.Graphics;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
+using Toggl.Phoebe.Data.Views;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class ProjectsAdapter : BaseAdapter
+    public class ProjectsAdapter : BaseDataViewAdapter<object>
     {
-        protected static readonly int ViewTypeWorkspace = 0;
-        protected static readonly int ViewTypeNoProject = 1;
-        protected static readonly int ViewTypeProject = 2;
-        protected static readonly int ViewTypeNewProject = 3;
-        protected static readonly int ViewTypeTask = 4;
-        private readonly List<object> data = new List<object> ();
-        private readonly List<WorkspaceWrapper> workspaces = new List<WorkspaceWrapper> ();
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
-        private bool dataStale = true;
-        private bool workspacesStale = true;
-        private int firstNewColor;
+        protected static readonly int ViewTypeWorkspace = ViewTypeContent;
+        protected static readonly int ViewTypeNoProject = ViewTypeContent + 1;
+        protected static readonly int ViewTypeProject = ViewTypeContent + 2;
+        protected static readonly int ViewTypeNewProject = ViewTypeContent + 3;
+        protected static readonly int ViewTypeTask = ViewTypeContent + 4;
+        private readonly ExpandableProjectsView dataView;
 
-        public ProjectsAdapter () : base ()
+        public ProjectsAdapter () : this (new ExpandableProjectsView ())
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-            firstNewColor = new Random ().Next ();
         }
 
-        protected override void Dispose (bool disposing)
+        private ProjectsAdapter (ExpandableProjectsView dataView) : base (dataView)
         {
-            if (disposing) {
-                ClearWorkspaces ();
-
-                if (subscriptionModelChanged != null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    bus.Unsubscribe (subscriptionModelChanged);
-                    subscriptionModelChanged = null;
-                }
-            }
-
-            base.Dispose (disposing);
-        }
-
-        private void ClearWorkspaces ()
-        {
-            foreach (var workspace in workspaces) {
-                workspace.Dispose ();
-            }
-            workspaces.Clear ();
-            workspacesStale = true;
-        }
-
-        private void EnsureWorkspaces ()
-        {
-            if (!workspacesStale)
-                return;
-
-            ClearWorkspaces ();
-            workspaces.AddRange (Model.Query<WorkspaceModel> ()
-                .NotDeleted ()
-                .Select ((m) => new WorkspaceWrapper (this, m)));
-            workspaces.Sort (WorkspaceComparison);
-
-            workspacesStale = false;
-        }
-
-        private void EnsureData ()
-        {
-            if (!dataStale)
-                return;
-
-            EnsureWorkspaces ();
-
-            // Flatten data:
-            data.Clear ();
-
-            // If there are more than 1 visible workspace, we need to display workspaces
-            var addWorkspaces = workspaces.Where ((m) => m.ProjectCount > 0).Count () > 1;
-            var workspaceIdx = 0;
-
-            foreach (var workspace in workspaces) {
-                if (addWorkspaces) {
-                    data.Add (workspace);
-                }
-
-                data.Add (new NoProjectWrapper (workspace.Model));
-
-                foreach (var projects in workspace.Projects) {
-                    data.Add (projects);
-
-                    if (projects.IsExpanded) {
-                        foreach (var task in projects.Tasks) {
-                            data.Add (task);
-                        }
-                    }
-                }
-
-                data.Add (new NewProjectWrapper (workspace.Model, firstNewColor + workspaceIdx));
-                workspaceIdx += 1;
-            }
-
-            dataStale = false;
-        }
-
-        private void Rebind ()
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero)
-                return;
-
-            dataStale = true;
-            NotifyDataSetChanged ();
-        }
-
-        private void OnModelChanged (ModelChangedMessage msg)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero)
-                return;
-
-            if (workspacesStale)
-                return;
-
-            if (msg.Model is UserModel
-                && msg.PropertyName == UserModel.PropertyDefaultWorkspaceId) {
-                workspaces.Sort (WorkspaceComparison);
-                Rebind ();
-            } else if (msg.Model is WorkspaceModel) {
-                if (msg.PropertyName == WorkspaceModel.PropertyName
-                    || msg.PropertyName == WorkspaceModel.PropertyIsShared
-                    || msg.PropertyName == WorkspaceModel.PropertyDeletedAt) {
-
-                    var model = (WorkspaceModel)msg.Model;
-                    if (model.IsShared && model.DeletedAt != null) {
-                        if (!workspaces.Any ((w) => w.Model == model)) {
-                            workspacesStale = true;
-                        } else {
-                            workspaces.Sort (WorkspaceComparison);
-                            Rebind ();
-                        }
-                    } else {
-                        if (workspaces.Any ((w) => w.Model == model)) {
-                            workspacesStale = true;
-                        }
-                    }
-                }
-            }
-
-            if (workspacesStale) {
-                Rebind ();
-            }
-        }
-
-        public Model GetModel (int position)
-        {
-            EnsureData ();
-            if (position < 0 || position >= data.Count)
-                return null;
-
-            var obj = data [position];
-
-            var project = obj as ProjectWrapper;
-            if (project != null)
-                return project.Model;
-
-            var noProject = obj as NoProjectWrapper;
-            if (noProject != null)
-                return noProject.Workspace;
-
-            var newProject = obj as NewProjectWrapper;
-            if (newProject != null)
-                return newProject.Model;
-
-            var task = obj as TaskModel;
-            if (task != null)
-                return task;
-
-            var workspace = obj as WorkspaceWrapper;
-            if (workspace != null)
-                return workspace.Model;
-
-            return null;
-        }
-
-        public override Java.Lang.Object GetItem (int position)
-        {
-            return null;
-        }
-
-        public override long GetItemId (int position)
-        {
-            return position;
+            this.dataView = dataView;
         }
 
         public override int ViewTypeCount {
-            get { return 5; }
+            get { return base.ViewTypeCount + 4; }
         }
 
         public override int GetItemViewType (int position)
         {
-            EnsureData ();
-            if (position < 0 || position >= data.Count)
+            if (position == DataView.Count && DataView.IsLoading)
+                return ViewTypeLoaderPlaceholder;
+
+            if (position < 0 || position >= DataView.Count)
                 throw new ArgumentOutOfRangeException ("position");
 
-            var obj = data [position];
-            if (obj is ProjectWrapper) {
+            var obj = DataView.Data.ElementAt (position);
+            if (obj is ProjectAndTaskView.Project) {
+                var p = (ProjectAndTaskView.Project)obj;
+                if (p.IsNewProject) {
+                    return ViewTypeNewProject;
+                }
+                if (p.IsNoProject) {
+                    return ViewTypeNoProject;
+                }
                 return ViewTypeProject;
-            } else if (obj is NoProjectWrapper) {
-                return ViewTypeNoProject;
-            } else if (obj is NewProjectWrapper) {
-                return ViewTypeNewProject;
             } else if (obj is TaskModel) {
                 return ViewTypeTask;
-            } else if (obj is WorkspaceWrapper) {
+            } else if (obj is ProjectAndTaskView.Workspace) {
                 return ViewTypeWorkspace;
             }
 
             throw new NotSupportedException ("No view type defined for given object.");
         }
 
-        public override View GetView (int position, View convertView, ViewGroup parent)
+        protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
-            EnsureData ();
             var view = convertView;
 
+            var item = GetEntry (position);
             var viewType = GetItemViewType (position);
             if (viewType == ViewTypeWorkspace) {
                 if (view == null) {
@@ -241,16 +75,16 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (WorkspaceListItemHolder)view.Tag;
-                holder.Bind ((WorkspaceWrapper)data [position]);
+                holder.Bind ((ProjectAndTaskView.Workspace)item);
             } else if (viewType == ViewTypeProject) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.ProjectListProjectItem, parent, false);
-                    view.Tag = new ProjectListItemHolder (view);
+                    view.Tag = new ProjectListItemHolder (dataView, view);
                 }
 
                 var holder = (ProjectListItemHolder)view.Tag;
-                holder.Bind ((ProjectWrapper)data [position]);
+                holder.Bind ((ProjectAndTaskView.Project)item);
             } else if (viewType == ViewTypeNoProject) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -259,7 +93,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (NoProjectListItemHolder)view.Tag;
-                holder.Bind ((NoProjectWrapper)data [position]);
+                holder.Bind ((ProjectAndTaskView.Project)item);
             } else if (viewType == ViewTypeNewProject) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -268,7 +102,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (NewProjectListItemHolder)view.Tag;
-                holder.Bind ((NewProjectWrapper)data [position]);
+                holder.Bind ((ProjectAndTaskView.Project)item);
             } else if (viewType == ViewTypeTask) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -277,7 +111,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (TaskListItemHolder)view.Tag;
-                holder.Bind ((TaskModel)data [position]);
+                holder.Bind ((TaskModel)item);
             } else {
                 throw new NotSupportedException ("Got an invalid view type: {0}" + viewType);
             }
@@ -287,298 +121,12 @@ namespace Toggl.Joey.UI.Adapters
 
         public override bool IsEnabled (int position)
         {
-            EnsureData ();
-            if (position < 0 || position >= data.Count)
-                throw new ArgumentOutOfRangeException ("position");
-            return !(data [position] is WorkspaceWrapper);
+            return !(GetEntry (position) is ProjectAndTaskView.Workspace);
         }
-
-        public override int Count {
-            get {
-                EnsureData ();
-                return data.Count;
-            }
-        }
-
-        #region Model wrappers
-
-        private abstract class ModelWrapper<T> : IDisposable
-            where T : Model
-        {
-            protected readonly ProjectsAdapter adapter;
-            protected readonly T model;
-            private Subscription<ModelChangedMessage> subscriptionModelChanged;
-
-            public ModelWrapper (ProjectsAdapter adapter, T model)
-            {
-                this.adapter = adapter;
-                this.model = model;
-
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-            }
-
-            ~ModelWrapper ()
-            {
-                Dispose (false);
-            }
-
-            public void Dispose ()
-            {
-                Dispose (true);
-                GC.SuppressFinalize (this);
-            }
-
-            protected virtual void Dispose (bool disposing)
-            {
-                if (disposing) {
-                    if (subscriptionModelChanged != null) {
-                        var bus = ServiceContainer.Resolve<MessageBus> ();
-                        bus.Unsubscribe (subscriptionModelChanged);
-                        subscriptionModelChanged = null;
-                    }
-                }
-            }
-
-            protected abstract void OnModelChanged (ModelChangedMessage msg);
-
-            public T Model {
-                get { return model; }
-            }
-        }
-
-        private class WorkspaceWrapper : ModelWrapper<WorkspaceModel>
-        {
-            private readonly List<ProjectWrapper> projects = new List<ProjectWrapper> ();
-            private bool projectsStale = true;
-
-            public WorkspaceWrapper (ProjectsAdapter adapter, WorkspaceModel model) : base (adapter, model)
-            {
-            }
-
-            protected override void Dispose (bool disposing)
-            {
-                if (disposing) {
-                    ClearProjects ();
-                }
-
-                base.Dispose (disposing);
-            }
-
-            private void ClearProjects ()
-            {
-                foreach (var project in projects) {
-                    project.Dispose ();
-                }
-                projects.Clear ();
-
-                projectsStale = true;
-            }
-
-            private void EnsureProjects ()
-            {
-                if (!projectsStale)
-                    return;
-
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-
-                ClearProjects ();
-                if (user != null) {
-                    projects.AddRange (user.GetAvailableProjects (model).Select ((m) => new ProjectWrapper (adapter, m)));
-                }
-                projects.Sort (ProjectComparison);
-
-                projectsStale = false;
-            }
-
-            public int ProjectCount {
-                get {
-                    EnsureProjects ();
-                    return projects.Count;
-                }
-            }
-
-            public IEnumerable<ProjectWrapper> Projects {
-                get {
-                    EnsureProjects ();
-                    return projects;
-                }
-            }
-
-            protected override void OnModelChanged (ModelChangedMessage msg)
-            {
-                if (projectsStale)
-                    return;
-
-                if (msg.Model is ProjectModel) {
-                    var project = (ProjectModel)msg.Model;
-
-                    if (projects.Any ((w) => w.Model == project)) {
-                        if (msg.PropertyName == ProjectModel.PropertyName) {
-                            // Only the name changed, so we can just sort the list again
-                            projects.Sort (ProjectComparison);
-                            adapter.Rebind ();
-                        } else if (msg.PropertyName == ProjectModel.PropertyWorkspaceId
-                                   || msg.PropertyName == ProjectModel.PropertyDeletedAt) {
-                            // Highly likely that something was removed, invalidate data
-                            projectsStale = true;
-                        }
-                    } else if (msg.PropertyName == ProjectModel.PropertyWorkspaceId
-                               || msg.PropertyName == ProjectModel.PropertyDeletedAt
-                               || msg.PropertyName == ProjectModel.PropertyIsShared
-                               || msg.PropertyName == ProjectModel.PropertyName) {
-                        if (project.IsShared && project.DeletedAt == null && project.WorkspaceId == model.Id) {
-                            // Something new, maybe it belongs to us?
-                            projectsStale = true;
-                        }
-                    }
-                } else if (msg.Model is ProjectUserModel) {
-                    var inter = (ProjectUserModel)msg.Model;
-
-                    // Project - user relation changed, need new data
-                    if (inter.From.WorkspaceId == model.Id) {
-                        projectsStale = true;
-                    }
-                }
-
-                if (projectsStale) {
-                    // Notify the adapter that new stuff is avail
-                    adapter.Rebind ();
-                }
-            }
-        }
-
-        private class ProjectWrapper : ModelWrapper<ProjectModel>
-        {
-            private readonly List<TaskModel> tasks = new List<TaskModel> ();
-            private bool tasksStale = true;
-            private bool expanded = false;
-
-            public ProjectWrapper (ProjectsAdapter adapter, ProjectModel model) : base (adapter, model)
-            {
-            }
-
-            protected override void Dispose (bool disposing)
-            {
-                if (disposing) {
-                    ClearTasks ();
-                }
-
-                base.Dispose (disposing);
-            }
-
-            private void ClearTasks ()
-            {
-                tasks.Clear ();
-                tasksStale = true;
-            }
-
-            private void EnsureTasks ()
-            {
-                if (!tasksStale)
-                    return;
-
-                ClearTasks ();
-                tasks.AddRange (model.Tasks.NotDeleted ().Where ((t) => t.IsActive));
-                tasks.Sort (TaskComparison);
-
-                tasksStale = true;
-            }
-
-            public bool IsExpanded {
-                get { return expanded; }
-                set {
-                    if (expanded == value)
-                        return;
-                    expanded = value;
-                    adapter.Rebind ();
-                }
-            }
-
-            public int TaskCount {
-                get {
-                    EnsureTasks ();
-                    return tasks.Count;
-                }
-            }
-
-            public IEnumerable<TaskModel> Tasks {
-                get {
-                    EnsureTasks ();
-                    return tasks;
-                }
-            }
-
-            protected override void OnModelChanged (ModelChangedMessage msg)
-            {
-                if (tasksStale)
-                    return;
-
-                var task = msg.Model as TaskModel;
-                if (task == null)
-                    return;
-
-                if (msg.PropertyName == TaskModel.PropertyProjectId
-                    || msg.PropertyName == TaskModel.PropertyDeletedAt
-                    || msg.PropertyName == TaskModel.PropertyIsShared
-                    || msg.PropertyName == TaskModel.PropertyIsActive
-                    || msg.PropertyName == TaskModel.PropertyName) {
-                    if (task.IsShared && task.DeletedAt == null && task.IsActive && task.ProjectId == model.Id) {
-                        if (!tasks.Contains (task)) {
-                            tasksStale = true;
-                        } else {
-                            tasks.Sort (TaskComparison);
-                            adapter.Rebind ();
-                        }
-                    } else {
-                        if (tasks.Contains (task)) {
-                            tasksStale = true;
-                        }
-                    }
-                }
-
-                if (tasksStale) {
-                    adapter.Rebind ();
-                }
-            }
-        }
-
-        private class NoProjectWrapper
-        {
-            private readonly WorkspaceModel workspace;
-
-            public NoProjectWrapper (WorkspaceModel workspace)
-            {
-                this.workspace = workspace;
-            }
-
-            public WorkspaceModel Workspace {
-                get { return workspace; }
-            }
-        }
-
-        private class NewProjectWrapper
-        {
-            private readonly ProjectModel model;
-
-            public NewProjectWrapper (WorkspaceModel workspace, int color)
-            {
-                model = new ProjectModel () {
-                    Workspace = workspace,
-                    Color = color,
-                };
-            }
-
-            public ProjectModel Model {
-                get { return model; }
-            }
-        }
-
-        #endregion
 
         #region View holders
 
-        private class WorkspaceListItemHolder : ModelViewHolder<WorkspaceWrapper>
+        private class WorkspaceListItemHolder : ModelViewHolder<ProjectAndTaskView.Workspace>
         {
             public TextView WorkspaceTextView { get; private set; }
 
@@ -617,8 +165,10 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class ProjectListItemHolder : ModelViewHolder<ProjectWrapper>
+        private class ProjectListItemHolder : ModelViewHolder<ProjectAndTaskView.Project>
         {
+            private readonly ExpandableProjectsView dataView;
+
             public View ColorView { get; private set; }
 
             public TextView ProjectTextView { get; private set; }
@@ -631,8 +181,10 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageView TasksImageView { get; private set; }
 
-            public ProjectListItemHolder (View root) : base (root)
+            public ProjectListItemHolder (ExpandableProjectsView dataView, View root) : base (root)
             {
+                this.dataView = dataView;
+
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
@@ -647,7 +199,7 @@ namespace Toggl.Joey.UI.Adapters
             {
                 if (DataSource == null)
                     return;
-                DataSource.IsExpanded = !DataSource.IsExpanded;
+                dataView.ToggleProjectTasks (Model);
             }
 
             private ProjectModel Model {
@@ -691,13 +243,14 @@ namespace Toggl.Joey.UI.Adapters
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
-                TasksFrameLayout.Visibility = DataSource.TaskCount == 0 ? ViewStates.Gone : ViewStates.Visible;
-                TasksTextView.Visibility = DataSource.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
-                TasksImageView.Visibility = !DataSource.IsExpanded ? ViewStates.Invisible : ViewStates.Visible;
+                TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                var expanded = dataView.AreProjectTasksVisible (Model);
+                TasksTextView.Visibility = expanded ? ViewStates.Invisible : ViewStates.Visible;
+                TasksImageView.Visibility = !expanded ? ViewStates.Invisible : ViewStates.Visible;
             }
         }
 
-        private class NoProjectListItemHolder : BindableViewHolder<NoProjectWrapper>
+        private class NoProjectListItemHolder : BindableViewHolder<ProjectAndTaskView.Project>
         {
             public View ColorView { get; private set; }
 
@@ -716,7 +269,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class NewProjectListItemHolder : BindableViewHolder<NewProjectWrapper>
+        private class NewProjectListItemHolder : BindableViewHolder<ProjectAndTaskView.Project>
         {
             public View ColorView { get; private set; }
 
@@ -781,33 +334,108 @@ namespace Toggl.Joey.UI.Adapters
 
         #endregion
 
-        #region Sorting functions
-
-        private static int WorkspaceComparison (WorkspaceWrapper a, WorkspaceWrapper b)
+        class ExpandableProjectsView : IDataView<object>, IDisposable
         {
-            // Make sure the default workspace is first:
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-            if (user != null) {
-                if (a.Model.Id == user.DefaultWorkspaceId) {
-                    return -1;
-                } else if (b.Model.Id == user.DefaultWorkspaceId) {
-                    return 1;
+            private readonly HashSet<Guid?> expandedProjectIds = new HashSet<Guid?> ();
+            private ProjectAndTaskView dataView;
+
+            public ExpandableProjectsView ()
+            {
+                dataView = new ProjectAndTaskView ();
+                dataView.Updated += OnDataViewUpdated;
+            }
+
+            public void Dispose ()
+            {
+                if (dataView != null) {
+                    dataView.Dispose ();
+                    dataView.Updated -= OnDataViewUpdated;
+                    dataView = null;
                 }
             }
 
-            return a.Model.Name.CompareTo (b.Model.Name);
-        }
+            private void OnDataViewUpdated (object sender, EventArgs e)
+            {
+                OnUpdated ();
+            }
 
-        private static int ProjectComparison (ProjectWrapper a, ProjectWrapper b)
-        {
-            return (a.Model.Name ?? String.Empty).CompareTo (b.Model.Name ?? String.Empty);
-        }
+            public void ToggleProjectTasks (ProjectModel model)
+            {
+                if (!expandedProjectIds.Remove (model.Id)) {
+                    expandedProjectIds.Add (model.Id);
+                }
+                OnUpdated ();
+            }
 
-        private static int TaskComparison (TaskModel a, TaskModel b)
-        {
-            return (a.Name ?? String.Empty).CompareTo (b.Name ?? String.Empty);
-        }
+            public bool AreProjectTasksVisible (ProjectModel model)
+            {
+                return expandedProjectIds.Contains (model.Id);
+            }
 
-        #endregion
+            public event EventHandler Updated;
+
+            private void OnUpdated ()
+            {
+                cachedCount = null;
+                var handler = Updated;
+                if (handler != null) {
+                    handler (this, EventArgs.Empty);
+                }
+            }
+
+            public void Reload ()
+            {
+                if (dataView != null)
+                    dataView.Reload ();
+            }
+
+            public void LoadMore ()
+            {
+                if (dataView != null)
+                    dataView.LoadMore ();
+            }
+
+            public IEnumerable<object> Data {
+                get {
+                    if (dataView != null) {
+                        foreach (var obj in dataView.Data) {
+                            var task = obj as TaskModel;
+                            if (task != null) {
+                                if (!expandedProjectIds.Contains (task.ProjectId))
+                                    continue;
+                            }
+                            yield return obj;
+                        }
+                    }
+                }
+            }
+
+            private long? cachedCount;
+
+            public long Count {
+                get {
+                    if (cachedCount == null) {
+                        cachedCount = Data.LongCount ();
+                    }
+                    return cachedCount.Value;
+                }
+            }
+
+            public bool HasMore {
+                get {
+                    if (dataView != null)
+                        return dataView.HasMore;
+                    return false;
+                }
+            }
+
+            public bool IsLoading {
+                get {
+                    if (dataView != null)
+                        return dataView.IsLoading;
+                    return false;
+                }
+            }
+        }
     }
 }

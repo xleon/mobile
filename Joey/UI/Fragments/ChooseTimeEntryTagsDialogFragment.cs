@@ -107,7 +107,7 @@ namespace Toggl.Joey.UI.Fragments
             var tags = model.Tags.Select ((inter) => inter.To).ToList ();
             var i = 0;
             listView.ClearChoices ();
-            foreach (var tag in modelsView.Models) {
+            foreach (var tag in modelsView.Data) {
                 if (tags.Contains (tag)) {
                     listView.SetItemChecked (i, true);
                 }
@@ -141,7 +141,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
         {
             var selected = listView.CheckedItemPositions;
-            var tags = modelsView.Models.Where ((tag, idx) => selected.Get (idx, false)).ToList ();
+            var tags = modelsView.Data.Where ((tag, idx) => selected.Get (idx, false)).ToList ();
 
             // Store tags
             foreach (var inter in model.Tags.ToList()) {

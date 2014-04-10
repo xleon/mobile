@@ -5,14 +5,11 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class WorkspaceTagsView : ModelsView<TagModel>
+    public sealed class WorkspaceTagsView : IDataView<TagModel>, IDisposable
     {
         private readonly List<TagModel> models = new List<TagModel> ();
-        #pragma warning disable 0414
-        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-        #pragma warning restore 0414
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private Guid workspaceId;
-        private bool subscriptionEnabled = true;
 
         public WorkspaceTagsView (Guid workspaceId)
         {
@@ -23,35 +20,48 @@ namespace Toggl.Phoebe.Data.Views
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
         }
 
+        public void Dispose ()
+        {
+            if (subscriptionModelChanged != null) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
+
+            GC.SuppressFinalize (this);
+        }
+
         private void OnModelChanged (ModelChangedMessage msg)
         {
-            if (!subscriptionEnabled)
-                return;
-
             var model = msg.Model as TagModel;
             if (model == null)
                 return;
 
             if (msg.PropertyName == TagModel.PropertyName
                 || model.WorkspaceId == workspaceId) {
-                ChangeDataAndNotify (delegate {
-                    Sort ();
-                });
+                Sort ();
+                OnUpdated ();
             } else if (msg.PropertyName == TagModel.PropertyWorkspaceId
                        || msg.PropertyName == TagModel.PropertyIsShared) {
                 if (model.WorkspaceId == workspaceId) {
-                    ChangeDataAndNotify (delegate {
-                        models.Add (model);
-                        Sort ();
-                    });
+                    models.Add (model);
+                    Sort ();
+                    OnUpdated ();
                 } else {
                     var idx = models.IndexOf (model);
                     if (idx >= 0) {
-                        ChangeDataAndNotify (delegate {
-                            models.RemoveAt (idx);
-                        });
+                        models.RemoveAt (idx);
+                        OnUpdated ();
                     }
                 }
+            }
+        }
+
+        private void OnUpdated ()
+        {
+            var handler = Updated;
+            if (handler != null) {
+                handler (this, EventArgs.Empty);
             }
         }
 
@@ -65,44 +75,54 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private void ChangeDataAndNotify (Action change)
-        {
-            OnPropertyChanging (PropertyCount);
-            OnPropertyChanging (PropertyModels);
-            change ();
-            OnPropertyChanged (PropertyModels);
-            OnPropertyChanged (PropertyCount);
-        }
-
-        public override void Reload ()
-        {
-            subscriptionEnabled = false;
-            try {
-                ChangeDataAndNotify (delegate {
-                    models.Clear ();
-                    models.AddRange (Model.Query<TagModel> ((m) => m.WorkspaceId == workspaceId).NotDeleted ());
-                    Sort ();
-                });
-            } finally {
-                subscriptionEnabled = true;
-            }
-        }
-
         private void Sort ()
         {
             models.Sort ((a, b) => (a.Name ?? String.Empty).CompareTo ((b.Name ?? String.Empty)));
         }
 
-        public override void LoadMore ()
+        public event EventHandler Updated;
+
+        public void Reload ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bool shouldSubscribe = false;
+
+            if (subscriptionModelChanged != null) {
+                shouldSubscribe = true;
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
+
+            try {
+                models.Clear ();
+                models.AddRange (Model.Query<TagModel> ((m) => m.WorkspaceId == workspaceId).NotDeleted ());
+                Sort ();
+                OnUpdated ();
+            } finally {
+                if (shouldSubscribe) {
+                    subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+                }
+            }
+        }
+
+        public void LoadMore ()
         {
         }
 
-        public override IEnumerable<TagModel> Models {
+        public IEnumerable<TagModel> Data {
             get { return models; }
         }
 
-        public override long Count {
+        public long Count {
             get { return models.Count; }
+        }
+
+        public bool HasMore {
+            get { return false; }
+        }
+
+        public bool IsLoading {
+            get { return false; }
         }
     }
 }

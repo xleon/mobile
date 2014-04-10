@@ -58,8 +58,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -70,8 +71,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -85,8 +87,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (5, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2, 1 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -100,8 +103,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (5, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2, 1 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -116,8 +120,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 1, 5, 4, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -132,8 +137,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 2, 1 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -147,8 +153,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (3, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -162,8 +169,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -177,8 +185,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 2, 1 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -192,8 +201,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (3, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -207,8 +217,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -222,8 +233,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 2, 1 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -243,8 +255,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -266,8 +279,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         [Test]
@@ -287,8 +301,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (4, view.Count);
             Assert.AreEqual (
                 new long[] { 5, 4, 3, 2 },
-                view.Models.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
             );
+            view.Dispose ();
         }
 
         private void CreateTestData ()

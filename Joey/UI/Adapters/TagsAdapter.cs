@@ -8,9 +8,9 @@ using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class TagsAdapter : BaseModelsViewAdapter<TagModel>
+    public class TagsAdapter : BaseDataViewAdapter<TagModel>
     {
-        public TagsAdapter (IModelsView<TagModel> view) : base (view)
+        public TagsAdapter (IDataView<TagModel> view) : base (view)
         {
         }
 
@@ -23,7 +23,7 @@ namespace Toggl.Joey.UI.Adapters
                 view.Tag = new TagListItemHolder (view);
             }
             var holder = (TagListItemHolder)view.Tag;
-            holder.Bind (GetModel (position));
+            holder.Bind (GetEntry (position));
             return view;
         }
 

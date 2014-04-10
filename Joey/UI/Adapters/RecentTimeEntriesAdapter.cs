@@ -13,7 +13,7 @@ using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class RecentTimeEntriesAdapter : BaseModelsViewAdapter<TimeEntryModel>
+    public class RecentTimeEntriesAdapter : BaseDataViewAdapter<TimeEntryModel>
     {
         public RecentTimeEntriesAdapter () : base (new RecentTimeEntriesView ())
         {
@@ -28,7 +28,7 @@ namespace Toggl.Joey.UI.Adapters
                 view.Tag = new RecentTimeEntryListItemHolder (view);
             }
             var holder = (RecentTimeEntryListItemHolder)view.Tag;
-            holder.Bind (GetModel (position));
+            holder.Bind (GetEntry (position));
             return view;
         }
 

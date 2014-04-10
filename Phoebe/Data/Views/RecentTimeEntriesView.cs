@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
@@ -12,15 +11,9 @@ namespace Toggl.Phoebe.Data.Views
     /// <summary>
     /// This view returns the recent unique time entries.
     /// </summary>
-    public class RecentTimeEntriesView : ModelsView<TimeEntryModel>
+    public class RecentTimeEntriesView : IDataView<TimeEntryModel>, IDisposable
     {
         private static readonly string Tag = "RecentTimeEntriesView";
-
-        private static string GetPropertyName<K> (Expression<Func<RecentTimeEntriesView, K>> expr)
-        {
-            return expr.ToPropertyName ();
-        }
-
         private DateTime queryStartDate;
         private GroupContainer data = new GroupContainer ();
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
@@ -29,6 +22,22 @@ namespace Toggl.Phoebe.Data.Views
         public RecentTimeEntriesView ()
         {
             Reload ();
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+        }
+
+        public void Dispose ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionModelChanged != null) {
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
+            if (subscriptionSyncFinished != null) {
+                bus.Unsubscribe (subscriptionSyncFinished);
+                subscriptionSyncFinished = null;
+            }
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
@@ -45,10 +54,9 @@ namespace Toggl.Phoebe.Data.Views
                 if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
                     if (entry.StartTime >= queryStartDate) {
                         // Update group and resort data:
-                        ChangeDataAndNotify (delegate {
-                            grp.Update (entry);
-                            data.Sort ();
-                        });
+                        grp.Update (entry);
+                        data.Sort ();
+                        OnUpdated ();
                     } else {
                         // Out side of date range, remove from list
                         grp.Remove (entry);
@@ -57,32 +65,31 @@ namespace Toggl.Phoebe.Data.Views
                         } else {
                             data.Sort ();
                         }
+                        OnUpdated ();
                     }
                 } else if (msg.PropertyName == TimeEntryModel.PropertyDescription
                            || msg.PropertyName == TimeEntryModel.PropertyTaskId
                            || msg.PropertyName == TimeEntryModel.PropertyProjectId) {
-                    ChangeDataAndNotify (delegate {
-                        // Remove from old group:
-                        grp.Remove (entry);
-                        if (grp.IsEmpty) {
-                            data.Remove (grp);
-                        }
+                    // Remove from old group:
+                    grp.Remove (entry);
+                    if (grp.IsEmpty) {
+                        data.Remove (grp);
+                    }
 
-                        // Add entry to correct group
-                        data.Add (entry);
-                        data.Sort ();
-                    });
+                    // Add entry to correct group
+                    data.Add (entry);
+                    data.Sort ();
+                    OnUpdated ();
                 } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt
                            || msg.PropertyName == TimeEntryModel.PropertyIsPersisted) {
                     if (!entry.IsPersisted || entry.DeletedAt.HasValue) {
-                        ChangeDataAndNotify (delegate {
-                            grp.Remove (entry);
-                            if (grp.IsEmpty) {
-                                data.Remove (grp);
-                            } else {
-                                data.Sort ();
-                            }
-                        });
+                        grp.Remove (entry);
+                        if (grp.IsEmpty) {
+                            data.Remove (grp);
+                        } else {
+                            data.Sort ();
+                        }
+                        OnUpdated ();
                     }
                 }
                 return;
@@ -96,37 +103,38 @@ namespace Toggl.Phoebe.Data.Views
             if (entry.UserId != authManager.UserId)
                 return;
 
-            ChangeDataAndNotify (delegate {
-                data.Add (entry);
-                data.Sort ();
-            });
+            data.Add (entry);
+            data.Sort ();
+            OnUpdated ();
         }
 
-        private void ChangeDataAndNotify (Action change)
+        public event EventHandler Updated;
+
+        private void OnUpdated ()
         {
-            OnPropertyChanging (PropertyCount);
-            OnPropertyChanging (PropertyModels);
-            change ();
-            OnPropertyChanged (PropertyModels);
-            OnPropertyChanged (PropertyCount);
+            var handler = Updated;
+            if (handler != null) {
+                handler (this, EventArgs.Empty);
+            }
         }
 
-        public override async void Reload ()
+        public async void Reload ()
         {
             if (IsLoading)
                 return;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
+            var shouldSubscribe = false;
+
             if (subscriptionModelChanged != null) {
+                shouldSubscribe = true;
                 bus.Unsubscribe (subscriptionModelChanged);
                 subscriptionModelChanged = null;
             }
 
-            ChangeDataAndNotify (delegate {
-                data.Clear ();
-            });
-
+            data.Clear ();
             IsLoading = true;
+            OnUpdated ();
 
             // Group only items in the past 9 days
             queryStartDate = DateTime.UtcNow - TimeSpan.FromDays (9);
@@ -137,11 +145,10 @@ namespace Toggl.Phoebe.Data.Views
                 .OrderBy ((e) => e.StartTime, false);
 
             // Get new data
-            var groups = await Task.Factory.StartNew (() => FromQuery (query));
-            ChangeDataAndNotify (delegate {
-                data = groups;
-            });
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            data = await Task.Factory.StartNew (() => FromQuery (query));
+            if (shouldSubscribe) {
+                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            }
 
             // Determine if sync is running, if so, delay setting IsLoading to false
             var syncManager = ServiceContainer.Resolve<SyncManager> ();
@@ -150,21 +157,37 @@ namespace Toggl.Phoebe.Data.Views
             } else {
                 subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             }
+            OnUpdated ();
         }
+
+        public void LoadMore ()
+        {
+        }
+
+        public IEnumerable<TimeEntryModel> Data {
+            get { return data.Where ((g) => !g.IsEmpty).Select ((g) => g.First ()); }
+        }
+
+        public long Count {
+            get { return data.Count ((g) => !g.IsEmpty); }
+        }
+
+        public bool HasMore {
+            get { return false; }
+        }
+
+        public bool IsLoading { get; private set; }
 
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
             IsLoading = false;
+            OnUpdated ();
 
             if (subscriptionSyncFinished != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionSyncFinished);
                 subscriptionSyncFinished = null;
             }
-        }
-
-        public override void LoadMore ()
-        {
         }
 
         private static GroupContainer FromQuery (IModelQuery<TimeEntryModel> query)
@@ -186,14 +209,6 @@ namespace Toggl.Phoebe.Data.Views
                 log.Error (Tag, exc, "Failed to compose recent time entries");
             }
             return groups;
-        }
-
-        public override IEnumerable<TimeEntryModel> Models {
-            get { return data.Where ((g) => !g.IsEmpty).Select ((g) => g.First ()); }
-        }
-
-        public override long Count {
-            get { return data.Count; }
         }
 
         private class GroupContainer : IEnumerable<Group>

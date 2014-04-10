@@ -1,21 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
 
 namespace Toggl.Phoebe.Data.Views
 {
     /// <summary>
     /// Query view wraps IModelQuery and retrieves only required amount of data at once.
     /// </summary>
-    public class ModelQueryView<T> : ModelsView<T>
+    public sealed class ModelQueryView<T> : IDataView<T>
         where T : Model, new()
     {
-        private static string GetPropertyName<K> (Expression<Func<ModelQueryView<T>, K>> expr)
-        {
-            return expr.ToPropertyName ();
-        }
-
         private readonly IModelQuery<T> query;
         private readonly int batchSize;
         private readonly List<T> data = new List<T> ();
@@ -27,56 +20,45 @@ namespace Toggl.Phoebe.Data.Views
             Reload ();
         }
 
-        private void ChangeDataAndNotify (Action change)
+        public event EventHandler Updated;
+
+        public void Reload ()
         {
-            OnPropertyChanging (PropertyCount);
-            OnPropertyChanging (PropertyModels);
-            change ();
-            OnPropertyChanged (PropertyModels);
-            OnPropertyChanged (PropertyCount);
+            data.Clear ();
+            data.AddRange (query.Skip (data.Count).Take (batchSize));
+            var count = query.Count ();
+            HasMore = data.Count < count;
+            OnUpdated ();
         }
 
-        public override void Reload ()
+        public void LoadMore ()
         {
-            HasError = false;
+            data.AddRange (query.Skip (data.Count).Take (batchSize));
+            var count = query.Count ();
+            HasMore = data.Count < count;
+            OnUpdated ();
+        }
 
-            try {
-                ChangeDataAndNotify (delegate {
-                    data.Clear ();
-                    data.AddRange (query.Skip (data.Count).Take (batchSize));
-                });
-
-                var count = query.Count ();
-                TotalCount = count;
-                HasMore = data.Count < count;
-            } catch {
-                HasError = true;
+        private void OnUpdated ()
+        {
+            var handler = Updated;
+            if (handler != null) {
+                handler (this, EventArgs.Empty);
             }
         }
 
-        public override void LoadMore ()
-        {
-            HasError = false;
-
-            try {
-                ChangeDataAndNotify (delegate {
-                    data.AddRange (query.Skip (data.Count).Take (batchSize));
-                });
-
-                var count = query.Count ();
-                TotalCount = count;
-                HasMore = data.Count < count;
-            } catch {
-                HasError = true;
-            }
-        }
-
-        public override IEnumerable<T> Models {
+        public IEnumerable<T> Data {
             get { return data; }
         }
 
-        public override long Count {
+        public long Count {
             get { return data.Count; }
+        }
+
+        public bool HasMore { get; private set; }
+
+        public bool IsLoading {
+            get { return false; }
         }
     }
 }

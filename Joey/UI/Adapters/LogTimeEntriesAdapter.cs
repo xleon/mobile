@@ -20,118 +20,39 @@ using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : BaseModelsViewAdapter<TimeEntryModel>
+    public class LogTimeEntriesAdapter : BaseDataViewAdapter<object>
     {
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         protected static readonly int ViewTypeExpanded = ViewTypeContent + 2;
         private readonly Handler handler = new Handler ();
-        private readonly List<HeaderPosition> headers = new List<HeaderPosition> ();
         private int? expandedPos;
-
-        private class HeaderPosition
-        {
-            public int Position { get; set; }
-
-            public DateTime Date { get; set; }
-
-            public HeaderPosition (int position, DateTime date)
-            {
-                this.Position = position;
-                this.Date = date;
-            }
-        }
 
         public LogTimeEntriesAdapter () : base (new AllTimeEntriesView ())
         {
-            UpdateHeaders ();
-        }
-
-        public override void NotifyDataSetChanged ()
-        {
-            UpdateHeaders ();
-            base.NotifyDataSetChanged ();
-        }
-
-        private void UpdateHeaders ()
-        {
-            headers.Clear ();
-
-            if (ModelsView.Count == 0)
-                return;
-
-            TimeEntryModel model = ModelsView.Models.ElementAt (0);
-
-            var date = model.StartTime.ToLocalTime ().Date;
-            headers.Add (new HeaderPosition (0, date));
-
-            var prevDate = date;
-            for (int i = 1; i < ModelsView.Count; i++) {
-                model = ModelsView.Models.ElementAt (i);
-                date = model.StartTime.ToLocalTime ().Date;
-                var isNewDay = prevDate.CompareTo (date) != 0;
-                if (isNewDay) {
-                    headers.Add (new HeaderPosition (i + headers.Count, date));
-                }
-                prevDate = date;
-            }
-        }
-
-        private HeaderPosition GetHeaderAt (int position)
-        {
-            return headers.FirstOrDefault ((h) => h.Position == position);
-        }
-
-        private int GetIndexForPosition (int position)
-        {
-            if (GetHeaderAt (position) != null) // This is header position, there is no index for that
-                return GetIndexForPosition (position + 1); // Return next position (which is probably an actual item)
-
-            int numberSections = 0;
-            foreach (HeaderPosition header in headers) {
-                if (position > header.Position) {
-                    numberSections++;
-                }
-            }
-
-            return position - numberSections;
         }
 
         public override bool IsEnabled (int position)
         {
-            return GetHeaderAt (position) == null && ExpandedPosition != position;
-        }
-
-        public override TimeEntryModel GetModel (int position)
-        {
-            var modelIndex = GetIndexForPosition (position);
-            if (modelIndex >= ModelsView.Models.Count ())
-                return null;
-            
-            return ModelsView.Models.ElementAt (modelIndex);
+            return ExpandedPosition != position && GetEntry (position) is TimeEntryModel;
         }
 
         public override int GetItemViewType (int position)
         {
-            if (GetIndexForPosition (position) == ModelsView.Count && ModelsView.IsLoading)
+            if (position == DataView.Count && DataView.IsLoading)
                 return ViewTypeLoaderPlaceholder;
 
-            if (GetHeaderAt (position) == null) {
-                if (expandedPos == position) {
-                    return ViewTypeExpanded;
-                }
-                return ViewTypeContent;
+            var obj = GetEntry (position);
+            if (obj is AllTimeEntriesView.DateGroup) {
+                return ViewTypeDateHeader;
             }
-            return ViewTypeDateHeader;
+            if (position == expandedPos) {
+                return ViewTypeExpanded;
+            }
+            return ViewTypeContent;
         }
 
         public override int ViewTypeCount {
             get { return base.ViewTypeCount + 2; }
-        }
-
-        public override int Count {
-            get {
-                return base.Count + headers.Count;
-            }
         }
 
         public int? ExpandedPosition {
@@ -174,40 +95,24 @@ namespace Toggl.Joey.UI.Adapters
 
         public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
 
-        private static string GetRelativeDateString (DateTime dateTime)
-        {
-            var ctx = ServiceContainer.Resolve<Context> ();
-            var ts = DateTime.Now.Date - dateTime.Date;
-            switch (ts.Days) {
-            case 0:
-                return ctx.Resources.GetString (Resource.String.Today);
-            case 1:
-                return ctx.Resources.GetString (Resource.String.Yesterday);
-            case -1:
-                return ctx.Resources.GetString (Resource.String.Tomorrow);
-            default:
-                return dateTime.ToShortDateString ();
-            }
-        }
-
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
 
-            var model = GetModel (position);
+            var entry = GetEntry (position);
             var viewType = GetItemViewType (position);
 
             if (viewType == ViewTypeDateHeader) {
-                TextView headerTextView;
+                var dateGroup = (AllTimeEntriesView.DateGroup)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
-                    headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoLight);
-                } else {
-                    headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView);
+                    view.Tag = new HeaderListItemHolder (handler, view);
                 }
-                headerTextView.Text = GetRelativeDateString (GetHeaderAt (position).Date);
+                var holder = (HeaderListItemHolder)view.Tag;
+                holder.Bind (dateGroup);
             } else if (viewType == ViewTypeExpanded) {
+                var model = (TimeEntryModel)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListExpandedItem, parent, false);
@@ -216,6 +121,7 @@ namespace Toggl.Joey.UI.Adapters
                 var holder = (ExpandedListItemHolder)view.Tag;
                 holder.Bind (model);
             } else {
+                var model = (TimeEntryModel)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListItem, parent, false);
@@ -226,6 +132,59 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             return view;
+        }
+
+        private class HeaderListItemHolder : BindableViewHolder<AllTimeEntriesView.DateGroup>
+        {
+            private readonly Handler handler;
+
+            public TextView DateGroupTitleTextView { get; private set; }
+
+            public TextView DateGroupDurationTextView { get; private set; }
+
+            public HeaderListItemHolder (Handler handler, View root) : base (root)
+            {
+                this.handler = handler;
+                DateGroupTitleTextView = root.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoLight);
+                DateGroupDurationTextView = root.FindViewById<TextView> (Resource.Id.DateGroupDurationTextView).SetFont (Font.RobotoLight);
+            }
+
+            protected override void Rebind ()
+            {
+                DateGroupTitleTextView.Text = GetRelativeDateString (DataSource.Date);
+                RebindDuration ();
+            }
+
+            private void RebindDuration ()
+            {
+                if (DataSource == null || Handle == IntPtr.Zero)
+                    return;
+
+                var duration = TimeSpan.FromSeconds (DataSource.Models.Sum (m => m.GetDuration ().TotalSeconds));
+                DateGroupDurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
+
+                var runningModel = DataSource.Models.FirstOrDefault (m => m.State == TimeEntryState.Running);
+                if (runningModel != null) {
+                    handler.RemoveCallbacks (RebindDuration);
+                    handler.PostDelayed (RebindDuration, 1000 - runningModel.GetDuration ().Milliseconds);
+                }
+            }
+
+            private static string GetRelativeDateString (DateTime dateTime)
+            {
+                var ctx = ServiceContainer.Resolve<Context> ();
+                var ts = DateTime.Now.Date - dateTime.Date;
+                switch (ts.Days) {
+                case 0:
+                    return ctx.Resources.GetString (Resource.String.Today);
+                case 1:
+                    return ctx.Resources.GetString (Resource.String.Yesterday);
+                case -1:
+                    return ctx.Resources.GetString (Resource.String.Tomorrow);
+                default:
+                    return dateTime.ToShortDateString ();
+                }
+            }
         }
 
         private class TimeEntryListItemHolder : ModelViewHolder<TimeEntryModel>

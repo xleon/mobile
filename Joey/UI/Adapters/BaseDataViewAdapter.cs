@@ -22,6 +22,18 @@ namespace Toggl.Joey.UI.Adapters
             dataView.Updated += OnDataViewUpdated;
         }
 
+        protected override void Dispose (bool disposing)
+        {
+            if (disposing) {
+                var dispoableDataView = dataView as IDisposable;
+                if (dispoableDataView != null) {
+                    dispoableDataView.Dispose ();
+                    dataView = null;
+                }
+            }
+            base.Dispose (disposing);
+        }
+
         private void OnDataViewUpdated (object sender, EventArgs e)
         {
             // Need to access the Handle property, else mono optimises/loses the context and we get a weird

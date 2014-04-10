@@ -9,31 +9,26 @@ using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public abstract class BaseModelsViewAdapter<T> : BaseAdapter
-        where T : Model, new()
+    public abstract class BaseDataViewAdapter<T> : BaseAdapter
     {
         private static readonly int LoadMoreOffset = 3;
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
         protected static readonly int ViewTypeContent = 1;
-        private IModelsView<T> modelsView;
+        private IDataView<T> dataView;
 
-        public BaseModelsViewAdapter (IModelsView<T> modelsView)
+        public BaseDataViewAdapter (IDataView<T> dataView)
         {
-            this.modelsView = modelsView;
-            modelsView.PropertyChanged += OnModelsViewPropertyChanged;
+            this.dataView = dataView;
+            dataView.Updated += OnDataViewUpdated;
         }
 
-        private void OnModelsViewPropertyChanged (object sender, PropertyChangedEventArgs e)
+        private void OnDataViewUpdated (object sender, EventArgs e)
         {
             // Need to access the Handle property, else mono optimises/loses the context and we get a weird
             // low-level exception about "'jobject' must not be IntPtr.Zero".
             if (Handle == IntPtr.Zero)
                 return;
-            if (e.PropertyName == ModelsView<T>.PropertyHasMore
-                || e.PropertyName == ModelsView<T>.PropertyModels
-                || e.PropertyName == ModelsView<T>.PropertyIsLoading) {
-                NotifyDataSetChanged ();
-            }
+            NotifyDataSetChanged ();
         }
 
         public override Java.Lang.Object GetItem (int position)
@@ -41,11 +36,11 @@ namespace Toggl.Joey.UI.Adapters
             return null;
         }
 
-        public virtual T GetModel (int position)
+        public virtual T GetEntry (int position)
         {
-            if (modelsView.IsLoading && position == modelsView.Count)
-                return null;
-            return modelsView.Models.ElementAt (position);
+            if (dataView.IsLoading && position == dataView.Count)
+                return default(T);
+            return dataView.Data.ElementAt (position);
         }
 
         public override long GetItemId (int position)
@@ -59,7 +54,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position == modelsView.Count && modelsView.IsLoading)
+            if (position == dataView.Count && dataView.IsLoading)
                 return ViewTypeLoaderPlaceholder;
 
             return ViewTypeContent;
@@ -67,8 +62,8 @@ namespace Toggl.Joey.UI.Adapters
 
         public override View GetView (int position, View convertView, ViewGroup parent)
         {
-            if (position + LoadMoreOffset > Count && modelsView.HasMore && !modelsView.IsLoading) {
-                modelsView.LoadMore ();
+            if (position + LoadMoreOffset > Count && dataView.HasMore && !dataView.IsLoading) {
+                dataView.LoadMore ();
             }
 
             var viewType = GetItemViewType (position);
@@ -83,7 +78,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             if (convertView != null)
                 return convertView;
-            // TODO: Implement default loading indicator view
+
             var view = LayoutInflater.FromContext (parent.Context).Inflate (
                            Resource.Layout.TimeEntryListLoadingItem, parent, false);
 
@@ -102,14 +97,14 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int Count {
             get {
-                if (modelsView.IsLoading)
-                    return (int)modelsView.Count + 1;
-                return (int)modelsView.Count;
+                if (dataView.IsLoading)
+                    return (int)dataView.Count + 1;
+                return (int)dataView.Count;
             }
         }
 
-        protected IModelsView<T> ModelsView {
-            get { return modelsView; }
+        protected IDataView<T> DataView {
+            get { return dataView; }
         }
     }
 }

@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>12.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{735F910D-2550-48D1-B577-735721EFE6DF}</ProjectGuid>
     <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
@@ -74,7 +72,6 @@
     <Compile Include="AndroidApp.cs" />
     <Compile Include="Data\SettingsStore.cs" />
     <Compile Include="UI\Activities\BaseActivity.cs" />
-    <Compile Include="UI\Adapters\BaseModelsViewAdapter.cs" />
     <Compile Include="UI\Adapters\RecentTimeEntriesAdapter.cs" />
     <Compile Include="UI\Fragments\RecentTimeEntriesListFragment.cs" />
     <Compile Include="UI\Adapters\LogTimeEntriesAdapter.cs" />
@@ -124,6 +121,7 @@
     <Compile Include="UI\Fragments\CreateProjectDialogFragment.cs" />
     <Compile Include="UI\Activities\EditTimeEntryActivity.cs" />
     <Compile Include="UI\Fragments\EditTimeEntryFragment.cs" />
+    <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

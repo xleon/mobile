@@ -20,7 +20,7 @@ using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : BaseModelsViewAdapter<TimeEntryModel>
+    public class LogTimeEntriesAdapter : BaseDataViewAdapter<TimeEntryModel>
     {
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         protected static readonly int ViewTypeExpanded = ViewTypeContent + 2;
@@ -56,17 +56,17 @@ namespace Toggl.Joey.UI.Adapters
         {
             headers.Clear ();
 
-            if (ModelsView.Count == 0)
+            if (DataView.Count == 0)
                 return;
 
-            TimeEntryModel model = ModelsView.Models.ElementAt (0);
+            TimeEntryModel model = DataView.Data.ElementAt (0);
 
             var date = model.StartTime.ToLocalTime ().Date;
             headers.Add (new HeaderPosition (0, date));
 
             var prevDate = date;
-            for (int i = 1; i < ModelsView.Count; i++) {
-                model = ModelsView.Models.ElementAt (i);
+            for (int i = 1; i < DataView.Count; i++) {
+                model = DataView.Data.ElementAt (i);
                 date = model.StartTime.ToLocalTime ().Date;
                 var isNewDay = prevDate.CompareTo (date) != 0;
                 if (isNewDay) {
@@ -101,18 +101,18 @@ namespace Toggl.Joey.UI.Adapters
             return GetHeaderAt (position) == null && ExpandedPosition != position;
         }
 
-        public override TimeEntryModel GetModel (int position)
+        public override TimeEntryModel GetEntry (int position)
         {
             var modelIndex = GetIndexForPosition (position);
-            if (modelIndex >= ModelsView.Models.Count ())
+            if (modelIndex >= DataView.Data.Count ())
                 return null;
             
-            return ModelsView.Models.ElementAt (modelIndex);
+            return DataView.Data.ElementAt (modelIndex);
         }
 
         public override int GetItemViewType (int position)
         {
-            if (GetIndexForPosition (position) == ModelsView.Count && ModelsView.IsLoading)
+            if (GetIndexForPosition (position) == DataView.Count && DataView.IsLoading)
                 return ViewTypeLoaderPlaceholder;
 
             if (GetHeaderAt (position) == null) {
@@ -194,7 +194,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             View view = convertView;
 
-            var model = GetModel (position);
+            var model = GetEntry (position);
             var viewType = GetItemViewType (position);
 
             if (viewType == ViewTypeDateHeader) {

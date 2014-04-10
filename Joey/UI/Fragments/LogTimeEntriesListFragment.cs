@@ -49,7 +49,7 @@ namespace Toggl.Joey.UI.Fragments
             if (adapter == null)
                 return;
 
-            var model = adapter.GetModel (position);
+            var model = adapter.GetEntry (position);
             if (model == null)
                 return;
 
@@ -160,7 +160,7 @@ namespace Toggl.Joey.UI.Fragments
                 if (!isChecked)
                     continue;
 
-                var model = adapter.GetModel (position);
+                var model = adapter.GetEntry (position);
                 if (model != null)
                     toDelete.Add (model);
             }

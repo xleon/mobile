@@ -376,6 +376,7 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnUpdated ()
             {
+                cachedCount = null;
                 var handler = Updated;
                 if (handler != null) {
                     handler (this, EventArgs.Empty);
@@ -409,8 +410,15 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
+            private long? cachedCount;
+
             public long Count {
-                get { return Data.LongCount (); }
+                get {
+                    if (cachedCount == null) {
+                        cachedCount = Data.LongCount ();
+                    }
+                    return cachedCount.Value;
+                }
             }
 
             public bool HasMore {

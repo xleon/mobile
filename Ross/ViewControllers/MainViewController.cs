@@ -3,15 +3,18 @@ using MonoTouch.UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class MainViewController : UIViewController
+    public class MainViewController : UINavigationController
     {
         public MainViewController ()
         {
-            View = new UILabel () {
-                BackgroundColor = UIColor.White,
-                TextAlignment = UITextAlignment.Center,
-                Text = "Main",
-            };
+            UIViewController activeController;
+            activeController = new LogViewController ();
+            ViewControllers = new UIViewController[] { activeController };
+        }
+
+        public override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
         }
     }
 }

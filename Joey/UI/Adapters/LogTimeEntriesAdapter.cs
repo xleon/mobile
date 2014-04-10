@@ -95,22 +95,6 @@ namespace Toggl.Joey.UI.Adapters
 
         public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
 
-        private static string GetRelativeDateString (DateTime dateTime)
-        {
-            var ctx = ServiceContainer.Resolve<Context> ();
-            var ts = DateTime.Now.Date - dateTime.Date;
-            switch (ts.Days) {
-            case 0:
-                return ctx.Resources.GetString (Resource.String.Today);
-            case 1:
-                return ctx.Resources.GetString (Resource.String.Yesterday);
-            case -1:
-                return ctx.Resources.GetString (Resource.String.Tomorrow);
-            default:
-                return dateTime.ToShortDateString ();
-            }
-        }
-
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
@@ -120,15 +104,13 @@ namespace Toggl.Joey.UI.Adapters
 
             if (viewType == ViewTypeDateHeader) {
                 var dateGroup = (AllTimeEntriesView.DateGroup)entry;
-                TextView headerTextView;
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
-                    headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoLight);
-                } else {
-                    headerTextView = view.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView);
+                    view.Tag = new HeaderListItemHolder (handler, view);
                 }
-                headerTextView.Text = GetRelativeDateString (dateGroup.Date);
+                var holder = (HeaderListItemHolder)view.Tag;
+                holder.Bind (dateGroup);
             } else if (viewType == ViewTypeExpanded) {
                 var model = (TimeEntryModel)entry;
                 if (view == null) {
@@ -150,6 +132,59 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             return view;
+        }
+
+        private class HeaderListItemHolder : BindableViewHolder<AllTimeEntriesView.DateGroup>
+        {
+            private readonly Handler handler;
+
+            public TextView DateGroupTitleTextView { get; private set; }
+
+            public TextView DateGroupDurationTextView { get; private set; }
+
+            public HeaderListItemHolder (Handler handler, View root) : base (root)
+            {
+                this.handler = handler;
+                DateGroupTitleTextView = root.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoLight);
+                DateGroupDurationTextView = root.FindViewById<TextView> (Resource.Id.DateGroupDurationTextView).SetFont (Font.RobotoLight);
+            }
+
+            protected override void Rebind ()
+            {
+                DateGroupTitleTextView.Text = GetRelativeDateString (DataSource.Date);
+                RebindDuration ();
+            }
+
+            private void RebindDuration ()
+            {
+                if (DataSource == null || Handle == IntPtr.Zero)
+                    return;
+
+                var duration = TimeSpan.FromSeconds (DataSource.Models.Sum (m => m.GetDuration ().TotalSeconds));
+                DateGroupDurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
+
+                var runningModel = DataSource.Models.FirstOrDefault (m => m.State == TimeEntryState.Running);
+                if (runningModel != null) {
+                    handler.RemoveCallbacks (RebindDuration);
+                    handler.PostDelayed (RebindDuration, 1000 - runningModel.GetDuration ().Milliseconds);
+                }
+            }
+
+            private static string GetRelativeDateString (DateTime dateTime)
+            {
+                var ctx = ServiceContainer.Resolve<Context> ();
+                var ts = DateTime.Now.Date - dateTime.Date;
+                switch (ts.Days) {
+                case 0:
+                    return ctx.Resources.GetString (Resource.String.Today);
+                case 1:
+                    return ctx.Resources.GetString (Resource.String.Yesterday);
+                case -1:
+                    return ctx.Resources.GetString (Resource.String.Tomorrow);
+                default:
+                    return dateTime.ToShortDateString ();
+                }
+            }
         }
 
         private class TimeEntryListItemHolder : ModelViewHolder<TimeEntryModel>

@@ -39,6 +39,22 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
+        public IEnumerable<ProjectModel> GetAllAvailableProjects ()
+        {
+            lock (SyncRoot) {
+                var projectIds = Model.Query<ProjectUserModel> (m => m.ToId == Id && m.FromId != null)
+                    .NotDeleted ()
+                    .Select (m => m.FromId)
+                    .ToList ();
+
+                return Model.Query<ProjectModel> (m => m.IsActive)
+                    .Where (m => m.IsPrivate == false || projectIds.Contains (m.Id))
+                    .NotDeleted ()
+                    .OrderBy (m => m.Name)
+                    .ToList ();
+            }
+        }
+
         #region Data
 
         private string name;

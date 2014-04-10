@@ -16,7 +16,7 @@ namespace Toggl.Phoebe.Data
             return q.Where ((entry) => entry.UserId == authManager.UserId);
         }
 
-        public static IModelsView<T> ToView<T> (this IEnumerable<T> enumerable, int batchSize = 25)
+        public static IDataView<T> ToView<T> (this IEnumerable<T> enumerable, int batchSize = 25)
             where T : Model, new()
         {
             var query = enumerable as IModelQuery<T>;

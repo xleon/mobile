@@ -11,27 +11,29 @@ namespace Toggl.Phoebe.Data.Views
     /// This view combines IModelStore data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
-    public class AllTimeEntriesView : ModelsView<TimeEntryModel>
+    public class AllTimeEntriesView : IDataView<TimeEntryModel>, IDisposable
     {
         private static readonly string Tag = "AllTimeEntriesView";
-
-        private static string GetPropertyName<K> (Expression<Func<AllTimeEntriesView, K>> expr)
-        {
-            return expr.ToPropertyName ();
-        }
-
-        private DateTime startFrom;
         private readonly List<TimeEntryModel> data = new List<TimeEntryModel> ();
-        #pragma warning disable 0414
-        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-        #pragma warning restore 0414
+        private DateTime startFrom;
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
 
         public AllTimeEntriesView ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+
             HasMore = true;
             Reload ();
+        }
+
+        public void Dispose ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionModelChanged != null) {
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
@@ -44,55 +46,51 @@ namespace Toggl.Phoebe.Data.Views
 
             if (entry.DeletedAt == null && entry.State != TimeEntryState.New) {
                 if (!data.Contains (entry)) {
-                    ChangeDataAndNotify (delegate {
-                        data.Add (entry);
-                        data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                    });
+                    data.Add (entry);
+                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                    OnUpdated ();
                 } else if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
-                    ChangeDataAndNotify (delegate {
-                        data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                    });
+                    data.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                    OnUpdated ();
                 }
             } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
                 if (data.Contains (entry)) {
-                    ChangeDataAndNotify (delegate {
-                        data.Remove (entry);
-                    });
+                    data.Remove (entry);
+                    OnUpdated ();
                 }
             }
         }
 
-        public override void Reload ()
+        public event EventHandler Updated;
+
+        private void OnUpdated ()
+        {
+            var handler = Updated;
+            if (handler != null) {
+                handler (this, EventArgs.Empty);
+            }
+        }
+
+        public void Reload ()
         {
             if (IsLoading)
                 return;
 
             startFrom = DateTime.UtcNow;
-            ChangeDataAndNotify (delegate {
-                data.Clear ();
-            });
+            data.Clear ();
             HasMore = true;
 
             LoadMore ();
         }
 
-        private void ChangeDataAndNotify (Action change)
-        {
-            OnPropertyChanging (PropertyCount);
-            OnPropertyChanging (PropertyModels);
-            change ();
-            OnPropertyChanged (PropertyModels);
-            OnPropertyChanged (PropertyCount);
-        }
-
-        public async override void LoadMore ()
+        public async void LoadMore ()
         {
             if (IsLoading || !HasMore)
                 return;
 
             IsLoading = true;
             var client = ServiceContainer.Resolve<ITogglClient> ();
-            HasError = false;
+            OnUpdated ();
 
             try {
                 var endTime = startFrom;
@@ -100,8 +98,6 @@ namespace Toggl.Phoebe.Data.Views
 
                 bool useLocal = false;
 
-                OnPropertyChanging (PropertyCount);
-                OnPropertyChanging (PropertyModels);
 
                 // Try with latest data from server first:
                 if (!useLocal) {
@@ -127,7 +123,6 @@ namespace Toggl.Phoebe.Data.Views
                             log.Warning (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
                         }
 
-                        HasError = true;
                         useLocal = true;
                     }
                 }
@@ -144,25 +139,25 @@ namespace Toggl.Phoebe.Data.Views
 
                     HasMore = Model.Query<TimeEntryModel> ((te) => te.StartTime <= startTime && te.State != TimeEntryState.New).Count () > 0;
                 }
-
-                OnPropertyChanged (PropertyModels);
-                OnPropertyChanged (PropertyCount);
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, "Failed to fetch time entries");
-
-                HasError = true;
             } finally {
                 IsLoading = false;
+                OnUpdated ();
             }
         }
 
-        public override IEnumerable<TimeEntryModel> Models {
+        public IEnumerable<TimeEntryModel> Data {
             get { return data; }
         }
 
-        public override long Count {
+        public long Count {
             get { return data.Count; }
         }
+
+        public bool HasMore { get; private set; }
+
+        public bool IsLoading { get; private set; }
     }
 }

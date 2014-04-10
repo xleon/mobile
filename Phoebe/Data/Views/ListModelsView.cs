@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class ListModelsView<T> : ModelsView<T>
+    public class ListModelsView<T> : IDataView<T>
         where T : Model, new()
     {
         private readonly List<T> data;
@@ -12,24 +12,32 @@ namespace Toggl.Phoebe.Data.Views
         public ListModelsView (IEnumerable<T> enumerable)
         {
             data = enumerable.ToList ();
-            IsLoading = false;
-            HasMore = false;
         }
 
-        public override void Reload ()
+        public event EventHandler Updated;
+
+        public void Reload ()
         {
         }
 
-        public override void LoadMore ()
+        public void LoadMore ()
         {
         }
 
-        public override IEnumerable<T> Models {
+        public IEnumerable<T> Data {
             get { return data; }
         }
 
-        public override long Count {
+        public long Count {
             get { return data.Count; }
+        }
+
+        public bool HasMore {
+            get { return false; }
+        }
+
+        public bool IsLoading {
+            get { return false; }
         }
     }
 }

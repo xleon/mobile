@@ -16,6 +16,7 @@ namespace Toggl.Phoebe.Data.Views
     {
         private static readonly string Tag = "AllTimeEntriesView";
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
+        private UpdateMode updateMode = UpdateMode.Immediate;
         private DateTime startFrom;
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
 
@@ -105,9 +106,30 @@ namespace Toggl.Phoebe.Data.Views
 
         private void OnUpdated ()
         {
+            if (updateMode != UpdateMode.Immediate) {
+                updateMode = UpdateMode.BatchWithChanges;
+                return;
+            }
+
             var handler = Updated;
             if (handler != null) {
                 handler (this, EventArgs.Empty);
+            }
+        }
+
+        private void BeginUpdate ()
+        {
+            if (updateMode != UpdateMode.Immediate)
+                return;
+            updateMode = UpdateMode.Batch;
+        }
+
+        private void EndUpdate ()
+        {
+            var shouldUpdate = updateMode == UpdateMode.BatchWithChanges;
+            updateMode = UpdateMode.Immediate;
+            if (shouldUpdate) {
+                OnUpdated ();
             }
         }
 
@@ -138,13 +160,14 @@ namespace Toggl.Phoebe.Data.Views
 
                 bool useLocal = false;
 
-
                 // Try with latest data from server first:
                 if (!useLocal) {
                     const int numDays = 5;
                     try {
                         var minStart = endTime;
+                        await System.Threading.Tasks.Task.Delay (TimeSpan.FromSeconds (5));
                         var entries = await client.ListTimeEntries (endTime, numDays);
+                        BeginUpdate ();
                         foreach (var entry in entries) {
                             // OnModelChanged catches the newly created time entries and adds them to the dataset
 
@@ -173,6 +196,7 @@ namespace Toggl.Phoebe.Data.Views
                                       (te) => te.StartTime <= endTime && te.StartTime > startTime && te.State != TimeEntryState.New)
                         .NotDeleted ()
                         .ForCurrentUser ();
+                    BeginUpdate ();
                     foreach (var entry in entries) {
                         // OnModelChanged catches the newly created time entries and adds them to the dataset
                     }
@@ -184,7 +208,7 @@ namespace Toggl.Phoebe.Data.Views
                 log.Error (Tag, exc, "Failed to fetch time entries");
             } finally {
                 IsLoading = false;
-                OnUpdated ();
+                EndUpdate ();
             }
         }
 
@@ -224,6 +248,13 @@ namespace Toggl.Phoebe.Data.Views
             public List<TimeEntryModel> Models {
                 get { return models; }
             }
+        }
+
+        private enum UpdateMode
+        {
+            Immediate,
+            Batch,
+            BatchWithChanges
         }
     }
 }

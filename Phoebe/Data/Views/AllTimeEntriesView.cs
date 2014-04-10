@@ -50,7 +50,6 @@ namespace Toggl.Phoebe.Data.Views
                 if (grp == null) {
                     grp = GetGroupFor (entry);
                     grp.Models.Add (entry);
-                    grp.UpdateTotalDuration ();
                     Sort ();
                     OnUpdated ();
                 } else if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
@@ -59,24 +58,17 @@ namespace Toggl.Phoebe.Data.Views
                     if (grp.Date != date) {
                         // Need to move entry:
                         grp.Models.Remove (entry);
-                        grp.UpdateTotalDuration ();
 
                         grp = GetGroupFor (entry);
                         grp.Models.Add (entry);
                     }
-                    grp.UpdateTotalDuration ();
                     Sort ();
                     OnUpdated ();
-                } else if (msg.PropertyName == TimeEntryModel.PropertyStopTime) {
-                    if (grp.UpdateTotalDuration ()) {
-                        OnUpdated ();
-                    }
                 }
             } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
                 var grp = FindGroupWith (entry);
                 if (grp != null) {
                     grp.Models.Remove (entry);
-                    grp.UpdateTotalDuration ();
                     if (grp.Models.Count == 0) {
                         dateGroups.Remove (grp);
                     }
@@ -215,42 +207,18 @@ namespace Toggl.Phoebe.Data.Views
 
         public bool IsLoading { get; private set; }
 
-        public class DateGroup : ObservableObject
+        public class DateGroup
         {
-            private static string GetPropertyName<T> (Expression<Func<DateGroup, T>> expr)
-            {
-                return expr.ToPropertyName ();
-            }
-
             private readonly DateTime date;
             private readonly List<TimeEntryModel> models = new List<TimeEntryModel> ();
-            private TimeSpan totalDuration;
 
             public DateGroup (DateTime date)
             {
                 this.date = date.Date;
             }
 
-            public bool UpdateTotalDuration ()
-            {
-                var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
-                if (totalDuration != duration) {
-                    ChangePropertyAndNotify (PropertyTotalDuration, delegate {
-                        totalDuration = duration;
-                    });
-                    return true;
-                }
-                return false;
-            }
-
             public DateTime Date {
                 get { return date; }
-            }
-
-            public static readonly string PropertyTotalDuration = GetPropertyName ((m) => m.TotalDuration);
-
-            public TimeSpan TotalDuration {
-                get { return totalDuration; }
             }
 
             public List<TimeEntryModel> Models {

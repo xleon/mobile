@@ -160,7 +160,7 @@ namespace Toggl.Joey.UI.Fragments
                 if (!isChecked)
                     continue;
 
-                var model = adapter.GetEntry (position);
+                var model = adapter.GetEntry (position) as TimeEntryModel;
                 if (model != null)
                     toDelete.Add (model);
             }

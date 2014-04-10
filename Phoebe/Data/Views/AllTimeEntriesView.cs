@@ -165,7 +165,6 @@ namespace Toggl.Phoebe.Data.Views
                     const int numDays = 5;
                     try {
                         var minStart = endTime;
-                        await System.Threading.Tasks.Task.Delay (TimeSpan.FromSeconds (5));
                         var entries = await client.ListTimeEntries (endTime, numDays);
                         BeginUpdate ();
                         foreach (var entry in entries) {

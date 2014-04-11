@@ -259,7 +259,14 @@ namespace Toggl.Phoebe.Data.Views
 
                     var aName = a.Model != null ? (a.Model.Name ?? String.Empty) : String.Empty;
                     var bName = b.Model != null ? (b.Model.Name ?? String.Empty) : String.Empty;
-                    return String.Compare (aName, bName, StringComparison.Ordinal);
+                    var res = String.Compare (aName, bName, StringComparison.Ordinal);
+                    if (res == 0) {
+                        // Same project names, order by client name
+                        aName = (a.Model != null && a.Model.Client != null) ? (a.Model.Client.Name ?? String.Empty) : String.Empty;
+                        bName = (b.Model != null && b.Model.Client != null) ? (b.Model.Client.Name ?? String.Empty) : String.Empty;
+                        res = String.Compare (aName, bName, StringComparison.Ordinal);
+                    }
+                    return res;
                 });
             }
 

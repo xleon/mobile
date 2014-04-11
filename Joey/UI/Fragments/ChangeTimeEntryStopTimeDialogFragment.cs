@@ -1,9 +1,11 @@
 ﻿using System;
 using Android.App;
+using Android.Content;
 using Android.OS;
-using Android.Provider;
+using Android.Text.Format;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -56,8 +58,7 @@ namespace Toggl.Joey.UI.Fragments
                 time = model.StopTime.Value.ToLocalTime ();
             }
 
-            var clockType = Settings.System.GetString (Activity.ContentResolver, Settings.System.Time1224);
-            var is24h = !(clockType == null || clockType == "12");
+            var is24h = DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ());
 
             var dia = new TimePickerDialog (
                           Activity, OnTimeSelected,
@@ -84,4 +85,3 @@ namespace Toggl.Joey.UI.Fragments
         }
     }
 }
-

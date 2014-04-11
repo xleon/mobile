@@ -2,7 +2,6 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Provider;
 using Android.Text.Format;
 using Android.Util;
 using Android.Views;
@@ -10,6 +9,7 @@ using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 
@@ -67,8 +67,7 @@ namespace Toggl.Joey.UI.Fragments
                 Dismiss ();
             }
 
-            var clockType = Settings.System.GetString (Activity.ContentResolver, Settings.System.Time1224);
-            is24h = !(clockType == null || clockType == "12");
+            is24h = DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ());
         }
 
         public override Dialog OnCreateDialog (Bundle state)

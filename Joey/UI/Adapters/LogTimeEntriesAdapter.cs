@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
-using Android.Provider;
 using Android.Text;
+using Android.Text.Format;
 using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
@@ -342,7 +341,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
         {
-            private readonly bool timeIs24h;
+            private readonly bool is24h;
             private readonly LogTimeEntriesAdapter adapter;
 
             public View ColorView { get; private set; }
@@ -375,9 +374,7 @@ namespace Toggl.Joey.UI.Adapters
                 CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
                 EditImageButton = root.FindViewById<ImageButton> (Resource.Id.EditImageButton);
 
-                var ctx = ServiceContainer.Resolve<Context> ();
-                var clockType = Settings.System.GetString (ctx.ContentResolver, Settings.System.Time1224);
-                timeIs24h = !(clockType == null || clockType == "12");
+                is24h = DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ());
 
                 DeleteImageButton.Click += OnDeleteImageButton;
                 CloseImageButton.Click += OnCloseImageButton;
@@ -535,7 +532,7 @@ namespace Toggl.Joey.UI.Adapters
             private string FormatTime (DateTime time)
             {
                 time = time.ToLocalTime ();
-                if (timeIs24h) {
+                if (is24h) {
                     return time.ToString ("HH:mm:ss");
                 }
                 return time.ToString ("h:mm:ss tt");

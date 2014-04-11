@@ -19,29 +19,27 @@ namespace Toggl.Ross.ViewControllers
         {
             static NSString LoadingCellId = new NSString ("LoadingCellId");
             static NSString EntryCellId = new NSString ("EntryCellId");
+            static NSString HeaderCellId = new NSString ("HeaderCellId");
             readonly UITableView tableView;
-            readonly AllTimeEntriesView modelsView;
+            readonly AllTimeEntriesView dataView;
 
             public Source (UITableView tableView)
             {
                 this.tableView = tableView;
-                this.modelsView = new AllTimeEntriesView ();
+                this.dataView = new AllTimeEntriesView ();
 
                 tableView.RegisterClassForCellReuse (typeof(IndicatorCell), LoadingCellId);
                 tableView.RegisterClassForCellReuse (typeof(TimeEntryCell), EntryCellId);
+                tableView.RegisterClassForCellReuse (typeof(HeaderCell), HeaderCellId);
 
-                modelsView.PropertyChanged += OnModelsViewPropertyChanged;
+                dataView.Updated += OnDataViewUpdated;
             }
 
-            private void OnModelsViewPropertyChanged (object sender, PropertyChangedEventArgs e)
+            private void OnDataViewUpdated (object sender, EventArgs e)
             {
                 if (Handle == IntPtr.Zero)
                     return;
-                if (e.PropertyName == AllTimeEntriesView.PropertyHasMore
-                    || e.PropertyName == AllTimeEntriesView.PropertyModels
-                    || e.PropertyName == AllTimeEntriesView.PropertyIsLoading) {
-                    NotifyDataSetChanged ();
-                }
+                NotifyDataSetChanged ();
             }
 
             private void NotifyDataSetChanged ()
@@ -58,8 +56,11 @@ namespace Toggl.Ross.ViewControllers
 
             private NSString GetCellId (NSIndexPath indexPath)
             {
-                if (modelsView.IsLoading && indexPath.Row == modelsView.Count)
+                if (dataView.IsLoading && indexPath.Row == dataView.Count)
                     return LoadingCellId;
+                var item = dataView.Data.ElementAt (indexPath.Row);
+                if (item is AllTimeEntriesView.DateGroup)
+                    return HeaderCellId;
                 return EntryCellId;
             }
 
@@ -67,24 +68,28 @@ namespace Toggl.Ross.ViewControllers
             {
                 var cellId = GetCellId (indexPath);
 
-                if (!modelsView.IsLoading && modelsView.HasMore && indexPath.Row + 4 > modelsView.Count) {
-                    modelsView.LoadMore ();
+                if (!dataView.IsLoading && dataView.HasMore && indexPath.Row + 4 > dataView.Count) {
+                    dataView.LoadMore ();
                 }
 
                 if (cellId == LoadingCellId) {
                     var cell = (IndicatorCell)tableView.DequeueReusableCell (cellId, indexPath);
                     return cell;
+                } else if (cellId == HeaderCellId) {
+                    var cell = (HeaderCell)tableView.DequeueReusableCell (cellId, indexPath);
+                    cell.Rebind ((AllTimeEntriesView.DateGroup)dataView.Data.ElementAt (indexPath.Row));
+                    return cell;
                 } else {
                     var cell = (TimeEntryCell)tableView.DequeueReusableCell (cellId, indexPath);
-                    cell.Rebind (modelsView.Models.ElementAt (indexPath.Row));
+                    cell.Rebind ((TimeEntryModel)dataView.Data.ElementAt (indexPath.Row));
                     return cell;
                 }
             }
 
             public override int RowsInSection (UITableView tableview, int section)
             {
-                var rows = (int)modelsView.Count;
-                if (modelsView.IsLoading) {
+                var rows = (int)dataView.Count;
+                if (dataView.IsLoading) {
                     rows += 1;
                 }
                 return rows;
@@ -137,6 +142,18 @@ namespace Toggl.Ross.ViewControllers
                     }
                 }
                 TextLabel.Text = String.Concat (project, " ", model.Description);
+            }
+        }
+
+        class HeaderCell : UITableViewCell
+        {
+            public HeaderCell (IntPtr ptr) : base (ptr)
+            {
+            }
+
+            public void Rebind (AllTimeEntriesView.DateGroup data)
+            {
+                TextLabel.Text = data.Date.ToShortDateString ();
             }
         }
     }

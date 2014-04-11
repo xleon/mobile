@@ -107,7 +107,6 @@ namespace Toggl.Phoebe.Data.Views
         private void OnUpdated ()
         {
             if (updateMode != UpdateMode.Immediate) {
-                updateMode = UpdateMode.BatchWithChanges;
                 return;
             }
 
@@ -126,11 +125,8 @@ namespace Toggl.Phoebe.Data.Views
 
         private void EndUpdate ()
         {
-            var shouldUpdate = updateMode == UpdateMode.BatchWithChanges;
             updateMode = UpdateMode.Immediate;
-            if (shouldUpdate) {
-                OnUpdated ();
-            }
+            OnUpdated ();
         }
 
         public void Reload ()
@@ -253,7 +249,6 @@ namespace Toggl.Phoebe.Data.Views
         {
             Immediate,
             Batch,
-            BatchWithChanges
         }
     }
 }

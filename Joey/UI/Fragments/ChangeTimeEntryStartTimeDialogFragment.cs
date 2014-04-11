@@ -6,7 +6,6 @@ using Android.Text.Format;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
@@ -46,7 +45,6 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         private TimeEntryModel model;
-        private bool is24h;
 
         protected RadioGroup TabsRadioGroup { get; private set; }
 
@@ -66,8 +64,6 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null) {
                 Dismiss ();
             }
-
-            is24h = DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ());
         }
 
         public override Dialog OnCreateDialog (Bundle state)
@@ -93,7 +89,8 @@ namespace Toggl.Joey.UI.Fragments
 
             TimePicker.CurrentHour = new Java.Lang.Integer (time.Hour);
             TimePicker.CurrentMinute = new Java.Lang.Integer (time.Minute);
-            TimePicker.SetIs24HourView (new Java.Lang.Boolean (is24h));
+            TimePicker.SetIs24HourView (new Java.Lang.Boolean (
+                DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ())));
             TimePicker.TimeChanged += OnTimePickerTimeChanged;
 
             DatePicker.Init (date.Year, date.Month - 1, date.Day, this);
@@ -129,8 +126,8 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             var dateTime = DateTime;
-            TimeTabRadioButton.Text = FormatTime (dateTime);
-            DateTabRadioButton.Text = FormatDate (dateTime);
+            TimeTabRadioButton.Text = dateTime.ToDeviceTimeString ();
+            DateTabRadioButton.Text = dateTime.ToDeviceDateString ();
         }
 
         private void OnTimePickerTimeChanged (object sender, TimePicker.TimeChangedEventArgs e)
@@ -158,20 +155,6 @@ namespace Toggl.Joey.UI.Fragments
                     .AddHours (TimePicker.CurrentHour.IntValue ())
                     .AddMinutes (TimePicker.CurrentMinute.IntValue ()), DateTimeKind.Local);
             }
-        }
-
-        private string FormatTime (DateTime time)
-        {
-            if (is24h) {
-                return time.ToString ("HH:mm");
-            }
-            return time.ToString ("h:mm tt");
-        }
-
-        private string FormatDate (DateTime date)
-        {
-            var javaDate = new Java.Util.Date ((long)date.ToUnix ().TotalMilliseconds);
-            return DateFormat.GetDateFormat (Activity).Format (javaDate);
         }
     }
 }

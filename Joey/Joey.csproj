@@ -122,6 +122,7 @@
     <Compile Include="UI\Activities\EditTimeEntryActivity.cs" />
     <Compile Include="UI\Fragments\EditTimeEntryFragment.cs" />
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
+    <Compile Include="UI\Utils\DateTimeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

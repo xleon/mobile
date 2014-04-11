@@ -341,7 +341,6 @@ namespace Toggl.Joey.UI.Adapters
 
         private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
         {
-            private readonly bool is24h;
             private readonly LogTimeEntriesAdapter adapter;
 
             public View ColorView { get; private set; }
@@ -373,8 +372,6 @@ namespace Toggl.Joey.UI.Adapters
                 DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
                 CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
                 EditImageButton = root.FindViewById<ImageButton> (Resource.Id.EditImageButton);
-
-                is24h = DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ());
 
                 DeleteImageButton.Click += OnDeleteImageButton;
                 CloseImageButton.Click += OnCloseImageButton;
@@ -447,9 +444,11 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 if (Model.StopTime.HasValue) {
-                    TimeTextView.Text = String.Format ("{0} - {1}", FormatTime (Model.StartTime), FormatTime (Model.StopTime.Value));
+                    TimeTextView.Text = String.Format ("{0} - {1}",
+                        Model.StartTime.ToLocalTime ().ToDeviceDateString (),
+                        Model.StopTime.Value.ToLocalTime ().ToDeviceDateString ());
                 } else {
-                    TimeTextView.Text = FormatTime (Model.StartTime);
+                    TimeTextView.Text = Model.StartTime.ToLocalTime ().ToDeviceDateString ();
                 }
             }
 
@@ -527,15 +526,6 @@ namespace Toggl.Joey.UI.Adapters
                 spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
 
                 DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
-            }
-
-            private string FormatTime (DateTime time)
-            {
-                time = time.ToLocalTime ();
-                if (is24h) {
-                    return time.ToString ("HH:mm:ss");
-                }
-                return time.ToString ("h:mm:ss tt");
             }
         }
     }

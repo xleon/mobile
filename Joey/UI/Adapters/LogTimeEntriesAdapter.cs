@@ -181,7 +181,7 @@ namespace Toggl.Joey.UI.Adapters
                 case -1:
                     return ctx.Resources.GetString (Resource.String.Tomorrow);
                 default:
-                    return dateTime.ToShortDateString ();
+                    return dateTime.ToDeviceDateString ();
                 }
             }
         }
@@ -445,10 +445,10 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (Model.StopTime.HasValue) {
                     TimeTextView.Text = String.Format ("{0} - {1}",
-                        Model.StartTime.ToLocalTime ().ToDeviceDateString (),
-                        Model.StopTime.Value.ToLocalTime ().ToDeviceDateString ());
+                        Model.StartTime.ToLocalTime ().ToDeviceTimeString (),
+                        Model.StopTime.Value.ToLocalTime ().ToDeviceTimeString ());
                 } else {
-                    TimeTextView.Text = Model.StartTime.ToLocalTime ().ToDeviceDateString ();
+                    TimeTextView.Text = Model.StartTime.ToLocalTime ().ToDeviceTimeString ();
                 }
             }
 

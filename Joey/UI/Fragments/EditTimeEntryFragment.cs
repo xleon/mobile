@@ -342,9 +342,9 @@ namespace Toggl.Joey.UI.Fragments
                 }
             }
 
-            StartTimeEditText.Text = startTime.ToShortTimeString ();
+            StartTimeEditText.Text = startTime.ToDeviceTimeString ();
             if (startTime.Date != DateTime.Now.Date) {
-                DateTextView.Text = startTime.ToShortDateString ();
+                DateTextView.Text = startTime.ToDeviceDateString ();
                 DateTextView.Visibility = ViewStates.Visible;
             } else {
                 DateTextView.Visibility = ViewStates.Invisible;
@@ -356,10 +356,10 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             if (TimeEntry.StopTime.HasValue) {
-                StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToShortTimeString ();
+                StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();
                 StopTimeEditText.Visibility = ViewStates.Visible;
             } else {
-                StopTimeEditText.Text = DateTime.Now.ToShortTimeString ();
+                StopTimeEditText.Text = DateTime.Now.ToDeviceTimeString ();
                 if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
                     StopTimeEditText.Visibility = ViewStates.Invisible;
                 } else {

@@ -135,6 +135,8 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\LogViewController.cs" />
+    <Compile Include="DataSources\PlainDataViewSource.cs" />
+    <Compile Include="DataSources\GroupedDataViewSource.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -152,5 +154,7 @@
     <Folder Include="ViewControllers\" />
     <Folder Include="Resources\en.lproj\" />
     <Folder Include="Theme\" />
+    <Folder Include="Threading\" />
+    <Folder Include="DataSources\" />
   </ItemGroup>
 </Project>

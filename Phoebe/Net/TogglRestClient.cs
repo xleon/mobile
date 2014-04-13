@@ -35,23 +35,23 @@ namespace Toggl.Phoebe.Net
         {
             var type = model.GetType ();
             if (type == typeof(ClientModel)) {
-                await CreateClient (model as ClientModel);
+                await CreateClient ((ClientModel)(object)model);
             } else if (type == typeof(ProjectModel)) {
-                await CreateProject (model as ProjectModel);
+                await CreateProject ((ProjectModel)(object)model);
             } else if (type == typeof(TaskModel)) {
-                await CreateTask (model as TaskModel);
+                await CreateTask ((TaskModel)(object)model);
             } else if (type == typeof(TimeEntryModel)) {
-                await CreateTimeEntry (model as TimeEntryModel);
+                await CreateTimeEntry ((TimeEntryModel)(object)model);
             } else if (type == typeof(WorkspaceModel)) {
-                await CreateWorkspace (model as WorkspaceModel);
+                await CreateWorkspace ((WorkspaceModel)(object)model);
             } else if (type == typeof(UserModel)) {
-                await CreateUser (model as UserModel);
+                await CreateUser ((UserModel)(object)model);
             } else if (type == typeof(TagModel)) {
-                await CreateTag (model as TagModel);
+                await CreateTag ((TagModel)(object)model);
             } else if (type == typeof(WorkspaceUserModel)) {
-                await CreateWorkspaceUser (model as WorkspaceUserModel);
+                await CreateWorkspaceUser ((WorkspaceUserModel)(object)model);
             } else if (type == typeof(ProjectUserModel)) {
-                await CreateProjectUser (model as ProjectUserModel);
+                await CreateProjectUser ((ProjectUserModel)(object)model);
             } else {
                 throw new NotSupportedException ("Creating of model (of type T) is not supported.");
             }
@@ -61,17 +61,17 @@ namespace Toggl.Phoebe.Net
             where T : Model
         {
             if (typeof(T) == typeof(ClientModel)) {
-                return await GetClient (id) as T;
+                return (T)(object)await GetClient (id);
             } else if (typeof(T) == typeof(ProjectModel)) {
-                return await GetProject (id) as T;
+                return (T)(object)await GetProject (id);
             } else if (typeof(T) == typeof(TaskModel)) {
-                return await GetTask (id) as T;
+                return (T)(object)await GetTask (id);
             } else if (typeof(T) == typeof(TimeEntryModel)) {
-                return await GetTimeEntry (id) as T;
+                return (T)(object)await GetTimeEntry (id);
             } else if (typeof(T) == typeof(WorkspaceModel)) {
-                return await GetWorkspace (id) as T;
+                return (T)(object)await GetWorkspace (id);
             } else if (typeof(T) == typeof(UserModel)) {
-                return await GetUser (id) as T;
+                return (T)(object)await GetUser (id);
             } else {
                 throw new NotSupportedException ("Fetching of model (of type T) is not supported.");
             }
@@ -81,11 +81,11 @@ namespace Toggl.Phoebe.Net
             where T : Model
         {
             if (typeof(T) == typeof(ClientModel)) {
-                return await ListClients () as List<T>;
+                return (List<T>)(object)await ListClients ();
             } else if (typeof(T) == typeof(TimeEntryModel)) {
-                return await ListTimeEntries () as List<T>;
+                return (List<T>)(object)await ListTimeEntries ();
             } else if (typeof(T) == typeof(WorkspaceModel)) {
-                return await ListWorkspaces () as List<T>;
+                return (List<T>)(object)await ListWorkspaces ();
             } else {
                 throw new NotSupportedException ("Listing of models (of type T) is not supported.");
             }
@@ -96,23 +96,23 @@ namespace Toggl.Phoebe.Net
         {
             var type = model.GetType ();
             if (type == typeof(ClientModel)) {
-                await UpdateClient (model as ClientModel);
+                await UpdateClient ((ClientModel)(object)model);
             } else if (type == typeof(ProjectModel)) {
-                await UpdateProject (model as ProjectModel);
+                await UpdateProject ((ProjectModel)(object)model);
             } else if (type == typeof(TaskModel)) {
-                await UpdateTask (model as TaskModel);
+                await UpdateTask ((TaskModel)(object)model);
             } else if (type == typeof(TimeEntryModel)) {
-                await UpdateTimeEntry (model as TimeEntryModel);
+                await UpdateTimeEntry ((TimeEntryModel)(object)model);
             } else if (type == typeof(WorkspaceModel)) {
-                await UpdateWorkspace (model as WorkspaceModel);
+                await UpdateWorkspace ((WorkspaceModel)(object)model);
             } else if (type == typeof(UserModel)) {
-                await UpdateUser (model as UserModel);
+                await UpdateUser ((UserModel)(object)model);
             } else if (type == typeof(TagModel)) {
-                await UpdateTag (model as TagModel);
+                await UpdateTag ((TagModel)(object)model);
             } else if (type == typeof(WorkspaceUserModel)) {
-                await UpdateWorkspaceUser (model as WorkspaceUserModel);
+                await UpdateWorkspaceUser ((WorkspaceUserModel)(object)model);
             } else if (type == typeof(ProjectUserModel)) {
-                await UpdateProjectUser (model as ProjectUserModel);
+                await UpdateProjectUser ((ProjectUserModel)(object)model);
             } else {
                 throw new NotSupportedException ("Updating of model (of type T) is not supported.");
             }
@@ -123,19 +123,19 @@ namespace Toggl.Phoebe.Net
         {
             var type = model.GetType ();
             if (type == typeof(ClientModel)) {
-                await DeleteClient (model as ClientModel);
+                await DeleteClient ((ClientModel)(object)model);
             } else if (type == typeof(ProjectModel)) {
-                await DeleteProject (model as ProjectModel);
+                await DeleteProject ((ProjectModel)(object)model);
             } else if (type == typeof(TaskModel)) {
-                await DeleteTask (model as TaskModel);
+                await DeleteTask ((TaskModel)(object)model);
             } else if (type == typeof(TimeEntryModel)) {
-                await DeleteTimeEntry (model as TimeEntryModel);
+                await DeleteTimeEntry ((TimeEntryModel)(object)model);
             } else if (type == typeof(TagModel)) {
-                await DeleteTag (model as TagModel);
+                await DeleteTag ((TagModel)(object)model);
             } else if (type == typeof(WorkspaceUserModel)) {
-                await DeleteWorkspaceUser (model as WorkspaceUserModel);
+                await DeleteWorkspaceUser ((WorkspaceUserModel)(object)model);
             } else if (type == typeof(ProjectUserModel)) {
-                await DeleteProjectUser (model as ProjectUserModel);
+                await DeleteProjectUser ((ProjectUserModel)(object)model);
             } else {
                 throw new NotSupportedException (String.Format ("Deleting of model (of type {0}) is not supported.", typeof(T)));
             }

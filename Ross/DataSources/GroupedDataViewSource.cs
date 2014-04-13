@@ -69,17 +69,13 @@ namespace Toggl.Ross.DataSources
                 sectionIdx += 1;
             }
 
-            // Determine moved items
+            // Determine moved rows
             sectionIdx = 0;
             foreach (var section in newCache.GetSections()) {
                 var sectionOldIdx = oldCache.GetSections ().IndexOf (section);
                 // When it doesn't exist in the old, we don't increment the sectionIdx
                 if (sectionOldIdx < 0)
                     continue;
-
-                if (sectionIdx != sectionOldIdx) {
-                    TableView.MoveSection (sectionOldIdx, sectionIdx);
-                }
 
                 var oldRows = oldCache.GetRows (section);
                 var newRows = newCache.GetRows (section);
@@ -97,6 +93,21 @@ namespace Toggl.Ross.DataSources
                     }
 
                     rowIdx += 1;
+                }
+
+                sectionIdx += 1;
+            }
+
+            // Determine moved sections
+            sectionIdx = 0;
+            foreach (var section in newCache.GetSections()) {
+                var sectionOldIdx = oldCache.GetSections ().IndexOf (section);
+                // When it doesn't exist in the old, we don't increment the sectionIdx
+                if (sectionOldIdx < 0)
+                    continue;
+
+                if (sectionIdx != sectionOldIdx) {
+                    TableView.MoveSection (sectionOldIdx, sectionIdx);
                 }
 
                 sectionIdx += 1;

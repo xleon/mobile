@@ -6,6 +6,8 @@ using MonoTouch.UIKit;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Ross.DataSources;
+using Toggl.Ross.Theme;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -15,6 +17,14 @@ namespace Toggl.Ross.ViewControllers
         {
             EdgesForExtendedLayout = UIRectEdge.None;
             new Source (TableView).Attach ();
+            TableView.TableHeaderView = new TableViewHeaderView ();
+        }
+
+        public override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
+
+            Title = "Log";
         }
 
         class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryModel>
@@ -94,7 +104,7 @@ namespace Toggl.Ross.ViewControllers
                 textLabel = new UILabel ();
                 ContentView.AddSubview (textLabel);
                 BackgroundView = new UIView () {
-                    BackgroundColor = UIColor.FromRGBA (0xF6, 0xF6, 0xF6, 240),
+                    BackgroundColor = Color.LightGray,
                 };
             }
 

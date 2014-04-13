@@ -9,6 +9,8 @@ namespace Toggl.Ross.Theme
         {
             // Set global appearances here:
             // UIView.Appearance.TintColor = UIColor.Red;
+
+            UINavigationBar.Appearance.BackgroundColor = Color.LightGray;
         }
     }
 }

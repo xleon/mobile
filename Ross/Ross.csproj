@@ -137,6 +137,10 @@
     <Compile Include="ViewControllers\LogViewController.cs" />
     <Compile Include="DataSources\PlainDataViewSource.cs" />
     <Compile Include="DataSources\GroupedDataViewSource.cs" />
+    <Compile Include="Theme\Color.cs" />
+    <Compile Include="Views\TableViewHeaderView.cs" />
+    <Compile Include="Views\UINavigationBarExtensions.cs" />
+    <Compile Include="Views\UIViewExtensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -156,5 +160,6 @@
     <Folder Include="Theme\" />
     <Folder Include="Threading\" />
     <Folder Include="DataSources\" />
+    <Folder Include="Views\" />
   </ItemGroup>
 </Project>

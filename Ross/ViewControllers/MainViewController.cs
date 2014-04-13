@@ -1,5 +1,6 @@
 ﻿using System;
 using MonoTouch.UIKit;
+using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -15,6 +16,8 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
+
+            NavigationBar.ApplyStyle (Style.NavigationBar);
         }
     }
 }

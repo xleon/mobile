@@ -145,15 +145,20 @@ namespace Toggl.Phoebe.Net
             where T : Model
         {
             if (typeof(T) == typeof(ClientModel)) {
-                await Task.WhenAll (models.Select ((model) => DeleteClient (model as ClientModel)));
+                await Task.WhenAll (models.Select ((object model) => DeleteClient ((ClientModel)model)));
             } else if (typeof(T) == typeof(ProjectModel)) {
                 await DeleteProjects (models as IEnumerable<ProjectModel>);
             } else if (typeof(T) == typeof(TaskModel)) {
                 await DeleteTasks (models as IEnumerable<TaskModel>);
             } else if (typeof(T) == typeof(TimeEntryModel)) {
-                await Task.WhenAll (models.Select ((model) => DeleteTimeEntry (model as TimeEntryModel)));
+                await Task.WhenAll (models.Select ((object model) => DeleteTimeEntry ((TimeEntryModel)model)));
             } else if (typeof(T) == typeof(Model)) {
-                await Task.WhenAll (models.Select ((model) => Delete (model)));
+                // Cannot use LINQ due to AOT failure when using lambdas that use generic method calls inside them.
+                var tasks = new List<Task> ();
+                foreach (var model in models) {
+                    tasks.Add (Delete (model));
+                }
+                await Task.WhenAll (tasks);
             } else {
                 throw new NotSupportedException ("Deleting of models (of type T) is not supported.");
             }

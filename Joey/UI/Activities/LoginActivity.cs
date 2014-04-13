@@ -200,16 +200,21 @@ namespace Toggl.Joey.UI.Activities
             int selectionStart = PasswordEditText.SelectionStart;
             int selectionEnd = PasswordEditText.SelectionEnd;
 
+            var passwordInputType = PasswordEditText.InputType;
             if (showPassword) {
-                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationPassword) | InputTypes.TextVariationVisiblePassword;
+                passwordInputType = (passwordInputType & ~InputTypes.TextVariationPassword) | InputTypes.TextVariationVisiblePassword;
             } else {
-                PasswordEditText.InputType = (PasswordEditText.InputType & ~InputTypes.TextVariationVisiblePassword) | InputTypes.TextVariationPassword;
+                passwordInputType = (passwordInputType & ~InputTypes.TextVariationVisiblePassword) | InputTypes.TextVariationPassword;
             }
-            // Need to reset font after changing input type
-            PasswordEditText.SetFont (Font.RobotoLight);
+            if (PasswordEditText.InputType != passwordInputType) {
+                PasswordEditText.InputType = passwordInputType;
 
-            // Restore cursor position:
-            PasswordEditText.SetSelection (selectionStart, selectionEnd);
+                // Need to reset font after changing input type
+                PasswordEditText.SetFont (Font.RobotoLight);
+
+                // Restore cursor position:
+                PasswordEditText.SetSelection (selectionStart, selectionEnd);
+            }
         }
 
         private void OnEmailEditTextTextChanged (object sender, TextChangedEventArgs e)

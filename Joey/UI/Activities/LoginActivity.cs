@@ -340,7 +340,7 @@ namespace Toggl.Joey.UI.Activities
 
         private Mode CurrentMode {
             get {
-                switch (TabsRadioGroup.CheckedRadioButtonId) {
+                switch (TabsRadioGroup != null ? TabsRadioGroup.CheckedRadioButtonId : -1) {
                 case Resource.Id.SignupTabRadioButton:
                     return Mode.Signup;
                 default:

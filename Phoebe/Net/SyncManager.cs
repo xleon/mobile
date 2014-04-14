@@ -200,12 +200,7 @@ namespace Toggl.Phoebe.Net
                     modelStore.TryCommit ();
                 }
             } catch (Exception e) {
-                var isExpected = GetExceptionTree (e).Any (
-                                     exc => exc is System.Net.Http.HttpRequestException
-                                     || exc is System.Net.Sockets.SocketException
-                                     || exc is System.Net.WebException);
-
-                if (isExpected) {
+                if (e.IsNetworkFailure ()) {
                     log.Info (Tag, e, "Sync ({0}) failed.", mode);
                 } else {
                     log.Warning (Tag, e, "Sync ({0}) failed.", mode);
@@ -215,16 +210,6 @@ namespace Toggl.Phoebe.Net
                 ex = e;
             } finally {
                 bus.Send (new SyncFinishedMessage (this, mode, hasErrors, ex));
-            }
-        }
-
-        private static IEnumerable<Exception> GetExceptionTree (Exception ex)
-        {
-            yield return ex;
-
-            while (ex.InnerException != null) {
-                ex = ex.InnerException;
-                yield return ex;
             }
         }
 

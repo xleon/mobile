@@ -297,7 +297,7 @@ namespace Toggl.Joey.UI.Fragments
                 if (msg.PropertyName == TaskModel.PropertyName) {
                     Rebind ();
                 }
-            } else if (TimeEntry != null && TimeEntry.ProjectId != null
+            } else if (TimeEntry != null && TimeEntry.ProjectId != null && TimeEntry.Project != null
                        && model.Project.ClientId == msg.Model.Id && TimeEntry.Project.Client == msg.Model) {
                 if (msg.PropertyName == ClientModel.PropertyName) {
                     Rebind ();

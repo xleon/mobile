@@ -370,7 +370,7 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        private TrackingMode trackingMode;
+        private TrackingMode trackingMode = TrackingMode.StartNew;
         public static readonly string PropertyTrackingMode = GetPropertyName ((m) => m.TrackingMode);
 
         public TrackingMode TrackingMode {

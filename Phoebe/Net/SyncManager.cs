@@ -200,7 +200,7 @@ namespace Toggl.Phoebe.Net
                     modelStore.TryCommit ();
                 }
             } catch (Exception e) {
-                if (e.IsNetworkFailure ()) {
+                if (e.IsNetworkFailure () || ex is TaskCanceledException) {
                     log.Info (Tag, e, "Sync ({0}) failed.", mode);
                 } else {
                     log.Warning (Tag, e, "Sync ({0}) failed.", mode);

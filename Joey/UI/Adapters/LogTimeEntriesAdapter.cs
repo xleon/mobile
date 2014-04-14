@@ -104,7 +104,7 @@ namespace Toggl.Joey.UI.Adapters
             if (viewType == ViewTypeDateHeader) {
                 var dateGroup = (AllTimeEntriesView.DateGroup)entry;
                 if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                    view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
                         Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
                     view.Tag = new HeaderListItemHolder (handler, view);
                 }
@@ -113,7 +113,7 @@ namespace Toggl.Joey.UI.Adapters
             } else if (viewType == ViewTypeExpanded) {
                 var model = (TimeEntryModel)entry;
                 if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                    view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
                         Resource.Layout.LogTimeEntryListExpandedItem, parent, false);
                     view.Tag = new ExpandedListItemHolder (this, view);
                 }
@@ -122,7 +122,7 @@ namespace Toggl.Joey.UI.Adapters
             } else {
                 var model = (TimeEntryModel)entry;
                 if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                    view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
                         Resource.Layout.LogTimeEntryListItem, parent, false);
                     view.Tag = new TimeEntryListItemHolder (handler, this, view);
                 }

@@ -147,7 +147,8 @@ namespace Toggl.Joey.Net
         {
             task.ContinueWith ((t) => {
                 var e = t.Exception;
-                // TODO: Log exception
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Info (Tag, e, "Failed to send GCM info to server.");
             }, TaskContinuationOptions.OnlyOnFaulted);
         }
     }

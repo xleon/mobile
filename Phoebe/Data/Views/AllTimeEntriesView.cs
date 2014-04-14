@@ -175,7 +175,7 @@ namespace Toggl.Phoebe.Data.Views
                         HasMore = (endTime.Date - minStart.Date).Days > 0;
                     } catch (Exception exc) {
                         var log = ServiceContainer.Resolve<Logger> ();
-                        if (exc is System.Net.Http.HttpRequestException) {
+                        if (exc.IsNetworkFailure ()) {
                             log.Info (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
                         } else {
                             log.Warning (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);

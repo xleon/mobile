@@ -50,7 +50,7 @@ namespace Toggl.Phoebe.Net
                     }
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<Logger> ();
-                    if (ex is System.Net.Http.HttpRequestException) {
+                    if (ex.IsNetworkFailure ()) {
                         log.Info (Tag, ex, "Failed authenticate user.");
                     } else {
                         log.Warning (Tag, ex, "Failed to authenticate user.");

@@ -40,10 +40,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnDestroy ()
         {
-            if (welcomeManager != null) {
-                welcomeManager.Dispose ();
-                welcomeManager = null;
-            }
+            welcomeManager = null;
             base.OnDestroy ();
         }
 
@@ -96,132 +93,51 @@ namespace Toggl.Joey.UI.Fragments
 
                 var adapter = new RecentTimeEntriesAdapter ();
                 ListAdapter = adapter;
-                if (welcomeManager != null) {
-                    welcomeManager.Attach (adapter);
-                }
             }
         }
 
-        private class WelcomeBoxManager : Android.Database.DataSetObserver
+        private class WelcomeBoxManager
         {
             private readonly ListView listView;
-            private IListAdapter adapter;
-            private View root;
-            private Parent parent;
+            private readonly View headerView;
+            private readonly LinearLayout emptyLinearLayout;
+            private readonly View emptyView;
 
             public WelcomeBoxManager (ListView listView)
             {
                 this.listView = listView;
 
-                Inflate (LayoutInflater.FromContext (listView.Context));
-                listView.AddHeaderView (root);
-                parent = Parent.ListView;
+                var inflater = LayoutInflater.FromContext (listView.Context);
+
+                // Add list view welcome box
+                headerView = Inflate (inflater);
+                listView.AddHeaderView (headerView);
+
+                // Add empty view welcome box
+                emptyView = Inflate (inflater);
+                emptyLinearLayout = listView.EmptyView.FindViewById<LinearLayout> (Resource.Id.EmptyLinearLayout);
+                emptyLinearLayout.AddView (emptyView, 0);
             }
 
-            public void Attach (IListAdapter adapter)
+            private View Inflate (LayoutInflater inflater)
             {
-                if (this.adapter != null) {
-                    this.adapter.UnregisterDataSetObserver (this);
-                }
-
-                this.adapter = adapter;
-                ReparentRoot ();
-
-                if (this.adapter != null) {
-                    this.adapter.RegisterDataSetObserver (this);
-                }
-            }
-
-            protected override void Dispose (bool disposing)
-            {
-                if (disposing) {
-                    if (adapter != null) {
-                        adapter.UnregisterDataSetObserver (this);
-                    }
-                }
-                base.Dispose (disposing);
-            }
-
-            private void Inflate (LayoutInflater inflater)
-            {
-                root = inflater.Inflate (Resource.Layout.WelcomeBox, null);
+                var root = inflater.Inflate (Resource.Layout.WelcomeBox, null);
                 root.FindViewById<TextView> (Resource.Id.StartTextView).SetFont (Font.Roboto);
                 root.FindViewById<TextView> (Resource.Id.SwipeLeftTextView).SetFont (Font.RobotoLight);
                 root.FindViewById<TextView> (Resource.Id.SwipeRightTextView).SetFont (Font.RobotoLight);
                 root.FindViewById<TextView> (Resource.Id.TapToContinueTextView).SetFont (Font.RobotoLight);
                 root.FindViewById<Button> (Resource.Id.GotItButton)
                     .SetFont (Font.Roboto).Click += OnGotItButtonClick;
-            }
-
-            private void ReparentRoot ()
-            {
-                var fromParent = parent;
-
-                // Determine where to show the welcome message
-                var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-                if (settingsStore.GotWelcomeMessage) {
-                    parent = Parent.Orphan;
-                } else {
-                    if (adapter == null || adapter.Count == 0) {
-                        parent = Parent.EmptyView;
-                    } else {
-                        parent = Parent.ListView;
-                    }
-                }
-
-                if (fromParent == parent)
-                    return;
-
-                // Remove from old parent:
-                switch (fromParent) {
-                case Parent.ListView:
-                    listView.RemoveHeaderView (root);
-                    break;
-                default:
-                    var vg = root.Parent as ViewGroup;
-                    if (vg != null) {
-                        vg.RemoveView (root);
-                    }
-                    break;
-                }
-
-                // Add to correct parent:
-                switch (parent) {
-                case Parent.ListView:
-                    root.LayoutParameters = new ListView.LayoutParams (
-                        ListView.LayoutParams.MatchParent,
-                        ListView.LayoutParams.WrapContent
-                    );
-                    listView.AddHeaderView (root);
-                    break;
-                case Parent.EmptyView:
-                    root.LayoutParameters = new LinearLayout.LayoutParams (
-                        LinearLayout.LayoutParams.MatchParent,
-                        LinearLayout.LayoutParams.WrapContent
-                    );
-                    var cont = listView.EmptyView.FindViewById<LinearLayout> (Resource.Id.EmptyLinearLayout);
-                    cont.AddView (root, 0);
-                    break;
-                }
+                return root;
             }
 
             private void OnGotItButtonClick (object sender, EventArgs e)
             {
                 var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
                 settingsStore.GotWelcomeMessage = true;
-                ReparentRoot ();
-            }
 
-            public override void OnChanged ()
-            {
-                ReparentRoot ();
-            }
-
-            private enum Parent
-            {
-                Orphan,
-                ListView,
-                EmptyView,
+                listView.RemoveHeaderView (headerView);
+                emptyLinearLayout.RemoveView (emptyView);
             }
         }
     }

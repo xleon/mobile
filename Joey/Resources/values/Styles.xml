@@ -26,6 +26,7 @@
         <item name="android:background">@color/dark_gray</item>
         <item name="android:titleTextStyle">@android:color/white</item>
         <item name="android:progressBarPadding">0dip</item>
+        <item name="android:displayOptions">showHome|useLogo</item>
     </style>
 
     <style name="RadioButtonTab">

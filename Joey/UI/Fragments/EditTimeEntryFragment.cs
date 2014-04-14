@@ -322,7 +322,8 @@ namespace Toggl.Joey.UI.Fragments
             var res = Resources;
 
             var startTime = TimeEntry.StartTime;
-            if (TimeEntry.StartTime == DateTime.MinValue) {
+            var useTimer = TimeEntry.StartTime == DateTime.MinValue;
+            if (useTimer) {
                 startTime = DateTime.Now;
 
                 DurationTextView.Text = TimeSpan.Zero.ToString ();
@@ -354,6 +355,9 @@ namespace Toggl.Joey.UI.Fragments
             if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
                 DescriptionEditText.Text = TimeEntry.Description;
             }
+            DescriptionEditText.SetHint (useTimer
+                ? Resource.String.CurrentTimeEntryEditDescriptionHint
+                : Resource.String.CurrentTimeEntryEditDescriptionPastHint);
 
             if (TimeEntry.StopTime.HasValue) {
                 StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();

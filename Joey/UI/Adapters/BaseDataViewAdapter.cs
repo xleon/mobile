@@ -14,20 +14,24 @@ namespace Toggl.Joey.UI.Adapters
         private static readonly int LoadMoreOffset = 3;
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
         protected static readonly int ViewTypeContent = 1;
-        private IDataView<T> dataView;
+        private CachingDataView<T> dataView;
 
         public BaseDataViewAdapter (IDataView<T> dataView)
         {
-            this.dataView = dataView;
-            dataView.Updated += OnDataViewUpdated;
+            this.dataView = new CachingDataView<T> (dataView);
+            this.dataView.Updated += OnDataViewUpdated;
         }
 
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                var dispoableDataView = dataView as IDisposable;
-                if (dispoableDataView != null) {
-                    dispoableDataView.Dispose ();
+                if (dataView != null) {
+                    var sourceView = dataView.Source as IDisposable;
+                    if (sourceView != null) {
+                        sourceView.Dispose ();
+                    }
+
+                    dataView.Dispose ();
                     dataView = null;
                 }
             }
@@ -115,7 +119,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        protected IDataView<T> DataView {
+        protected CachingDataView<T> DataView {
             get { return dataView; }
         }
     }

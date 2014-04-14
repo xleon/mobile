@@ -138,7 +138,7 @@ namespace Toggl.Joey.Net
             var regId = RegistrationId;
             if (regId != null) {
                 var pushClient = ServiceContainer.Resolve<IPushClient> ();
-                IgnoreTaskErrors (pushClient.Register (authToken, PushService.GCM, regId));
+                IgnoreTaskErrors (pushClient.Unregister (authToken, PushService.GCM, regId));
                 RegistrationId = regId = null;
             }
         }

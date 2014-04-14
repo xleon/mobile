@@ -137,28 +137,22 @@ namespace Toggl.Phoebe.Data
 
         protected virtual void CreateTables (SQLiteConnection db)
         {
-            db.BeginTransaction ();
-            try {
+            db.RunInTransaction (delegate {
                 foreach (var t in Model.GetAllModels ()) {
                     db.CreateTable (t);
                 }
-            } finally {
-                db.Commit ();
-            }
+            });
         }
 
         protected virtual void ClearTables (SQLiteConnection db)
         {
-            db.BeginTransaction ();
-            try {
+            db.RunInTransaction (delegate {
                 foreach (var t in Model.GetAllModels()) {
                     var map = db.GetMapping (t);
                     var query = string.Format ("delete from \"{0}\"", map.TableName);
                     db.Execute (query);
                 }
-            } finally {
-                db.Commit ();
-            }
+            });
         }
 
         public T Get<T> (Guid id)
@@ -259,8 +253,7 @@ namespace Toggl.Phoebe.Data
             var hadChanges = false;
             var conn = connection.Value;
             lock (Model.SyncRoot) {
-                conn.BeginTransaction ();
-                try {
+                conn.RunInTransaction (delegate {
                     foreach (var model in changedModels) {
                         if (model.IsPersisted) {
                             conn.InsertOrReplace (model);
@@ -271,9 +264,7 @@ namespace Toggl.Phoebe.Data
                     }
                     changedModels.Clear ();
                     createdModels.Clear ();
-                } finally {
-                    conn.Commit ();
-                }
+                });
             }
 
             if (hadChanges) {
@@ -293,6 +284,10 @@ namespace Toggl.Phoebe.Data
                 } else {
                     log.Warning (LogTag, ex, "Failed to commit changes.");
                 }
+                return false;
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Warning (LogTag, ex, "Failed to commit changes.");
                 return false;
             }
             return true;

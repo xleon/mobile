@@ -25,6 +25,23 @@ namespace Toggl.Joey.Net
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChangedMessage);
+
+            CheckRegistrationId ();
+        }
+
+        private void CheckRegistrationId ()
+        {
+            if (!HasGcmSupport)
+                return;
+
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (!authManager.IsAuthenticated)
+                return;
+
+            if (RegistrationId == null) {
+                // Registration ID missing (either due update or something else)
+                RegisterDevice ();
+            }
         }
 
         private bool HasGcmSupport {

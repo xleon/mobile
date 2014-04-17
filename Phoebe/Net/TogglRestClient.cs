@@ -137,7 +137,7 @@ namespace Toggl.Phoebe.Net
             } else if (type == typeof(ProjectUserModel)) {
                 await DeleteProjectUser (model as ProjectUserModel);
             } else {
-                throw new NotSupportedException (String.Format ("Deleting of model (of type {0}) is not supported.", typeof(T)));
+                throw new NotSupportedException (String.Format ("Deleting of model (of type {0}) is not supported.", type));
             }
         }
 
@@ -155,7 +155,7 @@ namespace Toggl.Phoebe.Net
             } else if (typeof(T) == typeof(Model)) {
                 await Task.WhenAll (models.Select ((model) => Delete (model)));
             } else {
-                throw new NotSupportedException ("Deleting of models (of type T) is not supported.");
+                throw new NotSupportedException (String.Format ("Deleting of models (of type {0}) is not supported.", typeof(T)));
             }
         }
 

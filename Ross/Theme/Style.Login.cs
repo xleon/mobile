@@ -7,10 +7,13 @@ namespace Toggl.Ross.Theme
     {
         public static class Login
         {
-            public static readonly ViewStyler<UIButton> PasswordButton = (v) => {
-            };
-            public static readonly ViewStyler<UIButton> GoogleButton = (v) => {
-            };
+            public static void PasswordButton (UIButton v)
+            {
+            }
+
+            public static void GoogleButton (UIButton v)
+            {
+            }
         }
     }
 }

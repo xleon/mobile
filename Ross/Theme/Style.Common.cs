@@ -6,17 +6,22 @@ namespace Toggl.Ross.Theme
 {
     public static partial class Style
     {
-        public static readonly ViewStyler<UIView> Screen = (v) => {
+        public static void Screen (UIView v)
+        {
             v.BackgroundColor = UIColor.White;
-        };
-        public static readonly ViewStyler<UINavigationBar> NavigationBar = (v) => {
+        }
+
+        public static void NavigationBar (UINavigationBar v)
+        {
             var borderImage = v.GetBorderImage ();
             if (borderImage != null) {
                 borderImage.Hidden = true;
             }
-        };
-        public static readonly ViewStyler<TableViewHeaderView> TableViewHeader = (v) => {
+        }
+
+        public static void TableViewHeader (TableViewHeaderView v)
+        {
             v.BackgroundColor = Color.LightGray;
-        };
+        }
     }
 }

@@ -206,7 +206,7 @@ namespace Toggl.Ross.ViewControllers
                 bounds = GetBoundingRect (clientLabel);
                 clientLabel.Frame = new RectangleF (
                     x: projectLabel.Frame.X + projectLabel.Frame.Width + clientLeftMargin,
-                    y: (float)Math.Ceiling (projectLabel.Frame.Y + projectLabel.Font.Ascender - clientLabel.Font.Ascender),
+                    y: (float)Math.Floor (projectLabel.Frame.Y + projectLabel.Font.Ascender - clientLabel.Font.Ascender),
                     width: bounds.Width,
                     height: bounds.Height
                 );
@@ -262,10 +262,12 @@ namespace Toggl.Ross.ViewControllers
                 var attrs = new UIStringAttributes () {
                     Font = view.Font,
                 };
-                return ((NSString)(view.Text ?? String.Empty)).GetBoundingRect (
-                    new SizeF (Single.MaxValue, Single.MaxValue),
-                    NSStringDrawingOptions.UsesLineFragmentOrigin,
-                    attrs, null);
+                var rect = ((NSString)(view.Text ?? String.Empty)).GetBoundingRect (
+                               new SizeF (Single.MaxValue, Single.MaxValue),
+                               NSStringDrawingOptions.UsesLineFragmentOrigin,
+                               attrs, null);
+                rect.Height = (float)Math.Ceiling (rect.Height);
+                return rect;
             }
 
             public void Rebind (TimeEntryModel model)

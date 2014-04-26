@@ -167,6 +167,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Theme\UIColorExtensions.cs" />
+    <Compile Include="Theme\Images.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

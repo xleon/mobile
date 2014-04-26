@@ -122,7 +122,7 @@ namespace Toggl.Ross.ViewControllers
                 taskSeparatorImageView = new UIImageView ().ApplyStyle (Style.Log.CellTaskDescriptionSeparator);
                 billableTagsImageView = new UIImageView ();
                 durationLabel = new UILabel ().ApplyStyle (Style.Log.CellDurationLabel);
-                runningImageView = new UIImageView ();
+                runningImageView = new UIImageView ().ApplyStyle (Style.Log.CellRunningIndicator);
 
                 textContentView.AddSubviews (
                     projectLabel, clientLabel,
@@ -161,7 +161,7 @@ namespace Toggl.Ross.ViewControllers
 
                 var contentFrame = ContentView.Frame;
 
-                const float durationLabelWidth = 80f;
+                const float durationLabelWidth = 75f;
                 durationLabel.Frame = new RectangleF (
                     x: contentFrame.Width - durationLabelWidth - HorizPadding,
                     y: 0,

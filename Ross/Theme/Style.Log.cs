@@ -57,20 +57,33 @@ namespace Toggl.Ross.Theme
             {
             }
 
+            public static void CellRunningIndicator (UIImageView v)
+            {
+                v.ContentMode = UIViewContentMode.Center;
+                v.Image = Images.IconRunning;
+            }
+
             public static void BillableAndTaggedEntry (UIImageView v)
             {
+                v.ContentMode = UIViewContentMode.Center;
+                v.Image = Images.IconTagBillable;
             }
 
             public static void TaggedEntry (UIImageView v)
             {
+                v.ContentMode = UIViewContentMode.Center;
+                v.Image = Images.IconTag;
             }
 
             public static void BillableEntry (UIImageView v)
             {
+                v.ContentMode = UIViewContentMode.Center;
+                v.Image = Images.IconBillable;
             }
 
             public static void PlainEntry (UIImageView v)
             {
+                v.Image = null;
             }
         }
     }

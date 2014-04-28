@@ -55,6 +55,8 @@ namespace Toggl.Ross.Theme
 
             public static void CellTaskDescriptionSeparator (UIImageView v)
             {
+                v.Image = Image.IconArrowRight;
+                v.ContentMode = UIViewContentMode.Center;
             }
 
             public static void CellRunningIndicator (UIImageView v)

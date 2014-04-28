@@ -5,12 +5,20 @@ namespace Toggl.Ross.Theme
 {
     public static class Image
     {
+        public static UIImage LoginBackground {
+            get { return UIImage.FromBundle ("bg"); }
+        }
+
         public static UIImage CircleStart {
             get { return UIImage.FromBundle ("circle-start"); }
         }
 
         public static UIImage CircleStop {
             get { return UIImage.FromBundle ("circle-stop"); }
+        }
+
+        public static UIImage IconArrowRight {
+            get { return UIImage.FromBundle ("icon-arrow-right"); }
         }
 
         public static UIImage IconBack {

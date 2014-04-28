@@ -221,18 +221,19 @@ namespace Toggl.Ross.ViewControllers
                         width: bounds.Width,
                         height: bounds.Height
                     );
-                    offsetX += taskLabel.Frame.Width + 2f;
+                    offsetX += taskLabel.Frame.Width + 4f;
 
                     if (!taskSeparatorImageView.Hidden) {
+                        const float separatorOffsetY = -2f;
                         var imageSize = taskSeparatorImageView.Image != null ? taskSeparatorImageView.Image.Size : SizeF.Empty;
                         taskSeparatorImageView.Frame = new RectangleF (
                             x: offsetX,
-                            y: taskLabel.Frame.Y + taskLabel.Font.Ascender - imageSize.Height,
+                            y: taskLabel.Frame.Y + taskLabel.Font.Ascender - imageSize.Height + separatorOffsetY,
                             width: imageSize.Width,
                             height: imageSize.Height
                         );
 
-                        offsetX += taskSeparatorImageView.Frame.Width + 2f;
+                        offsetX += taskSeparatorImageView.Frame.Width + 4f;
                     }
 
                     if (!descriptionLabel.Hidden) {
@@ -244,7 +245,7 @@ namespace Toggl.Ross.ViewControllers
                             height: bounds.Height
                         );
 
-                        offsetX += descriptionLabel.Frame.Width + 2f;
+                        offsetX += descriptionLabel.Frame.Width + 4f;
                     }
                 } else if (!descriptionLabel.Hidden) {
                     bounds = GetBoundingRect (descriptionLabel);

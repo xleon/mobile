@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using MonoTouch.CoreAnimation;
+using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
@@ -111,6 +112,8 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableTagsImageView;
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
+            private int rebindCounter;
+            private TimeEntryModel model;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -178,12 +181,12 @@ namespace Toggl.Ross.ViewControllers
                     width: billableTagsWidth
                 );
 
-                const float runningHeight = 5f;
-                const float runningWidth = 5f;
+                var runningHeight = runningImageView.Image.Size.Height;
+                var runningWidth = runningImageView.Image.Size.Width;
                 runningImageView.Frame = new RectangleF (
                     y: (contentFrame.Height - runningHeight) / 2,
                     height: runningHeight,
-                    x: contentFrame.Width - (HorizPadding - runningWidth) / 2,
+                    x: contentFrame.Width - (HorizPadding + runningWidth) / 2,
                     width: runningWidth
                 );
 
@@ -273,6 +276,14 @@ namespace Toggl.Ross.ViewControllers
 
             public void Rebind (TimeEntryModel model)
             {
+                this.model = model;
+                Rebind ();
+            }
+
+            private void Rebind ()
+            {
+                rebindCounter++;
+
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
                 var clientName = String.Empty;
@@ -340,7 +351,15 @@ namespace Toggl.Ross.ViewControllers
                 runningImageView.Hidden = model.State != TimeEntryState.Running;
 
                 if (model.State == TimeEntryState.Running) {
-                    // TODO: Schedule rebind
+                    // Schedule rebind
+                    var counter = rebindCounter;
+                    DispatchQueue.MainQueue.DispatchAfter (
+                        TimeSpan.FromMilliseconds (1000 - duration.Milliseconds),
+                        delegate {
+                            if (counter == rebindCounter) {
+                                Rebind ();
+                            }
+                        });
                 }
 
                 LayoutIfNeeded ();
@@ -352,6 +371,8 @@ namespace Toggl.Ross.ViewControllers
             private const float HorizSpacing = 15f;
             private readonly UILabel dateLabel;
             private readonly UILabel totalDurationLabel;
+            private AllTimeEntriesView.DateGroup data;
+            private int rebindCounter;
 
             public SectionHeaderView (IntPtr ptr) : base (ptr)
             {
@@ -386,10 +407,30 @@ namespace Toggl.Ross.ViewControllers
 
             public void Rebind (AllTimeEntriesView.DateGroup data)
             {
+                this.data = data;
+                Rebind ();
+            }
+
+            private void Rebind ()
+            {
+                rebindCounter++;
+
                 dateLabel.Text = FormatDate (data.Date);
 
                 var duration = TimeSpan.FromSeconds (data.Models.Sum (m => m.GetDuration ().TotalSeconds));
                 totalDurationLabel.Text = FormatDuration (duration);
+
+                if (data.Models.Any (m => m.State == TimeEntryState.Running)) {
+                    // Schedule rebind
+                    var counter = rebindCounter;
+                    DispatchQueue.MainQueue.DispatchAfter (
+                        TimeSpan.FromMilliseconds (60000 - duration.Seconds * 1000 - duration.Milliseconds),
+                        delegate {
+                            if (counter == rebindCounter) {
+                                Rebind ();
+                            }
+                        });
+                }
             }
 
             private string FormatDate (DateTime date)

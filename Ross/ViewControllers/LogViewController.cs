@@ -17,7 +17,7 @@ using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class LogViewController : UITableViewController
+    public class LogViewController : BaseTimerTableViewController
     {
         public LogViewController () : base (UITableViewStyle.Plain)
         {
@@ -28,13 +28,6 @@ namespace Toggl.Ross.ViewControllers
             EdgesForExtendedLayout = UIRectEdge.None;
             new Source (TableView).Attach ();
             TableView.TableHeaderView = new TableViewHeaderView ();
-        }
-
-        public override void ViewDidLoad ()
-        {
-            base.ViewDidLoad ();
-
-            Title = "Log";
         }
 
         class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryModel>

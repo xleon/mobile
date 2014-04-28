@@ -3,7 +3,7 @@ using MonoTouch.UIKit;
 
 namespace Toggl.Ross.Theme
 {
-    public static class Images
+    public static class Image
     {
         public static UIImage CircleStart {
             get { return UIImage.FromBundle ("circle-start"); }

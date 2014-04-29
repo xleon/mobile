@@ -26,6 +26,19 @@ namespace Toggl.Ross.Theme
                 v.Font = UIFont.FromName ("HelveticaNeue", 14f);
             }
 
+            public static void CellContentView (UIView v)
+            {
+                v.Opaque = true;
+                v.BackgroundColor = Color.White;
+            }
+
+            public static void CellSwipeActionLabel (UILabel v)
+            {
+                v.TextColor = Color.White;
+                v.Font = UIFont.FromName ("HelveticaNeue", 18f);
+                v.TextAlignment = UITextAlignment.Center;
+            }
+
             public static void CellProjectLabel (UILabel v)
             {
                 v.Font = UIFont.FromName ("HelveticaNeue-Medium", 18f);
@@ -86,6 +99,16 @@ namespace Toggl.Ross.Theme
             public static void PlainEntry (UIImageView v)
             {
                 v.Image = null;
+            }
+
+            public static void ContinueState (UIView v)
+            {
+                v.BackgroundColor = Color.Green;
+            }
+
+            public static void DeleteState (UIView v)
+            {
+                v.BackgroundColor = Color.Red;
             }
         }
     }

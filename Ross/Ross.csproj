@@ -178,6 +178,8 @@
     </Compile>
     <Compile Include="Theme\Image.cs" />
     <Compile Include="DispatchQueueExtensions.cs" />
+    <Compile Include="Views\ModelTableViewCell.cs" />
+    <Compile Include="Views\BindableTableViewCell.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

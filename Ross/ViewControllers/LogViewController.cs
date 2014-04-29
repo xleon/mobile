@@ -71,7 +71,7 @@ namespace Toggl.Ross.ViewControllers
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
                 var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
-                cell.Rebind (GetRow (indexPath));
+                cell.Bind (GetRow (indexPath));
                 return cell;
             }
 
@@ -88,12 +88,12 @@ namespace Toggl.Ross.ViewControllers
             public override UIView GetViewForHeader (UITableView tableView, int section)
             {
                 var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (SectionHeaderId);
-                view.Rebind (GetSection (section));
+                view.Bind (GetSection (section));
                 return view;
             }
         }
 
-        class TimeEntryCell : UITableViewCell
+        class TimeEntryCell : ModelTableViewCell<TimeEntryModel>
         {
             private const float HorizPadding = 15f;
             private readonly UIView textContentView;
@@ -106,7 +106,6 @@ namespace Toggl.Ross.ViewControllers
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
             private int rebindCounter;
-            private TimeEntryModel model;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -267,16 +266,14 @@ namespace Toggl.Ross.ViewControllers
                 return rect;
             }
 
-            public void Rebind (TimeEntryModel model)
+            protected override void Rebind ()
             {
-                this.model = model;
-                Rebind ();
-            }
+                if (DataSource == null)
+                    return;
 
-            private void Rebind ()
-            {
                 rebindCounter++;
 
+                var model = DataSource;
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
                 var clientName = String.Empty;
@@ -357,6 +354,34 @@ namespace Toggl.Ross.ViewControllers
 
                 LayoutIfNeeded ();
             }
+
+            protected override void OnModelChanged (ModelChangedMessage msg)
+            {
+                if (DataSource == null)
+                    return;
+
+                if (DataSource == msg.Model) {
+                    if (msg.PropertyName == TimeEntryModel.PropertyStartTime
+                        || msg.PropertyName == TimeEntryModel.PropertyIsBillable
+                        || msg.PropertyName == TimeEntryModel.PropertyState
+                        || msg.PropertyName == TimeEntryModel.PropertyDescription
+                        || msg.PropertyName == TimeEntryModel.PropertyProjectId
+                        || msg.PropertyName == TimeEntryModel.PropertyTaskId)
+                        Rebind ();
+                } else if (DataSource.ProjectId.HasValue && DataSource.ProjectId == msg.Model.Id) {
+                    if (msg.PropertyName == ProjectModel.PropertyName
+                        || msg.PropertyName == ProjectModel.PropertyColor)
+                        Rebind ();
+                } else if (DataSource.ProjectId.HasValue && DataSource.Project != null
+                           && DataSource.Project.ClientId.HasValue
+                           && DataSource.Project.ClientId == msg.Model.Id) {
+                    if (msg.PropertyName == ClientModel.PropertyName)
+                        Rebind ();
+                } else if (DataSource.TaskId.HasValue && DataSource.TaskId == msg.Model.Id) {
+                    if (msg.PropertyName == TaskModel.PropertyName)
+                        Rebind ();
+                }
+            }
         }
 
         class SectionHeaderView : UITableViewHeaderFooterView
@@ -398,7 +423,7 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            public void Rebind (AllTimeEntriesView.DateGroup data)
+            public void Bind (AllTimeEntriesView.DateGroup data)
             {
                 this.data = data;
                 Rebind ();

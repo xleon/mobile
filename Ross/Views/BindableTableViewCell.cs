@@ -1,0 +1,26 @@
+﻿using System;
+using MonoTouch.UIKit;
+
+namespace Toggl.Ross.Views
+{
+    public abstract class BindableTableViewCell<T> : UITableViewCell
+    {
+        private T dataSource;
+
+        protected BindableTableViewCell (IntPtr handle) : base (handle)
+        {
+        }
+
+        public void Bind (T dataSource)
+        {
+            this.dataSource = dataSource;
+            Rebind ();
+        }
+
+        protected abstract void Rebind ();
+
+        public T DataSource {
+            get { return dataSource; }
+        }
+    }
+}

@@ -65,7 +65,7 @@ namespace Toggl.Ross.ViewControllers
 
             public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
-                return 60f;
+                return EstimatedHeight (tableView, indexPath);
             }
 
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
@@ -82,7 +82,7 @@ namespace Toggl.Ross.ViewControllers
 
             public override float GetHeightForHeader (UITableView tableView, int section)
             {
-                return 42f;
+                return EstimatedHeightForHeader (tableView, section);
             }
 
             public override UIView GetViewForHeader (UITableView tableView, int section)

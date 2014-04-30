@@ -19,7 +19,9 @@ namespace Toggl.Ross.Theme
             {
                 v.Font = UIFont.FromName ("HelveticaNeue", 16f);
                 v.SetBackgroundImage (Image.CircleStart, UIControlState.Normal);
+                v.SetBackgroundImage (Image.CircleStartPressed, UIControlState.Highlighted);
                 v.SetTitleColor (Color.White, UIControlState.Normal);
+                v.SetTitleColor (Color.White, UIControlState.Highlighted);
                 v.SetTitle ("NavTimerStart".Tr (), UIControlState.Normal);
             }
 
@@ -27,7 +29,9 @@ namespace Toggl.Ross.Theme
             {
                 v.Font = UIFont.FromName ("HelveticaNeue-Light", 16f);
                 v.SetBackgroundImage (Image.CircleStop, UIControlState.Normal);
+                v.SetBackgroundImage (Image.CircleStopPressed, UIControlState.Highlighted);
                 v.SetTitleColor (Color.Red, UIControlState.Normal);
+                v.SetTitleColor (Color.White, UIControlState.Highlighted);
                 v.SetTitle ("NavTimerStop".Tr (), UIControlState.Normal);
             }
         }

@@ -13,8 +13,16 @@ namespace Toggl.Ross.Theme
             get { return UIImage.FromBundle ("circle-start"); }
         }
 
+        public static UIImage CircleStartPressed {
+            get { return UIImage.FromBundle ("circle-start-pressed"); }
+        }
+
         public static UIImage CircleStop {
             get { return UIImage.FromBundle ("circle-stop"); }
+        }
+
+        public static UIImage CircleStopPressed {
+            get { return UIImage.FromBundle ("circle-stop-pressed"); }
         }
 
         public static UIImage IconArrowRight {

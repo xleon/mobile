@@ -137,6 +137,10 @@
     <BundleResource Include="Resources\bg%402x.png" />
     <BundleResource Include="Resources\icon-arrow-right.png" />
     <BundleResource Include="Resources\icon-arrow-right%402x.png" />
+    <BundleResource Include="Resources\circle-start-pressed.png" />
+    <BundleResource Include="Resources\circle-start-pressed%402x.png" />
+    <BundleResource Include="Resources\circle-stop-pressed.png" />
+    <BundleResource Include="Resources\circle-stop-pressed%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

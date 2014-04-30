@@ -96,6 +96,12 @@ namespace Toggl.Ross.ViewControllers
             {
                 return false;
             }
+
+            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
+            {
+                // TODO: Navigate to edit instead
+                tableView.DeselectRow (indexPath, true);
+            }
         }
 
         class TimeEntryCell : ModelTableViewCell<TimeEntryModel>
@@ -171,6 +177,8 @@ namespace Toggl.Ross.ViewControllers
                     runningImageView
                 );
 
+                BackgroundView = new UIView ();
+                SelectedBackgroundView = new UIView ().ApplyStyle (Style.CellSelectedBackground);
                 ContentView.AddSubviews (
                     continueActionLabel,
                     deleteActionLabel,
@@ -336,9 +344,11 @@ namespace Toggl.Ross.ViewControllers
                 actualContentView.Frame = frame;
 
                 if (panDeltaX < 0) {
-                    ContentView.ApplyStyle (Style.Log.ContinueState);
+                    BackgroundView.ApplyStyle (Style.Log.ContinueState);
                 } else if (panDeltaX > 0) {
-                    ContentView.ApplyStyle (Style.Log.DeleteState);
+                    BackgroundView.ApplyStyle (Style.Log.DeleteState);
+                } else {
+                    BackgroundView.ApplyStyle (Style.Log.NoSwipeState);
                 }
 
                 switch (panLock) {

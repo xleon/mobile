@@ -23,5 +23,10 @@ namespace Toggl.Ross.Theme
         {
             v.BackgroundColor = Color.LightGray;
         }
+
+        public static void CellSelectedBackground (UIView v)
+        {
+            v.BackgroundColor = Color.LightGray;
+        }
     }
 }

@@ -110,6 +110,11 @@ namespace Toggl.Ross.Theme
             {
                 v.BackgroundColor = Color.Red;
             }
+
+            public static void NoSwipeState (UIView v)
+            {
+                v.BackgroundColor = UIColor.Clear;
+            }
         }
     }
 }

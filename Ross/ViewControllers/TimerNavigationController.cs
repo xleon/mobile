@@ -34,12 +34,22 @@ namespace Toggl.Ross.ViewControllers
             if (navigationButton == null) {
                 actionButton = new UIButton ().ApplyStyle (Style.NavTimer.StartButton);
                 actionButton.SizeToFit ();
+                actionButton.TouchUpInside += OnActionButtonTouchUpInside;
                 navigationButton = new UIBarButtonItem (actionButton);
             }
 
             // Attach views
             navigationItem.TitleView = durationLabel;
             navigationItem.RightBarButtonItem = navigationButton;
+        }
+
+        private void OnActionButtonTouchUpInside (object sender, EventArgs e)
+        {
+            if (currentTimeEntry == null) {
+                // TODO: Start a new time entry
+            } else {
+                currentTimeEntry.Stop ();
+            }
         }
 
         private void Rebind ()

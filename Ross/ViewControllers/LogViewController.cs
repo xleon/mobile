@@ -19,15 +19,26 @@ namespace Toggl.Ross.ViewControllers
 {
     public class LogViewController : BaseTimerTableViewController
     {
+        private readonly NavigationMenuController navMenuController;
+
         public LogViewController () : base (UITableViewStyle.Plain)
         {
             // TODO: Sync manager should be invoked in a different place?
             var syncManager = ServiceContainer.Resolve<SyncManager> ();
             syncManager.Run (SyncMode.Auto);
 
+            navMenuController = new NavigationMenuController ();
+
             EdgesForExtendedLayout = UIRectEdge.None;
             new Source (TableView).Attach ();
             TableView.TableHeaderView = new TableViewHeaderView ();
+        }
+
+        public override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
+
+            navMenuController.Attach (this);
         }
 
         class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryModel>

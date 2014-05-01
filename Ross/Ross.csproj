@@ -183,6 +183,7 @@
     <Compile Include="DispatchQueueExtensions.cs" />
     <Compile Include="Views\ModelTableViewCell.cs" />
     <Compile Include="Views\BindableTableViewCell.cs" />
+    <Compile Include="ViewControllers\NavigationMenuController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

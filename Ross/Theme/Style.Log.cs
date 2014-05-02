@@ -28,54 +28,42 @@ namespace Toggl.Ross.Theme
 
             public static void CellContentView (UIView v)
             {
-                v.Opaque = true;
-                v.BackgroundColor = Color.White;
-            }
-
-            public static void CellSwipeActionLabel (UILabel v)
-            {
-                v.TextColor = Color.White;
-                v.Font = UIFont.FromName ("HelveticaNeue", 18f);
-                v.TextAlignment = UITextAlignment.Center;
+                v.ApplyStyle (TimeEntryCell.ContentView);
             }
 
             public static void CellProjectLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Medium", 18f);
+                v.ApplyStyle (TimeEntryCell.ProjectLabel);
             }
 
             public static void CellClientLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 15f);
-                v.TextColor = UIColor.Gray;
+                v.ApplyStyle (TimeEntryCell.ClientLabel);
             }
 
             public static void CellTaskLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Bold", 14f);
+                v.ApplyStyle (TimeEntryCell.TaskLabel);
             }
 
             public static void CellDescriptionLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 14f);
+                v.ApplyStyle (TimeEntryCell.DescriptionLabel);
             }
 
             public static void CellDurationLabel (UILabel v)
             {
-                v.TextAlignment = UITextAlignment.Right;
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 18f);
+                v.ApplyStyle (TimeEntryCell.DurationLabel);
             }
 
             public static void CellTaskDescriptionSeparator (UIImageView v)
             {
-                v.Image = Image.IconArrowRight;
-                v.ContentMode = UIViewContentMode.Center;
+                v.ApplyStyle (TimeEntryCell.TaskDescriptionSeparator);
             }
 
             public static void CellRunningIndicator (UIImageView v)
             {
-                v.ContentMode = UIViewContentMode.Center;
-                v.Image = Image.IconRunning;
+                v.ApplyStyle (TimeEntryCell.RunningIndicator);
             }
 
             public static void BillableAndTaggedEntry (UIImageView v)
@@ -99,21 +87,6 @@ namespace Toggl.Ross.Theme
             public static void PlainEntry (UIImageView v)
             {
                 v.Image = null;
-            }
-
-            public static void ContinueState (UIView v)
-            {
-                v.BackgroundColor = Color.Green;
-            }
-
-            public static void DeleteState (UIView v)
-            {
-                v.BackgroundColor = Color.Red;
-            }
-
-            public static void NoSwipeState (UIView v)
-            {
-                v.BackgroundColor = UIColor.Clear;
             }
         }
     }

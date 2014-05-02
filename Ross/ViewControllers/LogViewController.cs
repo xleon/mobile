@@ -115,16 +115,9 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        class TimeEntryCell : ModelTableViewCell<TimeEntryModel>
+        class TimeEntryCell : SwipableTimeEntryTableViewCell
         {
             private const float HorizPadding = 15f;
-            private const float ContinueSwipeWidth = 90f;
-            private const float DeleteSwipeWidth = 100f;
-            private const float SnapDistance = 20f;
-            private readonly UILabel continueActionLabel;
-            private readonly UILabel confirmActionLabel;
-            private readonly UILabel deleteActionLabel;
-            private readonly UIView actualContentView;
             private readonly UIView textContentView;
             private readonly UILabel projectLabel;
             private readonly UILabel clientLabel;
@@ -138,16 +131,6 @@ namespace Toggl.Ross.ViewControllers
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
-                continueActionLabel = new UILabel () {
-                    Text = "LogCellContinue".Tr (),
-                }.ApplyStyle (Style.Log.CellSwipeActionLabel);
-                deleteActionLabel = new UILabel () {
-                    Text = "LogCellDelete".Tr (),
-                }.ApplyStyle (Style.Log.CellSwipeActionLabel);
-                confirmActionLabel = new UILabel () {
-                    Text = "LogCellConfirm".Tr (),
-                }.ApplyStyle (Style.Log.CellSwipeActionLabel);
-                actualContentView = new UIView ().ApplyStyle (Style.Log.CellContentView);
                 textContentView = new UIView ();
                 projectLabel = new UILabel ().ApplyStyle (Style.Log.CellProjectLabel);
                 clientLabel = new UILabel ().ApplyStyle (Style.Log.CellClientLabel);
@@ -181,205 +164,26 @@ namespace Toggl.Ross.ViewControllers
                 };
                 textContentView.Layer.Mask = maskLayer;
 
-                actualContentView.AddSubviews (
+                ActualContentView.AddSubviews (
                     textContentView,
                     billableTagsImageView,
                     durationLabel,
                     runningImageView
                 );
-
-                BackgroundView = new UIView ();
-                SelectedBackgroundView = new UIView ().ApplyStyle (Style.CellSelectedBackground);
-                ContentView.AddSubviews (
-                    continueActionLabel,
-                    deleteActionLabel,
-                    confirmActionLabel,
-                    actualContentView
-                );
-
-                actualContentView.AddGestureRecognizer (new UIPanGestureRecognizer (OnPanningGesture) {
-                    ShouldRecognizeSimultaneously = (a, b) => !panLockInHorizDirection,
-                });
             }
 
-            private void OnContinue ()
+            protected override void OnContinue ()
             {
                 if (DataSource == null)
                     return;
                 DataSource.Continue ();
             }
 
-            private void OnDelete ()
+            protected override void OnDelete ()
             {
                 if (DataSource == null)
                     return;
                 DataSource.Delete ();
-            }
-
-            enum PanLock
-            {
-                None,
-                Left,
-                Right
-            }
-
-            private PointF panStart;
-            private float panDeltaX;
-            private bool panLockInHorizDirection;
-            private bool panDeleteConfirmed;
-            private PanLock panLock;
-
-            private void OnPanningGesture (UIPanGestureRecognizer gesture)
-            {
-                switch (gesture.State) {
-                case UIGestureRecognizerState.Began:
-                    panStart = gesture.TranslationInView (actualContentView);
-                    panLockInHorizDirection = false;
-                    panDeleteConfirmed = false;
-                    panLock = PanLock.None;
-                    break;
-                case UIGestureRecognizerState.Changed:
-                    var currentPoint = gesture.TranslationInView (actualContentView);
-                    panDeltaX = panStart.X - currentPoint.X;
-
-                    if (!panLockInHorizDirection) {
-                        if (Math.Abs (panDeltaX) > 10) {
-                            // User is swiping the cell, lock them into this direction
-                            panLockInHorizDirection = true;
-                        } else if (Math.Abs (panStart.Y - currentPoint.Y) > 10) {
-                            // User is starting to move upwards, let them scroll
-                            gesture.Enabled = false;
-                        }
-                    }
-
-                    // Switch pan lock
-                    var oldLock = panLock;
-                    var leftWidth = ContinueSwipeWidth;
-                    var rightWidth = DeleteSwipeWidth;
-
-                    switch (panLock) {
-                    case PanLock.None:
-                        if (-panDeltaX >= leftWidth) {
-                            panLock = PanLock.Left;
-                        } else if (panDeltaX >= rightWidth) {
-                            panLock = PanLock.Right;
-                        }
-                        // Reset delete confirmation when completely hiding the delete
-                        if (panDeltaX <= 0) {
-                            panDeleteConfirmed = false;
-                        }
-                        break;
-                    case PanLock.Left:
-                        if (-panDeltaX < leftWidth - SnapDistance) {
-                            panLock = PanLock.None;
-                        } else {
-                            return;
-                        }
-                        break;
-                    case PanLock.Right:
-                        if (panDeltaX < rightWidth - SnapDistance) {
-                            panLock = PanLock.None;
-                        } else {
-                            return;
-                        }
-                        break;
-                    }
-
-                    // Apply delta limits
-                    switch (panLock) {
-                    case PanLock.Left:
-                        panDeltaX = -(leftWidth + SnapDistance);
-                        break;
-                    case PanLock.Right:
-                        panDeltaX = rightWidth + SnapDistance;
-                        break;
-                    }
-
-                    var shouldAnimate = oldLock != panLock;
-                    if (shouldAnimate) {
-                        UIView.Animate (0.1, 0,
-                            UIViewAnimationOptions.CurveEaseOut,
-                            LayoutActualContentView, null);
-                    } else {
-                        LayoutActualContentView ();
-                    }
-
-                    if (!panDeleteConfirmed && panLock == PanLock.Right) {
-                        // Queue cross fade animation
-                        UIView.Animate (0.6, 0.4,
-                            UIViewAnimationOptions.CurveEaseInOut,
-                            delegate {
-                                confirmActionLabel.Alpha = 0;
-                            },
-                            delegate {
-                                if (panLock != PanLock.Right)
-                                    return;
-                                panDeleteConfirmed = true;
-                            });
-
-                        UIView.Animate (0.4, 0.8,
-                            UIViewAnimationOptions.CurveEaseInOut,
-                            delegate {
-                                deleteActionLabel.Alpha = 1;
-                            }, null);
-                    }
-
-                    break;
-                case UIGestureRecognizerState.Cancelled:
-                case UIGestureRecognizerState.Ended:
-                    if (!gesture.Enabled)
-                        gesture.Enabled = true;
-                    panLockInHorizDirection = false;
-                    panDeltaX = 0;
-
-                    var shouldContinue = panLock == PanLock.Left;
-                    var shouldDelete = panLock == PanLock.Right && panDeleteConfirmed;
-
-                    UIView.Animate (0.3, 0,
-                        UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
-                        LayoutActualContentView,
-                        delegate {
-                            if (shouldContinue)
-                                OnContinue ();
-                            if (shouldDelete)
-                                OnDelete ();
-                        });
-                    break;
-                }
-            }
-
-            private void LayoutActualContentView ()
-            {
-                var frame = ContentView.Frame;
-                frame.X -= panDeltaX;
-                actualContentView.Frame = frame;
-
-                if (panDeltaX < 0) {
-                    BackgroundView.ApplyStyle (Style.Log.ContinueState);
-                } else if (panDeltaX > 0) {
-                    BackgroundView.ApplyStyle (Style.Log.DeleteState);
-                } else {
-                    BackgroundView.ApplyStyle (Style.Log.NoSwipeState);
-                }
-
-                switch (panLock) {
-                case PanLock.None:
-                    continueActionLabel.Alpha = Math.Min (1, Math.Max (0, -2 * panDeltaX / ContinueSwipeWidth - 1));
-                    var delAlpha = Math.Min (1, Math.Max (0, 2 * panDeltaX / DeleteSwipeWidth - 1));
-                    confirmActionLabel.Alpha = panDeleteConfirmed ? 0 : delAlpha;
-                    deleteActionLabel.Alpha = panDeleteConfirmed ? delAlpha : 0;
-                    break;
-                case PanLock.Left:
-                    continueActionLabel.Alpha = 1;
-                    confirmActionLabel.Alpha = 0;
-                    deleteActionLabel.Alpha = 0;
-                    break;
-                case PanLock.Right:
-                    continueActionLabel.Alpha = 0;
-                    confirmActionLabel.Alpha = panDeleteConfirmed ? 0 : 1;
-                    deleteActionLabel.Alpha = panDeleteConfirmed ? 1 : 0;
-                    break;
-                }
             }
 
             public override void LayoutSubviews ()
@@ -387,20 +191,6 @@ namespace Toggl.Ross.ViewControllers
                 base.LayoutSubviews ();
 
                 var contentFrame = ContentView.Frame;
-
-                LayoutActualContentView ();
-
-                continueActionLabel.Frame = new RectangleF (
-                    x: 0, y: 0,
-                    height: contentFrame.Height,
-                    width: ContinueSwipeWidth + SnapDistance
-                );
-                confirmActionLabel.Frame = deleteActionLabel.Frame = new RectangleF (
-                    x: contentFrame.Width - DeleteSwipeWidth - SnapDistance,
-                    y: 0,
-                    height: contentFrame.Height,
-                    width: DeleteSwipeWidth + SnapDistance
-                );
 
                 const float durationLabelWidth = 75f;
                 durationLabel.Frame = new RectangleF (

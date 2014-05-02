@@ -49,6 +49,7 @@ namespace Toggl.Ross.ViewControllers
             containerView.AddSubview (menuView);
 
             menuAnimator = new UIDynamicAnimator (containerView);
+            menuAnimator.Delegate = new AnimatorDelegate (this);
 
             containerView.Frame = new RectangleF (
                 x: 0,
@@ -63,8 +64,6 @@ namespace Toggl.Ross.ViewControllers
                 width: containerView.Frame.Width,
                 height: containerView.Frame.Height
             );
-
-            navController.View.AddSubview (containerView);
 
             return;
         }
@@ -105,6 +104,35 @@ namespace Toggl.Ross.ViewControllers
 
             menuShown = !menuShown;
             containerView.UserInteractionEnabled = menuShown;
+        }
+
+        private class AnimatorDelegate : UIDynamicAnimatorDelegate
+        {
+            private readonly NavigationMenuController menuController;
+
+            public AnimatorDelegate (NavigationMenuController menuController)
+            {
+                this.menuController = menuController;
+            }
+
+            public override void DidPause (UIDynamicAnimator animator)
+            {
+                // Remove from subview
+                if (!menuController.menuShown) {
+                    menuController.containerView.RemoveFromSuperview ();
+                }
+            }
+
+            public override void WillResume (UIDynamicAnimator animator)
+            {
+                // Make sure that the containerView has been added the the view hiearchy
+                if (menuController.containerView.Superview == null) {
+                    var navController = menuController.controller.NavigationController;
+                    if (navController != null) {
+                        navController.View.AddSubview (menuController.containerView);
+                    }
+                }
+            }
         }
     }
 }

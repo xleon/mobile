@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
-    <ProductVersion>12.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}</ProjectGuid>
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
@@ -24,6 +22,9 @@
     <MtouchLink>None</MtouchLink>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchDebug>true</MtouchDebug>
+    <MtouchI18n>
+    </MtouchI18n>
+    <MtouchArch>ARMv7</MtouchArch>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <DebugType>full</DebugType>
@@ -35,6 +36,9 @@
     <MtouchLink>None</MtouchLink>
     <ConsolePause>false</ConsolePause>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchI18n>
+    </MtouchI18n>
+    <MtouchArch>ARMv7</MtouchArch>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
@@ -48,6 +52,11 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchDebug>true</MtouchDebug>
     <CodesignKey>iPhone Developer</CodesignKey>
+    <IpaPackageName>
+    </IpaPackageName>
+    <MtouchI18n>
+    </MtouchI18n>
+    <MtouchArch>ARMv7</MtouchArch>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <DebugType>full</DebugType>
@@ -59,6 +68,9 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <ConsolePause>false</ConsolePause>
     <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchI18n>
+    </MtouchI18n>
+    <MtouchArch>ARMv7</MtouchArch>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
     <DebugType>full</DebugType>
@@ -72,6 +84,9 @@
     <BuildIpa>true</BuildIpa>
     <CodesignProvision>Automatic:AdHoc</CodesignProvision>
     <CodesignKey>iPhone Distribution</CodesignKey>
+    <MtouchI18n>
+    </MtouchI18n>
+    <MtouchArch>ARMv7</MtouchArch>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
     <DebugType>full</DebugType>
@@ -84,6 +99,9 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <CodesignProvision>Automatic:AppStore</CodesignProvision>
     <CodesignKey>iPhone Distribution</CodesignKey>
+    <MtouchI18n>
+    </MtouchI18n>
+    <MtouchArch>ARMv7</MtouchArch>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -92,7 +110,37 @@
     <Reference Include="monotouch" />
   </ItemGroup>
   <ItemGroup>
-    <BundleResource Include="Resources\Default-568h%402x.png" />
+    <BundleResource Include="Resources\en.lproj\Localizable.strings" />
+    <BundleResource Include="Resources\circle-start.png" />
+    <BundleResource Include="Resources\circle-start%402x.png" />
+    <BundleResource Include="Resources\circle-stop.png" />
+    <BundleResource Include="Resources\circle-stop%402x.png" />
+    <BundleResource Include="Resources\icon-back.png" />
+    <BundleResource Include="Resources\icon-back%402x.png" />
+    <BundleResource Include="Resources\icon-billable.png" />
+    <BundleResource Include="Resources\icon-billable%402x.png" />
+    <BundleResource Include="Resources\icon-duration-arrow.png" />
+    <BundleResource Include="Resources\icon-duration-arrow%402x.png" />
+    <BundleResource Include="Resources\icon-nav.png" />
+    <BundleResource Include="Resources\icon-nav%402x.png" />
+    <BundleResource Include="Resources\icon-running.png" />
+    <BundleResource Include="Resources\icon-running%402x.png" />
+    <BundleResource Include="Resources\icon-tag-billable.png" />
+    <BundleResource Include="Resources\icon-tag-billable%402x.png" />
+    <BundleResource Include="Resources\icon-tag.png" />
+    <BundleResource Include="Resources\icon-tag%402x.png" />
+    <BundleResource Include="Resources\icon-tick-blue.png" />
+    <BundleResource Include="Resources\icon-tick-blue%402x.png" />
+    <BundleResource Include="Resources\logo.png" />
+    <BundleResource Include="Resources\logo%402x.png" />
+    <BundleResource Include="Resources\bg.png" />
+    <BundleResource Include="Resources\bg%402x.png" />
+    <BundleResource Include="Resources\icon-arrow-right.png" />
+    <BundleResource Include="Resources\icon-arrow-right%402x.png" />
+    <BundleResource Include="Resources\circle-start-pressed.png" />
+    <BundleResource Include="Resources\circle-start-pressed%402x.png" />
+    <BundleResource Include="Resources\circle-stop-pressed.png" />
+    <BundleResource Include="Resources\circle-stop-pressed%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -101,6 +149,52 @@
   <ItemGroup>
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
+    <Compile Include="Data\SettingsStore.cs" />
+    <Compile Include="ViewControllers\AppViewController.cs" />
+    <Compile Include="ViewControllers\MainViewController.cs" />
+    <Compile Include="ViewControllers\LoginViewController.cs" />
+    <Compile Include="StringExtensions.cs" />
+    <Compile Include="Theme\UIExtensions.cs" />
+    <Compile Include="Theme\ViewStyler.cs" />
+    <Compile Include="Theme\Style.Common.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Theme\Style.cs" />
+    <Compile Include="Theme\Style.Login.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ViewControllers\LogViewController.cs" />
+    <Compile Include="DataSources\PlainDataViewSource.cs" />
+    <Compile Include="DataSources\GroupedDataViewSource.cs" />
+    <Compile Include="Theme\Color.cs" />
+    <Compile Include="Views\TableViewHeaderView.cs" />
+    <Compile Include="Views\UINavigationBarExtensions.cs" />
+    <Compile Include="Views\UIViewExtensions.cs" />
+    <Compile Include="Theme\Style.Log.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Theme\UIColorExtensions.cs" />
+    <Compile Include="ViewControllers\BaseTimerTableViewController.cs" />
+    <Compile Include="ViewControllers\TimerNavigationController.cs" />
+    <Compile Include="Theme\Style.NavTimer.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Theme\Image.cs" />
+    <Compile Include="DispatchQueueExtensions.cs" />
+    <Compile Include="Views\ModelTableViewCell.cs" />
+    <Compile Include="Views\BindableTableViewCell.cs" />
+    <Compile Include="ViewControllers\NavigationMenuController.cs" />
+    <Compile Include="Theme\Style.NavMenu.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ViewControllers\RecentViewController.cs" />
+    <Compile Include="Views\SwipableTimeEntryTableViewCell.cs" />
+    <Compile Include="Theme\Style.TimeEntryCell.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Theme\Style.Recent.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -108,5 +202,32 @@
       <Project>{F968924D-3FFA-4927-B03E-EC0C3BFF87BC}</Project>
       <Name>Phoebe.iOS</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Contrib\Cirrious.FluentLayout\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj">
+      <Project>{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}</Project>
+      <Name>Cirrious.FluentLayouts.Touch</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="ViewControllers\" />
+    <Folder Include="Resources\en.lproj\" />
+    <Folder Include="Theme\" />
+    <Folder Include="DataSources\" />
+    <Folder Include="Views\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon.png" />
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-60%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-Small.png" />
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-Small%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-Small-40%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\Contents.json" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\Default-568h%402x.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ITunesArtwork Include="iTunesArtwork" />
+    <ITunesArtwork Include="iTunesArtwork%402x" />
   </ItemGroup>
 </Project>

@@ -207,6 +207,10 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        public IEnumerable<DateGroup> DateGroups {
+            get { return dateGroups; }
+        }
+
         public IEnumerable<object> Data {
             get {
                 foreach (var grp in dateGroups) {

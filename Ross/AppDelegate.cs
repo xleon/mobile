@@ -1,8 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
+using Toggl.Ross.Data;
+using Toggl.Ross.ViewControllers;
 
 namespace Toggl.Ross
 {
@@ -10,29 +14,60 @@ namespace Toggl.Ross
     // User Interface of the application, as well as listening (and optionally responding) to
     // application events from iOS.
     [Register ("AppDelegate")]
-    public partial class AppDelegate : UIApplicationDelegate
+    public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
-        // class-level declarations
-        UIWindow window;
-        //
-        // This method is invoked when the application has loaded and is ready to run. In this
-        // method you should instantiate the window, load the UI into it and then make the window
-        // visible.
-        //
-        // You have 17 seconds to return from this method, or iOS will terminate your application.
-        //
+        private UIWindow window;
+
         public override bool FinishedLaunching (UIApplication app, NSDictionary options)
         {
-            // create a new window instance based on the screen size
+            RegisterComponents ();
+
+            Toggl.Ross.Theme.Style.Initialize ();
+
+            // Start app
             window = new UIWindow (UIScreen.MainScreen.Bounds);
-            
-            // If you have defined a root view controller, set it here:
-            // window.RootViewController = myViewController;
-            
-            // make the window visible
+            window.RootViewController = new AppViewController ();
             window.MakeKeyAndVisible ();
             
             return true;
+        }
+
+        private void RegisterComponents ()
+        {
+            // Register common Phoebe components:
+            ServiceContainer.Register<MessageBus> ();
+            ServiceContainer.Register<Logger> ();
+            ServiceContainer.Register<ModelManager> ();
+            ServiceContainer.Register<AuthManager> ();
+            ServiceContainer.Register<SyncManager> ();
+            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
+            ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
+
+            // Register Ross components:
+            ServiceContainer.Register<IPlatformInfo> (this);
+            ServiceContainer.Register<SettingsStore> ();
+            ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
+            ServiceContainer.Register<IModelStore> (delegate {
+                string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
+                var path = System.IO.Path.Combine (folder, "toggl.db");
+                return new SQLiteModelStore (path);
+            });
+        }
+
+        string IPlatformInfo.AppIdentifier {
+            get { return Build.AppIdentifier; }
+        }
+
+        private string appVersion;
+
+        string IPlatformInfo.AppVersion {
+            get {
+                if (appVersion == null) {
+                    appVersion = NSBundle.MainBundle.InfoDictionary.ObjectForKey (
+                        new NSString ("CFBundleVersion")).ToString ();
+                }
+                return appVersion;
+            }
         }
     }
 }

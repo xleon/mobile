@@ -69,62 +69,32 @@ namespace Toggl.Ross.DataSources
                 sectionIdx += 1;
             }
 
-            // Determine moved rows
+            // Determine new items and moved items
             sectionIdx = 0;
             foreach (var section in newCache.GetSections()) {
                 var sectionOldIdx = oldCache.GetSections ().IndexOf (section);
-                // When it doesn't exist in the old, we don't increment the sectionIdx
-                if (sectionOldIdx < 0)
-                    continue;
-
-                var oldRows = oldCache.GetRows (section);
-                var newRows = newCache.GetRows (section);
-                var rowIdx = 0;
-                foreach (var row in newRows) {
-                    var rowOldIdx = oldRows.IndexOf (row);
-                    // When it doesn't exist in the old, we don't increment the rowIdx
-                    if (rowOldIdx < 0)
-                        continue;
-
-                    if (rowIdx != rowOldIdx) {
-                        TableView.MoveRow (
-                            NSIndexPath.FromRowSection (rowOldIdx, sectionOldIdx),
-                            NSIndexPath.FromRowSection (rowIdx, sectionIdx));
-                    }
-
-                    rowIdx += 1;
-                }
-
-                sectionIdx += 1;
-            }
-
-            // Determine moved sections
-            sectionIdx = 0;
-            foreach (var section in newCache.GetSections()) {
-                var sectionOldIdx = oldCache.GetSections ().IndexOf (section);
-                // When it doesn't exist in the old, we don't increment the sectionIdx
-                if (sectionOldIdx < 0)
-                    continue;
-
-                if (sectionIdx != sectionOldIdx) {
-                    TableView.MoveSection (sectionOldIdx, sectionIdx);
-                }
-
-                sectionIdx += 1;
-            }
-
-            // Find sections and rows to insert
-            sectionIdx = 0;
-            foreach (var section in newCache.GetSections()) {
-                if (!oldCache.GetSections ().Contains (section)) {
+                if (sectionOldIdx < 0) {
+                    // New section needs to be inserted
                     TableView.InsertSections (new NSIndexSet ((uint)sectionIdx), UITableViewRowAnimation.Automatic);
                 } else {
+                    if (sectionIdx != sectionOldIdx) {
+                        // Old section has changed idx, mark as moved
+                        TableView.MoveSection (sectionOldIdx, sectionIdx);
+                    }
+
                     var oldRows = oldCache.GetRows (section);
                     var newRows = newCache.GetRows (section);
                     var rowIdx = 0;
                     foreach (var row in newRows) {
-                        if (!oldRows.Contains (row)) {
+                        var rowOldIdx = oldRows.IndexOf (row);
+                        if (rowOldIdx < 0) {
+                            // New row needs to be inserted
                             TableView.InsertRows (new[] { NSIndexPath.FromRowSection (rowIdx, sectionIdx) }, UITableViewRowAnimation.Automatic);
+                        } else if (rowIdx != rowOldIdx) {
+                            // Old row has changed idx, mark as moved
+                            TableView.MoveRow (
+                                NSIndexPath.FromRowSection (rowOldIdx, sectionOldIdx),
+                                NSIndexPath.FromRowSection (rowIdx, sectionIdx));
                         }
 
                         rowIdx += 1;

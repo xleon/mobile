@@ -184,6 +184,10 @@
     <Compile Include="Views\ModelTableViewCell.cs" />
     <Compile Include="Views\BindableTableViewCell.cs" />
     <Compile Include="ViewControllers\NavigationMenuController.cs" />
+    <Compile Include="Theme\Style.NavMenu.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ViewControllers\RecentViewController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

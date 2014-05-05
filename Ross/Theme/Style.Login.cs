@@ -1,5 +1,6 @@
 ﻿using System;
 using MonoTouch.UIKit;
+using System.Drawing;
 
 namespace Toggl.Ross.Theme
 {
@@ -7,12 +8,31 @@ namespace Toggl.Ross.Theme
     {
         public static class Login
         {
-            public static void PasswordButton (UIButton v)
+            public static void EmailField (UITextField v)
             {
+                v.TextColor = Color.Black;
             }
 
-            public static void GoogleButton (UIButton v)
+            public static void PasswordField (UITextField v)
             {
+                v.TextColor = Color.Black;
+            }
+
+            public static void LoginButton (UIButton v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Light", 20f);
+                v.SetBackgroundImage (Color.Green.ToImage (), UIControlState.Normal);
+                v.SetTitleColor (Color.White, UIControlState.Normal);
+            }
+
+            public static void InputsContainer (UIView v)
+            {
+                v.BackgroundColor = Color.White;
+            }
+
+            public static void InputsBorder (UIView v)
+            {
+                v.BackgroundColor = Color.Gray.ColorWithAlpha (0.5f);
             }
         }
     }

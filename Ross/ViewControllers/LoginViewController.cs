@@ -9,82 +9,103 @@ namespace Toggl.Ross.ViewControllers
 {
     public class LoginViewController : UIViewController
     {
-        private UILabel headerLabel;
-        private UISegmentedControl actionSegmentedControl;
+        private UIView inputsContainer;
+        private UIView topBorder;
+        private UIView middleBorder;
+        private UIView bottomBorder;
         private UITextField emailTextField;
         private UITextField passwordTextField;
         private UIButton passwordActionButton;
-        private UIButton googleActionButton;
+
+        public LoginViewController ()
+        {
+            Title = "LoginTitle".Tr ();
+        }
 
         public override void LoadView ()
         {
             View = new UIView ()
                 .ApplyStyle (Style.Screen);
 
-            View.Add (headerLabel = new UILabel () {
-                Text = "LoginHeaderText".Tr (),
-            });
+            View.Add (inputsContainer = new UIView ().ApplyStyle (Style.Login.InputsContainer));
 
-            View.Add (actionSegmentedControl = new UISegmentedControl (new object[] {
-                "LoginLoginTabText".Tr (),
-                "LoginSignupTabText".Tr (),
-            }) {
-                SelectedSegment = 0,
-            });
+            inputsContainer.Add (topBorder = new UIView ().ApplyStyle (Style.Login.InputsBorder));
 
-            View.Add (emailTextField = new UITextField () {
+            inputsContainer.Add (emailTextField = new UITextField () {
                 Placeholder = "LoginEmailHint".Tr (),
                 AutocapitalizationType = UITextAutocapitalizationType.None,
                 KeyboardType = UIKeyboardType.EmailAddress,
                 ReturnKeyType = UIReturnKeyType.Next,
                 ClearButtonMode = UITextFieldViewMode.Always,
                 ShouldReturn = HandleShouldReturn,
-            });
+            }.ApplyStyle (Style.Login.EmailField));
 
-            View.Add (passwordTextField = new UITextField () {
+            inputsContainer.Add (middleBorder = new UIView ().ApplyStyle (Style.Login.InputsBorder));
+
+            inputsContainer.Add (passwordTextField = new UITextField () {
                 Placeholder = "LoginPasswordHint".Tr (),
                 AutocapitalizationType = UITextAutocapitalizationType.None,
                 AutocorrectionType = UITextAutocorrectionType.No,
                 SecureTextEntry = true,
                 ReturnKeyType = UIReturnKeyType.Go,
                 ShouldReturn = HandleShouldReturn,
-            });
+            }.ApplyStyle (Style.Login.PasswordField));
+
+            inputsContainer.Add (bottomBorder = new UIView ().ApplyStyle (Style.Login.InputsBorder));
 
             View.Add (passwordActionButton = new UIButton ()
-                .ApplyStyle (Style.Login.PasswordButton));
+                .ApplyStyle (Style.Login.LoginButton));
             passwordActionButton.SetTitle ("LoginLoginButtonText".Tr (), UIControlState.Normal);
             passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 
-            View.Add (googleActionButton = new UIButton ()
-                .ApplyStyle (Style.Login.GoogleButton));
-            googleActionButton.SetTitle ("LoginGoogleButtonText".Tr (), UIControlState.Normal);
+            inputsContainer.AddConstraints (
+                topBorder.AtTopOf (inputsContainer),
+                topBorder.AtLeftOf (inputsContainer),
+                topBorder.AtRightOf (inputsContainer),
+                topBorder.Height ().EqualTo (1f),
+
+                emailTextField.Below (topBorder),
+                emailTextField.AtLeftOf (inputsContainer, 20f),
+                emailTextField.AtRightOf (inputsContainer, 10f),
+                emailTextField.Height ().EqualTo (42f),
+
+                middleBorder.Below (emailTextField),
+                middleBorder.AtLeftOf (inputsContainer, 20f),
+                middleBorder.AtRightOf (inputsContainer),
+                middleBorder.Height ().EqualTo (1f),
+
+                passwordTextField.Below (middleBorder),
+                passwordTextField.AtLeftOf (inputsContainer, 20f),
+                passwordTextField.AtRightOf (inputsContainer),
+                passwordTextField.Height ().EqualTo (42f),
+
+                bottomBorder.Below (passwordTextField),
+                bottomBorder.AtLeftOf (inputsContainer),
+                bottomBorder.AtRightOf (inputsContainer),
+                bottomBorder.AtBottomOf (inputsContainer),
+                bottomBorder.Height ().EqualTo (1f)
+            );
+
+            inputsContainer.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints ();
 
             View.AddConstraints (
-                headerLabel.AtTopOf (View, 80f),
-                headerLabel.WithSameCenterX (View),
+                inputsContainer.AtTopOf (View, 80f),
+                inputsContainer.AtLeftOf (View),
+                inputsContainer.AtRightOf (View),
 
-                actionSegmentedControl.Below (headerLabel, 40f),
-                actionSegmentedControl.AtLeftOf (View, 10f),
-                actionSegmentedControl.AtRightOf (View, 10f),
-
-                emailTextField.Below (actionSegmentedControl, 20f),
-                emailTextField.AtLeftOf (View, 10f),
-                emailTextField.AtRightOf (View, 10f),
-
-                passwordTextField.Below (emailTextField, 10f),
-                passwordTextField.AtLeftOf (View, 10f),
-                passwordTextField.AtRightOf (View, 10f),
-
-                passwordActionButton.Below (passwordTextField, 10f),
-                passwordActionButton.AtLeftOf (View, 10f),
-                passwordActionButton.AtRightOf (View, 10f),
-
-                googleActionButton.AtBottomOf (View, 10f),
-                googleActionButton.AtLeftOf (View, 10f),
-                googleActionButton.AtRightOf (View, 10f)
+                passwordActionButton.Below (inputsContainer, 20f),
+                passwordActionButton.AtLeftOf (View),
+                passwordActionButton.AtRightOf (View),
+                passwordActionButton.Height ().EqualTo (60f)
             );
 
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints ();
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+            emailTextField.BecomeFirstResponder ();
         }
 
         private bool HandleShouldReturn (UITextField textField)
@@ -93,8 +114,6 @@ namespace Toggl.Ross.ViewControllers
                 passwordTextField.BecomeFirstResponder ();
             } else if (textField == passwordTextField) {
                 textField.ResignFirstResponder ();
-
-                // TODO: Start login
                 TryPasswordAuth ();
             } else {
                 return false;
@@ -120,6 +139,8 @@ namespace Toggl.Ross.ViewControllers
 
                 if (!success) {
                     // TODO: Show error
+                } else {
+                    // TODO: Run initial sync
                 }
             } finally {
                 IsAuthenticating = false;
@@ -135,7 +156,6 @@ namespace Toggl.Ross.ViewControllers
                 emailTextField.Enabled = !isAuthenticating;
                 passwordTextField.Enabled = !isAuthenticating;
                 passwordActionButton.Enabled = !isAuthenticating;
-                googleActionButton.Enabled = !isAuthenticating;
 
                 passwordActionButton.SetTitle ("LoginLoginProgressText".Tr (), UIControlState.Disabled);
             }

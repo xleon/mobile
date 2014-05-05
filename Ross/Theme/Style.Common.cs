@@ -8,7 +8,7 @@ namespace Toggl.Ross.Theme
     {
         public static void Screen (UIView v)
         {
-            v.BackgroundColor = UIColor.White;
+            v.BackgroundColor = Color.LightGray;
         }
 
         public static void NavigationBar (UINavigationBar v)

@@ -10,6 +10,10 @@ namespace Toggl.Ross.Theme
             // Set global appearances here:
             // UIView.Appearance.TintColor = UIColor.Red;
 
+            UINavigationBar.Appearance.SetTitleTextAttributes (new UITextAttributes () {
+                Font = UIFont.FromName ("HelveticaNeue", 20f),
+            });
+            UINavigationBar.Appearance.TintColor = Color.Gray;
             UINavigationBar.Appearance.BackgroundColor = Color.LightGray;
         }
     }

@@ -195,6 +195,9 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\WelcomeViewController.cs" />
+    <Compile Include="Theme\Style.Welcome.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

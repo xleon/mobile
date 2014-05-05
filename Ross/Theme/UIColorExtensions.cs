@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Globalization;
 using MonoTouch.UIKit;
 
@@ -33,6 +34,22 @@ namespace Toggl.Ross.Theme
             default:
                 throw new ArgumentException ("Invalid hex string.", "hexValue");
             }
+        }
+
+        public static UIImage ToImage (this UIColor color)
+        {
+            var size = new SizeF (1f, 1f);
+
+            UIGraphics.BeginImageContext (size);
+            var ctx = UIGraphics.GetCurrentContext ();
+
+            ctx.SetFillColorWithColor (color.CGColor);
+            ctx.FillRect (new RectangleF (PointF.Empty, size));
+
+            var image = UIGraphics.GetImageFromCurrentImageContext ();
+            UIGraphics.EndImageContext ();
+
+            return image;
         }
     }
 }

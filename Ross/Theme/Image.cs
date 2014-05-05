@@ -1,5 +1,4 @@
-﻿using System;
-using MonoTouch.UIKit;
+﻿using MonoTouch.UIKit;
 
 namespace Toggl.Ross.Theme
 {
@@ -66,4 +65,3 @@ namespace Toggl.Ross.Theme
         }
     }
 }
-

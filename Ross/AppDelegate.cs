@@ -26,7 +26,7 @@ namespace Toggl.Ross
 
             // Start app
             window = new UIWindow (UIScreen.MainScreen.Bounds);
-            window.RootViewController = new AppViewController ();
+            window.RootViewController = new MainViewController ();
             window.MakeKeyAndVisible ();
             
             return true;

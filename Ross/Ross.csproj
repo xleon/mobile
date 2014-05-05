@@ -150,7 +150,6 @@
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
     <Compile Include="Data\SettingsStore.cs" />
-    <Compile Include="ViewControllers\AppViewController.cs" />
     <Compile Include="ViewControllers\MainViewController.cs" />
     <Compile Include="ViewControllers\LoginViewController.cs" />
     <Compile Include="StringExtensions.cs" />
@@ -195,6 +194,7 @@
     <Compile Include="Theme\Style.Recent.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="ViewControllers\WelcomeViewController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

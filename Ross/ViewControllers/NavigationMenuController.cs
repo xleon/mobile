@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using MonoTouch.CoreGraphics;
-using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -14,7 +12,6 @@ namespace Toggl.Ross.ViewControllers
         private UIViewController controller;
         private UIView containerView;
         private UIView menuView;
-        private UIDynamicAnimator menuAnimator;
         private UIButton logButton;
         private UIButton recentButton;
         private UIButton settingsButton;
@@ -78,9 +75,6 @@ namespace Toggl.Ross.ViewControllers
             menuView.AddSubviews (separators);
             menuView.AddSubviews (menuButtons);
             containerView.AddSubview (menuView);
-
-            menuAnimator = new UIDynamicAnimator (containerView);
-            menuAnimator.Delegate = new AnimatorDelegate (this);
 
             // Layout items:
             var offsetY = 15f;
@@ -159,64 +153,48 @@ namespace Toggl.Ross.ViewControllers
             if (containerView == null)
                 return;
 
-            menuAnimator.RemoveAllBehaviors ();
-
             if (menuShown) {
-                var collision = new UICollisionBehavior (menuView);
-                collision.AddBoundary (
-                    (NSString)"top",
-                    new PointF (0, -menuView.Frame.Height - 1f),
-                    new PointF (containerView.Frame.Width, -menuView.Frame.Height - 1f));
-                menuAnimator.AddBehavior (collision);
-
-                menuAnimator.AddBehavior (new UIGravityBehavior (menuView) {
-                    GravityDirection = new CGVector (0, -1),
-                    Magnitude = 4,
-                });
+                UIView.Animate (
+                    0.4, 0,
+                    UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseIn,
+                    delegate {
+                        menuView.Frame = new RectangleF (
+                            x: 0,
+                            y: -containerView.Frame.Height,
+                            width: containerView.Frame.Width,
+                            height: containerView.Frame.Height
+                        );
+                    },
+                    delegate {
+                        if (!menuShown) {
+                            // Remove from subview
+                            containerView.RemoveFromSuperview ();
+                        }
+                    });
             } else {
-                var collision = new UICollisionBehavior (menuView);
-                collision.AddBoundary (
-                    (NSString)"bottom",
-                    new PointF (0, containerView.Frame.Height),
-                    new PointF (containerView.Frame.Width, containerView.Frame.Height));
-                menuAnimator.AddBehavior (collision);
+                UIView.Animate (
+                    0.4, 0,
+                    UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseOut,
+                    delegate {
+                        menuView.Frame = new RectangleF (
+                            x: 0,
+                            y: 0,
+                            width: containerView.Frame.Width,
+                            height: containerView.Frame.Height
+                        );
+                    }, null);
 
-                menuAnimator.AddBehavior (new UIGravityBehavior (menuView) {
-                    Magnitude = 4,
-                });
+                // Make sure that the containerView has been added the the view hiearchy
+                if (containerView.Superview == null) {
+                    var navController = controller.NavigationController;
+                    if (navController != null) {
+                        navController.View.AddSubview (containerView);
+                    }
+                }
             }
 
             menuShown = !menuShown;
             containerView.UserInteractionEnabled = menuShown;
-        }
-
-        private class AnimatorDelegate : UIDynamicAnimatorDelegate
-        {
-            private readonly NavigationMenuController menuController;
-
-            public AnimatorDelegate (NavigationMenuController menuController)
-            {
-                this.menuController = menuController;
-            }
-
-            public override void DidPause (UIDynamicAnimator animator)
-            {
-                // Remove from subview
-                if (!menuController.menuShown) {
-                    menuController.containerView.RemoveFromSuperview ();
-                }
-            }
-
-            public override void WillResume (UIDynamicAnimator animator)
-            {
-                // Make sure that the containerView has been added the the view hiearchy
-                if (menuController.containerView.Superview == null) {
-                    var navController = menuController.controller.NavigationController;
-                    if (navController != null) {
-                        navController.View.AddSubview (menuController.containerView);
-                    }
-                }
-            }
         }
     }
 }

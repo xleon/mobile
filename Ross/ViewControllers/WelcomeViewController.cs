@@ -63,7 +63,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnCreateButtonTouchUpInside (object sender, EventArgs e)
         {
-            Console.WriteLine ("Should open create account..");
+            NavigationController.PushViewController (new SignupViewController (), true);
         }
 
         private void OnPasswordButtonTouchUpInside (object sender, EventArgs e)

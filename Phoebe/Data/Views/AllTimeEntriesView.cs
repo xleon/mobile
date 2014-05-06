@@ -138,10 +138,15 @@ namespace Toggl.Phoebe.Data.Views
             dateGroups.Clear ();
             HasMore = true;
 
-            LoadMore ();
+            Load (true);
         }
 
-        public async void LoadMore ()
+        public void LoadMore ()
+        {
+            Load (false);
+        }
+
+        private async void Load (bool initialLoad)
         {
             if (IsLoading || !HasMore)
                 return;
@@ -155,6 +160,11 @@ namespace Toggl.Phoebe.Data.Views
                 var startTime = startFrom = endTime - TimeSpan.FromDays (4);
 
                 bool useLocal = false;
+
+                if (initialLoad) {
+                    useLocal = true;
+                    startTime = startFrom = endTime - TimeSpan.FromDays (9);
+                }
 
                 // Try with latest data from server first:
                 if (!useLocal) {
@@ -196,7 +206,10 @@ namespace Toggl.Phoebe.Data.Views
                         // OnModelChanged catches the newly created time entries and adds them to the dataset
                     }
 
-                    HasMore = Model.Query<TimeEntryModel> ((te) => te.StartTime <= startTime && te.State != TimeEntryState.New).Count () > 0;
+                    if (!initialLoad) {
+                        HasMore = Model.Query<TimeEntryModel> (
+                            (te) => te.StartTime <= startTime && te.State != TimeEntryState.New).Count () > 0;
+                    }
                 }
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();

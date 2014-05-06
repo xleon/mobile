@@ -1,6 +1,6 @@
 ﻿using System;
+using MonoTouch.TTTAttributedLabel;
 using MonoTouch.UIKit;
-using System.Drawing;
 
 namespace Toggl.Ross.Theme
 {
@@ -30,7 +30,7 @@ namespace Toggl.Ross.Theme
                 v.Font = UIFont.FromName ("HelveticaNeue-Light", 20f);
                 v.SetBackgroundImage (UIColor.Clear.ToImage (), UIControlState.Normal);
                 v.SetBackgroundImage (UIColor.FromWhiteAlpha (0f, 0.3f).ToImage (), UIControlState.Highlighted);
-                v.SetTitleColor (Color.White, UIControlState.Normal);
+                v.SetTitleColor (Color.Gray, UIControlState.Normal);
             }
 
             public static void InputsContainer (UIView v)
@@ -41,6 +41,23 @@ namespace Toggl.Ross.Theme
             public static void InputsBorder (UIView v)
             {
                 v.BackgroundColor = Color.Gray.ColorWithAlpha (0.5f);
+            }
+
+            public static void LegalLabel (TTTAttributedLabel v)
+            {
+                v.Lines = 2;
+                v.Font = UIFont.FromName ("HelveticaNeue", 16f);
+                v.TextColor = Color.Gray;
+                v.TextAlignment = UITextAlignment.Center;
+                v.LinkAttributes = new UIStringAttributes () {
+                    ForegroundColor = Color.Green,
+                    ParagraphStyle = new NSMutableParagraphStyle () {
+                        Alignment = UITextAlignment.Center,
+                    },
+                }.Dictionary;
+                v.ActiveLinkAttributes = new UIStringAttributes () {
+                    ForegroundColor = Color.DarkGreen,
+                }.Dictionary;
             }
         }
     }

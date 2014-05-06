@@ -174,7 +174,11 @@ namespace Toggl.Ross.ViewControllers
                 var success = await authManager.Signup (emailTextField.Text, passwordTextField.Text);
 
                 if (!success) {
-                    // TODO: Show error
+                    new UIAlertView (
+                        "SignupFailedTitle".Tr (),
+                        "SignupFailedMessage".Tr (),
+                        null,
+                        "SignupFailedOk".Tr ()).Show ();
                 }
             } finally {
                 IsAuthenticating = false;

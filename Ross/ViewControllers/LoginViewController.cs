@@ -138,7 +138,11 @@ namespace Toggl.Ross.ViewControllers
                 var success = await authManager.Authenticate (emailTextField.Text, passwordTextField.Text);
 
                 if (!success) {
-                    // TODO: Show error
+                    new UIAlertView (
+                        "LoginFailedTitle".Tr (),
+                        "LoginFailedMessage".Tr (),
+                        null,
+                        "LoginFailedOk".Tr ()).Show ();
                 } else {
                     // TODO: Run initial sync
                 }

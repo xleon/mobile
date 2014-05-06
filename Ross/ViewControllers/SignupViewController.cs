@@ -43,6 +43,7 @@ namespace Toggl.Ross.ViewControllers
                 ClearButtonMode = UITextFieldViewMode.Always,
                 ShouldReturn = HandleShouldReturn,
             }.ApplyStyle (Style.Signup.EmailField));
+            emailTextField.EditingChanged += OnTextFieldEditingChanged;
 
             inputsContainer.Add (middleBorder = new UIView ().ApplyStyle (Style.Signup.InputsBorder));
 
@@ -54,6 +55,7 @@ namespace Toggl.Ross.ViewControllers
                 ReturnKeyType = UIReturnKeyType.Go,
                 ShouldReturn = HandleShouldReturn,
             }.ApplyStyle (Style.Signup.PasswordField));
+            passwordTextField.EditingChanged += OnTextFieldEditingChanged;
 
             inputsContainer.Add (bottomBorder = new UIView ().ApplyStyle (Style.Signup.InputsBorder));
 
@@ -118,6 +120,21 @@ namespace Toggl.Ross.ViewControllers
             );
 
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints ();
+
+            ResetSignupButtonState ();
+        }
+
+        private void OnTextFieldEditingChanged (object sender, EventArgs e)
+        {
+            ResetSignupButtonState ();
+        }
+
+        private void ResetSignupButtonState ()
+        {
+            var enabled = !IsAuthenticating
+                          && !String.IsNullOrWhiteSpace (emailTextField.Text) && emailTextField.Text.Contains ("@")
+                          && !String.IsNullOrWhiteSpace (passwordTextField.Text) && passwordTextField.Text.Length >= 6;
+            passwordActionButton.Enabled = enabled;
         }
 
         private static void SetLegalText (TTTAttributedLabel label)

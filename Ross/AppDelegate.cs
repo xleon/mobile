@@ -17,6 +17,7 @@ namespace Toggl.Ross
     public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
         private UIWindow window;
+        private bool isResuming;
 
         public override bool FinishedLaunching (UIApplication app, NSDictionary options)
         {
@@ -30,6 +31,14 @@ namespace Toggl.Ross
             window.MakeKeyAndVisible ();
             
             return true;
+        }
+
+        public override void OnActivated (UIApplication application)
+        {
+            // Make sure the user data is refreshed when the application becomes active
+            ServiceContainer.Resolve<SyncManager> ().Run (isResuming ? SyncMode.Auto : SyncMode.Full);
+
+            isResuming = true;
         }
 
         private void RegisterComponents ()

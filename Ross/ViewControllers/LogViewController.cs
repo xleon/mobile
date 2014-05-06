@@ -24,10 +24,6 @@ namespace Toggl.Ross.ViewControllers
 
         public LogViewController () : base (UITableViewStyle.Plain)
         {
-            // TODO: Sync manager should be invoked in a different place?
-            var syncManager = ServiceContainer.Resolve<SyncManager> ();
-            syncManager.Run (SyncMode.Auto);
-
             navMenuController = new NavigationMenuController ();
 
             EdgesForExtendedLayout = UIRectEdge.None;

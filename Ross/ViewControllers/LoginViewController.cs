@@ -144,7 +144,8 @@ namespace Toggl.Ross.ViewControllers
                         null,
                         "LoginFailedOk".Tr ()).Show ();
                 } else {
-                    // TODO: Run initial sync
+                    // Start the initial sync for the user
+                    ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
                 }
             } finally {
                 IsAuthenticating = false;

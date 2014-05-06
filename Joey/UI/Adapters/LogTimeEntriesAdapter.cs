@@ -5,10 +5,10 @@ using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Text;
-using Android.Text.Format;
 using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
@@ -172,7 +172,7 @@ namespace Toggl.Joey.UI.Adapters
             private static string GetRelativeDateString (DateTime dateTime)
             {
                 var ctx = ServiceContainer.Resolve<Context> ();
-                var ts = DateTime.Now.Date - dateTime.Date;
+                var ts = Time.Now.Date - dateTime.Date;
                 switch (ts.Days) {
                 case 0:
                     return ctx.Resources.GetString (Resource.String.Today);

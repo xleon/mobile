@@ -49,6 +49,7 @@ namespace Toggl.Joey
             ServiceContainer.Register<SyncManager> ();
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
+            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
 
             // Register Joey components:
             ServiceContainer.Register<Logger> (() => new AndroidLogger ());

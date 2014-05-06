@@ -387,7 +387,7 @@ namespace Toggl.Phoebe.Tests.Views
 
         private DateTime MakeTime (int hour, int minute, int second = 0)
         {
-            return DateTime.UtcNow.Date
+            return Time.UtcNow.Date
                     .AddHours (hour)
                     .AddMinutes (minute)
                     .AddSeconds (second);

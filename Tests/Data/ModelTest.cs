@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Tests.Data
             Assert.IsNull (model.RemoteId, "RemoteId must be null");
             Assert.IsFalse (model.IsShared, "IsShared must be false");
             Assert.IsFalse (model.IsPersisted, "IsPersisted must be false");
-            Assert.That (model.ModifiedAt, Is.EqualTo (DateTime.UtcNow).Within (1).Seconds, "ModifiedAt must be the time of model creation");
+            Assert.That (model.ModifiedAt, Is.EqualTo (Time.UtcNow).Within (1).Seconds, "ModifiedAt must be the time of model creation");
             Assert.IsFalse (model.IsDirty, "IsDirty must be false");
             Assert.IsFalse (model.IsMerging, "IsMerging must be false");
             Assert.IsNull (model.DeletedAt, "DeletedAt must be null");

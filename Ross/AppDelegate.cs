@@ -42,6 +42,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<SyncManager> ();
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
+            ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider ());
 
             // Register Ross components:
             ServiceContainer.Register<IPlatformInfo> (this);

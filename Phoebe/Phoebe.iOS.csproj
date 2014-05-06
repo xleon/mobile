@@ -51,6 +51,9 @@
     <Compile Include="Net\**\*.cs" />
     <Compile Include="Properties\**\*.cs" />
     <Compile Include="Threading\**\*.cs" />
+    <Compile Include="ITimeProvider.cs" />
+    <Compile Include="Time.cs" />
+    <Compile Include="DefaultTimeProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

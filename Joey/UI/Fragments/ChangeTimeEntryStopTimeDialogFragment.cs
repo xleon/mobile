@@ -53,7 +53,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override Dialog OnCreateDialog (Bundle state)
         {
-            var time = DateTime.Now;
+            var time = Toggl.Phoebe.Time.Now;
             if (model != null && model.StopTime.HasValue) {
                 time = model.StopTime.Value.ToLocalTime ();
             }
@@ -71,7 +71,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnTimeSelected (object sender, TimePickerDialog.TimeSetEventArgs e)
         {
             if (model != null) {
-                var dt = DateTime.Now;
+                var dt = Toggl.Phoebe.Time.Now;
                 if (model.StopTime.HasValue) {
                     dt = model.StopTime.Value.ToLocalTime ();
                 }

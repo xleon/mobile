@@ -6,6 +6,7 @@ using MonoTouch.CoreAnimation;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
@@ -490,7 +491,7 @@ namespace Toggl.Ross.ViewControllers
             private string FormatDate (DateTime date)
             {
                 date = date.ToLocalTime ().Date;
-                var today = DateTime.Now.Date;
+                var today = Time.Now.Date;
                 if (date.Date == today) {
                     return "LogHeaderDateToday".Tr ();
                 }

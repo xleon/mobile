@@ -324,7 +324,7 @@ namespace Toggl.Joey.UI.Fragments
             var startTime = TimeEntry.StartTime;
             var useTimer = TimeEntry.StartTime == DateTime.MinValue;
             if (useTimer) {
-                startTime = DateTime.Now;
+                startTime = Time.Now;
 
                 DurationTextView.Text = TimeSpan.Zero.ToString ();
 
@@ -344,7 +344,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             StartTimeEditText.Text = startTime.ToDeviceTimeString ();
-            if (startTime.Date != DateTime.Now.Date) {
+            if (startTime.Date != Time.Now.Date) {
                 DateTextView.Text = startTime.ToDeviceDateString ();
                 DateTextView.Visibility = ViewStates.Visible;
             } else {
@@ -363,7 +363,7 @@ namespace Toggl.Joey.UI.Fragments
                 StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();
                 StopTimeEditText.Visibility = ViewStates.Visible;
             } else {
-                StopTimeEditText.Text = DateTime.Now.ToDeviceTimeString ();
+                StopTimeEditText.Text = Time.Now.ToDeviceTimeString ();
                 if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
                     StopTimeEditText.Visibility = ViewStates.Invisible;
                 } else {

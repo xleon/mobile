@@ -124,8 +124,8 @@ namespace Toggl.Phoebe.Tests.Data
             var oldTimeEntry = Model.Update (new TimeEntryModel () {
                 User = AuthManager.User,
                 State = TimeEntryState.Finished,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow + TimeSpan.FromSeconds (60),
+                StartTime = Time.UtcNow,
+                StopTime = Time.UtcNow + TimeSpan.FromSeconds (60),
                 DurationOnly = false,
                 IsPersisted = true,
                 ModifiedAt = new DateTime (),
@@ -159,8 +159,8 @@ namespace Toggl.Phoebe.Tests.Data
                 Description = "Old time entry",
                 User = AuthManager.User,
                 State = TimeEntryState.Finished,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow + TimeSpan.FromSeconds (60),
+                StartTime = Time.UtcNow,
+                StopTime = Time.UtcNow + TimeSpan.FromSeconds (60),
                 DurationOnly = false,
                 IsPersisted = true,
             });
@@ -183,8 +183,8 @@ namespace Toggl.Phoebe.Tests.Data
                 Description = "Old time entry",
                 User = AuthManager.User,
                 State = TimeEntryState.Finished,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow + TimeSpan.FromSeconds (60),
+                StartTime = Time.UtcNow,
+                StopTime = Time.UtcNow + TimeSpan.FromSeconds (60),
                 DurationOnly = true,
                 IsPersisted = true,
             });
@@ -277,7 +277,7 @@ namespace Toggl.Phoebe.Tests.Data
                 State = TimeEntryState.New,
             });
 
-            entry.StartTime = DateTime.UtcNow.AddHours (-1);
+            entry.StartTime = Time.UtcNow.AddHours (-1);
             Assert.AreEqual (entry.StartTime.AddHours (1), entry.StopTime);
         }
 
@@ -288,7 +288,7 @@ namespace Toggl.Phoebe.Tests.Data
                 State = TimeEntryState.New,
             });
 
-            entry.StartTime = DateTime.UtcNow.AddDays (-3).AddHours (-1);
+            entry.StartTime = Time.UtcNow.AddDays (-3).AddHours (-1);
             Assert.AreEqual (entry.StartTime.AddHours (1), entry.StopTime);
         }
 
@@ -299,7 +299,7 @@ namespace Toggl.Phoebe.Tests.Data
                 State = TimeEntryState.New,
             });
 
-            entry.StartTime = DateTime.UtcNow.AddHours (1);
+            entry.StartTime = Time.UtcNow.AddHours (1);
             Assert.AreEqual (entry.StartTime, entry.StopTime);
         }
 

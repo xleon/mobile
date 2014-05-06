@@ -121,7 +121,7 @@ namespace Toggl.Phoebe.Data.Models
                             if (StopTime.HasValue) {
                                 StopTime = startTime + duration;
                             } else {
-                                var now = DateTime.UtcNow;
+                                var now = Time.UtcNow;
 
                                 var stopTime = startTime.Date
                                     .AddHours (now.Hour)
@@ -177,7 +177,7 @@ namespace Toggl.Phoebe.Data.Models
 
         public TimeSpan GetDuration ()
         {
-            return GetDuration (DateTime.UtcNow);
+            return GetDuration (Time.UtcNow);
         }
 
         private TimeSpan GetDuration (DateTime now)
@@ -198,7 +198,7 @@ namespace Toggl.Phoebe.Data.Models
         public void SetDuration (TimeSpan value)
         {
             lock (SyncRoot) {
-                var now = DateTime.UtcNow;
+                var now = Time.UtcNow;
 
                 if (State == TimeEntryState.Finished) {
                     StopTime = StartTime + value;
@@ -222,7 +222,7 @@ namespace Toggl.Phoebe.Data.Models
         private long EncodedDuration {
             get {
                 lock (SyncRoot) {
-                    var now = DateTime.UtcNow;
+                    var now = Time.UtcNow;
 
                     var duration = (long)GetDuration (now).TotalSeconds;
                     if (State == TimeEntryState.Running) {
@@ -236,7 +236,7 @@ namespace Toggl.Phoebe.Data.Models
                 lock (SyncRoot) {
                     if (value < 0) {
                         State = TimeEntryState.Running;
-                        SetDuration (DateTime.UtcNow.ToUnix () + TimeSpan.FromSeconds (value));
+                        SetDuration (Time.UtcNow.ToUnix () + TimeSpan.FromSeconds (value));
                     } else {
                         State = TimeEntryState.Finished;
                         SetDuration (TimeSpan.FromSeconds (value));
@@ -545,7 +545,7 @@ namespace Toggl.Phoebe.Data.Models
                     Tags.Add (DefaultTag);
                 }
                 State = TimeEntryState.Running;
-                StartTime = DateTime.UtcNow;
+                StartTime = Time.UtcNow;
                 StopTime = null;
             }
         }
@@ -595,7 +595,7 @@ namespace Toggl.Phoebe.Data.Models
                 if (State != TimeEntryState.Running)
                     throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", State));
 
-                StopTime = DateTime.UtcNow;
+                StopTime = Time.UtcNow;
                 State = TimeEntryState.Finished;
             }
         }
@@ -620,10 +620,10 @@ namespace Toggl.Phoebe.Data.Models
                     throw new InvalidOperationException (String.Format ("Cannot continue a time entry in {0} state.", State));
                 }
 
-                if (DurationOnly && StartTime.ToLocalTime ().Date == DateTime.Now.Date) {
+                if (DurationOnly && StartTime.ToLocalTime ().Date == Time.Now.Date) {
                     if (RemoteId == null) {
                         IsPersisted = true;
-                        StartTime = DateTime.UtcNow - GetDuration ();
+                        StartTime = Time.UtcNow - GetDuration ();
                         StopTime = null;
                         State = TimeEntryState.Running;
                         return this;
@@ -636,7 +636,7 @@ namespace Toggl.Phoebe.Data.Models
                     TaskId = TaskId,
                     UserId = UserId,
                     Description = Description,
-                    StartTime = DateTime.UtcNow,
+                    StartTime = Time.UtcNow,
                     DurationOnly = DurationOnly,
                     StringTags = StringTags,
                     IsBillable = IsBillable,

@@ -98,7 +98,7 @@ namespace Toggl.Phoebe.Net
                 var m = Model.Update (new UserModel () {
                     Email = email,
                     Password = password,
-                    Timezone = GetCurrentTimeZone (),
+                    Timezone = Time.TimeZoneId,
                     ModifiedAt = DateTime.MinValue,
                 });
 
@@ -115,7 +115,7 @@ namespace Toggl.Phoebe.Net
             return Authenticate (async delegate {
                 var m = Model.Update (new UserModel () {
                     GoogleAccessToken = accessToken,
-                    Timezone = GetCurrentTimeZone (),
+                    Timezone = Time.TimeZoneId,
                     ModifiedAt = DateTime.MinValue,
                 });
 
@@ -124,15 +124,6 @@ namespace Toggl.Phoebe.Net
                 m.IsPersisted = true;
                 return m;
             });
-        }
-
-        private static string GetCurrentTimeZone ()
-        {
-            var tz = TimeZoneInfo.Local;
-            if (tz == null) {
-                return "UTC";
-            }
-            return tz.Id;
         }
 
         public void Forget ()

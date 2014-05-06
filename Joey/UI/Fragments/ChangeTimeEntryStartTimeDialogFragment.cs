@@ -68,11 +68,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public override Dialog OnCreateDialog (Bundle state)
         {
-            var time = DateTime.Now;
+            var time = Toggl.Phoebe.Time.Now;
             if (model != null && model.StartTime != DateTime.MinValue) {
                 time = model.StartTime.ToLocalTime ();
             }
-            var date = DateTime.Now;
+            var date = Toggl.Phoebe.Time.Now;
             if (model != null && model.StartTime != DateTime.MinValue) {
                 date = model.StartTime.ToLocalTime ().Date;
             }

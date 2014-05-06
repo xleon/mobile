@@ -163,7 +163,7 @@ namespace Toggl.Joey.Net
 
                 if (!syncManager.IsRunning) {
                     IsRunning = true;
-                    StartTime = DateTime.UtcNow;
+                    StartTime = Time.UtcNow;
 
                     syncManager.Run (SyncMode.Pull);
                 }

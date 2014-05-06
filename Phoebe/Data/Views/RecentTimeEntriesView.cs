@@ -137,7 +137,7 @@ namespace Toggl.Phoebe.Data.Views
             OnUpdated ();
 
             // Group only items in the past 9 days
-            queryStartDate = DateTime.UtcNow - TimeSpan.FromDays (9);
+            queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
             var query = Model.Query<TimeEntryModel> ()
                 .NotDeleted ()
                 .ForCurrentUser ()

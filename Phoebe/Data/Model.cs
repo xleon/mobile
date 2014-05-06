@@ -54,14 +54,14 @@ namespace Toggl.Phoebe.Data
                 return;
 
             if (updateModTime)
-                ModifiedAt = DateTime.UtcNow;
+                ModifiedAt = Time.UtcNow;
             IsDirty = true;
         }
 
         public virtual void Delete ()
         {
             lock (SyncRoot) {
-                DeletedAt = DateTime.UtcNow;
+                DeletedAt = Time.UtcNow;
                 if (RemoteId == null) {
                     IsPersisted = false;
                 }
@@ -127,7 +127,7 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        private DateTime modified = DateTime.UtcNow;
+        private DateTime modified = Time.UtcNow;
         public static readonly string PropertyModifiedAt = GetPropertyName ((m) => m.ModifiedAt);
 
         [JsonProperty ("at")]

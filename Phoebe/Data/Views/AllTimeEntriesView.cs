@@ -134,7 +134,7 @@ namespace Toggl.Phoebe.Data.Views
             if (IsLoading)
                 return;
 
-            startFrom = DateTime.UtcNow;
+            startFrom = Time.UtcNow;
             dateGroups.Clear ();
             HasMore = true;
 

@@ -142,7 +142,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             model.Merge (new PlainModel () {
                 RemoteId = remoteId,
-                ModifiedAt = DateTime.UtcNow,
+                ModifiedAt = Time.UtcNow,
             });
 
             Assert.AreEqual (remoteId, model.RemoteId, "Model remote id was not updated by merge.");
@@ -173,7 +173,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             model.Merge (new PlainModel () {
                 RemoteId = remoteId2,
-                ModifiedAt = DateTime.UtcNow,
+                ModifiedAt = Time.UtcNow,
             });
 
             Assert.AreEqual (remoteId2, model.RemoteId, "Model remote id was not updated by merge.");

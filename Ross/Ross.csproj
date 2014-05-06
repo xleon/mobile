@@ -111,36 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
-    <BundleResource Include="Resources\circle-start.png" />
-    <BundleResource Include="Resources\circle-start%402x.png" />
-    <BundleResource Include="Resources\circle-stop.png" />
-    <BundleResource Include="Resources\circle-stop%402x.png" />
-    <BundleResource Include="Resources\icon-back.png" />
-    <BundleResource Include="Resources\icon-back%402x.png" />
-    <BundleResource Include="Resources\icon-billable.png" />
-    <BundleResource Include="Resources\icon-billable%402x.png" />
-    <BundleResource Include="Resources\icon-duration-arrow.png" />
-    <BundleResource Include="Resources\icon-duration-arrow%402x.png" />
-    <BundleResource Include="Resources\icon-nav.png" />
-    <BundleResource Include="Resources\icon-nav%402x.png" />
-    <BundleResource Include="Resources\icon-running.png" />
-    <BundleResource Include="Resources\icon-running%402x.png" />
-    <BundleResource Include="Resources\icon-tag-billable.png" />
-    <BundleResource Include="Resources\icon-tag-billable%402x.png" />
-    <BundleResource Include="Resources\icon-tag.png" />
-    <BundleResource Include="Resources\icon-tag%402x.png" />
-    <BundleResource Include="Resources\icon-tick-blue.png" />
-    <BundleResource Include="Resources\icon-tick-blue%402x.png" />
-    <BundleResource Include="Resources\logo.png" />
-    <BundleResource Include="Resources\logo%402x.png" />
-    <BundleResource Include="Resources\bg.png" />
-    <BundleResource Include="Resources\bg%402x.png" />
-    <BundleResource Include="Resources\icon-arrow-right.png" />
-    <BundleResource Include="Resources\icon-arrow-right%402x.png" />
-    <BundleResource Include="Resources\circle-start-pressed.png" />
-    <BundleResource Include="Resources\circle-start-pressed%402x.png" />
-    <BundleResource Include="Resources\circle-stop-pressed.png" />
-    <BundleResource Include="Resources\circle-stop-pressed%402x.png" />
+    <BundleResource Include="Resources\*.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

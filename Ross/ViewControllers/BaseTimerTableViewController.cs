@@ -3,11 +3,11 @@ using MonoTouch.UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class BaseTimerTableViewController : UITableViewController
+    public abstract class BaseTimerTableViewController : UITableViewController
     {
         private readonly TimerNavigationController timerController;
 
-        public BaseTimerTableViewController (UITableViewStyle withStyle) : base (withStyle)
+        protected BaseTimerTableViewController (UITableViewStyle withStyle) : base (withStyle)
         {
             timerController = new TimerNavigationController ();
         }

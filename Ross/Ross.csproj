@@ -177,6 +177,7 @@
     <Compile Include="Theme\Style.Signup.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="ViewControllers\EditTimeEntryViewController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

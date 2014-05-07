@@ -27,7 +27,7 @@ namespace Toggl.Ross.ViewControllers
             navMenuController = new NavigationMenuController ();
 
             EdgesForExtendedLayout = UIRectEdge.None;
-            new Source (TableView).Attach ();
+            new Source (this).Attach ();
             TableView.TableHeaderView = new TableViewHeaderView ();
         }
 
@@ -42,18 +42,20 @@ namespace Toggl.Ross.ViewControllers
         {
             readonly static NSString EntryCellId = new NSString ("EntryCellId");
             readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
+            readonly LogViewController controller;
             readonly AllTimeEntriesView dataView;
 
-            public Source (UITableView tableView) : this (tableView, new AllTimeEntriesView ())
+            public Source (LogViewController controller) : this (controller, new AllTimeEntriesView ())
             {
             }
 
-            private Source (UITableView tableView, AllTimeEntriesView dataView) : base (tableView, dataView)
+            private Source (LogViewController controller, AllTimeEntriesView dataView) : base (controller.TableView, dataView)
             {
+                this.controller = controller;
                 this.dataView = dataView;
 
-                tableView.RegisterClassForCellReuse (typeof(TimeEntryCell), EntryCellId);
-                tableView.RegisterClassForHeaderFooterViewReuse (typeof(SectionHeaderView), SectionHeaderId);
+                controller.TableView.RegisterClassForCellReuse (typeof(TimeEntryCell), EntryCellId);
+                controller.TableView.RegisterClassForHeaderFooterViewReuse (typeof(SectionHeaderView), SectionHeaderId);
             }
 
             protected override IEnumerable<AllTimeEntriesView.DateGroup> GetSections ()
@@ -107,8 +109,13 @@ namespace Toggl.Ross.ViewControllers
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                // TODO: Navigate to edit instead
-                tableView.DeselectRow (indexPath, true);
+                var model = GetRow (indexPath);
+                if (model != null) {
+                    controller.NavigationController.PushViewController (
+                        new EditTimeEntryViewController (model), true);
+                } else {
+                    tableView.DeselectRow (indexPath, true);
+                }
             }
         }
 

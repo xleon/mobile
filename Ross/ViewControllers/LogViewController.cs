@@ -473,7 +473,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 rebindCounter++;
 
-                dateLabel.Text = FormatDate (data.Date);
+                dateLabel.Text = data.Date.ToLocalizedDateString ();
 
                 var duration = TimeSpan.FromSeconds (data.Models.Sum (m => m.GetDuration ().TotalSeconds));
                 totalDurationLabel.Text = FormatDuration (duration);
@@ -489,19 +489,6 @@ namespace Toggl.Ross.ViewControllers
                             }
                         });
                 }
-            }
-
-            private string FormatDate (DateTime date)
-            {
-                date = date.ToLocalTime ().Date;
-                var today = Time.Now.Date;
-                if (date.Date == today) {
-                    return "LogHeaderDateToday".Tr ();
-                }
-                if (date.Date == today - TimeSpan.FromDays (1)) {
-                    return "LogHeaderDateYesterday".Tr ();
-                }
-                return date.ToString ("MMMM d");
             }
 
             private string FormatDuration (TimeSpan duration)

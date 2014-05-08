@@ -178,6 +178,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\EditTimeEntryViewController.cs" />
+    <Compile Include="DateTimeExtensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

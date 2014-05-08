@@ -179,6 +179,9 @@
     </Compile>
     <Compile Include="ViewControllers\EditTimeEntryViewController.cs" />
     <Compile Include="DateTimeExtensions.cs" />
+    <Compile Include="Theme\Style.EditTimeEntry.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

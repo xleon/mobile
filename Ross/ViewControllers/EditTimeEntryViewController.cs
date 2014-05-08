@@ -48,101 +48,182 @@ namespace Toggl.Ross.ViewControllers
         {
             private readonly UILabel startDateLabel;
             private readonly UILabel startTimeLabel;
-            private readonly UIView startDateTimeView;
+            private readonly UIButton startDateTimeButton;
             private readonly UILabel stopDateLabel;
             private readonly UILabel stopTimeLabel;
-            private readonly UIView stopDateTimeView;
+            private readonly UIButton stopDateTimeButton;
             private readonly UIImageView arrowImageView;
             private LayoutVariant viewLayout = LayoutVariant.StartOnly;
+            private bool stopTimeHidden = true;
+            private DateTime startTime;
+            private DateTime? stopTime;
+            private TimeKind selectedTime;
 
             public StartStopView ()
             {
-                startDateTimeView = new UIView () {
+                startDateTimeButton = new UIButton () {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                 };
+                startDateTimeButton.TouchUpInside += OnStartDateTimeButtonTouchUpInside;
                 arrowImageView = new UIImageView () {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                     Image = Image.IconDurationArrow,
                 };
-                stopDateTimeView = new UIView () {
+                stopDateTimeButton = new UIButton () {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                 };
+                stopDateTimeButton.TouchUpInside += OnStopDateTimeButtonTouchUpInside;
 
-                ConstructDateTimeView (startDateTimeView, ref startDateLabel, ref startTimeLabel);
-                ConstructDateTimeView (stopDateTimeView, ref stopDateLabel, ref stopTimeLabel);
+                ConstructDateTimeView (startDateTimeButton, ref startDateLabel, ref startTimeLabel);
+                ConstructDateTimeView (stopDateTimeButton, ref stopDateLabel, ref stopTimeLabel);
 
-                startDateLabel.Text = "Today";
-                startTimeLabel.Text = "10:00";
-                stopDateLabel.Text = "Today";
-                stopTimeLabel.Text = "12:30";
+                Add (startDateTimeButton);
 
-                Add (startDateTimeView);
+                StartTime = DateTime.Now - TimeSpan.FromHours (4);
             }
 
-            public override void TouchesEnded (NSSet touches, UIEvent evt)
+            private void OnStartDateTimeButtonTouchUpInside (object sender, EventArgs e)
             {
-                base.TouchesEnded (touches, evt);
+                Selected = Selected == TimeKind.Start ? TimeKind.None : TimeKind.Start;
+            }
 
-                if (ViewLayout == LayoutVariant.StartOnly) {
-                    ViewLayout = LayoutVariant.BothCenterStart;
-                    stopDateTimeView.Alpha = 0;
-                    arrowImageView.Alpha = 0;
-                    LayoutIfNeeded ();
+            private void OnStopDateTimeButtonTouchUpInside (object sender, EventArgs e)
+            {
+                Selected = Selected == TimeKind.Stop ? TimeKind.None : TimeKind.Stop;
+            }
 
-                    UIView.AnimateKeyframes (
-                        0.5, 0,
-                        UIViewKeyframeAnimationOptions.CalculationModeCubic,
-                        delegate {
-                            UIView.AddKeyframeWithRelativeStartTime (0, 1, delegate {
-                                ViewLayout = LayoutVariant.BothCenterAll;
-                                LayoutIfNeeded ();
-                            });
-                            UIView.AddKeyframeWithRelativeStartTime (0.2, 1, delegate {
-                                stopDateTimeView.Alpha = 1;
-                                arrowImageView.Alpha = 1;
-                            });
-                        },
-                        delegate {
-                        });
-                } else {
+            public DateTime StartTime {
+                get { return startTime; }
+                set {
+                    if (startTime == value)
+                        return;
+
+                    startTime = value;
+                    var time = startTime.ToLocalTime ();
+                    startDateLabel.Text = time.ToLocalizedDateString ();
+                    startTimeLabel.Text = time.ToLocalizedTimeString ();
+                }
+            }
+
+            public DateTime? StopTime {
+                get { return stopTime; }
+                set {
+                    if (stopTime == value)
+                        return;
+
+                    stopTime = value;
+                    if (stopTime.HasValue) {
+                        var time = stopTime.Value.ToLocalTime ();
+                        stopDateLabel.Text = time.ToLocalizedDateString ();
+                        stopTimeLabel.Text = time.ToLocalizedTimeString ();
+                    }
+                    SetStopTimeHidden (stopTime == null, animate: Superview != null);
+                }
+            }
+
+            public TimeKind Selected {
+                get { return selectedTime; }
+                set {
+                    if (selectedTime == value)
+                        return;
+
+                    selectedTime = value;
+
+                    if (selectedTime == TimeKind.Start) {
+                        startDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabelActive);
+                        startTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabelActive);
+                    } else {
+                        startDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabel);
+                        startTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabel);
+                    }
+
+                    if (selectedTime == TimeKind.Stop) {
+                        stopDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabelActive);
+                        stopTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabelActive);
+                    } else {
+                        stopDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabel);
+                        stopTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabel);
+                    }
+
+                    var handler = SelectedChanged;
+                    if (handler != null) {
+                        handler (this, EventArgs.Empty);
+                    }
+                }
+            }
+
+            private event EventHandler SelectedChanged;
+
+            private void SetStopTimeHidden (bool hidden, bool animate)
+            {
+                if (stopTimeHidden == hidden)
+                    return;
+                stopTimeHidden = hidden;
+
+                if (!animate) {
+                    ViewLayout = hidden ? LayoutVariant.StartOnly : LayoutVariant.BothCenterAll;
+                } else if (hidden) {
                     ViewLayout = LayoutVariant.BothCenterAll;
-                    stopDateTimeView.Alpha = 1;
+                    stopDateTimeButton.Alpha = 1;
                     arrowImageView.Alpha = 1;
                     LayoutIfNeeded ();
 
                     UIView.AnimateKeyframes (
-                        0.5, 0,
-                        UIViewKeyframeAnimationOptions.CalculationModeCubic,
+                        0.4, 0,
+                        UIViewKeyframeAnimationOptions.CalculationModeCubic | UIViewKeyframeAnimationOptions.BeginFromCurrentState,
                         delegate {
                             UIView.AddKeyframeWithRelativeStartTime (0, 1, delegate {
                                 ViewLayout = LayoutVariant.BothCenterStart;
                                 LayoutIfNeeded ();
                             });
                             UIView.AddKeyframeWithRelativeStartTime (0, 0.8, delegate {
-                                stopDateTimeView.Alpha = 0;
+                                stopDateTimeButton.Alpha = 0;
                                 arrowImageView.Alpha = 0;
                             });
                         },
                         delegate {
-                            ViewLayout = LayoutVariant.StartOnly;
-                            LayoutIfNeeded ();
+                            if (ViewLayout == LayoutVariant.BothCenterStart) {
+                                ViewLayout = LayoutVariant.StartOnly;
+                                LayoutIfNeeded ();
+                            }
+                        });
+                } else {
+                    ViewLayout = LayoutVariant.BothCenterStart;
+                    stopDateTimeButton.Alpha = 0;
+                    arrowImageView.Alpha = 0;
+                    LayoutIfNeeded ();
+
+                    UIView.AnimateKeyframes (
+                        0.4, 0,
+                        UIViewKeyframeAnimationOptions.CalculationModeCubic | UIViewKeyframeAnimationOptions.BeginFromCurrentState,
+                        delegate {
+                            UIView.AddKeyframeWithRelativeStartTime (0, 1, delegate {
+                                ViewLayout = LayoutVariant.BothCenterAll;
+                                LayoutIfNeeded ();
+                            });
+                            UIView.AddKeyframeWithRelativeStartTime (0.2, 1, delegate {
+                                stopDateTimeButton.Alpha = 1;
+                                arrowImageView.Alpha = 1;
+                            });
+                        },
+                        delegate {
                         });
                 }
             }
 
             private static void ConstructDateTimeView (UIView view, ref UILabel dateLabel, ref UILabel timeLabel)
             {
-                view.Add (dateLabel = new UILabel ());
-                view.Add (timeLabel = new UILabel ());
+                view.Add (dateLabel = new UILabel ().ApplyStyle (Style.EditTimeEntry.DateLabel));
+                view.Add (timeLabel = new UILabel ().ApplyStyle (Style.EditTimeEntry.TimeLabel));
                 view.AddConstraints (
-                    dateLabel.AtTopOf (view),
-                    dateLabel.AtLeftOf (view),
-                    dateLabel.AtRightOf (view),
+                    dateLabel.AtTopOf (view, 10f),
+                    dateLabel.AtLeftOf (view, 10f),
+                    dateLabel.AtRightOf (view, 10f),
 
-                    timeLabel.Below (dateLabel, 5f),
-                    timeLabel.AtBottomOf (view),
-                    timeLabel.AtLeftOf (view),
-                    timeLabel.AtRightOf (view)
+                    timeLabel.Below (dateLabel, 2f),
+                    timeLabel.AtBottomOf (view, 10f),
+                    timeLabel.AtLeftOf (view, 10f),
+                    timeLabel.AtRightOf (view, 10f)
                 );
                 view.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints ();
             }
@@ -154,49 +235,49 @@ namespace Toggl.Ross.ViewControllers
                 switch (viewLayout) {
                 case LayoutVariant.StartOnly:
                     arrowImageView.RemoveFromSuperview ();
-                    stopDateTimeView.RemoveFromSuperview ();
+                    stopDateTimeButton.RemoveFromSuperview ();
 
                     this.AddConstraints (
-                        startDateTimeView.WithSameCenterX (this),
-                        startDateTimeView.WithSameCenterY (this),
-                        startDateTimeView.AtTopOf (this, 20f),
-                        startDateTimeView.AtBottomOf (this, 20f)
+                        startDateTimeButton.WithSameCenterX (this),
+                        startDateTimeButton.WithSameCenterY (this),
+                        startDateTimeButton.AtTopOf (this, 10f),
+                        startDateTimeButton.AtBottomOf (this, 10f)
                     );
                     break;
                 case LayoutVariant.BothCenterStart:
                     AddSubview (arrowImageView);
-                    AddSubview (stopDateTimeView);
+                    AddSubview (stopDateTimeButton);
 
                     this.AddConstraints (
-                        startDateTimeView.WithSameCenterX (this),
-                        startDateTimeView.WithSameCenterY (this),
-                        startDateTimeView.AtTopOf (this, 20f),
-                        startDateTimeView.AtBottomOf (this, 20f),
+                        startDateTimeButton.WithSameCenterX (this),
+                        startDateTimeButton.WithSameCenterY (this),
+                        startDateTimeButton.AtTopOf (this, 10f),
+                        startDateTimeButton.AtBottomOf (this, 10f),
 
-                        arrowImageView.WithSameCenterY (startDateTimeView),
-                        arrowImageView.ToRightOf (startDateTimeView, 20f),
-                        arrowImageView.ToLeftOf (stopDateTimeView, 20f),
+                        arrowImageView.WithSameCenterY (startDateTimeButton),
+                        arrowImageView.ToRightOf (startDateTimeButton, 10f),
+                        arrowImageView.ToLeftOf (stopDateTimeButton, 10f),
 
-                        stopDateTimeView.AtTopOf (this, 20f),
-                        stopDateTimeView.AtBottomOf (this, 20f)
+                        stopDateTimeButton.AtTopOf (this, 10f),
+                        stopDateTimeButton.AtBottomOf (this, 10f)
                     );
                     break;
                 case LayoutVariant.BothCenterAll:
                 default:
                     AddSubview (arrowImageView);
-                    AddSubview (stopDateTimeView);
+                    AddSubview (stopDateTimeButton);
 
                     this.AddConstraints (
-                        startDateTimeView.AtTopOf (this, 20f),
-                        startDateTimeView.AtBottomOf (this, 20f),
+                        startDateTimeButton.AtTopOf (this, 10f),
+                        startDateTimeButton.AtBottomOf (this, 10f),
 
                         arrowImageView.WithSameCenterX (this),
                         arrowImageView.WithSameCenterY (this),
-                        arrowImageView.ToRightOf (startDateTimeView, 20f),
-                        arrowImageView.ToLeftOf (stopDateTimeView, 20f),
+                        arrowImageView.ToRightOf (startDateTimeButton, 10f),
+                        arrowImageView.ToLeftOf (stopDateTimeButton, 10f),
 
-                        stopDateTimeView.AtTopOf (this, 20f),
-                        stopDateTimeView.AtBottomOf (this, 20f)
+                        stopDateTimeButton.AtTopOf (this, 10f),
+                        stopDateTimeButton.AtBottomOf (this, 10f)
                     );
                     break;
                 }
@@ -227,6 +308,13 @@ namespace Toggl.Ross.ViewControllers
             {
                 return true;
             }
+        }
+
+        private enum TimeKind
+        {
+            None,
+            Start,
+            Stop
         }
     }
 }

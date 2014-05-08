@@ -32,6 +32,24 @@ namespace Toggl.Ross.Theme
                 v.ApplyStyle (TimeLabel);
                 v.TextColor = Color.Red;
             }
+
+            public static void ProjectLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Medium", 17f);
+                v.TextColor = Color.White;
+            }
+
+            public static void ClientLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue", 13f);
+                v.TextColor = Color.White.ColorWithAlpha (0.75f);
+            }
+
+            public static void TaskLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue", 13f);
+                v.TextColor = Color.White.ColorWithAlpha (0.75f);
+            }
         }
     }
 }

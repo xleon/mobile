@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Drawing;
 using Cirrious.FluentLayouts.Touch;
+using MonoTouch.CoreAnimation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data.Models;
@@ -11,7 +13,7 @@ namespace Toggl.Ross.ViewControllers
     {
         private StartStopView startStopView;
         private UIDatePicker datePicker;
-        private UIButton projectButton;
+        private ProjectClientTaskButton projectButton;
         private UITextField descriptionTextField;
         private UIButton tagsButton;
         private UIView billableView;
@@ -31,13 +33,23 @@ namespace Toggl.Ross.ViewControllers
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
+            scrollView.Add (projectButton = new ProjectClientTaskButton () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+            });
+
             scrollView.AddConstraints (
                 startStopView.AtTopOf (scrollView),
                 startStopView.WithSameWidth (scrollView),
                 startStopView.AtLeftOf (scrollView),
                 startStopView.AtRightOf (scrollView),
 
-                startStopView.AtBottomOf (scrollView, 1000f),
+                projectButton.Below (startStopView, 5f),
+                projectButton.WithSameWidth (scrollView),
+                projectButton.Height ().GreaterThanOrEqualTo (60f),
+                projectButton.AtLeftOf (scrollView),
+                projectButton.AtRightOf (scrollView),
+
+                projectButton.AtBottomOf (scrollView, 1000f),
                 null
             );
 
@@ -315,6 +327,153 @@ namespace Toggl.Ross.ViewControllers
             None,
             Start,
             Stop
+        }
+
+        private class ProjectClientTaskButton : UIButton
+        {
+            private readonly UIView container;
+            private readonly UILabel projectLabel;
+            private readonly UILabel clientLabel;
+            private readonly UILabel taskLabel;
+
+            public ProjectClientTaskButton ()
+            {
+                Add (container = new UIView () {
+                    TranslatesAutoresizingMaskIntoConstraints = false,
+                    UserInteractionEnabled = false,
+                });
+
+                var maskLayer = new CAGradientLayer () {
+                    AnchorPoint = PointF.Empty,
+                    StartPoint = new PointF (0.0f, 0.0f),
+                    EndPoint = new PointF (1.0f, 0.0f),
+                    Colors = new [] {
+                        UIColor.FromWhiteAlpha (1, 1).CGColor,
+                        UIColor.FromWhiteAlpha (1, 1).CGColor,
+                        UIColor.FromWhiteAlpha (1, 0).CGColor,
+                    },
+                    Locations = new [] {
+                        NSNumber.FromFloat (0f),
+                        NSNumber.FromFloat (0.9f),
+                        NSNumber.FromFloat (1f),
+                    },
+                };
+                container.Layer.Mask = maskLayer;
+
+                container.Add (projectLabel = new UILabel () {
+                    TranslatesAutoresizingMaskIntoConstraints = false,
+                }.ApplyStyle (Style.EditTimeEntry.ProjectLabel));
+                container.Add (clientLabel = new UILabel () {
+                    TranslatesAutoresizingMaskIntoConstraints = false,
+                }.ApplyStyle (Style.EditTimeEntry.ClientLabel));
+                container.Add (taskLabel = new UILabel () {
+                    TranslatesAutoresizingMaskIntoConstraints = false,
+                }.ApplyStyle (Style.EditTimeEntry.TaskLabel));
+            }
+
+            public override void UpdateConstraints ()
+            {
+                RemoveConstraints (Constraints);
+
+                this.AddConstraints (
+                    container.AtLeftOf (this, 15f),
+                    container.WithSameCenterY (this),
+
+                    projectLabel.AtTopOf (container),
+                    projectLabel.AtLeftOf (container),
+                    null
+                );
+
+                if (!clientLabel.Hidden) {
+                    var baselineOffset = (float)Math.Floor (projectLabel.Font.Descender - clientLabel.Font.Descender);
+                    this.AddConstraints (
+                        clientLabel.AtTopOf (container, -baselineOffset),
+                        clientLabel.AtRightOf (container),
+                        clientLabel.ToRightOf (projectLabel, 5f),
+                        clientLabel.AtBottomOf (projectLabel, baselineOffset),
+                        null
+                    );
+                } else {
+                    this.AddConstraints (
+                        projectLabel.AtRightOf (container),
+                        null
+                    );
+                }
+
+                if (!taskLabel.Hidden) {
+                    this.AddConstraints (
+                        taskLabel.Below (projectLabel, 3f),
+                        taskLabel.AtLeftOf (container),
+                        taskLabel.AtRightOf (container),
+                        taskLabel.AtBottomOf (container),
+                        null
+                    );
+                } else {
+                    this.AddConstraints (
+                        projectLabel.AtBottomOf (container),
+                        null
+                    );
+                }
+
+                base.UpdateConstraints ();
+            }
+
+            public override void LayoutSubviews ()
+            {
+                base.LayoutSubviews ();
+
+                // Update fade mask position:
+                var bounds = container.Frame;
+                bounds.Width = Frame.Width - bounds.X;
+                container.Layer.Mask.Bounds = bounds;
+            }
+
+            public string ProjectName {
+                get { return projectLabel.Text; }
+                set { projectLabel.Text = value; }
+            }
+
+            public string ClientName {
+                get { return clientLabel.Text; }
+                set {
+                    if (clientLabel.Text == value)
+                        return;
+
+                    var visibilityChanged = String.IsNullOrWhiteSpace (clientLabel.Text) != String.IsNullOrWhiteSpace (value);
+                    clientLabel.Text = value;
+
+                    if (visibilityChanged) {
+                        SetNeedsUpdateConstraints ();
+                        clientLabel.Hidden = String.IsNullOrWhiteSpace (value);
+                    }
+                }
+            }
+
+            public string TaskName {
+                get { return taskLabel.Text; }
+                set {
+                    if (taskLabel.Text == value)
+                        return;
+
+                    var visibilityChanged = String.IsNullOrWhiteSpace (taskLabel.Text) != String.IsNullOrWhiteSpace (value);
+                    taskLabel.Text = value;
+
+                    if (visibilityChanged) {
+                        SetNeedsUpdateConstraints ();
+                        taskLabel.Hidden = String.IsNullOrWhiteSpace (value);
+                    }
+                }
+            }
+
+            public UIColor ProjectColor {
+                set { SetBackgroundImage (value.ToImage (), UIControlState.Normal); }
+            }
+
+            [Export ("requiresConstraintBasedLayout")]
+            public static new bool RequiresConstraintBasedLayout ()
+            {
+                return true;
+            }
         }
     }
 }

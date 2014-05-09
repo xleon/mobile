@@ -182,6 +182,7 @@
     <Compile Include="Theme\Style.EditTimeEntry.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="Views\TextField.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

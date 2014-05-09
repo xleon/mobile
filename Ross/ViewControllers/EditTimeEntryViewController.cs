@@ -7,6 +7,8 @@ using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
+using Toggl.Ross.Views;
+using System.Linq;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -15,11 +17,9 @@ namespace Toggl.Ross.ViewControllers
         private StartStopView startStopView;
         private UIDatePicker datePicker;
         private ProjectClientTaskButton projectButton;
-        private UITextField descriptionTextField;
+        private TextField descriptionTextField;
         private UIButton tagsButton;
-        private UIView billableView;
-        private UILabel billableLabel;
-        private UISwitch billableSwitch;
+        private LabelSwitch billableSwitch;
         private UIButton deleteButton;
 
         public EditTimeEntryViewController (TimeEntryModel model)
@@ -29,19 +29,60 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             var scrollView = new UIScrollView ().ApplyStyle (Style.Screen);
+            var wrapper = new UIView () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+            };
 
-            scrollView.Add (startStopView = new StartStopView () {
+            scrollView.Add (wrapper);
+
+            wrapper.Add (startStopView = new StartStopView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
-            scrollView.Add (datePicker = new UIDatePicker () {
+
+            wrapper.Add (datePicker = new UIDatePicker () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Hidden = true,
             }.ApplyStyle (Style.EditTimeEntry.DatePicker));
-            scrollView.Add (projectButton = new ProjectClientTaskButton () {
+
+            wrapper.Add (projectButton = new ProjectClientTaskButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
-            scrollView.AddConstraints (VerticalLinearLayout (scrollView));
+            wrapper.Add (descriptionTextField = new TextField () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+                AttributedPlaceholder = new NSAttributedString (
+                    "EditEntryDesciptionTimerHint".Tr (),
+                    foregroundColor: Color.Gray
+                ),
+                ShouldReturn = (tf) => tf.ResignFirstResponder (),
+            }.ApplyStyle (Style.EditTimeEntry.DescriptionField));
+
+            wrapper.Add (tagsButton = new UIButton () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+            }.ApplyStyle (Style.EditTimeEntry.TagsButton).ApplyStyle (Style.EditTimeEntry.NoTags));
+            tagsButton.SetTitle ("EditEntryTagsHint".Tr (), UIControlState.Normal);
+
+            wrapper.Add (billableSwitch = new LabelSwitch () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+                Text = "EditEntryBillable".Tr (),
+            }.ApplyStyle (Style.EditTimeEntry.BillableContainer));
+            billableSwitch.Label.ApplyStyle (Style.EditTimeEntry.BillableLabel);
+
+            wrapper.Add (deleteButton = new UIButton () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+            }.ApplyStyle (Style.EditTimeEntry.DeleteButton));
+            deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
+
+            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+            scrollView.AddConstraints (
+                wrapper.AtTopOf (scrollView),
+                wrapper.AtBottomOf (scrollView),
+                wrapper.AtLeftOf (scrollView),
+                wrapper.AtRightOf (scrollView),
+                wrapper.WithSameWidth (scrollView),
+                wrapper.Height ().GreaterThanOrEqualTo ().HeightOf (scrollView).Minus (64f),
+                null
+            );
 
             View = scrollView;
         }
@@ -50,16 +91,18 @@ namespace Toggl.Ross.ViewControllers
         {
             UIView prev = null;
 
-            foreach (var v in container.Subviews) {
-                if (v.Hidden)
-                    continue;
+            var subviews = container.Subviews.Where (v => !v.Hidden).ToList ();
+            foreach (var v in subviews) {
+                var isLast = subviews [subviews.Count - 1] == v;
 
                 if (prev == null) {
                     yield return v.AtTopOf (container);
+                } else if (isLast) {
+                    yield return v.Top ().GreaterThanOrEqualTo ().BottomOf (prev).Plus (5f);
                 } else {
                     yield return v.Below (prev, 5f);
                 }
-                yield return v.WithSameWidth (container);
+                yield return v.Height ().EqualTo (60f).SetPriority (UILayoutPriority.DefaultLow);
                 yield return v.Height ().GreaterThanOrEqualTo (60f);
                 yield return v.AtLeftOf (container);
                 yield return v.AtRightOf (container);
@@ -68,7 +111,7 @@ namespace Toggl.Ross.ViewControllers
             }
 
             if (prev != null) {
-                yield return prev.AtBottomOf (container, 1000f);
+                yield return prev.AtBottomOf (container);
             }
         }
 
@@ -483,6 +526,66 @@ namespace Toggl.Ross.ViewControllers
 
             public UIColor ProjectColor {
                 set { SetBackgroundImage (value.ToImage (), UIControlState.Normal); }
+            }
+
+            [Export ("requiresConstraintBasedLayout")]
+            public static new bool RequiresConstraintBasedLayout ()
+            {
+                return true;
+            }
+        }
+
+        private class LabelSwitch : UIView
+        {
+            private readonly UILabel label;
+            private readonly UISwitch toggle;
+
+            public LabelSwitch ()
+            {
+                Add (label = new UILabel () {
+                    TranslatesAutoresizingMaskIntoConstraints = false,
+                });
+                Add (toggle = new UISwitch () {
+                    TranslatesAutoresizingMaskIntoConstraints = false,
+                });
+            }
+
+            public override void UpdateConstraints ()
+            {
+                if (Constraints.Length == 0) {
+                    this.AddConstraints (
+                        toggle.AtRightOf (this, 15f),
+                        toggle.WithSameCenterY (this),
+
+                        label.AtLeftOf (this, 15f),
+                        label.WithSameCenterY (this),
+                        label.ToLeftOf (toggle, 5f),
+
+                        null
+                    );
+                }
+
+                base.UpdateConstraints ();
+            }
+
+            public override UIView HitTest (PointF point, UIEvent uievent)
+            {
+                if (point.X < 0 || point.X > Frame.Width || point.Y < 0 || point.Y > Frame.Height)
+                    return null;
+                return toggle.HitTest (PointF.Empty, uievent);
+            }
+
+            public string Text {
+                get { return label.Text; }
+                set { label.Text = value; }
+            }
+
+            public UILabel Label {
+                get { return label; }
+            }
+
+            public UISwitch Switch {
+                get { return toggle; }
             }
 
             [Export ("requiresConstraintBasedLayout")]

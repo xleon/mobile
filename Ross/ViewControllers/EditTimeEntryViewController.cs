@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using Cirrious.FluentLayouts.Touch;
 using MonoTouch.CoreAnimation;
@@ -32,28 +33,39 @@ namespace Toggl.Ross.ViewControllers
             scrollView.Add (startStopView = new StartStopView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
-
             scrollView.Add (projectButton = new ProjectClientTaskButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
-            scrollView.AddConstraints (
-                startStopView.AtTopOf (scrollView),
-                startStopView.WithSameWidth (scrollView),
-                startStopView.AtLeftOf (scrollView),
-                startStopView.AtRightOf (scrollView),
-
-                projectButton.Below (startStopView, 5f),
-                projectButton.WithSameWidth (scrollView),
-                projectButton.Height ().GreaterThanOrEqualTo (60f),
-                projectButton.AtLeftOf (scrollView),
-                projectButton.AtRightOf (scrollView),
-
-                projectButton.AtBottomOf (scrollView, 1000f),
-                null
-            );
+            scrollView.AddConstraints (VerticalLinearLayout (scrollView));
 
             View = scrollView;
+        }
+
+        private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
+        {
+            UIView prev = null;
+
+            foreach (var v in container.Subviews) {
+                if (v.Hidden)
+                    continue;
+
+                if (prev == null) {
+                    yield return v.AtTopOf (container);
+                } else {
+                    yield return v.Below (prev, 5f);
+                }
+                yield return v.WithSameWidth (container);
+                yield return v.Height ().GreaterThanOrEqualTo (60f);
+                yield return v.AtLeftOf (container);
+                yield return v.AtRightOf (container);
+
+                prev = v;
+            }
+
+            if (prev != null) {
+                yield return prev.AtBottomOf (container, 1000f);
+            }
         }
 
         private class StartStopView : UIView

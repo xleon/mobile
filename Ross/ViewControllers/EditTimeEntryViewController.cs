@@ -33,6 +33,10 @@ namespace Toggl.Ross.ViewControllers
             scrollView.Add (startStopView = new StartStopView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
+            scrollView.Add (datePicker = new UIDatePicker () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+                Hidden = true,
+            }.ApplyStyle (Style.EditTimeEntry.DatePicker));
             scrollView.Add (projectButton = new ProjectClientTaskButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });

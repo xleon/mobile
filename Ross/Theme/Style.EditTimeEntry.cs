@@ -33,6 +33,11 @@ namespace Toggl.Ross.Theme
                 v.TextColor = Color.Red;
             }
 
+            public static void DatePicker (UIDatePicker v)
+            {
+                v.BackgroundColor = Color.White;
+            }
+
             public static void ProjectLabel (UILabel v)
             {
                 v.Font = UIFont.FromName ("HelveticaNeue-Medium", 17f);

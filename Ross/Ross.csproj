@@ -182,6 +182,7 @@
     </Compile>
     <Compile Include="Views\TextField.cs" />
     <Compile Include="ObjectExtensions.cs" />
+    <Compile Include="NSDateExtensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

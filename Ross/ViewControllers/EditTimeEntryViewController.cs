@@ -132,6 +132,7 @@ namespace Toggl.Ross.ViewControllers
                 Hidden = DatePickerHidden,
                 Alpha = 0,
             }.Apply (Style.EditTimeEntry.DatePicker).Apply (BindDatePicker));
+            datePicker.ValueChanged += OnDatePickerValueChanged;
 
             wrapper.Add (projectButton = new ProjectClientTaskButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -155,6 +156,7 @@ namespace Toggl.Ross.ViewControllers
                 Text = "EditEntryBillable".Tr (),
             }.Apply (Style.EditTimeEntry.BillableContainer).Apply (BindBillableSwitch));
             billableSwitch.Label.Apply (Style.EditTimeEntry.BillableLabel);
+            billableSwitch.Switch.ValueChanged += OnBillableSwitchValueChanged;
 
             wrapper.Add (deleteButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -173,6 +175,23 @@ namespace Toggl.Ross.ViewControllers
             );
 
             View = scrollView;
+        }
+
+        private void OnDatePickerValueChanged (object sender, EventArgs e)
+        {
+            switch (startStopView.Selected) {
+            case TimeKind.Start:
+                model.StartTime = datePicker.Date.ToDateTime ();
+                break;
+            case TimeKind.Stop:
+                model.StopTime = datePicker.Date.ToDateTime ();
+                break;
+            }
+        }
+
+        private void OnBillableSwitchValueChanged (object sender, EventArgs e)
+        {
+            model.IsBillable = billableSwitch.Switch.On;
         }
 
         public override void ViewWillAppear (bool animated)

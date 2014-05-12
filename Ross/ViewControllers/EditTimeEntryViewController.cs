@@ -148,7 +148,7 @@ namespace Toggl.Ross.ViewControllers
 
             wrapper.Add (tagsButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.EditTimeEntry.TagsButton).Apply (Style.EditTimeEntry.NoTags).Apply (BindTagsButton));
+            }.Apply (Style.EditTimeEntry.TagsButton).Apply (BindTagsButton));
 
             wrapper.Add (billableSwitch = new LabelSwitch () {
                 TranslatesAutoresizingMaskIntoConstraints = false,

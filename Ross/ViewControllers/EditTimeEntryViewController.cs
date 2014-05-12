@@ -621,13 +621,6 @@ namespace Toggl.Ross.ViewControllers
                 base.UpdateConstraints ();
             }
 
-            public override UIView HitTest (PointF point, UIEvent uievent)
-            {
-                if (point.X < 0 || point.X > Frame.Width || point.Y < 0 || point.Y > Frame.Height)
-                    return null;
-                return toggle.HitTest (PointF.Empty, uievent);
-            }
-
             public string Text {
                 get { return label.Text; }
                 set { label.Text = value; }

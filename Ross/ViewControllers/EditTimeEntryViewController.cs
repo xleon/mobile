@@ -401,7 +401,7 @@ namespace Toggl.Ross.ViewControllers
                     }
                     SetStopTimeHidden (stopTime == null, animate: Superview != null);
 
-                    if (Selected == TimeKind.Stop) {
+                    if (stopTime == null && Selected == TimeKind.Stop) {
                         Selected = TimeKind.None;
                     }
                 }

@@ -30,6 +30,9 @@ namespace Toggl.Ross.ViewControllers
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
         private readonly TimeEntryModel model;
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private bool descriptionChanging;
+        private bool autoCommitScheduled;
+        private int autoCommitId;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -47,6 +50,42 @@ namespace Toggl.Ross.ViewControllers
                     subscriptionModelChanged = null;
                 }
             }
+        }
+
+        private void ScheduleDescriptionChangeAutoCommit ()
+        {
+            if (autoCommitScheduled)
+                return;
+
+            var commitId = ++autoCommitId;
+            autoCommitScheduled = true;
+            DispatchQueue.MainQueue.DispatchAfter (TimeSpan.FromSeconds (1), delegate {
+                if (!autoCommitScheduled || commitId != autoCommitId)
+                    return;
+
+                autoCommitScheduled = false;
+                CommitDescriptionChanges ();
+            });
+        }
+
+        private void CancelDescriptionChangeAutoCommit ()
+        {
+            autoCommitScheduled = false;
+        }
+
+        private void CommitDescriptionChanges ()
+        {
+            if (descriptionChanging) {
+                model.Description = descriptionTextField.Text;
+            }
+            descriptionChanging = false;
+            CancelDescriptionChangeAutoCommit ();
+        }
+
+        private void DiscardDescriptionChanges ()
+        {
+            descriptionChanging = false;
+            CancelDescriptionChangeAutoCommit ();
         }
 
         private void OnModelChanged (ModelChangedMessage msg)
@@ -136,8 +175,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void BindDescriptionField (TextField v)
         {
-            // TODO: Add some edit protection?
-            v.Text = model.Description;
+            if (!descriptionChanging && v.Text != model.Description) {
+                v.Text = model.Description;
+            }
         }
 
         private void BindTagsButton (UIButton v)
@@ -202,6 +242,8 @@ namespace Toggl.Ross.ViewControllers
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder (),
             }.Apply (Style.EditTimeEntry.DescriptionField).Apply (BindDescriptionField));
+            descriptionTextField.EditingChanged += OnDescriptionFieldEditingChanged;
+            descriptionTextField.EditingDidEnd += (s, e) => CommitDescriptionChanges ();
 
             wrapper.Add (tagsButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -243,6 +285,16 @@ namespace Toggl.Ross.ViewControllers
                 model.StopTime = datePicker.Date.ToDateTime ();
                 break;
             }
+        }
+
+        private void OnDescriptionFieldEditingChanged (object sender, EventArgs e)
+        {
+            // Mark description as changed
+            descriptionChanging = descriptionTextField.Text != model.Description;
+
+            // Make sure that we're commiting 1 second after the user has stopped typing
+            CancelDescriptionChangeAutoCommit ();
+            ScheduleDescriptionChangeAutoCommit ();
         }
 
         private void OnBillableSwitchValueChanged (object sender, EventArgs e)

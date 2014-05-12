@@ -260,6 +260,7 @@ namespace Toggl.Ross.ViewControllers
                 TranslatesAutoresizingMaskIntoConstraints = false,
             }.Apply (Style.EditTimeEntry.DeleteButton));
             deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
+            deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
             wrapper.AddConstraints (VerticalLinearLayout (wrapper));
             scrollView.AddConstraints (
@@ -300,6 +301,23 @@ namespace Toggl.Ross.ViewControllers
         private void OnBillableSwitchValueChanged (object sender, EventArgs e)
         {
             model.IsBillable = billableSwitch.Switch.On;
+        }
+
+        private void OnDeleteButtonTouchUpInside (object sender, EventArgs e)
+        {
+            var alert = new UIAlertView (
+                            "EditEntryConfirmTitle".Tr (),
+                            "EditEntryConfirmMessage".Tr (),
+                            null,
+                            "EditEntryConfirmCancel".Tr (),
+                            "EditEntryConfirmDelete".Tr ());
+            alert.Clicked += (s, ev) => {
+                if (ev.ButtonIndex == 1) {
+                    NavigationController.PopToRootViewController (true);
+                    model.Delete ();
+                }
+            };
+            alert.Show ();
         }
 
         public override void ViewWillAppear (bool animated)

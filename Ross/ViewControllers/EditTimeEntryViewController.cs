@@ -39,6 +39,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void BindDatePicker (UIDatePicker v)
         {
+            if (startStopView == null)
+                return;
+
             switch (startStopView.Selected) {
             case TimeKind.Start:
                 v.SetDate (model.StartTime.ToNSDate (), !v.Hidden);

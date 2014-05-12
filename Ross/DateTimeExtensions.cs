@@ -24,12 +24,16 @@ namespace Toggl.Ross
 
         public static string ToLocalizedTimeString (this DateTime self)
         {
-            var date = NSDate.FromTimeIntervalSince1970 (self.ToUnix ().TotalSeconds);
             var fmt = new NSDateFormatter () {
                 DateStyle = NSDateFormatterStyle.None,
                 TimeStyle = NSDateFormatterStyle.Short,
             };
-            return fmt.ToString (date);
+            return fmt.ToString (self.ToNSDate ());
+        }
+
+        public static NSDate ToNSDate (this DateTime self)
+        {
+            return NSDate.FromTimeIntervalSince1970 (self.ToUnix ().TotalSeconds);
         }
     }
 }

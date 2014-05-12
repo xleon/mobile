@@ -24,9 +24,89 @@ namespace Toggl.Ross.ViewControllers
         private UIButton deleteButton;
         private bool hideDatePicker = true;
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
+        private readonly TimeEntryModel model;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
+            this.model = model;
+        }
+
+        private void BindStartStopView (StartStopView v)
+        {
+            v.StartTime = model.StartTime;
+            v.StopTime = model.StopTime;
+        }
+
+        private void BindDatePicker (UIDatePicker v)
+        {
+            switch (startStopView.Selected) {
+            case TimeKind.Start:
+                v.SetDate (model.StartTime.ToNSDate (), !v.Hidden);
+                break;
+            case TimeKind.Stop:
+                v.SetDate (model.StopTime.Value.ToNSDate (), !v.Hidden);
+                break;
+            }
+        }
+
+        private void BindProjectButton (ProjectClientTaskButton v)
+        {
+            var projectName = "EditEntryProjectHint".Tr ();
+            var projectColor = Color.White;
+            var clientName = String.Empty;
+            var taskName = String.Empty;
+
+            if (model.Project != null) {
+                projectName = model.Project.Name;
+                projectColor = UIColor.Clear.FromHex (model.Project.GetHexColor ());
+
+                if (model.Project.Client != null) {
+                    clientName = model.Project.Client.Name;
+                }
+
+                if (model.Task != null) {
+                    taskName = model.Task.Name;
+                }
+            }
+
+            v.ProjectColor = projectColor;
+            v.ProjectName = projectName;
+            v.ClientName = clientName;
+            v.TaskName = taskName;
+        }
+
+        private void BindDescriptionField (TextField v)
+        {
+            // TODO: Add some edit protection?
+            v.Text = model.Description;
+        }
+
+        private void BindTagsButton (UIButton v)
+        {
+            var text = String.Join (", ", model.Tags.Select ((t) => t.To.Name));
+            if (String.IsNullOrEmpty (text)) {
+                v.ApplyStyle (Style.EditTimeEntry.NoTags);
+                v.SetTitle ("EditEntryTagsHint".Tr (), UIControlState.Normal);
+            } else {
+                v.ApplyStyle (Style.EditTimeEntry.WithTags);
+                v.SetTitle (text, UIControlState.Normal);
+            }
+        }
+
+        private void BindBillableSwitch (LabelSwitch v)
+        {
+            v.Hidden = model.Workspace == null || !model.Workspace.IsPremium;
+            v.Switch.On = model.IsBillable;
+        }
+
+        private void Rebind ()
+        {
+            startStopView.ApplyStyle (BindStartStopView);
+            datePicker.ApplyStyle (BindDatePicker);
+            projectButton.ApplyStyle (BindProjectButton);
+            descriptionTextField.ApplyStyle (BindDescriptionField);
+            tagsButton.ApplyStyle (BindTagsButton);
+            billableSwitch.ApplyStyle (BindBillableSwitch);
         }
 
         public override void LoadView ()
@@ -39,18 +119,20 @@ namespace Toggl.Ross.ViewControllers
 
             wrapper.Add (startStopView = new StartStopView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            });
+                StartTime = model.StartTime,
+                StopTime = model.StopTime,
+            }.ApplyStyle (BindStartStopView));
             startStopView.SelectedChanged += OnStartStopViewSelectedChanged;
 
             wrapper.Add (datePicker = new UIDatePicker () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Hidden = hideDatePicker,
                 Alpha = 0,
-            }.ApplyStyle (Style.EditTimeEntry.DatePicker));
+            }.ApplyStyle (Style.EditTimeEntry.DatePicker).ApplyStyle (BindDatePicker));
 
             wrapper.Add (projectButton = new ProjectClientTaskButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            });
+            }.ApplyStyle (BindProjectButton));
 
             wrapper.Add (descriptionTextField = new TextField () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -59,17 +141,16 @@ namespace Toggl.Ross.ViewControllers
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder (),
-            }.ApplyStyle (Style.EditTimeEntry.DescriptionField));
+            }.ApplyStyle (Style.EditTimeEntry.DescriptionField).ApplyStyle (BindDescriptionField));
 
             wrapper.Add (tagsButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.ApplyStyle (Style.EditTimeEntry.TagsButton).ApplyStyle (Style.EditTimeEntry.NoTags));
-            tagsButton.SetTitle ("EditEntryTagsHint".Tr (), UIControlState.Normal);
+            }.ApplyStyle (Style.EditTimeEntry.TagsButton).ApplyStyle (Style.EditTimeEntry.NoTags).ApplyStyle (BindTagsButton));
 
             wrapper.Add (billableSwitch = new LabelSwitch () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = "EditEntryBillable".Tr (),
-            }.ApplyStyle (Style.EditTimeEntry.BillableContainer));
+            }.ApplyStyle (Style.EditTimeEntry.BillableContainer).ApplyStyle (BindBillableSwitch));
             billableSwitch.Label.ApplyStyle (Style.EditTimeEntry.BillableLabel);
 
             wrapper.Add (deleteButton = new UIButton () {
@@ -143,6 +224,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnStartStopViewSelectedChanged (object sender, EventArgs e)
         {
+            datePicker.ApplyStyle (BindDatePicker);
             var value = startStopView.Selected == TimeKind.None;
 
             if (hideDatePicker == value)
@@ -170,7 +252,6 @@ namespace Toggl.Ross.ViewControllers
                     }
                 );
             } else {
-                // TODO: Sync date picker value
                 datePicker.Hidden = false;
 
                 UIView.AnimateKeyframes (
@@ -293,6 +374,10 @@ namespace Toggl.Ross.ViewControllers
                         stopTimeLabel.Text = time.ToLocalizedTimeString ();
                     }
                     SetStopTimeHidden (stopTime == null, animate: Superview != null);
+
+                    if (Selected == TimeKind.Stop) {
+                        Selected = TimeKind.None;
+                    }
                 }
             }
 
@@ -629,7 +714,17 @@ namespace Toggl.Ross.ViewControllers
             }
 
             public UIColor ProjectColor {
-                set { SetBackgroundImage (value.ToImage (), UIControlState.Normal); }
+                set {
+                    if (value == Color.White) {
+                        projectLabel.ApplyStyle (Style.EditTimeEntry.ProjectHintLabel);
+                        SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
+                        SetBackgroundImage (Color.LightGray.ToImage (), UIControlState.Highlighted);
+                    } else {
+                        projectLabel.ApplyStyle (Style.EditTimeEntry.ProjectLabel);
+                        SetBackgroundImage (value.ToImage (), UIControlState.Normal);
+                        SetBackgroundImage (null, UIControlState.Highlighted);
+                    }
+                }
             }
 
             [Export ("requiresConstraintBasedLayout")]

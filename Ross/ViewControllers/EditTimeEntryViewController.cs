@@ -126,7 +126,7 @@ namespace Toggl.Ross.ViewControllers
 
             wrapper.Add (datePicker = new UIDatePicker () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Hidden = hideDatePicker,
+                Hidden = DatePickerHidden,
                 Alpha = 0,
             }.Apply (Style.EditTimeEntry.DatePicker).Apply (BindDatePicker));
 
@@ -225,50 +225,54 @@ namespace Toggl.Ross.ViewControllers
         private void OnStartStopViewSelectedChanged (object sender, EventArgs e)
         {
             datePicker.Apply (BindDatePicker);
-            var value = startStopView.Selected == TimeKind.None;
+            DatePickerHidden = startStopView.Selected == TimeKind.None;
+        }
 
-            if (hideDatePicker == value)
-                return;
+        private bool DatePickerHidden {
+            get { return hideDatePicker; }
+            set {
+                if (hideDatePicker == value)
+                    return;
+                hideDatePicker = value;
 
-            hideDatePicker = value;
-
-            if (hideDatePicker) {
-                UIView.AnimateKeyframes (
-                    0.4, 0, 0,
-                    delegate {
-                        UIView.AddKeyframeWithRelativeStartTime (0, 0.4, delegate {
-                            datePicker.Alpha = 0;
-                        });
-                        UIView.AddKeyframeWithRelativeStartTime (0.2, 0.8, delegate {
-                            wrapper.RemoveConstraints (wrapper.Constraints);
-                            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
-                            View.LayoutIfNeeded ();
-                        });
-                    },
-                    delegate {
-                        if (hideDatePicker) {
-                            datePicker.Hidden = true;
+                if (hideDatePicker) {
+                    UIView.AnimateKeyframes (
+                        0.4, 0, 0,
+                        delegate {
+                            UIView.AddKeyframeWithRelativeStartTime (0, 0.4, delegate {
+                                datePicker.Alpha = 0;
+                            });
+                            UIView.AddKeyframeWithRelativeStartTime (0.2, 0.8, delegate {
+                                wrapper.RemoveConstraints (wrapper.Constraints);
+                                wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+                                View.LayoutIfNeeded ();
+                            });
+                        },
+                        delegate {
+                            if (hideDatePicker) {
+                                datePicker.Hidden = true;
+                            }
                         }
-                    }
-                );
-            } else {
-                datePicker.Hidden = false;
+                    );
+                } else {
+                    datePicker.Hidden = false;
 
-                UIView.AnimateKeyframes (
-                    0.4, 0, 0,
-                    delegate {
-                        UIView.AddKeyframeWithRelativeStartTime (0, 0.6, delegate {
-                            wrapper.RemoveConstraints (wrapper.Constraints);
-                            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
-                            View.LayoutIfNeeded ();
-                        });
-                        UIView.AddKeyframeWithRelativeStartTime (0.4, 0.8, delegate {
-                            datePicker.Alpha = 1;
-                        });
-                    },
-                    delegate {
-                    }
-                );
+                    UIView.AnimateKeyframes (
+                        0.4, 0, 0,
+                        delegate {
+                            UIView.AddKeyframeWithRelativeStartTime (0, 0.6, delegate {
+                                wrapper.RemoveConstraints (wrapper.Constraints);
+                                wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+                                View.LayoutIfNeeded ();
+                            });
+                            UIView.AddKeyframeWithRelativeStartTime (0.4, 0.8, delegate {
+                                datePicker.Alpha = 1;
+                            });
+                        },
+                        delegate {
+                        }
+                    );
+                }
             }
         }
 
@@ -276,7 +280,7 @@ namespace Toggl.Ross.ViewControllers
         {
             UIView prev = null;
 
-            var subviews = container.Subviews.Where (v => !v.Hidden && !(v == datePicker && hideDatePicker)).ToList ();
+            var subviews = container.Subviews.Where (v => !v.Hidden && !(v == datePicker && DatePickerHidden)).ToList ();
             foreach (var v in subviews) {
                 var isLast = subviews [subviews.Count - 1] == v;
 

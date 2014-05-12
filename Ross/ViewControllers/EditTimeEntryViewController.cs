@@ -23,6 +23,7 @@ namespace Toggl.Ross.ViewControllers
         private LabelSwitch billableSwitch;
         private UIButton deleteButton;
         private bool hideDatePicker = true;
+        private readonly List<NSObject> notificationObjects = new List<NSObject> ();
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -88,6 +89,56 @@ namespace Toggl.Ross.ViewControllers
             );
 
             View = scrollView;
+        }
+
+        public override void ViewWillAppear (bool animated)
+        {
+            base.ViewWillAppear (animated);
+
+            ObserveNotification (UIKeyboard.WillHideNotification, (notif) => {
+                OnKeyboardHeightChanged (0);
+            });
+            ObserveNotification (UIKeyboard.WillShowNotification, (notif) => {
+                var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
+                if (val != null) {
+                    OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
+                }
+            });
+            ObserveNotification (UIKeyboard.WillChangeFrameNotification, (notif) => {
+                var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
+                if (val != null) {
+                    OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
+                }
+            });
+        }
+
+        private void ObserveNotification (string name, Action<NSNotification> callback)
+        {
+            var obj = NSNotificationCenter.DefaultCenter.AddObserver (name, callback);
+            if (obj != null) {
+                notificationObjects.Add (obj);
+            }
+        }
+
+        public override void ViewWillDisappear (bool animated)
+        {
+            base.ViewWillDisappear (animated);
+
+            NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
+            notificationObjects.Clear ();
+        }
+
+        private void OnKeyboardHeightChanged (int height)
+        {
+            var scrollView = (UIScrollView)View;
+
+            var inset = scrollView.ContentInset;
+            inset.Bottom = height;
+            scrollView.ContentInset = inset;
+
+            inset = scrollView.ScrollIndicatorInsets;
+            inset.Bottom = height;
+            scrollView.ScrollIndicatorInsets = inset;
         }
 
         private void OnStartStopViewSelectedChanged (object sender, EventArgs e)

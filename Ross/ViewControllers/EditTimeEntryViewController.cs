@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using MonoTouch.CoreAnimation;
+using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using System.Linq;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -25,10 +29,62 @@ namespace Toggl.Ross.ViewControllers
         private bool hideDatePicker = true;
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
         private readonly TimeEntryModel model;
+        private Subscription<ModelChangedMessage> subscriptionModelChanged;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
             this.model = model;
+        }
+
+        protected override void Dispose (bool disposing)
+        {
+            base.Dispose (disposing);
+
+            if (disposing) {
+                if (subscriptionModelChanged != null) {
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    bus.Unsubscribe (subscriptionModelChanged);
+                    subscriptionModelChanged = null;
+                }
+            }
+        }
+
+        private void OnModelChanged (ModelChangedMessage msg)
+        {
+            if (msg.Model == model) {
+                // Listen for changes regarding current running entry
+                if (msg.PropertyName == TimeEntryModel.PropertyState
+                    || msg.PropertyName == TimeEntryModel.PropertyStartTime
+                    || msg.PropertyName == TimeEntryModel.PropertyStopTime
+                    || msg.PropertyName == TimeEntryModel.PropertyDescription
+                    || msg.PropertyName == TimeEntryModel.PropertyIsBillable
+                    || msg.PropertyName == TimeEntryModel.PropertyProjectId
+                    || msg.PropertyName == TimeEntryModel.PropertyTaskId) {
+                    Rebind ();
+                }
+            } else if (model != null && model.ProjectId == msg.Model.Id && model.Project == msg.Model) {
+                if (msg.PropertyName == ProjectModel.PropertyName
+                    || msg.PropertyName == ProjectModel.PropertyColor
+                    || msg.PropertyName == ProjectModel.PropertyClientId) {
+                    Rebind ();
+                }
+            } else if (model != null && model.TaskId == msg.Model.Id && model.Task == msg.Model) {
+                if (msg.PropertyName == TaskModel.PropertyName) {
+                    Rebind ();
+                }
+            } else if (model != null && model.ProjectId != null && model.Project != null
+                       && model.Project.ClientId == msg.Model.Id && model.Project.Client == msg.Model) {
+                if (msg.PropertyName == ClientModel.PropertyName) {
+                    Rebind ();
+                }
+            } else if (model != null && msg.Model is TimeEntryTagModel) {
+                var inter = (TimeEntryTagModel)msg.Model;
+                if (inter.FromId == model.Id) {
+                    // Schedule rebind, as if we do it right away the RelatedModelsCollection will not
+                    // have been updated yet
+                    DispatchQueue.MainQueue.DispatchAfter (TimeSpan.FromMilliseconds (1), Rebind);
+                }
+            }
         }
 
         private void BindStartStopView (StartStopView v)
@@ -213,6 +269,11 @@ namespace Toggl.Ross.ViewControllers
                     OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
                 }
             });
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionModelChanged == null) {
+                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            }
         }
 
         private void ObserveNotification (string name, Action<NSNotification> callback)
@@ -229,6 +290,12 @@ namespace Toggl.Ross.ViewControllers
 
             NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
             notificationObjects.Clear ();
+
+            if (subscriptionModelChanged != null) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Unsubscribe (subscriptionModelChanged);
+                subscriptionModelChanged = null;
+            }
         }
 
         private void OnKeyboardHeightChanged (int height)

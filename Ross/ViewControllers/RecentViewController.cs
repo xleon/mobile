@@ -130,12 +130,12 @@ namespace Toggl.Ross.ViewControllers
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
                 textContentView = new UIView ();
-                projectLabel = new UILabel ().ApplyStyle (Style.Recent.CellProjectLabel);
-                clientLabel = new UILabel ().ApplyStyle (Style.Recent.CellClientLabel);
-                taskLabel = new UILabel ().ApplyStyle (Style.Recent.CellTaskLabel);
-                descriptionLabel = new UILabel ().ApplyStyle (Style.Recent.CellDescriptionLabel);
-                taskSeparatorImageView = new UIImageView ().ApplyStyle (Style.Recent.CellTaskDescriptionSeparator);
-                runningImageView = new UIImageView ().ApplyStyle (Style.Recent.CellRunningIndicator);
+                projectLabel = new UILabel ().Apply (Style.Recent.CellProjectLabel);
+                clientLabel = new UILabel ().Apply (Style.Recent.CellClientLabel);
+                taskLabel = new UILabel ().Apply (Style.Recent.CellTaskLabel);
+                descriptionLabel = new UILabel ().Apply (Style.Recent.CellDescriptionLabel);
+                taskSeparatorImageView = new UIImageView ().Apply (Style.Recent.CellTaskDescriptionSeparator);
+                runningImageView = new UIImageView ().Apply (Style.Recent.CellRunningIndicator);
 
                 textContentView.AddSubviews (
                     projectLabel, clientLabel,
@@ -390,10 +390,10 @@ namespace Toggl.Ross.ViewControllers
 
             public SectionHeaderView (IntPtr ptr) : base (ptr)
             {
-                dateLabel = new UILabel ().ApplyStyle (Style.Recent.HeaderLabel);
+                dateLabel = new UILabel ().Apply (Style.Recent.HeaderLabel);
                 ContentView.AddSubview (dateLabel);
 
-                BackgroundView = new UIView ().ApplyStyle (Style.Recent.HeaderBackgroundView);
+                BackgroundView = new UIView ().Apply (Style.Recent.HeaderBackgroundView);
             }
 
             public override void LayoutSubviews ()

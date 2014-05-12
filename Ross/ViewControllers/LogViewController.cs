@@ -136,14 +136,14 @@ namespace Toggl.Ross.ViewControllers
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
                 textContentView = new UIView ();
-                projectLabel = new UILabel ().ApplyStyle (Style.Log.CellProjectLabel);
-                clientLabel = new UILabel ().ApplyStyle (Style.Log.CellClientLabel);
-                taskLabel = new UILabel ().ApplyStyle (Style.Log.CellTaskLabel);
-                descriptionLabel = new UILabel ().ApplyStyle (Style.Log.CellDescriptionLabel);
-                taskSeparatorImageView = new UIImageView ().ApplyStyle (Style.Log.CellTaskDescriptionSeparator);
+                projectLabel = new UILabel ().Apply (Style.Log.CellProjectLabel);
+                clientLabel = new UILabel ().Apply (Style.Log.CellClientLabel);
+                taskLabel = new UILabel ().Apply (Style.Log.CellTaskLabel);
+                descriptionLabel = new UILabel ().Apply (Style.Log.CellDescriptionLabel);
+                taskSeparatorImageView = new UIImageView ().Apply (Style.Log.CellTaskDescriptionSeparator);
                 billableTagsImageView = new UIImageView ();
-                durationLabel = new UILabel ().ApplyStyle (Style.Log.CellDurationLabel);
-                runningImageView = new UIImageView ().ApplyStyle (Style.Log.CellRunningIndicator);
+                durationLabel = new UILabel ().Apply (Style.Log.CellDurationLabel);
+                runningImageView = new UIImageView ().Apply (Style.Log.CellRunningIndicator);
 
                 textContentView.AddSubviews (
                     projectLabel, clientLabel,
@@ -366,13 +366,13 @@ namespace Toggl.Ross.ViewControllers
                 var hasTags = model.Tags.HasNonDefault;
                 var isBillable = model.IsBillable;
                 if (hasTags && isBillable) {
-                    billableTagsImageView.ApplyStyle (Style.Log.BillableAndTaggedEntry);
+                    billableTagsImageView.Apply (Style.Log.BillableAndTaggedEntry);
                 } else if (hasTags) {
-                    billableTagsImageView.ApplyStyle (Style.Log.TaggedEntry);
+                    billableTagsImageView.Apply (Style.Log.TaggedEntry);
                 } else if (isBillable) {
-                    billableTagsImageView.ApplyStyle (Style.Log.BillableEntry);
+                    billableTagsImageView.Apply (Style.Log.BillableEntry);
                 } else {
-                    billableTagsImageView.ApplyStyle (Style.Log.PlainEntry);
+                    billableTagsImageView.Apply (Style.Log.PlainEntry);
                 }
 
                 var duration = model.GetDuration ();
@@ -434,13 +434,13 @@ namespace Toggl.Ross.ViewControllers
 
             public SectionHeaderView (IntPtr ptr) : base (ptr)
             {
-                dateLabel = new UILabel ().ApplyStyle (Style.Log.HeaderDateLabel);
+                dateLabel = new UILabel ().Apply (Style.Log.HeaderDateLabel);
                 ContentView.AddSubview (dateLabel);
 
-                totalDurationLabel = new UILabel ().ApplyStyle (Style.Log.HeaderDurationLabel);
+                totalDurationLabel = new UILabel ().Apply (Style.Log.HeaderDurationLabel);
                 ContentView.AddSubview (totalDurationLabel);
 
-                BackgroundView = new UIView ().ApplyStyle (Style.Log.HeaderBackgroundView);
+                BackgroundView = new UIView ().Apply (Style.Log.HeaderBackgroundView);
             }
 
             public override void LayoutSubviews ()

@@ -14,7 +14,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLoad ();
 
-            NavigationBar.ApplyStyle (Style.NavigationBar);
+            NavigationBar.Apply (Style.NavigationBar);
         }
 
         public override void ViewWillAppear (bool animated)

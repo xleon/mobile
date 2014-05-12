@@ -17,14 +17,14 @@ namespace Toggl.Ross.ViewControllers
         {
             View = new UIImageView () {
                 UserInteractionEnabled = true,
-            }.ApplyStyle (Style.Welcome.Background);
-            View.Add (logoImageView = new UIImageView ().ApplyStyle (Style.Welcome.Logo));
+            }.Apply (Style.Welcome.Background);
+            View.Add (logoImageView = new UIImageView ().Apply (Style.Welcome.Logo));
             View.Add (sloganLabel = new UILabel () {
                 Text = "WelcomeSlogan".Tr (),
-            }.ApplyStyle (Style.Welcome.Slogan));
-            View.Add (createButton = new UIButton ().ApplyStyle (Style.Welcome.CreateAccount));
-            View.Add (passwordButton = new UIButton ().ApplyStyle (Style.Welcome.PasswordLogin));
-            View.Add (googleButton = new UIButton ().ApplyStyle (Style.Welcome.GoogleLogin));
+            }.Apply (Style.Welcome.Slogan));
+            View.Add (createButton = new UIButton ().Apply (Style.Welcome.CreateAccount));
+            View.Add (passwordButton = new UIButton ().Apply (Style.Welcome.PasswordLogin));
+            View.Add (googleButton = new UIButton ().Apply (Style.Welcome.GoogleLogin));
 
             createButton.SetTitle ("WelcomeCreate".Tr (), UIControlState.Normal);
             passwordButton.SetTitle ("WelcomePassword".Tr (), UIControlState.Normal);

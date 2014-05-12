@@ -28,42 +28,42 @@ namespace Toggl.Ross.Theme
 
             public static void CellContentView (UIView v)
             {
-                v.ApplyStyle (TimeEntryCell.ContentView);
+                v.Apply (TimeEntryCell.ContentView);
             }
 
             public static void CellProjectLabel (UILabel v)
             {
-                v.ApplyStyle (TimeEntryCell.ProjectLabel);
+                v.Apply (TimeEntryCell.ProjectLabel);
             }
 
             public static void CellClientLabel (UILabel v)
             {
-                v.ApplyStyle (TimeEntryCell.ClientLabel);
+                v.Apply (TimeEntryCell.ClientLabel);
             }
 
             public static void CellTaskLabel (UILabel v)
             {
-                v.ApplyStyle (TimeEntryCell.TaskLabel);
+                v.Apply (TimeEntryCell.TaskLabel);
             }
 
             public static void CellDescriptionLabel (UILabel v)
             {
-                v.ApplyStyle (TimeEntryCell.DescriptionLabel);
+                v.Apply (TimeEntryCell.DescriptionLabel);
             }
 
             public static void CellDurationLabel (UILabel v)
             {
-                v.ApplyStyle (TimeEntryCell.DurationLabel);
+                v.Apply (TimeEntryCell.DurationLabel);
             }
 
             public static void CellTaskDescriptionSeparator (UIImageView v)
             {
-                v.ApplyStyle (TimeEntryCell.TaskDescriptionSeparator);
+                v.Apply (TimeEntryCell.TaskDescriptionSeparator);
             }
 
             public static void CellRunningIndicator (UIImageView v)
             {
-                v.ApplyStyle (TimeEntryCell.RunningIndicator);
+                v.Apply (TimeEntryCell.RunningIndicator);
             }
 
             public static void BillableAndTaggedEntry (UIImageView v)

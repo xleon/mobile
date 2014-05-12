@@ -25,11 +25,11 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             View = new UIView ()
-                .ApplyStyle (Style.Screen);
+                .Apply (Style.Screen);
 
-            View.Add (inputsContainer = new UIView ().ApplyStyle (Style.Login.InputsContainer));
+            View.Add (inputsContainer = new UIView ().Apply (Style.Login.InputsContainer));
 
-            inputsContainer.Add (topBorder = new UIView ().ApplyStyle (Style.Login.InputsBorder));
+            inputsContainer.Add (topBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
             inputsContainer.Add (emailTextField = new UITextField () {
                 Placeholder = "LoginEmailHint".Tr (),
@@ -38,9 +38,9 @@ namespace Toggl.Ross.ViewControllers
                 ReturnKeyType = UIReturnKeyType.Next,
                 ClearButtonMode = UITextFieldViewMode.Always,
                 ShouldReturn = HandleShouldReturn,
-            }.ApplyStyle (Style.Login.EmailField));
+            }.Apply (Style.Login.EmailField));
 
-            inputsContainer.Add (middleBorder = new UIView ().ApplyStyle (Style.Login.InputsBorder));
+            inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
             inputsContainer.Add (passwordTextField = new UITextField () {
                 Placeholder = "LoginPasswordHint".Tr (),
@@ -49,12 +49,12 @@ namespace Toggl.Ross.ViewControllers
                 SecureTextEntry = true,
                 ReturnKeyType = UIReturnKeyType.Go,
                 ShouldReturn = HandleShouldReturn,
-            }.ApplyStyle (Style.Login.PasswordField));
+            }.Apply (Style.Login.PasswordField));
 
-            inputsContainer.Add (bottomBorder = new UIView ().ApplyStyle (Style.Login.InputsBorder));
+            inputsContainer.Add (bottomBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
             View.Add (passwordActionButton = new UIButton ()
-                .ApplyStyle (Style.Login.LoginButton));
+                .Apply (Style.Login.LoginButton));
             passwordActionButton.SetTitle ("LoginLoginButtonText".Tr (), UIControlState.Normal);
             passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 

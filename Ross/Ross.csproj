@@ -128,8 +128,6 @@
     <Compile Include="ViewControllers\MainViewController.cs" />
     <Compile Include="ViewControllers\LoginViewController.cs" />
     <Compile Include="StringExtensions.cs" />
-    <Compile Include="Theme\UIExtensions.cs" />
-    <Compile Include="Theme\ViewStyler.cs" />
     <Compile Include="Theme\Style.Common.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -183,6 +181,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\TextField.cs" />
+    <Compile Include="ObjectExtensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

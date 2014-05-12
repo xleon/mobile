@@ -14,7 +14,7 @@ namespace Toggl.Ross.Views
             backgroundView = new UIView ();
             AddSubview (backgroundView);
 
-            this.ApplyStyle (Style.TableViewHeader);
+            this.Apply (Style.TableViewHeader);
         }
 
         public override void LayoutSubviews ()

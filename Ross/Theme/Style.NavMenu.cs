@@ -27,14 +27,14 @@ namespace Toggl.Ross.Theme
 
             public static void HighlightedItem (UIButton v)
             {
-                v.ApplyStyle (MenuItem);
+                v.Apply (MenuItem);
                 v.SetTitleColor (Color.White, UIControlState.Normal);
                 v.SetTitleColor (Color.White, UIControlState.Highlighted);
             }
 
             public static void NormalItem (UIButton v)
             {
-                v.ApplyStyle (MenuItem);
+                v.Apply (MenuItem);
                 v.SetTitleColor (Color.Gray, UIControlState.Normal);
                 v.SetTitleColor (Color.White, UIControlState.Highlighted);
             }

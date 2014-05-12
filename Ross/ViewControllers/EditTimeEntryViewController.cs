@@ -85,10 +85,10 @@ namespace Toggl.Ross.ViewControllers
         {
             var text = String.Join (", ", model.Tags.Select ((t) => t.To.Name));
             if (String.IsNullOrEmpty (text)) {
-                v.ApplyStyle (Style.EditTimeEntry.NoTags);
+                v.Apply (Style.EditTimeEntry.NoTags);
                 v.SetTitle ("EditEntryTagsHint".Tr (), UIControlState.Normal);
             } else {
-                v.ApplyStyle (Style.EditTimeEntry.WithTags);
+                v.Apply (Style.EditTimeEntry.WithTags);
                 v.SetTitle (text, UIControlState.Normal);
             }
         }
@@ -101,17 +101,17 @@ namespace Toggl.Ross.ViewControllers
 
         private void Rebind ()
         {
-            startStopView.ApplyStyle (BindStartStopView);
-            datePicker.ApplyStyle (BindDatePicker);
-            projectButton.ApplyStyle (BindProjectButton);
-            descriptionTextField.ApplyStyle (BindDescriptionField);
-            tagsButton.ApplyStyle (BindTagsButton);
-            billableSwitch.ApplyStyle (BindBillableSwitch);
+            startStopView.Apply (BindStartStopView);
+            datePicker.Apply (BindDatePicker);
+            projectButton.Apply (BindProjectButton);
+            descriptionTextField.Apply (BindDescriptionField);
+            tagsButton.Apply (BindTagsButton);
+            billableSwitch.Apply (BindBillableSwitch);
         }
 
         public override void LoadView ()
         {
-            var scrollView = new UIScrollView ().ApplyStyle (Style.Screen);
+            var scrollView = new UIScrollView ().Apply (Style.Screen);
 
             scrollView.Add (wrapper = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -121,18 +121,18 @@ namespace Toggl.Ross.ViewControllers
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 StartTime = model.StartTime,
                 StopTime = model.StopTime,
-            }.ApplyStyle (BindStartStopView));
+            }.Apply (BindStartStopView));
             startStopView.SelectedChanged += OnStartStopViewSelectedChanged;
 
             wrapper.Add (datePicker = new UIDatePicker () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Hidden = hideDatePicker,
                 Alpha = 0,
-            }.ApplyStyle (Style.EditTimeEntry.DatePicker).ApplyStyle (BindDatePicker));
+            }.Apply (Style.EditTimeEntry.DatePicker).Apply (BindDatePicker));
 
             wrapper.Add (projectButton = new ProjectClientTaskButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.ApplyStyle (BindProjectButton));
+            }.Apply (BindProjectButton));
 
             wrapper.Add (descriptionTextField = new TextField () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -141,21 +141,21 @@ namespace Toggl.Ross.ViewControllers
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder (),
-            }.ApplyStyle (Style.EditTimeEntry.DescriptionField).ApplyStyle (BindDescriptionField));
+            }.Apply (Style.EditTimeEntry.DescriptionField).Apply (BindDescriptionField));
 
             wrapper.Add (tagsButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.ApplyStyle (Style.EditTimeEntry.TagsButton).ApplyStyle (Style.EditTimeEntry.NoTags).ApplyStyle (BindTagsButton));
+            }.Apply (Style.EditTimeEntry.TagsButton).Apply (Style.EditTimeEntry.NoTags).Apply (BindTagsButton));
 
             wrapper.Add (billableSwitch = new LabelSwitch () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = "EditEntryBillable".Tr (),
-            }.ApplyStyle (Style.EditTimeEntry.BillableContainer).ApplyStyle (BindBillableSwitch));
-            billableSwitch.Label.ApplyStyle (Style.EditTimeEntry.BillableLabel);
+            }.Apply (Style.EditTimeEntry.BillableContainer).Apply (BindBillableSwitch));
+            billableSwitch.Label.Apply (Style.EditTimeEntry.BillableLabel);
 
             wrapper.Add (deleteButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.ApplyStyle (Style.EditTimeEntry.DeleteButton));
+            }.Apply (Style.EditTimeEntry.DeleteButton));
             deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
 
             wrapper.AddConstraints (VerticalLinearLayout (wrapper));
@@ -224,7 +224,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnStartStopViewSelectedChanged (object sender, EventArgs e)
         {
-            datePicker.ApplyStyle (BindDatePicker);
+            datePicker.Apply (BindDatePicker);
             var value = startStopView.Selected == TimeKind.None;
 
             if (hideDatePicker == value)
@@ -390,19 +390,19 @@ namespace Toggl.Ross.ViewControllers
                     selectedTime = value;
 
                     if (selectedTime == TimeKind.Start) {
-                        startDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabelActive);
-                        startTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabelActive);
+                        startDateLabel.Apply (Style.EditTimeEntry.DateLabelActive);
+                        startTimeLabel.Apply (Style.EditTimeEntry.TimeLabelActive);
                     } else {
-                        startDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabel);
-                        startTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabel);
+                        startDateLabel.Apply (Style.EditTimeEntry.DateLabel);
+                        startTimeLabel.Apply (Style.EditTimeEntry.TimeLabel);
                     }
 
                     if (selectedTime == TimeKind.Stop) {
-                        stopDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabelActive);
-                        stopTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabelActive);
+                        stopDateLabel.Apply (Style.EditTimeEntry.DateLabelActive);
+                        stopTimeLabel.Apply (Style.EditTimeEntry.TimeLabelActive);
                     } else {
-                        stopDateLabel.ApplyStyle (Style.EditTimeEntry.DateLabel);
-                        stopTimeLabel.ApplyStyle (Style.EditTimeEntry.TimeLabel);
+                        stopDateLabel.Apply (Style.EditTimeEntry.DateLabel);
+                        stopTimeLabel.Apply (Style.EditTimeEntry.TimeLabel);
                     }
 
                     var handler = SelectedChanged;
@@ -473,8 +473,8 @@ namespace Toggl.Ross.ViewControllers
 
             private static void ConstructDateTimeView (UIView view, ref UILabel dateLabel, ref UILabel timeLabel)
             {
-                view.Add (dateLabel = new UILabel ().ApplyStyle (Style.EditTimeEntry.DateLabel));
-                view.Add (timeLabel = new UILabel ().ApplyStyle (Style.EditTimeEntry.TimeLabel));
+                view.Add (dateLabel = new UILabel ().Apply (Style.EditTimeEntry.DateLabel));
+                view.Add (timeLabel = new UILabel ().Apply (Style.EditTimeEntry.TimeLabel));
                 view.AddConstraints (
                     dateLabel.AtTopOf (view, 10f),
                     dateLabel.AtLeftOf (view, 10f),
@@ -610,13 +610,13 @@ namespace Toggl.Ross.ViewControllers
 
                 container.Add (projectLabel = new UILabel () {
                     TranslatesAutoresizingMaskIntoConstraints = false,
-                }.ApplyStyle (Style.EditTimeEntry.ProjectLabel));
+                }.Apply (Style.EditTimeEntry.ProjectLabel));
                 container.Add (clientLabel = new UILabel () {
                     TranslatesAutoresizingMaskIntoConstraints = false,
-                }.ApplyStyle (Style.EditTimeEntry.ClientLabel));
+                }.Apply (Style.EditTimeEntry.ClientLabel));
                 container.Add (taskLabel = new UILabel () {
                     TranslatesAutoresizingMaskIntoConstraints = false,
-                }.ApplyStyle (Style.EditTimeEntry.TaskLabel));
+                }.Apply (Style.EditTimeEntry.TaskLabel));
             }
 
             public override void UpdateConstraints ()
@@ -716,11 +716,11 @@ namespace Toggl.Ross.ViewControllers
             public UIColor ProjectColor {
                 set {
                     if (value == Color.White) {
-                        projectLabel.ApplyStyle (Style.EditTimeEntry.ProjectHintLabel);
+                        projectLabel.Apply (Style.EditTimeEntry.ProjectHintLabel);
                         SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
                         SetBackgroundImage (Color.LightGray.ToImage (), UIControlState.Highlighted);
                     } else {
-                        projectLabel.ApplyStyle (Style.EditTimeEntry.ProjectLabel);
+                        projectLabel.Apply (Style.EditTimeEntry.ProjectLabel);
                         SetBackgroundImage (value.ToImage (), UIControlState.Normal);
                         SetBackgroundImage (null, UIControlState.Highlighted);
                     }

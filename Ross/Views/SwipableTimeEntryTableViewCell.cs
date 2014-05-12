@@ -21,17 +21,17 @@ namespace Toggl.Ross.Views
         {
             continueActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryContinue".Tr (),
-            }.ApplyStyle (Style.TimeEntryCell.SwipeActionLabel);
+            }.Apply (Style.TimeEntryCell.SwipeActionLabel);
             deleteActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryDelete".Tr (),
-            }.ApplyStyle (Style.TimeEntryCell.SwipeActionLabel);
+            }.Apply (Style.TimeEntryCell.SwipeActionLabel);
             confirmActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryConfirm".Tr (),
-            }.ApplyStyle (Style.TimeEntryCell.SwipeActionLabel);
-            actualContentView = new UIView ().ApplyStyle (Style.Log.CellContentView);
+            }.Apply (Style.TimeEntryCell.SwipeActionLabel);
+            actualContentView = new UIView ().Apply (Style.Log.CellContentView);
 
             BackgroundView = new UIView ();
-            SelectedBackgroundView = new UIView ().ApplyStyle (Style.CellSelectedBackground);
+            SelectedBackgroundView = new UIView ().Apply (Style.CellSelectedBackground);
             ContentView.AddSubviews (
                 continueActionLabel,
                 deleteActionLabel,
@@ -187,11 +187,11 @@ namespace Toggl.Ross.Views
             actualContentView.Frame = frame;
 
             if (panDeltaX < 0) {
-                BackgroundView.ApplyStyle (Style.TimeEntryCell.ContinueState);
+                BackgroundView.Apply (Style.TimeEntryCell.ContinueState);
             } else if (panDeltaX > 0) {
-                BackgroundView.ApplyStyle (Style.TimeEntryCell.DeleteState);
+                BackgroundView.Apply (Style.TimeEntryCell.DeleteState);
             } else {
-                BackgroundView.ApplyStyle (Style.TimeEntryCell.NoSwipeState);
+                BackgroundView.Apply (Style.TimeEntryCell.NoSwipeState);
             }
 
             switch (panLock) {

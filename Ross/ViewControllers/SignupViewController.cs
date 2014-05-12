@@ -29,11 +29,11 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             View = new UIView ()
-                .ApplyStyle (Style.Screen);
+                .Apply (Style.Screen);
 
-            View.Add (inputsContainer = new UIView ().ApplyStyle (Style.Signup.InputsContainer));
+            View.Add (inputsContainer = new UIView ().Apply (Style.Signup.InputsContainer));
 
-            inputsContainer.Add (topBorder = new UIView ().ApplyStyle (Style.Signup.InputsBorder));
+            inputsContainer.Add (topBorder = new UIView ().Apply (Style.Signup.InputsBorder));
 
             inputsContainer.Add (emailTextField = new UITextField () {
                 Placeholder = "SignupEmailHint".Tr (),
@@ -42,10 +42,10 @@ namespace Toggl.Ross.ViewControllers
                 ReturnKeyType = UIReturnKeyType.Next,
                 ClearButtonMode = UITextFieldViewMode.Always,
                 ShouldReturn = HandleShouldReturn,
-            }.ApplyStyle (Style.Signup.EmailField));
+            }.Apply (Style.Signup.EmailField));
             emailTextField.EditingChanged += OnTextFieldEditingChanged;
 
-            inputsContainer.Add (middleBorder = new UIView ().ApplyStyle (Style.Signup.InputsBorder));
+            inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Signup.InputsBorder));
 
             inputsContainer.Add (passwordTextField = new UITextField () {
                 Placeholder = "SignupPasswordHint".Tr (),
@@ -54,24 +54,24 @@ namespace Toggl.Ross.ViewControllers
                 SecureTextEntry = true,
                 ReturnKeyType = UIReturnKeyType.Go,
                 ShouldReturn = HandleShouldReturn,
-            }.ApplyStyle (Style.Signup.PasswordField));
+            }.Apply (Style.Signup.PasswordField));
             passwordTextField.EditingChanged += OnTextFieldEditingChanged;
 
-            inputsContainer.Add (bottomBorder = new UIView ().ApplyStyle (Style.Signup.InputsBorder));
+            inputsContainer.Add (bottomBorder = new UIView ().Apply (Style.Signup.InputsBorder));
 
             View.Add (passwordActionButton = new UIButton ()
-                .ApplyStyle (Style.Signup.SignupButton));
+                .Apply (Style.Signup.SignupButton));
             passwordActionButton.SetTitle ("SignupSignupButtonText".Tr (), UIControlState.Normal);
             passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 
             View.Add (googleActionButton = new UIButton ()
-                .ApplyStyle (Style.Signup.GoogleButton));
+                .Apply (Style.Signup.GoogleButton));
             googleActionButton.SetTitle ("SignupGoogleButtonText".Tr (), UIControlState.Normal);
             googleActionButton.TouchUpInside += OnGoogleActionButtonTouchUpInside;
 
             View.Add (legalLabel = new TTTAttributedLabel () {
                 Delegate = new LegalLabelDelegate (),
-            }.ApplyStyle (Style.Signup.LegalLabel));
+            }.Apply (Style.Signup.LegalLabel));
             SetLegalText (legalLabel);
 
             inputsContainer.AddConstraints (

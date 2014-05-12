@@ -27,12 +27,12 @@ namespace Toggl.Ross.ViewControllers
             if (durationLabel == null) {
                 durationLabel = new UILabel () {
                     Text = DefaultDurationText, // Dummy content to use for sizing of the label
-                }.ApplyStyle (Style.NavTimer.DurationLabel);
+                }.Apply (Style.NavTimer.DurationLabel);
                 durationLabel.SizeToFit ();
             }
 
             if (navigationButton == null) {
-                actionButton = new UIButton ().ApplyStyle (Style.NavTimer.StartButton);
+                actionButton = new UIButton ().Apply (Style.NavTimer.StartButton);
                 actionButton.SizeToFit ();
                 actionButton.TouchUpInside += OnActionButtonTouchUpInside;
                 navigationButton = new UIBarButtonItem (actionButton);
@@ -61,12 +61,12 @@ namespace Toggl.Ross.ViewControllers
 
             if (currentTimeEntry == null) {
                 durationLabel.Text = DefaultDurationText;
-                actionButton.ApplyStyle (Style.NavTimer.StartButton);
+                actionButton.Apply (Style.NavTimer.StartButton);
             } else {
                 var duration = currentTimeEntry.GetDuration ();
 
                 durationLabel.Text = duration.ToString (@"hh\:mm\:ss");
-                actionButton.ApplyStyle (Style.NavTimer.StopButton);
+                actionButton.Apply (Style.NavTimer.StopButton);
 
                 var counter = rebindCounter;
                 DispatchQueue.MainQueue.DispatchAfter (

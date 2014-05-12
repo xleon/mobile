@@ -42,7 +42,7 @@ namespace Toggl.Ross.ViewControllers
                 ClipsToBounds = true,
             };
 
-            menuView = new UIView ().ApplyStyle (Style.NavMenu.Background);
+            menuView = new UIView ().Apply (Style.NavMenu.Background);
 
             menuButtons = new[] {
                 (recentButton = new UIButton ()),
@@ -60,16 +60,16 @@ namespace Toggl.Ross.ViewControllers
                                || (menuButton == logButton && controller is LogViewController);
 
                 if (isActive) {
-                    menuButton.ApplyStyle (Style.NavMenu.HighlightedItem);
+                    menuButton.Apply (Style.NavMenu.HighlightedItem);
                 } else {
-                    menuButton.ApplyStyle (Style.NavMenu.NormalItem);
+                    menuButton.Apply (Style.NavMenu.NormalItem);
                 }
                 menuButton.TouchUpInside += OnMenuButtonTouchUpInside;
             }
 
             separators = new UIView[menuButtons.Length - 1];
             for (var i = 0; i < separators.Length; i++) {
-                separators [i] = new UIView ().ApplyStyle (Style.NavMenu.Separator);
+                separators [i] = new UIView ().Apply (Style.NavMenu.Separator);
             }
 
             menuView.AddSubviews (separators);

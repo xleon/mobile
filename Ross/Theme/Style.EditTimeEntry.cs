@@ -17,7 +17,7 @@ namespace Toggl.Ross.Theme
 
             public static void DateLabelActive (UILabel v)
             {
-                v.ApplyStyle (DateLabel);
+                v.Apply (DateLabel);
                 v.TextColor = Color.Red;
             }
 
@@ -30,7 +30,7 @@ namespace Toggl.Ross.Theme
 
             public static void TimeLabelActive (UILabel v)
             {
-                v.ApplyStyle (TimeLabel);
+                v.Apply (TimeLabel);
                 v.TextColor = Color.Red;
             }
 

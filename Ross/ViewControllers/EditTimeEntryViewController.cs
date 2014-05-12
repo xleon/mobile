@@ -14,6 +14,7 @@ namespace Toggl.Ross.ViewControllers
 {
     public class EditTimeEntryViewController : UIViewController
     {
+        private UIView wrapper;
         private StartStopView startStopView;
         private UIDatePicker datePicker;
         private ProjectClientTaskButton projectButton;
@@ -21,6 +22,7 @@ namespace Toggl.Ross.ViewControllers
         private UIButton tagsButton;
         private LabelSwitch billableSwitch;
         private UIButton deleteButton;
+        private bool hideDatePicker = true;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -29,19 +31,20 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             var scrollView = new UIScrollView ().ApplyStyle (Style.Screen);
-            var wrapper = new UIView () {
-                TranslatesAutoresizingMaskIntoConstraints = false,
-            };
 
-            scrollView.Add (wrapper);
+            scrollView.Add (wrapper = new UIView () {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+            });
 
             wrapper.Add (startStopView = new StartStopView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
+            startStopView.SelectedChanged += OnStartStopViewSelectedChanged;
 
             wrapper.Add (datePicker = new UIDatePicker () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Hidden = true,
+                Hidden = hideDatePicker,
+                Alpha = 0,
             }.ApplyStyle (Style.EditTimeEntry.DatePicker));
 
             wrapper.Add (projectButton = new ProjectClientTaskButton () {
@@ -87,11 +90,61 @@ namespace Toggl.Ross.ViewControllers
             View = scrollView;
         }
 
+        private void OnStartStopViewSelectedChanged (object sender, EventArgs e)
+        {
+            var value = startStopView.Selected == TimeKind.None;
+
+            if (hideDatePicker == value)
+                return;
+
+            hideDatePicker = value;
+
+            if (hideDatePicker) {
+                UIView.AnimateKeyframes (
+                    0.4, 0, 0,
+                    delegate {
+                        UIView.AddKeyframeWithRelativeStartTime (0, 0.4, delegate {
+                            datePicker.Alpha = 0;
+                        });
+                        UIView.AddKeyframeWithRelativeStartTime (0.2, 0.8, delegate {
+                            wrapper.RemoveConstraints (wrapper.Constraints);
+                            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+                            View.LayoutIfNeeded ();
+                        });
+                    },
+                    delegate {
+                        if (hideDatePicker) {
+                            datePicker.Hidden = true;
+                        }
+                    }
+                );
+            } else {
+                // TODO: Sync date picker value
+                datePicker.Hidden = false;
+
+                UIView.AnimateKeyframes (
+                    0.4, 0, 0,
+                    delegate {
+                        UIView.AddKeyframeWithRelativeStartTime (0, 0.6, delegate {
+                            wrapper.RemoveConstraints (wrapper.Constraints);
+                            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+                            View.LayoutIfNeeded ();
+                        });
+                        UIView.AddKeyframeWithRelativeStartTime (0.4, 0.8, delegate {
+                            datePicker.Alpha = 1;
+                        });
+                    },
+                    delegate {
+                    }
+                );
+            }
+        }
+
         private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
         {
             UIView prev = null;
 
-            var subviews = container.Subviews.Where (v => !v.Hidden).ToList ();
+            var subviews = container.Subviews.Where (v => !v.Hidden && !(v == datePicker && hideDatePicker)).ToList ();
             foreach (var v in subviews) {
                 var isLast = subviews [subviews.Count - 1] == v;
 
@@ -223,7 +276,7 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            private event EventHandler SelectedChanged;
+            public event EventHandler SelectedChanged;
 
             private void SetStopTimeHidden (bool hidden, bool animate)
             {

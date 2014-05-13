@@ -184,6 +184,9 @@
     <Compile Include="ObjectExtensions.cs" />
     <Compile Include="NSDateExtensions.cs" />
     <Compile Include="ViewControllers\ProjectSelectionViewController.cs" />
+    <Compile Include="Theme\Style.ProjectList.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

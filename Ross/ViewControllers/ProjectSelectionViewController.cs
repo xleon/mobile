@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Drawing;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
@@ -9,13 +9,14 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Ross.DataSources;
+using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class ProjectSelectionViewController : UITableViewController
     {
-        public ProjectSelectionViewController (TimeEntryModel model) : base (UITableViewStyle.Grouped)
+        public ProjectSelectionViewController (TimeEntryModel model) : base (UITableViewStyle.Plain)
         {
             Title = "ProjectTitle".Tr ();
 
@@ -24,7 +25,7 @@ namespace Toggl.Ross.ViewControllers
             TableView.TableHeaderView = new TableViewHeaderView ();
         }
 
-        class Source : GroupedDataViewSource<object, ProjectAndTaskView.Workspace, object>
+        class Source : GroupedDataViewSource<object, object, object>
         {
             private readonly static NSString WorkspaceHeaderId = new NSString ("SectionHeaderId");
             private readonly static NSString ProjectCellId = new NSString ("ProjectCellId");
@@ -43,10 +44,16 @@ namespace Toggl.Ross.ViewControllers
             {
                 this.controller = controller;
                 this.dataView = dataView;
+            }
 
-                controller.TableView.RegisterClassForHeaderFooterViewReuse (typeof(WorkspaceHeaderView), WorkspaceHeaderId);
+            public override void Attach ()
+            {
+                base.Attach ();
+
+                controller.TableView.RegisterClassForCellReuse (typeof(WorkspaceHeaderCell), WorkspaceHeaderId);
                 controller.TableView.RegisterClassForCellReuse (typeof(ProjectCell), ProjectCellId);
                 controller.TableView.RegisterClassForCellReuse (typeof(TaskCell), TaskCellId);
+                controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
             }
 
             private void SetTasksExpanded (Guid projectId, bool expand)
@@ -65,12 +72,15 @@ namespace Toggl.Ross.ViewControllers
 
             public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
+                var row = GetRow (indexPath);
+                if (row is ProjectAndTaskView.Workspace)
+                    return 42f;
                 return EstimatedHeight (tableView, indexPath);
             }
 
             public override float EstimatedHeightForHeader (UITableView tableView, int section)
             {
-                return 42f;
+                return -1f;
             }
 
             public override float GetHeightForHeader (UITableView tableView, int section)
@@ -96,19 +106,32 @@ namespace Toggl.Ross.ViewControllers
                     return cell;
                 }
 
+                var workspace = row as ProjectAndTaskView.Workspace;
+                if (workspace != null) {
+                    var cell = (WorkspaceHeaderCell)tableView.DequeueReusableCell (WorkspaceHeaderId, indexPath);
+                    cell.Bind (workspace);
+                    return cell;
+                }
+
                 throw new InvalidOperationException (String.Format ("Unknown row type {0}", row.GetType ()));
             }
 
             public override UIView GetViewForHeader (UITableView tableView, int section)
             {
-                var view = (WorkspaceHeaderView)tableView.DequeueReusableHeaderFooterView (WorkspaceHeaderId);
-                view.Bind (GetSection (section).Model);
-                return view;
+                return new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
             }
 
             public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
             {
                 return false;
+            }
+
+            public override NSIndexPath WillSelectRow (UITableView tableView, NSIndexPath indexPath)
+            {
+                var row = GetRow (indexPath);
+                if (row is ProjectAndTaskView.Workspace)
+                    return null;
+                return indexPath;
             }
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
@@ -121,14 +144,15 @@ namespace Toggl.Ross.ViewControllers
                     projectModel = taskModel.Project;
                 } else {
                     var project = row as ProjectAndTaskView.Project;
-                    if (project != null) {
-                        // TODO: Set time entry project
-                        if (project.IsNewProject) {
-                            // TODO: Open project creation view controller
-                            return;
-                        } else if (!project.IsNoProject) {
-                            projectModel = project.Model;
-                        }
+                    if (project == null)
+                        return;
+
+                    // TODO: Set time entry project
+                    if (project.IsNewProject) {
+                        // TODO: Open project creation view controller
+                        return;
+                    } else if (!project.IsNoProject) {
+                        projectModel = project.Model;
                     }
                 }
 
@@ -137,22 +161,19 @@ namespace Toggl.Ross.ViewControllers
                 tableView.DeselectRow (indexPath, true);
             }
 
-            protected override IEnumerable<ProjectAndTaskView.Workspace> GetSections ()
+            protected override IEnumerable<object> GetSections ()
             {
-                return dataView.Workspaces;
+                yield return String.Empty;
             }
 
-            protected override IEnumerable<object> GetRows (ProjectAndTaskView.Workspace section)
+            protected override IEnumerable<object> GetRows (object section)
             {
-                foreach (var proj in section.Projects) {
-                    yield return proj;
+                foreach (var row in dataView.Data) {
+                    var task = row as TaskModel;
+                    if (task != null && (task.ProjectId == null || !expandedProjects.Contains (task.ProjectId.Value)))
+                        continue;
 
-                    var isExpanded = proj.Model != null && proj.Model.Id != null && expandedProjects.Contains (proj.Model.Id.Value);
-                    if (isExpanded) {
-                        foreach (var task in proj.Tasks) {
-                            yield return task;
-                        }
-                    }
+                    yield return row;
                 }
             }
         }
@@ -207,7 +228,6 @@ namespace Toggl.Ross.ViewControllers
 
             protected override void Rebind ()
             {
-                throw new NotImplementedException ();
             }
         }
 
@@ -219,23 +239,42 @@ namespace Toggl.Ross.ViewControllers
 
             protected override void Rebind ()
             {
-                throw new NotImplementedException ();
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)
             {
-                throw new NotImplementedException ();
             }
         }
 
-        private class WorkspaceHeaderView : UITableViewHeaderFooterView
+        private class WorkspaceHeaderCell : BindableTableViewCell<ProjectAndTaskView.Workspace>
         {
-            public WorkspaceHeaderView (IntPtr handle) : base (handle)
+            private const float HorizSpacing = 15f;
+            private readonly UILabel nameLabel;
+
+            public WorkspaceHeaderCell (IntPtr handle) : base (handle)
             {
+                nameLabel = new UILabel ().Apply (Style.ProjectList.HeaderLabel);
+                ContentView.AddSubview (nameLabel);
+
+                BackgroundView = new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
             }
 
-            public void Bind (WorkspaceModel model)
+            public override void LayoutSubviews ()
             {
+                base.LayoutSubviews ();
+                var contentFrame = ContentView.Frame;
+
+                nameLabel.Frame = new RectangleF (
+                    x: HorizSpacing,
+                    y: 0,
+                    width: contentFrame.Width - 2 * HorizSpacing,
+                    height: contentFrame.Height
+                );
+            }
+
+            protected override void Rebind ()
+            {
+                nameLabel.Text = DataSource.Model.Name;
             }
         }
     }

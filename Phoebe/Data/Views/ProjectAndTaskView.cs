@@ -213,6 +213,10 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        public IEnumerable<Workspace> Workspaces {
+            get { return data; }
+        }
+
         public long Count {
             get { return Data.LongCount (); }
         }

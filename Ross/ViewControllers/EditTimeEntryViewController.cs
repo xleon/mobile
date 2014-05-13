@@ -233,6 +233,7 @@ namespace Toggl.Ross.ViewControllers
             wrapper.Add (projectButton = new ProjectClientTaskButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             }.Apply (BindProjectButton));
+            projectButton.TouchUpInside += OnProjectButtonTouchUpInside;
 
             wrapper.Add (descriptionTextField = new TextField () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -286,6 +287,12 @@ namespace Toggl.Ross.ViewControllers
                 model.StopTime = datePicker.Date.ToDateTime ();
                 break;
             }
+        }
+
+        private void OnProjectButtonTouchUpInside (object sender, EventArgs e)
+        {
+            var controller = new ProjectSelectionViewController (model);
+            NavigationController.PushViewController (controller, true);
         }
 
         private void OnDescriptionFieldEditingChanged (object sender, EventArgs e)

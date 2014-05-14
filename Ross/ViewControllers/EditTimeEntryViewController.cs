@@ -201,12 +201,19 @@ namespace Toggl.Ross.ViewControllers
 
         private void Rebind ()
         {
+            var billableHidden = billableSwitch.Hidden;
+
             startStopView.Apply (BindStartStopView);
             datePicker.Apply (BindDatePicker);
             projectButton.Apply (BindProjectButton);
             descriptionTextField.Apply (BindDescriptionField);
             tagsButton.Apply (BindTagsButton);
             billableSwitch.Apply (BindBillableSwitch);
+
+            if (billableHidden != billableSwitch.Hidden) {
+                wrapper.RemoveConstraints (wrapper.Constraints);
+                wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+            }
         }
 
         public override void LoadView ()

@@ -129,14 +129,6 @@ namespace Toggl.Ross.ViewControllers
                 return false;
             }
 
-            public override NSIndexPath WillSelectRow (UITableView tableView, NSIndexPath indexPath)
-            {
-                var row = GetRow (indexPath);
-                if (row is ProjectAndTaskView.Workspace)
-                    return null;
-                return indexPath;
-            }
-
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
                 var row = GetRow (indexPath);
@@ -405,6 +397,7 @@ namespace Toggl.Ross.ViewControllers
                 ContentView.AddSubview (nameLabel);
 
                 BackgroundView = new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
+                UserInteractionEnabled = false;
             }
 
             public override void LayoutSubviews ()

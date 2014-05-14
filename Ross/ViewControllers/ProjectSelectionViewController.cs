@@ -18,9 +18,12 @@ namespace Toggl.Ross.ViewControllers
     public class ProjectSelectionViewController : UITableViewController
     {
         private const float CellSpacing = 4f;
+        private readonly TimeEntryModel model;
 
         public ProjectSelectionViewController (TimeEntryModel model) : base (UITableViewStyle.Plain)
         {
+            this.model = model;
+
             Title = "ProjectTitle".Tr ();
 
             EdgesForExtendedLayout = UIRectEdge.None;
@@ -154,27 +157,38 @@ namespace Toggl.Ross.ViewControllers
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                var row = GetRow (indexPath);
+                var m = GetRow (indexPath);
 
-                ProjectModel projectModel = null;
-                var taskModel = row as TaskModel;
-                if (taskModel != null) {
-                    projectModel = taskModel.Project;
-                } else {
-                    var project = row as ProjectAndTaskView.Project;
-                    if (project == null)
-                        return;
+                TaskModel task = null;
+                ProjectModel project = null;
+                WorkspaceModel workspace = null;
 
-                    // TODO: Set time entry project
-                    if (project.IsNewProject) {
-                        // TODO: Open project creation view controller
-                        return;
-                    } else if (!project.IsNoProject) {
-                        projectModel = project.Model;
+                if (m is TaskModel) {
+                    task = (TaskModel)m;
+                    project = task != null ? task.Project : null;
+                    workspace = project != null ? project.Workspace : null;
+                } else if (m is ProjectAndTaskView.Project) {
+                    var wrap = (ProjectAndTaskView.Project)m;
+                    if (wrap.IsNoProject) {
+                        workspace = wrap.WorkspaceModel;
+                    } else if (wrap.IsNewProject) {
+                        var proj = wrap.Model;
+                        // TODO: Show create project dialog instead
+                    } else {
+                        project = wrap.Model;
+                        workspace = project != null ? project.Workspace : null;
                     }
+                } else if (m is ProjectAndTaskView.Workspace) {
+                    var wrap = (ProjectAndTaskView.Workspace)m;
+                    workspace = wrap.Model;
                 }
 
-                // TODO: Update model and return
+                if (project != null || task != null || workspace != null) {
+                    controller.model.Workspace = workspace;
+                    controller.model.Project = project;
+                    controller.model.Task = task;
+                    controller.NavigationController.PopViewControllerAnimated (true);
+                }
 
                 tableView.DeselectRow (indexPath, true);
             }

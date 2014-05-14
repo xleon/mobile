@@ -33,6 +33,7 @@ namespace Toggl.Ross.ViewControllers
         private bool descriptionChanging;
         private bool autoCommitScheduled;
         private int autoCommitId;
+        private bool shouldRebindOnAppear;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -350,6 +351,12 @@ namespace Toggl.Ross.ViewControllers
             var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionModelChanged == null) {
                 subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            }
+
+            if (shouldRebindOnAppear) {
+                Rebind ();
+            } else {
+                shouldRebindOnAppear = true;
             }
         }
 

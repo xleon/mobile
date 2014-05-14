@@ -313,6 +313,13 @@ namespace Toggl.Ross.ViewControllers
 
             protected void OnModelChanged (ModelChangedMessage msg)
             {
+                if (msg.Model != DataSource.Model)
+                    return;
+
+                if (msg.PropertyName == ProjectModel.PropertyName
+                    || msg.PropertyName == ProjectModel.PropertyColor
+                    || msg.PropertyName == ProjectModel.PropertyClientId)
+                    Rebind ();
             }
 
             protected override void Rebind ()

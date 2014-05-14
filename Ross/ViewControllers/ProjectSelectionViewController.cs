@@ -59,6 +59,11 @@ namespace Toggl.Ross.ViewControllers
                 controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
             }
 
+            private void ToggleTasksExpanded (Guid projectId)
+            {
+                SetTasksExpanded (projectId, !expandedProjects.Contains (projectId));
+            }
+
             private void SetTasksExpanded (Guid projectId, bool expand)
             {
                 if (expand && expandedProjects.Add (projectId)) {
@@ -99,6 +104,12 @@ namespace Toggl.Ross.ViewControllers
                 if (project != null) {
                     var cell = (ProjectCell)tableView.DequeueReusableCell (ProjectCellId, indexPath);
                     cell.Bind (project);
+                    if (project.Model != null && project.Model.Id != null) {
+                        var projectId = project.Model.Id.Value;
+                        cell.ToggleTasks = () => ToggleTasksExpanded (projectId);
+                    } else {
+                        cell.ToggleTasks = null;
+                    }
                     return cell;
                 }
 
@@ -206,7 +217,19 @@ namespace Toggl.Ross.ViewControllers
                     },
                 };
                 textContentView.Layer.Mask = maskLayer;
+
+                tasksButton.TouchUpInside += OnTasksButtonTouchUpInside;
             }
+
+            private void OnTasksButtonTouchUpInside (object sender, EventArgs e)
+            {
+                var cb = ToggleTasks;
+                if (cb != null) {
+                    cb ();
+                }
+            }
+
+            public Action ToggleTasks { get; set; }
 
             public override void LayoutSubviews ()
             {

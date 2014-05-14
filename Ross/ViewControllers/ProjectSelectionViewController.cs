@@ -25,7 +25,13 @@ namespace Toggl.Ross.ViewControllers
 
             EdgesForExtendedLayout = UIRectEdge.None;
             new Source (this).Attach ();
-            TableView.TableHeaderView = new TableViewHeaderView ();
+        }
+
+        public override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
+
+            View.Apply (Style.Screen);
         }
 
         class Source : GroupedDataViewSource<object, object, object>
@@ -200,6 +206,7 @@ namespace Toggl.Ross.ViewControllers
 
             public ProjectCell (IntPtr handle) : base (handle)
             {
+                this.Apply (Style.Screen);
                 BackgroundView = new UIView ();
 
                 ContentView.Add (textContentView = new UIView ());
@@ -415,6 +422,7 @@ namespace Toggl.Ross.ViewControllers
 
             public TaskCell (IntPtr handle) : base (handle)
             {
+                this.Apply (Style.Screen);
                 ContentView.Add (nameLabel = new UILabel ().Apply (Style.ProjectList.TaskLabel));
                 ContentView.Add (separatorView = new UIView ().Apply (Style.ProjectList.TaskSeparator));
                 BackgroundView = new UIView ().Apply (Style.ProjectList.TaskBackground);
@@ -495,6 +503,7 @@ namespace Toggl.Ross.ViewControllers
 
             public WorkspaceHeaderCell (IntPtr handle) : base (handle)
             {
+                this.Apply (Style.Screen);
                 nameLabel = new UILabel ().Apply (Style.ProjectList.HeaderLabel);
                 ContentView.AddSubview (nameLabel);
 

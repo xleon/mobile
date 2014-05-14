@@ -83,6 +83,8 @@ namespace Toggl.Ross.ViewControllers
                 var row = GetRow (indexPath);
                 if (row is ProjectAndTaskView.Workspace)
                     return 42f;
+                if (row is TaskModel)
+                    return 49f;
                 return EstimatedHeight (tableView, indexPath);
             }
 
@@ -117,6 +119,10 @@ namespace Toggl.Ross.ViewControllers
                 if (task != null) {
                     var cell = (TaskCell)tableView.DequeueReusableCell (TaskCellId, indexPath);
                     cell.Bind (task);
+
+                    var rows = GetCachedRows (GetSection (indexPath.Section));
+                    cell.IsFirst = indexPath.Row < 1 || !(rows [indexPath.Row - 1] is TaskModel);
+                    cell.IsLast = indexPath.Row >= rows.Count || !(rows [indexPath.Row + 1] is TaskModel);
                     return cell;
                 }
 
@@ -402,17 +408,83 @@ namespace Toggl.Ross.ViewControllers
 
         private class TaskCell : ModelTableViewCell<TaskModel>
         {
+            private readonly UILabel nameLabel;
+            private readonly UIView separatorView;
+            private bool isFirst;
+            private bool isLast;
+
             public TaskCell (IntPtr handle) : base (handle)
             {
-                BackgroundView = new UIView () { BackgroundColor = UIColor.White };
+                ContentView.Add (nameLabel = new UILabel ().Apply (Style.ProjectList.TaskLabel));
+                ContentView.Add (separatorView = new UIView ().Apply (Style.ProjectList.TaskSeparator));
+                BackgroundView = new UIView ().Apply (Style.ProjectList.TaskBackground);
+            }
+
+            public override void LayoutSubviews ()
+            {
+                base.LayoutSubviews ();
+
+                var contentFrame = new RectangleF (0, 0, Frame.Width, Frame.Height);
+
+                if (isFirst) {
+                    contentFrame.Y += CellSpacing / 2;
+                    contentFrame.Height -= CellSpacing / 2;
+                }
+
+                if (isLast) {
+                    contentFrame.Height -= CellSpacing / 2;
+                }
+
+                SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
+
+                // Add padding
+                contentFrame.X = 15f;
+                contentFrame.Y = 0;
+                contentFrame.Width -= 15f;
+
+                nameLabel.Frame = contentFrame;
+                separatorView.Frame = new RectangleF (
+                    contentFrame.X, contentFrame.Y + contentFrame.Height - 1f,
+                    contentFrame.Width, 1f);
             }
 
             protected override void Rebind ()
             {
+                var taskName = DataSource.Name;
+                if (String.IsNullOrWhiteSpace (taskName))
+                    taskName = "ProjectNoNameTask".Tr ();
+                nameLabel.Text = taskName;
             }
 
             protected override void OnModelChanged (ModelChangedMessage msg)
             {
+                if (msg.Model != DataSource)
+                    return;
+
+                if (msg.PropertyName == TaskModel.PropertyName)
+                    Rebind ();
+            }
+
+            public bool IsFirst {
+                get { return isFirst; }
+                set {
+                    if (isFirst == value)
+                        return;
+                    isFirst = value;
+                    SetNeedsLayout ();
+                }
+            }
+
+            public bool IsLast {
+                get { return isLast; }
+                set {
+                    if (isLast == value)
+                        return;
+                    isLast = value;
+                    SetNeedsLayout ();
+
+                    separatorView.Hidden = isLast;
+                }
             }
         }
 

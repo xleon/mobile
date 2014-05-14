@@ -75,6 +75,22 @@ namespace Toggl.Ross.Theme
 
                 return image;
             }
+
+            public static void TaskLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue", 17f);
+                v.TextColor = Color.Black;
+            }
+
+            public static void TaskBackground (UIView v)
+            {
+                v.BackgroundColor = Color.White;
+            }
+
+            public static void TaskSeparator (UIView v)
+            {
+                v.BackgroundColor = Color.LightGray;
+            }
         }
     }
 }

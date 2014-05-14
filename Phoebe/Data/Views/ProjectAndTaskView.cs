@@ -289,7 +289,7 @@ namespace Toggl.Phoebe.Data.Views
 
             public Project (WorkspaceModel model)
             {
-                model = null;
+                this.model = null;
                 workspaceModel = model;
             }
 

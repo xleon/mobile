@@ -37,25 +37,18 @@ namespace Toggl.Ross.ViewControllers
             View.Apply (Style.Screen);
         }
 
-        class Source : GroupedDataViewSource<object, object, object>
+        class Source : PlainDataViewSource<object>
         {
             private readonly static NSString WorkspaceHeaderId = new NSString ("SectionHeaderId");
             private readonly static NSString ProjectCellId = new NSString ("ProjectCellId");
             private readonly static NSString TaskCellId = new NSString ("TaskCellId");
             private readonly ProjectSelectionViewController controller;
-            private readonly ProjectAndTaskView dataView;
             private readonly HashSet<Guid> expandedProjects = new HashSet<Guid> ();
 
             public Source (ProjectSelectionViewController controller)
-                : this (controller, new ProjectAndTaskView ())
-            {
-            }
-
-            private Source (ProjectSelectionViewController controller, ProjectAndTaskView dataView)
-                : base (controller.TableView, dataView)
+                : base (controller.TableView, new ProjectAndTaskView ())
             {
                 this.controller = controller;
-                this.dataView = dataView;
             }
 
             public override void Attach ()
@@ -193,14 +186,9 @@ namespace Toggl.Ross.ViewControllers
                 tableView.DeselectRow (indexPath, true);
             }
 
-            protected override IEnumerable<object> GetSections ()
+            protected override IEnumerable<object> GetRows (string section)
             {
-                yield return String.Empty;
-            }
-
-            protected override IEnumerable<object> GetRows (object section)
-            {
-                foreach (var row in dataView.Data) {
+                foreach (var row in DataView.Data) {
                     var task = row as TaskModel;
                     if (task != null && (task.ProjectId == null || !expandedProjects.Contains (task.ProjectId.Value)))
                         continue;

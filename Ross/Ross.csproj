@@ -187,6 +187,10 @@
     <Compile Include="Theme\Style.ProjectList.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="ViewControllers\TagSelectionViewController.cs" />
+    <Compile Include="Theme\Style.TagList.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

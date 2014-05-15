@@ -257,6 +257,7 @@ namespace Toggl.Ross.ViewControllers
             wrapper.Add (tagsButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             }.Apply (Style.EditTimeEntry.TagsButton).Apply (BindTagsButton));
+            tagsButton.TouchUpInside += OnTagsButtonTouchUpInside;
 
             wrapper.Add (billableSwitch = new LabelSwitch () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -311,6 +312,12 @@ namespace Toggl.Ross.ViewControllers
             // Make sure that we're commiting 1 second after the user has stopped typing
             CancelDescriptionChangeAutoCommit ();
             ScheduleDescriptionChangeAutoCommit ();
+        }
+
+        private void OnTagsButtonTouchUpInside (object sender, EventArgs e)
+        {
+            var controller = new TagSelectionViewController (model);
+            NavigationController.PushViewController (controller, true);
         }
 
         private void OnBillableSwitchValueChanged (object sender, EventArgs e)

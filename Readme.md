@@ -50,6 +50,17 @@ Then make sure that you have "Custom" policy selected under Xamarin Studio setti
 Code Formatting > C# source code. And don't forget to turn on "Format document on save" under
 Xamarin Studio settings > Text Editor > Behavior.
 
+## We are hiring!
+
+Want to write open source code for a living? Love writing mobile applications using Xamarin technologies? Sick of the daily commute to the office?
+
+We are looking for talented Android/iOS hackers who would help us improve our mobile apps - make them faster, more polished, more stable, etc. It doesn’t matter where you are located, as long as you can communicate clearly in English and are proficient in a Github based workflow.
+
+Sounds good? Here’s what you should do:
+
+1. Contribute! Fix some bugs, improve performance, etc (suprise us :tada:) and submit pull requests.
+2. Review the codebase - find potential (architectural) shortcomings and suggest ways you would go about fixing them. Send this along with a short introduction of yourself to jobs@toggl.com.
+
 ## License
 
 The code in this repository is licensed under the [BSD 3-clause license](https://github.com/toggl/mobile/blob/master/LICENSE).

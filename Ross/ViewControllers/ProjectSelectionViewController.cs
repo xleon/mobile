@@ -166,7 +166,10 @@ namespace Toggl.Ross.ViewControllers
                         workspace = wrap.WorkspaceModel;
                     } else if (wrap.IsNewProject) {
                         var proj = wrap.Model;
-                        // TODO: Show create project dialog instead
+                        // Show create project dialog instead
+                        // TODO: Handle successful creation of the project
+                        var next = new NewProjectViewController (proj.Workspace, proj.Color);
+                        controller.NavigationController.PushViewController (next, true);
                     } else {
                         project = wrap.Model;
                         workspace = project != null ? project.Workspace : null;

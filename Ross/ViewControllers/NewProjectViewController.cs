@@ -28,6 +28,8 @@ namespace Toggl.Ross.ViewControllers
             Title = "NewProjectTitle".Tr ();
         }
 
+        public Action<ProjectModel> ProjectCreated { get; set; }
+
         private void BindNameField (TextField v)
         {
             if (v.Text != model.Name) {
@@ -93,10 +95,13 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnClientButtonTouchUpInside (object sender, EventArgs e)
         {
-            #if false
-            var controller = new ClientSelectionViewController (model);
+            var controller = new ClientSelectionViewController (model.Workspace) {
+                ClientSelected = (client) => {
+                    model.Client = client;
+                    NavigationController.PopToViewController (this, true);
+                }
+            };
             NavigationController.PushViewController (controller, true);
-            #endif
         }
 
         private void OnNavigationBarAddClicked (object sender, EventArgs e)
@@ -108,9 +113,14 @@ namespace Toggl.Ross.ViewControllers
 
             // Create new project:
             model.IsPersisted = true;
-            NavigationController.PopViewControllerAnimated (true);
 
-            // TODO: Invoke extra actions
+            // Invoke callback hook
+            var cb = ProjectCreated;
+            if (cb != null) {
+                cb (model);
+            } else {
+                NavigationController.PopViewControllerAnimated (true);
+            }
         }
 
         private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)

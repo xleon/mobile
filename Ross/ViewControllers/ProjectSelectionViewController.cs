@@ -25,9 +25,6 @@ namespace Toggl.Ross.ViewControllers
             this.model = model;
 
             Title = "ProjectTitle".Tr ();
-
-            EdgesForExtendedLayout = UIRectEdge.None;
-            new Source (this).Attach ();
         }
 
         public override void ViewDidLoad ()
@@ -35,6 +32,31 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             View.Apply (Style.Screen);
+            EdgesForExtendedLayout = UIRectEdge.None;
+            new Source (this).Attach ();
+        }
+
+        public Action ProjectSelected { get; set; }
+
+        private void Finish (TaskModel task = null, ProjectModel project = null, WorkspaceModel workspace = null)
+        {
+            project = task != null ? task.Project : project;
+            workspace = project != null ? project.Workspace : workspace;
+
+            if (project != null || task != null || workspace != null) {
+                model.Workspace = workspace;
+                model.Project = project;
+                model.Task = task;
+            }
+
+            var cb = ProjectSelected;
+            if (cb != null) {
+                cb ();
+            } else {
+                // Pop to previous view controller
+                var vc = NavigationController.ViewControllers;
+                NavigationController.PopToViewController (vc [Array.IndexOf (vc, this) - 1], true);
+            }
         }
 
         class Source : PlainDataViewSource<object>
@@ -152,38 +174,25 @@ namespace Toggl.Ross.ViewControllers
             {
                 var m = GetRow (indexPath);
 
-                TaskModel task = null;
-                ProjectModel project = null;
-                WorkspaceModel workspace = null;
-
                 if (m is TaskModel) {
-                    task = (TaskModel)m;
-                    project = task != null ? task.Project : null;
-                    workspace = project != null ? project.Workspace : null;
+                    controller.Finish ((TaskModel)m);
                 } else if (m is ProjectAndTaskView.Project) {
                     var wrap = (ProjectAndTaskView.Project)m;
                     if (wrap.IsNoProject) {
-                        workspace = wrap.WorkspaceModel;
+                        controller.Finish (workspace: wrap.WorkspaceModel);
                     } else if (wrap.IsNewProject) {
                         var proj = wrap.Model;
                         // Show create project dialog instead
-                        // TODO: Handle successful creation of the project
-                        var next = new NewProjectViewController (proj.Workspace, proj.Color);
+                        var next = new NewProjectViewController (proj.Workspace, proj.Color) {
+                            ProjectCreated = (p) => controller.Finish (project: p),
+                        };
                         controller.NavigationController.PushViewController (next, true);
                     } else {
-                        project = wrap.Model;
-                        workspace = project != null ? project.Workspace : null;
+                        controller.Finish (project: wrap.Model);
                     }
                 } else if (m is ProjectAndTaskView.Workspace) {
                     var wrap = (ProjectAndTaskView.Workspace)m;
-                    workspace = wrap.Model;
-                }
-
-                if (project != null || task != null || workspace != null) {
-                    controller.model.Workspace = workspace;
-                    controller.model.Project = project;
-                    controller.model.Task = task;
-                    controller.NavigationController.PopViewControllerAnimated (true);
+                    controller.Finish (workspace: wrap.Model);
                 }
 
                 tableView.DeselectRow (indexPath, true);

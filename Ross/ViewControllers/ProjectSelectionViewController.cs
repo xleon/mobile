@@ -55,7 +55,10 @@ namespace Toggl.Ross.ViewControllers
             } else {
                 // Pop to previous view controller
                 var vc = NavigationController.ViewControllers;
-                NavigationController.PopToViewController (vc [Array.IndexOf (vc, this) - 1], true);
+                var i = Array.IndexOf (vc, this) - 1;
+                if (i >= 0) {
+                    NavigationController.PopToViewController (vc [i], true);
+                }
             }
         }
 

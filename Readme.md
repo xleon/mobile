@@ -58,8 +58,10 @@ We are looking for talented Android/iOS hackers who would help us improve our mo
 
 Sounds good? Here’s what you should do:
 
-1. Contribute! Fix some bugs, improve performance, etc (suprise us :tada:) and submit pull requests.
-2. Review the codebase - find potential (architectural) shortcomings and suggest ways you would go about fixing them. Send this along with a short introduction of yourself to jobs@toggl.com.
+1. Show us your code. Links to your public repositories or (better yet) submit a pull request.
+2. Suggest changes and improvements, which you would like to work on when you're hired.
+
+Email these to jobs@toggl.com. Don't forget to add a short introduction of yourself.
 
 ## License
 

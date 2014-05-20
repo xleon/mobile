@@ -18,6 +18,7 @@ namespace Toggl.Ross.ViewControllers
 {
     public class EditTimeEntryViewController : UIViewController
     {
+        private readonly TimerNavigationController timerController;
         private UIView wrapper;
         private StartStopView startStopView;
         private UIDatePicker datePicker;
@@ -38,6 +39,7 @@ namespace Toggl.Ross.ViewControllers
         public EditTimeEntryViewController (TimeEntryModel model)
         {
             this.model = model;
+            timerController = new TimerNavigationController (model);
         }
 
         protected override void Dispose (bool disposing)
@@ -286,6 +288,12 @@ namespace Toggl.Ross.ViewControllers
             View = scrollView;
         }
 
+        public override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
+            timerController.Attach (NavigationItem);
+        }
+
         private void OnDatePickerValueChanged (object sender, EventArgs e)
         {
             switch (startStopView.Selected) {
@@ -346,6 +354,8 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillAppear (animated);
 
+            timerController.Start ();
+
             ObserveNotification (UIKeyboard.WillHideNotification, (notif) => {
                 OnKeyboardHeightChanged (0);
             });
@@ -394,6 +404,13 @@ namespace Toggl.Ross.ViewControllers
                 bus.Unsubscribe (subscriptionModelChanged);
                 subscriptionModelChanged = null;
             }
+        }
+
+        public override void ViewDidDisappear (bool animated)
+        {
+            base.ViewDidDisappear (animated);
+
+            timerController.Stop ();
         }
 
         private void OnKeyboardHeightChanged (int height)

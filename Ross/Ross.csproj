@@ -201,6 +201,9 @@
     </Compile>
     <Compile Include="Views\DurationView.cs" />
     <Compile Include="ViewControllers\DurationChangeViewController.cs" />
+    <Compile Include="Theme\Style.DurationEdit.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

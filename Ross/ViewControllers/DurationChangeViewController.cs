@@ -28,7 +28,9 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             // Configure navigation item
-            NavigationItem.TitleView = durationView = new DurationView ();
+            NavigationItem.TitleView = durationView = new DurationView () {
+                Hint = model != null ? model.GetDuration () : TimeSpan.Zero,
+            }.Apply (Style.DurationEdit.DurationView);
             durationView.SizeToFit ();
 
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (

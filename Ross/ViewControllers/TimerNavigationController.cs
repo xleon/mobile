@@ -104,9 +104,11 @@ namespace Toggl.Ross.ViewControllers
             } else if (showRunning && msg.Model is TimeEntryModel) {
                 // When some other time entry becomes Running we need to switch over to that
                 if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
+                    || msg.PropertyName == TimeEntryModel.PropertyIsShared
+                    || msg.PropertyName == TimeEntryModel.PropertyIsPersisted) {
                     var entry = (TimeEntryModel)msg.Model;
-                    if (entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
+                    if (entry.IsShared && entry.IsPersisted && entry.DeletedAt == null
+                        && entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
                         currentTimeEntry = entry;
                         Rebind ();
                     }

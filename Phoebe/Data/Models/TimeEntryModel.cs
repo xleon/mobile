@@ -670,12 +670,11 @@ namespace Toggl.Phoebe.Data.Models
                 }
 
                 if (model == null) {
-                    // Create new draft:
                     List<string> tags = null;
                     if (ShouldAddDefaultTag) {
                         tags = new List<string> () { DefaultTag };
                     }
-                    model = Model.Update (new TimeEntryModel () {
+                    return Model.Update (new TimeEntryModel () {
                         State = TimeEntryState.New,
                         User = user,
                         Workspace = user.DefaultWorkspace,
@@ -687,6 +686,29 @@ namespace Toggl.Phoebe.Data.Models
 
                 return model;
             }
+        }
+
+        public static TimeEntryModel CreateFinished (TimeSpan duration)
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            if (user == null)
+                return null;
+
+            var now = Time.UtcNow;
+            List<string> tags = null;
+            if (ShouldAddDefaultTag) {
+                tags = new List<string> () { DefaultTag };
+            }
+            return Model.Update (new TimeEntryModel () {
+                State = TimeEntryState.Finished,
+                StartTime = now - duration,
+                StopTime = now,
+                User = user,
+                Workspace = user.DefaultWorkspace,
+                DurationOnly = user.TrackingMode == TrackingMode.Continue,
+                StringTags = tags,
+                IsPersisted = true,
+            });
         }
 
         public class TagsCollection : RelatedModelsCollection<TagModel, TimeEntryTagModel, TimeEntryModel, TagModel>

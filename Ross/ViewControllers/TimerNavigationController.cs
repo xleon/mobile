@@ -84,6 +84,7 @@ namespace Toggl.Ross.ViewControllers
 
                 durationButton.SetTitle (duration.ToString (@"hh\:mm\:ss"), UIControlState.Normal);
                 actionButton.Apply (Style.NavTimer.StopButton);
+                actionButton.Hidden = currentTimeEntry.State != TimeEntryState.Running;
 
                 var counter = rebindCounter;
                 DispatchQueue.MainQueue.DispatchAfter (

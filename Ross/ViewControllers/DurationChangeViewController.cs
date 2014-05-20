@@ -22,6 +22,7 @@ namespace Toggl.Ross.ViewControllers
         {
             View = new UIImageView () {
                 BackgroundColor = Color.Black,
+                ContentMode = UIViewContentMode.Bottom,
             };
         }
 
@@ -87,6 +88,87 @@ namespace Toggl.Ross.ViewControllers
             } else {
                 model.SetDuration (duration);
                 NavigationController.PopViewControllerAnimated (true);
+            }
+        }
+
+        public Type PreviousControllerType { get; set; }
+
+        private static UIImage GetBlurred (UIView view)
+        {
+            UIGraphics.BeginImageContextWithOptions (view.Bounds.Size, true, view.Window.Screen.Scale);
+
+            var frame = view.Frame;
+            frame.Y = 0;
+            view.DrawViewHierarchy (frame, false);
+
+            var snapshotImage = UIGraphics.GetImageFromCurrentImageContext ();
+            snapshotImage = snapshotImage.ApplyDarkEffect ();
+
+            UIGraphics.EndImageContext ();
+
+            return snapshotImage;
+        }
+
+        public class PushAnimator : UIViewControllerAnimatedTransitioning
+        {
+            public override void AnimateTransition (IUIViewControllerContextTransitioning transitionContext)
+            {
+                var toController = (DurationChangeViewController)transitionContext.GetViewControllerForKey (UITransitionContext.ToViewControllerKey);
+                var fromController = transitionContext.GetViewControllerForKey (UITransitionContext.FromViewControllerKey);
+                var container = transitionContext.ContainerView;
+
+                var imageView = (UIImageView)toController.View;
+                imageView.Image = GetBlurred (fromController.View);
+
+                toController.View.Frame = transitionContext.GetFinalFrameForViewController (toController);
+                toController.View.Alpha = 0;
+                container.InsertSubviewAbove (toController.View, fromController.View);
+
+                UIView.Animate (
+                    TransitionDuration (transitionContext),
+                    delegate {
+                        toController.View.Alpha = 1;
+                    },
+                    delegate {
+                        fromController.View.RemoveFromSuperview ();
+                        transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
+                    }
+                );
+            }
+
+            public override double TransitionDuration (IUIViewControllerContextTransitioning transitionContext)
+            {
+                return 0.4f;
+            }
+        }
+
+        public class PopAnimator : UIViewControllerAnimatedTransitioning
+        {
+            public override void AnimateTransition (IUIViewControllerContextTransitioning transitionContext)
+            {
+                var toController = transitionContext.GetViewControllerForKey (UITransitionContext.ToViewControllerKey);
+                var fromController = (DurationChangeViewController)transitionContext.GetViewControllerForKey (UITransitionContext.FromViewControllerKey);
+                var container = transitionContext.ContainerView;
+
+                toController.View.Frame = transitionContext.GetFinalFrameForViewController (toController);
+                container.InsertSubviewBelow (toController.View, fromController.View);
+                fromController.View.Alpha = 1;
+
+                UIView.Animate (
+                    TransitionDuration (transitionContext),
+                    delegate {
+                        fromController.View.Alpha = 0;
+                    },
+                    delegate {
+                        fromController.View.RemoveFromSuperview ();
+                        transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
+                    }
+                );
+            }
+
+            public override double TransitionDuration (IUIViewControllerContextTransitioning transitionContext)
+            {
+                return 0.4f;
             }
         }
     }

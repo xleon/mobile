@@ -25,6 +25,7 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <DebugType>full</DebugType>
@@ -39,6 +40,7 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
@@ -57,6 +59,7 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <DebugType>full</DebugType>
@@ -71,6 +74,7 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
     <DebugType>full</DebugType>
@@ -87,6 +91,7 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
     <DebugType>full</DebugType>
@@ -102,6 +107,7 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -204,6 +210,7 @@
     <Compile Include="Theme\Style.DurationEdit.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="UIImageEffects.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

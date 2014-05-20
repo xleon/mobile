@@ -15,6 +15,7 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             NavigationBar.Apply (Style.NavigationBar);
+            Delegate = new NavDelegate ();
         }
 
         public override void ViewWillAppear (bool animated)
@@ -72,6 +73,26 @@ namespace Toggl.Ross.ViewControllers
                 if (ViewControllers.Length < 1 || !(ViewControllers [0] is WelcomeViewController)) {
                     SetViewControllers (new [] { new WelcomeViewController () }, ViewControllers.Length > 0);
                 }
+            }
+        }
+
+        private class NavDelegate : UINavigationControllerDelegate
+        {
+            public override IUIViewControllerAnimatedTransitioning GetAnimationControllerForOperation (UINavigationController navigationController, UINavigationControllerOperation operation, UIViewController fromViewController, UIViewController toViewController)
+            {
+                if (toViewController is DurationChangeViewController) {
+                    var durationController = (DurationChangeViewController)toViewController;
+                    durationController.PreviousControllerType = fromViewController.GetType ();
+                    return new DurationChangeViewController.PushAnimator ();
+                }
+                if (fromViewController is DurationChangeViewController) {
+                    var durationController = (DurationChangeViewController)fromViewController;
+                    if (durationController.PreviousControllerType == toViewController.GetType ()) {
+                        return new DurationChangeViewController.PopAnimator ();
+                    }
+                    durationController.PreviousControllerType = null;
+                }
+                return null;
             }
         }
     }

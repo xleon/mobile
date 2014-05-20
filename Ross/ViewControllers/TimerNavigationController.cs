@@ -14,7 +14,7 @@ namespace Toggl.Ross.ViewControllers
     {
         private const string DefaultDurationText = " 00:00:00 ";
         private readonly bool showRunning;
-        private UILabel durationLabel;
+        private UIButton durationButton;
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
         private TimeEntryModel currentTimeEntry;
@@ -31,11 +31,10 @@ namespace Toggl.Ross.ViewControllers
         public void Attach (UINavigationItem navigationItem)
         {
             // Lazyily create views
-            if (durationLabel == null) {
-                durationLabel = new UILabel () {
-                    Text = DefaultDurationText, // Dummy content to use for sizing of the label
-                }.Apply (Style.NavTimer.DurationLabel);
-                durationLabel.SizeToFit ();
+            if (durationButton == null) {
+                durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
+                durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
+                durationButton.SizeToFit ();
             }
 
             if (navigationButton == null) {
@@ -46,7 +45,7 @@ namespace Toggl.Ross.ViewControllers
             }
 
             // Attach views
-            navigationItem.TitleView = durationLabel;
+            navigationItem.TitleView = durationButton;
             navigationItem.RightBarButtonItem = navigationButton;
         }
 
@@ -67,12 +66,12 @@ namespace Toggl.Ross.ViewControllers
             rebindCounter++;
 
             if (currentTimeEntry == null) {
-                durationLabel.Text = DefaultDurationText;
+                durationButton.SetTitle (DefaultDurationText, UIControlState.Normal);
                 actionButton.Apply (Style.NavTimer.StartButton);
             } else {
                 var duration = currentTimeEntry.GetDuration ();
 
-                durationLabel.Text = duration.ToString (@"hh\:mm\:ss");
+                durationButton.SetTitle (duration.ToString (@"hh\:mm\:ss"), UIControlState.Normal);
                 actionButton.Apply (Style.NavTimer.StopButton);
 
                 var counter = rebindCounter;

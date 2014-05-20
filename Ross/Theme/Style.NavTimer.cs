@@ -8,11 +8,12 @@ namespace Toggl.Ross.Theme
     {
         public static class NavTimer
         {
-            public static void DurationLabel (UILabel v)
+            public static void DurationButton (UIButton v)
             {
                 v.Font = UIFont.FromName ("HelveticaNeue-Thin", 32f);
-                v.TextAlignment = UITextAlignment.Center;
                 v.LineBreakMode = UILineBreakMode.Clip;
+                v.SetTitleColor (UIColor.Black, UIControlState.Normal);
+                v.SetTitleColor (UIColor.Gray, UIControlState.Highlighted);
             }
 
             public static void StartButton (UIButton v)

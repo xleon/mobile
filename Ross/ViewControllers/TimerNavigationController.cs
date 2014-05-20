@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using MonoTouch.CoreFoundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
@@ -63,7 +64,13 @@ namespace Toggl.Ross.ViewControllers
         private void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
             if (currentTimeEntry == null) {
-                // TODO: Start a new time entry
+                currentTimeEntry = TimeEntryModel.GetDraft ();
+                currentTimeEntry.Start ();
+
+                var controllers = new List<UIViewController> (parentController.NavigationController.ViewControllers);
+                controllers.Add (new EditTimeEntryViewController (currentTimeEntry));
+                controllers.Add (new ProjectSelectionViewController (currentTimeEntry));
+                parentController.NavigationController.SetViewControllers (controllers.ToArray (), true);
             } else {
                 currentTimeEntry.Stop ();
             }

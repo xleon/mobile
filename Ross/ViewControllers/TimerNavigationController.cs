@@ -13,6 +13,7 @@ namespace Toggl.Ross.ViewControllers
     public class TimerNavigationController
     {
         private const string DefaultDurationText = " 00:00:00 ";
+        private readonly bool showRunning;
         private UILabel durationLabel;
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
@@ -20,6 +21,12 @@ namespace Toggl.Ross.ViewControllers
         private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private bool isStarted;
         private int rebindCounter;
+
+        public TimerNavigationController (TimeEntryModel model = null)
+        {
+            showRunning = model == null;
+            currentTimeEntry = model;
+        }
 
         public void Attach (UINavigationItem navigationItem)
         {
@@ -88,11 +95,13 @@ namespace Toggl.Ross.ViewControllers
                     || msg.PropertyName == TimeEntryModel.PropertyStopTime
                     || msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
                     if (currentTimeEntry.State == TimeEntryState.Finished || currentTimeEntry.DeletedAt.HasValue) {
-                        currentTimeEntry = null;
+                        if (showRunning) {
+                            currentTimeEntry = null;
+                        }
                     }
                     Rebind ();
                 }
-            } else if (msg.Model is TimeEntryModel) {
+            } else if (showRunning && msg.Model is TimeEntryModel) {
                 // When some other time entry becomes Running we need to switch over to that
                 if (msg.PropertyName == TimeEntryModel.PropertyState
                     || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
@@ -114,7 +123,9 @@ namespace Toggl.Ross.ViewControllers
         public void Start ()
         {
             // Start listening to timer changes
-            currentTimeEntry = TimeEntryModel.FindRunning ();
+            if (showRunning) {
+                currentTimeEntry = TimeEntryModel.FindRunning ();
+            }
 
             if (subscriptionModelChanged == null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -136,7 +147,9 @@ namespace Toggl.Ross.ViewControllers
                 subscriptionModelChanged = null;
             }
 
-            currentTimeEntry = null;
+            if (showRunning) {
+                currentTimeEntry = null;
+            }
         }
     }
 }

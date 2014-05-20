@@ -14,6 +14,7 @@ namespace Toggl.Ross.ViewControllers
     {
         private const string DefaultDurationText = " 00:00:00 ";
         private readonly bool showRunning;
+        private UIViewController parentController;
         private UIButton durationButton;
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
@@ -28,13 +29,16 @@ namespace Toggl.Ross.ViewControllers
             currentTimeEntry = model;
         }
 
-        public void Attach (UINavigationItem navigationItem)
+        public void Attach (UIViewController parentController)
         {
+            this.parentController = parentController;
+
             // Lazyily create views
             if (durationButton == null) {
                 durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
                 durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
                 durationButton.SizeToFit ();
+                durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
             }
 
             if (navigationButton == null) {
@@ -45,8 +49,15 @@ namespace Toggl.Ross.ViewControllers
             }
 
             // Attach views
+            var navigationItem = parentController.NavigationItem;
             navigationItem.TitleView = durationButton;
             navigationItem.RightBarButtonItem = navigationButton;
+        }
+
+        private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
+        {
+            var controller = new DurationChangeViewController (currentTimeEntry);
+            parentController.NavigationController.PushViewController (controller, true);
         }
 
         private void OnActionButtonTouchUpInside (object sender, EventArgs e)

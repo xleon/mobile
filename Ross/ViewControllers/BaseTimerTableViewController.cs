@@ -15,7 +15,7 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
-            timerController.Attach (NavigationItem);
+            timerController.Attach (this);
         }
 
         public override void ViewWillAppear (bool animated)

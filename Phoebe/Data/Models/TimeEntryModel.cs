@@ -779,11 +779,11 @@ namespace Toggl.Phoebe.Data.Models
 
                 lock (SyncRoot) {
                     IEnumerable<TimeEntryModel> entries;
-                    entries = Model.Query<TimeEntryModel> ((te) => te.State == TimeEntryState.Running && te.UserId == userId && te.DeletedAt == null).ToList ();
+                    entries = Model.Query<TimeEntryModel> ((te) => te.State == TimeEntryState.Running && te.UserId == currentUserId && te.DeletedAt == null).ToList ();
 
                     // Find currently running time entry:
                     entries = Model.Manager.Cached<TimeEntryModel> ()
-                        .Where ((te) => te.State == TimeEntryState.Running && te.DeletedAt == null && te.IsPersisted == true && te.UserId == userId);
+                        .Where ((te) => te.State == TimeEntryState.Running && te.DeletedAt == null && te.IsPersisted == true && te.UserId == currentUserId);
                     model = entries.FirstOrDefault ();
                 }
 

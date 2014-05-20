@@ -12,8 +12,8 @@ namespace Toggl.Ross.Theme
             {
                 v.Font = UIFont.FromName ("HelveticaNeue-Thin", 32f);
                 v.LineBreakMode = UILineBreakMode.Clip;
-                v.SetTitleColor (UIColor.Black, UIControlState.Normal);
-                v.SetTitleColor (UIColor.Gray, UIControlState.Highlighted);
+                v.SetTitleColor (Color.Black, UIControlState.Normal);
+                v.SetTitleColor (Color.Gray, UIControlState.Highlighted);
             }
 
             public static void StartButton (UIButton v)

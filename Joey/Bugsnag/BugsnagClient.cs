@@ -426,7 +426,7 @@ namespace Toggl.Joey.Bugsnag
                     Model = Android.OS.Build.Model,
                     ScreenDensity = androidContext.Resources.DisplayMetrics.Density,
                     ScreenResolution = AndroidInfo.GetScreenResolution (androidContext),
-                    TotalMemory = AndroidInfo.GetMemoryAvailable (),
+                    TotalMemory = (ulong)AndroidInfo.GetMemoryAvailable (),
                     OperatingSystem = "android",
                     OperatingSystemVersion = Android.OS.Build.VERSION.Release,
                     ApiLevel = (int)Android.OS.Build.VERSION.SdkInt,
@@ -448,11 +448,11 @@ namespace Toggl.Joey.Bugsnag
             }
 
             return new Toggl.Joey.Bugsnag.Data.SystemState () {
-                FreeMemory = AndroidInfo.GetFreeMemory (),
+                FreeMemory = (ulong)AndroidInfo.GetFreeMemory (),
                 Orientation = AndroidInfo.GetOrientation (androidContext),
                 BatteryLevel = AndroidInfo.GetBatteryLevel (androidContext),
                 IsCharging = AndroidInfo.CheckBatteryCharging (androidContext),
-                AvailableDiskSpace = AndroidInfo.GetAvailableDiskSpace (),
+                AvailableDiskSpace = (ulong)AndroidInfo.GetAvailableDiskSpace (),
                 LocationStatus = AndroidInfo.GetGpsStatus (androidContext),
                 NetworkStatus = AndroidInfo.GetNetworkStatus (androidContext),
             };

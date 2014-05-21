@@ -7,9 +7,9 @@ namespace Toggl.Phoebe.Bugsnag.Data
     public class SystemState
     {
         [JsonProperty ("freeMemory", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public long FreeMemory { get; set; }
+        public ulong FreeMemory { get; set; }
 
         [JsonProperty ("freeDisk", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public long AvailableDiskSpace { get; set; }
+        public ulong AvailableDiskSpace { get; set; }
     }
 }

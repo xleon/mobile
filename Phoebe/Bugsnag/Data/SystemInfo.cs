@@ -16,7 +16,7 @@ namespace Toggl.Phoebe.Bugsnag.Data
         public string OperatingSystemVersion { get; set; }
 
         [JsonProperty ("totalMemory", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public long TotalMemory { get; set; }
+        public ulong TotalMemory { get; set; }
 
         [JsonProperty ("locale", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Locale { get; set; }

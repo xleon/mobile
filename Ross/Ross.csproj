@@ -97,6 +97,11 @@
     <MtouchUseLlvm>true</MtouchUseLlvm>
     <MtouchUseSGen>true</MtouchUseSGen>
     <MtouchUseRefCounting>true</MtouchUseRefCounting>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="AfterBuild" command="upload_dsym_bugsnag.sh ${ProjectDir} ${TargetDir}" workingdir="${ProjectDir}" />
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
     <Optimize>true</Optimize>
@@ -115,6 +120,11 @@
     <MtouchUseLlvm>true</MtouchUseLlvm>
     <MtouchUseSGen>true</MtouchUseSGen>
     <MtouchUseRefCounting>true</MtouchUseRefCounting>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="AfterBuild" command="upload_dsym_bugsnag.sh ${ProjectDir} ${TargetDir}" workingdir="${ProjectDir}" />
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

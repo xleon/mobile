@@ -19,9 +19,9 @@
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>CFBundleDisplayName</key>
-	<string>Toggl</string>
+	<string>Toggl Timer</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.toggl.toggl</string>
+	<string>com.toggl.timer</string>
 	<key>CFBundleShortVersionString</key>
 	<string>7.0</string>
 	<key>CFBundleVersion</key>

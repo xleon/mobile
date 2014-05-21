@@ -59,9 +59,9 @@ namespace Toggl.Joey.Bugsnag
         protected override void OnUnhandledException (object sender, UnhandledExceptionEventArgs e)
         {
             if (e.IsTerminating) {
-                // At this point in time we don't want to attemt an HTTP connection, thus we only store
+                // At this point in time we don't want to attempt an HTTP connection, thus we only store
                 // the event to disk and hope that the user opens the application again to send the
-                // errors to Bugsense.
+                // errors to Bugsnag.
                 storeOnly = true;
             }
             base.OnUnhandledException (sender, e);
@@ -499,7 +499,7 @@ namespace Toggl.Joey.Bugsnag
 
         private static string MakeCachePath (Context ctx)
         {
-            var path = Path.Combine (ctx.CacheDir.AbsolutePath, "bugsense-events");
+            var path = Path.Combine (ctx.CacheDir.AbsolutePath, "bugsnag-events");
             if (!Directory.Exists (path)) {
                 try {
                     Directory.CreateDirectory (path);

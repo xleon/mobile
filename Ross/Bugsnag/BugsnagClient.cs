@@ -457,6 +457,12 @@ namespace Toggl.Ross.Bugsnag
             };
         }
 
+        protected override ExceptionInfo ConvertException (Exception ex)
+        {
+            // TODO: Implement special handling for MonoTouchException
+            return base.ConvertException (ex);
+        }
+
         private static string MakeCachePath ()
         {
             var path = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Personal), "bugsnag-events");

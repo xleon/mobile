@@ -28,7 +28,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
-    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
     <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
@@ -60,9 +59,10 @@
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchUseSGen>true</MtouchUseSGen>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
-    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\iPhone\Release</OutputPath>
     <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
@@ -75,9 +75,11 @@
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchUseLlvm>true</MtouchUseLlvm>
+    <MtouchUseSGen>true</MtouchUseSGen>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
-    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\iPhone\Ad-Hoc</OutputPath>
     <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
@@ -92,9 +94,11 @@
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchUseLlvm>true</MtouchUseLlvm>
+    <MtouchUseSGen>true</MtouchUseSGen>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
-    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\iPhone\AppStore</OutputPath>
     <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
@@ -108,6 +112,9 @@
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchUseLlvm>true</MtouchUseLlvm>
+    <MtouchUseSGen>true</MtouchUseSGen>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

@@ -32,6 +32,9 @@ namespace Toggl.Ross
             window.RootViewController = new MainViewController ();
             window.MakeKeyAndVisible ();
             
+            // Make sure critical services are running are running:
+            ServiceContainer.Resolve<BugsnagClient> ();
+
             return true;
         }
 

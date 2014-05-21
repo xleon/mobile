@@ -13,6 +13,7 @@ namespace Toggl.Ross.Data
         private const string PhoebeApiTokenKey = "phoebeApiToken";
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
+        private const string RossInstallIdKey = "rossInstallId";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -101,6 +102,17 @@ namespace Toggl.Ross.Data
             set {
                 SetGuid (PhoebeUserIdKey, value);
                 OnSettingChanged (PropertyUserId);
+            }
+        }
+
+        public string InstallId {
+            get {
+                var val = GetString (RossInstallIdKey);
+                if (String.IsNullOrEmpty (val)) {
+                    val = Guid.NewGuid ().ToString ();
+                    SetString (RossInstallIdKey, val);
+                }
+                return val;
             }
         }
 

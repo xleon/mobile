@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -62,6 +64,19 @@ namespace Toggl.Ross
                 var path = System.IO.Path.Combine (folder, "toggl.db");
                 return new SQLiteModelStore (path);
             });
+            ServiceContainer.Register<BugsnagClient> (delegate {
+                return new Toggl.Ross.Bugsnag.BugsnagClient (Build.BugsnagApiKey) {
+                    DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
+                    ProjectNamespaces = new List<string> () { "Toggl." },
+                    NotifyReleaseStages = new List<string> () { "production" },
+                    #if DEBUG
+                    ReleaseStage = "development",
+                    #else
+                    ReleaseStage = "production",
+                    #endif
+                };
+            });
+
         }
 
         string IPlatformInfo.AppIdentifier {

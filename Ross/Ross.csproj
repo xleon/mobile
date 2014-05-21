@@ -134,6 +134,10 @@
     <Reference Include="MonoTouch.TTTAttributedLabel">
       <HintPath>..\Contrib\MonoTouch.TTTAttributedLabel.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\portable-net40+sl4+wp7+win8\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
@@ -228,6 +232,14 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="UIImageEffects.cs" />
+    <Compile Include="Bugsnag\BugsnagClient.cs" />
+    <Compile Include="Bugsnag\Data\ApplicationInfo.cs" />
+    <Compile Include="Bugsnag\Data\ApplicationState.cs" />
+    <Compile Include="Bugsnag\Data\SystemInfo.cs" />
+    <Compile Include="Bugsnag\Data\SystemState.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -247,6 +259,8 @@
     <Folder Include="Theme\" />
     <Folder Include="DataSources\" />
     <Folder Include="Views\" />
+    <Folder Include="Bugsnag\" />
+    <Folder Include="Bugsnag\Data\" />
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />

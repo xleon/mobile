@@ -241,6 +241,7 @@
     <Compile Include="Theme\Style.EmptyView.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="ViewControllers\SettingsViewController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

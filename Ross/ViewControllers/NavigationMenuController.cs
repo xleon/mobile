@@ -134,6 +134,8 @@ namespace Toggl.Ross.ViewControllers
                 navController.SetViewControllers (new[] { new LogViewController () }, true);
                 // TODO: Store user selection?
             } else if (sender == settingsButton) {
+                var navController = controller.NavigationController;
+                navController.PushViewController (new SettingsViewController (), true);
             } else if (sender == signOutButton) {
                 ServiceContainer.Resolve<AuthManager> ().Forget ();
             }

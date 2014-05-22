@@ -25,7 +25,7 @@ namespace Toggl.Ross.ViewControllers
         private ProjectClientTaskButton projectButton;
         private TextField descriptionTextField;
         private UIButton tagsButton;
-        private LabelSwitch billableSwitch;
+        private LabelSwitchView billableSwitch;
         private UIButton deleteButton;
         private bool hideDatePicker = true;
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
@@ -195,7 +195,7 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void BindBillableSwitch (LabelSwitch v)
+        private void BindBillableSwitch (LabelSwitchView v)
         {
             v.Hidden = model.Workspace == null || !model.Workspace.IsPremium;
             v.Switch.On = model.IsBillable;
@@ -261,7 +261,7 @@ namespace Toggl.Ross.ViewControllers
             }.Apply (Style.EditTimeEntry.TagsButton).Apply (BindTagsButton));
             tagsButton.TouchUpInside += OnTagsButtonTouchUpInside;
 
-            wrapper.Add (billableSwitch = new LabelSwitch () {
+            wrapper.Add (billableSwitch = new LabelSwitchView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = "EditEntryBillable".Tr (),
             }.Apply (Style.EditTimeEntry.BillableContainer).Apply (BindBillableSwitch));
@@ -933,59 +933,6 @@ namespace Toggl.Ross.ViewControllers
                         SetBackgroundImage (null, UIControlState.Highlighted);
                     }
                 }
-            }
-
-            [Export ("requiresConstraintBasedLayout")]
-            public static new bool RequiresConstraintBasedLayout ()
-            {
-                return true;
-            }
-        }
-
-        private class LabelSwitch : UIView
-        {
-            private readonly UILabel label;
-            private readonly UISwitch toggle;
-
-            public LabelSwitch ()
-            {
-                Add (label = new UILabel () {
-                    TranslatesAutoresizingMaskIntoConstraints = false,
-                });
-                Add (toggle = new UISwitch () {
-                    TranslatesAutoresizingMaskIntoConstraints = false,
-                });
-            }
-
-            public override void UpdateConstraints ()
-            {
-                if (Constraints.Length == 0) {
-                    this.AddConstraints (
-                        toggle.AtRightOf (this, 15f),
-                        toggle.WithSameCenterY (this),
-
-                        label.AtLeftOf (this, 15f),
-                        label.WithSameCenterY (this),
-                        label.ToLeftOf (toggle, 5f),
-
-                        null
-                    );
-                }
-
-                base.UpdateConstraints ();
-            }
-
-            public string Text {
-                get { return label.Text; }
-                set { label.Text = value; }
-            }
-
-            public UILabel Label {
-                get { return label; }
-            }
-
-            public UISwitch Switch {
-                get { return toggle; }
             }
 
             [Export ("requiresConstraintBasedLayout")]

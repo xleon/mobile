@@ -242,6 +242,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\SettingsViewController.cs" />
+    <Compile Include="Views\LabelSwitchView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

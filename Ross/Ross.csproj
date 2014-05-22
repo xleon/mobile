@@ -237,6 +237,10 @@
     <Compile Include="Bugsnag\Data\ApplicationState.cs" />
     <Compile Include="Bugsnag\Data\SystemInfo.cs" />
     <Compile Include="Bugsnag\Data\SystemState.cs" />
+    <Compile Include="Views\SimpleEmptyView.cs" />
+    <Compile Include="Theme\Style.EmptyView.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

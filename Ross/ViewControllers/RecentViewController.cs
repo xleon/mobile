@@ -17,21 +17,39 @@ namespace Toggl.Ross.ViewControllers
     public class RecentViewController : BaseTimerTableViewController
     {
         private readonly NavigationMenuController navMenuController;
+        private UIView emptyView;
 
         public RecentViewController () : base (UITableViewStyle.Plain)
         {
             navMenuController = new NavigationMenuController ();
 
-            EdgesForExtendedLayout = UIRectEdge.None;
-            new Source (this).Attach ();
-            TableView.TableHeaderView = new TableViewHeaderView ();
         }
 
         public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
+            EdgesForExtendedLayout = UIRectEdge.None;
+
+            emptyView = new SimpleEmptyView () {
+                Title = "RecentEmptyTitle".Tr (),
+                Message = "RecentEmptyMessage".Tr (),
+            };
+
+            var source = new Source (this) {
+                EmptyView = emptyView,
+            };
+            source.Attach ();
+            TableView.TableHeaderView = new TableViewHeaderView ();
+
             navMenuController.Attach (this);
+        }
+
+        public override void ViewDidLayoutSubviews ()
+        {
+            base.ViewDidLayoutSubviews ();
+
+            emptyView.Frame = new RectangleF (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
         }
 
         class Source : GroupedDataViewSource<TimeEntryModel, string, TimeEntryModel>

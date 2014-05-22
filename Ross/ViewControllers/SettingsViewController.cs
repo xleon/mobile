@@ -74,7 +74,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void BindAskProjectView (LabelSwitchView v)
         {
-            // TODO
+            v.Switch.On = SettingsStore.ChooseProjectForNew;
         }
 
         private void BindMobileTagView (LabelSwitchView v)
@@ -90,7 +90,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnAskProjectViewValueChanged (object sender, EventArgs e)
         {
-            // TODO
+            SettingsStore.ChooseProjectForNew = askProjectView.Switch.On;
         }
 
         private void OnMobileTagViewValueChanged (object sender, EventArgs e)

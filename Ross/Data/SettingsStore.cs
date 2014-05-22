@@ -15,6 +15,7 @@ namespace Toggl.Ross.Data
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string RossInstallIdKey = "rossInstallId";
         private const string RossPreferredStartViewKey = "rossPreferredStartView";
+        private const string RossChooseProjectForNewKey = "rossChooseProjectForNewKey";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -154,6 +155,16 @@ namespace Toggl.Ross.Data
             set {
                 SetString (RossPreferredStartViewKey, value);
                 OnSettingChanged (PropertyPreferredStartView);
+            }
+        }
+
+        public static readonly string PropertyChooseProjectForNew = GetPropertyName (s => s.ChooseProjectForNew);
+
+        public bool ChooseProjectForNew {
+            get { return (GetInt (RossChooseProjectForNewKey) ?? 1) == 1; }
+            set {
+                SetInt (RossChooseProjectForNewKey, value ? 1 : 0);
+                OnSettingChanged (PropertyChooseProjectForNew);
             }
         }
     }

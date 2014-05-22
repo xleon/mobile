@@ -7,6 +7,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
@@ -69,7 +70,9 @@ namespace Toggl.Ross.ViewControllers
 
                 var controllers = new List<UIViewController> (parentController.NavigationController.ViewControllers);
                 controllers.Add (new EditTimeEntryViewController (currentTimeEntry));
-                controllers.Add (new ProjectSelectionViewController (currentTimeEntry));
+                if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
+                    controllers.Add (new ProjectSelectionViewController (currentTimeEntry));
+                }
                 parentController.NavigationController.SetViewControllers (controllers.ToArray (), true);
             } else {
                 currentTimeEntry.Stop ();

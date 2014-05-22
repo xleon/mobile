@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Joey.Net;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
@@ -34,6 +35,7 @@ namespace Toggl.Ross
             
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<BugsnagClient> ();
+            ServiceContainer.Resolve<BugsnagUserManager> ();
 
             return true;
         }
@@ -79,7 +81,7 @@ namespace Toggl.Ross
                     #endif
                 };
             });
-
+            ServiceContainer.Register<BugsnagUserManager> ();
         }
 
         string IPlatformInfo.AppIdentifier {

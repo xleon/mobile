@@ -181,6 +181,8 @@ namespace Toggl.Ross.DataSources
                 defaultFooterView.StartAnimating ();
             } else if (IsEmpty) {
                 tableView.TableFooterView = EmptyView;
+            } else {
+                tableView.TableFooterView = null;
             }
         }
 

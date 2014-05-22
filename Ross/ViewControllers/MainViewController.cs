@@ -2,6 +2,7 @@
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
@@ -63,9 +64,14 @@ namespace Toggl.Ross.ViewControllers
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.IsAuthenticated) {
                 if (ViewControllers.Length < 1 || ViewControllers [0] is WelcomeViewController) {
-                    // TODO: Determine the default root view controller
+                    // Determine the default root view controller
                     UIViewController activeController;
-                    activeController = new LogViewController ();
+                    var preferredView = ServiceContainer.Resolve<SettingsStore> ().PreferredStartView;
+                    if (preferredView == "recent") {
+                        activeController = new RecentViewController ();
+                    } else {
+                        activeController = new LogViewController ();
+                    }
 
                     SetViewControllers (new [] { activeController }, ViewControllers.Length > 0);
                 }

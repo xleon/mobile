@@ -3,6 +3,7 @@ using System.Drawing;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
@@ -126,13 +127,13 @@ namespace Toggl.Ross.ViewControllers
         private void OnMenuButtonTouchUpInside (object sender, EventArgs e)
         {
             if (sender == recentButton && !(controller is RecentViewController)) {
+                ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "recent";
                 var navController = controller.NavigationController;
                 navController.SetViewControllers (new[] { new RecentViewController () }, true);
-                // TODO: Store user selection?
             } else if (sender == logButton && !(controller is LogViewController)) {
+                ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
                 var navController = controller.NavigationController;
                 navController.SetViewControllers (new[] { new LogViewController () }, true);
-                // TODO: Store user selection?
             } else if (sender == settingsButton) {
                 var navController = controller.NavigationController;
                 navController.PushViewController (new SettingsViewController (), true);

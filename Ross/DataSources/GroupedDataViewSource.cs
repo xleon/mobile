@@ -34,6 +34,8 @@ namespace Toggl.Ross.DataSources
             base.Dispose (disposing);
         }
 
+        public UIView EmptyView { get; set; }
+
         public virtual void Attach ()
         {
             cache = new DataCache (this);
@@ -41,6 +43,19 @@ namespace Toggl.Ross.DataSources
             UpdateFooter ();
         }
 
+        public bool IsEmpty {
+            get { return !HasData && !dataView.IsLoading && !dataView.HasMore; }
+        }
+
+        protected virtual bool HasData {
+            get {
+                var sections = cache.GetSections ();
+                if (sections.Count == 1) {
+                    return cache.GetRows (sections [0]).Count > 0;
+                }
+                return sections.Count > 0;
+            }
+        }
 
         public override void Scrolled (UIScrollView scrollView)
         {
@@ -85,7 +100,6 @@ namespace Toggl.Ross.DataSources
                 }
             });
         }
-
 
         protected virtual void Update ()
         {
@@ -164,8 +178,8 @@ namespace Toggl.Ross.DataSources
                 }
                 tableView.TableFooterView = defaultFooterView;
                 defaultFooterView.StartAnimating ();
-            } else {
-                tableView.TableFooterView = null;
+            } else if (IsEmpty) {
+                tableView.TableFooterView = EmptyView;
             }
         }
 

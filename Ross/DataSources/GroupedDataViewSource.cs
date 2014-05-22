@@ -41,6 +41,7 @@ namespace Toggl.Ross.DataSources
             cache = new DataCache (this);
             tableView.Source = this;
             UpdateFooter ();
+            TryLoadMore ();
         }
 
         public bool IsEmpty {

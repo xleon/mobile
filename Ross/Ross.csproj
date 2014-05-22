@@ -243,6 +243,9 @@
     </Compile>
     <Compile Include="ViewControllers\SettingsViewController.cs" />
     <Compile Include="Views\LabelSwitchView.cs" />
+    <Compile Include="Theme\Style.Settings.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

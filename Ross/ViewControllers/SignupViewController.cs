@@ -114,6 +114,11 @@ namespace Toggl.Ross.ViewControllers
                 passwordActionButton.AtRightOf (View),
                 passwordActionButton.Height ().EqualTo (60f),
 
+                googleActionButton.Below (passwordActionButton, 5f),
+                googleActionButton.AtLeftOf (View),
+                googleActionButton.AtRightOf (View),
+                googleActionButton.Height ().EqualTo (60f),
+
                 legalLabel.AtBottomOf (View, 30f),
                 legalLabel.AtLeftOf (View, 40f),
                 legalLabel.AtRightOf (View, 40f)
@@ -122,6 +127,20 @@ namespace Toggl.Ross.ViewControllers
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints ();
 
             ResetSignupButtonState ();
+        }
+
+        public override void ViewWillAppear (bool animated)
+        {
+            base.ViewWillAppear (animated);
+
+            Google.Plus.SignIn.SharedInstance.Finished += OnGPlusFinished;
+        }
+
+        public override void ViewWillDisappear (bool animated)
+        {
+            base.ViewWillDisappear (animated);
+
+            Google.Plus.SignIn.SharedInstance.Finished -= OnGPlusFinished;
         }
 
         private void OnTextFieldEditingChanged (object sender, EventArgs e)
@@ -175,8 +194,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnGoogleActionButtonTouchUpInside (object sender, EventArgs e)
         {
-            // TODO: Add Google signup
-            Console.WriteLine ("Should attempt to sign up with G+...");
+            Google.Plus.SignIn.SharedInstance.Authenticate ();
         }
 
         private async void TryPasswordSignup ()
@@ -202,6 +220,39 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private void OnGPlusFinished (object sender, Google.Plus.SignInDelegateFinishedEventArgs e)
+        {
+            InvokeOnMainThread (async delegate {
+                try {
+                    if (e.Error == null) {
+                        IsAuthenticating = true;
+
+                        var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
+
+                        var authManager = ServiceContainer.Resolve<AuthManager> ();
+                        var success = await authManager.SignupWithGoogle (token);
+
+                        // No need to keep the users Google account access around anymore
+                        Google.Plus.SignIn.SharedInstance.Disconnect ();
+
+                        if (!success) {
+                            new UIAlertView (
+                                "SignupFailedTitle".Tr (),
+                                "SignupFailedMessage".Tr (),
+                                null, "SignupFailedOk".Tr (), null).Show ();
+                        }
+                    } else {
+                        new UIAlertView (
+                            "WelcomeGoogleErrorTitle".Tr (),
+                            "WelcomeGoogleErrorMessage".Tr (),
+                            null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
+                    }
+                } finally {
+                    IsAuthenticating = false;
+                }
+            });
+        }
+
         private bool isAuthenticating;
 
         private bool IsAuthenticating {
@@ -211,6 +262,7 @@ namespace Toggl.Ross.ViewControllers
                 emailTextField.Enabled = !isAuthenticating;
                 passwordTextField.Enabled = !isAuthenticating;
                 passwordActionButton.Enabled = !isAuthenticating;
+                googleActionButton.Enabled = !isAuthenticating;
 
                 passwordActionButton.SetTitle ("SignupSignupProgressText".Tr (), UIControlState.Disabled);
             }

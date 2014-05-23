@@ -27,7 +27,7 @@ namespace Toggl.Ross.Theme
 
             public static void GoogleButton (UIButton v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 20f);
+                v.Font = UIFont.FromName ("HelveticaNeue-Light", 16f);
                 v.SetBackgroundImage (UIColor.Clear.ToImage (), UIControlState.Normal);
                 v.SetBackgroundImage (UIColor.FromWhiteAlpha (0f, 0.3f).ToImage (), UIControlState.Highlighted);
                 v.SetTitleColor (Color.Gray, UIControlState.Normal);

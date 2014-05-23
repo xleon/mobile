@@ -1,7 +1,9 @@
 ﻿using System;
-using MonoTouch.UIKit;
-using Toggl.Ross.Theme;
 using Cirrious.FluentLayouts.Touch;
+using MonoTouch.UIKit;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
+using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -73,7 +75,8 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnGoogleButtonTouchUpInside (object sender, EventArgs e)
         {
-            Console.WriteLine ("Should login using google..");
+            IsAuthenticating = true;
+            Google.Plus.SignIn.SharedInstance.Authenticate ();
         }
 
         public override void ViewWillAppear (bool animated)
@@ -84,6 +87,8 @@ namespace Toggl.Ross.ViewControllers
             if (navController != null) {
                 navController.SetNavigationBarHidden (true, animated);
             }
+
+            Google.Plus.SignIn.SharedInstance.Finished += OnGPlusFinished;
         }
 
         public override void ViewWillDisappear (bool animated)
@@ -94,6 +99,59 @@ namespace Toggl.Ross.ViewControllers
             if (navController != null) {
                 navController.SetNavigationBarHidden (false, animated);
             }
+
+            Google.Plus.SignIn.SharedInstance.Finished -= OnGPlusFinished;
+        }
+
+        private bool IsAuthenticating {
+            get { return !View.UserInteractionEnabled; }
+            set {
+                if (View.UserInteractionEnabled == !value)
+                    return;
+
+                View.UserInteractionEnabled = !value;
+                UIView.Animate (0.3, 0,
+                    UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
+                    delegate {
+                        createButton.Alpha = value ? 0 : 1;
+                        googleButton.Alpha = value ? 0 : 1;
+                    },
+                    delegate {
+                    }
+                );
+                passwordButton.SetTitle (value ? "WelcomeLoggingIn".Tr () : "WelcomePassword".Tr (), UIControlState.Normal);
+            }
+        }
+
+        private void OnGPlusFinished (object sender, Google.Plus.SignInDelegateFinishedEventArgs e)
+        {
+            InvokeOnMainThread (async delegate {
+                try {
+                    if (e.Error == null) {
+                        var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
+
+                        var authManager = ServiceContainer.Resolve<AuthManager> ();
+                        var success = await authManager.AuthenticateWithGoogle (token);
+
+                        // No need to keep the users Google account access around anymore
+                        Google.Plus.SignIn.SharedInstance.Disconnect ();
+
+                        if (!success) {
+                            new UIAlertView (
+                                "WelcomeLoginErrorTitle".Tr (),
+                                "WelcomeLoginErrorMessage".Tr (),
+                                null, "WelcomeLoginErrorOk".Tr (), null).Show ();
+                        }
+                    } else {
+                        new UIAlertView (
+                            "WelcomeGoogleErrorTitle".Tr (),
+                            "WelcomeGoogleErrorMessage".Tr (),
+                            null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
+                    }
+                } finally {
+                    IsAuthenticating = false;
+                }
+            });
         }
     }
 }

@@ -26,6 +26,13 @@ namespace Toggl.Ross
         {
             RegisterComponents ();
 
+            var signIn = Google.Plus.SignIn.SharedInstance;
+            signIn.ClientId = Build.GoogleOAuthClientId;
+            signIn.Scopes = new [] {
+                "https://www.googleapis.com/auth/userinfo.profile",
+                "https://www.googleapis.com/auth/userinfo.email",
+            };
+
             Toggl.Ross.Theme.Style.Initialize ();
 
             // Start app
@@ -46,6 +53,11 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<SyncManager> ().Run (isResuming ? SyncMode.Auto : SyncMode.Full);
 
             isResuming = true;
+        }
+
+        public override bool OpenUrl (UIApplication application, NSUrl url, string sourceApplication, NSObject annotation)
+        {
+            return Google.Plus.UrlHandler.HandleUrl (url, sourceApplication, annotation);
         }
 
         private void RegisterComponents ()

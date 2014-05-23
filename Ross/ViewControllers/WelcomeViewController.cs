@@ -9,6 +9,7 @@ namespace Toggl.Ross.ViewControllers
 {
     public class WelcomeViewController : UIViewController
     {
+        private UINavigationController navController;
         private UIImageView logoImageView;
         private UILabel sloganLabel;
         private UIButton createButton;
@@ -83,7 +84,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillAppear (animated);
 
-            var navController = NavigationController;
+            navController = NavigationController;
             if (navController != null) {
                 navController.SetNavigationBarHidden (true, animated);
             }
@@ -95,9 +96,9 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillDisappear (animated);
 
-            var navController = NavigationController;
             if (navController != null) {
                 navController.SetNavigationBarHidden (false, animated);
+                navController = null;
             }
 
             Google.Plus.SignIn.SharedInstance.Finished -= OnGPlusFinished;

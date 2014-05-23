@@ -18,6 +18,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLoad ();
 
+            View.Apply (Style.Screen);
             NavigationBar.Apply (Style.NavigationBar);
             Delegate = new NavDelegate ();
         }

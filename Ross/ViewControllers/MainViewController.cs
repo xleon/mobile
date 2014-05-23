@@ -1,4 +1,5 @@
-﻿using MonoTouch.UIKit;
+﻿using MonoTouch.Foundation;
+using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -10,6 +11,8 @@ namespace Toggl.Ross.ViewControllers
     public class MainViewController : UINavigationController
     {
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
+        private Subscription<TogglHttpResponseMessage> subscriptionTogglHttpResponse;
+        private UIAlertView upgradeAlert;
 
         public override void ViewDidLoad ()
         {
@@ -23,9 +26,12 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillAppear (animated);
 
+            var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionAuthChanged == null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
                 subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
+            }
+            if (subscriptionTogglHttpResponse == null) {
+                subscriptionTogglHttpResponse = bus.Subscribe<TogglHttpResponseMessage> (OnTogglHttpResponse);
             }
 
             ResetRootViewController ();
@@ -33,10 +39,14 @@ namespace Toggl.Ross.ViewControllers
 
         public override void ViewWillDisappear (bool animated)
         {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionAuthChanged != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionAuthChanged);
                 subscriptionAuthChanged = null;
+            }
+            if (subscriptionTogglHttpResponse != null) {
+                bus.Unsubscribe (subscriptionTogglHttpResponse);
+                subscriptionTogglHttpResponse = null;
             }
 
             base.ViewWillDisappear (animated);
@@ -45,10 +55,14 @@ namespace Toggl.Ross.ViewControllers
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
                 if (subscriptionAuthChanged != null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
                     bus.Unsubscribe (subscriptionAuthChanged);
                     subscriptionAuthChanged = null;
+                }
+                if (subscriptionTogglHttpResponse != null) {
+                    bus.Unsubscribe (subscriptionTogglHttpResponse);
+                    subscriptionTogglHttpResponse = null;
                 }
             }
             base.Dispose (disposing);
@@ -57,6 +71,20 @@ namespace Toggl.Ross.ViewControllers
         private void OnAuthChanged (AuthChangedMessage msg)
         {
             ResetRootViewController ();
+        }
+
+        private void OnTogglHttpResponse (TogglHttpResponseMessage msg)
+        {
+            if (msg.StatusCode == System.Net.HttpStatusCode.Gone) {
+                if (upgradeAlert == null) {
+                    upgradeAlert = new UIAlertView (
+                        "MainUpdateNeededTitle".Tr (),
+                        "MainUpdateNeededMessage".Tr (),
+                        null, "MainUpdateNeededOk".Tr ());
+                    upgradeAlert.Clicked += (s, e) => UIApplication.SharedApplication.OpenUrl (new NSUrl (Build.AppStoreUrl));
+                }
+                upgradeAlert.Show ();
+            }
         }
 
         private void ResetRootViewController ()

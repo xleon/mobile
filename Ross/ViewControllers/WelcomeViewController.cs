@@ -76,7 +76,6 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnGoogleButtonTouchUpInside (object sender, EventArgs e)
         {
-            IsAuthenticating = true;
             Google.Plus.SignIn.SharedInstance.Authenticate ();
         }
 
@@ -129,6 +128,8 @@ namespace Toggl.Ross.ViewControllers
             InvokeOnMainThread (async delegate {
                 try {
                     if (e.Error == null) {
+                        IsAuthenticating = true;
+
                         var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
 
                         var authManager = ServiceContainer.Resolve<AuthManager> ();

@@ -1,4 +1,5 @@
-﻿using MonoTouch.Foundation;
+﻿using System;
+using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
@@ -12,6 +13,8 @@ namespace Toggl.Ross.ViewControllers
     {
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private Subscription<TogglHttpResponseMessage> subscriptionTogglHttpResponse;
+        private NavDelegate navDelegate;
+        private UIScreenEdgePanGestureRecognizer interactiveEdgePanGestureRecognizer;
         private UIAlertView upgradeAlert;
 
         public override void ViewDidLoad ()
@@ -20,7 +23,15 @@ namespace Toggl.Ross.ViewControllers
 
             View.Apply (Style.Screen);
             NavigationBar.Apply (Style.NavigationBar);
-            Delegate = new NavDelegate ();
+            Delegate = navDelegate = new NavDelegate ();
+
+            InteractivePopGestureRecognizer.ShouldBegin = GestureRecognizerShouldBegin;
+
+            interactiveEdgePanGestureRecognizer = new UIScreenEdgePanGestureRecognizer (OnEdgePanGesture) {
+                Edges = UIRectEdge.Left,
+                ShouldBegin = GestureRecognizerShouldBegin,
+            };
+            View.AddGestureRecognizer (interactiveEdgePanGestureRecognizer);
         }
 
         public override void ViewWillAppear (bool animated)
@@ -111,8 +122,59 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private void OnEdgePanGesture ()
+        {
+            var progress = interactiveEdgePanGestureRecognizer.TranslationInView (View).X / View.Bounds.Width;
+            progress = (float)Math.Min (1, Math.Max (0, progress));
+
+            switch (interactiveEdgePanGestureRecognizer.State) {
+            case UIGestureRecognizerState.Began:
+                navDelegate.InteractiveTransition = new UIPercentDrivenInteractiveTransition ();
+                PopViewControllerAnimated (true);
+                break;
+            case UIGestureRecognizerState.Changed:
+                navDelegate.InteractiveTransition.UpdateInteractiveTransition (progress);
+                break;
+            case UIGestureRecognizerState.Ended:
+            case UIGestureRecognizerState.Cancelled:
+                if (progress > 0.5) {
+                    navDelegate.InteractiveTransition.FinishInteractiveTransition ();
+                } else {
+                    navDelegate.InteractiveTransition.CancelInteractiveTransition ();
+                }
+                navDelegate.InteractiveTransition = null;
+                break;
+            }
+        }
+
+        private bool GestureRecognizerShouldBegin (UIGestureRecognizer recognizer)
+        {
+            // Make sure we're not mid transition or have too few view controllers
+            var transitionCoordinator = this.GetTransitionCoordinator ();
+            if (transitionCoordinator != null && transitionCoordinator.IsAnimated)
+                return false;
+            if (ViewControllers.Length <= 1)
+                return false;
+
+            var fromViewController = ViewControllers [ViewControllers.Length - 1];
+            var toViewController = ViewControllers [ViewControllers.Length - 2];
+
+            var fromDurationViewController = fromViewController as DurationChangeViewController;
+
+            if (fromDurationViewController != null && fromDurationViewController.PreviousControllerType == toViewController.GetType ()) {
+                if (recognizer == interactiveEdgePanGestureRecognizer)
+                    return true;
+            } else if (recognizer == InteractivePopGestureRecognizer) {
+                return true;
+            }
+
+            return false;
+        }
+
         private class NavDelegate : UINavigationControllerDelegate
         {
+            public UIPercentDrivenInteractiveTransition InteractiveTransition { get; set; }
+
             public override IUIViewControllerAnimatedTransitioning GetAnimationControllerForOperation (UINavigationController navigationController, UINavigationControllerOperation operation, UIViewController fromViewController, UIViewController toViewController)
             {
                 if (toViewController is DurationChangeViewController) {
@@ -128,6 +190,11 @@ namespace Toggl.Ross.ViewControllers
                     durationController.PreviousControllerType = null;
                 }
                 return null;
+            }
+
+            public override IUIViewControllerInteractiveTransitioning GetInteractionControllerForAnimationController (UINavigationController navigationController, IUIViewControllerAnimatedTransitioning animationController)
+            {
+                return InteractiveTransition;
             }
         }
     }

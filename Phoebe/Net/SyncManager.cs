@@ -71,7 +71,7 @@ namespace Toggl.Phoebe.Net
 
             // Resolve automatic sync mode to actual mode
             if (mode == SyncMode.Auto) {
-                if (LastRun != null && LastRun > Time.UtcNow - TimeSpan.FromHours (1)) {
+                if (LastRun != null && LastRun > Time.UtcNow - TimeSpan.FromMinutes (5)) {
                     mode = SyncMode.Push;
                 } else {
                     mode = SyncMode.Full;

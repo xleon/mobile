@@ -216,21 +216,25 @@ namespace Toggl.Phoebe.Net
         private static IModelQuery<T> QueryDirtyModels<T> ()
             where T : Model, new()
         {
+            IModelQuery<T> query;
+
             // Workaround to exclude intermediate models which we've created from assumptions (for current user
             // and without remote id) from returned models.
             if (typeof(T) == typeof(WorkspaceUserModel)) {
                 var userId = ServiceContainer.Resolve<AuthManager> ().UserId;
-                return (IModelQuery<T>)Model.Query<WorkspaceUserModel> (
-                    (m) => (m.ToId != userId || m.RemoteId != null)
-                    && (m.IsDirty || m.RemoteId == null || m.DeletedAt != null));
+                query = (IModelQuery<T>)Model.Query<WorkspaceUserModel> (
+                    (m) => (m.ToId != userId || m.RemoteId != null));
             } else if (typeof(T) == typeof(ProjectUserModel)) {
                 var userId = ServiceContainer.Resolve<AuthManager> ().UserId;
-                return (IModelQuery<T>)Model.Query<ProjectUserModel> (
-                    (m) => (m.ToId != userId || m.RemoteId != null)
-                    && (m.IsDirty || m.RemoteId == null || m.DeletedAt != null));
+                query = (IModelQuery<T>)Model.Query<ProjectUserModel> (
+                    (m) => (m.ToId != userId || m.RemoteId != null));
+            } else {
+                query = Model.Query<T> ();
             }
 
-            return Model.Query<T> ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null);
+            query.Where ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null);
+
+            return query;
         }
 
         private async Task<Exception> PushModel (Model model)

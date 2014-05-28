@@ -50,7 +50,7 @@ namespace Toggl.Ross
         public override void OnActivated (UIApplication application)
         {
             // Make sure the user data is refreshed when the application becomes active
-            ServiceContainer.Resolve<SyncManager> ().Run (isResuming ? SyncMode.Auto : SyncMode.Full);
+            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
 
             isResuming = true;
         }

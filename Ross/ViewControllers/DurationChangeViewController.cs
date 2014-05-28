@@ -130,7 +130,9 @@ namespace Toggl.Ross.ViewControllers
                         toController.View.Alpha = 1;
                     },
                     delegate {
-                        fromController.View.RemoveFromSuperview ();
+                        if (!transitionContext.TransitionWasCancelled) {
+                            fromController.View.RemoveFromSuperview ();
+                        }
                         transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
                     }
                 );
@@ -160,7 +162,9 @@ namespace Toggl.Ross.ViewControllers
                         fromController.View.Alpha = 0;
                     },
                     delegate {
-                        fromController.View.RemoveFromSuperview ();
+                        if (!transitionContext.TransitionWasCancelled) {
+                            fromController.View.RemoveFromSuperview ();
+                        }
                         transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
                     }
                 );

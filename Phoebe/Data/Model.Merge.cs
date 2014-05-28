@@ -40,6 +40,7 @@ namespace Toggl.Phoebe.Data
                 // Update our own properties in a specific order:
                 this.RemoteId = other.RemoteId;
                 this.RemoteDeletedAt = other.RemoteDeletedAt;
+                this.RemoteRejected = other.RemoteRejected;
                 if (other.RemoteDeletedAt != null) {
                     // Custom logic for handling remote deletions:
                     this.IsPersisted = false;

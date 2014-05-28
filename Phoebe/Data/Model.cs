@@ -53,6 +53,9 @@ namespace Toggl.Phoebe.Data
             if (!IsShared || IsMerging)
                 return;
 
+            // Reset rejected flag to try sending it to the server again
+            RemoteRejected = false;
+
             if (updateModTime)
                 ModifiedAt = Time.UtcNow;
             IsDirty = true;
@@ -124,6 +127,22 @@ namespace Toggl.Phoebe.Data
                         Manager.NotifyRemoteIdChanged (this, oldId, remoteId);
                     });
                 }
+            }
+        }
+
+        private bool remoteRejected;
+        public static readonly string PropertyRemoteRejected = GetPropertyName ((m) => m.RemoteRejected);
+
+        [DontDirty]
+        public bool RemoteRejected {
+            get { return remoteRejected; }
+            set {
+                if (remoteRejected == value)
+                    return;
+
+                ChangePropertyAndNotify (PropertyRemoteRejected, delegate {
+                    remoteRejected = value;
+                });
             }
         }
 

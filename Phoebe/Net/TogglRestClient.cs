@@ -209,7 +209,11 @@ namespace Toggl.Phoebe.Net
         private void PrepareResponse (HttpResponseMessage resp)
         {
             ServiceContainer.Resolve<MessageBus> ().Send (new TogglHttpResponseMessage (this, resp));
-            resp.EnsureSuccessStatusCode ();
+            if (resp.StatusCode == HttpStatusCode.BadRequest) {
+                throw new ServerValidationException ();
+            } else if (!resp.IsSuccessStatusCode) {
+                throw new HttpRequestException (String.Format ("{0} ({1})", (int)resp.StatusCode, resp.ReasonPhrase));
+            }
         }
 
         private async Task CreateModel<T> (Uri url, T model, Action<T, T> merger = null)

@@ -163,8 +163,21 @@ namespace Toggl.Phoebe.Net
                             break;
 
                         foreach (var model in models) {
-                            tasks.Add (PushModel (model));
+                            if (model.RemoteRejected) {
+                                if (model.RemoteId == null) {
+                                    // Creation has failed, so remove the whole branch.
+                                    graph.RemoveBranch (model);
+                                } else {
+                                    graph.Remove (model);
+                                }
+                            } else {
+                                tasks.Add (PushModel (model));
+                            }
                         }
+
+                        // Nothing was pushed this round
+                        if (tasks.Count < 1)
+                            continue;
 
                         await Task.WhenAll (tasks)
                             .ConfigureAwait (continueOnCapturedContext: false);
@@ -185,7 +198,10 @@ namespace Toggl.Phoebe.Net
 
                                 // Log error
                                 var id = model.RemoteId.HasValue ? model.RemoteId.ToString () : model.Id.ToString ();
-                                if (error is System.Net.Http.HttpRequestException) {
+                                if (error is ServerValidationException) {
+                                    log.Info (Tag, error, "Server rejected {0}#{1}.", model.GetType ().Name, id);
+                                    model.RemoteRejected = true;
+                                } else if (error is System.Net.Http.HttpRequestException) {
                                     log.Info (Tag, error, "Failed to sync {0}#{1}.", model.GetType ().Name, id);
                                 } else {
                                     log.Warning (Tag, error, "Failed to sync {0}#{1}.", model.GetType ().Name, id);
@@ -258,6 +274,8 @@ namespace Toggl.Phoebe.Net
                     await client.Create (model)
                         .ConfigureAwait (continueOnCapturedContext: false);
                 }
+            } catch (ServerValidationException ex) {
+                return ex;
             } catch (System.Net.Http.HttpRequestException ex) {
                 return ex;
             }

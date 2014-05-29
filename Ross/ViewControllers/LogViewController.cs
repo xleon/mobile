@@ -99,6 +99,7 @@ namespace Toggl.Ross.ViewControllers
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
                 var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
+                cell.ContinueCallback = OnContinue;
                 cell.Bind (GetRow (indexPath));
                 return cell;
             }
@@ -134,6 +135,11 @@ namespace Toggl.Ross.ViewControllers
                 } else {
                     tableView.DeselectRow (indexPath, true);
                 }
+            }
+
+            private void OnContinue (TimeEntryModel model)
+            {
+                controller.TableView.ScrollRectToVisible (new RectangleF (0, 0, 1, 1), true);
             }
         }
 
@@ -199,6 +205,8 @@ namespace Toggl.Ross.ViewControllers
                 if (DataSource == null)
                     return;
                 DataSource.Continue ();
+                if (ContinueCallback != null)
+                    ContinueCallback (DataSource);
             }
 
             protected override void OnDelete ()
@@ -440,6 +448,8 @@ namespace Toggl.Ross.ViewControllers
                         Rebind ();
                 }
             }
+
+            public Action<TimeEntryModel> ContinueCallback { get; set; }
         }
 
         class SectionHeaderView : UITableViewHeaderFooterView

@@ -144,14 +144,14 @@ namespace Toggl.Phoebe.Net
                 if (mode.HasFlag (SyncMode.Push)) {
                     // Construct dependency graph:
                     var graph = ModelGraph.FromDirty (Enumerable.Empty<Model> ()
-                        .Union (QueryDirtyModels<WorkspaceModel> ())
-                        .Union (QueryDirtyModels<WorkspaceUserModel> ())
-                        .Union (QueryDirtyModels<TagModel> ())
-                        .Union (QueryDirtyModels<ClientModel> ())
-                        .Union (QueryDirtyModels<ProjectModel> ())
-                        .Union (QueryDirtyModels<ProjectUserModel> ())
-                        .Union (QueryDirtyModels<TaskModel> ())
-                        .Union (QueryDirtyModels<TimeEntryModel> ().ForCurrentUser ().Where ((m) => m.State != TimeEntryState.New)));
+                        .Concat (QueryDirtyModels<WorkspaceModel> ())
+                        .Concat (QueryDirtyModels<WorkspaceUserModel> ())
+                        .Concat (QueryDirtyModels<TagModel> ())
+                        .Concat (QueryDirtyModels<ClientModel> ())
+                        .Concat (QueryDirtyModels<ProjectModel> ())
+                        .Concat (QueryDirtyModels<ProjectUserModel> ())
+                        .Concat (QueryDirtyModels<TaskModel> ())
+                        .Concat (QueryDirtyModels<TimeEntryModel> ().ForCurrentUser ().Where ((m) => m.State != TimeEntryState.New)));
 
                     // Start pushing the dependencies from the end nodes up
                     var tasks = new List<Task<Exception>> ();

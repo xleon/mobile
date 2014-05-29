@@ -248,7 +248,7 @@ namespace Toggl.Phoebe.Net
                 query = Model.Query<T> ();
             }
 
-            query.Where ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null);
+            query = query.Where ((m) => m.IsDirty || m.RemoteId == null || m.DeletedAt != null);
 
             return query;
         }

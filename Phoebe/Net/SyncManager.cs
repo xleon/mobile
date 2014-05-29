@@ -55,14 +55,15 @@ namespace Toggl.Phoebe.Net
             }
 
             try {
-                await RunInBackground (mode);
+                // Make sure that the RunInBackground is actually started on a background thread
+                LastRun = await await Task.Factory.StartNew (() => RunInBackground (mode, LastRun));
             } finally {
                 IsRunning = false;
                 subscriptionModelsCommited = bus.Subscribe<ModelsCommittedMessage> (OnModelsCommited);
             }
         }
 
-        private async Task RunInBackground (SyncMode mode)
+        private async Task<DateTime?> RunInBackground (SyncMode mode, DateTime? lastRun)
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
@@ -71,7 +72,7 @@ namespace Toggl.Phoebe.Net
 
             // Resolve automatic sync mode to actual mode
             if (mode == SyncMode.Auto) {
-                if (LastRun != null && LastRun > Time.UtcNow - TimeSpan.FromMinutes (5)) {
+                if (lastRun != null && lastRun > Time.UtcNow - TimeSpan.FromMinutes (5)) {
                     mode = SyncMode.Push;
                 } else {
                     mode = SyncMode.Full;
@@ -98,7 +99,7 @@ namespace Toggl.Phoebe.Net
                 }
 
                 if (mode.HasFlag (SyncMode.Pull)) {
-                    var changes = await client.GetChanges (LastRun)
+                    var changes = await client.GetChanges (lastRun)
                         .ConfigureAwait (continueOnCapturedContext: false);
 
                     changes.User.IsPersisted = true;
@@ -137,7 +138,7 @@ namespace Toggl.Phoebe.Net
 
                     if (modelStore.TryCommit ()) {
                         // Update LastRun incase the data was persisted successfully
-                        LastRun = changes.Timestamp;
+                        lastRun = changes.Timestamp;
                     }
                 }
 
@@ -227,6 +228,8 @@ namespace Toggl.Phoebe.Net
             } finally {
                 bus.Send (new SyncFinishedMessage (this, mode, hasErrors, ex));
             }
+
+            return lastRun;
         }
 
         private static IModelQuery<T> QueryDirtyModels<T> ()

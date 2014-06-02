@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
+using GoogleAnalytics.iOS;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
@@ -390,6 +391,15 @@ namespace Toggl.Ross.ViewControllers
             if (obj != null) {
                 notificationObjects.Add (obj);
             }
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Edit Time Entry View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         public override void ViewWillDisappear (bool animated)

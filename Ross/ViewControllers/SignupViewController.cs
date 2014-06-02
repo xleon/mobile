@@ -1,5 +1,6 @@
 ﻿using System;
 using Cirrious.FluentLayouts.Touch;
+using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.TTTAttributedLabel;
 using MonoTouch.UIKit;
@@ -134,6 +135,15 @@ namespace Toggl.Ross.ViewControllers
             base.ViewWillAppear (animated);
 
             Google.Plus.SignIn.SharedInstance.Finished += OnGPlusFinished;
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Signup View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         public override void ViewWillDisappear (bool animated)

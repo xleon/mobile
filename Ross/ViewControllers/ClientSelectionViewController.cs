@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Drawing;
+using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 
@@ -28,6 +30,15 @@ namespace Toggl.Ross.ViewControllers
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
             new Source (this).Attach ();
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Client Selection View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         public Action<ClientModel> ClientSelected { get; set; }

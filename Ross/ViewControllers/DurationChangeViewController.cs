@@ -1,7 +1,9 @@
 ﻿using System;
+using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 
@@ -56,6 +58,10 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
             durationView.BecomeFirstResponder ();
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Duration Change View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         public override void ViewWillDisappear (bool animated)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
+using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
@@ -112,6 +113,15 @@ namespace Toggl.Ross.ViewControllers
             }
 
             isResuming = true;
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Settings View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         public override void ViewWillDisappear (bool animated)

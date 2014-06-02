@@ -1,5 +1,6 @@
 ﻿using System;
 using Cirrious.FluentLayouts.Touch;
+using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -89,6 +90,15 @@ namespace Toggl.Ross.ViewControllers
             }
 
             Google.Plus.SignIn.SharedInstance.Finished += OnGPlusFinished;
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Welcome View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         public override void ViewWillDisappear (bool animated)

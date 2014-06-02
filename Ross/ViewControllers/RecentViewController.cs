@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using GoogleAnalytics.iOS;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
@@ -8,6 +9,7 @@ using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
@@ -50,6 +52,15 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLayoutSubviews ();
 
             emptyView.Frame = new RectangleF (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Recent View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         class Source : GroupedDataViewSource<TimeEntryModel, string, TimeEntryModel>

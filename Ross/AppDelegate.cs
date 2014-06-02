@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Joey.Net;
@@ -43,6 +44,11 @@ namespace Toggl.Ross
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<BugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
+
+            #if DEBUG
+            GAI.SharedInstance.DryRun = true;
+            #endif
+            ServiceContainer.Resolve<IGAITracker> ();
 
             return true;
         }
@@ -94,6 +100,8 @@ namespace Toggl.Ross
                 };
             });
             ServiceContainer.Register<BugsnagUserManager> ();
+            ServiceContainer.Register<IGAITracker> (
+                () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
         }
 
         string IPlatformInfo.AppIdentifier {

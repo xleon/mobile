@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 
@@ -36,6 +38,15 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "TagSet".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarSetClicked)
                 .Apply (Style.NavLabelButton);
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            var tracker = ServiceContainer.Resolve<IGAITracker> ();
+            tracker.Set (GAIConstants.ScreenName, "Tag Selection View");
+            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
         private void OnNavigationBarSetClicked (object s, EventArgs e)

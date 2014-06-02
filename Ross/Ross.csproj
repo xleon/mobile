@@ -286,7 +286,9 @@
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-Small%402x.png" />
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-Small-40%402x.png" />
     <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\Contents.json" />
-    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\Default-568h%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash4%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash.png" />
   </ItemGroup>
   <ItemGroup>
     <ITunesArtwork Include="iTunesArtwork" />

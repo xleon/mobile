@@ -141,6 +141,9 @@
     <Reference Include="Google.Plus">
       <HintPath>..\Components\googleplusandplayios-1.3.0.1\lib\ios\Google.Plus.dll</HintPath>
     </Reference>
+    <Reference Include="GoogleAnalytics.iOS">
+      <HintPath>..\Components\googleanalytics-3.0.3.4\lib\ios\GoogleAnalytics.iOS.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
@@ -292,6 +295,10 @@
   <ItemGroup>
     <XamarinComponentReference Include="googleplusandplayios">
       <Version>1.3.0.1</Version>
+      <Visible>False</Visible>
+    </XamarinComponentReference>
+    <XamarinComponentReference Include="googleanalytics">
+      <Version>3.0.3.4</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>

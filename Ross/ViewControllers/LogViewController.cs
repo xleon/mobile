@@ -435,6 +435,7 @@ namespace Toggl.Ross.ViewControllers
 
                 if (DataSource == msg.Model) {
                     if (msg.PropertyName == TimeEntryModel.PropertyStartTime
+                        || msg.PropertyName == TimeEntryModel.PropertyStopTime
                         || msg.PropertyName == TimeEntryModel.PropertyIsBillable
                         || msg.PropertyName == TimeEntryModel.PropertyState
                         || msg.PropertyName == TimeEntryModel.PropertyDescription

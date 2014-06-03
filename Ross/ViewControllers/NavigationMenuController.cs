@@ -46,12 +46,12 @@ namespace Toggl.Ross.ViewControllers
             menuView = new UIView ().Apply (Style.NavMenu.Background);
 
             menuButtons = new[] {
-                (recentButton = new UIButton ()),
+                // (recentButton = new UIButton ()),
                 (logButton = new UIButton ()),
                 (settingsButton = new UIButton ()),
                 (signOutButton = new UIButton ()),
             };
-            recentButton.SetTitle ("NavMenuRecent".Tr (), UIControlState.Normal);
+            // recentButton.SetTitle ("NavMenuRecent".Tr (), UIControlState.Normal);
             logButton.SetTitle ("NavMenuLog".Tr (), UIControlState.Normal);
             settingsButton.SetTitle ("NavMenuSettings".Tr (), UIControlState.Normal);
             signOutButton.SetTitle ("NavMenuSignOut".Tr (), UIControlState.Normal);

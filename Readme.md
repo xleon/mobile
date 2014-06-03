@@ -54,14 +54,7 @@ Xamarin Studio settings > Text Editor > Behavior.
 
 Want to write open source code for a living? Love writing mobile applications using Xamarin technologies? Sick of the daily commute to the office?
 
-We are looking for talented Android/iOS hackers who would help us improve our mobile apps - make them faster, more polished, more stable, etc. It doesn’t matter where you are located, as long as you can communicate clearly in English and are proficient in a Github based workflow.
-
-Sounds good? Here’s what you should do:
-
-1. Show us your code. Links to your public repositories or (better yet) submit a pull request.
-2. Suggest changes and improvements, which you would like to work on when you're hired.
-
-Email these to jobs@toggl.com. Don't forget to add a short introduction of yourself.
+Check out our jobs page for the [Xamarin/.NET mobile developer position](http://jobs.toggl.com/#xamarin).
 
 ## License
 

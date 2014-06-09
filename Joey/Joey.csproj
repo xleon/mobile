@@ -63,7 +63,7 @@
       <HintPath>..\Components\googleplayservices-15.0.2\lib\android\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
     </Reference>
     <Reference Include="GoogleAnalytics.Android">
-      <HintPath>..\Components\googleanalytics-3.0.3.2\lib\android\GoogleAnalytics.Android.dll</HintPath>
+      <HintPath>..\Components\googleanalytics-3.0.3.4\lib\android\GoogleAnalytics.Android.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -501,7 +501,7 @@
       <Visible>False</Visible>
     </XamarinComponentReference>
     <XamarinComponentReference Include="googleanalytics">
-      <Version>3.0.3.2</Version>
+      <Version>3.0.3.4</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>

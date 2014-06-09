@@ -23,10 +23,8 @@ You should begin by initializing git submodules we reference:
 	$ git submodule init
 	$ git submodule update
 
-We use some NuGet packages, so you need to install an addin for Xamarin Studio:
-[installation instructions](https://github.com/mrward/monodevelop-nuget-addin#installation).
-After successfully installing the addin, you need to right click on the solution and select
-"Restore NuGet Packages".
+You also need to restore NuGet packages for the solution. In Xamarin Studio 3.0 you can find the
+*Restore Packages* under *Project* menu.
 
 Before compiling any of the projects, there is one last file you need to edit.
 [Phoebe/Build.cs](https://github.com/toggl/mobile/blob/master/Phoebe/Build.cs) contains various

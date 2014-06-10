@@ -23,7 +23,7 @@ You should begin by initializing git submodules we reference:
 	$ git submodule init
 	$ git submodule update
 
-You also need to restore NuGet packages for the solution. In Xamarin Studio 3.0 you can find the
+You also need to restore NuGet packages for the solution. In Xamarin Studio 5.0 you can find the
 *Restore Packages* under *Project* menu.
 
 Before compiling any of the projects, there is one last file you need to edit.

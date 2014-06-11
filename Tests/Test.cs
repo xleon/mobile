@@ -22,6 +22,7 @@ namespace Toggl.Phoebe.Tests
         {
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<ModelManager> ();
+            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
         }
 
         [TearDown]

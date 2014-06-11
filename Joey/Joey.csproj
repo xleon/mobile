@@ -458,6 +458,7 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcEdit.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcEdit.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcEdit.png" />
+    <AndroidResource Include="Resources\layout\ChangeTimeEntryStopTimeDialogFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

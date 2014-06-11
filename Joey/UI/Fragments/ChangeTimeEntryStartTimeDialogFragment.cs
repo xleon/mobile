@@ -86,6 +86,7 @@ namespace Toggl.Joey.UI.Fragments
             DatePicker = view.FindViewById<DatePicker> (Resource.Id.DatePicker);
 
             TabsRadioGroup.CheckedChange += OnTabsRadioGroupCheckedChange;
+
             TimePicker.SetIs24HourView (new Java.Lang.Boolean (
                 DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ())));
             TimePicker.CurrentHour = new Java.Lang.Integer (time.Hour);

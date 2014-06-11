@@ -12,10 +12,10 @@ namespace Toggl.Phoebe.Data.Json
         public bool IsActive { get; set; }
 
         [JsonProperty ("name")]
-        private string Name { get; set; }
+        public string Name { get; set; }
 
         [JsonProperty ("email")]
-        private string Email { get; set; }
+        public string Email { get; set; }
 
         [JsonProperty ("wid")]
         public long WorkspaceId { get; set; }

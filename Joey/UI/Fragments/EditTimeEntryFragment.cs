@@ -354,6 +354,7 @@ namespace Toggl.Joey.UI.Fragments
             // Only update DescriptionEditText when content differs, else the user is unable to edit it
             if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
                 DescriptionEditText.Text = TimeEntry.Description;
+                DescriptionEditText.SetSelection (DescriptionEditText.Text.Length);
             }
             DescriptionEditText.SetHint (useTimer
                 ? Resource.String.CurrentTimeEntryEditDescriptionHint

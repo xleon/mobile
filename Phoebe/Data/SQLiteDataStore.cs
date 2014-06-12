@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SQLite;
 using XPlatUtils;
@@ -85,7 +86,7 @@ namespace Toggl.Phoebe.Data
 
         public IDataQuery<T> Table<T> () where T : new()
         {
-            throw new NotImplementedException ();
+            return new QueryBuilder<T> (this, ctx.Connection.Table<T> ());
         }
 
         public Task<T> ExecuteInTransactionAsync<T> (Func<IDataStoreContext, T> worker)
@@ -118,6 +119,63 @@ namespace Toggl.Phoebe.Data
                     throw;
                 }
             });
+        }
+
+        private class QueryBuilder<T> : IDataQuery<T>
+            where T : new()
+        {
+            private readonly SQLiteDataStore store;
+            private readonly TableQuery<T> query;
+
+            public QueryBuilder (SQLiteDataStore store, TableQuery<T> query)
+            {
+                this.store = store;
+                this.query = query;
+            }
+
+            public IDataQuery<T> Where (Expression<Func<T, bool>> predicate)
+            {
+                return new QueryBuilder<T> (store, query.Where (predicate));
+            }
+
+            public IDataQuery<T> OrderBy<U> (Expression<Func<T, U>> orderExpr, bool asc = true)
+            {
+                if (asc) {
+                    return new QueryBuilder<T> (store, query.OrderBy (orderExpr));
+                } else {
+                    return new QueryBuilder<T> (store, query.OrderByDescending (orderExpr));
+                }
+            }
+
+            public IDataQuery<T> Take (int n)
+            {
+                return new QueryBuilder<T> (store, query.Take (n));
+            }
+
+            public IDataQuery<T> Skip (int n)
+            {
+                return new QueryBuilder<T> (store, query.Skip (n));
+            }
+
+            public Task<int> CountAsync ()
+            {
+                return store.scheduler.Enqueue (() => query.Count ());
+            }
+
+            public Task<int> CountAsync (Expression<Func<T, bool>> predicate)
+            {
+                return new QueryBuilder<T> (store, query.Where (predicate)).CountAsync ();
+            }
+
+            public Task<List<T>> QueryAsync ()
+            {
+                return store.scheduler.Enqueue (() => query.ToList ());
+            }
+
+            public Task<List<T>> QueryAsync (Expression<Func<T, bool>> predicate)
+            {
+                return new QueryBuilder<T> (store, query.Where (predicate)).QueryAsync ();
+            }
         }
 
         private class Context : IDataStoreContext

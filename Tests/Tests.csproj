@@ -48,6 +48,7 @@
     <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
     <Compile Include="Data\ModelGraphTest.cs" />
     <Compile Include="MessageBusTest.cs" />
+    <Compile Include="Data\DataStoreTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

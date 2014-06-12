@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
@@ -29,6 +30,11 @@ namespace Toggl.Phoebe.Tests
         public virtual void TearDown ()
         {
             ServiceContainer.Clear ();
+        }
+
+        protected void RunAsync (Func<Task> fn)
+        {
+            fn ().GetAwaiter ().GetResult ();
         }
 
         protected MessageBus MessageBus {

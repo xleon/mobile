@@ -15,7 +15,7 @@ namespace Toggl.Phoebe.Data
 
         public SQLiteDataStore (string dbPath)
         {
-            ctx = new Context (dbPath);
+            ctx = new Context (this, dbPath);
             CreateTables ();
         }
 
@@ -58,7 +58,11 @@ namespace Toggl.Phoebe.Data
         {
             obj = Clone (obj);
             return scheduler.Enqueue (delegate {
-                return ctx.Put<T> (obj);
+                try {
+                    return ctx.Put<T> (obj);
+                } finally {
+                    ctx.SendMessages ();
+                }
             });
         }
 
@@ -66,7 +70,11 @@ namespace Toggl.Phoebe.Data
         {
             obj = Clone (obj);
             return scheduler.Enqueue (delegate {
-                return ctx.Delete (obj);
+                try {
+                    return ctx.Delete (obj);
+                } finally {
+                    ctx.SendMessages ();
+                }
             });
         }
 
@@ -98,8 +106,10 @@ namespace Toggl.Phoebe.Data
                 try {
                     ret = worker (ctx);
                     ctx.Connection.Commit ();
+                    ctx.SendMessages ();
                 } catch {
                     ctx.Connection.Rollback ();
+                    ctx.ClearMessages ();
                     throw;
                 }
 
@@ -114,8 +124,10 @@ namespace Toggl.Phoebe.Data
                 try {
                     worker (ctx);
                     ctx.Connection.Commit ();
+                    ctx.SendMessages ();
                 } catch {
                     ctx.Connection.Rollback ();
+                    ctx.ClearMessages ();
                     throw;
                 }
             });
@@ -180,10 +192,13 @@ namespace Toggl.Phoebe.Data
 
         private class Context : IDataStoreContext
         {
+            private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
+            private readonly SQLiteDataStore store;
             private readonly SQLiteConnection conn;
 
-            public Context (string dbPath)
+            public Context (SQLiteDataStore store, string dbPath)
             {
+                this.store = store;
                 conn = new SQLiteConnection (dbPath);
             }
 
@@ -192,7 +207,8 @@ namespace Toggl.Phoebe.Data
             {
                 conn.InsertOrReplace (obj);
 
-                // TODO: Schedule message to be sent about this update post transaction
+                // Schedule message to be sent about this update post transaction
+                messages.Add (new DataChangeMessage (store, obj, DataAction.Put));
 
                 return obj;
             }
@@ -200,14 +216,32 @@ namespace Toggl.Phoebe.Data
             public bool Delete (object obj)
             {
                 var count = conn.Delete (obj);
+                var success = count > 0;
 
-                // TODO: Schedule message to be sent about this update post transaction
+                // Schedule message to be sent about this delete post transaction
+                if (success) {
+                    messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
+                }
 
-                return count > 0;
+                return success;
             }
 
             public SQLiteConnection Connection {
                 get { return conn; }
+            }
+
+            public void SendMessages ()
+            {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                foreach (var msg in messages) {
+                    bus.Send (msg);
+                }
+                messages.Clear ();
+            }
+
+            public void ClearMessages ()
+            {
+                messages.Clear ();
             }
         }
 

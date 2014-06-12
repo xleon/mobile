@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
@@ -10,6 +11,8 @@ namespace Toggl.Phoebe.Tests.Data
     [TestFixture]
     public class DataStoreTest : Test
     {
+        private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
+        private Subscription<DataChangeMessage> subscriptionDataChange;
         private string tmpDb;
 
         private IDataStore DataStore {
@@ -22,14 +25,24 @@ namespace Toggl.Phoebe.Tests.Data
 
             tmpDb = Path.GetTempFileName ();
             ServiceContainer.Register<IDataStore> (new SQLiteDataStore (tmpDb));
+
+            messages.Clear ();
+            subscriptionDataChange = MessageBus.Subscribe<DataChangeMessage> ((msg) => {
+                lock (messages) {
+                    messages.Add (msg);
+                }
+            }, threadSafe: true);
         }
 
         public override void TearDown ()
         {
-            base.TearDown ();
+            MessageBus.Unsubscribe (subscriptionDataChange);
+            subscriptionDataChange = null;
 
             File.Delete (tmpDb);
             tmpDb = null;
+
+            base.TearDown ();
         }
 
         [Test]
@@ -44,6 +57,11 @@ namespace Toggl.Phoebe.Tests.Data
 
                 Assert.AreNotSame (obj1, obj2, "Put should return a new instance of the object.");
                 Assert.AreNotEqual (obj1.Id, obj2.Id, "Primary key was not set!");
+
+                // Verify that single message was sent
+                Assert.That (messages, Has.Count.EqualTo (1));
+                Assert.That (messages, Has.Exactly (1)
+                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj2.Matches (msg.Data)));
             });
         }
 
@@ -62,6 +80,11 @@ namespace Toggl.Phoebe.Tests.Data
 
                 Assert.AreNotSame (obj1, obj2, "Put should return a new instance of the object.");
                 Assert.AreEqual ("Other", obj2.Name, "Property was not updated.");
+
+                // Verify that the message about object update was delivered
+                Assert.That (messages, Has.Count.EqualTo (2));
+                Assert.That (messages, Has.Exactly (2)
+                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj2.Matches (msg.Data)));
             });
         }
 
@@ -77,6 +100,13 @@ namespace Toggl.Phoebe.Tests.Data
                 // Delete it
                 var success = await DataStore.DeleteAsync (obj1);
                 Assert.IsTrue (success, "Object was not deleted.");
+
+                // Verify that the message about object delete was delivered
+                Assert.That (messages, Has.Count.EqualTo (2));
+                Assert.That (messages, Has.Exactly (1)
+                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj1.Matches (msg.Data)));
+                Assert.That (messages, Has.Exactly (1)
+                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Delete && obj1.Matches (msg.Data)));
             });
         }
 
@@ -93,6 +123,8 @@ namespace Toggl.Phoebe.Tests.Data
                 // Delete it
                 var success = await DataStore.DeleteAsync (obj1);
                 Assert.IsFalse (success, "Delete should've failed.");
+
+                Assert.That (messages, Has.Count.EqualTo (0));
             });
         }
 
@@ -110,6 +142,7 @@ namespace Toggl.Phoebe.Tests.Data
                 await DataStore.PutAsync (new WorkspaceData () {
                     Name = "Foo #1",
                 });
+                messages.Clear ();
 
                 var count = await DataStore.Table<WorkspaceData> ().CountAsync ();
                 Assert.AreEqual (3, count, "Query returned false count for items.");
@@ -128,6 +161,8 @@ namespace Toggl.Phoebe.Tests.Data
                     .QueryAsync ((m) => m.Name.StartsWith ("Test"));
                 Assert.AreEqual (1, data.Count, "Should've received only a single result");
                 Assert.AreEqual ("Test #2", data [0].Name, "Invalid item returned");
+
+                Assert.That (messages, Has.Count.EqualTo (0));
             });
         }
 
@@ -145,6 +180,33 @@ namespace Toggl.Phoebe.Tests.Data
                     Assert.AreEqual (obj1.Id, obj2.Id);
                     Assert.AreEqual (obj1.Name, obj2.Name);
                 });
+
+                // Verify messages
+                Assert.That (messages, Has.Count.EqualTo (1));
+                Assert.That (messages, Has.Exactly (1)
+                    .Matches<DataChangeMessage> ((msg) => msg.Action == DataAction.Put));
+            });
+        }
+
+        [Test]
+        public void TestTransactionRollback ()
+        {
+            RunAsync (async delegate {
+                var obj1 = await DataStore.PutAsync (new WorkspaceData () {
+                    Name = "Test",
+                });
+                messages.Clear ();
+
+                try {
+                    await DataStore.ExecuteInTransactionAsync ((ctx) => {
+                        Assert.IsTrue (ctx.Delete (obj1));
+                        throw new NotImplementedException ();
+                    });
+                } catch (NotImplementedException) {
+                }
+
+                // Verify no delete messages got through messages
+                Assert.That (messages, Has.Count.EqualTo (0));
             });
         }
     }

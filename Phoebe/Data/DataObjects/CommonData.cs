@@ -1,4 +1,5 @@
 ﻿using System;
+using SQLite;
 
 namespace Toggl.Phoebe.Data.DataObjects
 {
@@ -25,7 +26,7 @@ namespace Toggl.Phoebe.Data.DataObjects
         }
 
         [DontDirty]
-        [SQLite.PrimaryKey]
+        [PrimaryKey, AutoIncrement]
         public Guid Id { get; set; }
 
         public DateTime ModifiedAt { get; set; }
@@ -36,7 +37,7 @@ namespace Toggl.Phoebe.Data.DataObjects
         public bool IsDirty { get; set; }
 
         [DontDirty]
-        [SQLite.Unique]
+        [Unique]
         public long? RemoteId { get; set; }
 
         [DontDirty]

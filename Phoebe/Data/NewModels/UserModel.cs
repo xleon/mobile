@@ -77,7 +77,7 @@ namespace Toggl.Phoebe.Data.NewModels
                 OnPropertyChanged (PropertySendWeeklyReport);
             if (oldData.TrackingMode != newData.TrackingMode)
                 OnPropertyChanged (PropertyTrackingMode);
-            if (oldData.DefaultWorkspaceId != newData.DefaultWorkspaceId || defaultWorkspace.HasChanged)
+            if (oldData.DefaultWorkspaceId != newData.DefaultWorkspaceId || defaultWorkspace.IsNewInstance)
                 OnPropertyChanged (PropertyDefaultWorkspace);
         }
 

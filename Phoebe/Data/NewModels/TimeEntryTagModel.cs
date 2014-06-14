@@ -45,9 +45,9 @@ namespace Toggl.Phoebe.Data.NewModels
         protected override void DetectChangedProperties (TimeEntryTagData oldData, TimeEntryTagData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.TimeEntryId != newData.TimeEntryId || timeEntry.HasChanged)
+            if (oldData.TimeEntryId != newData.TimeEntryId || timeEntry.IsNewInstance)
                 OnPropertyChanged (PropertyTimeEntry);
-            if (oldData.TagId != newData.TagId || tag.HasChanged)
+            if (oldData.TagId != newData.TagId || tag.IsNewInstance)
                 OnPropertyChanged (PropertyTag);
         }
 

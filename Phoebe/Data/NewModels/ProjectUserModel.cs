@@ -51,9 +51,9 @@ namespace Toggl.Phoebe.Data.NewModels
                 OnPropertyChanged (PropertyIsManager);
             if (oldData.HourlyRate != newData.HourlyRate)
                 OnPropertyChanged (PropertyHourlyRate);
-            if (oldData.ProjectId != newData.ProjectId || project.HasChanged)
+            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance)
                 OnPropertyChanged (PropertyProject);
-            if (oldData.UserId != newData.UserId || user.HasChanged)
+            if (oldData.UserId != newData.UserId || user.IsNewInstance)
                 OnPropertyChanged (PropertyUser);
         }
 

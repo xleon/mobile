@@ -65,13 +65,13 @@ namespace Toggl.Phoebe.Data.NewModels
                 OnPropertyChanged (PropertyDurationOnly);
             if (oldData.IsBillable != newData.IsBillable)
                 OnPropertyChanged (PropertyIsBillable);
-            if (oldData.UserId != newData.UserId || user.HasChanged)
+            if (oldData.UserId != newData.UserId || user.IsNewInstance)
                 OnPropertyChanged (PropertyUser);
-            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.HasChanged)
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
                 OnPropertyChanged (PropertyWorkspace);
-            if (oldData.ProjectId != newData.ProjectId || project.HasChanged)
+            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance)
                 OnPropertyChanged (PropertyProject);
-            if (oldData.TaskId != newData.TaskId || task.HasChanged)
+            if (oldData.TaskId != newData.TaskId || task.IsNewInstance)
                 OnPropertyChanged (PropertyTask);
         }
 

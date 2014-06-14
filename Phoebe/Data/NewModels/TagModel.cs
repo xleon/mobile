@@ -44,7 +44,7 @@ namespace Toggl.Phoebe.Data.NewModels
             base.DetectChangedProperties (oldData, newData);
             if (oldData.Name != newData.Name)
                 OnPropertyChanged (PropertyName);
-            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.HasChanged)
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
                 OnPropertyChanged (PropertyWorkspace);
         }
 

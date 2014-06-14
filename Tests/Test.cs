@@ -3,11 +3,14 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
+using System.IO;
 
 namespace Toggl.Phoebe.Tests
 {
     public abstract class Test
     {
+        private string databasePath;
+
         [TestFixtureSetUp]
         public virtual void Init ()
         {
@@ -24,12 +27,21 @@ namespace Toggl.Phoebe.Tests
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
+            ServiceContainer.Register<IDataStore> (delegate {
+                databasePath = Path.GetTempFileName ();
+                return new SQLiteDataStore (databasePath);
+            });
         }
 
         [TearDown]
         public virtual void TearDown ()
         {
             ServiceContainer.Clear ();
+
+            if (databasePath != null) {
+                File.Delete (databasePath);
+                databasePath = null;
+            }
         }
 
         protected void RunAsync (Func<Task> fn)
@@ -39,6 +51,10 @@ namespace Toggl.Phoebe.Tests
 
         protected MessageBus MessageBus {
             get { return ServiceContainer.Resolve<MessageBus> (); }
+        }
+
+        protected IDataStore DataStore {
+            get { return ServiceContainer.Resolve<IDataStore> (); }
         }
     }
 }

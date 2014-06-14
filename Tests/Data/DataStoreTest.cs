@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Data
 {
@@ -13,18 +11,10 @@ namespace Toggl.Phoebe.Tests.Data
     {
         private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
         private Subscription<DataChangeMessage> subscriptionDataChange;
-        private string tmpDb;
-
-        private IDataStore DataStore {
-            get { return ServiceContainer.Resolve<IDataStore> (); }
-        }
 
         public override void SetUp ()
         {
             base.SetUp ();
-
-            tmpDb = Path.GetTempFileName ();
-            ServiceContainer.Register<IDataStore> (new SQLiteDataStore (tmpDb));
 
             messages.Clear ();
             subscriptionDataChange = MessageBus.Subscribe<DataChangeMessage> ((msg) => {
@@ -38,9 +28,6 @@ namespace Toggl.Phoebe.Tests.Data
         {
             MessageBus.Unsubscribe (subscriptionDataChange);
             subscriptionDataChange = null;
-
-            File.Delete (tmpDb);
-            tmpDb = null;
 
             base.TearDown ();
         }

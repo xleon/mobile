@@ -115,5 +115,63 @@ namespace Toggl.Phoebe.Tests.Data.Models
                     String.Format ("{0} did not raise a PropertyChanged event.", prop.Name));
             }
         }
+
+        [Test]
+        public void ForeignRelations ()
+        {
+            var type = typeof(T);
+
+            var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
+                .Where (prop => prop.PropertyType.GetInterfaces ().Contains (typeof(IModel)))
+                .Where (prop => !ExemptProperties.Contains (prop.Name));
+
+            foreach (var prop in properties) {
+                var relationAttr = prop.GetCustomAttribute<ForeignRelationAttribute> ();
+                Assert.IsNotNull (relationAttr, String.Format ("{0} foreign relation property should have the ForeignRelationAttribute.", prop.Name));
+
+                var changeCount = 0;
+                var inst = Activator.CreateInstance<T> ();
+                inst.PropertyChanged += (s, e) => changeCount += e.PropertyName == prop.Name ? 1 : 0;
+
+                // Test default value:
+                var val = (IModel)prop.GetValue (inst);
+
+                if (relationAttr.Required) {
+                    Assert.IsNotNull (val, String.Format ("{0} (required) property default value shouldn't be null.", prop.Name));
+                    Assert.That (
+                        (TestDelegate)delegate {
+                            prop.SetValue (inst, null);
+                        },
+                        Throws.TargetInvocationException.With.InnerException.TypeOf<ArgumentNullException> (),
+                        String.Format ("{0} (required) property should throw ArgumentNullException when setting null.", prop.Name)
+                    );
+                } else {
+                    Assert.IsNull (val, String.Format ("{0} (optional) property default value should be null.", prop.Name));
+                }
+
+                // Initialize all properties to empty defaults:
+                val = (IModel)Activator.CreateInstance (prop.PropertyType);
+                prop.SetValue (inst, val);
+
+                // Test setting values:
+                changeCount = 0;
+                val = (IModel)Activator.CreateInstance (prop.PropertyType);
+                prop.SetValue (inst, val);
+                Assert.AreEqual (1, changeCount, "Setting the value to new instance should've triggered property changed.");
+
+                changeCount = 0;
+                var pk = Guid.NewGuid ();
+                val = (IModel)Activator.CreateInstance (prop.PropertyType, pk);
+                prop.SetValue (inst, val);
+                Assert.AreEqual (1, changeCount, "Setting the value to random item should've triggered property change.");
+
+                if (!relationAttr.Required) {
+                    changeCount = 0;
+                    val = null;
+                    prop.SetValue (inst, val);
+                    Assert.AreEqual (1, changeCount, "Setting the value to null should've triggered property change.");
+                }
+            }
+        }
     }
 }

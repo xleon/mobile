@@ -26,6 +26,15 @@ namespace Toggl.Phoebe.Data.NewModels
             data.RemoteRejected = false;
         }
 
+        protected static Guid? GetOptionalId (IModel model)
+        {
+            if (model == null)
+                return null;
+            if (model.Id == Guid.Empty)
+                return null;
+            return model.Id;
+        }
+
         private readonly Subscription<DataChangeMessage> subscriptionDataChange;
         private TaskCompletionSource<object> loadingTCS;
         private bool isLoaded;

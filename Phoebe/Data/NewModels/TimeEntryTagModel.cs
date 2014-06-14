@@ -61,13 +61,13 @@ namespace Toggl.Phoebe.Data.NewModels
             timeEntry = new ForeignRelation<TimeEntryModel> () {
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new TimeEntryModel (id),
-                Changed = id => MutateData (data => data.TimeEntryId = id.Value),
+                Changed = m => MutateData (data => data.TimeEntryId = m.Id),
             };
 
             tag = new ForeignRelation<TagModel> () {
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new TagModel (id),
-                Changed = id => MutateData (data => data.TagId = id.Value),
+                Changed = m => MutateData (data => data.TagId = m.Id),
             };
         }
 

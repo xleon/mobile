@@ -187,14 +187,14 @@ namespace Toggl.Phoebe.Data.NewModels
             workspace = new ForeignRelation<WorkspaceModel> () {
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new WorkspaceModel (id),
-                Changed = id => MutateData (data => data.WorkspaceId = id.Value),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
             };
 
             client = new ForeignRelation<ClientModel> () {
                 Required = false,
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new ClientModel (id),
-                Changed = id => MutateData (data => data.ClientId = id),
+                Changed = m => MutateData (data => data.ClientId = GetOptionalId (m)),
             };
         }
 

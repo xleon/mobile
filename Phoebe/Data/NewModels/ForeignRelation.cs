@@ -17,7 +17,7 @@ namespace Toggl.Phoebe.Data.NewModels
 
         public Func<Guid, T> Factory { get; set; }
 
-        public Action<Guid?> Changed { get; set; }
+        public Action<T> Changed { get; set; }
 
         public Action ShouldLoad { get; set; }
 
@@ -84,13 +84,9 @@ namespace Toggl.Phoebe.Data.NewModels
             if (Changed == null)
                 return;
 
-            if (model == null) {
-                if (Required)
-                    throw new InvalidOperationException ("Cannot update required foreign Id when model unset.");
-                Changed (null);
-            } else {
-                Changed (model.Id);
-            }
+            if (Required && model == null)
+                throw new InvalidOperationException ("Cannot update required foreign relation when model unset.");
+            Changed (model);
         }
     }
 }

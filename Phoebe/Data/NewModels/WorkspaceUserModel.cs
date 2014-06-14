@@ -93,13 +93,13 @@ namespace Toggl.Phoebe.Data.NewModels
             workspace = new ForeignRelation<WorkspaceModel> () {
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new WorkspaceModel (id),
-                Changed = id => MutateData (data => data.WorkspaceId = id.Value),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
             };
 
             user = new ForeignRelation<UserModel> () {
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new UserModel (id),
-                Changed = id => MutateData (data => data.UserId = id.Value),
+                Changed = m => MutateData (data => data.UserId = m.Id),
             };
         }
 

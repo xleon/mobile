@@ -54,9 +54,9 @@ namespace Toggl.Phoebe.Data.NewModels
                 OnPropertyChanged (PropertyIsActive);
             if (oldData.Estimate != newData.Estimate)
                 OnPropertyChanged (PropertyEstimate);
-            if (oldData.WorkspaceId != newData.WorkspaceId)
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.HasChanged)
                 OnPropertyChanged (PropertyWorkspace);
-            if (oldData.ProjectId != newData.ProjectId)
+            if (oldData.ProjectId != newData.ProjectId || project.HasChanged)
                 OnPropertyChanged (PropertyProject);
         }
 

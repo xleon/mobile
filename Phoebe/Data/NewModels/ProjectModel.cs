@@ -72,9 +72,9 @@ namespace Toggl.Phoebe.Data.NewModels
                 OnPropertyChanged (PropertyIsTemplate);
             if (oldData.UseTasksEstimate != newData.UseTasksEstimate)
                 OnPropertyChanged (PropertyUseTasksEstimate);
-            if (oldData.WorkspaceId != newData.WorkspaceId)
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.HasChanged)
                 OnPropertyChanged (PropertyWorkspace);
-            if (oldData.ClientId != newData.ClientId)
+            if (oldData.ClientId != newData.ClientId || client.HasChanged)
                 OnPropertyChanged (PropertyClient);
         }
 

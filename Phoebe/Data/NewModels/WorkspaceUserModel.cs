@@ -51,9 +51,9 @@ namespace Toggl.Phoebe.Data.NewModels
                 OnPropertyChanged (PropertyIsAdmin);
             if (oldData.IsActive != newData.IsActive)
                 OnPropertyChanged (PropertyIsActive);
-            if (oldData.WorkspaceId != newData.WorkspaceId)
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.HasChanged)
                 OnPropertyChanged (PropertyWorkspace);
-            if (oldData.UserId != newData.UserId)
+            if (oldData.UserId != newData.UserId || user.HasChanged)
                 OnPropertyChanged (PropertyUser);
         }
 

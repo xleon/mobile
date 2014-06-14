@@ -19,6 +19,8 @@ namespace Toggl.Phoebe.Data.NewModels
 
         public Action<Guid?> Changed { get; set; }
 
+        public bool HasChanged { get; private set; }
+
         public T Get (Guid? foreignKey)
         {
             if (Required && foreignKey == null)
@@ -69,12 +71,17 @@ namespace Toggl.Phoebe.Data.NewModels
             if (Changed == null)
                 return;
 
-            if (model == null) {
-                if (Required)
-                    throw new InvalidOperationException ("Cannot update required foreign Id when model unset.");
-                Changed (null);
-            } else {
-                Changed (model.Id);
+            HasChanged = true;
+            try {
+                if (model == null) {
+                    if (Required)
+                        throw new InvalidOperationException ("Cannot update required foreign Id when model unset.");
+                    Changed (null);
+                } else {
+                    Changed (model.Id);
+                }
+            } finally {
+                HasChanged = false;
             }
         }
     }

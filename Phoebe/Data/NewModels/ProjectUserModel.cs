@@ -47,6 +47,10 @@ namespace Toggl.Phoebe.Data.NewModels
         protected override void DetectChangedProperties (ProjectUserData oldData, ProjectUserData newData)
         {
             base.DetectChangedProperties (oldData, newData);
+            if (oldData.IsManager != newData.IsManager)
+                OnPropertyChanged (PropertyIsManager);
+            if (oldData.HourlyRate != newData.HourlyRate)
+                OnPropertyChanged (PropertyHourlyRate);
             if (oldData.ProjectId != newData.ProjectId)
                 OnPropertyChanged (PropertyProject);
             if (oldData.UserId != newData.UserId)

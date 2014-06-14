@@ -60,8 +60,8 @@ namespace Toggl.Phoebe.Data.NewModels
                 OnPropertyChanged (PropertyBillableRatesVisibility);
             if (oldData.RoundingMode != newData.RoundingMode)
                 OnPropertyChanged (PropertyRoundingMode);
-            if (oldData.RoundingMode != newData.RoundingMode)
-                OnPropertyChanged (PropertyRoundingMode);
+            if (oldData.RoundingPercision != newData.RoundingPercision)
+                OnPropertyChanged (PropertyRoundingPercision);
             if (oldData.LogoUrl != newData.LogoUrl)
                 OnPropertyChanged (PropertyLogoUrl);
         }

@@ -145,13 +145,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 var dataProp = type.GetProperty ("Data");
 
                 // Create dummy element (with default values) to load:
-                var raw = (CommonData)Activator.CreateInstance (dataProp.PropertyType);
-                var putTask = (Task)DataStore.GetType ().GetMethod ("PutAsync")
-                    .MakeGenericMethod (dataProp.PropertyType)
-                    .Invoke (DataStore, new[] { raw });
-                await putTask;
-                raw = (CommonData)putTask.GetType ().GetProperty ("Result").GetValue (putTask);
-                var pk = raw.Id;
+                var pk = await CreateDummyData (dataProp.PropertyType);
 
                 // Test property autoload by setting the value to something else and waiting to see if it is replaced
                 // by autoloaded data.
@@ -178,6 +172,43 @@ namespace Toggl.Phoebe.Tests.Data.Models
                         String.Format ("Property {0} failed to trigger lazy load.", prop.Name));
                 }
             });
+        }
+
+        [Test]
+        public void TestLoading ()
+        {
+            RunAsync (async delegate {
+                var type = typeof(T);
+                var dataProp = type.GetProperty ("Data");
+
+                // Test load new
+                var inst = (T)Activator.CreateInstance (type);
+                var loadTask = (Task)type.GetMethod ("LoadAsync").Invoke (inst, new object[0]);
+                await loadTask;
+
+                // Test load invalid
+                var pk = Guid.NewGuid ();
+                inst = (T)Activator.CreateInstance (type, pk);
+                loadTask = (Task)type.GetMethod ("LoadAsync").Invoke (inst, new object[0]);
+                await loadTask;
+
+                // Test load valid task:
+                pk = await CreateDummyData (dataProp.PropertyType);
+                inst = (T)Activator.CreateInstance (type, pk);
+                loadTask = (Task)type.GetMethod ("LoadAsync").Invoke (inst, new object[0]);
+                await loadTask;
+            });
+        }
+
+        private async Task<Guid> CreateDummyData (Type dataType)
+        {
+            var raw = (CommonData)Activator.CreateInstance (dataType);
+            var putTask = (Task)DataStore.GetType ().GetMethod ("PutAsync")
+                .MakeGenericMethod (dataType)
+                .Invoke (DataStore, new[] { raw });
+            await putTask;
+            raw = (CommonData)putTask.GetType ().GetProperty ("Result").GetValue (putTask);
+            return raw.Id;
         }
 
         private static void SimulatePropertyChange (object obj, PropertyInfo prop)

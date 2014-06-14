@@ -176,6 +176,38 @@ namespace Toggl.Phoebe.Tests.Data.Models
         }
 
         [Test]
+        public void TestOptionalRelationNullId ()
+        {
+            var type = typeof(T);
+            var dataProp = type.GetProperty ("Data");
+
+            var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
+                .Where (IsOptionalRelationProperty);
+
+            foreach (var prop in properties) {
+                var idProp = dataProp.PropertyType.GetProperty (String.Concat (prop.Name, "Id"));
+                if (idProp == null)
+                    continue;
+
+                var inst = Activator.CreateInstance<T> ();
+                var data = dataProp.GetValue (inst);
+                var val = idProp.GetValue (data);
+                Assert.IsNull (val, String.Format ("Initial {0} should be null.", idProp.Name));
+
+                var pk = Guid.NewGuid ();
+                prop.SetValue (inst, Activator.CreateInstance (prop.PropertyType, pk));
+                data = dataProp.GetValue (inst);
+                val = idProp.GetValue (data);
+                Assert.AreEqual (pk, val, "Id was not updated.");
+
+                prop.SetValue (inst, Activator.CreateInstance (prop.PropertyType));
+                data = dataProp.GetValue (inst);
+                val = idProp.GetValue (data);
+                Assert.IsNull (val, String.Format ("{0} should be null for empty model.", idProp.Name));
+            }
+        }
+
+        [Test]
         public void TestLoading ()
         {
             RunAsync (async delegate {
@@ -317,6 +349,12 @@ namespace Toggl.Phoebe.Tests.Data.Models
         {
             var attr = prop.GetCustomAttribute<ForeignRelationAttribute> ();
             return attr != null && attr.Required;
+        }
+
+        private static bool IsOptionalRelationProperty (PropertyInfo prop)
+        {
+            var attr = prop.GetCustomAttribute<ForeignRelationAttribute> ();
+            return attr != null && !attr.Required;
         }
     }
 }

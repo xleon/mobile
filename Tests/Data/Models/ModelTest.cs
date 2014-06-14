@@ -41,5 +41,17 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 }
             }
         }
+
+        [Test]
+        public void VerifyConstructors ()
+        {
+            var type = typeof(T);
+
+            Assert.IsNotNull (type.GetConstructor (new Type[] { }), "Default constructor not found.");
+            Assert.IsNotNull (type.GetConstructor (new[] { typeof(Guid) }), "Lazy load constructor not found.");
+
+            var dataProp = type.GetProperty ("Data");
+            Assert.IsNotNull (type.GetConstructor (new[] { dataProp.PropertyType }), "Wrapping constructor not found.");
+        }
     }
 }

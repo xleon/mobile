@@ -91,11 +91,13 @@ namespace Toggl.Phoebe.Data.NewModels
             base.InitializeRelations ();
 
             project = new ForeignRelation<ProjectModel> () {
+                ShouldLoad = EnsureLoaded,
                 Factory = id => new ProjectModel (id),
                 Changed = id => MutateData (data => data.ProjectId = id.Value),
             };
 
             user = new ForeignRelation<UserModel> () {
+                ShouldLoad = EnsureLoaded,
                 Factory = id => new UserModel (id),
                 Changed = id => MutateData (data => data.UserId = id.Value),
             };

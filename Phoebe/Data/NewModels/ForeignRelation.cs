@@ -19,12 +19,17 @@ namespace Toggl.Phoebe.Data.NewModels
 
         public Action<Guid?> Changed { get; set; }
 
+        public Action ShouldLoad { get; set; }
+
         public bool HasChanged { get; private set; }
 
         public T Get (Guid? foreignKey)
         {
             if (Required && foreignKey == null)
                 throw new ArgumentNullException ("value");
+
+            if (ShouldLoad != null)
+                ShouldLoad ();
 
             if (model == null || model.Id != foreignKey) {
                 // Unregister event listener
@@ -45,6 +50,9 @@ namespace Toggl.Phoebe.Data.NewModels
         {
             if (Required && value == null)
                 throw new ArgumentNullException ("value");
+
+            if (ShouldLoad != null)
+                ShouldLoad ();
 
             // Unregister event listener
             if (model != null) {

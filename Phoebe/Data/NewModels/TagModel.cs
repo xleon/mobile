@@ -68,6 +68,7 @@ namespace Toggl.Phoebe.Data.NewModels
             base.InitializeRelations ();
 
             workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
                 Factory = id => new WorkspaceModel (id),
                 Changed = id => MutateData (data => data.WorkspaceId = id.Value),
             };

@@ -248,17 +248,20 @@ namespace Toggl.Phoebe.Data.NewModels
             base.InitializeRelations ();
 
             user = new ForeignRelation<UserModel> () {
+                ShouldLoad = EnsureLoaded,
                 Factory = id => new UserModel (id),
                 Changed = id => MutateData (data => data.UserId = id.Value),
             };
 
             workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
                 Factory = id => new WorkspaceModel (id),
                 Changed = id => MutateData (data => data.WorkspaceId = id.Value),
             };
 
             project = new ForeignRelation<ProjectModel> () {
                 Required = false,
+                ShouldLoad = EnsureLoaded,
                 Factory = id => new ProjectModel (id),
                 // TODO: Update IsBillable flag
                 /*
@@ -269,6 +272,7 @@ namespace Toggl.Phoebe.Data.NewModels
 
             task = new ForeignRelation<TaskModel> () {
                 Required = false,
+                ShouldLoad = EnsureLoaded,
                 Factory = id => new TaskModel (id),
                 Changed = id => MutateData (data => data.TaskId = id),
             };

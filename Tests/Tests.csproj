@@ -49,6 +49,17 @@
     <Compile Include="Data\ModelGraphTest.cs" />
     <Compile Include="MessageBusTest.cs" />
     <Compile Include="Data\DataStoreTest.cs" />
+    <Compile Include="Data\Models\ModelTest.cs" />
+    <Compile Include="Data\Models\ClientModelTest.cs" />
+    <Compile Include="Data\Models\ProjectModelTest.cs" />
+    <Compile Include="Data\Models\ProjectUserModelTest.cs" />
+    <Compile Include="Data\Models\TagModelTest.cs" />
+    <Compile Include="Data\Models\TaskModelTest.cs" />
+    <Compile Include="Data\Models\TimeEntryModelTest.cs" />
+    <Compile Include="Data\Models\TimeEntryTagModelTest.cs" />
+    <Compile Include="Data\Models\UserModelTest.cs" />
+    <Compile Include="Data\Models\WorkspaceModelTest.cs" />
+    <Compile Include="Data\Models\WorkspaceUserModelTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -64,5 +75,6 @@
     <Folder Include="Data\" />
     <Folder Include="Bugsnag\" />
     <Folder Include="Views\" />
+    <Folder Include="Data\Models\" />
   </ItemGroup>
 </Project>

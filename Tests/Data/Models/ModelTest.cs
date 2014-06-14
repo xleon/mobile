@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using NUnit.Framework;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.NewModels;
 
 namespace Toggl.Phoebe.Tests.Data.Models
@@ -69,46 +71,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 var inst = Activator.CreateInstance<T> ();
                 inst.PropertyChanged += (s, e) => changed.Add (e.PropertyName);
 
-                // Simulate property change
-                var val = prop.GetValue (inst);
-
-                if (prop.PropertyType == typeof(string)) {
-                    val = ((string)val ?? String.Empty) + "Test";
-                } else if (prop.PropertyType == typeof(int)) {
-                    val = (int)val + 1;
-                } else if (prop.PropertyType == typeof(int?)) {
-                    val = ((int?)val ?? 0) + 1;
-                } else if (prop.PropertyType == typeof(long)) {
-                    val = (long)val + 1;
-                } else if (prop.PropertyType == typeof(long?)) {
-                    val = ((long?)val ?? 0) + 1;
-                } else if (prop.PropertyType == typeof(decimal)) {
-                    val = (decimal)val + 1;
-                } else if (prop.PropertyType == typeof(decimal?)) {
-                    val = ((decimal?)val ?? 0) + 1;
-                } else if (prop.PropertyType == typeof(bool)) {
-                    val = !(bool)val;
-                } else if (prop.PropertyType == typeof(DateTime)) {
-                    if ((DateTime)val == DateTime.MinValue) {
-                        val = Time.UtcNow;
-                    } else {
-                        val = (DateTime)val + TimeSpan.FromMinutes (1);
-                    }
-                } else if (prop.PropertyType == typeof(DateTime?)) {
-                    if (val == null || (DateTime?)val == DateTime.MinValue) {
-                        val = (DateTime?)Time.UtcNow;
-                    } else {
-                        val = ((DateTime?)val).Value + TimeSpan.FromMinutes (1);
-                    }
-                } else if (prop.PropertyType.IsEnum) {
-                    val = (int)val + 1;
-                } else if (prop.PropertyType.GetInterfaces ().Contains (typeof(IModel))) {
-                    val = Activator.CreateInstance (prop.PropertyType, Guid.NewGuid ());
-                } else {
-                    throw new InvalidOperationException (String.Format ("Don't know how to handle testing of {0} type.", prop.PropertyType));
-                }
-
-                prop.SetValue (inst, val);
+                SimulatePropertyChange (inst, prop);
 
                 // Verify that the property changed event was fired:
                 Assert.That (changed, Has.Some.Matches<string> (name => name == prop.Name),
@@ -172,6 +135,92 @@ namespace Toggl.Phoebe.Tests.Data.Models
                     Assert.AreEqual (1, changeCount, "Setting the value to null should've triggered property change.");
                 }
             }
+        }
+
+        [Test]
+        public void TestLazyLoad ()
+        {
+            RunAsync (async delegate {
+                var type = typeof(T);
+                var dataProp = type.GetProperty ("Data");
+
+                // Create dummy element (with default values) to load:
+                var raw = (CommonData)Activator.CreateInstance (dataProp.PropertyType);
+                var putTask = (Task)DataStore.GetType ().GetMethod ("PutAsync")
+                    .MakeGenericMethod (dataProp.PropertyType)
+                    .Invoke (DataStore, new[] { raw });
+                await putTask;
+                raw = (CommonData)putTask.GetType ().GetProperty ("Result").GetValue (putTask);
+                var pk = raw.Id;
+
+                // Test property autoload by setting the value to something else and waiting to see if it is replaced
+                // by autoloaded data.
+                var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
+                    .Where (prop => prop.CanWrite)
+                    .Where (prop => !ExemptProperties.Contains (prop.Name));
+
+                foreach (var prop in properties) {
+                    int changeCount = 2;
+                    var tcs = new TaskCompletionSource<object> ();
+
+                    var inst = (T)Activator.CreateInstance (type, pk);
+                    inst.PropertyChanged += (s, e) => {
+                        if (e.PropertyName == prop.Name) {
+                            if (--changeCount < 1) {
+                                tcs.SetResult (null);
+                            }
+                        }
+                    };
+
+                    SimulatePropertyChange (inst, prop);
+
+                    Assert.AreEqual (tcs.Task, await Task.WhenAny (tcs.Task, Task.Delay (100)),
+                        String.Format ("Property {0} failed to trigger lazy load.", prop.Name));
+                }
+            });
+        }
+
+        private static void SimulatePropertyChange (object obj, PropertyInfo prop)
+        {
+            var val = prop.GetValue (obj);
+
+            if (prop.PropertyType == typeof(string)) {
+                val = ((string)val ?? String.Empty) + "Test";
+            } else if (prop.PropertyType == typeof(int)) {
+                val = (int)val + 1;
+            } else if (prop.PropertyType == typeof(int?)) {
+                val = ((int?)val ?? 0) + 1;
+            } else if (prop.PropertyType == typeof(long)) {
+                val = (long)val + 1;
+            } else if (prop.PropertyType == typeof(long?)) {
+                val = ((long?)val ?? 0) + 1;
+            } else if (prop.PropertyType == typeof(decimal)) {
+                val = (decimal)val + 1;
+            } else if (prop.PropertyType == typeof(decimal?)) {
+                val = ((decimal?)val ?? 0) + 1;
+            } else if (prop.PropertyType == typeof(bool)) {
+                val = !(bool)val;
+            } else if (prop.PropertyType == typeof(DateTime)) {
+                if ((DateTime)val == DateTime.MinValue) {
+                    val = Time.UtcNow;
+                } else {
+                    val = (DateTime)val + TimeSpan.FromMinutes (1);
+                }
+            } else if (prop.PropertyType == typeof(DateTime?)) {
+                if (val == null || (DateTime?)val == DateTime.MinValue) {
+                    val = (DateTime?)Time.UtcNow;
+                } else {
+                    val = ((DateTime?)val).Value + TimeSpan.FromMinutes (1);
+                }
+            } else if (prop.PropertyType.IsEnum) {
+                val = (int)val + 1;
+            } else if (prop.PropertyType.GetInterfaces ().Contains (typeof(IModel))) {
+                val = Activator.CreateInstance (prop.PropertyType, Guid.NewGuid ());
+            } else {
+                throw new InvalidOperationException (String.Format ("Don't know how to handle testing of {0} type.", prop.PropertyType));
+            }
+
+            prop.SetValue (obj, val);
         }
     }
 }

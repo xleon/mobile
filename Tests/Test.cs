@@ -1,9 +1,10 @@
 using System;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
-using System.IO;
 
 namespace Toggl.Phoebe.Tests
 {
@@ -24,6 +25,8 @@ namespace Toggl.Phoebe.Tests
         [SetUp]
         public virtual void SetUp ()
         {
+            SynchronizationContext.SetSynchronizationContext (new SynchronizationContext ());
+
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());

@@ -263,11 +263,10 @@ namespace Toggl.Phoebe.Data.NewModels
                 Required = false,
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new ProjectModel (id),
-                // TODO: Update IsBillable flag
-                /*
-                    IsBillable = Project.IsBillable;
-                 */
-                Changed = m => MutateData (data => data.ProjectId = GetOptionalId (m)),
+                Changed = m => MutateData (data => {
+                    data.IsBillable = m.IsBillable;
+                    data.ProjectId = GetOptionalId (m);
+                }),
             };
 
             task = new ForeignRelation<TaskModel> () {

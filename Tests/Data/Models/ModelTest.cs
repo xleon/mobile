@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.NewModels;
 
@@ -200,6 +201,64 @@ namespace Toggl.Phoebe.Tests.Data.Models
             });
         }
 
+        [Test]
+        public virtual void TestSaving ()
+        {
+            var type = typeof(T);
+            var validData = new Dictionary<PropertyInfo, Func<object>> ();
+
+            var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
+                .Where (IsRequiredRelationProperty);
+            foreach (var prop in properties) {
+                validData.Add (prop, () => Activator.CreateInstance (prop.PropertyType, Guid.NewGuid ()));
+            }
+
+            TestSaving (validData);
+        }
+
+        protected void TestSaving (Dictionary<PropertyInfo, Func<object>> validData)
+        {
+            RunAsync (async delegate {
+                var type = typeof(T);
+
+                T inst;
+                Task saveTask;
+
+                // Test that we get ValidationError on save when required property not set
+                var properties = validData.Keys.ToList ();
+
+                foreach (var exemptProp in properties) {
+                    inst = Activator.CreateInstance<T> ();
+
+                    foreach (var prop in properties) {
+                        if (prop == exemptProp)
+                            continue;
+
+                        prop.SetValue (inst, validData [prop] ());
+                    }
+
+                    saveTask = (Task)type.GetMethod ("SaveAsync").Invoke (inst, new object[0]);
+                    Assert.That (() => saveTask.GetAwaiter ().GetResult (), Throws.Exception.TypeOf<ValidationException> ());
+                }
+
+                // Test saving new object
+                inst = Activator.CreateInstance<T> ();
+
+                foreach (var prop in properties) {
+                    var model = Activator.CreateInstance (prop.PropertyType, Guid.NewGuid ());
+                    prop.SetValue (inst, model);
+                }
+
+                saveTask = (Task)type.GetMethod ("SaveAsync").Invoke (inst, new object[0]);
+                await saveTask;
+                Assert.AreNotEqual (Guid.Empty, inst.Id, "Id should've been updated after save.");
+
+                // Test saving existing model
+                saveTask = (Task)type.GetMethod ("SaveAsync").Invoke (inst, new object[0]);
+                await saveTask;
+            });
+        }
+
         private async Task<Guid> CreateDummyData (Type dataType)
         {
             var raw = (CommonData)Activator.CreateInstance (dataType);
@@ -252,6 +311,12 @@ namespace Toggl.Phoebe.Tests.Data.Models
             }
 
             prop.SetValue (obj, val);
+        }
+
+        private static bool IsRequiredRelationProperty (PropertyInfo prop)
+        {
+            var attr = prop.GetCustomAttribute<ForeignRelationAttribute> ();
+            return attr != null && attr.Required;
         }
     }
 }

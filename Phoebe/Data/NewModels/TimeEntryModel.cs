@@ -1,11 +1,18 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.NewModels
 {
     public class TimeEntryModel : Model<TimeEntryData>
     {
+        private const string Tag = "TimeEntryModel";
+
         private static string GetPropertyName<T> (Expression<Func<TimeEntryModel, T>> expr)
         {
             return expr.ToPropertyName ();
@@ -299,6 +306,272 @@ namespace Toggl.Phoebe.Data.NewModels
         public TaskModel Task {
             get { return task.Get (Data.TaskId); }
             set { task.Set (value); }
+        }
+
+        /// <summary>
+        /// Stores the draft time entry in model store as a running time entry.
+        /// </summary>
+        public async Task StartAsync ()
+        {
+            await LoadAsync ();
+
+            if (Data.State != TimeEntryState.New)
+                throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", Data.State));
+            if (Data.StartTime != DateTime.MinValue || Data.StopTime.HasValue)
+                throw new InvalidOperationException ("Cannot start tracking time entry with start/stop time set already.");
+
+            var task = Task;
+            var project = Project;
+            var workspace = Workspace;
+            var user = User;
+
+            // Preload all pending relations:
+            var pending = new List<Task> ();
+            if (task != null)
+                pending.Add (task.LoadAsync ());
+            if (project != null)
+                pending.Add (project.LoadAsync ());
+            if (workspace != null)
+                pending.Add (workspace.LoadAsync ());
+            if (user != null)
+                pending.Add (user.LoadAsync ());
+            await System.Threading.Tasks.Task.WhenAll (pending);
+
+            if (task != null)
+                project = task.Project;
+            if (project != null)
+                workspace = project.Workspace;
+            if (workspace == null && user != null)
+                workspace = user.DefaultWorkspace;
+            if (workspace == null)
+                throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
+
+            MutateData (data => {
+                data.TaskId = task != null ? (Guid?)task.Id : null;
+                data.ProjectId = project != null ? (Guid?)project.Id : null;
+                data.WorkspaceId = workspace.Id;
+                data.UserId = user.Id;
+                data.State = TimeEntryState.Running;
+                data.StartTime = Time.UtcNow;
+                data.StopTime = null;
+            });
+
+            await SaveAsync ();
+
+            // TODO: Implement adding of default tag
+            // if (ShouldAddDefaultTag) {
+            //     Tags.Add (DefaultTag);
+            // }
+        }
+
+        /// <summary>
+        /// Stores the draft time entry in model store as a finished time entry.
+        /// </summary>
+        public async Task StoreAsync ()
+        {
+            await LoadAsync ();
+
+            if (Data.State != TimeEntryState.New)
+                throw new InvalidOperationException (String.Format ("Cannot store a time entry in {0} state.", Data.State));
+            if (Data.StartTime == DateTime.MinValue || Data.StopTime == null)
+                throw new InvalidOperationException ("Cannot store time entry with start/stop time not set.");
+
+            var task = Task;
+            var project = Project;
+            var workspace = Workspace;
+            var user = User;
+
+            // Preload all pending relations:
+            var pending = new List<Task> ();
+            if (task != null)
+                pending.Add (task.LoadAsync ());
+            if (project != null)
+                pending.Add (project.LoadAsync ());
+            if (workspace != null)
+                pending.Add (workspace.LoadAsync ());
+            if (user != null)
+                pending.Add (user.LoadAsync ());
+            await System.Threading.Tasks.Task.WhenAll (pending);
+
+            if (task != null)
+                project = task.Project;
+            if (project != null)
+                workspace = project.Workspace;
+            if (workspace == null && user != null)
+                workspace = user.DefaultWorkspace;
+            if (workspace == null)
+                throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
+
+            MutateData (data => {
+                data.TaskId = task != null ? (Guid?)task.Id : null;
+                data.ProjectId = project != null ? (Guid?)project.Id : null;
+                data.WorkspaceId = workspace.Id;
+                data.UserId = user.Id;
+                data.State = TimeEntryState.Finished;
+            });
+
+            await SaveAsync ();
+
+            // TODO: Implement adding of default tag
+            // if (ShouldAddDefaultTag) {
+            //     Tags.Add (DefaultTag);
+            // }
+        }
+
+        /// <summary>
+        /// Marks the currently running time entry as finished.
+        /// </summary>
+        public async Task StopAsync ()
+        {
+            await LoadAsync ();
+
+            if (Data.State != TimeEntryState.Running)
+                throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", Data.State));
+
+            MutateData (data => {
+                data.State = TimeEntryState.Finished;
+                data.StopTime = Time.UtcNow;
+            });
+
+            await SaveAsync ();
+        }
+
+        /// <summary>
+        /// Continues the finished time entry, either by creating a new time entry or restarting the current one.
+        /// </summary>
+        public async Task<TimeEntryModel> ContinueAsync ()
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+
+            await LoadAsync ();
+
+            // Validate the current state
+            switch (Data.State) {
+            case TimeEntryState.Running:
+                return this;
+            case TimeEntryState.Finished:
+                break;
+            default:
+                throw new InvalidOperationException (String.Format ("Cannot continue a time entry in {0} state.", Data.State));
+            }
+
+            // We can continue time entries which haven't been synced yet:
+            if (Data.DurationOnly && Data.StartTime.ToLocalTime ().Date == Time.Now.Date) {
+                if (Data.RemoteId == null) {
+                    MutateData (data => {
+                        data.State = TimeEntryState.Running;
+                        data.StartTime = Time.UtcNow - GetDuration ();
+                        data.StopTime = null;
+                    });
+
+                    await SaveAsync ();
+                    return this;
+                }
+            }
+
+            // Create new time entry:
+            var newData = new TimeEntryData () {
+                WorkspaceId = Data.WorkspaceId,
+                ProjectId = Data.ProjectId,
+                TaskId = Data.TaskId,
+                UserId = Data.UserId,
+                Description = Data.Description,
+                StartTime = Time.UtcNow,
+                DurationOnly = Data.DurationOnly,
+                IsBillable = Data.IsBillable,
+                State = TimeEntryState.Running,
+            };
+            MarkDirty (newData);
+
+            await store.ExecuteInTransactionAsync (ctx => {
+                newData = ctx.Put (newData);
+                // TODO: Duplicate tag relations as well
+            });
+
+            var model = new TimeEntryModel (newData);
+
+            return model;
+        }
+
+        private static TaskCompletionSource<TimeEntryData> draftDataTCS;
+
+        public static async Task<TimeEntryModel> GetDraftAsync ()
+        {
+            TimeEntryData data = null;
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            if (user == null)
+                return null;
+
+            // We're already loading draft data, wait for it to load, no need to create several drafts
+            if (draftDataTCS != null) {
+                data = await draftDataTCS.Task;
+                if (data == null)
+                    return null;
+                data = new TimeEntryData (data);
+                return new TimeEntryModel (data);
+            }
+
+            draftDataTCS = new TaskCompletionSource<TimeEntryData> ();
+
+            try {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                var rows = await store.Table<TimeEntryData> ()
+                    .Where (m => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
+                    .OrderBy (m => m.ModifiedAt)
+                    .Take (1).QueryAsync ();
+                data = rows.FirstOrDefault ();
+
+                if (data == null) {
+                    // Create new draft object
+                    var newData = new TimeEntryData () {
+                        State = TimeEntryState.New,
+                        UserId = user.Id.Value,
+                        WorkspaceId = user.DefaultWorkspaceId.Value,
+                        DurationOnly = user.TrackingMode == TrackingMode.Continue,
+                    };
+                    MarkDirty (newData);
+
+                    await store.ExecuteInTransactionAsync (ctx => {
+                        newData = ctx.Put (newData);
+                        // TODO: Add default tag
+                    });
+
+                    data = newData;
+                }
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Warning (Tag, ex, "Failed to retrieve/create draft.");
+            }
+
+            draftDataTCS.SetResult (data);
+            return new TimeEntryModel (data);
+        }
+
+        public static async Task<TimeEntryModel> CreateFinished (TimeSpan duration)
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            if (user == null)
+                return null;
+
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var now = Time.UtcNow;
+
+            var newData = new TimeEntryData () {
+                State = TimeEntryState.Finished,
+                StartTime = now - duration,
+                StopTime = now,
+                UserId = user.Id.Value,
+                WorkspaceId = user.DefaultWorkspaceId.Value,
+                DurationOnly = user.TrackingMode == TrackingMode.Continue,
+            };
+            MarkDirty (newData);
+
+            await store.ExecuteInTransactionAsync (ctx => {
+                newData = ctx.Put (newData);
+                // TODO: Add default tag
+            });
+
+            return new TimeEntryModel (newData);
         }
 
         public static implicit operator TimeEntryModel (TimeEntryData data)

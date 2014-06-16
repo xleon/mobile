@@ -148,6 +148,9 @@ namespace Toggl.Phoebe.Data.NewModels
                                 data.StopTime = data.StartTime + duration;
                             }
                         }
+
+                        data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
+                        data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
                     }
                 });
             }

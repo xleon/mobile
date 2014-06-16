@@ -31,6 +31,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         public static async Task<TagData> Import (TagJson json)
         {
             var data = await GetByRemoteId<TagData> (json.Id.Value).ConfigureAwait (false);
+            // TODO: Should fall back to name lookup?
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {

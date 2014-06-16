@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
-using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
             var projectIdTask = GetRemoteId<ProjectData> (data.ProjectId);
             var taskIdTask = GetRemoteId<TaskData> (data.TaskId);
-            var tagsTask = GetTags (data.Id);
+            var tagsTask = GetTimeEntryTags (data.Id);
 
             return new TimeEntryJson () {
                 Id = data.RemoteId,
@@ -32,9 +32,11 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static Task<List<string>> GetTags (Guid id)
+        private async Task<List<string>> GetTimeEntryTags (Guid id)
         {
-            throw new NotImplementedException ();
+            if (id == Guid.Empty)
+                return new List<string> (0);
+            return await DataStore.GetTimeEntryTagNames (id).ConfigureAwait (false);
         }
 
         private static long EncodeDuration (TimeEntryData data)
@@ -81,7 +83,6 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 data.StartTime = now - duration;
                 data.StopTime = null;
             }
-
         }
 
         private static async Task Merge (TimeEntryData data, TimeEntryJson json)
@@ -103,10 +104,54 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        private static Task ResetTags (TimeEntryData data, TimeEntryJson json)
+        private static Task ResetTags (TimeEntryData timeEntryData, TimeEntryJson json)
         {
-            // Ensure that only the JSON specified tags have many-to-many relation in our dataset.
-            throw new NotImplementedException ();
+            return DataStore.ExecuteInTransactionAsync (ctx => {
+                var con = ctx.Connection;
+
+                // Resolve tags to IDs:
+                var tagIds = new List<Guid> ();
+                foreach (var tagName in json.Tags) {
+                    var id = ctx.GetTagIdFromName (timeEntryData.WorkspaceId, tagName);
+
+                    if (id == null) {
+                        // Need to create a new tag:
+                        var tagData = new TagData () {
+                            Name = tagName,
+                            WorkspaceId = timeEntryData.WorkspaceId,
+                        };
+                        con.Insert (tagData);
+
+                        id = timeEntryData.Id;
+                    }
+
+                    tagIds.Add (id.Value);
+                }
+
+                // Iterate over TimeEntryTags and determine which to keep and which to discard:
+                var inters = con.Table<TimeEntryTagData> ().Where (m => m.TimeEntryId == timeEntryData.Id);
+                var toDelete = new List<TimeEntryTagData> ();
+                foreach (var inter in inters) {
+                    if (tagIds.Contains (inter.TagId)) {
+                        tagIds.Remove (inter.TagId);
+                    } else {
+                        toDelete.Add (inter);
+                    }
+                }
+
+                // Delete unused tags intermediate rows:
+                foreach (var inter in toDelete) {
+                    ctx.Delete (inter);
+                }
+
+                // Create new intermediate rows:
+                foreach (var tagId in tagIds) {
+                    ctx.Put (new TimeEntryTagData () {
+                        TagId = tagId,
+                        TimeEntryId = timeEntryData.Id,
+                    });
+                }
+            });
         }
 
         public async Task<TimeEntryData> Import (TimeEntryJson json)

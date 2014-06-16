@@ -54,15 +54,15 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             var data = await GetByRemoteId<UserData> (json.Id.Value).ConfigureAwait (false);
 
-            if (data == null || data.ModifiedAt < json.ModifiedAt) {
-                if (json.DeletedAt == null) {
-                    data = data ?? new UserData ();
-                    await Merge (data, json).ConfigureAwait (false);
-                    data = await DataStore.PutAsync (data).ConfigureAwait (false);
-                } else if (data != null) {
+            if (json.DeletedAt.HasValue) {
+                if (data != null) {
                     await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
+            } else if (data == null || data.ModifiedAt < json.ModifiedAt) {
+                data = data ?? new UserData ();
+                await Merge (data, json).ConfigureAwait (false);
+                data = await DataStore.PutAsync (data).ConfigureAwait (false);
             }
 
             return data;

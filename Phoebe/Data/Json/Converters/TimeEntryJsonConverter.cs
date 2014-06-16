@@ -158,17 +158,18 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             var data = await GetByRemoteId<TimeEntryData> (json.Id.Value).ConfigureAwait (false);
 
-            if (data == null || data.ModifiedAt < json.ModifiedAt) {
-                if (json.DeletedAt == null) {
-                    data = data ?? new TimeEntryData ();
-                    await Merge (data, json).ConfigureAwait (false);
-                    data = await DataStore.PutAsync (data).ConfigureAwait (false);
-                    // Also update tags from the JSON we are merging:
-                    await ResetTags (data, json).ConfigureAwait (false);
-                } else if (data != null) {
+            if (json.DeletedAt.HasValue) {
+                if (data != null) {
+                    // TODO: Delete TimeEntryTag intermediate data
                     await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
+            } else if (data == null || data.ModifiedAt < json.ModifiedAt) {
+                data = data ?? new TimeEntryData ();
+                await Merge (data, json).ConfigureAwait (false);
+                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                // Also update tags from the JSON we are merging:
+                await ResetTags (data, json).ConfigureAwait (false);
             }
 
             return data;

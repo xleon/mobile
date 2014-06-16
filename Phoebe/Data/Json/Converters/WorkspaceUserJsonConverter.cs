@@ -4,14 +4,15 @@ using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class WorkspaceUserJsonConverter
+    public sealed class WorkspaceUserJsonConverter : BaseJsonConverter
     {
-        public static async Task<WorkspaceUserJson> ToJsonAsync (this WorkspaceUserData data)
+        public async Task<WorkspaceUserJson> Export (WorkspaceUserData data)
         {
-            var userTask = GetById<UserData> (data.UserId);
+            var userTask = DataStore.Table<UserData> ()
+                .Take (1).QueryAsync (m => m.Id == data.UserId);
             var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
 
-            var user = await userTask;
+            var user = (await userTask.ConfigureAwait (false)) [0];
             return new WorkspaceUserJson () {
                 Id = data.RemoteId,
                 ModifiedAt = data.ModifiedAt,
@@ -19,60 +20,18 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 IsActive = data.IsActive,
                 Name = user.Name,
                 Email = user.Email,
-                WorkspaceId = await workspaceIdTask,
+                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
                 UserId = user.RemoteId.Value,
             };
         }
 
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static async Task<long?> GetRemoteId<T> (Guid? id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetById<T> (Guid id)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid?> ResolveRemoteId<T> (long? remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
         private static async Task Merge (WorkspaceUserData data, WorkspaceUserJson json)
         {
-            var workspaceIdTask = ResolveRemoteId<WorkspaceData> (json.WorkspaceId);
+            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
             var userTask = GetByRemoteId<UserData> (json.UserId);
 
-            var user = await userTask;
-            var workspaceId = await workspaceIdTask;
+            var user = await userTask.ConfigureAwait (false);
+            var workspaceId = await workspaceIdTask.ConfigureAwait (false);
 
             // Update linked user data:
             if (user == null) {
@@ -86,7 +45,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 user.Name = json.Name;
                 user.Email = json.Email;
             }
-            await Put (user);
+            await DataStore.PutAsync (user).ConfigureAwait (false);
 
             data.IsAdmin = json.IsAdmin;
             data.IsActive = json.IsActive;
@@ -96,26 +55,17 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
+        public static async Task<WorkspaceUserData> Import (WorkspaceUserJson json)
         {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
-        public static async Task<WorkspaceUserData> ToDataAsync (this WorkspaceUserJson json)
-        {
-            var data = await GetByRemoteId<WorkspaceUserData> (json.Id.Value);
+            var data = await GetByRemoteId<WorkspaceUserData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new WorkspaceUserData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }

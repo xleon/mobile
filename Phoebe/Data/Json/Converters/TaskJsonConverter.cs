@@ -4,9 +4,9 @@ using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class TaskJsonConverter
+    public sealed class TaskJsonConverter : BaseJsonConverter
     {
-        public static async Task<TaskJson> ToJsonAsync (this TaskData data)
+        public async Task<TaskJson> Export (TaskData data)
         {
             var projectIdTask = GetRemoteId<ProjectData> (data.ProjectId);
             var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
@@ -17,82 +17,36 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 Name = data.Name,
                 IsActive = data.IsActive,
                 Estimate = data.Estimate,
-                ProjectId = await projectIdTask,
-                WorkspaceId = await workspaceIdTask,
+                ProjectId = await projectIdTask.ConfigureAwait (false),
+                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
             };
-        }
-
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static async Task<long?> GetRemoteId<T> (Guid? id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid?> ResolveRemoteId<T> (long? remoteId)
-        {
-            throw new NotImplementedException ();
         }
 
         private static async Task Merge (TaskData data, TaskJson json)
         {
-            var projectIdTask = ResolveRemoteId<ProjectData> (json.ProjectId);
-            var workspaceIdTask = ResolveRemoteId<WorkspaceData> (json.WorkspaceId);
+            var projectIdTask = GetLocalId<ProjectData> (json.ProjectId);
+            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
 
             data.Name = json.Name;
             data.IsActive = json.IsActive;
             data.Estimate = json.Estimate;
-            data.ProjectId = await projectIdTask;
-            data.WorkspaceId = await workspaceIdTask;
+            data.ProjectId = await projectIdTask.ConfigureAwait (false);
+            data.WorkspaceId = await workspaceIdTask.ConfigureAwait (false);
 
             MergeCommon (data, json);
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
+        public async Task<TaskData> Import (TaskJson json)
         {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
-        public static async Task<TaskData> ToDataAsync (this TaskJson json)
-        {
-            var data = await GetByRemoteId<TaskData> (json.Id.Value);
+            var data = await GetByRemoteId<TaskData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new TaskData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }

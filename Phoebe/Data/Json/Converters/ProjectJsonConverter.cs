@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.NewModels;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class ProjectJsonConverter
+    public sealed class ProjectJsonConverter : BaseJsonConverter
     {
-        public static async Task<ProjectJson> ToJsonAsync (this ProjectData data)
+        public async Task<ProjectJson> Export (ProjectData data)
         {
             var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
             var clientIdTask = GetRemoteId<ClientData> (data.ClientId);
@@ -21,91 +22,44 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 IsPrivate = data.IsPrivate,
                 IsTemplate = data.IsTemplate,
                 UseTasksEstimate = data.UseTasksEstimate,
-                WorkspaceId = await workspaceIdTask,
-                ClientId = await clientIdTask,
+                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
+                ClientId = await clientIdTask.ConfigureAwait (false),
             };
-        }
-
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static async Task<long?> GetRemoteId<T> (Guid? id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid?> ResolveRemoteId<T> (long? remoteId)
-        {
-            throw new NotImplementedException ();
         }
 
         private static async Task Merge (ProjectData data, ProjectJson json)
         {
-            var workspaceIdTask = ResolveRemoteId<WorkspaceData> (json.WorkspaceId);
-            var clientIdTask = ResolveRemoteId<ClientData> (json.ClientId);
+            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
+            var clientIdTask = GetLocalId<ClientData> (json.ClientId);
 
             data.Name = json.Name;
             try {
                 data.Color = Convert.ToInt32 (json.Color);
             } catch {
-                // TODO: Use `ProjectModel.HexColors.Length - 1`
-                data.Color = 0;
+                data.Color = ProjectModel.DefaultColor;
             }
             data.IsActive = json.IsActive;
             data.IsBillable = json.IsBillable;
             data.IsPrivate = json.IsPrivate;
             data.IsTemplate = json.IsTemplate;
             data.UseTasksEstimate = json.UseTasksEstimate;
-            data.WorkspaceId = await workspaceIdTask;
-            data.ClientId = await clientIdTask;
+            data.WorkspaceId = await workspaceIdTask.ConfigureAwait (false);
+            data.ClientId = await clientIdTask.ConfigureAwait (false);
 
             MergeCommon (data, json);
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
+        public async Task<ProjectData> Import (ProjectJson json)
         {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
-        public static async Task<ProjectData> ToDataAsync (this ProjectJson json)
-        {
-            var data = await GetByRemoteId<ProjectData> (json.Id.Value);
+            var data = await GetByRemoteId<ProjectData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new ProjectData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }
@@ -114,4 +68,3 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
     }
 }
-

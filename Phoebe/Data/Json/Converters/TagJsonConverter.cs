@@ -4,9 +4,9 @@ using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class TagJsonConverter
+    public sealed class TagJsonConverter : BaseJsonConverter
     {
-        public static async Task<TagJson> ToJsonAsync (this TagData data)
+        public async Task<TagJson> ToJsonAsync (TagData data)
         {
             var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
 
@@ -14,77 +14,31 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 Id = data.RemoteId,
                 ModifiedAt = data.ModifiedAt,
                 Name = data.Name,
-                WorkspaceId = await workspaceIdTask,
+                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
             };
-        }
-
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static async Task<long?> GetRemoteId<T> (Guid? id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid?> ResolveRemoteId<T> (long? remoteId)
-        {
-            throw new NotImplementedException ();
         }
 
         private static async Task Merge (TagData data, TagJson json)
         {
-            var workspaceIdTask = ResolveRemoteId<WorkspaceData> (json.WorkspaceId);
+            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
 
             data.Name = json.Name;
-            data.WorkspaceId = await workspaceIdTask;
+            data.WorkspaceId = await workspaceIdTask.ConfigureAwait (false);
 
             MergeCommon (data, json);
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
+        public static async Task<TagData> Import (TagJson json)
         {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
-        public static async Task<TagData> ToDataAsync (this TagJson json)
-        {
-            var data = await GetByRemoteId<TagData> (json.Id.Value);
+            var data = await GetByRemoteId<TagData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new TagData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }

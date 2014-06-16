@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class TimeEntryJsonConverter
+    public sealed class TimeEntryJsonConverter : BaseJsonConverter
     {
-        public static async Task<TimeEntryJson> ToJsonAsync (this TimeEntryData data)
+        public async Task<TimeEntryJson> Export (TimeEntryData data)
         {
             var userIdTask = GetRemoteId<UserData> (data.UserId);
             var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
@@ -24,11 +24,11 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 StopTime = data.StopTime,
                 DurationOnly = data.DurationOnly,
                 Duration = EncodeDuration (data),
-                Tags = await tagsTask,
-                UserId = await userIdTask,
-                WorkspaceId = await workspaceIdTask,
-                ProjectId = await projectIdTask,
-                TaskId = await taskIdTask,
+                Tags = await tagsTask.ConfigureAwait (false),
+                UserId = await userIdTask.ConfigureAwait (false),
+                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
+                ProjectId = await projectIdTask.ConfigureAwait (false),
+                TaskId = await taskIdTask.ConfigureAwait (false),
             };
         }
 
@@ -84,57 +84,20 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         }
 
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static async Task<long?> GetRemoteId<T> (Guid? id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid?> ResolveRemoteId<T> (long? remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
         private static async Task Merge (TimeEntryData data, TimeEntryJson json)
         {
-            var userIdTask = ResolveRemoteId<UserData> (json.UserId);
-            var workspaceIdTask = ResolveRemoteId<WorkspaceData> (json.WorkspaceId);
-            var projectIdTask = ResolveRemoteId<ProjectData> (json.ProjectId);
-            var taskIdTask = ResolveRemoteId<TaskData> (json.TaskId);
+            var userIdTask = GetLocalId<UserData> (json.UserId);
+            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
+            var projectIdTask = GetLocalId<ProjectData> (json.ProjectId);
+            var taskIdTask = GetLocalId<TaskData> (json.TaskId);
 
             data.Description = json.Description;
             data.IsBillable = json.IsBillable;
             data.DurationOnly = json.DurationOnly;
-            data.UserId = await userIdTask;
-            data.WorkspaceId = await workspaceIdTask;
-            data.ProjectId = await projectIdTask;
-            data.TaskId = await taskIdTask;
+            data.UserId = await userIdTask.ConfigureAwait (false);
+            data.WorkspaceId = await workspaceIdTask.ConfigureAwait (false);
+            data.ProjectId = await projectIdTask.ConfigureAwait (false);
+            data.TaskId = await taskIdTask.ConfigureAwait (false);
             DecodeDuration (data, json);
 
             MergeCommon (data, json);
@@ -146,28 +109,19 @@ namespace Toggl.Phoebe.Data.Json.Converters
             throw new NotImplementedException ();
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
+        public async Task<TimeEntryData> Import (TimeEntryJson json)
         {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
-        public static async Task<TimeEntryData> ToDataAsync (this TimeEntryJson json)
-        {
-            var data = await GetByRemoteId<TimeEntryData> (json.Id.Value);
+            var data = await GetByRemoteId<TimeEntryData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new TimeEntryData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                     // Also update tags from the JSON we are merging:
-                    await ResetTags (data, json);
+                    await ResetTags (data, json).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }

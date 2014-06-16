@@ -4,9 +4,9 @@ using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class ProjectUserJsonConverter
+    public sealed class ProjectUserJsonConverter : BaseJsonConverter
     {
-        public static async Task<ProjectUserJson> ToJsonAsync (this ProjectUserData data)
+        public async Task<ProjectUserJson> Export (ProjectUserData data)
         {
             var projectIdTask = GetRemoteId<ProjectData> (data.ProjectId);
             var userIdTask = GetRemoteId<UserData> (data.UserId);
@@ -16,57 +16,20 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 ModifiedAt = data.ModifiedAt,
                 HourlyRate = data.HourlyRate,
                 IsManager = data.IsManager,
-                ProjectId = await projectIdTask,
-                UserId = await userIdTask,
+                ProjectId = await projectIdTask.ConfigureAwait (false),
+                UserId = await userIdTask.ConfigureAwait (false),
             };
-        }
-
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static async Task<long?> GetRemoteId<T> (Guid? id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid?> ResolveRemoteId<T> (long? remoteId)
-        {
-            throw new NotImplementedException ();
         }
 
         private static async Task Merge (ProjectUserData data, ProjectUserJson json)
         {
-            var projectIdTask = ResolveRemoteId<ProjectData> (json.ProjectId);
-            var userIdTask = ResolveRemoteId<UserData> (json.UserId);
+            var projectIdTask = GetLocalId<ProjectData> (json.ProjectId);
+            var userIdTask = GetLocalId<UserData> (json.UserId);
 
             data.HourlyRate = json.HourlyRate;
             data.IsManager = json.IsManager;
-            data.ProjectId = await projectIdTask;
-            data.UserId = await userIdTask;
+            data.ProjectId = await projectIdTask.ConfigureAwait (false);
+            data.UserId = await userIdTask.ConfigureAwait (false);
 
             MergeCommon (data, json);
         }
@@ -80,17 +43,17 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.IsDirty = false;
         }
 
-        public static async Task<ProjectUserData> ToDataAsync (this ProjectUserJson json)
+        public async Task<ProjectUserData> Import (ProjectUserJson json)
         {
-            var data = await GetByRemoteId<ProjectUserData> (json.Id.Value);
+            var data = await GetByRemoteId<ProjectUserData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new ProjectUserData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }

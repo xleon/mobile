@@ -4,11 +4,11 @@ using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class ClientJsonConverter
+    public sealed class ClientJsonConverter : BaseJsonConverter
     {
-        public static async Task<ClientJson> ToJsonAsync (this ClientData data)
+        public async Task<ClientJson> Export (ClientData data)
         {
-            var workspaceId = await GetRemoteId<WorkspaceData> (data.WorkspaceId);
+            var workspaceId = await GetRemoteId<WorkspaceData> (data.WorkspaceId).ConfigureAwait (false);
 
             return new ClientJson () {
                 Id = data.RemoteId,
@@ -18,59 +18,24 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
         private static async Task Merge (ClientData data, ClientJson json)
         {
             data.Name = json.Name;
-            data.WorkspaceId = await ResolveRemoteId<WorkspaceData> (json.WorkspaceId);
+            data.WorkspaceId = await GetLocalId<WorkspaceData> (json.WorkspaceId).ConfigureAwait (false);
             MergeCommon (data, json);
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
+        public async Task<ClientData> Import (ClientJson json)
         {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
-        public static async Task<ClientData> ToDataAsync (this ClientJson json)
-        {
-            var data = await GetByRemoteId<ClientData> (json.Id.Value);
+            var data = await GetByRemoteId<ClientData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new ClientData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }

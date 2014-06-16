@@ -4,9 +4,9 @@ using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
-    public static class UserJsonConverter
+    public sealed class UserJsonConverter : BaseJsonConverter
     {
-        public static async Task<UserJson> ToJsonAsync (this UserData data)
+        public async Task<UserJson> Export (UserData data)
         {
             var defaultWorkspaceIdTask = GetRemoteId<WorkspaceData> (data.DefaultWorkspaceId);
 
@@ -25,50 +25,13 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 SendTimerNotifications = data.SendTimerNotifications,
                 SendWeeklyReport = data.SendWeeklyReport,
                 StoreStartAndStopTime = data.TrackingMode == TrackingMode.StartNew,
-                DefaultWorkspaceId = await defaultWorkspaceIdTask,
+                DefaultWorkspaceId = await defaultWorkspaceIdTask.ConfigureAwait (false),
             };
-        }
-
-        private static async Task<long> GetRemoteId<T> (Guid id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static async Task<long?> GetRemoteId<T> (Guid? id)
-            where T : CommonData
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<T> GetByRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Put (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task Delete (object data)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid> ResolveRemoteId<T> (long remoteId)
-        {
-            throw new NotImplementedException ();
-        }
-
-        private static Task<Guid?> ResolveRemoteId<T> (long? remoteId)
-        {
-            throw new NotImplementedException ();
         }
 
         private static async Task Merge (UserData data, UserJson json)
         {
-            var defaultWorkspaceIdTask = ResolveRemoteId<WorkspaceData> (json.DefaultWorkspaceId);
+            var defaultWorkspaceIdTask = GetLocalId<WorkspaceData> (json.DefaultWorkspaceId);
 
             data.Name = json.Name;
             data.Email = json.Email;
@@ -82,31 +45,22 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.SendTimerNotifications = json.SendTimerNotifications;
             data.SendWeeklyReport = json.SendWeeklyReport;
             data.TrackingMode = json.StoreStartAndStopTime ? TrackingMode.StartNew : TrackingMode.Continue;
-            data.DefaultWorkspaceId = await defaultWorkspaceIdTask;
+            data.DefaultWorkspaceId = await defaultWorkspaceIdTask.ConfigureAwait (false);
 
             MergeCommon (data, json);
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
+        public async Task<UserData> Import (UserJson json)
         {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
-        public static async Task<UserData> ToDataAsync (this UserJson json)
-        {
-            var data = await GetByRemoteId<UserData> (json.Id.Value);
+            var data = await GetByRemoteId<UserData> (json.Id.Value).ConfigureAwait (false);
 
             if (data == null || data.ModifiedAt < json.ModifiedAt) {
                 if (json.DeletedAt == null) {
                     data = data ?? new UserData ();
-                    await Merge (data, json);
-                    await Put (data);
+                    await Merge (data, json).ConfigureAwait (false);
+                    await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
-                    await Delete (data);
+                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
             }

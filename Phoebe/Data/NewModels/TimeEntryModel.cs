@@ -271,7 +271,9 @@ namespace Toggl.Phoebe.Data.NewModels
                 ShouldLoad = EnsureLoaded,
                 Factory = id => new ProjectModel (id),
                 Changed = m => MutateData (data => {
-                    data.IsBillable = m.IsBillable;
+                    if (m != null) {
+                        data.IsBillable = m.IsBillable;
+                    }
                     data.ProjectId = GetOptionalId (m);
                 }),
             };

@@ -20,6 +20,8 @@ namespace Toggl.Phoebe.Data
         IDataQuery<T> Table<T> ()
             where T : new();
 
+        string GetTableName (Type mappingType);
+
         /// <summary>
         /// Executes a function on the SQLite background thread giving access to the raw SQLiteConnection.
         /// You should still use the Put and Delete methods provided instead of doing it via the SQLiteConnection

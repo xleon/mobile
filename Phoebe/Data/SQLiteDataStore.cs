@@ -97,6 +97,14 @@ namespace Toggl.Phoebe.Data
             return new QueryBuilder<T> (this, ctx.Connection.Table<T> ());
         }
 
+        public string GetTableName (Type mappingType)
+        {
+            var mapping = ctx.Connection.GetMapping (mappingType);
+            if (mapping == null)
+                return null;
+            return mapping.TableName;
+        }
+
         public Task<T> ExecuteInTransactionAsync<T> (Func<IDataStoreContext, T> worker)
         {
             return scheduler.Enqueue (delegate {

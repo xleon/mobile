@@ -1,14 +1,10 @@
 using System;
 using Android.App;
-using Android.Views;
-using Android.Widget;
 using Android.Content;
 using Android.OS;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
-using Toggl.Joey.UI.Adapters;
 using TimeEntryModel = Toggl.Phoebe.Data.Models.TimeEntryModel;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
@@ -33,7 +29,7 @@ namespace Toggl.Joey.UI.Fragments
                 .SetTitle (Resource.String.RecentTimeEntryContinueDialogTitle)
                 .SetMessage (Resource.String.RecentTimeEntryContinueDialogMessage)
                 .SetPositiveButton (Resource.String.RecentTimeEntryContinueDialogOk, OnOkClicked)
-                .SetNegativeButton (Resource.String.RecentTimeEntryContinueDialogCancel, OnCancelClicked)
+                .SetNegativeButton (Resource.String.RecentTimeEntryContinueDialogCancel, (EventHandler<DialogClickEventArgs>)null)
                 .Create ();
         }
 
@@ -64,12 +60,6 @@ namespace Toggl.Joey.UI.Fragments
             // Notify that the user explicitly started something
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
-        }
-
-        private void OnCancelClicked (object sender, DialogClickEventArgs e)
-        {
-            ServiceContainer.Resolve<SettingsStore> ().ReadContinueDialog = true;
-            Dismiss ();
         }
     }
 }

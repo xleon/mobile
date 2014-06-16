@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             var remoteId = await DataStore.GetRemoteId<T> (id).ConfigureAwait (false);
             // TODO: Should we throw an exception here when remoteId not found?
-            return remoteId ?? 0;
+            return remoteId;
         }
 
         protected static async Task<long?> GetRemoteId<T> (Guid? id)
@@ -39,7 +39,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             if (id == null)
                 return null;
-            return await DataStore.GetRemoteId<T> (id.Value).ConfigureAwait (false);
+            var remoteId = await DataStore.GetRemoteId<T> (id.Value).ConfigureAwait (false);
+            if (remoteId == 0)
+                return null;
+            return remoteId;
         }
 
         protected static async Task<Guid> GetLocalId<T> (long remoteId)
@@ -47,7 +50,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             var id = await DataStore.GetLocalId<T> (remoteId).ConfigureAwait (false);
             // TODO: Should we throw an exception here when remoteId not found?
-            return id ?? Guid.Empty;
+            return id;
         }
 
         protected static async Task<Guid?> GetLocalId<T> (long? remoteId)
@@ -55,7 +58,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             if (remoteId == null)
                 return null;
-            return await DataStore.GetLocalId<T> (remoteId.Value).ConfigureAwait (false);
+            var id = await DataStore.GetLocalId<T> (remoteId.Value).ConfigureAwait (false);
+            if (id == Guid.Empty)
+                return null;
+            return id;
         }
 
         protected static IDataStore DataStore {

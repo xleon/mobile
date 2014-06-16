@@ -33,7 +33,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 if (json.DeletedAt == null) {
                     data = data ?? new ClientData ();
                     await Merge (data, json).ConfigureAwait (false);
-                    await DataStore.PutAsync (data).ConfigureAwait (false);
+                    data = await DataStore.PutAsync (data).ConfigureAwait (false);
                 } else if (data != null) {
                     await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;

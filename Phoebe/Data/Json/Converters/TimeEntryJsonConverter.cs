@@ -162,7 +162,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 if (json.DeletedAt == null) {
                     data = data ?? new TimeEntryData ();
                     await Merge (data, json).ConfigureAwait (false);
-                    await DataStore.PutAsync (data).ConfigureAwait (false);
+                    data = await DataStore.PutAsync (data).ConfigureAwait (false);
                     // Also update tags from the JSON we are merging:
                     await ResetTags (data, json).ConfigureAwait (false);
                 } else if (data != null) {

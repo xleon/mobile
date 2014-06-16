@@ -46,22 +46,32 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         protected static async Task<Guid> GetLocalId<T> (long remoteId)
-            where T : CommonData
+            where T : CommonData, new()
         {
             var id = await DataStore.GetLocalId<T> (remoteId).ConfigureAwait (false);
-            // TODO: Should we throw an exception here when remoteId not found?
+            if (id == Guid.Empty)
+                id = await CreatePlaceholder<T> (remoteId);
             return id;
         }
 
         protected static async Task<Guid?> GetLocalId<T> (long? remoteId)
-            where T : CommonData
+            where T : CommonData, new()
         {
             if (remoteId == null)
                 return null;
             var id = await DataStore.GetLocalId<T> (remoteId.Value).ConfigureAwait (false);
             if (id == Guid.Empty)
-                return null;
+                id = await CreatePlaceholder<T> (remoteId.Value);
             return id;
+        }
+
+        private static async Task<Guid> CreatePlaceholder<T> (long remoteId)
+            where T : CommonData, new()
+        {
+            var data = await DataStore.PutAsync (new T () {
+                RemoteId = remoteId,
+            });
+            return data.Id;
         }
 
         protected static IDataStore DataStore {

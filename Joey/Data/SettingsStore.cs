@@ -25,6 +25,7 @@ namespace Toggl.Joey.Data
         private const string ReadDurOnlyNoticeKey = "readDurOnlyNotice";
         private const string IdleNotificationKey = "idleNotification";
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
+        private const string ReadContinueDialogKey = "readContinueDialog";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -219,6 +220,16 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (ReadDurOnlyNoticeKey, value ? 1 : 0);
                 OnSettingChanged (PropertyReadDurOnlyNotice);
+            }
+        }
+
+        public static readonly string PropertyReadContinueDialog = GetPropertyName (s => s.ReadContinueDialog);
+
+        public bool ReadContinueDialog {
+            get { return GetInt (ReadContinueDialogKey) == 1; }
+            set {
+                SetInt (ReadContinueDialogKey, value ? 1 : 0);
+                OnSettingChanged (PropertyReadContinueDialog);
             }
         }
     }

@@ -34,6 +34,10 @@
     <string name="RecentTimeEntryNoProject">(no project)</string>
     <string name="RecentTimeEntryNamelessProject">(nameless project)</string>
     <string name="RecentTimeEntryNoItemsTitle">No recent entries</string>
+    <string name="RecentTimeEntryContinueDialogTitle">About to continue</string>
+    <string name="RecentTimeEntryContinueDialogMessage">You are about to continue this time entry. To see details or edit, go to Log view.</string>
+    <string name="RecentTimeEntryContinueDialogOk">Ok</string>
+    <string name="RecentTimeEntryContinueDialogCancel">Cancel</string>
     <string name="NoItemsText">Start tracking and your activity will appear here.</string>
     <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
     <string name="TimerStartButtonText">Start</string>

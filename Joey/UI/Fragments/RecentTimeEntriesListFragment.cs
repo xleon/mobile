@@ -46,6 +46,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
+
             RecentTimeEntriesAdapter adapter = null;
             if (l.Adapter is HeaderViewListAdapter) {
                 var headerAdapter = (HeaderViewListAdapter)l.Adapter;
@@ -62,6 +63,12 @@ namespace Toggl.Joey.UI.Fragments
             var model = adapter.GetEntry (position);
             if (model == null)
                 return;
+
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            if (settingsStore.ReadContinueDialog != true) {
+                RecentTimeEntryContinueDialogFragment.ShowConfirm (FragmentManager, model);
+                return;
+            }
 
             var entry = model.Continue ();
 

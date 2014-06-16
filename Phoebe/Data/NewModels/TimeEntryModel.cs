@@ -339,13 +339,13 @@ namespace Toggl.Phoebe.Data.NewModels
                 pending.Add (user.LoadAsync ());
             await System.Threading.Tasks.Task.WhenAll (pending);
 
-            if (task != null)
+            if (ModelExists (task))
                 project = task.Project;
-            if (project != null)
+            if (ModelExists (project))
                 workspace = project.Workspace;
-            if (workspace == null && user != null)
+            if (ModelExists (user) && !ModelExists (workspace))
                 workspace = user.DefaultWorkspace;
-            if (workspace == null)
+            if (!ModelExists (workspace))
                 throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
 
             MutateData (data => {
@@ -395,13 +395,13 @@ namespace Toggl.Phoebe.Data.NewModels
                 pending.Add (user.LoadAsync ());
             await System.Threading.Tasks.Task.WhenAll (pending);
 
-            if (task != null)
+            if (ModelExists (task))
                 project = task.Project;
-            if (project != null)
+            if (ModelExists (project))
                 workspace = project.Workspace;
-            if (workspace == null && user != null)
+            if (ModelExists (user) && !ModelExists (workspace))
                 workspace = user.DefaultWorkspace;
-            if (workspace == null)
+            if (!ModelExists (workspace))
                 throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
 
             MutateData (data => {

@@ -28,11 +28,14 @@ namespace Toggl.Phoebe.Data.NewModels
 
         protected static Guid? GetOptionalId (IModel model)
         {
-            if (model == null)
-                return null;
-            if (model.Id == Guid.Empty)
+            if (!ModelExists (model))
                 return null;
             return model.Id;
+        }
+
+        protected static bool ModelExists (IModel model)
+        {
+            return model != null && model.Id != Guid.Empty;
         }
 
         private readonly Subscription<DataChangeMessage> subscriptionDataChange;

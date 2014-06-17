@@ -520,6 +520,14 @@ namespace Toggl.Phoebe.Data.NewModels
 
             try {
                 var store = ServiceContainer.Resolve<IDataStore> ();
+
+                if (user.DefaultWorkspaceId == Guid.Empty) {
+                    // User data has not yet been loaded by AuthManager, duplicate the effort and load ourselves:
+                    var userRows = await store.Table<UserData> ()
+                        .Take (1).QueryAsync (m => m.Id == user.Id);
+                    user = userRows [0];
+                }
+
                 var rows = await store.Table<TimeEntryData> ()
                     .Where (m => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
                     .OrderBy (m => m.ModifiedAt)
@@ -530,8 +538,8 @@ namespace Toggl.Phoebe.Data.NewModels
                     // Create new draft object
                     var newData = new TimeEntryData () {
                         State = TimeEntryState.New,
-                        UserId = user.Id.Value,
-                        WorkspaceId = user.DefaultWorkspaceId.Value,
+                        UserId = user.Id,
+                        WorkspaceId = user.DefaultWorkspaceId,
                         DurationOnly = user.TrackingMode == TrackingMode.Continue,
                     };
                     MarkDirty (newData);
@@ -565,8 +573,8 @@ namespace Toggl.Phoebe.Data.NewModels
                 State = TimeEntryState.Finished,
                 StartTime = now - duration,
                 StopTime = now,
-                UserId = user.Id.Value,
-                WorkspaceId = user.DefaultWorkspaceId.Value,
+                UserId = user.Id,
+                WorkspaceId = user.DefaultWorkspaceId,
                 DurationOnly = user.TrackingMode == TrackingMode.Continue,
             };
             MarkDirty (newData);

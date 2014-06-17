@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe.Data.Json.Converters;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -16,11 +19,19 @@ namespace Toggl.Phoebe.Net
             return expr.ToPropertyName ();
         }
 
+        private readonly Subscription<DataChangeMessage> subscriptionDataChange;
+
         public AuthManager ()
         {
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             try {
-                UserId = credStore.UserId;
+                if (credStore.UserId.HasValue) {
+                    User = new UserData () {
+                        Id = credStore.UserId.Value,
+                    };
+                    // Load full user data:
+                    ReloadUser ();
+                }
                 Token = credStore.ApiToken;
                 IsAuthenticated = !String.IsNullOrEmpty (Token);
             } catch (ArgumentException) {
@@ -28,9 +39,22 @@ namespace Toggl.Phoebe.Net
                 credStore.UserId = null;
                 credStore.ApiToken = null;
             }
+
+            // Listen for global data changes
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
         }
 
-        private async Task<bool> Authenticate (Func<Task<UserModel>> getUser)
+        private async void ReloadUser ()
+        {
+            if (User == null)
+                return;
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var rows = await store.Table<UserData> ().QueryAsync (r => r.Id == User.Id);
+            User = rows.FirstOrDefault ();
+        }
+
+        private async Task<bool> Authenticate (Func<Task<UserJson>> getUser)
         {
             if (IsAuthenticated)
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
@@ -40,10 +64,10 @@ namespace Toggl.Phoebe.Net
             IsAuthenticating = true;
 
             try {
-                UserModel user;
+                UserJson userJson;
                 try {
-                    user = await getUser ();
-                    if (user == null) {
+                    userJson = await getUser ();
+                    if (userJson == null) {
                         ServiceContainer.Resolve<MessageBus> ().Send (
                             new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials));
                         return false;
@@ -57,17 +81,29 @@ namespace Toggl.Phoebe.Net
                     }
 
                     ServiceContainer.Resolve<MessageBus> ().Send (
-                        new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials, ex));
+                        new AuthFailedMessage (this, AuthFailedMessage.Reason.NetworkError, ex));
+                    return false;
+                }
+
+                // Import the user into our database:
+                UserData userData;
+                try {
+                    userData = await userJson.Import ();
+                } catch (Exception ex) {
+                    var log = ServiceContainer.Resolve<Logger> ();
+                    log.Error (Tag, ex, "Failed to import authenticated user.");
+
+                    ServiceContainer.Resolve<MessageBus> ().Send (
+                        new AuthFailedMessage (this, AuthFailedMessage.Reason.SystemError, ex));
                     return false;
                 }
 
                 var credStore = ServiceContainer.Resolve<ISettingsStore> ();
-                credStore.UserId = user.Id;
-                credStore.ApiToken = user.ApiToken;
+                credStore.UserId = userData.Id;
+                credStore.ApiToken = userJson.ApiToken;
 
-                user.IsPersisted = true;
-                UserId = user.Id;
-                Token = user.ApiToken;
+                User = userData;
+                Token = userJson.ApiToken;
                 IsAuthenticated = true;
 
                 ServiceContainer.Resolve<MessageBus> ().Send (
@@ -94,36 +130,20 @@ namespace Toggl.Phoebe.Net
         public Task<bool> Signup (string email, string password)
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
-            return Authenticate (async delegate {
-                var m = Model.Update (new UserModel () {
-                    Email = email,
-                    Password = password,
-                    Timezone = Time.TimeZoneId,
-                    ModifiedAt = DateTime.MinValue,
-                });
-
-                await client.Create (m);
-
-                m.IsPersisted = true;
-                return m;
-            });
+            return Authenticate (() => client.Create (new UserJson () {
+                Email = email,
+                Password = password,
+                Timezone = Time.TimeZoneId,
+            }));
         }
 
         public Task<bool> SignupWithGoogle (string accessToken)
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
-            return Authenticate (async delegate {
-                var m = Model.Update (new UserModel () {
-                    GoogleAccessToken = accessToken,
-                    Timezone = Time.TimeZoneId,
-                    ModifiedAt = DateTime.MinValue,
-                });
-
-                await client.Create (m);
-
-                m.IsPersisted = true;
-                return m;
-            });
+            return Authenticate (() => client.Create (new UserJson () {
+                GoogleAccessToken = accessToken,
+                Timezone = Time.TimeZoneId,
+            }));
         }
 
         public void Forget ()
@@ -137,10 +157,17 @@ namespace Toggl.Phoebe.Net
 
             IsAuthenticated = false;
             Token = null;
-            UserId = null;
+            User = null;
 
             ServiceContainer.Resolve<MessageBus> ().Send (
                 new AuthChangedMessage (this));
+        }
+
+        private void OnDataChange (DataChangeMessage msg)
+        {
+            if (User.Matches (msg.Data)) {
+                User = new UserData ((UserData)msg.Data);
+            }
         }
 
         private bool authenticating;
@@ -173,40 +200,17 @@ namespace Toggl.Phoebe.Net
             }
         }
 
-        private Guid? userId;
-        public static readonly string PropertyUserId = GetPropertyName ((m) => m.UserId);
-
-        public Guid? UserId {
-            get { return userId; }
-            private set {
-                if (userId == value)
-                    return;
-
-                UserModel model = null;
-                if (value.HasValue) {
-                    model = Model.ById<UserModel> (value.Value);
-                    if (model == null)
-                        throw new ArgumentException ("Unable to resolve UserId to model.");
-                }
-
-                ChangePropertyAndNotify (PropertyUserId, delegate {
-                    userId = value;
-                });
-
-                User = model;
-            }
-        }
-
-        private UserModel user;
+        private UserData userData;
         public static readonly string PropertyUser = GetPropertyName ((m) => m.User);
 
-        public UserModel User {
-            get { return user; }
+        public UserData User {
+            get { return userData; }
             private set {
-                if (user == value)
+                if (userData == value)
                     return;
+
                 ChangePropertyAndNotify (PropertyUser, delegate {
-                    user = value;
+                    userData = value;
                 });
             }
         }

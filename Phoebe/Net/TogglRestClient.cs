@@ -682,7 +682,7 @@ namespace Toggl.Phoebe.Net
         public Task<UserJson> UpdateUser (UserJson jsonObject)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.Token == null || authManager.UserId != jsonObject.Id)
+            if (authManager.User == null || authManager.User.RemoteId != jsonObject.Id)
                 throw new NotSupportedException ("Can only update currently logged in user.");
 
             var url = new Uri (v8Url, "me");

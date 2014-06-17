@@ -39,12 +39,12 @@ namespace Toggl.Phoebe.Data
             return res.Select (v => v.Value).ToList ();
         }
 
-        public static Guid? GetTagIdFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
+        public static Guid GetTagIdFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
         {
             var con = ctx.Connection;
             var tagTbl = con.GetMapping (typeof(TagData)).TableName;
             var q = String.Concat ("SELECT Id AS Value FROM ", tagTbl, " WHERE WorkspaceId=? AND Name=?");
-            return con.ExecuteScalar<Guid?> (q, workspaceId, name);
+            return con.ExecuteScalar<Guid> (q, workspaceId, name);
         }
 
         private class ColumnRow<T>

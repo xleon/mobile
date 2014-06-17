@@ -119,7 +119,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 foreach (var tagName in json.Tags) {
                     var id = ctx.GetTagIdFromName (timeEntryData.WorkspaceId, tagName);
 
-                    if (id == null) {
+                    if (id == Guid.Empty) {
                         // Need to create a new tag:
                         var tagData = new TagData () {
                             Name = tagName,
@@ -130,7 +130,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                         id = timeEntryData.Id;
                     }
 
-                    tagIds.Add (id.Value);
+                    tagIds.Add (id);
                 }
 
                 // Iterate over TimeEntryTags and determine which to keep and which to discard:

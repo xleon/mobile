@@ -1,57 +1,36 @@
 using System;
-using Toggl.Phoebe;
+using System.ComponentModel;
 using Toggl.Phoebe.Bugsnag;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
-namespace Toggl.Joey.Net
+namespace Toggl.Phoebe.Net
 {
     public class BugsnagUserManager
     {
-        #pragma warning disable 0414
-        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-        #pragma warning restore 0414
-        private UserModel currentUser;
-
         public BugsnagUserManager ()
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChangedMessage);
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChangedMessage);
-
-            currentUser = ServiceContainer.Resolve<AuthManager> ().User;
-            OnUserChanged ();
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            authManager.PropertyChanged += OnAuthPropertyChanged;
+            UpdateUser ();
         }
 
-        private void OnAuthChangedMessage (AuthChangedMessage msg)
+        private void OnAuthPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            currentUser = ServiceContainer.Resolve<AuthManager> ().User;
-            OnUserChanged ();
-        }
-
-        private void OnModelChangedMessage (ModelChangedMessage msg)
-        {
-            if (currentUser == null || msg.Model != currentUser)
-                return;
-
-            if (msg.PropertyName == UserModel.PropertyRemoteId
-                || msg.PropertyName == UserModel.PropertyEmail
-                || msg.PropertyName == UserModel.PropertyName) {
-                OnUserChanged ();
+            if (args.PropertyName == AuthManager.PropertyUser) {
+                UpdateUser ();
             }
         }
 
-        private void OnUserChanged ()
+        private void UpdateUser ()
         {
             var bugsnag = ServiceContainer.Resolve<BugsnagClient> ();
-            if (currentUser == null) {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            if (user == null) {
                 bugsnag.SetUser (null, null, null);
             } else {
-                string id = currentUser.RemoteId.HasValue ? currentUser.RemoteId.ToString () : null;
-                bugsnag.SetUser (id, null, currentUser.Name);
+                string id = user.RemoteId.HasValue ? user.RemoteId.ToString () : null;
+                bugsnag.SetUser (id, null, user.Name);
             }
         }
     }

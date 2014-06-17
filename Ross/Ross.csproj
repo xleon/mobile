@@ -138,17 +138,17 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\portable-net40+sl4+wp7+win8\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Plus">
-      <HintPath>..\Components\googleplusandplayios-1.3.0.1\lib\ios\Google.Plus.dll</HintPath>
-    </Reference>
     <Reference Include="GoogleAnalytics.iOS">
       <HintPath>..\Components\googleanalytics-3.0.3.4\lib\ios\GoogleAnalytics.iOS.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.Plus">
+      <HintPath>..\Components\googleplusandplayios-1.3.0.1\lib\ios\Google.Plus.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
     <BundleResource Include="Resources\*.png" />
-	<BundleResource Include="Resources\Fonts\icomoon.ttf" />
+    <BundleResource Include="Resources\Fonts\icomoon.ttf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -188,7 +188,7 @@
     <Compile Include="Theme\Image.cs" />
     <Compile Include="DispatchQueueExtensions.cs" />
     <Compile Include="Views\ModelTableViewCell.cs" />
-	<Compile Include="Views\PasswordTextField.cs" />
+    <Compile Include="Views\PasswordTextField.cs" />
     <Compile Include="Views\BindableTableViewCell.cs" />
     <Compile Include="ViewControllers\NavigationMenuController.cs" />
     <Compile Include="Theme\Style.NavMenu.cs">

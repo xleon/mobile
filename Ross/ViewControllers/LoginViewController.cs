@@ -3,6 +3,7 @@ using Cirrious.FluentLayouts.Touch;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Net;
+using Toggl.Ross.Views;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 
@@ -43,7 +44,7 @@ namespace Toggl.Ross.ViewControllers
 
             inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
-            inputsContainer.Add (passwordTextField = new UITextField () {
+            inputsContainer.Add(passwordTextField = new PasswordTextField () {
                 Placeholder = "LoginPasswordHint".Tr (),
                 AutocapitalizationType = UITextAutocapitalizationType.None,
                 AutocorrectionType = UITextAutocorrectionType.No,

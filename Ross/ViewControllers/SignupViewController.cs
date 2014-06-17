@@ -5,6 +5,7 @@ using MonoTouch.Foundation;
 using MonoTouch.TTTAttributedLabel;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Net;
+using Toggl.Ross.Views;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 
@@ -48,7 +49,7 @@ namespace Toggl.Ross.ViewControllers
 
             inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Signup.InputsBorder));
 
-            inputsContainer.Add (passwordTextField = new UITextField () {
+            inputsContainer.Add(passwordTextField = new PasswordTextField () {
                 Placeholder = "SignupPasswordHint".Tr (),
                 AutocapitalizationType = UITextAutocapitalizationType.None,
                 AutocorrectionType = UITextAutocorrectionType.No,

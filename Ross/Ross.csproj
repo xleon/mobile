@@ -148,6 +148,7 @@
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
     <BundleResource Include="Resources\*.png" />
+	<BundleResource Include="Resources\Fonts\icomoon.ttf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

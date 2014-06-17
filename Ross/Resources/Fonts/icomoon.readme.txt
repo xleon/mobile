@@ -1,0 +1,2 @@
+- Icomoon glyphes are generated at http://icomoon.io/app/#/select
+- ttf file must be placed at current directory as a BundleResource

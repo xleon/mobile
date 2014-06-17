@@ -106,6 +106,11 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         private static Task ResetTags (TimeEntryData timeEntryData, TimeEntryJson json)
         {
+            // Don't touch the tags when the field is null
+            if (json.Tags == null) {
+                return Task.FromResult<object> (null);
+            }
+
             return DataStore.ExecuteInTransactionAsync (ctx => {
                 var con = ctx.Connection;
 

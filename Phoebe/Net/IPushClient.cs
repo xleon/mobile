@@ -10,4 +10,3 @@ namespace Toggl.Phoebe.Net
         Task Unregister (string authToken, PushService service, string regid);
     }
 }
-

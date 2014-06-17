@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 
@@ -18,20 +19,32 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static async Task Merge (TagData data, TagJson json)
+        private static async Task<TagData> Merge (TagData data, TagJson json)
         {
-            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
+            var workspaceId = await GetLocalId<WorkspaceData> (json.WorkspaceId).ConfigureAwait (false);
+
+            if (data == null) {
+                // Fallback to name lookup for unsynced tags:
+                var rows = await DataStore.Table<TagData> ().Take (1)
+                    .QueryAsync (r => r.WorkspaceId == workspaceId && r.Name == json.Name && r.RemoteId == null)
+                    .ConfigureAwait (false);
+                data = rows.FirstOrDefault ();
+            }
+
+            // As a last chance create new tag:
+            data = data ?? new TagData ();
 
             data.Name = json.Name;
-            data.WorkspaceId = await workspaceIdTask.ConfigureAwait (false);
+            data.WorkspaceId = workspaceId;
 
             MergeCommon (data, json);
+
+            return data;
         }
 
         public async Task<TagData> Import (TagJson json)
         {
             var data = await GetByRemoteId<TagData> (json.Id.Value).ConfigureAwait (false);
-            // TODO: Should fall back to name lookup?
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
@@ -39,8 +52,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     data = null;
                 }
             } else if (data == null || data.ModifiedAt < json.ModifiedAt) {
-                data = data ?? new TagData ();
-                await Merge (data, json).ConfigureAwait (false);
+                data = await Merge (data, json).ConfigureAwait (false);
                 data = await DataStore.PutAsync (data).ConfigureAwait (false);
             }
 

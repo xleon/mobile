@@ -62,6 +62,8 @@
     <Compile Include="Data\Models\WorkspaceUserModelTest.cs" />
     <Compile Include="Data\Json\Converters\ClientJsonConverterTest.cs" />
     <Compile Include="Data\Json\Converters\ProjectJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\ProjectUserJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\WorkspaceUserJsonConverterTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

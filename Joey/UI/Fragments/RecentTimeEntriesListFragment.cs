@@ -15,6 +15,7 @@ namespace Toggl.Joey.UI.Fragments
     public class RecentTimeEntriesListFragment : ListFragment
     {
         private WelcomeBoxManager welcomeManager;
+        private FooterViewManager footerView;
         private ViewGroup mainLayout;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -90,10 +91,31 @@ namespace Toggl.Joey.UI.Fragments
                 if (!settingsStore.GotWelcomeMessage) {
                     welcomeManager = new WelcomeBoxManager (ListView);
                 }
+                footerView = new FooterViewManager (ListView);
 
                 var adapter = new RecentTimeEntriesAdapter ();
                 ListAdapter = adapter;
             }
+        }
+
+        private class FooterViewManager
+        {
+
+            public FooterViewManager (ListView listView)
+            {
+
+                var inflater = LayoutInflater.FromContext (listView.Context);
+                View footerView = Inflate (inflater);
+                listView.AddFooterView (footerView);
+            }
+
+            private View Inflate (LayoutInflater inflater)
+            {
+                var footer = inflater.Inflate (Resource.Layout.RecentTimeEntriesListFooterFragment, null);
+                footer.FindViewById<TextView> (Resource.Id.RecentTimeEntriesListFooterTextView).SetFont (Font.RobotoLight);
+                return footer;
+            }
+
         }
 
         private class WelcomeBoxManager

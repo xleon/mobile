@@ -37,15 +37,15 @@ namespace Toggl.Phoebe.Data.Json.Converters
             if (user == null) {
                 user = new UserData () {
                     RemoteId = json.UserId,
-                    Name = user.Name,
-                    Email = user.Email,
+                    Name = json.Name,
+                    Email = json.Email,
                     DefaultWorkspaceId = workspaceId,
                 };
             } else {
                 user.Name = json.Name;
                 user.Email = json.Email;
             }
-            await DataStore.PutAsync (user).ConfigureAwait (false);
+            user = await DataStore.PutAsync (user).ConfigureAwait (false);
 
             data.IsAdmin = json.IsAdmin;
             data.IsActive = json.IsActive;
@@ -55,7 +55,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        public static async Task<WorkspaceUserData> Import (WorkspaceUserJson json)
+        public async Task<WorkspaceUserData> Import (WorkspaceUserJson json)
         {
             var data = await GetByRemoteId<WorkspaceUserData> (json.Id.Value).ConfigureAwait (false);
 

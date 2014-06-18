@@ -74,7 +74,7 @@ namespace Toggl.Phoebe.Data.NewModels
             };
         }
 
-        [ForeignRelation]
+        [ModelRelation]
         public WorkspaceModel Workspace {
             get { return workspace.Get (Data.WorkspaceId); }
             set { workspace.Set (value); }

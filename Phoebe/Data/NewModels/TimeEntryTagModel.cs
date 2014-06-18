@@ -71,13 +71,13 @@ namespace Toggl.Phoebe.Data.NewModels
             };
         }
 
-        [ForeignRelation]
+        [ModelRelation]
         public TimeEntryModel TimeEntry {
             get { return timeEntry.Get (Data.TimeEntryId); }
             set { timeEntry.Set (value); }
         }
 
-        [ForeignRelation]
+        [ModelRelation]
         public TagModel Tag {
             get { return tag.Get (Data.TagId); }
             set { tag.Set (value); }

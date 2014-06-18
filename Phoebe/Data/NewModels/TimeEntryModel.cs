@@ -289,25 +289,25 @@ namespace Toggl.Phoebe.Data.NewModels
             };
         }
 
-        [ForeignRelation]
+        [ModelRelation]
         public UserModel User {
             get { return user.Get (Data.UserId); }
             set { user.Set (value); }
         }
 
-        [ForeignRelation]
+        [ModelRelation]
         public WorkspaceModel Workspace {
             get { return workspace.Get (Data.WorkspaceId); }
             set { workspace.Set (value); }
         }
 
-        [ForeignRelation (Required = false)]
+        [ModelRelation (Required = false)]
         public ProjectModel Project {
             get { return project.Get (Data.ProjectId); }
             set { project.Set (value); }
         }
 
-        [ForeignRelation (Required = false)]
+        [ModelRelation (Required = false)]
         public TaskModel Task {
             get { return task.Get (Data.TaskId); }
             set { task.Set (value); }

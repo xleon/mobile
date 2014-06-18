@@ -6,9 +6,9 @@ namespace Toggl.Phoebe.Data.NewModels
     /// Foreign relation attribute to keep track of foreign key relations in models.
     /// </summary>
     [AttributeUsage (AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public sealed class ForeignRelationAttribute : Attribute
+    public sealed class ModelRelationAttribute : Attribute
     {
-        public ForeignRelationAttribute ()
+        public ModelRelationAttribute ()
         {
             Required = true;
         }

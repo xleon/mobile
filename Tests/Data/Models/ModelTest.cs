@@ -90,7 +90,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 .Where (prop => !ExemptProperties.Contains (prop.Name));
 
             foreach (var prop in properties) {
-                var relationAttr = prop.GetCustomAttribute<ForeignRelationAttribute> ();
+                var relationAttr = prop.GetCustomAttribute<ModelRelationAttribute> ();
                 Assert.IsNotNull (relationAttr, String.Format ("{0} foreign relation property should have the ForeignRelationAttribute.", prop.Name));
 
                 var changeCount = 0;
@@ -347,13 +347,13 @@ namespace Toggl.Phoebe.Tests.Data.Models
 
         private static bool IsRequiredRelationProperty (PropertyInfo prop)
         {
-            var attr = prop.GetCustomAttribute<ForeignRelationAttribute> ();
+            var attr = prop.GetCustomAttribute<ModelRelationAttribute> ();
             return attr != null && attr.Required;
         }
 
         private static bool IsOptionalRelationProperty (PropertyInfo prop)
         {
-            var attr = prop.GetCustomAttribute<ForeignRelationAttribute> ();
+            var attr = prop.GetCustomAttribute<ModelRelationAttribute> ();
             return attr != null && !attr.Required;
         }
     }

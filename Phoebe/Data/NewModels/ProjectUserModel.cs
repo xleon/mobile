@@ -103,13 +103,13 @@ namespace Toggl.Phoebe.Data.NewModels
             };
         }
 
-        [ForeignRelation]
+        [ModelRelation]
         public ProjectModel Project {
             get { return project.Get (Data.ProjectId); }
             set { project.Set (value); }
         }
 
-        [ForeignRelation]
+        [ModelRelation]
         public UserModel User {
             get { return user.Get (Data.UserId); }
             set { user.Set (value); }

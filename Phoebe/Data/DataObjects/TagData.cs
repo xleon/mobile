@@ -18,6 +18,7 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public string Name { get; set; }
 
+        [ForeignRelation (typeof(WorkspaceData))]
         public Guid WorkspaceId { get; set; }
     }
 }

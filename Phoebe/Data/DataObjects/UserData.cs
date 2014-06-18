@@ -51,6 +51,7 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public TrackingMode TrackingMode { get; set; }
 
+        [ForeignRelation (typeof(WorkspaceData))]
         public Guid DefaultWorkspaceId { get; set; }
     }
 }

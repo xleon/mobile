@@ -22,8 +22,10 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public bool IsActive { get; set; }
 
+        [ForeignRelation (typeof(WorkspaceData))]
         public Guid WorkspaceId { get; set; }
 
+        [ForeignRelation (typeof(UserData))]
         public Guid UserId { get; set; }
     }
 }

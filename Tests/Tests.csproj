@@ -46,7 +46,6 @@
     <Compile Include="Data\SqliteModelStoreTest.cs" />
     <Compile Include="Bugsnag\CombiningStreamTest.cs" />
     <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
-    <Compile Include="Data\ModelGraphTest.cs" />
     <Compile Include="MessageBusTest.cs" />
     <Compile Include="Data\DataStoreTest.cs" />
     <Compile Include="Data\Models\ModelTest.cs" />
@@ -70,6 +69,7 @@
     <Compile Include="Data\Json\Converters\UserJsonConverterTest.cs" />
     <Compile Include="Data\Json\Converters\TimeEntryJsonConverterTest.cs" />
     <Compile Include="Data\ForeignRelationManagerTest.cs" />
+    <Compile Include="Data\RelatedDataGraphTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

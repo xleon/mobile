@@ -25,7 +25,7 @@ namespace Toggl.Phoebe.Data
                 // Discover data objects:
                 var dataType = typeof(Toggl.Phoebe.Data.DataObjects.TimeEntryData);
                 var dataObjects = from t in dataType.Assembly.GetTypes ()
-                                              where t.Namespace == dataType.Namespace
+                                              where t.Namespace == dataType.Namespace && !t.IsAbstract
                                               select t;
 
                 // Create tables:

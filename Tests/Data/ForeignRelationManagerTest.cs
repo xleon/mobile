@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -48,6 +49,36 @@ namespace Toggl.Phoebe.Tests.Data
 
             var missingProps = relationProps.Where (p => relations.All (r => r.Name != p.Name)).ToList ();
             Assert.That (missingProps, Has.Count.EqualTo (0), "Not all properties were returned");
+        }
+
+        [Test, TestCaseSource ("DataObjectTypes")]
+        public void TestQuerying (Type dataType)
+        {
+            RunAsync (async delegate {
+                var mgr = new ForeignRelationManager ();
+
+                // Test null relation
+                var relation = new ForeignRelation () {
+                    Type = dataType,
+                    Id = null,
+                };
+                Assert.IsNull (await mgr.QueryAsync (relation));
+
+                // Test missing relation
+                relation = new ForeignRelation () {
+                    Type = dataType,
+                    Id = Guid.NewGuid (),
+                };
+                Assert.IsNull (await mgr.QueryAsync (relation));
+
+                // Create dummy data:
+                var inst = (CommonData)Activator.CreateInstance (dataType);
+                inst.Id = relation.Id.Value;
+
+                var putAsyncMethod = DataStore.GetType ().GetMethod ("PutAsync").MakeGenericMethod (dataType);
+                await (Task)putAsyncMethod.Invoke (DataStore, new object[] { inst });
+                Assert.IsNotNull (await mgr.QueryAsync (relation));
+            });
         }
 
         public static IEnumerable<Type> DataObjectTypes {

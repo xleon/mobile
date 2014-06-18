@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using XPlatUtils;
 
@@ -11,6 +12,12 @@ namespace Toggl.Phoebe.Data
         {
             var manager = ServiceContainer.Resolve<ForeignRelationManager> ();
             return manager.GetRelations (data);
+        }
+
+        public static Task<CommonData> QueryAsync (this ForeignRelation relation)
+        {
+            var manager = ServiceContainer.Resolve<ForeignRelationManager> ();
+            return manager.QueryAsync (relation);
         }
     }
 }

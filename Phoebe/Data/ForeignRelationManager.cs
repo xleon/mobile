@@ -1,12 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
     public class ForeignRelationManager
     {
+        public async Task<CommonData> QueryAsync (ForeignRelation relation)
+        {
+            var type = relation.Type;
+            var id = relation.Id;
+
+            if (type == typeof(ClientData)) {
+                return await QueryAsync<ClientData> (id).ConfigureAwait (false);
+            } else if (type == typeof(ProjectData)) {
+                return await QueryAsync<ProjectData> (id).ConfigureAwait (false);
+            } else if (type == typeof(ProjectUserData)) {
+                return await QueryAsync<ProjectUserData> (id).ConfigureAwait (false);
+            } else if (type == typeof(TagData)) {
+                return await QueryAsync<TagData> (id).ConfigureAwait (false);
+            } else if (type == typeof(TaskData)) {
+                return await QueryAsync<TaskData> (id).ConfigureAwait (false);
+            } else if (type == typeof(TimeEntryData)) {
+                return await QueryAsync<TimeEntryData> (id).ConfigureAwait (false);
+            } else if (type == typeof(TimeEntryTagData)) {
+                return await QueryAsync<TimeEntryTagData> (id).ConfigureAwait (false);
+            } else if (type == typeof(UserData)) {
+                return await QueryAsync<UserData> (id).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceData)) {
+                return await QueryAsync<WorkspaceData> (id).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceUserData)) {
+                return await QueryAsync<WorkspaceUserData> (id).ConfigureAwait (false);
+            }
+
+            throw new InvalidOperationException (String.Format ("Unknown relation type {0}", type));
+        }
+
+        private async Task<T> QueryAsync<T> (Guid? id)
+            where T : CommonData, new()
+        {
+            if (id == null)
+                return null;
+
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var rows = await store.Table<T> ().QueryAsync (r => r.Id == id).ConfigureAwait (false);
+            return rows.FirstOrDefault ();
+        }
+
         public IEnumerable<ForeignRelation> GetRelations (CommonData dataObject)
         {
             var type = dataObject.GetType ();

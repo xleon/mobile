@@ -69,6 +69,7 @@
     <Compile Include="Data\Json\Converters\WorkspaceJsonConverterTest.cs" />
     <Compile Include="Data\Json\Converters\UserJsonConverterTest.cs" />
     <Compile Include="Data\Json\Converters\TimeEntryJsonConverterTest.cs" />
+    <Compile Include="Data\ForeignRelationManagerTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

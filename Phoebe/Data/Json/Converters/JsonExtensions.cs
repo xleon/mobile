@@ -7,6 +7,56 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public static class JsonExtensions
     {
+        public static async Task<CommonData> Import (this CommonJson json)
+        {
+            var type = json.GetType ();
+            if (type == typeof(ClientJson)) {
+                return await Import ((ClientJson)json).ConfigureAwait (false);
+            } else if (type == typeof(ProjectJson)) {
+                return await Import ((ProjectJson)json).ConfigureAwait (false);
+            } else if (type == typeof(ProjectUserJson)) {
+                return await Import ((ProjectUserJson)json).ConfigureAwait (false);
+            } else if (type == typeof(TagJson)) {
+                return await Import ((TagJson)json).ConfigureAwait (false);
+            } else if (type == typeof(TaskJson)) {
+                return await Import ((TaskJson)json).ConfigureAwait (false);
+            } else if (type == typeof(TimeEntryJson)) {
+                return await Import ((TimeEntryJson)json).ConfigureAwait (false);
+            } else if (type == typeof(UserJson)) {
+                return await Import ((UserJson)json).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceJson)) {
+                return await Import ((WorkspaceJson)json).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceUserJson)) {
+                return await Import ((WorkspaceUserJson)json).ConfigureAwait (false);
+            }
+            throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
+        }
+
+        public static async Task<CommonJson> Export (this CommonData data)
+        {
+            var type = data.GetType ();
+            if (type == typeof(ClientData)) {
+                return await Export ((ClientData)data).ConfigureAwait (false);
+            } else if (type == typeof(ProjectData)) {
+                return await Export ((ProjectData)data).ConfigureAwait (false);
+            } else if (type == typeof(ProjectUserData)) {
+                return await Export ((ProjectUserData)data).ConfigureAwait (false);
+            } else if (type == typeof(TagData)) {
+                return await Export ((TagData)data).ConfigureAwait (false);
+            } else if (type == typeof(TaskData)) {
+                return await Export ((TaskData)data).ConfigureAwait (false);
+            } else if (type == typeof(TimeEntryData)) {
+                return await Export ((TimeEntryData)data).ConfigureAwait (false);
+            } else if (type == typeof(UserData)) {
+                return await Export ((UserData)data).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceData)) {
+                return await Export ((WorkspaceData)data).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceUserData)) {
+                return await Export ((WorkspaceUserData)data).ConfigureAwait (false);
+            }
+            throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
+        }
+
         public static Task<ClientData> Import (this ClientJson json)
         {
             var converter = ServiceContainer.Resolve<ClientJsonConverter> ();

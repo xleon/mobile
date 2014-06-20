@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using Toggl.Phoebe.Data.Models;
+using System.Linq;
+using Toggl.Phoebe.Data.DataObjects;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public sealed class WorkspaceTagsView : IDataView<TagModel>, IDisposable
+    public sealed class WorkspaceTagsView : IDataView<TagData>, IDisposable
     {
-        private readonly List<TagModel> models = new List<TagModel> ();
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private readonly List<TagData> dataObjects = new List<TagData> ();
+        private Subscription<DataChangeMessage> subscriptionDataChange;
         private Guid workspaceId;
 
         public WorkspaceTagsView (Guid workspaceId)
@@ -17,43 +18,47 @@ namespace Toggl.Phoebe.Data.Views
             Reload ();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
         }
 
         public void Dispose ()
         {
-            if (subscriptionModelChanged != null) {
+            if (subscriptionDataChange != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
+                bus.Unsubscribe (subscriptionDataChange);
+                subscriptionDataChange = null;
             }
 
             GC.SuppressFinalize (this);
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
+        private void OnDataChange (DataChangeMessage msg)
         {
-            var model = msg.Model as TagModel;
-            if (model == null)
+            var tagData = msg.Data as TagData;
+            if (tagData == null)
                 return;
 
-            if (msg.PropertyName == TagModel.PropertyName
-                || model.WorkspaceId == workspaceId) {
+            var isExcluded = msg.Action == DataAction.Delete
+                             || tagData.DeletedAt.HasValue
+                             || tagData.WorkspaceId != workspaceId;
+            var existingData = dataObjects.FirstOrDefault (r => r.Matches (tagData));
+
+            if (isExcluded) {
+                if (existingData != null) {
+                    dataObjects.Remove (existingData);
+                    OnUpdated ();
+                }
+            } else {
+                tagData = new TagData (tagData);
+
+                if (existingData == null) {
+                    dataObjects.Add (tagData);
+                } else {
+                    dataObjects.UpdateData (tagData);
+                }
+
                 Sort ();
                 OnUpdated ();
-            } else if (msg.PropertyName == TagModel.PropertyWorkspaceId
-                       || msg.PropertyName == TagModel.PropertyIsShared) {
-                if (model.WorkspaceId == workspaceId) {
-                    models.Add (model);
-                    Sort ();
-                    OnUpdated ();
-                } else {
-                    var idx = models.IndexOf (model);
-                    if (idx >= 0) {
-                        models.RemoveAt (idx);
-                        OnUpdated ();
-                    }
-                }
             }
         }
 
@@ -77,31 +82,46 @@ namespace Toggl.Phoebe.Data.Views
 
         private void Sort ()
         {
-            models.Sort ((a, b) => (a.Name ?? String.Empty).CompareTo ((b.Name ?? String.Empty)));
+            dataObjects.Sort ((a, b) => String.Compare (
+                a.Name ?? String.Empty,
+                b.Name ?? String.Empty,
+                StringComparison.Ordinal
+            ));
         }
 
         public event EventHandler Updated;
 
-        public void Reload ()
+        public async void Reload ()
         {
+            if (IsLoading)
+                return;
+
+            var store = ServiceContainer.Resolve<IDataStore> ();
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bool shouldSubscribe = false;
 
-            if (subscriptionModelChanged != null) {
+            if (subscriptionDataChange != null) {
                 shouldSubscribe = true;
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
+                bus.Unsubscribe (subscriptionDataChange);
+                subscriptionDataChange = null;
             }
 
             try {
-                models.Clear ();
-                models.AddRange (Model.Query<TagModel> ((m) => m.WorkspaceId == workspaceId).NotDeleted ());
-                Sort ();
+                dataObjects.Clear ();
+                IsLoading = true;
                 OnUpdated ();
+
+                var tags = await store.Table<TagData> ()
+                    .QueryAsync (r => r.DeletedAt == null
+                           && r.WorkspaceId == workspaceId);
+                dataObjects.AddRange (tags);
+                Sort ();
             } finally {
                 if (shouldSubscribe) {
-                    subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+                    subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
                 }
+                IsLoading = false;
+                OnUpdated ();
             }
         }
 
@@ -109,21 +129,19 @@ namespace Toggl.Phoebe.Data.Views
         {
         }
 
-        public IEnumerable<TagModel> Data {
-            get { return models; }
+        public IEnumerable<TagData> Data {
+            get { return dataObjects; }
         }
 
         public long Count {
-            get { return models.Count; }
+            get { return dataObjects.Count; }
         }
 
         public bool HasMore {
             get { return false; }
         }
 
-        public bool IsLoading {
-            get { return false; }
-        }
+        public bool IsLoading { get; private set; }
     }
 }
 

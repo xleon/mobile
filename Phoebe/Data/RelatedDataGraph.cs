@@ -161,7 +161,6 @@ namespace Toggl.Phoebe.Data
 
         private static async Task<IEnumerable<CommonData>> GetRelatedData (CommonData data, List<CommonData> cache)
         {
-            var store = ServiceContainer.Resolve<IDataStore> ();
             var dataObjects = new List<CommonData> ();
 
             foreach (var relation in data.GetRelations ()) {

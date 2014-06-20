@@ -16,7 +16,7 @@ namespace Toggl.Phoebe.Data.DataObjects
             Color = other.Color;
             IsActive = other.IsActive;
             IsBillable = other.IsBillable;
-            IsPrivate = other.IsBillable;
+            IsPrivate = other.IsPrivate;
             IsTemplate = other.IsTemplate;
             UseTasksEstimate = other.UseTasksEstimate;
             WorkspaceId = other.WorkspaceId;

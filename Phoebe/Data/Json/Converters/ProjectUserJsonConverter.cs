@@ -34,15 +34,6 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        private static void MergeCommon (CommonData data, CommonJson json)
-        {
-            data.RemoteId = json.Id;
-            data.RemoteRejected = false;
-            data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
-            data.IsDirty = false;
-        }
-
         public async Task<ProjectUserData> Import (ProjectUserJson json)
         {
             var data = await GetByRemoteId<ProjectUserData> (json.Id.Value).ConfigureAwait (false);

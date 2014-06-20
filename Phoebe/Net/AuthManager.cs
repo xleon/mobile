@@ -215,6 +215,13 @@ namespace Toggl.Phoebe.Net
             }
         }
 
+        public Guid? GetUserId ()
+        {
+            if (User == null)
+                return null;
+            return User.Id;
+        }
+
         private string token;
         public static readonly string PropertyToken = GetPropertyName ((m) => m.Token);
 

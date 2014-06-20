@@ -237,8 +237,7 @@ namespace Toggl.Phoebe.Data.Views
                 // Fall back to local data:
                 if (useLocal) {
                     var store = ServiceContainer.Resolve<IDataStore> ();
-                    var user = ServiceContainer.Resolve<AuthManager> ().User;
-                    var userId = user != null ? user.Id : (Guid?)null;
+                    var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
                     var baseQuery = store.Table<TimeEntryData> ()
                         .OrderBy (r => r.StartTime, false)

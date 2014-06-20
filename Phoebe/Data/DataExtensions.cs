@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data
@@ -19,6 +20,21 @@ namespace Toggl.Phoebe.Data
             if (data.GetType () != other.GetType ())
                 return false;
             return data.Id == ((CommonData)data).Id;
+        }
+
+        public static bool UpdateData<T> (this IList<T> list, T data)
+            where T : CommonData
+        {
+            var updateCount = 0;
+
+            for (var idx = 0; idx < list.Count; idx++) {
+                if (data.Matches (list [idx])) {
+                    list [idx] = data;
+                    updateCount++;
+                }
+            }
+
+            return updateCount > 0;
         }
     }
 }

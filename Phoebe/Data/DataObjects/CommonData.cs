@@ -25,7 +25,6 @@ namespace Toggl.Phoebe.Data.DataObjects
             RemoteRejected = other.RemoteRejected;
         }
 
-        [DontDirty]
         [PrimaryKey, AutoIncrement]
         public Guid Id { get; set; }
 
@@ -33,14 +32,11 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public DateTime? DeletedAt { get; set; }
 
-        [DontDirty]
         public bool IsDirty { get; set; }
 
-        [DontDirty]
         [Unique]
         public long? RemoteId { get; set; }
 
-        [DontDirty]
         public bool RemoteRejected { get; set; }
     }
 }

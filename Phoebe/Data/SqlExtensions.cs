@@ -47,6 +47,18 @@ namespace Toggl.Phoebe.Data
             return con.ExecuteScalar<Guid> (q, workspaceId, name);
         }
 
+        public static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
+        {
+            var projectTbl = ds.GetTableName (typeof(ProjectData));
+            var projectUserTbl = ds.GetTableName (typeof(ProjectUserData));
+            var q = String.Concat (
+                        "SELECT p.* FROM ", projectTbl, " AS p ",
+                        "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
+                        "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
+                        "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)");
+            return ds.QueryAsync<ProjectData> (q, userId);
+        }
+
         private class ColumnRow<T>
         {
             public T Value { get; set; }

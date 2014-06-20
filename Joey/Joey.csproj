@@ -75,7 +75,9 @@
     <Compile Include="UI\Adapters\RecentTimeEntriesAdapter.cs" />
     <Compile Include="UI\Fragments\RecentTimeEntriesListFragment.cs" />
     <Compile Include="UI\Adapters\LogTimeEntriesAdapter.cs" />
-    <Compile Include="UI\Fragments\LogTimeEntriesListFragment.cs" />
+    <Compile Include="UI\Fragments\LogTimeEntriesListFragment.cs">
+      <DependentUpon>BaseDialogFragment.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
@@ -460,6 +462,10 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcEdit.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcEdit.png" />
     <AndroidResource Include="Resources\layout\ChangeTimeEntryStopTimeDialogFragment.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcStop.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcStop.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcStop.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcStop.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

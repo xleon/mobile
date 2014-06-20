@@ -228,13 +228,19 @@ namespace Toggl.Joey.UI.Adapters
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
 
+
                 ContinueImageButton.Click += OnContinueButtonClicked;
+
             }
 
             void OnContinueButtonClicked (object sender, EventArgs e)
             {
                 if (Model == null)
                     return;
+                if (Model.State == TimeEntryState.Running) {
+                    //stop time entry
+
+                }
                 adapter.OnContinueTimeEntry (Model);
             }
 
@@ -335,6 +341,19 @@ namespace Toggl.Joey.UI.Adapters
                 if (Model.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
+                }
+                showStopButton ();
+            }
+
+            private void showStopButton()
+            {
+                if (Model == null || Handle == IntPtr.Zero)
+                    return;
+
+                if (Model.State == TimeEntryState.Running) {
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
+                } else {
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcContinue);
                 }
             }
         }

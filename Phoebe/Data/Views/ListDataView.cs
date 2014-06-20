@@ -4,12 +4,11 @@ using System.Linq;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class ListModelsView<T> : IDataView<T>
-        where T : Model, new()
+    public class ListDataView<T> : IDataView<T>
     {
         private readonly List<T> data;
 
-        public ListModelsView (IEnumerable<T> enumerable)
+        public ListDataView (IEnumerable<T> enumerable)
         {
             data = enumerable.ToList ();
         }

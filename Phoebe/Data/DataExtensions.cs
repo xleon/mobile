@@ -19,7 +19,7 @@ namespace Toggl.Phoebe.Data
                 return false;
             if (data.GetType () != other.GetType ())
                 return false;
-            return data.Id == ((CommonData)data).Id;
+            return data.Id == ((CommonData)other).Id;
         }
 
         public static bool UpdateData<T> (this IList<T> list, T data)

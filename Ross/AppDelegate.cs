@@ -10,6 +10,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Data;
+using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 
 namespace Toggl.Ross
@@ -102,6 +103,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<BugsnagUserManager> ();
             ServiceContainer.Register<IGAITracker> (
                 () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
+            ServiceContainer.Register<INetworkPresence>(() => new NetworkPresence());
         }
 
         string IPlatformInfo.AppIdentifier {

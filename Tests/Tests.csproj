@@ -38,12 +38,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Test.cs" />
-    <Compile Include="Data\ModelTest.cs" />
-    <Compile Include="Data\ModelManagerTest.cs" />
-    <Compile Include="Data\RelatedModelsCollectionTest.cs" />
-    <Compile Include="Data\TimeEntryModelTest.cs" />
-    <Compile Include="Data\AttributeLookupCacheTest.cs" />
-    <Compile Include="Data\SqliteModelStoreTest.cs" />
     <Compile Include="Bugsnag\CombiningStreamTest.cs" />
     <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
     <Compile Include="MessageBusTest.cs" />
@@ -80,6 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Data\RelatedModelsCollectionTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />

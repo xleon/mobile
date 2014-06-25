@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SQLite;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
@@ -12,27 +13,59 @@ namespace Toggl.Phoebe.Data
     {
         private readonly Scheduler scheduler = new Scheduler ();
         private readonly Context ctx;
+        #pragma warning disable 0414
+        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
+        #pragma warning restore 0414
 
         public SqliteDataStore (string dbPath)
         {
             ctx = new Context (this, dbPath);
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
+
             CreateTables ();
+        }
+
+        private static IEnumerable<Type> DiscoverDataObjectTypes ()
+        {
+            var dataType = typeof(Toggl.Phoebe.Data.DataObjects.TimeEntryData);
+            return from t in dataType.Assembly.GetTypes ()
+                            where t.Namespace == dataType.Namespace && !t.IsAbstract
+                            select t;
         }
 
         private async void CreateTables ()
         {
             await ExecuteInTransactionAsync (delegate {
-                // Discover data objects:
-                var dataType = typeof(Toggl.Phoebe.Data.DataObjects.TimeEntryData);
-                var dataObjects = from t in dataType.Assembly.GetTypes ()
-                                              where t.Namespace == dataType.Namespace && !t.IsAbstract
-                                              select t;
+                var dataObjects = DiscoverDataObjectTypes ();
 
-                // Create tables:
                 foreach (var t in dataObjects) {
                     ctx.Connection.CreateTable (t);
                 }
             });
+        }
+
+        private async void WipeTables ()
+        {
+            await ExecuteInTransactionAsync (delegate {
+                var dataObjects = DiscoverDataObjectTypes ();
+
+                foreach (var t in dataObjects) {
+                    var map = ctx.Connection.GetMapping (t);
+                    var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
+                    ctx.Connection.Execute (query);
+                }
+            });
+        }
+
+        private void OnAuthChanged (AuthChangedMessage msg)
+        {
+            if (msg.AuthManager.IsAuthenticated)
+                return;
+
+            // Wipe database on logout
+            WipeTables ();
         }
 
         private T Clone<T> (T obj)

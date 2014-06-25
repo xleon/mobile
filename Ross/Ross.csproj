@@ -252,6 +252,7 @@
     <Compile Include="Theme\Style.Settings.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="Net\NetworkPresence.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -276,6 +277,7 @@
     <Folder Include="Views\" />
     <Folder Include="Bugsnag\" />
     <Folder Include="Bugsnag\Data\" />
+    <Folder Include="Net\" />
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />

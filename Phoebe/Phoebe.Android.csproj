@@ -55,6 +55,7 @@
     <Compile Include="Net\**\*.cs" />
     <Compile Include="Properties\**\*.cs" />
     <Compile Include="Threading\**\*.cs" />
+    <Compile Include="Net\INetworkPresence.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

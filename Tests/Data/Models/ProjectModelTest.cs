@@ -1,7 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.NewModels;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Tests.Data.Models
 {

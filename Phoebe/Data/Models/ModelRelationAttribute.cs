@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Toggl.Phoebe.Data.NewModels
+namespace Toggl.Phoebe.Data.Models
 {
     /// <summary>
     /// Foreign relation attribute to keep track of foreign key relations in models.

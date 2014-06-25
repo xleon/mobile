@@ -7,7 +7,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.NewModels
+namespace Toggl.Phoebe.Data.Models
 {
     public class TimeEntryModel : Model<TimeEntryData>
     {

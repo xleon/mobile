@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.DataObjects;
 
-namespace Toggl.Phoebe.Data.NewModels
+namespace Toggl.Phoebe.Data.Models
 {
     public class ProjectModel : Model<ProjectData>
     {

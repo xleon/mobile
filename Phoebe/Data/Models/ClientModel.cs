@@ -1,45 +1,47 @@
 using System;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.DataObjects;
+using System.ComponentModel;
+using System.Threading.Tasks;
 
-namespace Toggl.Phoebe.Data.NewModels
+namespace Toggl.Phoebe.Data.Models
 {
-    public class TagModel : Model<TagData>
+    public class ClientModel : Model<ClientData>
     {
-        private static string GetPropertyName<T> (Expression<Func<TagModel, T>> expr)
+        private static string GetPropertyName<T> (Expression<Func<ClientModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        public static new readonly string PropertyId = Model<TagData>.PropertyId;
+        public static new readonly string PropertyId = Model<ClientData>.PropertyId;
         public static readonly string PropertyName = GetPropertyName (m => m.Name);
         public static readonly string PropertyWorkspace = GetPropertyName (m => m.Workspace);
 
-        public TagModel ()
+        public ClientModel ()
         {
         }
 
-        public TagModel (TagData data) : base (data)
+        public ClientModel (ClientData data) : base (data)
         {
         }
 
-        public TagModel (Guid id) : base (id)
+        public ClientModel (Guid id) : base (id)
         {
         }
 
-        protected override TagData Duplicate (TagData data)
+        protected override ClientData Duplicate (ClientData data)
         {
-            return new TagData (data);
+            return new ClientData (data);
         }
 
         protected override void OnBeforeSave ()
         {
             if (Data.WorkspaceId == Guid.Empty) {
-                throw new ValidationException ("Workspace must be set for Tag model.");
+                throw new ValidationException ("Workspace must be set for Client model.");
             }
         }
 
-        protected override void DetectChangedProperties (TagData oldData, TagData newData)
+        protected override void DetectChangedProperties (ClientData oldData, ClientData newData)
         {
             base.DetectChangedProperties (oldData, newData);
             if (oldData.Name != newData.Name)
@@ -80,12 +82,12 @@ namespace Toggl.Phoebe.Data.NewModels
             set { workspace.Set (value); }
         }
 
-        public static implicit operator TagModel (TagData data)
+        public static implicit operator ClientModel (ClientData data)
         {
-            return new TagModel (data);
+            return new ClientModel (data);
         }
 
-        public static implicit operator TagData (TagModel model)
+        public static implicit operator ClientData (ClientModel model)
         {
             return model.Data;
         }

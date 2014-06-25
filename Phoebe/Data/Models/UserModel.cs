@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.DataObjects;
 
-namespace Toggl.Phoebe.Data.NewModels
+namespace Toggl.Phoebe.Data.Models
 {
     public class UserModel : Model<UserData>
     {

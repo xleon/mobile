@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.NewModels
+namespace Toggl.Phoebe.Data.Models
 {
     public abstract class Model<T> : IModel
         where T : CommonData, new()

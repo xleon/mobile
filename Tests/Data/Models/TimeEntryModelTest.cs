@@ -2,7 +2,7 @@
 using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.NewModels;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Phoebe.Data.DataObjects;

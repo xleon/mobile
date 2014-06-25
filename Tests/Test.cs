@@ -45,6 +45,10 @@ namespace Toggl.Phoebe.Tests
             }
 
             RunAsync (async delegate {
+                // Use an empty transaction to ensure that the SQLiteDataStore has completed all scheduled jobs:
+                await DataStore.ExecuteInTransactionAsync ((ctx) => {
+                });
+
                 ServiceContainer.Clear ();
 
                 if (databasePath != null) {

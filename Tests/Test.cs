@@ -11,6 +11,7 @@ namespace Toggl.Phoebe.Tests
     public abstract class Test
     {
         private string databasePath;
+        private MainThreadSynchronizationContext syncContext;
 
         [TestFixtureSetUp]
         public virtual void Init ()
@@ -25,7 +26,8 @@ namespace Toggl.Phoebe.Tests
         [SetUp]
         public virtual void SetUp ()
         {
-            SynchronizationContext.SetSynchronizationContext (new SynchronizationContext ());
+            syncContext = new MainThreadSynchronizationContext ();
+            SynchronizationContext.SetSynchronizationContext (syncContext);
 
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
@@ -38,17 +40,27 @@ namespace Toggl.Phoebe.Tests
         [TearDown]
         public virtual void TearDown ()
         {
-            ServiceContainer.Clear ();
-
-            if (databasePath != null) {
-                File.Delete (databasePath);
-                databasePath = null;
+            // Work through queued jobs before we start tearing everything down
+            while (syncContext.Run ()) {
             }
+
+            RunAsync (async delegate {
+                ServiceContainer.Clear ();
+
+                if (databasePath != null) {
+                    File.Delete (databasePath);
+                    databasePath = null;
+                }
+            });
         }
 
         protected void RunAsync (Func<Task> fn)
         {
-            fn ().GetAwaiter ().GetResult ();
+            var awaiter = fn ().GetAwaiter ();
+
+            // Process jobs and wait for the task to complete
+            while (syncContext.Run () || !awaiter.IsCompleted) {
+            }
         }
 
         protected MessageBus MessageBus {

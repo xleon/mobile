@@ -64,6 +64,7 @@
     <Compile Include="Data\Json\Converters\TimeEntryJsonConverterTest.cs" />
     <Compile Include="Data\ForeignRelationManagerTest.cs" />
     <Compile Include="Data\RelatedDataGraphTest.cs" />
+    <Compile Include="MainThreadSynchronizationContext.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

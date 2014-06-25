@@ -115,4 +115,6 @@
     <string name="CreateProjectDialogHint">Project name&#8230;</string>
     <string name="CreateProjectDialogOk">Create</string>
     <string name="ActionBarDoneButton">Done</string>
+    <string name="FeedbackMessageHint">Your message...</string>
+    <string name="SendFeedbackButtonText">Send</string>
 </resources>

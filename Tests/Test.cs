@@ -34,7 +34,7 @@ namespace Toggl.Phoebe.Tests
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<IDataStore> (delegate {
                 databasePath = Path.GetTempFileName ();
-                return new SQLiteDataStore (databasePath);
+                return new SqliteDataStore (databasePath);
             });
         }
 

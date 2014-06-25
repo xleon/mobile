@@ -8,12 +8,12 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
-    public class SQLiteDataStore : IDataStore
+    public class SqliteDataStore : IDataStore
     {
         private readonly Scheduler scheduler = new Scheduler ();
         private readonly Context ctx;
 
-        public SQLiteDataStore (string dbPath)
+        public SqliteDataStore (string dbPath)
         {
             ctx = new Context (this, dbPath);
             CreateTables ();
@@ -144,10 +144,10 @@ namespace Toggl.Phoebe.Data
         private class QueryBuilder<T> : IDataQuery<T>
             where T : new()
         {
-            private readonly SQLiteDataStore store;
+            private readonly SqliteDataStore store;
             private readonly TableQuery<T> query;
 
-            public QueryBuilder (SQLiteDataStore store, TableQuery<T> query)
+            public QueryBuilder (SqliteDataStore store, TableQuery<T> query)
             {
                 this.store = store;
                 this.query = query;
@@ -201,10 +201,10 @@ namespace Toggl.Phoebe.Data
         private class Context : IDataStoreContext
         {
             private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
-            private readonly SQLiteDataStore store;
+            private readonly SqliteDataStore store;
             private readonly SQLiteConnection conn;
 
-            public Context (SQLiteDataStore store, string dbPath)
+            public Context (SqliteDataStore store, string dbPath)
             {
                 this.store = store;
                 conn = new SQLiteConnection (dbPath);

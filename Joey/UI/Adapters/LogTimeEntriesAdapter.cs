@@ -88,11 +88,21 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private void OnStopTimeEntry (TimeEntryModel model)
+        {
+            var handler = HandleTimeEntryStop;
+            if (handler != null) {
+                handler (model);
+            }
+        }
+
         public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
 
         public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
 
         public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
+
+        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
 
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
@@ -238,8 +248,8 @@ namespace Toggl.Joey.UI.Adapters
                 if (Model == null)
                     return;
                 if (Model.State == TimeEntryState.Running) {
-                    //stop time entry
-
+                    adapter.OnStopTimeEntry (Model);
+                    return;
                 }
                 adapter.OnContinueTimeEntry (Model);
             }

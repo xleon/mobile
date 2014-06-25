@@ -65,7 +65,7 @@ namespace Toggl.Phoebe.Data.Views
                     }
                     OnUpdated ();
                 } else {
-                    var groupChanged = grp.CanContain (entry);
+                    var groupChanged = !grp.CanContain (entry);
                     var startChanged = existingEntry.StartTime != entry.StartTime;
 
                     if (groupChanged) {

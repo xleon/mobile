@@ -28,7 +28,6 @@ namespace Toggl.Phoebe.Tests
             SynchronizationContext.SetSynchronizationContext (new SynchronizationContext ());
 
             ServiceContainer.Register<MessageBus> ();
-            ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<IDataStore> (delegate {
                 databasePath = Path.GetTempFileName ();

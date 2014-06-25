@@ -76,6 +76,7 @@
     <string name="CurrentTimeEntryEditDeleteToast">Time entry has been discarded</string>
     <string name="MainDrawerTimer">Timer</string>
     <string name="MainDrawerReports">Reports</string>
+    <string name="MainDrawerFeedback">Feedback</string>
     <string name="MainDrawerSettings">Settings</string>
     <string name="MainDrawerLogout">Log out</string>
     <string name="ChangeTimeEntryDurationDialogTitle">Set duration</string>

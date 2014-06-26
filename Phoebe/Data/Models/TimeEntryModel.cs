@@ -18,6 +18,11 @@ namespace Toggl.Phoebe.Data.Models
             return expr.ToPropertyName ();
         }
 
+        private static bool ShouldAddDefaultTag {
+            get { return ServiceContainer.Resolve<ISettingsStore> ().UseDefaultTag; }
+        }
+
+        internal static readonly string DefaultTag = "mobile";
         public static new readonly string PropertyId = Model<TimeEntryData>.PropertyId;
         public static readonly string PropertyState = GetPropertyName (m => m.State);
         public static readonly string PropertyDescription = GetPropertyName (m => m.Description);
@@ -362,11 +367,38 @@ namespace Toggl.Phoebe.Data.Models
             });
 
             await SaveAsync ();
+            await AddDefaultTags ();
+        }
 
-            // TODO: Implement adding of default tag
-            // if (ShouldAddDefaultTag) {
-            //     Tags.Add (DefaultTag);
-            // }
+        private async Task AddDefaultTags ()
+        {
+            if (!ShouldAddDefaultTag)
+                return;
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var timeEntryId = Data.Id;
+            var workspaceId = Data.WorkspaceId;
+
+            await dataStore.ExecuteInTransactionAsync (ctx => AddDefaultTags (ctx, workspaceId, timeEntryId))
+                .ConfigureAwait (false);
+        }
+
+        private static void AddDefaultTags (IDataStoreContext ctx, Guid workspaceId, Guid timeEntryId)
+        {
+            var defaultTag = ctx.Connection.Table<TagData> ()
+                .Where (r => r.Name == DefaultTag && r.DeletedAt == null)
+                .FirstOrDefault ();
+
+            if (defaultTag == null) {
+                defaultTag = ctx.Put (new TagData () {
+                    Name = DefaultTag,
+                    WorkspaceId = workspaceId,
+                });
+            }
+
+            ctx.Put (new TimeEntryTagData () {
+                TimeEntryId = timeEntryId,
+                TagId = defaultTag.Id,
+            });
         }
 
         /// <summary>
@@ -416,11 +448,7 @@ namespace Toggl.Phoebe.Data.Models
             });
 
             await SaveAsync ();
-
-            // TODO: Implement adding of default tag
-            // if (ShouldAddDefaultTag) {
-            //     Tags.Add (DefaultTag);
-            // }
+            await AddDefaultTags ();
         }
 
         /// <summary>
@@ -488,9 +516,21 @@ namespace Toggl.Phoebe.Data.Models
             };
             MarkDirty (newData);
 
+            var parentId = Data.Id;
             await store.ExecuteInTransactionAsync (ctx => {
                 newData = ctx.Put (newData);
-                // TODO: Duplicate tag relations as well
+
+                // Duplicate tag relations as well
+                if (parentId != Guid.Empty) {
+                    var q = ctx.Connection.Table<TimeEntryTagData> ()
+                        .Where (r => r.TimeEntryId == parentId && r.DeletedAt == null);
+                    foreach (var row in q) {
+                        ctx.Put (new TimeEntryTagData () {
+                            TimeEntryId = newData.Id,
+                            TagId = row.TagId,
+                        });
+                    }
+                }
             });
 
             var model = new TimeEntryModel (newData);
@@ -546,7 +586,9 @@ namespace Toggl.Phoebe.Data.Models
 
                     await store.ExecuteInTransactionAsync (ctx => {
                         newData = ctx.Put (newData);
-                        // TODO: Add default tag
+                        if (ShouldAddDefaultTag) {
+                            AddDefaultTags (ctx, newData.WorkspaceId, newData.Id);
+                        }
                     });
 
                     data = newData;
@@ -581,7 +623,9 @@ namespace Toggl.Phoebe.Data.Models
 
             await store.ExecuteInTransactionAsync (ctx => {
                 newData = ctx.Put (newData);
-                // TODO: Add default tag
+                if (ShouldAddDefaultTag) {
+                    AddDefaultTags (ctx, newData.WorkspaceId, newData.Id);
+                }
             });
 
             return new TimeEntryModel (newData);

@@ -66,6 +66,9 @@ namespace Toggl.Phoebe.Tests
             // Process jobs and wait for the task to complete
             while (syncContext.Run () || !awaiter.IsCompleted) {
             }
+
+            // Propagate exceptions
+            awaiter.GetResult ();
         }
 
         protected MessageBus MessageBus {

@@ -39,7 +39,7 @@ namespace Toggl.Phoebe.Tests.Views
             var tcs = new TaskCompletionSource<object> ();
             EventHandler onUpdated = null;
 
-            onUpdated = (s, e) => {
+            onUpdated = delegate {
                 if (view.IsLoading)
                     return;
                 view.Updated -= onUpdated;
@@ -47,8 +47,23 @@ namespace Toggl.Phoebe.Tests.Views
             };
 
             view.Updated += onUpdated;
-            await tcs.Task;
+            await tcs.Task.ConfigureAwait (false);
         }
 
+        protected async Task WaitForUpdates<T> (IDataView<T> view, int count = 1)
+        {
+            var tcs = new TaskCompletionSource<object> ();
+            EventHandler onUpdated = null;
+
+            onUpdated = delegate {
+                if (--count > 0)
+                    return;
+                view.Updated -= onUpdated;
+                tcs.TrySetResult (null);
+            };
+
+            view.Updated += onUpdated;
+            await tcs.Task.ConfigureAwait (false);
+        }
     }
 }

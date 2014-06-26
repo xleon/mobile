@@ -59,6 +59,18 @@ namespace Toggl.Phoebe.Data
             return ds.QueryAsync<ProjectData> (q, userId);
         }
 
+        public static Task<List<TagData>> GetTimeEntryTags (this IDataStore ds, Guid timeEntryId)
+        {
+            var tagTbl = ds.GetTableName (typeof(TagData));
+            var timeEntryTagTbl = ds.GetTableName (typeof(TimeEntryTagData));
+            var q = String.Concat (
+                        "SELECT t.* FROM ", tagTbl, " AS t ",
+                        "INNER JOIN ", timeEntryTagTbl, " AS tet ON tet.TagId = t.Id ",
+                        "WHERE t.DeletedAt IS NULL AND tet.DeletedAt IS NULL ",
+                        "AND tet.TimeEntryId=?");
+            return ds.QueryAsync<TagData> (q, timeEntryId);
+        }
+
         private class ColumnRow<T>
         {
             public T Value { get; set; }

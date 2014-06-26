@@ -1,0 +1,235 @@
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using NUnit.Framework;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Views;
+
+namespace Toggl.Phoebe.Tests.Views
+{
+    [TestFixture]
+    public class TimeEntryTagsViewTest : DataViewTest
+    {
+        TimeEntryData timeEntry;
+        TagData tag1;
+        TagData tag2;
+        TagData tag3;
+
+        public override void SetUp ()
+        {
+            base.SetUp ();
+
+            RunAsync (async delegate {
+                await CreateTestData ();
+            });
+        }
+
+        [Test]
+        public void TestInitialState ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                Assert.AreEqual (2, view.Count);
+                Assert.AreEqual (
+                    new[] { "Tag #1", "Tag #2" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        [Test]
+        public void TestInvalidTimeEntry ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (Guid.Empty);
+                await WaitForLoaded (view);
+
+                Assert.AreEqual (0, view.Count);
+            });
+        }
+
+        [Test]
+        public void TestAddInvalidManyToMany ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                await DataStore.PutAsync (new TimeEntryTagData () {
+                    TimeEntryId = timeEntry.Id,
+                    TagId = Guid.Empty,
+                });
+
+                Assert.AreEqual (2, view.Count);
+            });
+        }
+
+        [Test]
+        public void TestAddManyToMany ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                await DataStore.PutAsync (new TimeEntryTagData () {
+                    TimeEntryId = timeEntry.Id,
+                    TagId = tag3.Id,
+                });
+
+                Assert.AreEqual (3, view.Count);
+                Assert.AreEqual (
+                    new[] { "Tag #1", "Tag #2", "Tag #3" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        [Test]
+        public void TestDeleteManyToMany ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                var inter = await GetByRemoteId<TimeEntryTagData> (1);
+                await DataStore.DeleteAsync (inter);
+
+                Assert.AreEqual (1, view.Count);
+                Assert.AreEqual (
+                    new[] { "Tag #2" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        [Test]
+        public void TestDeleteTag ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                await DataStore.DeleteAsync (tag2);
+
+                Assert.AreEqual (1, view.Count);
+                Assert.AreEqual (
+                    new[] { "Tag #1" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        [Test]
+        public void TestRenameTag ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                tag2.Name = "A tag";
+                await DataStore.PutAsync (tag2);
+
+                Assert.AreEqual (2, view.Count);
+                Assert.AreEqual (
+                    new[] { "A tag", "Tag #1" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        [Test]
+        public void TestMarkDeletedTag ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                tag2.DeletedAt = Time.UtcNow;
+                await DataStore.PutAsync (tag2);
+
+                Assert.AreEqual (1, view.Count);
+                Assert.AreEqual (
+                    new[] { "Tag #1" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+
+        [Test]
+        public void TestMarkDeletedManyToMany ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                var inter = await GetByRemoteId<TimeEntryTagData> (1);
+                inter.DeletedAt = Time.UtcNow;
+                await DataStore.PutAsync (inter);
+
+                Assert.AreEqual (1, view.Count);
+                Assert.AreEqual (
+                    new[] { "Tag #2" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        private async Task CreateTestData ()
+        {
+            var workspace = await DataStore.PutAsync (new WorkspaceData () {
+                RemoteId = 1,
+                Name = "Unit Testing",
+            });
+
+            var user = await DataStore.PutAsync (new UserData () {
+                RemoteId = 1,
+                Name = "Tester",
+                DefaultWorkspaceId = workspace.Id,
+            });
+
+            tag1 = await DataStore.PutAsync (new TagData () {
+                RemoteId = 1,
+                Name = "Tag #1",
+                WorkspaceId = workspace.Id,
+            });
+
+            tag2 = await DataStore.PutAsync (new TagData () {
+                RemoteId = 2,
+                Name = "Tag #2",
+                WorkspaceId = workspace.Id,
+            });
+
+            tag3 = await DataStore.PutAsync (new TagData () {
+                RemoteId = 3,
+                Name = "Tag #3",
+                WorkspaceId = workspace.Id,
+            });
+
+            timeEntry = await DataStore.PutAsync (new TimeEntryData () {
+                RemoteId = 1,
+                Description = "Initial concept",
+                State = TimeEntryState.Finished,
+                StartTime = MakeTime (09, 12),
+                StopTime = MakeTime (10, 1),
+                WorkspaceId = workspace.Id,
+                UserId = user.Id,
+            });
+
+            await DataStore.PutAsync (new TimeEntryTagData () {
+                RemoteId = 1,
+                TimeEntryId = timeEntry.Id,
+                TagId = tag1.Id,
+            });
+
+            await DataStore.PutAsync (new TimeEntryTagData () {
+                RemoteId = 2,
+                TimeEntryId = timeEntry.Id,
+                TagId = tag2.Id,
+            });
+        }
+    }
+}

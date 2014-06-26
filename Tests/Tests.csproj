@@ -65,6 +65,8 @@
     <Compile Include="Data\ForeignRelationManagerTest.cs" />
     <Compile Include="Data\RelatedDataGraphTest.cs" />
     <Compile Include="MainThreadSynchronizationContext.cs" />
+    <Compile Include="Views\TimeEntryTagsViewTest.cs" />
+    <Compile Include="Views\DataViewTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -252,6 +252,7 @@
     <Compile Include="Theme\Style.Settings.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="TogglWindow.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

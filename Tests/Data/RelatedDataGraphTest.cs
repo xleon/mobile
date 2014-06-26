@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Data
 {
@@ -16,6 +17,8 @@ namespace Toggl.Phoebe.Tests.Data
             base.SetUp ();
 
             CreateTestData ();
+
+            ServiceContainer.Register<ForeignRelationManager> ();
         }
 
         [Test]

@@ -141,7 +141,7 @@ namespace Toggl.Phoebe.Data
             var objectsStack = new Stack<IEnumerable<CommonData>> ();
 
             parentStack.Push (null);
-            objectsStack.Push (dataCache);
+            objectsStack.Push (dataCache.ToList ());
 
             CommonData parent;
             while (parentStack.Count > 0) {

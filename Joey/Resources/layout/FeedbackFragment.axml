@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ScrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+<LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
@@ -20,51 +25,64 @@
         android:textSize="15dp"
         android:maxLines="4"
         android:layout_marginBottom="5dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:gravity="center" />
-    <FrameLayout
+    <LinearLayout
         android:orientation="horizontal"
         android:minWidth="25px"
         android:minHeight="25px"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="35dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
         android:gravity="center_vertical"
         android:id="@+id/linearLayout1">
         <ImageButton
             android:src="@drawable/IcFeedbackPositive"
             style="@style/FeedbackView.Button"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_weight="1"
             android:layout_gravity="left"
             android:gravity="center_vertical"
             android:background="@drawable/ButtonNoFrame"
-            android:id="@+id/lcFeedbackPositive" />
+            android:id="@+id/FeedbackPositiveButton" />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/button_divider" />
         <ImageButton
             android:src="@drawable/IcFeedbackNeutral"
             style="@style/FeedbackView.Button"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_weight="1"
             android:layout_gravity="center"
             android:gravity="center_vertical"
             android:background="@drawable/ButtonNoFrame"
-            android:id="@+id/imageButton2" />
+            android:id="@+id/FeedbackNeutralButton" />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/button_divider" />
         <ImageButton
             android:src="@drawable/IcFeedbackNegative"
             style="@style/FeedbackView.Button"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_weight="1"
             android:layout_gravity="right"
             android:gravity="center_vertical"
             android:background="@drawable/ButtonNoFrame"
-            android:id="@+id/imageButton3" />
-    </FrameLayout>
+            android:id="@+id/FeedbackNegativeButton" />
+    </LinearLayout>
     <EditText
         android:id="@+id/FeedbackMessageText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:editable="true"
         android:cursorVisible="true"
-        android:focusableInTouchMode="false"
+        android:focusableInTouchMode="true"
         android:hint="@string/FeedbackMessageHint"
         android:layout_marginBottom="5dp"
         android:layout_marginTop="30dp" />
@@ -77,3 +95,4 @@
         android:layout_marginTop="15dp"
         android:layout_marginBottom="15dp" />
 </LinearLayout>
+</ScrollView>

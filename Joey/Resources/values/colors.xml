@@ -17,4 +17,5 @@
     <color name="drawer_text_active">#6BCB00</color>
     <color name="drawer_text_disabled">@color/light_gray</color>
     <color name="drawer_text_default">@color/gray</color>
+    <color name="button_divider">#DBDBDB</color>    
 </resources>

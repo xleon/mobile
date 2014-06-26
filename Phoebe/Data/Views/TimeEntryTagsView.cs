@@ -75,9 +75,9 @@ namespace Toggl.Phoebe.Data.Views
                              || data.DeletedAt != null;
 
             if (isExcluded) {
-                shouldUpdate = tagIds.Remove (data.Id);
+                shouldUpdate = tagIds.Remove (data.TagId);
             } else {
-                shouldUpdate = tagIds.Add (data.Id);
+                shouldUpdate = tagIds.Add (data.TagId);
                 var shouldAdd = shouldUpdate && !tagsList.Any (i => i.Id == data.TagId);
 
                 if (shouldAdd) {
@@ -86,6 +86,7 @@ namespace Toggl.Phoebe.Data.Views
                     if (tag != null) {
                         tagsList.Add (tag);
                     } else {
+                        shouldUpdate = false;
                         LoadTagData (data.TagId);
                     }
                 }

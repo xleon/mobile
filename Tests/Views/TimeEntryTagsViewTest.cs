@@ -74,14 +74,44 @@ namespace Toggl.Phoebe.Tests.Views
                 var view = new TimeEntryTagsView (timeEntry.Id);
                 await WaitForLoaded (view);
 
+                var updateTask = WaitForUpdates (view);
+
                 await DataStore.PutAsync (new TimeEntryTagData () {
                     TimeEntryId = timeEntry.Id,
                     TagId = tag3.Id,
                 });
 
+                // Wait for the tag to be loaded and the view be updated:
+                await updateTask;
+
                 Assert.AreEqual (3, view.Count);
                 Assert.AreEqual (
                     new[] { "Tag #1", "Tag #2", "Tag #3" },
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        [Test]
+        public void TestReplaceManyToMany ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                var inter = await GetByRemoteId<TimeEntryTagData> (2);
+                await DataStore.DeleteAsync (inter);
+                await DataStore.PutAsync (new TimeEntryTagData () {
+                    TimeEntryId = timeEntry.Id,
+                    TagId = tag2.Id,
+                });
+
+                // We're not awaitng on the updated event as the view should update immediatelly as the TagData
+                // should still be cached.
+
+                Assert.AreEqual (2, view.Count);
+                Assert.AreEqual (
+                    new[] { "Tag #1", "Tag #2" },
                     view.Data.ToArray ()
                 );
             });

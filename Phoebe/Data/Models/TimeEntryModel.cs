@@ -596,13 +596,15 @@ namespace Toggl.Phoebe.Data.Models
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Warning (Tag, ex, "Failed to retrieve/create draft.");
+            } finally {
+                draftDataTCS.SetResult (data);
+                draftDataTCS = null;
             }
 
-            draftDataTCS.SetResult (data);
             return new TimeEntryModel (data);
         }
 
-        public static async Task<TimeEntryModel> CreateFinished (TimeSpan duration)
+        public static async Task<TimeEntryModel> CreateFinishedAsync (TimeSpan duration)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             if (user == null)

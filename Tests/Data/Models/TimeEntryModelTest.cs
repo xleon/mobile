@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Tests.Data.Models
 {
@@ -29,12 +30,24 @@ namespace Toggl.Phoebe.Tests.Data.Models
             RunAsync (async delegate {
                 await user.DefaultWorkspace.SaveAsync ();
                 await user.SaveAsync ();
-            });
 
-            // ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
-            //     (store) => store.ApiToken == "test" &&
-            //     store.UserId == user.Id));
-            // ServiceContainer.Register<AuthManager> (new AuthManager ());
+                ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
+                    (store) => store.ApiToken == "test" &&
+                    store.UserId == user.Id));
+                var authManager = new AuthManager ();
+                ServiceContainer.Register<AuthManager> (authManager);
+
+                // Wait for the auth manager to load user data:
+                var tcs = new TaskCompletionSource<object> ();
+                authManager.PropertyChanged += (sender, e) => {
+                    if (e.PropertyName == AuthManager.PropertyUser) {
+                        if (authManager.User.DefaultWorkspaceId != Guid.Empty) {
+                            tcs.TrySetResult (null);
+                        }
+                    }
+                };
+                await tcs.Task;
+            });
         }
 
         [Test]
@@ -76,21 +89,121 @@ namespace Toggl.Phoebe.Tests.Data.Models
         }
 
         [Test]
-        public void TestContinue ()
+        public void TestContinueStartStop ()
         {
-            throw new NotImplementedException ();
+            RunAsync (async delegate {
+                var parent = new TimeEntryModel () {
+                    User = user,
+                    StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
+                    StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
+                };
+                await parent.StoreAsync ();
+
+                var entry = await parent.ContinueAsync ();
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent, entry);
+                Assert.AreNotEqual (parent.Id, entry.Id);
+                Assert.IsNull (entry.StopTime);
+                Assert.AreEqual (TimeEntryState.Running, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestContinueDurationOtherDay ()
+        {
+            RunAsync (async delegate {
+                var parent = new TimeEntryModel () {
+                    User = user,
+                    StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
+                    StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
+                    DurationOnly = true,
+                };
+                await parent.StoreAsync ();
+
+                var entry = await parent.ContinueAsync ();
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent, entry);
+                Assert.AreNotEqual (parent.Id, entry.Id);
+                Assert.IsNull (entry.StopTime);
+                Assert.AreEqual (TimeEntryState.Running, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestContinueDurationSameDay ()
+        {
+            RunAsync (async delegate {
+                var startTime = Time.Now.Date.AddHours (1);
+                var stopTime = startTime + TimeSpan.FromHours (2);
+                var parent = new TimeEntryModel () {
+                    User = user,
+                    StartTime = startTime,
+                    StopTime = stopTime,
+                    DurationOnly = true,
+                };
+                await parent.StoreAsync ();
+
+                var entry = await parent.ContinueAsync ();
+                Assert.AreSame (parent, entry);
+                Assert.IsNull (entry.StopTime);
+                Assert.AreEqual (TimeEntryState.Running, entry.State);
+            });
         }
 
         [Test]
         public void TestGetDraft ()
         {
-            throw new NotImplementedException ();
+            RunAsync (async delegate {
+                var entry = await TimeEntryModel.GetDraftAsync ();
+                Assert.IsNotNull (entry);
+                Assert.AreNotEqual (Guid.Empty, entry.Id);
+                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
+                Assert.AreEqual (TimeEntryState.New, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestGetDraftNotLoadedUser ()
+        {
+            RunAsync (async delegate {
+                // Pretend that the data isn't loaded yet
+                ServiceContainer.Resolve<AuthManager> ().User.DefaultWorkspaceId = Guid.Empty;
+
+                var entry = await TimeEntryModel.GetDraftAsync ();
+                Assert.IsNotNull (entry);
+                Assert.AreNotEqual (Guid.Empty, entry.Id);
+                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
+                Assert.AreEqual (TimeEntryState.New, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestGetDraftUpdateGetAgain ()
+        {
+            RunAsync (async delegate {
+                var entry = await TimeEntryModel.GetDraftAsync ();
+                entry.Description = "Hello, world!";
+                await entry.SaveAsync ();
+
+                entry = await TimeEntryModel.GetDraftAsync ();
+                Assert.IsNotNull (entry);
+                Assert.AreNotEqual (Guid.Empty, entry.Id);
+                Assert.AreEqual ("Hello, world!", entry.Description);
+                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
+                Assert.AreEqual (TimeEntryState.New, entry.State);
+            });
         }
 
         [Test]
         public void TestCreateFinished ()
         {
-            throw new NotImplementedException ();
+            RunAsync (async delegate {
+                var entry = await TimeEntryModel.CreateFinishedAsync (TimeSpan.FromMinutes (95));
+                Assert.IsNotNull (entry);
+                Assert.AreNotEqual (Guid.Empty, entry.Id);
+                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
+                Assert.AreEqual (TimeEntryState.Finished, entry.State);
+            });
         }
 
         [Test]

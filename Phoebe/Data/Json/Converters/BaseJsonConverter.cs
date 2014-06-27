@@ -48,6 +48,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
         protected static async Task<Guid> GetLocalId<T> (long remoteId)
             where T : CommonData, new()
         {
+            if (remoteId == 0) {
+                throw new ArgumentException ("Remote Id cannot be zero.", "remoteId");
+            }
             var id = await DataStore.GetLocalId<T> (remoteId).ConfigureAwait (false);
             if (id == Guid.Empty)
                 id = await CreatePlaceholder<T> (remoteId);

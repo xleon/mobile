@@ -12,7 +12,21 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 .Take (1).QueryAsync (m => m.Id == data.UserId);
             var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
 
-            var user = (await userTask.ConfigureAwait (false)) [0];
+            var userRows = await userTask.ConfigureAwait (false);
+            if (userRows.Count == 0) {
+                throw new InvalidOperationException (String.Format (
+                    "Cannot export data with invalid local relation ({0}#{1}) to JSON.",
+                    typeof(UserData).Name, data.UserId
+                ));
+            }
+            var user = userRows [0];
+            if (user.RemoteId == null) {
+                throw new InvalidOperationException (String.Format (
+                    "Cannot export data with local-only relation ({0}#{1}) to JSON.",
+                    typeof(UserData).Name, data.UserId
+                ));
+            }
+
             return new WorkspaceUserJson () {
                 Id = data.RemoteId,
                 ModifiedAt = data.ModifiedAt,

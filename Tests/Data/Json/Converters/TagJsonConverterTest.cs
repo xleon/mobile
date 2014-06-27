@@ -58,7 +58,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
             });
 
             Assert.That (() => converter.Export (tagData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<NotSupportedException> ());
+                Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]

@@ -30,7 +30,12 @@ namespace Toggl.Phoebe.Data.Json.Converters
             where T : CommonData
         {
             var remoteId = await DataStore.GetRemoteId<T> (id).ConfigureAwait (false);
-            // TODO: Should we throw an exception here when remoteId not found?
+            if (remoteId == 0) {
+                throw new InvalidOperationException (String.Format (
+                    "Cannot export data with local-only relation ({0}#{1}) to JSON.",
+                    typeof(T).Name, id
+                ));
+            }
             return remoteId;
         }
 
@@ -40,8 +45,12 @@ namespace Toggl.Phoebe.Data.Json.Converters
             if (id == null)
                 return null;
             var remoteId = await DataStore.GetRemoteId<T> (id.Value).ConfigureAwait (false);
-            if (remoteId == 0)
-                return null;
+            if (remoteId == 0) {
+                throw new InvalidOperationException (String.Format (
+                    "Cannot export data with local-only relation ({0}#{1}) to JSON.",
+                    typeof(T).Name, id
+                ));
+            }
             return remoteId;
         }
 

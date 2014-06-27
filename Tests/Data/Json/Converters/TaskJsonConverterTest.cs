@@ -67,7 +67,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
             });
 
             Assert.That (() => converter.Export (taskData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<NotSupportedException> ());
+                Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]
@@ -146,6 +146,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     Id = 2,
                     Name = "Install Linux",
                     WorkspaceId = 1,
+                    ProjectId = 2,
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 

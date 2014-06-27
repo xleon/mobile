@@ -22,9 +22,15 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         public void ExportExisting ()
         {
             RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
                 var userData = await DataStore.PutAsync (new UserData () {
                     RemoteId = 1,
                     Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
                     ModifiedAt = new DateTime (2014, 1, 4),
                 });
 
@@ -51,15 +57,21 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
             });
 
             Assert.That (() => converter.Export (userData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<NotSupportedException> ());
+                Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]
         public void ExportNew ()
         {
             RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
                 var userData = await DataStore.PutAsync (new UserData () {
                     Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
                     ModifiedAt = new DateTime (2014, 1, 4),
                 });
 
@@ -75,9 +87,15 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         public void ImportNew ()
         {
             RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
                 var userJson = new UserJson () {
                     Id = 1,
                     Name = "John",
+                    DefaultWorkspaceId = 1,
                     ModifiedAt = new DateTime (2014, 1, 4),
                 };
 

@@ -69,7 +69,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
             });
 
             Assert.That (() => converter.Export (timeEntryData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<NotSupportedException> ());
+                Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]

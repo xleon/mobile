@@ -6,8 +6,6 @@ using Android.Text.Format;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using XPlatUtils;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
@@ -85,9 +87,21 @@ namespace Toggl.Phoebe.Data.Json.Converters
             }
         }
 
+        private static Task<Guid> GetUserLocalId (long id)
+        {
+            if (id == 0) {
+                var authManager = ServiceContainer.Resolve<AuthManager> ();
+                if (authManager.User == null) {
+                    throw new ArgumentException ("Cannot import TimeEntry with missing user when no authenticated user.", "id");
+                }
+                return Task.FromResult (authManager.User.Id);
+            }
+            return GetLocalId<UserData> (id);
+        }
+
         private static async Task Merge (TimeEntryData data, TimeEntryJson json)
         {
-            var userIdTask = GetLocalId<UserData> (json.UserId);
+            var userIdTask = GetUserLocalId (json.UserId);
             var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
             var projectIdTask = GetLocalId<ProjectData> (json.ProjectId);
             var taskIdTask = GetLocalId<TaskData> (json.TaskId);

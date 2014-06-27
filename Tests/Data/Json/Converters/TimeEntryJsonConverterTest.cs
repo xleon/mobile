@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
 using Toggl.Phoebe.Data.Json.Converters;
-using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Tests.Data.Json.Converters
 {
@@ -193,14 +193,52 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        public void ImportDefaultUser ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 3,
+                    Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var timeEntryJson = new TimeEntryJson () {
+                    Id = 2,
+                    Description = "Morning coffee",
+                    WorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 3),
+                };
+
+                await SetUpFakeUser (userData.Id);
+
+                var timeEntryData = await converter.Import (timeEntryJson);
+                Assert.AreNotEqual (Guid.Empty, timeEntryData.Id);
+                Assert.AreEqual (2, timeEntryData.RemoteId);
+                Assert.AreEqual ("Morning coffee", timeEntryData.Description);
+                Assert.AreEqual (new DateTime (2014, 1, 3), timeEntryData.ModifiedAt);
+                Assert.AreEqual (workspaceData.Id, timeEntryData.WorkspaceId);
+                Assert.AreEqual (userData.Id, timeEntryData.UserId);
+                Assert.IsFalse (timeEntryData.IsDirty);
+                Assert.IsFalse (timeEntryData.RemoteRejected);
+                Assert.IsNull (timeEntryData.DeletedAt);
+            });
+        }
+
+        [Test]
         public void ImportMissingWorkspaceAndUser ()
         {
             RunAsync (async delegate {
                 var timeEntryJson = new TimeEntryJson () {
                     Id = 2,
                     Description = "Morning coffee",
-                    WorkspaceId = 1,
                     ModifiedAt = new DateTime (2014, 1, 3),
+                    WorkspaceId = 1,
+                    UserId = 2,
                 };
 
                 var timeEntryData = await converter.Import (timeEntryJson);

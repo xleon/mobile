@@ -11,6 +11,7 @@ namespace Toggl.Phoebe.Tests.Views
     [TestFixture]
     public class TimeEntryTagsViewTest : DataViewTest
     {
+        const string DefaultTag = "mobile";
         TimeEntryData timeEntry;
         TagData tag1;
         TagData tag2;
@@ -34,7 +35,7 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (2, view.Count);
                 Assert.AreEqual (
-                    new[] { "Tag #1", "Tag #2" },
+                    MakeTagsArray (DefaultTag, "Tag #2"),
                     view.Data.ToArray ()
                 );
             });
@@ -86,7 +87,7 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (3, view.Count);
                 Assert.AreEqual (
-                    new[] { "Tag #1", "Tag #2", "Tag #3" },
+                    MakeTagsArray (DefaultTag, "Tag #2", "Tag #3"),
                     view.Data.ToArray ()
                 );
             });
@@ -111,7 +112,7 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (2, view.Count);
                 Assert.AreEqual (
-                    new[] { "Tag #1", "Tag #2" },
+                    MakeTagsArray (DefaultTag, "Tag #2"),
                     view.Data.ToArray ()
                 );
             });
@@ -129,7 +130,7 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (1, view.Count);
                 Assert.AreEqual (
-                    new[] { "Tag #2" },
+                    MakeTagsArray ("Tag #2"),
                     view.Data.ToArray ()
                 );
             });
@@ -146,7 +147,7 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (1, view.Count);
                 Assert.AreEqual (
-                    new[] { "Tag #1" },
+                    MakeTagsArray (DefaultTag),
                     view.Data.ToArray ()
                 );
             });
@@ -164,7 +165,7 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (2, view.Count);
                 Assert.AreEqual (
-                    new[] { "A tag", "Tag #1" },
+                    MakeTagsArray ("A tag", DefaultTag),
                     view.Data.ToArray ()
                 );
             });
@@ -182,7 +183,7 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (1, view.Count);
                 Assert.AreEqual (
-                    new[] { "Tag #1" },
+                    MakeTagsArray (DefaultTag),
                     view.Data.ToArray ()
                 );
             });
@@ -202,10 +203,37 @@ namespace Toggl.Phoebe.Tests.Views
 
                 Assert.AreEqual (1, view.Count);
                 Assert.AreEqual (
-                    new[] { "Tag #2" },
+                    MakeTagsArray ("Tag #2"),
                     view.Data.ToArray ()
                 );
             });
+        }
+
+        [Test]
+        public void TestNonDefault ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                Assert.IsTrue (view.HasNonDefault);
+
+                var inter = await GetByRemoteId<TimeEntryTagData> (2);
+                await DataStore.DeleteAsync (inter);
+
+                Assert.IsFalse (view.HasNonDefault);
+
+                inter = await GetByRemoteId<TimeEntryTagData> (1);
+                await DataStore.DeleteAsync (inter);
+
+                Assert.IsFalse (view.HasNonDefault);
+            });
+        }
+
+        private string[] MakeTagsArray (params string[] tags)
+        {
+            Array.Sort (tags, (a, b) => String.Compare (a, b, StringComparison.Ordinal));
+            return tags;
         }
 
         private async Task CreateTestData ()
@@ -223,7 +251,7 @@ namespace Toggl.Phoebe.Tests.Views
 
             tag1 = await DataStore.PutAsync (new TagData () {
                 RemoteId = 1,
-                Name = "Tag #1",
+                Name = DefaultTag,
                 WorkspaceId = workspace.Id,
             });
 

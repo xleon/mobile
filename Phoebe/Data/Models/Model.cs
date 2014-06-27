@@ -68,7 +68,15 @@ namespace Toggl.Phoebe.Data.Models
         private void OnDataChange (DataChangeMessage msg)
         {
             if (data.Matches (msg.Data)) {
-                Data = Duplicate ((T)msg.Data);
+                var updatedData = (T)msg.Data;
+                var isDeleted = msg.Action == DataAction.Delete
+                                || updatedData.DeletedAt != null;
+
+                if (isDeleted) {
+                    ResetIds ();
+                } else {
+                    Data = Duplicate (updatedData);
+                }
             }
         }
 
@@ -117,6 +125,25 @@ namespace Toggl.Phoebe.Data.Models
 
         protected abstract void OnBeforeSave ();
 
+        public async Task DeleteAsync ()
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+
+            if (data.RemoteId == null) {
+                // We can safely delete the item as it has not been synchronized with the server yet
+                await dataStore.DeleteAsync (data);
+            } else {
+                // Need to just mark this item as deleted so that it could be synced with the server
+                var newData = Duplicate (data);
+                newData.DeletedAt = Time.UtcNow;
+                MarkDirty (newData);
+
+                await dataStore.PutAsync (newData);
+            }
+
+            ResetIds ();
+        }
+
         protected async void EnsureLoaded ()
         {
             if (isLoaded || loadingTCS != null)
@@ -148,6 +175,15 @@ namespace Toggl.Phoebe.Data.Models
         {
             if (oldData.Id != newData.Id)
                 OnPropertyChanged (PropertyId);
+        }
+
+        private void ResetIds ()
+        {
+            var newData = Duplicate (Data);
+            newData.Id = Guid.Empty;
+            newData.RemoteId = null;
+            newData.RemoteRejected = false;
+            Data = newData;
         }
 
         protected void MutateData (Action<T> mutator)

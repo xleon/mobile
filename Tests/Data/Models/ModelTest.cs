@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -143,10 +144,9 @@ namespace Toggl.Phoebe.Tests.Data.Models
         {
             RunAsync (async delegate {
                 var type = typeof(T);
-                var dataProp = type.GetProperty ("Data");
 
                 // Create dummy element (with default values) to load:
-                var pk = await CreateDummyData (dataProp.PropertyType);
+                var pk = await CreateDummyData ();
 
                 // Test property autoload by setting the value to something else and waiting to see if it is replaced
                 // by autoloaded data.
@@ -212,7 +212,6 @@ namespace Toggl.Phoebe.Tests.Data.Models
         {
             RunAsync (async delegate {
                 var type = typeof(T);
-                var dataProp = type.GetProperty ("Data");
 
                 // Test load new
                 var inst = (T)Activator.CreateInstance (type);
@@ -226,7 +225,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 await loadTask;
 
                 // Test load valid task:
-                pk = await CreateDummyData (dataProp.PropertyType);
+                pk = await CreateDummyData ();
                 inst = (T)Activator.CreateInstance (type, pk);
                 loadTask = (Task)type.GetMethod ("LoadAsync").Invoke (inst, new object[0]);
                 await loadTask;
@@ -291,15 +290,93 @@ namespace Toggl.Phoebe.Tests.Data.Models
             });
         }
 
-        private async Task<Guid> CreateDummyData (Type dataType)
+        [Test]
+        public void TestDeletingLocal ()
         {
-            var raw = (CommonData)Activator.CreateInstance (dataType);
-            var putTask = (Task)DataStore.GetType ().GetMethod ("PutAsync")
-                .MakeGenericMethod (dataType)
-                .Invoke (DataStore, new[] { raw });
-            await putTask;
-            raw = (CommonData)putTask.GetType ().GetProperty ("Result").GetValue (putTask);
+            RunAsync (async delegate {
+                var type = typeof(T);
+
+                // Create dummy element (with default values) to load:
+                var data = await PutData (CreateDataInstance ());
+                var inst = (T)Activator.CreateInstance (typeof(T), data);
+
+                // Delete via model
+                var deleteTask = (Task)type.GetMethod ("DeleteAsync").Invoke (inst, new object[0]);
+                await deleteTask;
+
+                // Check that the item has been deleted from the datastore
+                Assert.IsNull (await GetDataById (data.GetType (), data.Id));
+
+                // Make sure that the underlying data in the model has reset the IDs
+                data = (CommonData)type.GetProperty ("Data").GetValue (inst);
+                Assert.AreEqual (Guid.Empty, data.Id);
+                Assert.IsNull (data.RemoteId);
+            });
+        }
+
+        [Test]
+        public void TestDeletingRemote ()
+        {
+            RunAsync (async delegate {
+                var type = typeof(T);
+
+                // Create dummy element (with default values) to load:
+                var data = CreateDataInstance ();
+                data.RemoteId = 1;
+                data = await PutData (data);
+                var inst = (T)Activator.CreateInstance (typeof(T), data);
+
+                // Delete via model
+                var deleteTask = (Task)type.GetMethod ("DeleteAsync").Invoke (inst, new object[0]);
+                await deleteTask;
+
+                // Check that the item has been marked for deletion in the database
+                data = await GetDataById (data.GetType (), data.Id);
+                Assert.IsNotNull (data);
+                Assert.IsNotNull (data.DeletedAt);
+
+                // Make sure that the underlying data in the model has reset the IDs
+                data = (CommonData)type.GetProperty ("Data").GetValue (inst);
+                Assert.AreEqual (Guid.Empty, data.Id);
+                Assert.IsNull (data.RemoteId);
+            });
+        }
+
+        private async Task<Guid> CreateDummyData ()
+        {
+            var raw = await PutData (CreateDataInstance ());
             return raw.Id;
+        }
+
+        private CommonData CreateDataInstance ()
+        {
+            var type = typeof(T);
+            var dataProp = type.GetProperty ("Data");
+            var dataType = dataProp.PropertyType;
+
+            return (CommonData)Activator.CreateInstance (dataType);
+        }
+
+        private async Task<CommonData> PutData (CommonData data)
+        {
+            var putTask = (Task)DataStore.GetType ().GetMethod ("PutAsync")
+                .MakeGenericMethod (data.GetType ())
+                .Invoke (DataStore, new[] { data });
+            await putTask;
+            return (CommonData)putTask.GetType ().GetProperty ("Result").GetValue (putTask);
+        }
+
+        private async Task<CommonData> GetDataById (Type dataType, Guid id)
+        {
+            var tbl = DataStore.GetTableName (dataType);
+            var sql = String.Concat ("SELECT * FROM ", tbl, " WHERE Id=?");
+            var rowsTask = (Task)DataStore.GetType ().GetMethod ("QueryAsync")
+                .MakeGenericMethod (dataType)
+                .Invoke (DataStore, new object[] { sql, new object[] { id } });
+            await rowsTask;
+
+            var rows = (IEnumerable)rowsTask.GetType ().GetProperty ("Result").GetValue (rowsTask);
+            return rows.OfType<CommonData> ().FirstOrDefault ();
         }
 
         private static void SimulatePropertyChange (object obj, PropertyInfo prop)

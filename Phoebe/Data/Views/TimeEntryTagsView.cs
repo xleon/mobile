@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe.Data.DataObjects;
 using XPlatUtils;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -162,6 +163,12 @@ namespace Toggl.Phoebe.Data.Views
 
         public long Count {
             get { return tagNames.Count; }
+        }
+
+        public bool HasNonDefault {
+            get {
+                return tagNames.FirstOrDefault (t => t != TimeEntryModel.DefaultTag) != null;
+            }
         }
 
         public bool HasMore {

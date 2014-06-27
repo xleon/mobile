@@ -125,7 +125,6 @@
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
     <Compile Include="UI\Fragments\RecentTimeEntryContinueDialogFragment.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
-    <Compile Include="UI\Adapters\FeedbackAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

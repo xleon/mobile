@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
-using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -30,23 +28,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
             RunAsync (async delegate {
                 await user.DefaultWorkspace.SaveAsync ();
                 await user.SaveAsync ();
-
-                ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
-                    (store) => store.ApiToken == "test" &&
-                    store.UserId == user.Id));
-                var authManager = new AuthManager ();
-                ServiceContainer.Register<AuthManager> (authManager);
-
-                // Wait for the auth manager to load user data:
-                var tcs = new TaskCompletionSource<object> ();
-                authManager.PropertyChanged += (sender, e) => {
-                    if (e.PropertyName == AuthManager.PropertyUser) {
-                        if (authManager.User.DefaultWorkspaceId != Guid.Empty) {
-                            tcs.TrySetResult (null);
-                        }
-                    }
-                };
-                await tcs.Task;
+                await SetUpFakeUser (user.Id);
             });
         }
 

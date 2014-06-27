@@ -2,8 +2,10 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests
@@ -57,6 +59,26 @@ namespace Toggl.Phoebe.Tests
                     databasePath = null;
                 }
             });
+        }
+
+        protected async Task SetUpFakeUser (Guid userId)
+        {
+            ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
+                (store) => store.ApiToken == "test" &&
+                store.UserId == userId));
+            var authManager = new AuthManager ();
+            ServiceContainer.Register<AuthManager> (authManager);
+
+            // Wait for the auth manager to load user data:
+            var tcs = new TaskCompletionSource<object> ();
+            authManager.PropertyChanged += (sender, e) => {
+                if (e.PropertyName == AuthManager.PropertyUser) {
+                    if (authManager.User.DefaultWorkspaceId != Guid.Empty) {
+                        tcs.TrySetResult (null);
+                    }
+                }
+            };
+            await tcs.Task;
         }
 
         protected void RunAsync (Func<Task> fn)

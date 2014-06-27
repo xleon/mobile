@@ -4,7 +4,6 @@ using System.Linq;
 using Android.Graphics;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Joey.UI.Utils;
@@ -128,14 +127,18 @@ namespace Toggl.Joey.UI.Adapters
 
         private class WorkspaceListItemHolder : ModelViewHolder<ProjectAndTaskView.Workspace>
         {
+            private WorkspaceModel model;
+
             public TextView WorkspaceTextView { get; private set; }
 
-            private WorkspaceModel Model {
-                get {
-                    if (DataSource == null)
-                        return null;
-                    return DataSource.Model;
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null) {
+                    model = DataSource.Data;
                 }
+
+                base.OnDataSourceChanged ();
             }
 
             public WorkspaceListItemHolder (View root) : base (root)
@@ -143,31 +146,40 @@ namespace Toggl.Joey.UI.Adapters
                 WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView).SetFont (Font.RobotoMedium);
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (Model == null)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (Model == msg.Model) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor
-                        || msg.PropertyName == ProjectModel.PropertyClientId)
-                        Rebind ();
+                if (model != null) {
+                    Tracker.Add (model, HandleWorkspacePropertyChanged);
                 }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleWorkspacePropertyChanged (string prop)
+            {
+                if (prop == WorkspaceModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
-                if (Model == null)
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+                ResetTrackedObservables ();
+                if (model == null)
                     return;
 
-                WorkspaceTextView.Text = (Model.Name ?? String.Empty).ToUpper ();
+                WorkspaceTextView.Text = (model.Name ?? String.Empty).ToUpper ();
             }
         }
 
         private class ProjectListItemHolder : ModelViewHolder<ProjectAndTaskView.Project>
         {
             private readonly ExpandableProjectsView dataView;
+            private ProjectModel model;
 
             public View ColorView { get; private set; }
 
@@ -202,30 +214,54 @@ namespace Toggl.Joey.UI.Adapters
                 dataView.ToggleProjectTasks (Model);
             }
 
-            private ProjectModel Model {
-                get {
-                    if (DataSource == null)
-                        return null;
-                    return DataSource.Model;
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null) {
+                    model = DataSource.Data;
                 }
+
+                base.OnDataSourceChanged ();
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (Model == null)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (Model == msg.Model) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor
-                        || msg.PropertyName == ProjectModel.PropertyClientId)
-                        Rebind ();
+                if (model != null) {
+                    Tracker.Add (model, HandleProjectPropertyChanged);
+
+                    if (model.Client != null) {
+                        Tracker.Add (model.Client, HandleClientPropertyChanged);
+                    }
                 }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleProjectPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyClient
+                    || prop == ProjectModel.PropertyColor
+                    || prop == ProjectModel.PropertyName)
+                    Rebind ();
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
-                if (Model == null) {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
+                ResetTrackedObservables ();
+
+                if (model == null) {
                     ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
                     ProjectTextView.SetText (Resource.String.ProjectsNoProject);
                     ClientTextView.Visibility = ViewStates.Gone;
@@ -233,18 +269,18 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var color = Color.ParseColor (Model.GetHexColor ());
+                var color = Color.ParseColor (model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);
-                ProjectTextView.Text = Model.Name;
-                if (Model.Client != null) {
-                    ClientTextView.Text = Model.Client.Name;
+                ProjectTextView.Text = model.Name;
+                if (model.Client != null) {
+                    ClientTextView.Text = model.Client.Name;
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
                 TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
-                var expanded = dataView.AreProjectTasksVisible (Model);
+                var expanded = dataView.AreProjectTasksVisible (model);
                 TasksTextView.Visibility = expanded ? ViewStates.Invisible : ViewStates.Visible;
                 TasksImageView.Visibility = !expanded ? ViewStates.Invisible : ViewStates.Visible;
             }
@@ -310,21 +346,31 @@ namespace Toggl.Joey.UI.Adapters
                 TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoLight);
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (DataSource == null)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (DataSource == msg.Model) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor
-                        || msg.PropertyName == ProjectModel.PropertyClientId)
-                        Rebind ();
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTaskPropertyChanged);
                 }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTaskPropertyChanged (string prop)
+            {
+                if (prop == TaskModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
+                ResetTrackedObservables ();
+
                 if (DataSource == null)
                     return;
 

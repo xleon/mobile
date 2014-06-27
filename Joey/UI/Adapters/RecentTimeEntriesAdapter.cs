@@ -4,7 +4,7 @@ using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -13,7 +13,7 @@ using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class RecentTimeEntriesAdapter : BaseDataViewAdapter<TimeEntryModel>
+    public class RecentTimeEntriesAdapter : BaseDataViewAdapter<TimeEntryData>
     {
         public RecentTimeEntriesAdapter () : base (new RecentTimeEntriesView ())
         {
@@ -44,10 +44,6 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView DescriptionTextView { get; private set; }
 
-            private TimeEntryModel Model {
-                get { return DataSource; }
-            }
-
             public RecentTimeEntryListItemHolder (View root) : base (root)
             {
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
@@ -57,65 +53,92 @@ namespace Toggl.Joey.UI.Adapters
                 TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.Roboto);
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
+            {
+                Tracker.MarkAllStale ();
+
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
+
+                    if (DataSource.Project != null) {
+                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
+
+                        if (DataSource.Project.Client != null) {
+                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
+                        }
+                    }
+
+                    if (DataSource.Task != null) {
+                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
+                    }
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTimeEntryPropertyChanged (string prop)
+            {
+                if (prop == TimeEntryModel.PropertyProject
+                    || prop == TimeEntryModel.PropertyTask
+                    || prop == TimeEntryModel.PropertyDescription)
+                    Rebind ();
+            }
+
+            private void HandleProjectPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyClient
+                    || prop == ProjectModel.PropertyColor
+                    || prop == ProjectModel.PropertyName)
+                    Rebind ();
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyName)
+                    Rebind ();
+            }
+
+            private void HandleTaskPropertyChanged (string prop)
+            {
+                if (prop == TaskModel.PropertyName)
+                    Rebind ();
+            }
+
+            protected override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero)
                     return;
 
-                if (Model == null)
-                    return;
+                ResetTrackedObservables ();
 
-                if (Model == msg.Model) {
-                    if (msg.PropertyName == TimeEntryModel.PropertyStartTime
-                        || msg.PropertyName == TimeEntryModel.PropertyDescription
-                        || msg.PropertyName == TimeEntryModel.PropertyProjectId
-                        || msg.PropertyName == TimeEntryModel.PropertyTaskId)
-                        Rebind ();
-                } else if (Model.ProjectId.HasValue && Model.ProjectId == msg.Model.Id) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor)
-                        Rebind ();
-                } else if (Model.ProjectId.HasValue && Model.Project != null
-                           && Model.Project.ClientId.HasValue
-                           && Model.Project.ClientId == msg.Model.Id) {
-                    if (msg.PropertyName == ClientModel.PropertyName)
-                        Rebind ();
-                } else if (Model.TaskId.HasValue && Model.TaskId == msg.Model.Id) {
-                    if (msg.PropertyName == TaskModel.PropertyName)
-                        Rebind ();
-                }
-            }
-
-            protected override void Rebind ()
-            {
-                if (Model == null)
+                if (DataSource == null)
                     return;
 
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (Model.Project != null && Model.Project.Client != null) {
-                    ClientTextView.Text = Model.Project.Client.Name;
+                if (DataSource.Project != null && DataSource.Project.Client != null) {
+                    ClientTextView.Text = DataSource.Project.Client.Name;
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
-                if (Model.Task != null) {
-                    TaskTextView.Text = Model.Task.Name;
+                if (DataSource.Task != null) {
+                    TaskTextView.Text = DataSource.Task.Name;
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
                     TaskTextView.Visibility = ViewStates.Gone;
                 }
 
                 var color = Color.Transparent;
-                if (Model.Project != null) {
-                    color = Color.ParseColor (Model.Project.GetHexColor ());
+                if (DataSource.Project != null) {
+                    color = Color.ParseColor (DataSource.Project.GetHexColor ());
                     ProjectTextView.SetTextColor (color);
-                    if (String.IsNullOrWhiteSpace (Model.Project.Name)) {
+                    if (String.IsNullOrWhiteSpace (DataSource.Project.Name)) {
                         ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
                     } else {
-                        ProjectTextView.Text = Model.Project.Name;
+                        ProjectTextView.Text = DataSource.Project.Name;
                     }
                 } else {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
@@ -127,15 +150,15 @@ namespace Toggl.Joey.UI.Adapters
                     shape.SetColor (color);
                 }
 
-                if (String.IsNullOrWhiteSpace (Model.Description)) {
-                    if (Model.Task == null) {
+                if (String.IsNullOrWhiteSpace (DataSource.Description)) {
+                    if (DataSource.Task == null) {
                         DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                         DescriptionTextView.Visibility = ViewStates.Visible;
                     } else {
                         DescriptionTextView.Visibility = ViewStates.Gone;
                     }
                 } else {
-                    DescriptionTextView.Text = Model.Description;
+                    DescriptionTextView.Text = DataSource.Description;
                     DescriptionTextView.Visibility = ViewStates.Visible;
                 }
             }

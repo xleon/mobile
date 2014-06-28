@@ -60,10 +60,11 @@ namespace Toggl.Joey.Net
         {
             public override void OnReceive (Context context, Intent intent)
             {
-                var info = intent.Extras.Get (ConnectivityManager.ExtraNetworkInfo) as NetworkInfo;
-
-                if (IsNetworkConnected (info)) {
-                    ServiceContainer.Resolve<SyncManager> ().Run ();
+                if (intent.Extras != null) {
+                    var info = intent.Extras.Get (ConnectivityManager.ExtraNetworkInfo) as NetworkInfo;
+                    if (info != null && IsNetworkConnected (info)) {
+                        ServiceContainer.Resolve<SyncManager> ().Run ();
+                    }
                 }
             }
         }

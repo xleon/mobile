@@ -19,12 +19,19 @@ namespace Toggl.Phoebe.Data
 
         public SqliteDataStore (string dbPath)
         {
+            scheduler.Idle += HandleSchedulerIdle;
             ctx = new Context (this, dbPath);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
             CreateTables ();
+        }
+
+        private void HandleSchedulerIdle (object sender, EventArgs args)
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (new DataStoreIdleMessage (this));
         }
 
         private static IEnumerable<Type> DiscoverDataObjectTypes ()
@@ -306,6 +313,8 @@ namespace Toggl.Phoebe.Data
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<Logger> ();
                     log.Error (Tag, ex, "Something exploded on the SQLite background thread.");
+                } finally {
+                    OnIdle ();
                 }
             }
 
@@ -325,6 +334,16 @@ namespace Toggl.Phoebe.Data
                     act ();
                 }
             }
+
+            private void OnIdle ()
+            {
+                var handler = Idle;
+                if (handler != null) {
+                    handler (this, EventArgs.Empty);
+                }
+            }
+
+            public event EventHandler Idle;
 
             public Task<T> Enqueue<T> (Func<T> task)
             {

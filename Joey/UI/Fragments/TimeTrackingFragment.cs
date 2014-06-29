@@ -55,7 +55,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // Make sure that the user will see newest data when they start the activity
-            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
         }
 
         public override void OnSaveInstanceState (Bundle outState)
@@ -73,7 +73,7 @@ namespace Toggl.Joey.UI.Fragments
             ToggleTimerDuration ();
 
             // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
-            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
+            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Auto);
         }
 
         public override void OnResume ()

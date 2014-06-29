@@ -28,7 +28,8 @@ namespace Toggl.Phoebe.Tests.Views
             RunAsync (async delegate {
                 await CreateTestData ();
 
-                ServiceContainer.Register<SyncManager> ();
+                ServiceContainer.Register<ISyncManager> (Mock.Of<ISyncManager> (
+                    (mgr) => mgr.IsRunning == false));
                 ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
                     (store) => store.ApiToken == "test" &&
                     store.UserId == user.Id));

@@ -8,15 +8,15 @@ namespace Toggl.Phoebe.Net
         private readonly bool hadErrors;
         private readonly Exception fatalError;
 
-        public SyncFinishedMessage (SyncManager sender, SyncMode mode, bool hadErrors, Exception fatalError) : base (sender)
+        public SyncFinishedMessage (ISyncManager sender, SyncMode mode, bool hadErrors, Exception fatalError) : base (sender)
         {
             this.mode = mode;
             this.hadErrors = hadErrors;
             this.fatalError = fatalError;
         }
 
-        public SyncManager SyncManager {
-            get { return (SyncManager)Sender; }
+        public ISyncManager SyncManager {
+            get { return (ISyncManager)Sender; }
         }
 
         public SyncMode Mode {

@@ -6,13 +6,13 @@ namespace Toggl.Phoebe.Net
     {
         private readonly SyncMode mode;
 
-        public SyncStartedMessage (SyncManager sender, SyncMode mode) : base (sender)
+        public SyncStartedMessage (ISyncManager sender, SyncMode mode) : base (sender)
         {
             this.mode = mode;
         }
 
-        public SyncManager SyncManager {
-            get { return (SyncManager)Sender; }
+        public ISyncManager SyncManager {
+            get { return (ISyncManager)Sender; }
         }
 
         public SyncMode Mode {

@@ -139,7 +139,7 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             // Determine if sync is running, if so, delay setting IsLoading to false
-            var syncManager = ServiceContainer.Resolve<SyncManager> ();
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
             if (!syncManager.IsRunning) {
                 IsLoading = false;
             } else {

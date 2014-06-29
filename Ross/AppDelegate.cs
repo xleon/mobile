@@ -57,7 +57,7 @@ namespace Toggl.Ross
         public override void OnActivated (UIApplication application)
         {
             // Make sure the user data is refreshed when the application becomes active
-            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
 
             isResuming = true;
         }
@@ -74,7 +74,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<Logger> ();
             ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<AuthManager> ();
-            ServiceContainer.Register<SyncManager> ();
+            ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider ());

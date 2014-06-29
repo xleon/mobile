@@ -159,7 +159,7 @@ namespace Toggl.Joey.Net
                 if (IsRunning || IsFinished)
                     throw new InvalidOperationException ("Start can only be called once.");
 
-                var syncManager = ServiceContainer.Resolve<SyncManager> ();
+                var syncManager = ServiceContainer.Resolve<ISyncManager> ();
 
                 if (!syncManager.IsRunning) {
                     IsRunning = true;

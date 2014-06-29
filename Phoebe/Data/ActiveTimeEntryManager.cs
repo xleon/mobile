@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.Data
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
-            var syncManager = ServiceContainer.Resolve<SyncManager> ();
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
             syncRunning = syncManager.IsRunning;
 
             UpdateCurrentUserId ();

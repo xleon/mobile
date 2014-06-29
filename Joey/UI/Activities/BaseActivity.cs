@@ -46,7 +46,7 @@ namespace Toggl.Joey.UI.Activities
 
         private void ResetSyncProgressBar ()
         {
-            var syncManager = ServiceContainer.Resolve<SyncManager> ();
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
             ToggleProgressBar (syncManager.IsRunning);
         }
 

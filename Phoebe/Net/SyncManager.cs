@@ -9,7 +9,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {
-    public class SyncManager
+    public class SyncManager : ISyncManager
     {
         private static readonly string Tag = "SyncManager";
         #pragma warning disable 0414

@@ -129,9 +129,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnUserTimeEntryStateChange (UserTimeEntryStateChangeMessage msg)
         {
-            if (msg.Model.State == TimeEntryState.Running) {
+            if (msg.Data.State == TimeEntryState.Running) {
                 viewPager.CurrentItem = MainPagerAdapter.EditPosition;
-            } else if (msg.Model.State == TimeEntryState.Finished
+            } else if (msg.Data.State == TimeEntryState.Finished
                        && viewPager.CurrentItem == MainPagerAdapter.EditPosition) {
                 viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
             }

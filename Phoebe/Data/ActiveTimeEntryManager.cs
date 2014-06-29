@@ -148,6 +148,32 @@ namespace Toggl.Phoebe.Data
             TryEnforceSingleRunning ();
         }
 
+        private async void LoadNewDraft ()
+        {
+            if (currentUserId == null)
+                return;
+
+            var userId = currentUserId.Value;
+            var store = ServiceContainer.Resolve<IDataStore> ();
+
+            // Load data:
+            var draftModel = await TimeEntryModel.GetDraftAsync ();
+
+            // Check that the user hasn't changed in the mean time
+            if (userId != currentUserId)
+                return;
+
+            // Update data
+            if (draftModel != null) {
+                var draftData = draftModel.Data;
+                if (!draftEntries.UpdateData (draftData)) {
+                    draftEntries.Add (draftData);
+                }
+            }
+
+            UpdateProperties ();
+        }
+
         private void OnDataChange (DataChangeMessage msg)
         {
             var data = msg.Data as TimeEntryData;
@@ -175,7 +201,10 @@ namespace Toggl.Phoebe.Data
                     draftEntries.Add (data);
                 }
             } else {
-                draftEntries.RemoveAll (e => e.Id == data.Id);
+                var removed = draftEntries.RemoveAll (e => e.Id == data.Id);
+                if (removed > 0 && draftEntries.Count < 1) {
+                    LoadNewDraft ();
+                }
             }
 
             UpdateProperties ();
@@ -206,7 +235,7 @@ namespace Toggl.Phoebe.Data
         {
             BatchPropertyChanges (delegate {
                 Running = runningEntries.OrderByDescending (e => e.ModifiedAt).FirstOrDefault ();
-                Draft = runningEntries.OrderByDescending (e => e.ModifiedAt).FirstOrDefault ();
+                Draft = draftEntries.OrderByDescending (e => e.ModifiedAt).FirstOrDefault ();
                 Active = Running ?? Draft;
             });
         }

@@ -79,6 +79,8 @@ namespace Toggl.Phoebe.Tests
                 }
             };
             await tcs.Task;
+
+            MessageBus.Send (new AuthChangedMessage (authManager));
         }
 
         protected void RunAsync (Func<Task> fn)

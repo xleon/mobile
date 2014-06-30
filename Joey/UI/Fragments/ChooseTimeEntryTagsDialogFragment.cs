@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Widget;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 
@@ -18,11 +19,13 @@ namespace Toggl.Joey.UI.Fragments
     public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
-        #pragma warning disable 0414
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
-        #pragma warning restore 0414
-        private WorkspaceTagsView modelsView;
+        private WorkspaceTagsView workspaceTagsView;
         private ListView listView;
+        private List<TimeEntryTagData> modelTags;
+        private TimeEntryModel model;
+        private bool tagsSelected;
+        private bool hasStarted;
+        private bool isSaving;
 
         public ChooseTimeEntryTagsDialogFragment (TimeEntryModel model) : base ()
         {
@@ -50,36 +53,80 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private TimeEntryModel model;
-
         public override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
 
-            model = Model.ById<TimeEntryModel> (TimeEntryId);
-            if (model == null) {
+            model = new TimeEntryModel (TimeEntryId);
+            model.PropertyChanged += OnModelPropertyChanged;
+
+            workspaceTagsView = new WorkspaceTagsView (WorkspaceId);
+            workspaceTagsView.Updated += OnWorkspaceTagsUpdated;
+
+            LoadModel ();
+            LoadTags ();
+        }
+
+        public override void OnDestroy ()
+        {
+            if (model != null) {
+                model.PropertyChanged -= OnModelPropertyChanged;
+                model = null;
+            }
+            if (workspaceTagsView != null) {
+                workspaceTagsView.Updated -= OnWorkspaceTagsUpdated;
+                workspaceTagsView.Dispose ();
+                workspaceTagsView = null;
+            }
+
+            base.OnDestroy ();
+        }
+
+        private async void LoadModel ()
+        {
+            await model.LoadAsync ();
+            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Dismiss ();
+            }
+        }
+
+        private async void LoadTags ()
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            modelTags = await dataStore.Table<TimeEntryTagData> ()
+                .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+            SelectInitialTags ();
+        }
+
+        private void OnModelPropertyChanged (object sender, PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName == TimeEntryModel.PropertyWorkspace) {
+                if (workspaceTagsView != null) {
+                    workspaceTagsView.WorkspaceId = model.Workspace.Id;
+                }
+            }
+        }
+
+        private void OnWorkspaceTagsUpdated (object sender, EventArgs args)
+        {
+            if (!workspaceTagsView.IsLoading) {
+                SelectInitialTags ();
             }
         }
 
         private Guid WorkspaceId {
             get {
-                if (model.WorkspaceId != null)
-                    return model.WorkspaceId.Value;
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                if (user != null && user.DefaultWorkspaceId != null)
-                    return user.DefaultWorkspaceId.Value;
+                if (model != null && model.Workspace != null)
+                    return model.Workspace.Id;
                 return Guid.Empty;
             }
         }
 
         public override Dialog OnCreateDialog (Bundle state)
         {
-            modelsView = new WorkspaceTagsView (WorkspaceId);
-
             var dia = new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.ChooseTimeEntryTagsDialogTitle)
-                .SetAdapter (new TagsAdapter (modelsView), (IDialogInterfaceOnClickListener)null)
+                .SetAdapter (new TagsAdapter (workspaceTagsView), (IDialogInterfaceOnClickListener)null)
                 .SetNegativeButton (Resource.String.ChooseTimeEntryTagsDialogCancel, OnCancelButtonClicked)
                 .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, OnOkButtonClicked)
                 .Create ();
@@ -93,6 +140,27 @@ namespace Toggl.Joey.UI.Fragments
             return dia;
         }
 
+        private void SelectInitialTags ()
+        {
+            var modelTagsReady = modelTags != null;
+            var workspaceTagsReady = workspaceTagsView != null && !workspaceTagsView.IsLoading;
+
+            if (tagsSelected || !hasStarted || !modelTagsReady || !workspaceTagsReady)
+                return;
+
+            // Select tags
+            var i = 0;
+            listView.ClearChoices ();
+            foreach (var tag in workspaceTagsView.Data) {
+                if (modelTags.Any (t => t.TagId == tag.Id)) {
+                    listView.SetItemChecked (i, true);
+                }
+                i++;
+            }
+
+            tagsSelected = true;
+        }
+
         public override void OnStart ()
         {
             // TODO: Remove workaround after support library upgrade!
@@ -101,36 +169,8 @@ namespace Toggl.Joey.UI.Fragments
                 Android.Runtime.JNIEnv.GetMethodID (ThresholdClass, "onStart", "()V"));
             // End of workaround
 
-            modelsView.WorkspaceId = WorkspaceId;
-
-            // Setting tags like this makes the selection break when modelsView changes...
-            var tags = model.Tags.Select ((inter) => inter.To).ToList ();
-            var i = 0;
-            listView.ClearChoices ();
-            foreach (var tag in modelsView.Data) {
-                if (tags.Contains (tag)) {
-                    listView.SetItemChecked (i, true);
-                }
-                i++;
-            }
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-        }
-
-        public override void OnStop ()
-        {
-            // TODO: Remove workaround after support library upgrade!
-            // base.OnStop ();
-            Android.Runtime.JNIEnv.CallNonvirtualVoidMethod (Handle, ThresholdClass,
-                Android.Runtime.JNIEnv.GetMethodID (ThresholdClass, "onStop", "()V"));
-            // End of workaround
-
-            if (subscriptionModelChanged != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
-            }
+            hasStarted = true;
+            SelectInitialTags ();
         }
 
         private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
@@ -138,36 +178,34 @@ namespace Toggl.Joey.UI.Fragments
             Dismiss ();
         }
 
-        private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+        private async void OnOkButtonClicked (object sender, DialogClickEventArgs args)
         {
-            var selected = listView.CheckedItemPositions;
-            var tags = modelsView.Data.Where ((tag, idx) => selected.Get (idx, false)).ToList ();
-
-            // Store tags
-            foreach (var inter in model.Tags.ToList()) {
-                if (!tags.Remove (inter.To)) {
-                    model.Tags.Remove (inter.To);
-                }
-            }
-            foreach (var tag in tags) {
-                model.Tags.Add (tag);
-            }
-
-            Dismiss ();
-        }
-
-        private void OnModelChanged (ModelChangedMessage msg)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero)
+            if (isSaving)
                 return;
 
-            if (msg.Model == model
-                && msg.PropertyName == TimeEntryModel.PropertyWorkspaceId) {
-                modelsView.WorkspaceId = WorkspaceId;
-            } else if (msg.Model is UserModel
-                       && msg.PropertyName == UserModel.PropertyDefaultWorkspaceId) {
-                modelsView.WorkspaceId = WorkspaceId;
+            isSaving = true;
+            try {
+                // Resolve selected indexes into TagData:
+                var selected = listView.CheckedItemPositions;
+                var tags = workspaceTagsView.Data
+                    .Where ((tag, idx) => selected.Get (idx, false))
+                    .ToList ();
+
+                // Delete unused tag relations:
+                var deleteTasks = modelTags
+                    .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
+                    .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
+
+                // Create new tag relations:
+                var createTasks = tags
+                    .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
+                    .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) }.SaveAsync ());
+
+                await Task.WhenAll (deleteTasks.Concat (createTasks));
+
+                Dismiss ();
+            } finally {
+                isSaving = false;
             }
         }
     }

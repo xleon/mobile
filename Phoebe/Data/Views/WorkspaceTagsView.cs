@@ -93,7 +93,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void Reload ()
         {
-            if (IsLoading)
+            if (IsLoading || WorkspaceId == Guid.Empty)
                 return;
 
             var store = ServiceContainer.Resolve<IDataStore> ();

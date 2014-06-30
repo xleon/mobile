@@ -299,7 +299,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnStopTimeEditTextClick (object sender, EventArgs e)
         {
-            if (TimeEntry == null || TimeEntry.State == State.Running)
+            if (TimeEntry == null || TimeEntry.State == TimeEntryState.Running)
                 return;
             new ChangeTimeEntryStopTimeDialogFragment (TimeEntry).Show (FragmentManager, "time_dialog");
         }

@@ -78,7 +78,7 @@ namespace Toggl.Joey.UI.Activities
 
         protected override void OnDestroy ()
         {
-            Timer.OnDestroy ();
+            Timer.OnDestroy (this);
             base.OnDestroy ();
         }
 

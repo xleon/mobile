@@ -9,6 +9,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.Net
 {
@@ -28,7 +29,7 @@ namespace Toggl.Joey.Net
 
         private readonly List<ScheduledSync> schedule = new List<ScheduledSync> ();
 
-        public override void OnStart (Intent intent, int startId)
+        public override async void OnStart (Intent intent, int startId)
         {
             ((AndroidApp)Application).InitializeComponents ();
 
@@ -39,7 +40,10 @@ namespace Toggl.Joey.Net
                 // case we assign modifiedAt the default DateTime value (start of time)
                 var modifiedAt = ParseDate (extras.GetString ("updated_at", String.Empty));
 
-                var entry = Model.ByRemoteId<TimeEntryModel> (entryId);
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var rows = await dataStore.Table<TimeEntryData> ()
+                    .QueryAsync (r => r.RemoteId == entryId);
+                var entry = rows.FirstOrDefault ();
                 if (entry != null && modifiedAt <= entry.ModifiedAt) {
                     // We already have the latest data, can skip this:
                     GcmBroadcastReceiver.CompleteWakefulIntent (intent);

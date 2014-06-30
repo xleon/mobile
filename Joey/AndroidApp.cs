@@ -45,8 +45,8 @@ namespace Toggl.Joey
         {
             // Register common Phoebe components:
             ServiceContainer.Register<MessageBus> ();
-            ServiceContainer.Register<ModelManager> ();
             ServiceContainer.Register<AuthManager> ();
+            ServiceContainer.Register<ActiveTimeEntryManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
@@ -58,10 +58,10 @@ namespace Toggl.Joey
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
-            ServiceContainer.Register<IModelStore> (delegate {
+            ServiceContainer.Register<IDataStore> (delegate {
                 string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
                 var path = System.IO.Path.Combine (folder, "toggl.db");
-                return new SQLiteModelStore (path);
+                return new SqliteDataStore (path);
             });
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
@@ -107,7 +107,6 @@ namespace Toggl.Joey
             base.OnTrimMemory (level);
 
             if (level <= TrimMemory.Moderate) {
-                ServiceContainer.Resolve<IModelStore> ().Commit ();
                 if (level <= TrimMemory.Complete) {
                     System.GC.Collect (GC.MaxGeneration);
                 } else {

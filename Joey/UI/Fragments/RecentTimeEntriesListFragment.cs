@@ -9,6 +9,7 @@ using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using ListFragment = Android.Support.V4.App.ListFragment;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -44,7 +45,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroy ();
         }
 
-        public override void OnListItemClick (ListView l, View v, int position, long id)
+        public override async void OnListItemClick (ListView l, View v, int position, long id)
         {
 
             RecentTimeEntriesAdapter adapter = null;
@@ -60,8 +61,8 @@ namespace Toggl.Joey.UI.Fragments
             if (adapter == null || position < 0 || position >= adapter.Count)
                 return;
 
-            var model = adapter.GetEntry (position);
-            if (model == null)
+            var data = adapter.GetEntry (position);
+            if (data == null)
                 return;
 
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
@@ -75,11 +76,14 @@ namespace Toggl.Joey.UI.Fragments
             // Scroll to top (where the new model will appear)
             ListView.SmoothScrollToPosition (0);
 
+            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
+
+            var model = new TimeEntryModel (data);
+            var entry = await model.ContinueAsync ();
+
             // Notify that the user explicitly started something
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
-
-            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
         }
 
         public override bool UserVisibleHint {

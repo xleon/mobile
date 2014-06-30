@@ -160,10 +160,11 @@ namespace Toggl.Joey.UI.Adapters
                 if (DataSource == null || Handle == IntPtr.Zero)
                     return;
 
-                var duration = TimeSpan.FromSeconds (DataSource.Models.Sum (m => m.GetDuration ().TotalSeconds));
+                var models = DataSource.DataObjects.Select (data => new TimeEntryModel (data)).ToList ();
+                var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
                 DateGroupDurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
 
-                var runningModel = DataSource.Models.FirstOrDefault (m => m.State == TimeEntryState.Running);
+                var runningModel = models.FirstOrDefault (m => m.State == TimeEntryState.Running);
                 if (runningModel != null) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - runningModel.GetDuration ().Milliseconds);
@@ -431,10 +432,6 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton EditImageButton { get; private set; }
 
-            private TimeEntryModel Model {
-                get { return DataSource; }
-            }
-
             public ExpandedListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
             {
                 this.adapter = adapter;
@@ -454,7 +451,7 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnDeleteImageButton (object sender, EventArgs e)
             {
-                adapter.OnDeleteTimeEntry (Model);
+                adapter.OnDeleteTimeEntry (DataSource);
                 adapter.ExpandedPosition = null;
             }
 
@@ -465,13 +462,72 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnEditImageButton (object sender, EventArgs e)
             {
-                adapter.OnEditTimeEntry (Model);
+                adapter.OnEditTimeEntry (DataSource);
                 adapter.ExpandedPosition = null;
+            }
+
+            protected override void ResetTrackedObservables ()
+            {
+                Tracker.MarkAllStale ();
+
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
+
+                    if (DataSource.Project != null) {
+                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
+
+                        if (DataSource.Project.Client != null) {
+                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
+                        }
+                    }
+
+                    if (DataSource.Task != null) {
+                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
+                    }
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTimeEntryPropertyChanged (string prop)
+            {
+                if (prop == TimeEntryModel.PropertyProject
+                    || prop == TimeEntryModel.PropertyTask
+                    || prop == TimeEntryModel.PropertyStartTime
+                    || prop == TimeEntryModel.PropertyStopTime
+                    || prop == TimeEntryModel.PropertyDescription)
+                    Rebind ();
+            }
+
+            private void HandleProjectPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyClient
+                    || prop == ProjectModel.PropertyColor
+                    || prop == ProjectModel.PropertyName)
+                    Rebind ();
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == ClientModel.PropertyName)
+                    Rebind ();
+            }
+
+            private void HandleTaskPropertyChanged (string prop)
+            {
+                if (prop == TaskModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
-                if (Model == null)
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
+                ResetTrackedObservables ();
+
+                if (DataSource == null)
                     return;
 
                 var ctx = ServiceContainer.Resolve<Context> ();
@@ -480,8 +536,8 @@ namespace Toggl.Joey.UI.Adapters
                 RebindDescriptionTextView (ctx);
 
                 var color = Color.Transparent;
-                if (Model.Project != null) {
-                    color = Color.ParseColor (Model.Project.GetHexColor ());
+                if (DataSource.Project != null) {
+                    color = Color.ParseColor (DataSource.Project.GetHexColor ());
                 }
 
                 var shape = ColorView.Background as GradientDrawable;
@@ -489,12 +545,12 @@ namespace Toggl.Joey.UI.Adapters
                     shape.SetColor (color);
                 }
 
-                if (Model.StopTime.HasValue) {
+                if (DataSource.StopTime.HasValue) {
                     TimeTextView.Text = String.Format ("{0} - {1}",
-                        Model.StartTime.ToLocalTime ().ToDeviceTimeString (),
-                        Model.StopTime.Value.ToLocalTime ().ToDeviceTimeString ());
+                        DataSource.StartTime.ToLocalTime ().ToDeviceTimeString (),
+                        DataSource.StopTime.Value.ToLocalTime ().ToDeviceTimeString ());
                 } else {
-                    TimeTextView.Text = Model.StartTime.ToLocalTime ().ToDeviceTimeString ();
+                    TimeTextView.Text = DataSource.StartTime.ToLocalTime ().ToDeviceTimeString ();
                 }
             }
 
@@ -505,16 +561,16 @@ namespace Toggl.Joey.UI.Adapters
                 int clientLength = 0;
                 var mode = SpanTypes.InclusiveExclusive;
 
-                if (Model.Project != null) {
-                    var projectName = Model.Project.Name;
+                if (DataSource.Project != null) {
+                    var projectName = DataSource.Project.Name;
                     if (String.IsNullOrWhiteSpace (projectName)) {
                         projectName = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
                     }
 
                     projectLength = projectName.Length;
-                    if (Model.Project.Client != null && !String.IsNullOrWhiteSpace (Model.Project.Client.Name)) {
-                        clientLength = Model.Project.Client.Name.Length;
-                        text = String.Concat (projectName, "   ", Model.Project.Client.Name);
+                    if (DataSource.Project.Client != null && !String.IsNullOrWhiteSpace (DataSource.Project.Client.Name)) {
+                        clientLength = DataSource.Project.Client.Name.Length;
+                        text = String.Concat (projectName, "   ", DataSource.Project.Client.Name);
                     } else {
                         text = projectName;
                     }
@@ -546,17 +602,17 @@ namespace Toggl.Joey.UI.Adapters
                 int descriptionLength = 0;
                 var mode = SpanTypes.InclusiveExclusive;
 
-                if (String.IsNullOrWhiteSpace (Model.Description)) {
+                if (String.IsNullOrWhiteSpace (DataSource.Description)) {
                     text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                     descriptionLength = text.Length;
                 } else {
-                    text = Model.Description;
-                    descriptionLength = Model.Description.Length;
+                    text = DataSource.Description;
+                    descriptionLength = DataSource.Description.Length;
                 }
 
-                if (Model.Task != null && !String.IsNullOrEmpty (Model.Task.Name)) {
-                    taskLength = Model.Task.Name.Length;
-                    text = String.Concat (Model.Task.Name, "  ", text);
+                if (DataSource.Task != null && !String.IsNullOrEmpty (DataSource.Task.Name)) {
+                    taskLength = DataSource.Task.Name.Length;
+                    text = String.Concat (DataSource.Task.Name, "  ", text);
                 }
 
                 var spannable = new SpannableString (text);

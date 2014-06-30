@@ -162,7 +162,7 @@ namespace Toggl.Joey.UI.Fragments
             public const int LogPosition = 2;
             private Context ctx;
             private ActiveTimeEntryManager timeEntryManager;
-            private readonly Subscription<SettingChangedMessage> subscriptionSettingChanged;
+            private Subscription<SettingChangedMessage> subscriptionSettingChanged;
 
             public readonly EditCurrentTimeEntryFragment EditFragment = new EditCurrentTimeEntryFragment ();
             public readonly RecentTimeEntriesListFragment RecentFragment = new RecentTimeEntriesListFragment ();

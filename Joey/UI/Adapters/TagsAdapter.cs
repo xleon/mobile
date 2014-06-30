@@ -11,7 +11,7 @@ namespace Toggl.Joey.UI.Adapters
 {
     public class TagsAdapter : BaseDataViewAdapter<TagData>
     {
-        public TagsAdapter (IDataView<TagModel> view) : base (view)
+        public TagsAdapter (IDataView<TagData> view) : base (view)
         {
         }
 

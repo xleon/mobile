@@ -209,9 +209,9 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnTasksFrameLayoutClick (object sender, EventArgs e)
             {
-                if (DataSource == null)
+                if (model == null)
                     return;
-                dataView.ToggleProjectTasks (Model);
+                dataView.ToggleProjectTasks (model);
             }
 
             protected override void OnDataSourceChanged ()
@@ -317,17 +317,21 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
             }
 
-            private ProjectModel Model {
-                get {
-                    if (DataSource == null)
-                        return null;
-                    return DataSource.Model;
+            private ProjectModel model;
+
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null && DataSource.Data != null) {
+                    model = new ProjectModel (DataSource.Data);
                 }
+
+                base.OnDataSourceChanged ();
             }
 
             protected override void Rebind ()
             {
-                var color = Color.ParseColor (Model.GetHexColor ());
+                var color = Color.ParseColor (model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);
                 ProjectTextView.SetText (Resource.String.ProjectsNewProject);
             }
@@ -336,10 +340,6 @@ namespace Toggl.Joey.UI.Adapters
         private class TaskListItemHolder : ModelViewHolder<TaskModel>
         {
             public TextView TaskTextView { get; private set; }
-
-            public TaskModel Model {
-                get { return DataSource; }
-            }
 
             public TaskListItemHolder (View root) : base (root)
             {
@@ -446,8 +446,8 @@ namespace Toggl.Joey.UI.Adapters
                     if (dataView != null) {
                         foreach (var obj in dataView.Data) {
                             var task = obj as TaskModel;
-                            if (task != null) {
-                                if (!expandedProjectIds.Contains (task.ProjectId))
+                            if (task != null && task.Project != null) {
+                                if (!expandedProjectIds.Contains (task.Project.Id))
                                     continue;
                             }
                             yield return obj;

@@ -117,4 +117,14 @@
     <string name="ActionBarDoneButton">Done</string>
     <string name="FeedbackMessageHint">Your message...</string>
     <string name="SendFeedbackButtonText">Send</string>
+    <string name="FeedbackAlertNoText">Please write some feedback text!</string>
+    <string name="FeedbackAlertNoMood">Please select a mood!</string>
+    <string name="FeedbackFormNotValidTitle">Notification</string>
+    <string name="FeedbackCopyToClipboardTitle">Copy to clipboard?</string>
+    <string name="FeedbackCopyToClipboardMessage">Do you want to share your feedback in Google Play Store?</string>
+    <string name="FeedbackCopiedToClipboardToast">Your feedback is copied to clipboard!</string>
+    <string name="FeedbackCopyToClipboardOK">Copy to clipboard</string>
+    <string name="FeedbackCopyToClipboardCancel">Cance</string>
+    <string name="FeedbackAlertDialogOk">OK</string>
+
 </resources>

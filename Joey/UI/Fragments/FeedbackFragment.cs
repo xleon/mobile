@@ -13,12 +13,13 @@ using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Fragment = Android.Support.V4.App.Fragment;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class FeedbackFragment : Fragment
     {
-
+        private Context ctx;
         public ImageButton FeedbackPositiveButton { get; private set;}
         public ImageButton FeedbackNeutralButton { get; private set;}
         public ImageButton FeedbackNegativeButton { get; private set;}
@@ -30,6 +31,7 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.FeedbackFragment, container, false);
+            ctx = ServiceContainer.Resolve<Context> ();
 
             FeedbackPositiveButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackPositiveButton);
             FeedbackNeutralButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNeutralButton);
@@ -45,6 +47,7 @@ namespace Toggl.Joey.UI.Fragments
             SubmitFeedbackButton.Click += OnSendClick;
 
             return view;
+
         }
 
         public override void OnResume()
@@ -60,12 +63,18 @@ namespace Toggl.Joey.UI.Fragments
             //When succesfully sent, reset the form and navigate away, also display toast that it succeeded.
             FeedbackMessage = FeedbackMessageEditText.Text;
 
-            if( FeedbackMessage.Length > 0 && FeedbackMood > 0 ) //valid
-                SendFeedbackData(FeedbackMessage, FeedbackMood);
-            else if ( FeedbackMessage.Length == 0)
-                FormNotValidAlert(1);
+
+            if (FeedbackMessage.Length == 0)
+                FormNotValidAlert (1);
             else if (FeedbackMood == 0)
-                FormNotValidAlert(2);
+                FormNotValidAlert (2);
+            else if (FeedbackMessage.Length > 0 && FeedbackMood > 0) { //valid
+                SendFeedbackData (FeedbackMessage, FeedbackMood);
+                AskCopyToClipboard ();
+                if (FeedbackMood == 1) { //in case of positive feedback
+
+                }
+            }
         }
 
         private bool prevSendResult;
@@ -97,16 +106,48 @@ namespace Toggl.Joey.UI.Fragments
 
         void FormNotValidAlert(int type)
         {
+            int AlertMessage;
+            if (type == 1)
+                AlertMessage = Resource.String.FeedbackAlertNoText;
+            else 
+                AlertMessage = Resource.String.FeedbackAlertNoMood;
+
             new AlertDialog.Builder (Activity)
-                .SetTitle ("Warning")
-                .SetMessage ("Please insert a message!")
+                .SetTitle (Resource.String.FeedbackFormNotValidTitle)
+                .SetMessage (AlertMessage)
                 .SetCancelable (false)
-                .SetPositiveButton ("OK", OnOkClicked)
+                .SetPositiveButton (Resource.String.FeedbackAlertDialogOk, OnOkClicked)
+                .Show ();
+        }
+
+        void AskCopyToClipboard()
+        {
+            new AlertDialog.Builder (Activity)
+                .SetTitle (Resource.String.FeedbackCopyToClipboardTitle)
+                .SetMessage (Resource.String.FeedbackCopyToClipboardMessage)
+                .SetCancelable (true)
+                .SetNegativeButton(Resource.String.FeedbackCopyToClipboardCancel, OnCopyCancelClicked)
+                .SetPositiveButton (Resource.String.FeedbackCopyToClipboardOK, OnCopyOkClicked)
                 .Show ();
         }
 
         private void OnOkClicked (object sender, DialogClickEventArgs e)
         {
+        }
+
+        private void OnCopyOkClicked (object sender, DialogClickEventArgs e)
+        {
+            Android.Content.ClipboardManager clipboard = (Android.Content.ClipboardManager) ctx.GetSystemService(Context.ClipboardService); 
+            Android.Content.ClipData clip = Android.Content.ClipData.NewPlainText("Toggl", FeedbackMessage);
+            clipboard.PrimaryClip = clip;
+
+            Toast toast = Toast.MakeText(ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
+            toast.Show ();
+        }
+
+        private void OnCopyCancelClicked (object sender, DialogClickEventArgs e)
+        {
+
         }
     }
 }

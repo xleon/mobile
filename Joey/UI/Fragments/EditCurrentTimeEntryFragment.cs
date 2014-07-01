@@ -8,7 +8,7 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class EditCurrentTimeEntryFragment : EditTimeEntryFragment
+    public class EditCurrentTimeEntryFragment : BaseEditTimeEntryFragment
     {
         private ActiveTimeEntryManager timeEntryManager;
 

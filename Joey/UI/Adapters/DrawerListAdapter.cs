@@ -77,7 +77,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (HeaderViewHolder)view.Tag;
-                holder.Bind (authManager.User);
+                holder.Bind ((UserModel)authManager.User);
             } else {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (

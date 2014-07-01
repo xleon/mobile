@@ -46,8 +46,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (state);
 
-            model = Model.ById<TimeEntryModel> (TimeEntryId);
-            if (model == null) {
+            // TODO: Really should use async here
+            model = new TimeEntryModel (TimeEntryId);
+            model.LoadAsync ().Wait ();
+            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Dismiss ();
             }
         }
@@ -86,19 +88,19 @@ namespace Toggl.Joey.UI.Fragments
                 } else if (m is ProjectAndTaskView.Project) {
                     var wrap = (ProjectAndTaskView.Project)m;
                     if (wrap.IsNoProject) {
-                        workspace = wrap.WorkspaceModel;
+                        workspace = new WorkspaceModel (wrap.WorkspaceId);
                     } else if (wrap.IsNewProject) {
-                        var proj = wrap.Model;
+                        var proj = (ProjectModel)wrap.Data;
                         // Show create project dialog instead
                         new CreateProjectDialogFragment (model, proj.Workspace, proj.Color)
                             .Show (FragmentManager, "new_project_dialog");
                     } else {
-                        project = wrap.Model;
+                        project = (ProjectModel)wrap.Data;
                         workspace = project != null ? project.Workspace : null;
                     }
                 } else if (m is ProjectAndTaskView.Workspace) {
                     var wrap = (ProjectAndTaskView.Workspace)m;
-                    workspace = wrap.Model;
+                    workspace = (WorkspaceModel)wrap.Data;
                 }
 
                 if (project != null || task != null || workspace != null) {

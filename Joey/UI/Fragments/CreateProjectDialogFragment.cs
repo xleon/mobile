@@ -6,6 +6,7 @@ using Android.Text;
 using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -16,6 +17,7 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly string ProjectColorArgument = "com.toggl.timer.project_color";
         private EditText nameEditText;
         private Button positiveButton;
+        private bool isSaving;
 
         public CreateProjectDialogFragment (WorkspaceModel workspace, int color) : this (null, workspace, color)
         {
@@ -79,11 +81,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (state);
 
-            timeEntry = Model.ById<TimeEntryModel> (TimeEntryId);
-            workspace = Model.ById<WorkspaceModel> (WorkspaceId);
-            if (workspace == null) {
-                Dismiss ();
-            }
+            // TODO: Really should use async here
+            timeEntry = new TimeEntryModel (TimeEntryId);
+            workspace = new WorkspaceModel (WorkspaceId);
+            Task.WhenAll (timeEntry.LoadAsync (), workspace.LoadAsync ()).Wait ();
+
+            // TODO: Determine if timeEntry or workspace is deleted and dismiss dialog
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -117,23 +120,32 @@ namespace Toggl.Joey.UI.Fragments
             SyncButton ();
         }
 
-        private void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
+        private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            if (workspace == null)
+            if (isSaving)
                 return;
 
-            var project = Model.Update (new ProjectModel () {
-                Workspace = workspace,
-                Name = nameEditText.Text,
-                Color = ProjectColor,
-                IsActive = true,
-                IsPersisted = true,
-            });
+            isSaving = true;
+            try {
+                if (workspace == null)
+                    return;
 
-            if (timeEntry != null) {
-                timeEntry.Workspace = project.Workspace;
-                timeEntry.Project = project;
-                timeEntry.Task = null;
+                var project = new ProjectModel () {
+                    Workspace = workspace,
+                    Name = nameEditText.Text,
+                    Color = ProjectColor,
+                    IsActive = true,
+                };
+                await project.SaveAsync ();
+
+                if (timeEntry != null) {
+                    timeEntry.Workspace = project.Workspace;
+                    timeEntry.Project = project;
+                    timeEntry.Task = null;
+                    await timeEntry.SaveAsync ();
+                }
+            } finally {
+                isSaving = false;
             }
         }
 

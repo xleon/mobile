@@ -24,7 +24,7 @@ namespace Toggl.Joey.UI.Adapters
                 view.Tag = new TagListItemHolder (view);
             }
             var holder = (TagListItemHolder)view.Tag;
-            holder.Bind (GetEntry (position));
+            holder.Bind ((TagModel)GetEntry (position));
             return view;
         }
 

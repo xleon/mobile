@@ -59,8 +59,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (state);
 
-            model = Model.ById<TimeEntryModel> (TimeEntryId);
-            if (model == null) {
+            // TODO: Really should use async here
+            model = new TimeEntryModel (TimeEntryId);
+            model.LoadAsync ().Wait ();
+            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Dismiss ();
             }
         }

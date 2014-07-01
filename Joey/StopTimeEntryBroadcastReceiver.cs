@@ -1,8 +1,11 @@
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Android.Content;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey
@@ -14,19 +17,14 @@ namespace Toggl.Joey
 
         public override void OnReceive (Context context, Intent intent)
         {
-            TimeEntryModel timeEntry = TimeEntryModel.FindRunning ();
-            if (timeEntry != null) {
-                timeEntry.Stop ();
-            }
-
-            // Force commit of data (in case Android kills us right after this function returns)
-            var modelStore = ServiceContainer.Resolve<IModelStore> ();
-            try {
-                modelStore.Commit ();
-            } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
-                log.Warning (LogTag, ex, "Manual commit failed.");
-            }
+            // TODO: Should move this to an Android service to allow for async execution
+            var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var tasks = dataStore.Table<TimeEntryData> ()
+                .QueryAsync (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId)
+                .Result
+                .Select (data => new TimeEntryModel (data).StopAsync ());
+            Task.WhenAll (tasks).Wait ();
 
             // Try initialising components
             var app = context.ApplicationContext as AndroidApp;
@@ -36,4 +34,3 @@ namespace Toggl.Joey
         }
     }
 }
-

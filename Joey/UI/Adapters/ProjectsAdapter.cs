@@ -135,7 +135,7 @@ namespace Toggl.Joey.UI.Adapters
             {
                 model = null;
                 if (DataSource != null) {
-                    model = DataSource.Data;
+                    model = (WorkspaceModel)DataSource.Data;
                 }
 
                 base.OnDataSourceChanged ();
@@ -218,7 +218,7 @@ namespace Toggl.Joey.UI.Adapters
             {
                 model = null;
                 if (DataSource != null) {
-                    model = DataSource.Data;
+                    model = (ProjectModel)DataSource.Data;
                 }
 
                 base.OnDataSourceChanged ();

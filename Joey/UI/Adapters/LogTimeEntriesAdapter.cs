@@ -119,7 +119,7 @@ namespace Toggl.Joey.UI.Adapters
                     view.Tag = new ExpandedListItemHolder (this, view);
                 }
                 var holder = (ExpandedListItemHolder)view.Tag;
-                holder.Bind (data);
+                holder.Bind ((TimeEntryModel)data);
             } else {
                 var model = (TimeEntryModel)entry;
                 if (view == null) {

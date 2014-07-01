@@ -28,7 +28,7 @@ namespace Toggl.Joey.UI.Adapters
                 view.Tag = new RecentTimeEntryListItemHolder (view);
             }
             var holder = (RecentTimeEntryListItemHolder)view.Tag;
-            holder.Bind (GetEntry (position));
+            holder.Bind ((TimeEntryModel)GetEntry (position));
             return view;
         }
 

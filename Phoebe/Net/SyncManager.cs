@@ -315,6 +315,8 @@ namespace Toggl.Phoebe.Net
                 query = store.Table<T> ();
             }
 
+            query = query.Where (r => r.IsDirty || r.RemoteId == null || r.DeletedAt != null);
+
             return query.QueryAsync ();
         }
 

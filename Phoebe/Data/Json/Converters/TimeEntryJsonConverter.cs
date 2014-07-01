@@ -131,6 +131,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 // Resolve tags to IDs:
                 var tagIds = new List<Guid> ();
                 foreach (var tagName in json.Tags) {
+                    // Prevent importing empty (invalid) tags:
+                    if (String.IsNullOrWhiteSpace (tagName))
+                        continue;
+
                     var id = ctx.GetTagIdFromName (timeEntryData.WorkspaceId, tagName);
 
                     if (id == Guid.Empty) {

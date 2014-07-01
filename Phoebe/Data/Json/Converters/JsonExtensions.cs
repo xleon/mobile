@@ -7,27 +7,27 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public static class JsonExtensions
     {
-        public static async Task<CommonData> Import (this CommonJson json)
+        public static async Task<CommonData> Import (this CommonJson json, Guid? localIdHint = null)
         {
             var type = json.GetType ();
             if (type == typeof(ClientJson)) {
-                return await Import ((ClientJson)json).ConfigureAwait (false);
+                return await Import ((ClientJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(ProjectJson)) {
-                return await Import ((ProjectJson)json).ConfigureAwait (false);
+                return await Import ((ProjectJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(ProjectUserJson)) {
-                return await Import ((ProjectUserJson)json).ConfigureAwait (false);
+                return await Import ((ProjectUserJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(TagJson)) {
-                return await Import ((TagJson)json).ConfigureAwait (false);
+                return await Import ((TagJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(TaskJson)) {
-                return await Import ((TaskJson)json).ConfigureAwait (false);
+                return await Import ((TaskJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(TimeEntryJson)) {
-                return await Import ((TimeEntryJson)json).ConfigureAwait (false);
+                return await Import ((TimeEntryJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(UserJson)) {
-                return await Import ((UserJson)json).ConfigureAwait (false);
+                return await Import ((UserJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(WorkspaceJson)) {
-                return await Import ((WorkspaceJson)json).ConfigureAwait (false);
+                return await Import ((WorkspaceJson)json, localIdHint).ConfigureAwait (false);
             } else if (type == typeof(WorkspaceUserJson)) {
-                return await Import ((WorkspaceUserJson)json).ConfigureAwait (false);
+                return await Import ((WorkspaceUserJson)json, localIdHint).ConfigureAwait (false);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
@@ -57,10 +57,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
 
-        public static Task<ClientData> Import (this ClientJson json)
+        public static Task<ClientData> Import (this ClientJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<ClientJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<ClientJson> Export (this ClientData data)
@@ -69,10 +69,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<ProjectData> Import (this ProjectJson json)
+        public static Task<ProjectData> Import (this ProjectJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<ProjectJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<ProjectJson> Export (this ProjectData data)
@@ -81,10 +81,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<ProjectUserData> Import (this ProjectUserJson json)
+        public static Task<ProjectUserData> Import (this ProjectUserJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<ProjectUserJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<ProjectUserJson> Export (this ProjectUserData data)
@@ -93,10 +93,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<TagData> Import (this TagJson json)
+        public static Task<TagData> Import (this TagJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<TagJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<TagJson> Export (this TagData data)
@@ -105,10 +105,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<TaskData> Import (this TaskJson json)
+        public static Task<TaskData> Import (this TaskJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<TaskJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<TaskJson> Export (this TaskData data)
@@ -117,10 +117,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<TimeEntryData> Import (this TimeEntryJson json)
+        public static Task<TimeEntryData> Import (this TimeEntryJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<TimeEntryJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<TimeEntryJson> Export (this TimeEntryData data)
@@ -129,10 +129,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<UserData> Import (this UserJson json)
+        public static Task<UserData> Import (this UserJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<UserJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<UserJson> Export (this UserData data)
@@ -141,10 +141,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<WorkspaceData> Import (this WorkspaceJson json)
+        public static Task<WorkspaceData> Import (this WorkspaceJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<WorkspaceJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<WorkspaceJson> Export (this WorkspaceData data)
@@ -153,10 +153,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return converter.Export (data);
         }
 
-        public static Task<WorkspaceUserData> Import (this WorkspaceUserJson json)
+        public static Task<WorkspaceUserData> Import (this WorkspaceUserJson json, Guid? localIdHint = null)
         {
             var converter = ServiceContainer.Resolve<WorkspaceUserJsonConverter> ();
-            return converter.Import (json);
+            return converter.Import (json, localIdHint);
         }
 
         public static Task<WorkspaceUserJson> Export (this WorkspaceUserData data)

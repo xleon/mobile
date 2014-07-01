@@ -177,9 +177,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             });
         }
 
-        public async Task<TimeEntryData> Import (TimeEntryJson json)
+        public async Task<TimeEntryData> Import (TimeEntryJson json, Guid? localIdHint = null)
         {
-            var data = await GetByRemoteId<TimeEntryData> (json.Id.Value).ConfigureAwait (false);
+            var data = await GetByRemoteId<TimeEntryData> (json.Id.Value, localIdHint).ConfigureAwait (false);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

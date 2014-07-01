@@ -17,13 +17,19 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.IsDirty = false;
         }
 
-        protected static async Task<T> GetByRemoteId<T> (long remoteId)
+        protected static async Task<T> GetByRemoteId<T> (long remoteId, Guid? localIdHint)
             where T : CommonData, new()
         {
-            var res = await DataStore.Table<T> ()
-                .QueryAsync (m => m.RemoteId == remoteId)
-                .ConfigureAwait (false);
-            return res.FirstOrDefault ();
+            var query = DataStore.Table<T> ();
+            if (localIdHint != null) {
+                var localId = localIdHint.Value;
+                query = query.Where (r => r.Id == localId || r.RemoteId == remoteId);
+            } else {
+                query = query.Where (r => r.RemoteId == remoteId);
+            }
+
+            var res = await query.QueryAsync ().ConfigureAwait (false);
+            return res.FirstOrDefault (data => data.RemoteId == remoteId) ?? res.FirstOrDefault ();
         }
 
         protected static async Task<long> GetRemoteId<T> (Guid id)

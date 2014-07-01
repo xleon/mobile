@@ -25,9 +25,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        public async Task<ClientData> Import (ClientJson json)
+        public async Task<ClientData> Import (ClientJson json, Guid? localIdHint = null)
         {
-            var data = await GetByRemoteId<ClientData> (json.Id.Value).ConfigureAwait (false);
+            var data = await GetByRemoteId<ClientData> (json.Id.Value, localIdHint).ConfigureAwait (false);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

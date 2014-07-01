@@ -42,7 +42,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         private static async Task Merge (WorkspaceUserData data, WorkspaceUserJson json)
         {
             var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
-            var userTask = GetByRemoteId<UserData> (json.UserId);
+            var userTask = GetByRemoteId<UserData> (json.UserId, null);
 
             var user = await userTask.ConfigureAwait (false);
             var workspaceId = await workspaceIdTask.ConfigureAwait (false);
@@ -69,9 +69,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        public async Task<WorkspaceUserData> Import (WorkspaceUserJson json)
+        public async Task<WorkspaceUserData> Import (WorkspaceUserJson json, Guid? localIdHint = null)
         {
-            var data = await GetByRemoteId<WorkspaceUserData> (json.Id.Value).ConfigureAwait (false);
+            var data = await GetByRemoteId<WorkspaceUserData> (json.Id.Value, localIdHint).ConfigureAwait (false);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

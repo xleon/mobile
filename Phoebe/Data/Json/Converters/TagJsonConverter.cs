@@ -42,9 +42,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return data;
         }
 
-        public async Task<TagData> Import (TagJson json)
+        public async Task<TagData> Import (TagJson json, Guid? localIdHint = null)
         {
-            var data = await GetByRemoteId<TagData> (json.Id.Value).ConfigureAwait (false);
+            var data = await GetByRemoteId<TagData> (json.Id.Value, localIdHint).ConfigureAwait (false);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

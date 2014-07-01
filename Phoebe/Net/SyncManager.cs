@@ -260,7 +260,6 @@ namespace Toggl.Phoebe.Net
                         var id = dataObject.RemoteId.HasValue ? dataObject.RemoteId.ToString () : dataObject.Id.ToString ();
                         if (error is ServerValidationException) {
                             log.Info (Tag, error, "Server rejected {0}#{1}.", dataObject.GetType ().Name, id);
-                            dataObject.RemoteRejected = true;
                         } else if (error is System.Net.Http.HttpRequestException) {
                             log.Info (Tag, error, "Failed to sync {0}#{1}.", dataObject.GetType ().Name, id);
                         } else {
@@ -325,6 +324,8 @@ namespace Toggl.Phoebe.Net
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var store = ServiceContainer.Resolve<IDataStore> ();
 
+            Exception error = null;
+
             try {
                 if (dataObject.DeletedAt != null) {
                     if (dataObject.RemoteId != null) {
@@ -343,15 +344,20 @@ namespace Toggl.Phoebe.Net
                 } else {
                     var json = await dataObject.Export ().ConfigureAwait (false);
                     json = await client.Create (json).ConfigureAwait (false);
-                    await json.Import ().ConfigureAwait (false);
+                    await json.Import (dataObject.Id).ConfigureAwait (false);
                 }
             } catch (ServerValidationException ex) {
-                return ex;
+                error = ex;
             } catch (System.Net.Http.HttpRequestException ex) {
-                return ex;
+                error = ex;
             }
 
-            return null;
+            if (error is ServerValidationException) {
+                dataObject.RemoteRejected = true;
+                await store.PutDataAsync (dataObject);
+            }
+
+            return error;
         }
 
         public bool IsRunning { get; private set; }

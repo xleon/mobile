@@ -11,6 +11,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
+using Toggl.Phoebe.Data.Json.Converters;
 
 namespace Toggl.Joey
 {
@@ -47,6 +48,15 @@ namespace Toggl.Joey
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<ActiveTimeEntryManager> ();
+            ServiceContainer.Register<ForeignRelationManager> ();
+            ServiceContainer.Register<ClientJsonConverter> ();
+            ServiceContainer.Register<ProjectJsonConverter> ();
+            ServiceContainer.Register<TagJsonConverter> ();
+            ServiceContainer.Register<TaskJsonConverter> ();
+            ServiceContainer.Register<TimeEntryJsonConverter> ();
+            ServiceContainer.Register<UserJsonConverter> ();
+            ServiceContainer.Register<WorkspaceJsonConverter> ();
+            ServiceContainer.Register<WorkspaceUserJsonConverter> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));

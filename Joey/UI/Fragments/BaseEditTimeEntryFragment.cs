@@ -37,17 +37,20 @@ namespace Toggl.Joey.UI.Fragments
             set {
                 DiscardDescriptionChanges ();
 
-                if (tagsView != null) {
+                if (tagsView != null && (value == null || value.Id != tagsView.TimeEntryId)) {
                     tagsView.Updated -= OnTimeEntryTagsUpdated;
                     tagsView = null;
                 }
 
                 model = value;
 
-                if (model != null) {
+                if (model != null && tagsView == null) {
                     tagsView = new TimeEntryTagsView (model.Id);
                     tagsView.Updated += OnTimeEntryTagsUpdated;
                 }
+
+                Rebind ();
+                RebindTags ();
             }
         }
 
@@ -306,6 +309,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnDescriptionTextChanged (object sender, Android.Text.TextChangedEventArgs e)
         {
+            // This can be called when the fragment is being restored, so the previous value will be
+            // set miraculously. So we need to make sure that this is indeed the user who is changing the
+            // value by only acting when the OnStart has been called.
+            if (!canRebind)
+                return;
+
             // Mark description as changed
             descriptionChanging = TimeEntry != null && DescriptionEditText.Text != TimeEntry.Description;
 
@@ -349,8 +358,11 @@ namespace Toggl.Joey.UI.Fragments
             if (TimeEntry == null)
                 return;
 
-            TimeEntry.IsBillable = !BillableCheckBox.Checked;
-            SaveTimeEntry ();
+            var isBillable = !BillableCheckBox.Checked;
+            if (TimeEntry.IsBillable != isBillable) {
+                TimeEntry.IsBillable = isBillable;
+                SaveTimeEntry ();
+            }
         }
 
         private async void OnDeleteImageButtonClick (object sender, EventArgs e)
@@ -393,8 +405,10 @@ namespace Toggl.Joey.UI.Fragments
         private void CommitDescriptionChanges ()
         {
             if (TimeEntry != null && descriptionChanging) {
-                TimeEntry.Description = DescriptionEditText.Text;
-                SaveTimeEntry ();
+                if (TimeEntry.Description != DescriptionEditText.Text) {
+                    TimeEntry.Description = DescriptionEditText.Text;
+                    SaveTimeEntry ();
+                }
             }
             descriptionChanging = false;
             CancelDescriptionChangeAutoCommit ();

@@ -73,7 +73,8 @@ namespace Toggl.Phoebe.Data.Views
         {
             var shouldUpdate = false;
             var isExcluded = action == DataAction.Delete
-                             || data.DeletedAt != null;
+                             || data.DeletedAt != null
+                             || data.TimeEntryId != timeEntryId;
 
             if (isExcluded) {
                 shouldUpdate = tagIds.Remove (data.TagId);

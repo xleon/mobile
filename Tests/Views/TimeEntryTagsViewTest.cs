@@ -94,6 +94,31 @@ namespace Toggl.Phoebe.Tests.Views
         }
 
         [Test]
+        public void TestAddManyToManyForOther ()
+        {
+            RunAsync (async delegate {
+                var view = new TimeEntryTagsView (timeEntry.Id);
+                await WaitForLoaded (view);
+
+                var updateTask = WaitForUpdates (view);
+
+                await DataStore.PutAsync (new TimeEntryTagData () {
+                    TimeEntryId = Guid.NewGuid (),
+                    TagId = tag3.Id,
+                });
+
+                // Wait to be sure the view has had a chance to ignore this relation:
+                await Task.WhenAny (updateTask, Task.Delay (10));
+
+                Assert.AreEqual (2, view.Count);
+                Assert.AreEqual (
+                    MakeTagsArray (DefaultTag, "Tag #2"),
+                    view.Data.ToArray ()
+                );
+            });
+        }
+
+        [Test]
         public void TestReplaceManyToMany ()
         {
             RunAsync (async delegate {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data
@@ -35,6 +36,31 @@ namespace Toggl.Phoebe.Data
             }
 
             return updateCount > 0;
+        }
+
+        public static async Task<CommonData> PutDataAsync (this IDataStore ds, CommonData data)
+        {
+            var type = data.GetType ();
+            if (type == typeof(ClientData)) {
+                return await ds.PutAsync ((ClientData)data).ConfigureAwait (false);
+            } else if (type == typeof(ProjectData)) {
+                return await ds.PutAsync ((ProjectData)data).ConfigureAwait (false);
+            } else if (type == typeof(ProjectUserData)) {
+                return await ds.PutAsync ((ProjectUserData)data).ConfigureAwait (false);
+            } else if (type == typeof(TagData)) {
+                return await ds.PutAsync ((TagData)data).ConfigureAwait (false);
+            } else if (type == typeof(TaskData)) {
+                return await ds.PutAsync ((TaskData)data).ConfigureAwait (false);
+            } else if (type == typeof(TimeEntryData)) {
+                return await ds.PutAsync ((TimeEntryData)data).ConfigureAwait (false);
+            } else if (type == typeof(UserData)) {
+                return await ds.PutAsync ((UserData)data).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceData)) {
+                return await ds.PutAsync ((WorkspaceData)data).ConfigureAwait (false);
+            } else if (type == typeof(WorkspaceUserData)) {
+                return await ds.PutAsync ((WorkspaceUserData)data).ConfigureAwait (false);
+            }
+            throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
     }
 }

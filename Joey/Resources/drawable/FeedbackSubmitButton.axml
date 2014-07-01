@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:constantSize="true">
+    <item
+        android:drawable="@drawable/ButtonGreenPressed"
+        android:state_enabled="true"
+        android:state_pressed="true" />
+    <item
+        android:drawable="@drawable/ButtonGreenDefault"
+        android:state_enabled="true" />
+    <item
+        android:drawable="@drawable/FeedbackButtonDisabled"
+        android:state_enabled="false" />
+</selector>

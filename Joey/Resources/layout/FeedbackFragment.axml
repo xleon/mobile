@@ -15,12 +15,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/gray"
-        android:text="FEEDBACK" />
+        android:text="@string/FeedbackHeaderTextView" />
     <TextView
         android:id="@+id/DescriptionTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="How are you feeling?"
+        android:text="@string/FeedbackSmallHeaderTextView"
         android:textColor="@color/light_gray"
         android:textSize="15dp"
         android:maxLines="4"
@@ -29,8 +29,6 @@
         android:gravity="center" />
     <LinearLayout
         android:orientation="horizontal"
-        android:minWidth="25px"
-        android:minHeight="25px"
         android:layout_width="match_parent"
         android:layout_height="35dp"
         android:layout_marginTop="20dp"
@@ -45,7 +43,7 @@
             android:layout_weight="1"
             android:layout_gravity="left"
             android:gravity="center_vertical"
-            android:background="@drawable/ButtonNoFrame"
+            android:background="@drawable/FeedbackRatingButton"
             android:id="@+id/FeedbackPositiveButton" />
         <View
             android:layout_width="1dp"
@@ -59,7 +57,7 @@
             android:layout_weight="1"
             android:layout_gravity="center"
             android:gravity="center_vertical"
-            android:background="@drawable/ButtonNoFrame"
+            android:background="@drawable/FeedbackRatingButton"
             android:id="@+id/FeedbackNeutralButton" />
         <View
             android:layout_width="1dp"
@@ -73,7 +71,7 @@
             android:layout_weight="1"
             android:layout_gravity="right"
             android:gravity="center_vertical"
-            android:background="@drawable/ButtonNoFrame"
+            android:background="@drawable/FeedbackRatingButton"
             android:id="@+id/FeedbackNegativeButton" />
     </LinearLayout>
     <EditText
@@ -88,7 +86,7 @@
         android:layout_marginTop="30dp" />
     <Button
         android:id="@+id/SendFeedbackButton"
-        style="@style/Button.Green"
+        style="@style/Button.FeedbackSubmitButton"
         android:text="@string/SendFeedbackButtonText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -25,8 +25,12 @@ namespace Toggl.Joey.UI.Fragments
         public ImageButton FeedbackNegativeButton { get; private set;}
         public Button SubmitFeedbackButton { get; private set; }
         public EditText FeedbackMessageEditText { get; private set; }
-        public int FeedbackMood { get; private set; }
+        public int FeedbackRating { get; private set; }
         public String FeedbackMessage { get; private set; }
+        private const int RatingNotSet = 0;
+        private const int RatingPositive = 1;
+        private const int RatingNeutral = 2;
+        private const int RatingNegative = 3;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -37,117 +41,112 @@ namespace Toggl.Joey.UI.Fragments
             FeedbackNeutralButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNeutralButton);
             FeedbackNegativeButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNegativeButton);
 
-            FeedbackPositiveButton.Click  += (sender, e) => SetMood(1);
-            FeedbackNeutralButton.Click  += (sender, e) => SetMood(2);
-            FeedbackNegativeButton.Click  += (sender, e) => SetMood(3);
+            FeedbackPositiveButton.Click  += (sender, e) => SetRating(RatingPositive);
+            FeedbackNeutralButton.Click  += (sender, e) => SetRating(RatingNeutral);
+            FeedbackNegativeButton.Click  += (sender, e) => SetRating(RatingNegative);
 
             FeedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText);
 
             SubmitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton);
             SubmitFeedbackButton.Click += OnSendClick;
-
+            FeedbackMessageEditText.AfterTextChanged += OnEdit;
+            SetRating (RatingNotSet);
+            ValidateForm ();
             return view;
-
         }
 
+        public void OnEdit(object sender, EventArgs e)
+        {
+            ValidateForm ();
+        }
         public override void OnResume()
         {
-            SetMood(FeedbackMood);
+            SetRating(FeedbackRating);
+            ValidateForm ();
             base.OnResume ();
         }
 
-        void OnSendClick (object sender, EventArgs e) 
+        private async void OnSendClick (object sender, EventArgs e) 
         {
-            //Collect feedback message text, and users mood (alert when either is missing)
-            //If user submits positive message, ask if they want to insert it to app store (google play store??) and if so then copy to clipboard.
-            //When succesfully sent, reset the form and navigate away, also display toast that it succeeded.
-            FeedbackMessage = FeedbackMessageEditText.Text;
-
-
-            if (FeedbackMessage.Length == 0)
-                FormNotValidAlert (1);
-            else if (FeedbackMood == 0)
-                FormNotValidAlert (2);
-            else if (FeedbackMessage.Length > 0 && FeedbackMood > 0) { //valid
-                SendFeedbackData (FeedbackMessage, FeedbackMood);
-                AskCopyToClipboard ();
-                if (FeedbackMood == 1) { //in case of positive feedback
-
+            ValidateForm ();
+                bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
+                if (send == true) {
+                    if (FeedbackRating == RatingPositive)
+                        AskPublishToAppStore ();
                 }
-            }
+        }
+
+        private void ValidateForm()
+        {
+            FeedbackMessage = FeedbackMessageEditText.Text;
+            bool enabled = false;
+            if (FeedbackMessage.Length == 0 || FeedbackRating == RatingNotSet)
+                enabled = false;
+            else 
+                enabled = true;
+            SubmitFeedbackButton.Enabled = enabled;
         }
 
         private bool prevSendResult;
-        private async Task<bool> SendFeedbackData ( string feedback, int mood ) {
+        private async Task<bool> SendFeedbackData ( string feedback, int Rating ) {
             await Task.Delay(TimeSpan.FromSeconds(5));
             prevSendResult = !prevSendResult;
+
+            Toast toast = Toast.MakeText(ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
+            toast.Show ();
+
             return prevSendResult;
         }
 
-        void SetMood (int mood)
+        private void SetRating (int Rating)
         {
-            FeedbackMood = mood;
-            ResetMoodButtonImages ();
-            if (mood  == 1) {
+            FeedbackRating = Rating;
+            ResetRatingButtonImages ();
+            if (FeedbackRating  == RatingPositive) {
                 FeedbackPositiveButton.SetImageResource(Resource.Drawable.IcFeedbackPositiveActive);
-            } else if (mood == 2) {
+            } else if (FeedbackRating == RatingNeutral) {
                 FeedbackNeutralButton.SetImageResource(Resource.Drawable.IcFeedbackNeutralActive);
-            } else if (mood == 3) {
+            } else if (FeedbackRating == RatingNegative) {
                 FeedbackNegativeButton.SetImageResource(Resource.Drawable.IcFeedbackNegativeActive);
             }
         }
 
-        void ResetMoodButtonImages()
+        private void ResetRatingButtonImages()
         {
             FeedbackPositiveButton.SetImageResource(Resource.Drawable.IcFeedbackPositive);
             FeedbackNeutralButton.SetImageResource(Resource.Drawable.IcFeedbackNeutral);
             FeedbackNegativeButton.SetImageResource(Resource.Drawable.IcFeedbackNegative);
         }
 
-        void FormNotValidAlert(int type)
+        private void FormNotValidAlert(int AlertMessage)
         {
-            int AlertMessage;
-            if (type == 1)
-                AlertMessage = Resource.String.FeedbackAlertNoText;
-            else 
-                AlertMessage = Resource.String.FeedbackAlertNoMood;
-
             new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.FeedbackFormNotValidTitle)
                 .SetMessage (AlertMessage)
                 .SetCancelable (false)
-                .SetPositiveButton (Resource.String.FeedbackAlertDialogOk, OnOkClicked)
+                .SetPositiveButton (Resource.String.FeedbackAlertDialogOk, (IDialogInterfaceOnClickListener)null)
                 .Show ();
         }
 
-        void AskCopyToClipboard()
+        private void AskPublishToAppStore()
         {
             new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.FeedbackCopyToClipboardTitle)
-                .SetMessage (Resource.String.FeedbackCopyToClipboardMessage)
+                .SetTitle (Resource.String.FeedbackAskPublishTitle)
+                .SetMessage (Resource.String.FeedbackAskPublishMessage)
                 .SetCancelable (true)
-                .SetNegativeButton(Resource.String.FeedbackCopyToClipboardCancel, OnCopyCancelClicked)
-                .SetPositiveButton (Resource.String.FeedbackCopyToClipboardOK, OnCopyOkClicked)
+                .SetNegativeButton(Resource.String.FeedbackAskPublishCancel, (IDialogInterfaceOnClickListener)null )
+                .SetPositiveButton (Resource.String.FeedbackAskPublishOK, OnCopyOkClicked)
                 .Show ();
-        }
-
-        private void OnOkClicked (object sender, DialogClickEventArgs e)
-        {
         }
 
         private void OnCopyOkClicked (object sender, DialogClickEventArgs e)
         {
             Android.Content.ClipboardManager clipboard = (Android.Content.ClipboardManager) ctx.GetSystemService(Context.ClipboardService); 
-            Android.Content.ClipData clip = Android.Content.ClipData.NewPlainText("Toggl", FeedbackMessage);
+            Android.Content.ClipData clip = Android.Content.ClipData.NewPlainText(Resource.String.AppName.ToString(), FeedbackMessage);
             clipboard.PrimaryClip = clip;
 
             Toast toast = Toast.MakeText(ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
             toast.Show ();
-        }
-
-        private void OnCopyCancelClicked (object sender, DialogClickEventArgs e)
-        {
-
         }
     }
 }

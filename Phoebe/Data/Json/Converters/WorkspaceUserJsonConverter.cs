@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             return new WorkspaceUserJson () {
                 Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt,
+                ModifiedAt = data.ModifiedAt.ToUtc (),
                 IsAdmin = data.IsAdmin,
                 IsActive = data.IsActive,
                 Name = user.Name,

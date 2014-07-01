@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             return new TagJson () {
                 Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt,
+                ModifiedAt = data.ModifiedAt.ToUtc (),
                 Name = data.Name,
                 WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
             };

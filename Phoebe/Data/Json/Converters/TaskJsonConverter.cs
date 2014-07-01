@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             return new TaskJson () {
                 Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt,
+                ModifiedAt = data.ModifiedAt.ToUtc (),
                 Name = data.Name,
                 IsActive = data.IsActive,
                 Estimate = data.Estimate,

@@ -10,7 +10,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             return Task.FromResult (new WorkspaceJson () {
                 Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt,
+                ModifiedAt = data.ModifiedAt.ToUtc (),
                 Name = data.Name,
                 IsPremium = data.IsPremium,
                 DefaultRate = data.DefaultRate,

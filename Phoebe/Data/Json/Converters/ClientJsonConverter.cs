@@ -12,7 +12,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             return new ClientJson () {
                 Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt,
+                ModifiedAt = data.ModifiedAt.ToUtc (),
                 Name = data.Name,
                 WorkspaceId = workspaceId,
             };

@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.RemoteId = json.Id;
             data.RemoteRejected = false;
             data.DeletedAt = null;
-            data.ModifiedAt = json.ModifiedAt;
+            data.ModifiedAt = json.ModifiedAt.ToUtc ();
             data.IsDirty = false;
         }
 

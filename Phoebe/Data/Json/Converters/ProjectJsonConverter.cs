@@ -14,7 +14,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             return new ProjectJson () {
                 Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt,
+                ModifiedAt = data.ModifiedAt.ToUtc (),
                 Name = data.Name,
                 Color = data.Color.ToString (),
                 IsActive = data.IsActive,

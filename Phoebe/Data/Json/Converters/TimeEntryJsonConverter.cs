@@ -19,11 +19,11 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             return new TimeEntryJson () {
                 Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt,
+                ModifiedAt = data.ModifiedAt.ToUtc (),
                 Description = data.Description,
                 IsBillable = data.IsBillable,
-                StartTime = data.StartTime,
-                StopTime = data.StopTime,
+                StartTime = data.StartTime.ToUtc (),
+                StopTime = data.StopTime.ToUtc (),
                 DurationOnly = data.DurationOnly,
                 Duration = EncodeDuration (data),
                 Tags = await tagsTask.ConfigureAwait (false),
@@ -79,8 +79,8 @@ namespace Toggl.Phoebe.Data.Json.Converters
             // Set start and stop times based on the duration:
             var now = Time.UtcNow;
             if (data.State == TimeEntryState.Finished) {
-                data.StartTime = json.StartTime;
-                data.StopTime = json.StartTime + duration;
+                data.StartTime = json.StartTime.ToUtc ();
+                data.StopTime = json.StartTime.ToUtc () + duration;
             } else {
                 data.StartTime = now - duration;
                 data.StopTime = null;

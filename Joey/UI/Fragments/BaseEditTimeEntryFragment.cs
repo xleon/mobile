@@ -102,7 +102,7 @@ namespace Toggl.Joey.UI.Fragments
                 propertyTracker.Add (entry, HandleTimeEntryPropertyChanged);
 
                 if (entry.Project != null) {
-                    propertyTracker.Add (entry.Task, HandleProjectPropertyChanged);
+                    propertyTracker.Add (entry.Project, HandleProjectPropertyChanged);
 
                     if (entry.Project.Client != null) {
                         propertyTracker.Add (entry.Project.Client, HandleClientPropertyChanged);

@@ -115,8 +115,10 @@ namespace Toggl.Phoebe.Data.Models
             set { user.Set (value); }
         }
 
-        public static implicit operator ProjectUserModel (ProjectUserData data)
+        public static explicit operator ProjectUserModel (ProjectUserData data)
         {
+            if (data == null)
+                return null;
             return new ProjectUserModel (data);
         }
 

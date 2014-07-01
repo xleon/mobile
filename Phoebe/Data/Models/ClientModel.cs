@@ -82,8 +82,10 @@ namespace Toggl.Phoebe.Data.Models
             set { workspace.Set (value); }
         }
 
-        public static implicit operator ClientModel (ClientData data)
+        public static explicit operator ClientModel (ClientData data)
         {
+            if (data == null)
+                return null;
             return new ClientModel (data);
         }
 

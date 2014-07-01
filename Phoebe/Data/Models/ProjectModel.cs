@@ -210,8 +210,10 @@ namespace Toggl.Phoebe.Data.Models
             set { client.Set (value); }
         }
 
-        public static implicit operator ProjectModel (ProjectData data)
+        public static explicit operator ProjectModel (ProjectData data)
         {
+            if (data == null)
+                return null;
             return new ProjectModel (data);
         }
 

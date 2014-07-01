@@ -115,8 +115,10 @@ namespace Toggl.Phoebe.Data.Models
             set { user.Set (value); }
         }
 
-        public static implicit operator WorkspaceUserModel (WorkspaceUserData data)
+        public static explicit operator WorkspaceUserModel (WorkspaceUserData data)
         {
+            if (data == null)
+                return null;
             return new WorkspaceUserModel (data);
         }
 

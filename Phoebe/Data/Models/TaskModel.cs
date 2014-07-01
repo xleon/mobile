@@ -131,8 +131,10 @@ namespace Toggl.Phoebe.Data.Models
             set { project.Set (value); }
         }
 
-        public static implicit operator TaskModel (TaskData data)
+        public static explicit operator TaskModel (TaskData data)
         {
+            if (data == null)
+                return null;
             return new TaskModel (data);
         }
 

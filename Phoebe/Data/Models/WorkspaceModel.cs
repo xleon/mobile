@@ -183,8 +183,10 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        public static implicit operator WorkspaceModel (WorkspaceData data)
+        public static explicit operator WorkspaceModel (WorkspaceData data)
         {
+            if (data == null)
+                return null;
             return new WorkspaceModel (data);
         }
 

@@ -80,8 +80,10 @@ namespace Toggl.Phoebe.Data.Models
             set { workspace.Set (value); }
         }
 
-        public static implicit operator TagModel (TagData data)
+        public static explicit operator TagModel (TagData data)
         {
+            if (data == null)
+                return null;
             return new TagModel (data);
         }
 

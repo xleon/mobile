@@ -633,8 +633,10 @@ namespace Toggl.Phoebe.Data.Models
             return new TimeEntryModel (newData);
         }
 
-        public static implicit operator TimeEntryModel (TimeEntryData data)
+        public static explicit operator TimeEntryModel (TimeEntryData data)
         {
+            if (data == null)
+                return null;
             return new TimeEntryModel (data);
         }
 

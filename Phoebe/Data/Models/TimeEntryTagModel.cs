@@ -83,8 +83,10 @@ namespace Toggl.Phoebe.Data.Models
             set { tag.Set (value); }
         }
 
-        public static implicit operator TimeEntryTagModel (TimeEntryTagData data)
+        public static explicit operator TimeEntryTagModel (TimeEntryTagData data)
         {
+            if (data == null)
+                return null;
             return new TimeEntryTagModel (data);
         }
 

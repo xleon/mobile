@@ -22,6 +22,10 @@ namespace Toggl.Phoebe.Data.Views
             Reload ();
         }
 
+        public Guid TimeEntryId {
+            get { return timeEntryId; }
+        }
+
         public event EventHandler Updated;
 
         private void OnUpdated ()

@@ -121,7 +121,8 @@ namespace Toggl.Joey.UI.Adapters
                 var holder = (ExpandedListItemHolder)view.Tag;
                 holder.Bind ((TimeEntryModel)data);
             } else {
-                var model = (TimeEntryModel)entry;
+                var data = (TimeEntryData)entry;
+                var model = (TimeEntryModel)data;
                 if (view == null) {
                     view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
                         Resource.Layout.LogTimeEntryListItem, parent, false);

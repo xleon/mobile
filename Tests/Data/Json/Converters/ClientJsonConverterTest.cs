@@ -131,6 +131,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var workspaceData = rows.FirstOrDefault ();
                 Assert.IsNotNull (workspaceData);
                 Assert.IsNotNull (workspaceData.RemoteId);
+                Assert.AreEqual (DateTime.MinValue, workspaceData.ModifiedAt);
             });
         }
 

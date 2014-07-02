@@ -54,6 +54,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     Name = json.Name,
                     Email = json.Email,
                     DefaultWorkspaceId = workspaceId,
+                    ModifiedAt = DateTime.MinValue,
                 };
             } else {
                 user.Name = json.Name;

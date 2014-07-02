@@ -88,6 +88,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             var data = await DataStore.PutAsync (new T () {
                 RemoteId = remoteId,
+                ModifiedAt = DateTime.MinValue,
             });
             return data.Id;
         }

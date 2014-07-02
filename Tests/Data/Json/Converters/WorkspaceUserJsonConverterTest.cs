@@ -142,11 +142,13 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var workspaceData = projectRows.FirstOrDefault ();
                 Assert.IsNotNull (workspaceData);
                 Assert.IsNotNull (workspaceData.RemoteId);
+                Assert.AreEqual (DateTime.MinValue, workspaceData.ModifiedAt);
 
                 var userRows = await DataStore.Table<UserData> ().QueryAsync (m => m.Id == workspaceUserData.UserId);
                 var userData = userRows.FirstOrDefault ();
                 Assert.IsNotNull (userData);
                 Assert.IsNotNull (userData.RemoteId);
+                Assert.AreEqual (DateTime.MinValue, userData.ModifiedAt);
             });
         }
 

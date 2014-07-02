@@ -186,11 +186,13 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var workspaceData = workspaceRows.FirstOrDefault ();
                 Assert.IsNotNull (workspaceData);
                 Assert.IsNotNull (workspaceData.RemoteId);
+                Assert.AreEqual (DateTime.MinValue, workspaceData.ModifiedAt);
 
-                var clientRows = await DataStore.Table<ClientData> ().QueryAsync (m => m.Id == projectData.WorkspaceId);
+                var clientRows = await DataStore.Table<ClientData> ().QueryAsync (m => m.Id == projectData.ClientId);
                 var clientData = clientRows.FirstOrDefault ();
-                Assert.IsNotNull (workspaceData);
-                Assert.IsNotNull (workspaceData.RemoteId);
+                Assert.IsNotNull (clientData);
+                Assert.IsNotNull (clientData.RemoteId);
+                Assert.AreEqual (DateTime.MinValue, clientData.ModifiedAt);
             });
         }
 

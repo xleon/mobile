@@ -3,9 +3,10 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Joey.UI.Adapters;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Joey.UI.Adapters;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -88,22 +89,28 @@ namespace Toggl.Joey.UI.Fragments
                 ProjectModel project = null;
                 WorkspaceModel workspace = null;
 
-                if (m is TaskModel) {
-                    task = (TaskModel)m;
-                    project = task != null ? task.Project : null;
-                    workspace = project != null ? project.Workspace : null;
+                if (m is TaskData) {
+                    task = (TaskModel)(TaskData)m;
+                    if (task.Project != null) {
+                        await task.Project.LoadAsync ();
+                        project = task.Project;
+                        workspace = project.Workspace ?? task.Workspace;
+                    } else {
+                        workspace = task.Workspace;
+                    }
                 } else if (m is ProjectAndTaskView.Project) {
                     var wrap = (ProjectAndTaskView.Project)m;
                     if (wrap.IsNoProject) {
                         workspace = new WorkspaceModel (wrap.WorkspaceId);
                     } else if (wrap.IsNewProject) {
-                        var proj = (ProjectModel)wrap.Data;
+                        var data = wrap.Data;
+                        var ws = new WorkspaceModel (data.WorkspaceId);
                         // Show create project dialog instead
-                        new CreateProjectDialogFragment (model, proj.Workspace, proj.Color)
+                        new CreateProjectDialogFragment (model, ws, data.Color)
                             .Show (FragmentManager, "new_project_dialog");
                     } else {
                         project = (ProjectModel)wrap.Data;
-                        workspace = project != null ? project.Workspace : null;
+                        workspace = project.Workspace;
                     }
                 } else if (m is ProjectAndTaskView.Workspace) {
                     var wrap = (ProjectAndTaskView.Workspace)m;
@@ -117,8 +124,6 @@ namespace Toggl.Joey.UI.Fragments
                     await model.SaveAsync ();
                 }
             }
-
-            Dismiss ();
         }
     }
 }

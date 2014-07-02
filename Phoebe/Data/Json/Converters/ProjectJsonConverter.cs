@@ -49,7 +49,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        public async Task<ProjectData> Import (ProjectJson json, Guid? localIdHint = null)
+        public async Task<ProjectData> Import (ProjectJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
             var data = await GetByRemoteId<ProjectData> (json.Id.Value, localIdHint).ConfigureAwait (false);
 
@@ -58,7 +58,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
-            } else if (data == null || data.ModifiedAt < json.ModifiedAt) {
+            } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = data ?? new ProjectData ();
                 await Merge (data, json).ConfigureAwait (false);
                 data = await DataStore.PutAsync (data).ConfigureAwait (false);

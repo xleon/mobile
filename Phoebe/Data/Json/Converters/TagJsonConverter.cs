@@ -42,7 +42,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return data;
         }
 
-        public async Task<TagData> Import (TagJson json, Guid? localIdHint = null)
+        public async Task<TagData> Import (TagJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
             var data = await GetByRemoteId<TagData> (json.Id.Value, localIdHint).ConfigureAwait (false);
 
@@ -51,7 +51,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     await DataStore.DeleteAsync (data).ConfigureAwait (false);
                     data = null;
                 }
-            } else if (data == null || data.ModifiedAt < json.ModifiedAt) {
+            } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = await Merge (data, json).ConfigureAwait (false);
                 data = await DataStore.PutAsync (data).ConfigureAwait (false);
             }

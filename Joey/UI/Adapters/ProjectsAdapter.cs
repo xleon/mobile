@@ -4,6 +4,7 @@ using System.Linq;
 using Android.Graphics;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Joey.UI.Utils;
@@ -51,7 +52,7 @@ namespace Toggl.Joey.UI.Adapters
                     return ViewTypeNoProject;
                 }
                 return ViewTypeProject;
-            } else if (obj is TaskModel) {
+            } else if (obj is TaskData) {
                 return ViewTypeTask;
             } else if (obj is ProjectAndTaskView.Workspace) {
                 return ViewTypeWorkspace;
@@ -103,6 +104,9 @@ namespace Toggl.Joey.UI.Adapters
                 var holder = (NewProjectListItemHolder)view.Tag;
                 holder.Bind ((ProjectAndTaskView.Project)item);
             } else if (viewType == ViewTypeTask) {
+                var data = (TaskData)item;
+                var model = (TaskModel)data;
+
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.ProjectListTaskItem, parent, false);
@@ -110,7 +114,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (TaskListItemHolder)view.Tag;
-                holder.Bind ((TaskModel)item);
+                holder.Bind (model);
             } else {
                 throw new NotSupportedException ("Got an invalid view type: {0}" + viewType);
             }
@@ -211,7 +215,7 @@ namespace Toggl.Joey.UI.Adapters
             {
                 if (model == null)
                     return;
-                dataView.ToggleProjectTasks (model);
+                dataView.ToggleProjectTasks (model.Id);
             }
 
             protected override void OnDataSourceChanged ()
@@ -280,7 +284,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
-                var expanded = dataView.AreProjectTasksVisible (model);
+                var expanded = dataView.AreProjectTasksVisible (model.Id);
                 TasksTextView.Visibility = expanded ? ViewStates.Invisible : ViewStates.Visible;
                 TasksImageView.Visibility = !expanded ? ViewStates.Invisible : ViewStates.Visible;
             }
@@ -382,7 +386,7 @@ namespace Toggl.Joey.UI.Adapters
 
         class ExpandableProjectsView : IDataView<object>, IDisposable
         {
-            private readonly HashSet<Guid?> expandedProjectIds = new HashSet<Guid?> ();
+            private readonly HashSet<Guid> expandedProjectIds = new HashSet<Guid> ();
             private ProjectAndTaskView dataView;
 
             public ExpandableProjectsView ()
@@ -405,17 +409,17 @@ namespace Toggl.Joey.UI.Adapters
                 OnUpdated ();
             }
 
-            public void ToggleProjectTasks (ProjectModel model)
+            public void ToggleProjectTasks (Guid projectId)
             {
-                if (!expandedProjectIds.Remove (model.Id)) {
-                    expandedProjectIds.Add (model.Id);
+                if (!expandedProjectIds.Remove (projectId)) {
+                    expandedProjectIds.Add (projectId);
                 }
                 OnUpdated ();
             }
 
-            public bool AreProjectTasksVisible (ProjectModel model)
+            public bool AreProjectTasksVisible (Guid projectId)
             {
-                return expandedProjectIds.Contains (model.Id);
+                return expandedProjectIds.Contains (projectId);
             }
 
             public event EventHandler Updated;
@@ -445,9 +449,9 @@ namespace Toggl.Joey.UI.Adapters
                 get {
                     if (dataView != null) {
                         foreach (var obj in dataView.Data) {
-                            var task = obj as TaskModel;
-                            if (task != null && task.Project != null) {
-                                if (!expandedProjectIds.Contains (task.Project.Id))
+                            var task = obj as TaskData;
+                            if (task != null) {
+                                if (!expandedProjectIds.Contains (task.ProjectId))
                                     continue;
                             }
                             yield return obj;

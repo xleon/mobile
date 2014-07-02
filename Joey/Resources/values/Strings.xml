@@ -119,14 +119,15 @@
     <string name="FeedbackSmallHeaderTextView">How are you feeling?</string>
     <string name="FeedbackMessageHint">Your message...</string>
     <string name="SendFeedbackButtonText">Send</string>
-    <string name="FeedbackAlertNoText">Please write some feedback text!</string>
-    <string name="FeedbackAlertNoRating">Please select a mood!</string>
-    <string name="FeedbackFormNotValidTitle">Notification</string>
-    <string name="FeedbackAskPublishTitle">Share on App Store?</string>
-    <string name="FeedbackAskPublishMessage">Do you want to share your feedback in Google Play Store?</string>
+    <string name="SendFeedbackButtonActiveText">Sending...</string>
+    <string name="FeedbackAskPublishTitle">Share on Google Play?</string>
+    <string name="FeedbackAskPublishMessage">Want to share your opinion on Google Play Store?</string>
     <string name="FeedbackCopiedToClipboardToast">Your feedback is copied to clipboard!</string>
-    <string name="FeedbackAskPublishOK">Share</string>
+    <string name="FeedbackAskPublishOK">Google Play</string>
     <string name="FeedbackAskPublishCancel">Cancel</string>
     <string name="FeedbackAlertDialogOk">OK</string>
+    <string name="FeedbackThankYouMessage">We\'ll write you back as soon as possible!</string>
+    <string name="FeedbackThankYouTitle">Thank you</string>
+    <string name="FeedbackThankYouOK">OK</string>
 
 </resources>

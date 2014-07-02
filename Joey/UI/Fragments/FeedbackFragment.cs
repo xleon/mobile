@@ -46,19 +46,16 @@ namespace Toggl.Joey.UI.Fragments
             FeedbackNegativeButton.Click  += (sender, e) => SetRating(RatingNegative);
 
             FeedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText);
+            FeedbackMessageEditText.AfterTextChanged += OnEdit;
 
             SubmitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton);
             SubmitFeedbackButton.Click += OnSendClick;
-            FeedbackMessageEditText.AfterTextChanged += OnEdit;
+
             SetRating (RatingNotSet);
             ValidateForm ();
             return view;
         }
 
-        public void OnEdit(object sender, EventArgs e)
-        {
-            ValidateForm ();
-        }
         public override void OnResume()
         {
             SetRating(FeedbackRating);
@@ -68,12 +65,15 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnSendClick (object sender, EventArgs e) 
         {
-            ValidateForm ();
-                bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
-                if (send == true) {
-                    if (FeedbackRating == RatingPositive)
-                        AskPublishToAppStore ();
-                }
+            SubmitFeedbackButton.Enabled = false;
+            SubmitFeedbackButton.SetText(Resource.String.SendFeedbackButtonActiveText);
+            bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
+            if (send == true) {
+                if (FeedbackRating == RatingPositive)
+                    AskPublishToAppStore ();
+                else
+                    ThankForFeedback();
+            }
         }
 
         private void ValidateForm()
@@ -89,12 +89,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private bool prevSendResult;
         private async Task<bool> SendFeedbackData ( string feedback, int Rating ) {
-            await Task.Delay(TimeSpan.FromSeconds(5));
-            prevSendResult = !prevSendResult;
-
-            Toast toast = Toast.MakeText(ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
-            toast.Show ();
-
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            prevSendResult = true;
             return prevSendResult;
         }
 
@@ -109,6 +105,7 @@ namespace Toggl.Joey.UI.Fragments
             } else if (FeedbackRating == RatingNegative) {
                 FeedbackNegativeButton.SetImageResource(Resource.Drawable.IcFeedbackNegativeActive);
             }
+            ValidateForm ();
         }
 
         private void ResetRatingButtonImages()
@@ -116,16 +113,6 @@ namespace Toggl.Joey.UI.Fragments
             FeedbackPositiveButton.SetImageResource(Resource.Drawable.IcFeedbackPositive);
             FeedbackNeutralButton.SetImageResource(Resource.Drawable.IcFeedbackNeutral);
             FeedbackNegativeButton.SetImageResource(Resource.Drawable.IcFeedbackNegative);
-        }
-
-        private void FormNotValidAlert(int AlertMessage)
-        {
-            new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.FeedbackFormNotValidTitle)
-                .SetMessage (AlertMessage)
-                .SetCancelable (false)
-                .SetPositiveButton (Resource.String.FeedbackAlertDialogOk, (IDialogInterfaceOnClickListener)null)
-                .Show ();
         }
 
         private void AskPublishToAppStore()
@@ -139,6 +126,17 @@ namespace Toggl.Joey.UI.Fragments
                 .Show ();
         }
 
+        private void ThankForFeedback()
+        {
+            new AlertDialog.Builder (Activity)
+                .SetTitle (Resource.String.FeedbackThankYouTitle)
+                .SetMessage (Resource.String.FeedbackThankYouMessage)
+                .SetCancelable (true)
+                .SetPositiveButton (Resource.String.FeedbackThankYouOK, (IDialogInterfaceOnClickListener)null)
+                .Show ();
+            ResetFeedbackForm ();
+        }
+
         private void OnCopyOkClicked (object sender, DialogClickEventArgs e)
         {
             Android.Content.ClipboardManager clipboard = (Android.Content.ClipboardManager) ctx.GetSystemService(Context.ClipboardService); 
@@ -147,7 +145,25 @@ namespace Toggl.Joey.UI.Fragments
 
             Toast toast = Toast.MakeText(ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
             toast.Show ();
+
+            StartActivity (new Intent (
+                Intent.ActionView,
+                Android.Net.Uri.Parse (Toggl.Phoebe.Build.GooglePlayUrl)
+            ));
+            ResetFeedbackForm ();
         }
+
+        private void OnEdit(object sender, EventArgs e)
+        {
+            ValidateForm ();
+        }
+
+        private void ResetFeedbackForm(){
+            SetRating (RatingNotSet);
+            FeedbackMessageEditText.Text = "";
+            SubmitFeedbackButton.SetText(Resource.String.SendFeedbackButtonText);
+        }
+
     }
 }
 

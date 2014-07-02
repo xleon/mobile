@@ -76,17 +76,27 @@ namespace Toggl.Joey.UI.Fragments
 
         private TimeEntryModel timeEntry;
         private WorkspaceModel workspace;
+        private bool modelsLoaded;
 
         public override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
 
-            // TODO: Really should use async here
+            LoadData ();
+        }
+
+        private async void LoadData ()
+        {
             timeEntry = new TimeEntryModel (TimeEntryId);
             workspace = new WorkspaceModel (WorkspaceId);
-            Task.WhenAll (timeEntry.LoadAsync (), workspace.LoadAsync ()).Wait ();
+            await Task.WhenAll (timeEntry.LoadAsync (), workspace.LoadAsync ());
 
-            // TODO: Determine if timeEntry or workspace is deleted and dismiss dialog
+            if (timeEntry.Workspace == null || timeEntry.Workspace.Id == Guid.Empty) {
+                // TODO: Better logic to determine if the models are actually non-existent
+                Dismiss ();
+            } else {
+                modelsLoaded = true;
+            }
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -122,27 +132,30 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            if (isSaving)
+            if (!modelsLoaded || isSaving)
                 return;
 
             isSaving = true;
             try {
-                if (workspace == null)
+                var workspaceModel = workspace;
+                var timeEntryModel = timeEntry;
+
+                if (workspaceModel == null)
                     return;
 
                 var project = new ProjectModel () {
-                    Workspace = workspace,
+                    Workspace = workspaceModel,
                     Name = nameEditText.Text,
                     Color = ProjectColor,
                     IsActive = true,
                 };
                 await project.SaveAsync ();
 
-                if (timeEntry != null) {
-                    timeEntry.Workspace = project.Workspace;
-                    timeEntry.Project = project;
-                    timeEntry.Task = null;
-                    await timeEntry.SaveAsync ();
+                if (timeEntryModel != null) {
+                    timeEntryModel.Workspace = project.Workspace;
+                    timeEntryModel.Project = project;
+                    timeEntryModel.Task = null;
+                    await timeEntryModel.SaveAsync ();
                 }
             } finally {
                 isSaving = false;

@@ -340,11 +340,16 @@ namespace Toggl.Phoebe.Net
                 } else if (dataObject.RemoteId != null) {
                     var json = await dataObject.Export ().ConfigureAwait (false);
                     json = await client.Update (json).ConfigureAwait (false);
-                    await json.Import ().ConfigureAwait (false);
+                    await json.Import (
+                        forceUpdate: true
+                    ).ConfigureAwait (false);
                 } else {
                     var json = await dataObject.Export ().ConfigureAwait (false);
                     json = await client.Create (json).ConfigureAwait (false);
-                    await json.Import (dataObject.Id).ConfigureAwait (false);
+                    await json.Import (
+                        localIdHint: dataObject.Id,
+                        forceUpdate: true
+                    ).ConfigureAwait (false);
                 }
             } catch (ServerValidationException ex) {
                 error = ex;

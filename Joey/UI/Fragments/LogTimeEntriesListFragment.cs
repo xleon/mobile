@@ -5,6 +5,7 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -155,9 +156,9 @@ namespace Toggl.Joey.UI.Fragments
                 if (!isChecked)
                     continue;
 
-                var model = adapter.GetEntry (position) as TimeEntryModel;
-                if (model != null)
-                    toDelete.Add (model);
+                var data = adapter.GetEntry (position) as TimeEntryData;
+                if (data != null)
+                    toDelete.Add ((TimeEntryModel)data);
             }
 
             // Delete models:

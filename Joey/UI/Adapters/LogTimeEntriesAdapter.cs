@@ -33,7 +33,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override bool IsEnabled (int position)
         {
-            return ExpandedPosition != position && GetEntry (position) is TimeEntryModel;
+            return ExpandedPosition != position && GetEntry (position) is TimeEntryData;
         }
 
         public override int GetItemViewType (int position)

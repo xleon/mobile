@@ -234,7 +234,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             foreach (var ws in workspaceWrappers) {
                 foreach (var proj in ws.Projects) {
-                    if (proj.Data.Id == id) {
+                    if (proj.Data != null && proj.Data.Id == id) {
                         workspace = ws;
                         project = proj;
                         return true;

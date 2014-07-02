@@ -12,7 +12,6 @@ namespace Toggl.Joey.UI.Fragments
     public class ChooseTimeEntryProjectDialogFragment : BaseDialogFragment
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
-        private ProjectsAdapter adapter;
 
         public ChooseTimeEntryProjectDialogFragment (TimeEntryModel model) : base ()
         {
@@ -40,17 +39,25 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        private ProjectsAdapter adapter;
         private TimeEntryModel model;
+        private bool modelLoaded;
 
         public override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
 
-            // TODO: Really should use async here
+            LoadData ();
+        }
+
+        private async void LoadData ()
+        {
             model = new TimeEntryModel (TimeEntryId);
-            model.LoadAsync ().Wait ();
+            await model.LoadAsync ();
             if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Dismiss ();
+            } else {
+                modelLoaded = true;
             }
         }
 
@@ -72,9 +79,9 @@ namespace Toggl.Joey.UI.Fragments
             Dismiss ();
         }
 
-        private void OnItemSelected (object sender, DialogClickEventArgs args)
+        private async void OnItemSelected (object sender, DialogClickEventArgs args)
         {
-            if (model != null) {
+            if (modelLoaded && model != null) {
                 var m = adapter.GetEntry (args.Which);
 
                 TaskModel task = null;
@@ -107,6 +114,7 @@ namespace Toggl.Joey.UI.Fragments
                     model.Workspace = workspace;
                     model.Project = project;
                     model.Task = task;
+                    await model.SaveAsync ();
                 }
             }
 

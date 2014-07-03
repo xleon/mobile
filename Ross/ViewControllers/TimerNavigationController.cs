@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using MonoTouch.CoreFoundation;
 using MonoTouch.UIKit;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
 using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
@@ -21,9 +21,11 @@ namespace Toggl.Ross.ViewControllers
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
         private TimeEntryModel currentTimeEntry;
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private ActiveTimeEntryManager timeEntryManager;
+        private PropertyChangeTracker propertyTracker;
         private bool isStarted;
         private int rebindCounter;
+        private bool isActing;
 
         public TimerNavigationController (TimeEntryModel model = null)
         {
@@ -62,20 +64,28 @@ namespace Toggl.Ross.ViewControllers
             parentController.NavigationController.PushViewController (controller, true);
         }
 
-        private void OnActionButtonTouchUpInside (object sender, EventArgs e)
+        private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
-            if (currentTimeEntry == null) {
-                currentTimeEntry = TimeEntryModel.GetDraft ();
-                currentTimeEntry.Start ();
+            if (isActing)
+                return;
+            isActing = true;
 
-                var controllers = new List<UIViewController> (parentController.NavigationController.ViewControllers);
-                controllers.Add (new EditTimeEntryViewController (currentTimeEntry));
-                if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
-                    controllers.Add (new ProjectSelectionViewController (currentTimeEntry));
+            try {
+                if (currentTimeEntry != null) {
+                    await currentTimeEntry.StopAsync ();
+                } else if (timeEntryManager != null) {
+                    currentTimeEntry = (TimeEntryModel)timeEntryManager.Active;
+                    await currentTimeEntry.StartAsync ();
+
+                    var controllers = new List<UIViewController> (parentController.NavigationController.ViewControllers);
+                    controllers.Add (new EditTimeEntryViewController (currentTimeEntry));
+                    if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
+                        controllers.Add (new ProjectSelectionViewController (currentTimeEntry));
+                    }
+                    parentController.NavigationController.SetViewControllers (controllers.ToArray (), true);
                 }
-                parentController.NavigationController.SetViewControllers (controllers.ToArray (), true);
-            } else {
-                currentTimeEntry.Stop ();
+            } finally {
+                isActing = false;
             }
         }
 
@@ -83,6 +93,8 @@ namespace Toggl.Ross.ViewControllers
         {
             if (!isStarted)
                 return;
+
+            ResetTrackedObservables ();
 
             rebindCounter++;
 
@@ -107,52 +119,59 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
+        private void ResetTrackedObservables ()
         {
-            if (msg.Model == currentTimeEntry) {
-                // Listen for changes regarding current running entry
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyStartTime
-                    || msg.PropertyName == TimeEntryModel.PropertyStopTime
-                    || msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
-                    if (currentTimeEntry.State == TimeEntryState.Finished || currentTimeEntry.DeletedAt.HasValue) {
-                        if (showRunning) {
-                            currentTimeEntry = null;
-                        }
-                    }
-                    Rebind ();
-                }
-            } else if (showRunning && msg.Model is TimeEntryModel) {
-                // When some other time entry becomes Running we need to switch over to that
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared
-                    || msg.PropertyName == TimeEntryModel.PropertyIsPersisted) {
-                    var entry = (TimeEntryModel)msg.Model;
-                    if (entry.IsShared && entry.IsPersisted && entry.DeletedAt == null
-                        && entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
-                        currentTimeEntry = entry;
-                        Rebind ();
-                    }
-                }
+            if (propertyTracker == null)
+                return;
+
+            propertyTracker.MarkAllStale ();
+
+            if (currentTimeEntry != null) {
+                propertyTracker.Add (currentTimeEntry, HandleTimeEntryPropertyChanged);
+            }
+
+            propertyTracker.ClearStale ();
+        }
+
+        private void HandleTimeEntryPropertyChanged (string prop)
+        {
+            if (prop == TimeEntryModel.PropertyState
+                || prop == TimeEntryModel.PropertyStartTime
+                || prop == TimeEntryModel.PropertyStopTime)
+                Rebind ();
+        }
+
+        private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
+                ResetModelToRunning ();
+                Rebind ();
             }
         }
 
-        private static bool ForCurrentUser (TimeEntryModel model)
+        private void ResetModelToRunning ()
         {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            return model.UserId == authManager.UserId;
+            if (timeEntryManager == null)
+                return;
+
+            if (currentTimeEntry == null) {
+                currentTimeEntry = (TimeEntryModel)timeEntryManager.Running;
+            } else if (timeEntryManager.Running != null) {
+                currentTimeEntry.Data = timeEntryManager.Running;
+            } else {
+                currentTimeEntry = null;
+            }
         }
 
         public void Start ()
         {
+            propertyTracker = new PropertyChangeTracker ();
+
             // Start listening to timer changes
             if (showRunning) {
-                currentTimeEntry = TimeEntryModel.FindRunning ();
-            }
-
-            if (subscriptionModelChanged == null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+                timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+                timeEntryManager.PropertyChanged += OnTimeEntryManagerPropertyChanged;
+                ResetModelToRunning ();
             }
 
             isStarted = true;
@@ -164,10 +183,14 @@ namespace Toggl.Ross.ViewControllers
             // Stop listening to timer changes
             isStarted = false;
 
-            if (subscriptionModelChanged != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
+            if (propertyTracker != null) {
+                propertyTracker.Dispose ();
+                propertyTracker = null;
+            }
+
+            if (timeEntryManager != null) {
+                timeEntryManager.PropertyChanged -= OnTimeEntryManagerPropertyChanged;
+                timeEntryManager = null;
             }
 
             if (showRunning) {

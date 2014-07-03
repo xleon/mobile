@@ -1,15 +1,11 @@
 ﻿using System;
-using MonoTouch.UIKit;
-using XPlatUtils;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Ross.Views
 {
     public abstract class ModelTableViewCell<T> : BindableTableViewCell<T>
-        where T : Model
     {
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private PropertyChangeTracker tracker = new PropertyChangeTracker ();
 
         protected ModelTableViewCell (IntPtr handle) : base (handle)
         {
@@ -18,39 +14,19 @@ namespace Toggl.Ross.Views
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                if (subscriptionModelChanged != null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    bus.Unsubscribe (subscriptionModelChanged);
-                    subscriptionModelChanged = null;
+                if (tracker != null) {
+                    tracker.Dispose ();
+                    tracker = null;
                 }
             }
 
             base.Dispose (disposing);
         }
 
-        public override void WillMoveToSuperview (UIView newsuper)
-        {
-            base.WillMoveToSuperview (newsuper);
-
-            if (newsuper != null) {
-                if (subscriptionModelChanged == null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> ((msg) => {
-                        if (Handle == IntPtr.Zero)
-                            return;
-
-                        OnModelChanged (msg);
-                    });
-                }
-            } else {
-                if (subscriptionModelChanged != null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    bus.Unsubscribe (subscriptionModelChanged);
-                    subscriptionModelChanged = null;
-                }
-            }
+        protected PropertyChangeTracker Tracker {
+            get { return tracker; }
         }
 
-        protected abstract void OnModelChanged (ModelChangedMessage msg);
+        protected abstract void ResetTrackedObservables ();
     }
 }

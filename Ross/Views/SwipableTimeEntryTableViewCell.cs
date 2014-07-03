@@ -17,7 +17,7 @@ namespace Toggl.Ross.Views
         private readonly UILabel deleteActionLabel;
         private readonly UIView actualContentView;
 
-        public SwipableTimeEntryTableViewCell (IntPtr ptr) : base (ptr)
+        protected SwipableTimeEntryTableViewCell (IntPtr ptr) : base (ptr)
         {
             continueActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryContinue".Tr (),

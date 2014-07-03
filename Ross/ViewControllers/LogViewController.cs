@@ -8,6 +8,7 @@ using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -63,7 +64,7 @@ namespace Toggl.Ross.ViewControllers
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
-        class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryModel>
+        class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryData>
         {
             readonly static NSString EntryCellId = new NSString ("EntryCellId");
             readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
@@ -88,9 +89,9 @@ namespace Toggl.Ross.ViewControllers
                 return dataView.DateGroups;
             }
 
-            protected override IEnumerable<TimeEntryModel> GetRows (AllTimeEntriesView.DateGroup section)
+            protected override IEnumerable<TimeEntryData> GetRows (AllTimeEntriesView.DateGroup section)
             {
-                return section.Models;
+                return section.DataObjects;
             }
 
             public override float EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
@@ -107,7 +108,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
                 cell.ContinueCallback = OnContinue;
-                cell.Bind (GetRow (indexPath));
+                cell.Bind ((TimeEntryModel)GetRow (indexPath));
                 return cell;
             }
 
@@ -207,20 +208,20 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            protected override void OnContinue ()
+            protected override async void OnContinue ()
             {
                 if (DataSource == null)
                     return;
-                DataSource.Continue ();
+                await DataSource.ContinueAsync ();
                 if (ContinueCallback != null)
                     ContinueCallback (DataSource);
             }
 
-            protected override void OnDelete ()
+            protected override async void OnDelete ()
             {
                 if (DataSource == null)
                     return;
-                DataSource.Delete ();
+                await DataSource.DeleteAsync ();
             }
 
             public override void LayoutSubviews ()
@@ -341,6 +342,8 @@ namespace Toggl.Ross.ViewControllers
 
             protected override void Rebind ()
             {
+                ResetTrackedObservables ();
+
                 if (DataSource == null)
                     return;
 
@@ -428,33 +431,59 @@ namespace Toggl.Ross.ViewControllers
                 LayoutIfNeeded ();
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (DataSource == null)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (DataSource == msg.Model) {
-                    if (msg.PropertyName == TimeEntryModel.PropertyStartTime
-                        || msg.PropertyName == TimeEntryModel.PropertyStopTime
-                        || msg.PropertyName == TimeEntryModel.PropertyIsBillable
-                        || msg.PropertyName == TimeEntryModel.PropertyState
-                        || msg.PropertyName == TimeEntryModel.PropertyDescription
-                        || msg.PropertyName == TimeEntryModel.PropertyProjectId
-                        || msg.PropertyName == TimeEntryModel.PropertyTaskId)
-                        Rebind ();
-                } else if (DataSource.ProjectId.HasValue && DataSource.ProjectId == msg.Model.Id) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor)
-                        Rebind ();
-                } else if (DataSource.ProjectId.HasValue && DataSource.Project != null
-                           && DataSource.Project.ClientId.HasValue
-                           && DataSource.Project.ClientId == msg.Model.Id) {
-                    if (msg.PropertyName == ClientModel.PropertyName)
-                        Rebind ();
-                } else if (DataSource.TaskId.HasValue && DataSource.TaskId == msg.Model.Id) {
-                    if (msg.PropertyName == TaskModel.PropertyName)
-                        Rebind ();
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
+
+                    if (DataSource.Project != null) {
+                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
+
+                        if (DataSource.Project.Client != null) {
+                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
+                        }
+                    }
+
+                    if (DataSource.Task != null) {
+                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
+                    }
                 }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTimeEntryPropertyChanged (string prop)
+            {
+                if (prop == TimeEntryModel.PropertyProject
+                    || prop == TimeEntryModel.PropertyTask
+                    || prop == TimeEntryModel.PropertyStartTime
+                    || prop == TimeEntryModel.PropertyStopTime
+                    || prop == TimeEntryModel.PropertyState
+                    || prop == TimeEntryModel.PropertyIsBillable
+                    || prop == TimeEntryModel.PropertyDescription)
+                    Rebind ();
+            }
+
+            private void HandleProjectPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyClient
+                    || prop == ProjectModel.PropertyName
+                    || prop == ProjectModel.PropertyColor)
+                    Rebind ();
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == ClientModel.PropertyName)
+                    Rebind ();
+            }
+
+            private void HandleTaskPropertyChanged (string prop)
+            {
+                if (prop == TaskModel.PropertyName)
+                    Rebind ();
             }
 
             public Action<TimeEntryModel> ContinueCallback { get; set; }
@@ -511,10 +540,11 @@ namespace Toggl.Ross.ViewControllers
 
                 dateLabel.Text = data.Date.ToLocalizedDateString ();
 
-                var duration = TimeSpan.FromSeconds (data.Models.Sum (m => m.GetDuration ().TotalSeconds));
+                var models = data.DataObjects.Select (data => new TimeEntryModel (data)).ToList ();
+                var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
                 totalDurationLabel.Text = FormatDuration (duration);
 
-                if (data.Models.Any (m => m.State == TimeEntryState.Running)) {
+                if (models.Any (m => m.State == TimeEntryState.Running)) {
                     // Schedule rebind
                     var counter = rebindCounter;
                     DispatchQueue.MainQueue.DispatchAfter (

@@ -3,7 +3,7 @@ using SQLite;
 
 namespace Toggl.Phoebe.Data.DataObjects
 {
-    [Table ("ProjectUser")]
+    [Table ("ProjectUserModel")]
     public class ProjectUserData : CommonData
     {
         public ProjectUserData ()

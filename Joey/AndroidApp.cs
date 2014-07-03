@@ -51,6 +51,7 @@ namespace Toggl.Joey
             ServiceContainer.Register<ForeignRelationManager> ();
             ServiceContainer.Register<ClientJsonConverter> ();
             ServiceContainer.Register<ProjectJsonConverter> ();
+            ServiceContainer.Register<ProjectUserJsonConverter> ();
             ServiceContainer.Register<TagJsonConverter> ();
             ServiceContainer.Register<TaskJsonConverter> ();
             ServiceContainer.Register<TimeEntryJsonConverter> ();
@@ -92,7 +93,7 @@ namespace Toggl.Joey
                 tracker.Set (Fields.TrackingId, Build.GoogleAnalyticsId);
                 return tracker;
             });
-            ServiceContainer.Register<INetworkPresence>(() => new NetworkPresence(Context, (ConnectivityManager) GetSystemService(ConnectivityService)));
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
         }
 
         private void InitializeStartupComponents ()

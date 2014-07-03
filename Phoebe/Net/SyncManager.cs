@@ -44,6 +44,15 @@ namespace Toggl.Phoebe.Net
             if (IsRunning)
                 return;
 
+            var network = ServiceContainer.Resolve<INetworkPresence> ();
+
+            if (!network.IsNetworkPresent) {
+                network.RegisterSyncWhenNetworkPresent ();
+                return;
+            } else {
+                network.UnregisterSyncWhenNetworkPresent ();
+            }
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
             IsRunning = true;
 
@@ -219,6 +228,8 @@ namespace Toggl.Phoebe.Net
             } catch (Exception e) {
                 if (e.IsNetworkFailure () || e is TaskCanceledException) {
                     log.Info (Tag, e, "Sync ({0}) failed.", mode);
+                    if (e.IsNetworkFailure ())
+                        ServiceContainer.Resolve<INetworkPresence> ().RegisterSyncWhenNetworkPresent ();
                 } else {
                     log.Warning (Tag, e, "Sync ({0}) failed.", mode);
                 }

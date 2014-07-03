@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Android.App;
 using Android.Content;
+using Android.Net;
 using Google.Analytics.Tracking;
 using Toggl.Joey.Net;
 using Toggl.Phoebe;
@@ -81,6 +82,7 @@ namespace Toggl.Joey
                 tracker.Set (Fields.TrackingId, Build.GoogleAnalyticsId);
                 return tracker;
             });
+            ServiceContainer.Register<INetworkPresence>(() => new NetworkPresence(Context, (ConnectivityManager) GetSystemService(ConnectivityService)));
         }
 
         private void InitializeStartupComponents ()

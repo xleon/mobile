@@ -1,10 +1,8 @@
-﻿
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Text;
-
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -12,8 +10,11 @@ using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using Fragment = Android.Support.V4.App.Fragment;
 using XPlatUtils;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
+using Fragment = Android.Support.V4.App.Fragment;
+
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -45,13 +46,15 @@ namespace Toggl.Joey.UI.Fragments
             FeedbackNeutralButton.Click  += (sender, e) => SetRating(RatingNeutral);
             FeedbackNegativeButton.Click  += (sender, e) => SetRating(RatingNegative);
 
-            FeedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText);
+            FeedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText).SetFont (Font.Roboto);
             FeedbackMessageEditText.AfterTextChanged += OnEdit;
 
-            SubmitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton);
+            SubmitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton).SetFont (Font.Roboto);
             SubmitFeedbackButton.Click += OnSendClick;
-
-            SetRating (RatingNotSet);
+            if(savedInstanceState != null)
+                SetRating(savedInstanceState.GetInt("rating"));
+            else
+                SetRating (RatingNotSet);
             ValidateForm ();
             return view;
         }
@@ -76,6 +79,14 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public override void OnSaveInstanceState (Bundle outState)
+        {
+            base.OnSaveInstanceState (outState);
+            if (FeedbackRating != null) {
+                outState.PutInt ("rating", FeedbackRating);
+            }
+        }
+
         private void ValidateForm()
         {
             FeedbackMessage = FeedbackMessageEditText.Text;
@@ -88,15 +99,15 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         private bool prevSendResult;
-        private async Task<bool> SendFeedbackData ( string feedback, int Rating ) {
+        private async Task<bool> SendFeedbackData ( string feedback, int rating ) {
             await Task.Delay(TimeSpan.FromSeconds(1));
             prevSendResult = true;
             return prevSendResult;
         }
 
-        private void SetRating (int Rating)
+        private void SetRating (int rating)
         {
-            FeedbackRating = Rating;
+            FeedbackRating = rating;
             ResetRatingButtonImages ();
             if (FeedbackRating  == RatingPositive) {
                 FeedbackPositiveButton.SetImageResource(Resource.Drawable.IcFeedbackPositiveActive);

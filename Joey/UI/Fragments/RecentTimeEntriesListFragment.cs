@@ -65,20 +65,17 @@ namespace Toggl.Joey.UI.Fragments
             if (data == null)
                 return;
 
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            if (settingsStore.ReadContinueDialog != true) {
-                RecentTimeEntryContinueDialogFragment.ShowConfirm (FragmentManager, model);
-                return;
-            }
+            var model = new TimeEntryModel (data);
 
-            var entry = model.Continue ();
+            // Show a notice about tapping on entries acts as continue.
+            if (RecentTimeEntryContinueDialogFragment.TryShow (FragmentManager, model))
+                return;
 
             // Scroll to top (where the new model will appear)
             ListView.SmoothScrollToPosition (0);
 
             DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
 
-            var model = new TimeEntryModel (data);
             var entry = await model.ContinueAsync ();
 
             // Notify that the user explicitly started something

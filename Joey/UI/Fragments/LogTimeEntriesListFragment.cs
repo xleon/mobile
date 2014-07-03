@@ -86,7 +86,7 @@ namespace Toggl.Joey.UI.Fragments
                 adapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
                 adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
                 adapter.HandleTimeEntryContinue = ContinueTimeEntry;
-                adapter.HandleTimeEntryStop= StopTimeEntry;
+                adapter.HandleTimeEntryStop = StopTimeEntry;
                 ListAdapter = adapter;
             }
         }

@@ -352,10 +352,10 @@ namespace Toggl.Joey.UI.Adapters
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
                 }
-                showStopButton ();
+                ShowStopButton ();
             }
 
-            private void showStopButton()
+            private void ShowStopButton()
             {
                 if (Model == null || Handle == IntPtr.Zero)
                     return;

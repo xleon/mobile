@@ -43,22 +43,22 @@ namespace Toggl.Phoebe.Tests
         [TearDown]
         public virtual void TearDown ()
         {
-            // Work through queued jobs before we start tearing everything down
-            while (syncContext.Run ()) {
-            }
-
             RunAsync (async delegate {
                 // Use an empty transaction to ensure that the SQLiteDataStore has completed all scheduled jobs:
                 await DataStore.ExecuteInTransactionAsync ((ctx) => {
                 });
-
-                ServiceContainer.Clear ();
-
-                if (databasePath != null) {
-                    File.Delete (databasePath);
-                    databasePath = null;
-                }
             });
+
+            // Make sure all of the scheduled actions have been completed
+            while (syncContext.Run ()) {
+            }
+
+            ServiceContainer.Clear ();
+
+            if (databasePath != null) {
+                File.Delete (databasePath);
+                databasePath = null;
+            }
         }
 
         protected async Task SetUpFakeUser (Guid userId)

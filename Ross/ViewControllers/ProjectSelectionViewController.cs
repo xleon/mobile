@@ -400,6 +400,8 @@ namespace Toggl.Ross.ViewControllers
                     clientName = model.Client != null ? model.Client.Name : String.Empty;
                     taskCount = DataSource.Tasks.Count;
                     projectLabel.Apply (Style.ProjectList.ProjectLabel);
+                } else {
+                    return;
                 }
 
                 if (String.IsNullOrWhiteSpace (projectName)) {

@@ -136,10 +136,10 @@ namespace Toggl.Ross.ViewControllers
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                var model = GetRow (indexPath);
-                if (model != null) {
+                var data = GetRow (indexPath);
+                if (data != null) {
                     controller.NavigationController.PushViewController (
-                        new EditTimeEntryViewController (model), true);
+                        new EditTimeEntryViewController ((TimeEntryModel)data), true);
                 } else {
                     tableView.DeselectRow (indexPath, true);
                 }

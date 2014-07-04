@@ -136,10 +136,10 @@ namespace Toggl.Ross.ViewControllers
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                var model = GetRow (indexPath);
-                if (model != null) {
+                var data = GetRow (indexPath);
+                if (data != null) {
                     controller.NavigationController.PushViewController (
-                        new EditTimeEntryViewController (model), true);
+                        new EditTimeEntryViewController ((TimeEntryModel)data), true);
                 } else {
                     tableView.DeselectRow (indexPath, true);
                 }
@@ -163,6 +163,7 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableTagsImageView;
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
+            private TimeEntryTagsView tagsView;
             private int rebindCounter;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
@@ -206,6 +207,38 @@ namespace Toggl.Ross.ViewControllers
                     durationLabel,
                     runningImageView
                 );
+            }
+
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (tagsView != null) {
+                        tagsView.Updated -= OnTagsUpdated;
+                        tagsView = null;
+                    }
+                }
+
+                base.Dispose (disposing);
+            }
+
+            protected override void OnDataSourceChanged ()
+            {
+                if (tagsView != null && (DataSource == null || DataSource.Id == tagsView.TimeEntryId)) {
+                    tagsView.Updated -= OnTagsUpdated;
+                    tagsView = null;
+                }
+
+                if (DataSource != null) {
+                    tagsView = new TimeEntryTagsView (DataSource.Id);
+                    tagsView.Updated += OnTagsUpdated;
+                }
+
+                base.OnDataSourceChanged ();
+            }
+
+            private void OnTagsUpdated (object sender, EventArgs args)
+            {
+                RebindTags ();
             }
 
             protected override async void OnContinue ()
@@ -399,17 +432,7 @@ namespace Toggl.Ross.ViewControllers
                     SetNeedsLayout ();
                 }
 
-                var hasTags = model.Tags.HasNonDefault;
-                var isBillable = model.IsBillable;
-                if (hasTags && isBillable) {
-                    billableTagsImageView.Apply (Style.Log.BillableAndTaggedEntry);
-                } else if (hasTags) {
-                    billableTagsImageView.Apply (Style.Log.TaggedEntry);
-                } else if (isBillable) {
-                    billableTagsImageView.Apply (Style.Log.BillableEntry);
-                } else {
-                    billableTagsImageView.Apply (Style.Log.PlainEntry);
-                }
+                RebindTags ();
 
                 var duration = model.GetDuration ();
                 durationLabel.Text = duration.ToString (@"h\:mm\:ss");
@@ -429,6 +452,25 @@ namespace Toggl.Ross.ViewControllers
                 }
 
                 LayoutIfNeeded ();
+            }
+
+            private void RebindTags ()
+            {
+                var model = DataSource;
+                if (model == null || tagsView == null)
+                    return;
+
+                var hasTags = tagsView.HasNonDefault;
+                var isBillable = model.IsBillable;
+                if (hasTags && isBillable) {
+                    billableTagsImageView.Apply (Style.Log.BillableAndTaggedEntry);
+                } else if (hasTags) {
+                    billableTagsImageView.Apply (Style.Log.TaggedEntry);
+                } else if (isBillable) {
+                    billableTagsImageView.Apply (Style.Log.BillableEntry);
+                } else {
+                    billableTagsImageView.Apply (Style.Log.PlainEntry);
+                }
             }
 
             protected override void ResetTrackedObservables ()
@@ -540,7 +582,7 @@ namespace Toggl.Ross.ViewControllers
 
                 dateLabel.Text = data.Date.ToLocalizedDateString ();
 
-                var models = data.DataObjects.Select (data => new TimeEntryModel (data)).ToList ();
+                var models = data.DataObjects.Select (d => new TimeEntryModel (d)).ToList ();
                 var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
                 totalDurationLabel.Text = FormatDuration (duration);
 

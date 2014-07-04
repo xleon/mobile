@@ -14,6 +14,11 @@ namespace Toggl.Ross.Views
         public void Bind (T dataSource)
         {
             this.dataSource = dataSource;
+            OnDataSourceChanged ();
+        }
+
+        protected virtual void OnDataSourceChanged ()
+        {
             Rebind ();
         }
 

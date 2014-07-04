@@ -5,7 +5,7 @@
     </item>
 
     <item android:state_activated="true">
-        <inset android:insetLeft="5dp" android:insetRight="5dp" android:drawable="@drawable/BgMainListButtonPressed" />
+        <inset android:insetLeft="5dp" android:insetRight="5dp" android:drawable="@drawable/BgMainListButtonSelected" />
     </item>
 
     <item android:state_checked="true">

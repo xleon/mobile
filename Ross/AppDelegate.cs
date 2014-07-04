@@ -104,6 +104,12 @@ namespace Toggl.Ross
                 () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
         }
 
+        public static TogglWindow TogglWindow {
+            get {
+                return (TogglWindow)((AppDelegate)UIApplication.SharedApplication.Delegate).window;
+            }
+        }
+
         string IPlatformInfo.AppIdentifier {
             get { return Build.AppIdentifier; }
         }

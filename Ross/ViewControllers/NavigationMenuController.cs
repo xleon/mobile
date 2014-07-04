@@ -27,13 +27,20 @@ namespace Toggl.Ross.ViewControllers
         {
             this.controller = controller;
 
-            if ((window = TogglWindow.Locate ()) != null) {
-                window.OnHitTest += OnTogglWindowHit;
-            }
+            window = AppDelegate.TogglWindow;
+
+            window.OnHitTest += OnTogglWindowHit;
 
             controller.NavigationItem.LeftBarButtonItem = new UIBarButtonItem (
                 Image.IconNav.ImageWithRenderingMode (UIImageRenderingMode.AlwaysOriginal),
                 UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
+        }
+
+        public void Detach ()
+        {
+            if (window != null)
+                window.OnHitTest -= OnTogglWindowHit;
+            window = null;
         }
 
         private void OnTogglWindowHit (UIView view)

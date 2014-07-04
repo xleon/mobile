@@ -63,6 +63,15 @@ namespace Toggl.Ross.ViewControllers
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            if (navMenuController != null)
+                navMenuController.Detach();
+
+            base.Dispose(disposing);
+        }
+
         class Source : GroupedDataViewSource<TimeEntryModel, string, TimeEntryModel>
         {
             readonly static NSString EntryCellId = new NSString ("EntryCellId");

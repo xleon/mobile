@@ -17,7 +17,7 @@
             android:id="@+id/DeleteImageButton"
             style="@style/ChangeDurationDialog.Button"
             android:layout_column="2"
-            android:src="@android:drawable/ic_input_delete" />
+            android:src="@drawable/IcInputDelete" />
     </TableRow>
     <TableRow>
         <Button

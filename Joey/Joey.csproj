@@ -461,6 +461,10 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcEdit.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcEdit.png" />
     <AndroidResource Include="Resources\layout\ChangeTimeEntryStopTimeDialogFragment.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcInputDelete.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcInputDelete.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcInputDelete.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcInputDelete.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 
@@ -7,10 +6,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class ProjectJsonConverter : BaseJsonConverter
     {
-        public async Task<ProjectJson> Export (ProjectData data)
+        public ProjectJson Export (IDataStoreContext ctx, ProjectData data)
         {
-            var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
-            var clientIdTask = GetRemoteId<ClientData> (data.ClientId);
+            var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);
+            var clientId = GetRemoteId<ClientData> (ctx, data.ClientId);
 
             return new ProjectJson () {
                 Id = data.RemoteId,
@@ -22,15 +21,15 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 IsPrivate = data.IsPrivate,
                 IsTemplate = data.IsTemplate,
                 UseTasksEstimate = data.UseTasksEstimate,
-                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
-                ClientId = await clientIdTask.ConfigureAwait (false),
+                WorkspaceId = workspaceId,
+                ClientId = clientId,
             };
         }
 
-        private static async Task Merge (ProjectData data, ProjectJson json)
+        private static void Merge (IDataStoreContext ctx, ProjectData data, ProjectJson json)
         {
-            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
-            var clientIdTask = GetLocalId<ClientData> (json.ClientId);
+            var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
+            var clientId = GetLocalId<ClientData> (ctx, json.ClientId);
 
             data.Name = json.Name;
             try {
@@ -43,25 +42,25 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.IsPrivate = json.IsPrivate;
             data.IsTemplate = json.IsTemplate;
             data.UseTasksEstimate = json.UseTasksEstimate;
-            data.WorkspaceId = await workspaceIdTask.ConfigureAwait (false);
-            data.ClientId = await clientIdTask.ConfigureAwait (false);
+            data.WorkspaceId = workspaceId;
+            data.ClientId = clientId;
 
             MergeCommon (data, json);
         }
 
-        public async Task<ProjectData> Import (ProjectJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public ProjectData Import (IDataStoreContext ctx, ProjectJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
-            var data = await GetByRemoteId<ProjectData> (json.Id.Value, localIdHint).ConfigureAwait (false);
+            var data = GetByRemoteId<ProjectData> (ctx, json.Id.Value, localIdHint);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
-                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
+                    ctx.Delete (data);
                     data = null;
                 }
             } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = data ?? new ProjectData ();
-                await Merge (data, json).ConfigureAwait (false);
-                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                Merge (ctx, data, json);
+                data = ctx.Put (data);
             }
 
             return data;

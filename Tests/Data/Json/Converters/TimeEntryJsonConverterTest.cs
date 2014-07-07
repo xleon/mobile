@@ -42,7 +42,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (timeEntryData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, timeEntryData));
                 Assert.AreEqual (2, json.Id);
                 Assert.AreEqual ("Morning coffee", json.Description);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
@@ -68,8 +68,9 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 });
             });
 
-            Assert.That (() => converter.Export (timeEntryData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<InvalidOperationException> ());
+            Assert.That (() => RunAsync (async delegate {
+                await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, timeEntryData));
+            }), Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]
@@ -94,7 +95,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (timeEntryData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, timeEntryData));
                 Assert.IsNull (json.Id);
                 Assert.AreEqual ("Morning coffee", json.Description);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
@@ -143,7 +144,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     TagId = tag2Data.Id,
                 });
 
-                var json = await converter.Export (timeEntryData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, timeEntryData));
                 Assert.AreEqual (2, json.Id);
                 Assert.AreEqual ("Morning coffee", json.Description);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
@@ -179,7 +180,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 
-                var timeEntryData = await converter.Import (timeEntryJson);
+                var timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.AreNotEqual (Guid.Empty, timeEntryData.Id);
                 Assert.AreEqual (2, timeEntryData.RemoteId);
                 Assert.AreEqual ("Morning coffee", timeEntryData.Description);
@@ -216,7 +217,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
 
                 await SetUpFakeUser (userData.Id);
 
-                var timeEntryData = await converter.Import (timeEntryJson);
+                var timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.AreNotEqual (Guid.Empty, timeEntryData.Id);
                 Assert.AreEqual (2, timeEntryData.RemoteId);
                 Assert.AreEqual ("Morning coffee", timeEntryData.Description);
@@ -241,7 +242,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     UserId = 2,
                 };
 
-                var timeEntryData = await converter.Import (timeEntryJson);
+                var timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.AreNotEqual (Guid.Empty, timeEntryData.WorkspaceId);
 
                 var workspaceRows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == timeEntryData.WorkspaceId);
@@ -286,7 +287,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 4),
                 };
 
-                var ret = await converter.Import (timeEntryJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<TimeEntryData> ().QueryAsync (m => m.Id == timeEntryData.Id);
@@ -322,7 +323,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 2),
                 };
 
-                var ret = await converter.Import (timeEntryJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<TimeEntryData> ().QueryAsync (m => m.Id == timeEntryData.Id);
@@ -378,7 +379,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 4),
                 };
 
-                timeEntryData = await converter.Import (timeEntryJson);
+                timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
 
                 var tags = await DataStore.Table<TimeEntryTagData> ().QueryAsync (m => m.TimeEntryId == timeEntryData.Id);
                 Assert.That (tags, Has.Count.EqualTo (2));
@@ -439,7 +440,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 4),
                 };
 
-                timeEntryData = await converter.Import (timeEntryJson);
+                timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
 
                 var timeEntryTagRows = await DataStore.Table<TimeEntryTagData> ().QueryAsync (m => m.TimeEntryId == timeEntryData.Id);
                 var tags = timeEntryTagRows.Select (r => r.TagId).ToList ();

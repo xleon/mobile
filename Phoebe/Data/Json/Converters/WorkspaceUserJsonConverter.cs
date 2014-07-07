@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Linq;
 using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class WorkspaceUserJsonConverter : BaseJsonConverter
     {
-        public async Task<WorkspaceUserJson> Export (WorkspaceUserData data)
+        public WorkspaceUserJson Export (IDataStoreContext ctx, WorkspaceUserData data)
         {
-            var userTask = DataStore.Table<UserData> ()
-                .Take (1).QueryAsync (m => m.Id == data.UserId);
-            var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
-
-            var userRows = await userTask.ConfigureAwait (false);
+            var userRows = ctx.Connection.Table<UserData> ()
+                .Take (1).Where (m => m.Id == data.UserId).ToList ();
             if (userRows.Count == 0) {
                 throw new InvalidOperationException (String.Format (
                     "Cannot export data with invalid local relation ({0}#{1}) to JSON.",
@@ -27,6 +24,8 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 ));
             }
 
+            var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);
+
             return new WorkspaceUserJson () {
                 Id = data.RemoteId,
                 ModifiedAt = data.ModifiedAt.ToUtc (),
@@ -34,18 +33,15 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 IsActive = data.IsActive,
                 Name = user.Name,
                 Email = user.Email,
-                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
+                WorkspaceId = workspaceId,
                 UserId = user.RemoteId.Value,
             };
         }
 
-        private static async Task Merge (WorkspaceUserData data, WorkspaceUserJson json)
+        private static void Merge (IDataStoreContext ctx, WorkspaceUserData data, WorkspaceUserJson json)
         {
-            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
-            var userTask = GetByRemoteId<UserData> (json.UserId, null);
-
-            var user = await userTask.ConfigureAwait (false);
-            var workspaceId = await workspaceIdTask.ConfigureAwait (false);
+            var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
+            var user = GetByRemoteId<UserData> (ctx, json.UserId, null);
 
             // Update linked user data:
             if (user == null) {
@@ -60,7 +56,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 user.Name = json.Name;
                 user.Email = json.Email;
             }
-            user = await DataStore.PutAsync (user).ConfigureAwait (false);
+            user = ctx.Put (user);
 
             data.IsAdmin = json.IsAdmin;
             data.IsActive = json.IsActive;
@@ -70,19 +66,19 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        public async Task<WorkspaceUserData> Import (WorkspaceUserJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public WorkspaceUserData Import (IDataStoreContext ctx, WorkspaceUserJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
-            var data = await GetByRemoteId<WorkspaceUserData> (json.Id.Value, localIdHint).ConfigureAwait (false);
+            var data = GetByRemoteId<WorkspaceUserData> (ctx, json.Id.Value, localIdHint);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
-                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
+                    ctx.Delete (data);
                     data = null;
                 }
             } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = data ?? new WorkspaceUserData ();
-                await Merge (data, json).ConfigureAwait (false);
-                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                Merge (ctx, data, json);
+                data = ctx.Put (data);
             }
 
             return data;

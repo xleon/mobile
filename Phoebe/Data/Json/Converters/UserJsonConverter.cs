@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class UserJsonConverter : BaseJsonConverter
     {
-        public async Task<UserJson> Export (UserData data)
+        public UserJson Export (IDataStoreContext ctx, UserData data)
         {
-            var defaultWorkspaceIdTask = GetRemoteId<WorkspaceData> (data.DefaultWorkspaceId);
+            var defaultWorkspaceId = GetRemoteId<WorkspaceData> (ctx, data.DefaultWorkspaceId);
 
             return new UserJson () {
                 Id = data.RemoteId,
@@ -25,13 +24,13 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 SendTimerNotifications = data.SendTimerNotifications,
                 SendWeeklyReport = data.SendWeeklyReport,
                 StoreStartAndStopTime = data.TrackingMode == TrackingMode.StartNew,
-                DefaultWorkspaceId = await defaultWorkspaceIdTask.ConfigureAwait (false),
+                DefaultWorkspaceId = defaultWorkspaceId,
             };
         }
 
-        private static async Task Merge (UserData data, UserJson json)
+        private static void Merge (IDataStoreContext ctx, UserData data, UserJson json)
         {
-            var defaultWorkspaceIdTask = GetLocalId<WorkspaceData> (json.DefaultWorkspaceId);
+            var defaultWorkspaceId = GetLocalId<WorkspaceData> (ctx, json.DefaultWorkspaceId);
 
             data.Name = json.Name;
             data.Email = json.Email;
@@ -45,24 +44,24 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.SendTimerNotifications = json.SendTimerNotifications;
             data.SendWeeklyReport = json.SendWeeklyReport;
             data.TrackingMode = json.StoreStartAndStopTime ? TrackingMode.StartNew : TrackingMode.Continue;
-            data.DefaultWorkspaceId = await defaultWorkspaceIdTask.ConfigureAwait (false);
+            data.DefaultWorkspaceId = defaultWorkspaceId;
 
             MergeCommon (data, json);
         }
 
-        public async Task<UserData> Import (UserJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public UserData Import (IDataStoreContext ctx, UserJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
-            var data = await GetByRemoteId<UserData> (json.Id.Value, localIdHint).ConfigureAwait (false);
+            var data = GetByRemoteId<UserData> (ctx, json.Id.Value, localIdHint);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
-                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
+                    ctx.Delete (data);
                     data = null;
                 }
             } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = data ?? new UserData ();
-                await Merge (data, json).ConfigureAwait (false);
-                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                Merge (ctx, data, json);
+                data = ctx.Put (data);
             }
 
             return data;

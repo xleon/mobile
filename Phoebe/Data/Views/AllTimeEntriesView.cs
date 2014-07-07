@@ -189,6 +189,7 @@ namespace Toggl.Phoebe.Data.Views
             OnUpdated ();
 
             try {
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var endTime = startFrom;
                 var startTime = startFrom = endTime - TimeSpan.FromDays (4);
 
@@ -205,11 +206,10 @@ namespace Toggl.Phoebe.Data.Views
                     try {
                         var minStart = endTime;
                         var jsonEntries = await client.ListTimeEntries (endTime, numDays);
-                        var importTasks = jsonEntries.Select (json => json.Import ()).ToList ();
 
                         BeginUpdate ();
-                        await Task.WhenAll (importTasks);
-                        var entries = importTasks.Select (t => t.Result).ToList ();
+                        var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
+                            jsonEntries.Select (json => json.Import (ctx)).ToList ());
 
                         // Add entries to list:
                         foreach (var entry in entries) {

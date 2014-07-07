@@ -28,7 +28,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 2),
                 });
 
-                var json = await converter.Export (workspaceData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, workspaceData));
                 Assert.AreEqual (1, json.Id);
                 Assert.AreEqual ("Test", json.Name);
                 Assert.AreEqual (new DateTime (2014, 1, 2), json.ModifiedAt);
@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 2),
                 });
 
-                var json = await converter.Export (workspaceData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, workspaceData));
                 Assert.IsNull (json.Id);
                 Assert.AreEqual ("Test", json.Name);
                 Assert.AreEqual (new DateTime (2014, 1, 2), json.ModifiedAt);
@@ -63,7 +63,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 2),
                 };
 
-                var workspaceData = await converter.Import (workspaceJson);
+                var workspaceData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, workspaceJson));
                 Assert.AreNotEqual (Guid.Empty, workspaceData.Id);
                 Assert.AreEqual (1, workspaceData.RemoteId);
                 Assert.AreEqual ("Test", workspaceData.Name);
@@ -89,7 +89,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 4),
                 };
 
-                var ret = await converter.Import (workspaceJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, workspaceJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == workspaceData.Id);
@@ -112,7 +112,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 1),
                 };
 
-                var ret = await converter.Import (workspaceJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, workspaceJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == workspaceData.Id);

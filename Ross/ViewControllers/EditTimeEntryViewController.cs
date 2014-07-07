@@ -87,6 +87,7 @@ namespace Toggl.Ross.ViewControllers
         {
             if (descriptionChanging) {
                 model.Description = descriptionTextField.Text;
+                model.SaveAsync ();
             }
             descriptionChanging = false;
             CancelDescriptionChangeAutoCommit ();
@@ -347,6 +348,8 @@ namespace Toggl.Ross.ViewControllers
                 model.StopTime = datePicker.Date.ToDateTime ();
                 break;
             }
+
+            model.SaveAsync ();
         }
 
         private void OnProjectButtonTouchUpInside (object sender, EventArgs e)
@@ -374,6 +377,7 @@ namespace Toggl.Ross.ViewControllers
         private void OnBillableSwitchValueChanged (object sender, EventArgs e)
         {
             model.IsBillable = billableSwitch.Switch.On;
+            model.SaveAsync ();
         }
 
         private void OnDeleteButtonTouchUpInside (object sender, EventArgs e)

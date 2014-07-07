@@ -47,15 +47,19 @@ namespace Toggl.Ross.ViewControllers
 
         public Action ProjectSelected { get; set; }
 
-        private void Finish (TaskModel task = null, ProjectModel project = null, WorkspaceModel workspace = null)
+        private async void Finish (TaskModel task = null, ProjectModel project = null, WorkspaceModel workspace = null)
         {
             project = task != null ? task.Project : project;
-            workspace = project != null ? project.Workspace : workspace;
+            if (project != null) {
+                await project.LoadAsync ();
+                workspace = project.Workspace;
+            }
 
             if (project != null || task != null || workspace != null) {
                 model.Workspace = workspace;
                 model.Project = project;
                 model.Task = task;
+                await model.SaveAsync ();
             }
 
             var cb = ProjectSelected;
@@ -151,10 +155,10 @@ namespace Toggl.Ross.ViewControllers
                     return cell;
                 }
 
-                var task = row as TaskModel;
-                if (task != null) {
+                var taskData = row as TaskData;
+                if (taskData != null) {
                     var cell = (TaskCell)tableView.DequeueReusableCell (TaskCellId, indexPath);
-                    cell.Bind (task);
+                    cell.Bind ((TaskModel)taskData);
 
                     var rows = GetCachedRows (GetSection (indexPath.Section));
                     cell.IsFirst = indexPath.Row < 1 || !(rows [indexPath.Row - 1] is TaskModel);
@@ -187,7 +191,8 @@ namespace Toggl.Ross.ViewControllers
                 var m = GetRow (indexPath);
 
                 if (m is TaskData) {
-                    controller.Finish ((TaskModel)m);
+                    var data = (TaskData)m;
+                    controller.Finish ((TaskModel)data);
                 } else if (m is ProjectAndTaskView.Project) {
                     var wrap = (ProjectAndTaskView.Project)m;
                     if (wrap.IsNoProject) {

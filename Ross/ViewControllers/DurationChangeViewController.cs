@@ -99,6 +99,7 @@ namespace Toggl.Ross.ViewControllers
                     NavigationController.SetViewControllers (vcs, true);
                 } else {
                     model.SetDuration (duration);
+                    await model.SaveAsync ();
                     NavigationController.PopViewControllerAnimated (true);
                 }
             } finally {

@@ -5,7 +5,6 @@ using Cirrious.FluentLayouts.Touch;
 using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -19,14 +18,15 @@ namespace Toggl.Ross.ViewControllers
         private TextField nameTextField;
         private UIButton clientButton;
         private bool shouldRebindOnAppear;
+        private bool isSaving;
 
         public NewProjectViewController (WorkspaceModel workspace, int color)
         {
-            this.model = Model.Update (new ProjectModel () {
+            this.model = new ProjectModel () {
                 Workspace = workspace,
                 Color = color,
                 IsActive = true,
-            });
+            };
             Title = "NewProjectTitle".Tr ();
         }
 
@@ -106,22 +106,30 @@ namespace Toggl.Ross.ViewControllers
             NavigationController.PushViewController (controller, true);
         }
 
-        private void OnNavigationBarAddClicked (object sender, EventArgs e)
+        private async void OnNavigationBarAddClicked (object sender, EventArgs e)
         {
             if (String.IsNullOrWhiteSpace (model.Name)) {
                 // TODO: Show error dialog?
                 return;
             }
 
-            // Create new project:
-            model.IsPersisted = true;
+            if (isSaving)
+                return;
 
-            // Invoke callback hook
-            var cb = ProjectCreated;
-            if (cb != null) {
-                cb (model);
-            } else {
-                NavigationController.PopViewControllerAnimated (true);
+            isSaving = true;
+            try {
+                // Create new project:
+                await model.SaveAsync ();
+
+                // Invoke callback hook
+                var cb = ProjectCreated;
+                if (cb != null) {
+                    cb (model);
+                } else {
+                    NavigationController.PopViewControllerAnimated (true);
+                }
+            } finally {
+                isSaving = false;
             }
         }
 

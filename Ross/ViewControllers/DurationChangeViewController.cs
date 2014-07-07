@@ -14,6 +14,7 @@ namespace Toggl.Ross.ViewControllers
         private readonly TimeEntryModel model;
         private DurationView durationView;
         private UIBarButtonItem barButtonItem;
+        private bool isSaving;
 
         public DurationChangeViewController (TimeEntryModel model)
         {
@@ -70,30 +71,38 @@ namespace Toggl.Ross.ViewControllers
             durationView.ResignFirstResponder ();
         }
 
-        private void OnNavigationBarRightClicked (object sender, EventArgs args)
+        private async void OnNavigationBarRightClicked (object sender, EventArgs args)
         {
-            var duration = TimeSpan.Zero;
+            if (isSaving)
+                return;
 
-            var entered = durationView.EnteredDuration;
-            if (model == null || model.State == TimeEntryState.New) {
-                duration = new TimeSpan (entered.Hours, entered.Minutes, 0);
-            } else {
-                duration = model.GetDuration ();
-                // Keep the current seconds and milliseconds
-                duration = new TimeSpan (0, entered.Hours, entered.Minutes, duration.Seconds, duration.Milliseconds);
-            }
+            try {
+                isSaving = true;
+                var duration = TimeSpan.Zero;
 
-            if (model == null) {
-                var m = TimeEntryModel.CreateFinished (duration);
-                var controller = new EditTimeEntryViewController (m);
+                var entered = durationView.EnteredDuration;
+                if (model == null || model.State == TimeEntryState.New) {
+                    duration = new TimeSpan (entered.Hours, entered.Minutes, 0);
+                } else {
+                    duration = model.GetDuration ();
+                    // Keep the current seconds and milliseconds
+                    duration = new TimeSpan (0, entered.Hours, entered.Minutes, duration.Seconds, duration.Milliseconds);
+                }
 
-                // Replace self with edit controller on the stack
-                var vcs = NavigationController.ViewControllers;
-                vcs [vcs.Length - 1] = controller;
-                NavigationController.SetViewControllers (vcs, true);
-            } else {
-                model.SetDuration (duration);
-                NavigationController.PopViewControllerAnimated (true);
+                if (model == null) {
+                    var m = await TimeEntryModel.CreateFinishedAsync (duration);
+                    var controller = new EditTimeEntryViewController (m);
+
+                    // Replace self with edit controller on the stack
+                    var vcs = NavigationController.ViewControllers;
+                    vcs [vcs.Length - 1] = controller;
+                    NavigationController.SetViewControllers (vcs, true);
+                } else {
+                    model.SetDuration (duration);
+                    NavigationController.PopViewControllerAnimated (true);
+                }
+            } finally {
+                isSaving = false;
             }
         }
 

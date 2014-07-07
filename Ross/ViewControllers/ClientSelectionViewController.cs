@@ -4,6 +4,7 @@ using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -43,7 +44,7 @@ namespace Toggl.Ross.ViewControllers
 
         public Action<ClientModel> ClientSelected { get; set; }
 
-        private class Source : PlainDataViewSource<ClientModel>
+        private class Source : PlainDataViewSource<ClientData>
         {
             private readonly static NSString ClientCellId = new NSString ("ClientCellId");
             private readonly ClientSelectionViewController controller;
@@ -54,9 +55,13 @@ namespace Toggl.Ross.ViewControllers
                 this.controller = controller;
             }
 
-            private static IDataView<ClientModel> GetClientView (WorkspaceModel model)
+            private static IDataView<ClientData> GetClientView (WorkspaceModel model)
             {
-                return model.Clients.Where (m => m.DeletedAt == null).ToView ();
+                var workspaceId = model.Id;
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var q = dataStore.Table<ClientData> ()
+                    .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+                return new DataQueryView<ClientData> (q, 50);
             }
 
             public override void Attach ()
@@ -80,13 +85,13 @@ namespace Toggl.Ross.ViewControllers
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
                 var cell = (ClientCell)tableView.DequeueReusableCell (ClientCellId, indexPath);
-                cell.Bind (GetRow (indexPath));
+                cell.Bind ((ClientModel)GetRow (indexPath));
                 return cell;
             }
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                var client = GetRow (indexPath);
+                var client = (ClientModel)GetRow (indexPath);
                 var cb = controller.ClientSelected;
                 if (client != null && cb != null) {
                     cb (client);

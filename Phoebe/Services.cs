@@ -15,10 +15,13 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<ActiveTimeEntryManager> ();
             ServiceContainer.Register<ForeignRelationManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
-            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<IDataStore> (CreateDataStore);
+
+            // Core services that are most likelly to be overriden by UI code:
+            ServiceContainer.Register<Logger> ();
+            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
 
             RegisterJsonConverters ();
 

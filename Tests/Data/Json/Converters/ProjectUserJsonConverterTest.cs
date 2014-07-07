@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (projectUserData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, projectUserData));
                 Assert.AreEqual (4, json.Id);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
                 Assert.AreEqual (3, json.ProjectId);
@@ -63,8 +63,9 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 });
             });
 
-            Assert.That (() => converter.Export (projectUserData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<InvalidOperationException> ());
+            Assert.That (() => RunAsync (async delegate {
+                await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, projectUserData));
+            }), Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]
@@ -85,7 +86,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (projectUserData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, projectUserData));
                 Assert.IsNull (json.Id);
                 Assert.AreEqual (1, json.ProjectId);
                 Assert.AreEqual (2, json.UserId);
@@ -112,7 +113,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 
-                var projectUserData = await converter.Import (projectUserJson);
+                var projectUserData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
                 Assert.AreNotEqual (Guid.Empty, projectUserData.Id);
                 Assert.AreEqual (2, projectUserData.RemoteId);
                 Assert.AreEqual (new DateTime (2014, 1, 3), projectUserData.ModifiedAt);
@@ -135,7 +136,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 
-                var projectUserData = await converter.Import (projectUserJson);
+                var projectUserData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
                 Assert.AreNotEqual (Guid.Empty, projectUserData.ProjectId);
                 Assert.AreNotEqual (Guid.Empty, projectUserData.UserId);
 
@@ -177,7 +178,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 4),
                 };
 
-                var ret = await converter.Import (projectUserJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<ProjectUserData> ().QueryAsync (m => m.Id == projectUserData.Id);
@@ -209,7 +210,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 2),
                 };
 
-                var ret = await converter.Import (projectUserJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<ProjectUserData> ().QueryAsync (m => m.Id == projectUserData.Id);

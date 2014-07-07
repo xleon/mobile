@@ -43,7 +43,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (projectData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, projectData));
                 Assert.AreEqual (3, json.Id);
                 Assert.AreEqual ("Hosting", json.Name);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
@@ -79,8 +79,9 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 });
             });
 
-            Assert.That (() => converter.Export (projectData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<InvalidOperationException> ());
+            Assert.That (() => RunAsync (async delegate {
+                await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, projectData));
+            }), Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]
@@ -99,8 +100,9 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 });
             });
 
-            Assert.That (() => converter.Export (projectData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<InvalidOperationException> ());
+            Assert.That (() => RunAsync (async delegate {
+                await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, projectData));
+            }), Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]
@@ -120,7 +122,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (projectData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, projectData));
                 Assert.IsNull (json.Id);
                 Assert.AreEqual ("Hosting", json.Name);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
@@ -154,7 +156,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 
-                var projectData = await converter.Import (projectJson);
+                var projectData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectJson));
                 Assert.AreNotEqual (Guid.Empty, projectData.Id);
                 Assert.AreEqual (3, projectData.RemoteId);
                 Assert.AreEqual ("Hosting", projectData.Name);
@@ -179,7 +181,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 
-                var projectData = await converter.Import (projectJson);
+                var projectData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectJson));
                 Assert.AreNotEqual (Guid.Empty, projectData.WorkspaceId);
 
                 var workspaceRows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == projectData.WorkspaceId);
@@ -219,7 +221,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 4),
                 };
 
-                var ret = await converter.Import (projectJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<ProjectData> ().QueryAsync (m => m.Id == projectData.Id);
@@ -250,7 +252,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 2),
                 };
 
-                var ret = await converter.Import (projectJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<ProjectData> ().QueryAsync (m => m.Id == projectData.Id);

@@ -41,7 +41,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (taskData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, taskData));
                 Assert.AreEqual (2, json.Id);
                 Assert.AreEqual ("Install Linux", json.Name);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
@@ -66,8 +66,9 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 });
             });
 
-            Assert.That (() => converter.Export (taskData).GetAwaiter ().GetResult (),
-                Throws.Exception.TypeOf<InvalidOperationException> ());
+            Assert.That (() => RunAsync (async delegate {
+                await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, taskData));
+            }), Throws.Exception.TypeOf<InvalidOperationException> ());
         }
 
         [Test]
@@ -92,7 +93,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });
 
-                var json = await converter.Export (taskData);
+                var json = await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, taskData));
                 Assert.IsNull (json.Id);
                 Assert.AreEqual ("Install Linux", json.Name);
                 Assert.AreEqual (new DateTime (2014, 1, 3), json.ModifiedAt);
@@ -125,7 +126,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 
-                var taskData = await converter.Import (taskJson);
+                var taskData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
                 Assert.AreNotEqual (Guid.Empty, taskData.Id);
                 Assert.AreEqual (2, taskData.RemoteId);
                 Assert.AreEqual ("Install Linux", taskData.Name);
@@ -150,7 +151,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     ModifiedAt = new DateTime (2014, 1, 3),
                 };
 
-                var taskData = await converter.Import (taskJson);
+                var taskData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
                 Assert.AreNotEqual (Guid.Empty, taskData.WorkspaceId);
 
                 var workspaceRows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == taskData.WorkspaceId);
@@ -195,7 +196,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 4),
                 };
 
-                var ret = await converter.Import (taskJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<TaskData> ().QueryAsync (m => m.Id == taskData.Id);
@@ -231,7 +232,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     DeletedAt = new DateTime (2014, 1, 2),
                 };
 
-                var ret = await converter.Import (taskJson);
+                var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
                 Assert.IsNull (ret);
 
                 var rows = await DataStore.Table<TaskData> ().QueryAsync (m => m.Id == taskData.Id);

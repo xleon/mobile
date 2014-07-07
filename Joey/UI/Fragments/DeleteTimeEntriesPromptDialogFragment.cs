@@ -6,6 +6,9 @@ using Android.Content;
 using Android.OS;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
+using Toggl.Phoebe.Data.DataObjects;
+using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -26,12 +29,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var ids = new List<string> ();
             foreach (var model in models) {
-                if (!model.IsShared || model.DeletedAt != null)
-                    continue;
-                // Need to ensure the model IsPersisted, as we need to be able to access this model even
-                // if the system suspends our process
-                model.IsPersisted = true;
-                ids.Add (model.Id.Value.ToString ());
+                ids.Add (model.Id.ToString ());
             }
 
             var args = new Bundle ();
@@ -53,8 +51,13 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (savedInstanceState);
 
-            models = TimeEntryIds
-                .Select ((id) => Model.ById<TimeEntryModel> (Guid.Parse (id)))
+            // TODO: Really shouldn't use synchronous here, but ...
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var ids = TimeEntryIds.Select (id => Guid.Parse (id)).ToList ();
+            models = dataStore.Table<TimeEntryData> ()
+                .QueryAsync (r => r.DeletedAt == null && ids.Contains (r.Id))
+                .Result
+                .Select (data => new TimeEntryModel (data))
                 .ToList ();
         }
 
@@ -89,9 +92,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnDeleteButtonClicked (object sender, DialogClickEventArgs args)
         {
-            foreach (var model in models) {
-                model.Delete ();
-            }
+            models.Select (m => m.DeleteAsync ()).ToList ();
             models.Clear ();
             Dismiss ();
         }

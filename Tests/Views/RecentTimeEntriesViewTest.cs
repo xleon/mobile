@@ -1,10 +1,10 @@
 using System;
-using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -12,15 +12,10 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Tests.Views
 {
     [TestFixture]
-    public class RecentTimeEntriesViewTest : Test
+    public class RecentTimeEntriesViewTest : DataViewTest
     {
-        private string tmpDb;
-        private WorkspaceModel workspace;
-        private UserModel user;
-
-        private IModelStore ModelStore {
-            get { return ServiceContainer.Resolve<IModelStore> (); }
-        }
+        private WorkspaceData workspace;
+        private UserData user;
 
         private AuthManager AuthManager {
             get { return ServiceContainer.Resolve<AuthManager> (); }
@@ -30,380 +25,367 @@ namespace Toggl.Phoebe.Tests.Views
         {
             base.SetUp ();
 
-            tmpDb = Path.GetTempFileName ();
-            ServiceContainer.Register<IModelStore> (new TestSqliteStore (tmpDb));
+            RunAsync (async delegate {
+                await CreateTestData ();
 
-            CreateTestData ();
-
-            ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
-                (store) => store.ApiToken == "test" &&
-                store.UserId == user.Id));
-            ServiceContainer.Register<AuthManager> (new AuthManager ());
-        }
-
-        public override void TearDown ()
-        {
-            ModelStore.Commit ();
-
-            base.TearDown ();
-
-            File.Delete (tmpDb);
-            tmpDb = null;
+                ServiceContainer.Register<ISyncManager> (Mock.Of<ISyncManager> (
+                    (mgr) => mgr.IsRunning == false));
+                ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
+                    (store) => store.ApiToken == "test" &&
+                    store.UserId == user.Id));
+                ServiceContainer.Register<AuthManager> (new AuthManager ());
+            });
         }
 
         [Test]
         public void TestInitialGrouping ()
         {
-            var view = new RecentTimeEntriesView ();
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
+
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestInitialReload ()
         {
-            var view = new RecentTimeEntriesView ();
-            view.Reload ();
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
+
+                view.Reload ();
+                await WaitForLoaded (view);
+
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestChangeGroupBottom ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            var model = Model.ByRemoteId<TimeEntryModel> (1);
-            model.Description += " and some";
+                await ChangeData<TimeEntryData> (1, m => m.Description += " and some");
 
-            Assert.AreEqual (5, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2, 1 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+                Assert.AreEqual (5, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2, 1 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestChangeGroupTop ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            var model = Model.ByRemoteId<TimeEntryModel> (3);
-            model.Description += " and some";
+                await ChangeData<TimeEntryData> (3, m => m.Description += " and some");
 
-            Assert.AreEqual (5, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2, 1 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+                Assert.AreEqual (5, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2, 1 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestChangeGroupBottomToTop ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            var model = Model.ByRemoteId<TimeEntryModel> (1);
-            model.StopTime += TimeSpan.FromDays (1);
-            model.StartTime += TimeSpan.FromDays (1);
+                await ChangeData<TimeEntryData> (1, m => {
+                    m.StopTime += TimeSpan.FromDays (1);
+                    m.StartTime += TimeSpan.FromDays (1);
+                });
 
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 1, 5, 4, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 1, 5, 4, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestChangeGroupTopToBottom ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            var model = Model.ByRemoteId<TimeEntryModel> (3);
-            model.StopTime -= TimeSpan.FromDays (1);
-            model.StartTime -= TimeSpan.FromDays (1);
+                await ChangeData<TimeEntryData> (3, m => {
+                    m.StopTime -= TimeSpan.FromDays (1);
+                    m.StartTime -= TimeSpan.FromDays (1);
+                });
 
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 2, 1 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 2, 1 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
+        }
+
+        [Test]
+        public void TestMarkDeletedGroup ()
+        {
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
+
+                await ChangeData<TimeEntryData> (2, m => {
+                    m.DeletedAt = Time.UtcNow;
+                });
+
+                Assert.AreEqual (3, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
+        }
+
+        [Test]
+        public void TestMarkDeletedGroupTop ()
+        {
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
+
+                await ChangeData<TimeEntryData> (1, m => {
+                    m.DeletedAt = Time.UtcNow;
+                });
+
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
+        }
+
+        [Test]
+        public void TestMarkDeletedGroupBottom ()
+        {
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
+
+                await ChangeData<TimeEntryData> (3, m => {
+                    m.DeletedAt = Time.UtcNow;
+                });
+
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 2, 1 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestDeleteGroup ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            var model = Model.ByRemoteId<TimeEntryModel> (2);
-            model.Delete ();
+                var model = await GetByRemoteId<TimeEntryData> (2);
+                await DataStore.DeleteAsync (model);
 
-            Assert.AreEqual (3, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+                Assert.AreEqual (3, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestDeleteGroupTop ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            var model = Model.ByRemoteId<TimeEntryModel> (1);
-            model.Delete ();
+                var model = await GetByRemoteId<TimeEntryData> (1);
+                await DataStore.DeleteAsync (model);
 
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
         [Test]
         public void TestDeleteGroupBottom ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            var model = Model.ByRemoteId<TimeEntryModel> (3);
-            model.Delete ();
+                var model = await GetByRemoteId<TimeEntryData> (3);
+                await DataStore.DeleteAsync (model);
 
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 2, 1 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
-        }
-
-        [Test]
-        public void TestUnPersistGroup ()
-        {
-            var view = new RecentTimeEntriesView ();
-
-            var model = Model.ByRemoteId<TimeEntryModel> (2);
-            model.IsPersisted = false;
-
-            Assert.AreEqual (3, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
-        }
-
-        [Test]
-        public void TestUnPersistGroupTop ()
-        {
-            var view = new RecentTimeEntriesView ();
-
-            var model = Model.ByRemoteId<TimeEntryModel> (1);
-            model.IsPersisted = false;
-
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
-        }
-
-        [Test]
-        public void TestUnPersistGroupBottom ()
-        {
-            var view = new RecentTimeEntriesView ();
-
-            var model = Model.ByRemoteId<TimeEntryModel> (3);
-            model.IsPersisted = false;
-
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 2, 1 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
-        }
-
-        [Test]
-        public void TestTemporaryShared ()
-        {
-            var view = new RecentTimeEntriesView ();
-
-            Model.Update (new TimeEntryModel () {
-                RemoteId = 6,
-                State = TimeEntryState.Finished,
-                StartTime = MakeTime (16, 0),
-                StopTime = MakeTime (16, 36),
-                Workspace = workspace,
-                User = user,
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 2, 1 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
             });
-
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
         }
 
         [Test]
-        public void TestDeletedShared ()
+        public void TestDeletedEntry ()
         {
-            var view = new RecentTimeEntriesView ();
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
 
-            Model.Update (new TimeEntryModel () {
-                RemoteId = 6,
-                State = TimeEntryState.Finished,
-                StartTime = MakeTime (16, 0),
-                StopTime = MakeTime (16, 36),
-                Workspace = workspace,
-                User = user,
-                IsPersisted = true,
-                DeletedAt = MakeTime (16, 39),
+                await DataStore.PutAsync (new TimeEntryData () {
+                    RemoteId = 6,
+                    State = TimeEntryState.Finished,
+                    StartTime = MakeTime (16, 0),
+                    StopTime = MakeTime (16, 36),
+                    WorkspaceId = workspace.Id,
+                    UserId = user.Id,
+                    DeletedAt = MakeTime (16, 39),
+                });
+
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
             });
-
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
         }
 
         [Test]
         public void TestPastEntryHidden ()
         {
-            Model.Update (new TimeEntryModel () {
-                RemoteId = 6,
-                State = TimeEntryState.Finished,
-                StartTime = MakeTime (16, 0).AddDays (-10),
-                StopTime = MakeTime (16, 36).AddDays (-10),
-                Workspace = workspace,
-                User = user,
-                IsPersisted = true,
-            });
+            RunAsync (async delegate {
+                await DataStore.PutAsync (new TimeEntryData () {
+                    RemoteId = 6,
+                    State = TimeEntryState.Finished,
+                    StartTime = MakeTime (16, 0).AddDays (-10),
+                    StopTime = MakeTime (16, 36).AddDays (-10),
+                    WorkspaceId = workspace.Id,
+                    UserId = user.Id,
+                });
 
-            var view = new RecentTimeEntriesView ();
-            Assert.AreEqual (4, view.Count);
-            Assert.AreEqual (
-                new long[] { 5, 4, 3, 2 },
-                view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
-            );
-            view.Dispose ();
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
+                Assert.AreEqual (4, view.Count);
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+                view.Dispose ();
+            });
         }
 
-        private void CreateTestData ()
+        private async Task CreateTestData ()
         {
-            workspace = Model.Update (new WorkspaceModel () {
+            workspace = await DataStore.PutAsync (new WorkspaceData () {
                 RemoteId = 1,
                 Name = "Unit Testing",
-                IsPersisted = true,
             });
 
-            user = Model.Update (new UserModel () {
+            user = await DataStore.PutAsync (new UserData () {
                 RemoteId = 1,
                 Name = "Tester",
-                DefaultWorkspace = workspace,
-                IsPersisted = true,
+                DefaultWorkspaceId = workspace.Id,
             });
 
-            var project = Model.Update (new ProjectModel () {
+            var project = await DataStore.PutAsync (new ProjectData () {
                 RemoteId = 1,
                 Name = "Ad design",
-                Workspace = workspace,
-                IsPersisted = true,
+                WorkspaceId = workspace.Id,
             });
 
-            Model.Update (new TimeEntryModel () {
+            await DataStore.PutAsync (new TimeEntryData () {
                 RemoteId = 1,
                 Description = "Initial concept",
                 State = TimeEntryState.Finished,
                 StartTime = MakeTime (09, 12),
                 StopTime = MakeTime (10, 1),
-                Project = project,
-                Workspace = workspace,
-                User = user,
-                IsPersisted = true,
+                ProjectId = project.Id,
+                WorkspaceId = workspace.Id,
+                UserId = user.Id,
             });
 
-            Model.Update (new TimeEntryModel () {
+            await DataStore.PutAsync (new TimeEntryData () {
                 RemoteId = 2,
                 Description = "Breakfast",
                 State = TimeEntryState.Finished,
                 StartTime = MakeTime (10, 5),
                 StopTime = MakeTime (10, 30),
-                Workspace = workspace,
-                User = user,
-                IsPersisted = true,
+                WorkspaceId = workspace.Id,
+                UserId = user.Id,
             });
 
-            Model.Update (new TimeEntryModel () {
+            await DataStore.PutAsync (new TimeEntryData () {
                 RemoteId = 3,
                 Description = "Initial concept",
                 State = TimeEntryState.Finished,
                 StartTime = MakeTime (10, 35),
                 StopTime = MakeTime (12, 21),
-                Workspace = workspace,
-                Project = project,
-                User = user,
-                IsPersisted = true,
+                ProjectId = project.Id,
+                WorkspaceId = workspace.Id,
+                UserId = user.Id,
             });
 
-            Model.Update (new TimeEntryModel () {
+            await DataStore.PutAsync (new TimeEntryData () {
                 RemoteId = 4,
                 State = TimeEntryState.Finished,
                 StartTime = MakeTime (12, 25),
                 StopTime = MakeTime (13, 57),
-                Workspace = workspace,
-                Project = project,
-                User = user,
-                IsPersisted = true,
+                ProjectId = project.Id,
+                WorkspaceId = workspace.Id,
+                UserId = user.Id,
             });
 
-            Model.Update (new TimeEntryModel () {
+            await DataStore.PutAsync (new TimeEntryData () {
                 RemoteId = 5,
                 State = TimeEntryState.Finished,
                 StartTime = MakeTime (14, 0),
                 StopTime = MakeTime (14, 36),
-                Workspace = workspace,
-                User = user,
-                IsPersisted = true,
+                WorkspaceId = workspace.Id,
+                UserId = user.Id,
             });
-        }
-
-        private DateTime MakeTime (int hour, int minute, int second = 0)
-        {
-            return Time.UtcNow.Date
-                    .AddHours (hour)
-                    .AddMinutes (minute)
-                    .AddSeconds (second);
-        }
-
-        private class TestSqliteStore : SQLiteModelStore
-        {
-            public TestSqliteStore (string path) : base (path)
-            {
-            }
-
-            protected override void ScheduleCommit ()
-            {
-                Commit ();
-            }
         }
     }
 }
-

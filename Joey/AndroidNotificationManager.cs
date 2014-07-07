@@ -1,10 +1,12 @@
 using System;
-using System.Linq;
+using System.ComponentModel;
 using Android.App;
 using Android.Content;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -21,10 +23,10 @@ namespace Toggl.Joey
         private readonly NotificationManager notificationManager;
         private readonly NotificationCompat.Builder runningBuilder;
         private readonly NotificationCompat.Builder idleBuilder;
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private PropertyChangeTracker propertyTracker;
+        private ActiveTimeEntryManager timeEntryManager;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
-        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        private TimeEntryModel currentTimeEntry;
+        private TimeEntryModel backingRunningTimeEntry;
 
         public AndroidNotificationManager ()
         {
@@ -32,76 +34,117 @@ namespace Toggl.Joey
             notificationManager = (NotificationManager)ctx.GetSystemService (Context.NotificationService);
             runningBuilder = CreateRunningNotificationBuilder (ctx);
             idleBuilder = CreateIdleNotificationBuilder (ctx);
+            propertyTracker = new PropertyChangeTracker ();
 
-            currentTimeEntry = TimeEntryModel.FindRunning ();
-            SyncNotification ();
+            timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            timeEntryManager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
+
+            SyncRunningModel ();
+            SyncNotification ();
         }
 
         public void Dispose ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionModelChanged != null) {
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
+            if (propertyTracker != null) {
+                propertyTracker.Dispose ();
+                propertyTracker = null;
             }
             if (subscriptionSettingChanged != null) {
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-            if (subscriptionAuthChanged != null) {
-                bus.Unsubscribe (subscriptionAuthChanged);
-                subscriptionAuthChanged = null;
+            if (timeEntryManager != null) {
+                timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
+                timeEntryManager = null;
+            }
+            if (propertyTracker != null) {
+                propertyTracker.Dispose ();
+                propertyTracker = null;
             }
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
+        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (currentTimeEntry == msg.Model) {
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyDescription
-                    || msg.PropertyName == TimeEntryModel.PropertyStartTime
-                    || msg.PropertyName == TimeEntryModel.PropertyProjectId
-                    || msg.PropertyName == TimeEntryModel.PropertyTaskId
-                    || msg.PropertyName == TimeEntryModel.PropertyUserId) {
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
+                SyncRunningModel ();
+                SyncNotification ();
+            }
+        }
 
-                    if (currentTimeEntry.State != TimeEntryState.Running || !ForCurrentUser (currentTimeEntry)) {
-                        currentTimeEntry = null;
-                    }
+        private TimeEntryData RunningTimeEntryData {
+            get {
+                if (timeEntryManager == null)
+                    return null;
+                return timeEntryManager.Running;
+            }
+        }
 
-                    SyncNotification ();
-                }
-            } else if (currentTimeEntry != null
-                       && msg.Model.Id == currentTimeEntry.ProjectId
-                       && msg.Model == currentTimeEntry.Project) {
-                if (msg.PropertyName == ProjectModel.PropertyName
-                    || msg.PropertyName == ProjectModel.PropertyClientId) {
-                    SyncNotification ();
-                }
-            } else if (currentTimeEntry != null
-                       && currentTimeEntry.ProjectId != null
-                       && currentTimeEntry.Project != null
-                       && msg.Model.Id == currentTimeEntry.Project.ClientId
-                       && msg.Model == currentTimeEntry.Project.Client) {
-                if (msg.PropertyName == ClientModel.PropertyName) {
-                    SyncNotification ();
-                }
-            } else if (msg.Model is TimeEntryModel) {
-                var entry = (TimeEntryModel)msg.Model;
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared
-                    || msg.PropertyName == TimeEntryModel.PropertyIsPersisted
-                    || msg.PropertyName == TimeEntryModel.PropertyUserId) {
-                    if (entry.IsShared && entry.IsPersisted && entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
-                        currentTimeEntry = entry;
-                        SyncNotification ();
-                    }
+        private void SyncRunningModel ()
+        {
+            var data = RunningTimeEntryData;
+            if (data != null) {
+                if (backingRunningTimeEntry == null) {
+                    backingRunningTimeEntry = new TimeEntryModel (data);
+                } else {
+                    backingRunningTimeEntry.Data = data;
                 }
             }
+        }
+
+        private TimeEntryModel RunningTimeEntry {
+            get {
+                if (RunningTimeEntryData == null)
+                    return null;
+                return backingRunningTimeEntry;
+            }
+        }
+
+        private void ResetTrackedObservables ()
+        {
+            if (propertyTracker == null)
+                return;
+
+            propertyTracker.MarkAllStale ();
+
+            var model = RunningTimeEntry;
+            if (model != null) {
+                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
+
+                if (model.Project != null) {
+                    propertyTracker.Add (model.Project, HandleProjectPropertyChanged);
+                }
+
+                if (model.Task != null) {
+                    propertyTracker.Add (model.Task, HandleTaskPropertyChanged);
+                }
+            }
+
+            propertyTracker.ClearStale ();
+        }
+
+        private void HandleTimeEntryPropertyChanged (string prop)
+        {
+            if (prop == TimeEntryModel.PropertyProject
+                || prop == TimeEntryModel.PropertyTask
+                || prop == TimeEntryModel.PropertyDescription
+                || prop == TimeEntryModel.PropertyStartTime)
+                SyncNotification ();
+        }
+
+        private void HandleProjectPropertyChanged (string prop)
+        {
+            if (prop == ProjectModel.PropertyName)
+                SyncNotification ();
+        }
+
+        private void HandleTaskPropertyChanged (string prop)
+        {
+            if (prop == TaskModel.PropertyName)
+                SyncNotification ();
         }
 
         private void OnSettingChanged (SettingChangedMessage msg)
@@ -111,21 +154,12 @@ namespace Toggl.Joey
             }
         }
 
-        private void OnAuthChanged (AuthChangedMessage msg)
-        {
-            SyncNotification ();
-        }
-
-        private bool ForCurrentUser (TimeEntryModel model)
-        {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            return model.UserId == authManager.UserId;
-        }
-
         private void SyncNotification ()
         {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            var currentTimeEntry = RunningTimeEntry;
+            ResetTrackedObservables ();
 
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (!authManager.IsAuthenticated) {
                 notificationManager.Cancel (RunningNotifId);
                 notificationManager.Cancel (IdleNotifId);

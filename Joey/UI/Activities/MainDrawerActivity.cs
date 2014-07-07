@@ -76,6 +76,12 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
+        protected override void OnDestroy ()
+        {
+            Timer.OnDestroy (this);
+            base.OnDestroy ();
+        }
+
         protected override void OnSaveInstanceState (Bundle outState)
         {
             outState.PutIntArray (PageStackExtra, pageStack.ToArray ());

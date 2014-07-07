@@ -1,81 +1,130 @@
 using System;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class ProjectUserModel : IntermediateModel<ProjectModel, UserModel>
+    public class ProjectUserModel : Model<ProjectUserData>
     {
         private static string GetPropertyName<T> (Expression<Func<ProjectUserModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        #region Data
+        public static new readonly string PropertyId = Model<ProjectUserData>.PropertyId;
+        public static readonly string PropertyIsManager = GetPropertyName (m => m.IsManager);
+        public static readonly string PropertyHourlyRate = GetPropertyName (m => m.HourlyRate);
+        public static readonly string PropertyProject = GetPropertyName (m => m.Project);
+        public static readonly string PropertyUser = GetPropertyName (m => m.User);
 
-        private bool isManager;
-        public static readonly string PropertyIsManager = GetPropertyName ((m) => m.IsManager);
+        public ProjectUserModel ()
+        {
+        }
 
-        [JsonProperty ("manager")]
+        public ProjectUserModel (ProjectUserData data) : base (data)
+        {
+        }
+
+        public ProjectUserModel (Guid id) : base (id)
+        {
+        }
+
+        protected override ProjectUserData Duplicate (ProjectUserData data)
+        {
+            return new ProjectUserData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+            if (Data.ProjectId == Guid.Empty) {
+                throw new ValidationException ("Project must be set for ProjectUser model.");
+            }
+            if (Data.UserId == Guid.Empty) {
+                throw new ValidationException ("User must be set for ProjectUser model.");
+            }
+        }
+
+        protected override void DetectChangedProperties (ProjectUserData oldData, ProjectUserData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.IsManager != newData.IsManager)
+                OnPropertyChanged (PropertyIsManager);
+            if (oldData.HourlyRate != newData.HourlyRate)
+                OnPropertyChanged (PropertyHourlyRate);
+            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance)
+                OnPropertyChanged (PropertyProject);
+            if (oldData.UserId != newData.UserId || user.IsNewInstance)
+                OnPropertyChanged (PropertyUser);
+        }
+
         public bool IsManager {
             get {
-                lock (SyncRoot) {
-                    return isManager;
-                }
+                EnsureLoaded ();
+                return Data.IsManager;
             }
             set {
-                lock (SyncRoot) {
-                    if (isManager == value)
-                        return;
+                if (IsManager == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyIsManager, delegate {
-                        isManager = value;
-                    });
-                }
+                MutateData (data => data.IsManager = value);
             }
         }
 
-        private int rate;
-        public static readonly string PropertyHourlyRate = GetPropertyName ((m) => m.HourlyRate);
-
-        [JsonProperty ("rate")]
         public int HourlyRate {
             get {
-                lock (SyncRoot) {
-                    return rate;
-                }
+                EnsureLoaded ();
+                return Data.HourlyRate;
             }
             set {
-                lock (SyncRoot) {
-                    if (rate == value)
-                        return;
+                if (HourlyRate == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyHourlyRate, delegate {
-                        rate = value;
-                    });
-                }
+                MutateData (data => data.HourlyRate = value);
             }
         }
 
-        #endregion
+        private ForeignRelation<ProjectModel> project;
+        private ForeignRelation<UserModel> user;
 
-        #region Relations
+        protected override void InitializeRelations ()
+        {
+            base.InitializeRelations ();
 
-        [SQLite.Ignore]
-        [JsonProperty ("pid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
-        public override ProjectModel From {
-            get { return base.From; }
-            set { base.From = value; }
+            project = new ForeignRelation<ProjectModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new ProjectModel (id),
+                Changed = m => MutateData (data => data.ProjectId = m.Id),
+            };
+
+            user = new ForeignRelation<UserModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new UserModel (id),
+                Changed = m => MutateData (data => data.UserId = m.Id),
+            };
         }
 
-        [SQLite.Ignore]
-        [JsonProperty ("uid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
-        public override UserModel To {
-            get { return base.To; }
-            set { base.To = value; }
+        [ModelRelation]
+        public ProjectModel Project {
+            get { return project.Get (Data.ProjectId); }
+            set { project.Set (value); }
         }
 
-        #endregion
+        [ModelRelation]
+        public UserModel User {
+            get { return user.Get (Data.UserId); }
+            set { user.Set (value); }
+        }
+
+        public static explicit operator ProjectUserModel (ProjectUserData data)
+        {
+            if (data == null)
+                return null;
+            return new ProjectUserModel (data);
+        }
+
+        public static implicit operator ProjectUserData (ProjectUserModel model)
+        {
+            return model.Data;
+        }
     }
 }
-

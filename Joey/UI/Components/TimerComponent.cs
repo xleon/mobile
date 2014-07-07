@@ -1,11 +1,14 @@
 ﻿using System;
-using System.Linq;
+using System.ComponentModel;
+using System.Threading.Tasks;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -21,9 +24,11 @@ namespace Toggl.Joey.UI.Components
     {
         private static readonly string LogTag = "TimerComponent";
         private readonly Handler handler = new Handler ();
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
-        private TimeEntryModel currentEntry;
+        private PropertyChangeTracker propertyTracker;
+        private ActiveTimeEntryManager timeEntryManager;
+        private TimeEntryModel backingActiveTimeEntry;
         private bool canRebind;
+        private bool isProcessingAction;
         private bool hideDuration;
         private bool hideAction;
 
@@ -47,21 +52,31 @@ namespace Toggl.Joey.UI.Components
         public void OnCreate (Activity activity)
         {
             this.activity = activity;
+            propertyTracker = new PropertyChangeTracker ();
 
             Root = LayoutInflater.From (activity).Inflate (Resource.Layout.TimerComponent, null);
 
             FindViews ();
         }
 
+        public void OnDestroy (Activity activity)
+        {
+            if (propertyTracker != null) {
+                propertyTracker.Dispose ();
+                propertyTracker = null;
+            }
+        }
+
         public void OnStart ()
         {
-            currentEntry = TimeEntryModel.FindRunning () ?? TimeEntryModel.GetDraft ();
-
-            // Start listening for changes model changes
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            // Hook up to time entry manager
+            if (timeEntryManager == null) {
+                timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+                timeEntryManager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
+            }
 
             canRebind = true;
+            SyncModel ();
             Rebind ();
         }
 
@@ -69,46 +84,73 @@ namespace Toggl.Joey.UI.Components
         {
             canRebind = false;
 
-            // Stop listening for changes model changes
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Unsubscribe (subscriptionModelChanged);
-            subscriptionModelChanged = null;
+            if (timeEntryManager != null) {
+                timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
+                timeEntryManager = null;
+            }
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
+        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (msg.Model == currentEntry) {
-                // Listen for changes regarding current running entry
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyStartTime
-                    || msg.PropertyName == TimeEntryModel.PropertyStopTime
-                    || msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
-                    if (currentEntry.State == TimeEntryState.Finished || currentEntry.DeletedAt.HasValue) {
-                        currentEntry = TimeEntryModel.GetDraft ();
-                    }
-                    Rebind ();
-                }
-            } else if (msg.Model is TimeEntryModel) {
-                // When some other time entry becomes Running we need to switch over to that
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
-                    var entry = (TimeEntryModel)msg.Model;
-                    if (entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
-                        currentEntry = entry;
-                        Rebind ();
-                    }
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
+                SyncModel ();
+            }
+        }
+
+        private void SyncModel ()
+        {
+            var data = ActiveTimeEntryData;
+            if (data != null) {
+                if (backingActiveTimeEntry == null) {
+                    backingActiveTimeEntry = new TimeEntryModel (data);
+                } else {
+                    backingActiveTimeEntry.Data = data;
                 }
             }
         }
 
-        private static bool ForCurrentUser (TimeEntryModel model)
+        private TimeEntryData ActiveTimeEntryData {
+            get {
+                if (timeEntryManager == null)
+                    return null;
+                return timeEntryManager.Active;
+            }
+        }
+
+        private TimeEntryModel ActiveTimeEntry {
+            get {
+                if (ActiveTimeEntryData == null)
+                    return null;
+                return backingActiveTimeEntry;
+            }
+        }
+
+        private void ResetTrackedObservables ()
         {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            return model.UserId == authManager.UserId;
+            if (propertyTracker == null)
+                return;
+
+            propertyTracker.MarkAllStale ();
+
+            var model = ActiveTimeEntry;
+            if (model != null) {
+                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
+            }
+
+            propertyTracker.ClearStale ();
+        }
+
+        private void HandleTimeEntryPropertyChanged (string prop)
+        {
+            if (prop == TimeEntryModel.PropertyState
+                || prop == TimeEntryModel.PropertyStartTime
+                || prop == TimeEntryModel.PropertyStopTime)
+                Rebind ();
         }
 
         void OnDurationTextClicked (object sender, EventArgs e)
         {
+            var currentEntry = ActiveTimeEntry;
             if (currentEntry == null)
                 return;
             new ChangeTimeEntryDurationDialogFragment (currentEntry).Show (activity.SupportFragmentManager, "duration_dialog");
@@ -116,6 +158,9 @@ namespace Toggl.Joey.UI.Components
 
         private void Rebind ()
         {
+            ResetTrackedObservables ();
+
+            var currentEntry = ActiveTimeEntry;
             if (!canRebind || currentEntry == null)
                 return;
 
@@ -169,39 +214,59 @@ namespace Toggl.Joey.UI.Components
             }
         }
 
-        private void OnActionButtonClicked (object sender, EventArgs e)
+        private async void OnActionButtonClicked (object sender, EventArgs e)
         {
-            var entry = currentEntry;
-            if (entry == null)
+            // Protect from double clicks
+            if (isProcessingAction)
                 return;
 
-            var startedEntry = false;
-
+            isProcessingAction = true;
             try {
-                if (entry.State == TimeEntryState.New && entry.StopTime.HasValue) {
-                    entry.Store ();
-                } else if (entry.State == TimeEntryState.Running) {
-                    entry.Stop ();
-                } else {
-                    entry.Start ();
-                    startedEntry = true;
+                var entry = ActiveTimeEntry;
+                if (entry == null)
+                    return;
+
+                // Make sure that we work on the copy of the entry to not affect the rest of the logic.
+                entry = new TimeEntryModel (new TimeEntryData (entry.Data));
+
+                var showProjectSelection = false;
+
+                try {
+                    if (entry.State == TimeEntryState.New && entry.StopTime.HasValue) {
+                        await entry.StoreAsync ();
+                    } else if (entry.State == TimeEntryState.Running) {
+                        await entry.StopAsync ();
+                    } else {
+                        var startTask = entry.StartAsync ();
+
+                        var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+                        if (userId.HasValue && ChooseProjectForNew && entry.Project == null) {
+                            var store = ServiceContainer.Resolve<IDataStore> ();
+                            var countTask = store.CountUserAccessibleProjects (userId.Value);
+
+                            // Wait for the start and count to finish
+                            await Task.WhenAll (startTask, countTask);
+
+                            if (countTask.Result > 0)
+                                showProjectSelection = true;
+                        } else {
+                            await startTask;
+                        }
+                    }
+                } catch (Exception ex) {
+                    var log = ServiceContainer.Resolve<Logger> ();
+                    log.Warning (LogTag, ex, "Failed to change time entry state.");
                 }
-            } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
-                log.Warning (LogTag, ex, "Failed to change time entry state.");
-            }
 
-            if (startedEntry && entry.Project == null && ChooseProjectForNew) {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                var hasProjects = user.GetAvailableProjects ().Any ();
-
-                if (hasProjects) {
+                if (showProjectSelection) {
                     new ChooseTimeEntryProjectDialogFragment (entry).Show (activity.SupportFragmentManager, "projects_dialog");
                 }
-            }
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+            } finally {
+                isProcessingAction = false;
+            }
         }
 
         private bool ChooseProjectForNew {

@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
     /// <summary>
-    /// This view combines IModelStore data and data from ITogglClient for time views. It tries to load data from
+    /// This view combines IDataStore data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
     public class AllTimeEntriesView : IDataView<object>, IDisposable
@@ -18,12 +19,12 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Immediate;
         private DateTime startFrom;
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private Subscription<DataChangeMessage> subscriptionDataChange;
 
         public AllTimeEntriesView ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
 
             HasMore = true;
             Reload ();
@@ -32,60 +33,92 @@ namespace Toggl.Phoebe.Data.Views
         public void Dispose ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionModelChanged != null) {
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
+            if (subscriptionDataChange != null) {
+                bus.Unsubscribe (subscriptionDataChange);
+                subscriptionDataChange = null;
             }
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
+        private void OnDataChange (DataChangeMessage msg)
         {
-            if (!msg.Model.IsShared)
-                return;
-            var entry = msg.Model as TimeEntryModel;
+            var entry = msg.Data as TimeEntryData;
             if (entry == null)
                 return;
 
-            if (entry.DeletedAt == null && entry.State != TimeEntryState.New) {
-                var grp = FindGroupWith (entry);
-                if (grp == null) {
-                    grp = GetGroupFor (entry);
-                    grp.Models.Add (entry);
-                    Sort ();
-                    OnUpdated ();
-                } else if (msg.PropertyName == TimeEntryModel.PropertyStartTime) {
-                    // Check that the entry is still in the correct group:
-                    var date = entry.StartTime.ToLocalTime ().Date;
-                    if (grp.Date != date) {
-                        // Need to move entry:
-                        grp.Models.Remove (entry);
+            var isExcluded = entry.DeletedAt != null
+                             || msg.Action == DataAction.Delete
+                             || entry.State == TimeEntryState.New;
 
-                        grp = GetGroupFor (entry);
-                        grp.Models.Add (entry);
-                    }
-                    Sort ();
-                    OnUpdated ();
-                }
-            } else if (msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
-                var grp = FindGroupWith (entry);
-                if (grp != null) {
-                    grp.Models.Remove (entry);
-                    if (grp.Models.Count == 0) {
-                        dateGroups.Remove (grp);
-                    }
-                    OnUpdated ();
-                }
+            if (isExcluded) {
+                RemoveEntry (entry);
+            } else {
+                AddOrUpdateEntry (new TimeEntryData (entry));
             }
         }
 
-        private DateGroup FindGroupWith (TimeEntryModel model)
+        private void AddOrUpdateEntry (TimeEntryData entry)
         {
-            return dateGroups.FirstOrDefault (g => g.Models.Contains (model));
+            TimeEntryData existingEntry;
+            DateGroup grp;
+
+            if (FindExistingEntry (entry, out grp, out existingEntry)) {
+                if (entry.StartTime != existingEntry.StartTime) {
+                    var date = entry.StartTime.ToLocalTime ().Date;
+                    if (grp.Date != date) {
+                        // Need to move entry:
+                        grp.DataObjects.Remove (existingEntry);
+
+                        grp = GetGroupFor (entry);
+                        grp.DataObjects.Add (entry);
+                    } else {
+                        grp.DataObjects.UpdateData (entry);
+                    }
+                    Sort ();
+                } else {
+                    grp.DataObjects.UpdateData (entry);
+                }
+                OnUpdated ();
+            } else {
+                grp = GetGroupFor (entry);
+                grp.DataObjects.Add (entry);
+                Sort ();
+                OnUpdated ();
+            }
         }
 
-        private DateGroup GetGroupFor (TimeEntryModel model)
+        private void RemoveEntry (TimeEntryData entry)
         {
-            var date = model.StartTime.ToLocalTime ().Date;
+            DateGroup grp;
+            TimeEntryData oldEntry;
+            if (FindExistingEntry (entry, out grp, out oldEntry)) {
+                grp.DataObjects.Remove (oldEntry);
+                if (grp.DataObjects.Count == 0) {
+                    dateGroups.Remove (grp);
+                }
+                OnUpdated ();
+            }
+        }
+
+        private bool FindExistingEntry (TimeEntryData dataObject, out DateGroup dateGroup, out TimeEntryData existingDataObject)
+        {
+            foreach (var grp in dateGroups) {
+                foreach (var obj in grp.DataObjects) {
+                    if (dataObject.Matches (obj)) {
+                        dateGroup = grp;
+                        existingDataObject = obj;
+                        return true;
+                    }
+                }
+            }
+
+            dateGroup = null;
+            existingDataObject = null;
+            return false;
+        }
+
+        private DateGroup GetGroupFor (TimeEntryData dataObject)
+        {
+            var date = dataObject.StartTime.ToLocalTime ().Date;
             var grp = dateGroups.FirstOrDefault (g => g.Date == date);
             if (grp == null) {
                 grp = new DateGroup (date);
@@ -97,7 +130,7 @@ namespace Toggl.Phoebe.Data.Views
         private void Sort ()
         {
             foreach (var grp in dateGroups) {
-                grp.Models.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                grp.DataObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
             }
             dateGroups.Sort ((a, b) => b.Date.CompareTo (a.Date));
         }
@@ -171,10 +204,16 @@ namespace Toggl.Phoebe.Data.Views
                     const int numDays = 5;
                     try {
                         var minStart = endTime;
-                        var entries = await client.ListTimeEntries (endTime, numDays);
+                        var jsonEntries = await client.ListTimeEntries (endTime, numDays);
+                        var importTasks = jsonEntries.Select (json => json.Import ()).ToList ();
+
                         BeginUpdate ();
+                        await Task.WhenAll (importTasks);
+                        var entries = importTasks.Select (t => t.Result).ToList ();
+
+                        // Add entries to list:
                         foreach (var entry in entries) {
-                            // OnModelChanged catches the newly created time entries and adds them to the dataset
+                            AddOrUpdateEntry (entry);
 
                             if (entry.StartTime < minStart) {
                                 minStart = entry.StartTime;
@@ -197,18 +236,27 @@ namespace Toggl.Phoebe.Data.Views
 
                 // Fall back to local data:
                 if (useLocal) {
-                    var entries = Model.Query<TimeEntryModel> (
-                                      (te) => te.StartTime <= endTime && te.StartTime > startTime && te.State != TimeEntryState.New)
-                        .NotDeleted ()
-                        .ForCurrentUser ();
+                    var store = ServiceContainer.Resolve<IDataStore> ();
+                    var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+
+                    var baseQuery = store.Table<TimeEntryData> ()
+                        .OrderBy (r => r.StartTime, false)
+                        .Where (r => r.State != TimeEntryState.New
+                                    && r.DeletedAt == null
+                                    && r.UserId == userId);
+                    var entries = await baseQuery
+                        .QueryAsync (r => r.StartTime <= endTime
+                                  && r.StartTime > startTime);
+
                     BeginUpdate ();
                     foreach (var entry in entries) {
-                        // OnModelChanged catches the newly created time entries and adds them to the dataset
+                        AddOrUpdateEntry (entry);
                     }
 
                     if (!initialLoad) {
-                        HasMore = Model.Query<TimeEntryModel> (
-                            (te) => te.StartTime <= startTime && te.State != TimeEntryState.New).Count () > 0;
+                        var count = await baseQuery
+                            .CountAsync (r => r.StartTime <= startTime);
+                        HasMore = count > 0;
                     }
                 }
             } catch (Exception exc) {
@@ -228,15 +276,15 @@ namespace Toggl.Phoebe.Data.Views
             get {
                 foreach (var grp in dateGroups) {
                     yield return grp;
-                    foreach (var model in grp.Models) {
-                        yield return model;
+                    foreach (var data in grp.DataObjects) {
+                        yield return data;
                     }
                 }
             }
         }
 
         public long Count {
-            get { return dateGroups.Count + dateGroups.Sum (g => g.Models.Count); }
+            get { return dateGroups.Count + dateGroups.Sum (g => g.DataObjects.Count); }
         }
 
         public bool HasMore { get; private set; }
@@ -246,7 +294,7 @@ namespace Toggl.Phoebe.Data.Views
         public class DateGroup
         {
             private readonly DateTime date;
-            private readonly List<TimeEntryModel> models = new List<TimeEntryModel> ();
+            private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
 
             public DateGroup (DateTime date)
             {
@@ -257,8 +305,8 @@ namespace Toggl.Phoebe.Data.Views
                 get { return date; }
             }
 
-            public List<TimeEntryModel> Models {
-                get { return models; }
+            public List<TimeEntryData> DataObjects {
+                get { return dataObjects; }
             }
         }
 

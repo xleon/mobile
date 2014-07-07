@@ -8,8 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Json;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -30,168 +29,172 @@ namespace Toggl.Phoebe.Net
             headers.Accept.Add (new MediaTypeWithQualityHeaderValue ("application/json"));
         }
 
-        public async Task Create<T> (T model)
-            where T : Model
+        public async Task<T> Create<T> (T jsonObject)
+            where T : CommonJson
         {
-            var type = model.GetType ();
-            if (type == typeof(ClientModel)) {
-                await CreateClient ((ClientModel)(object)model);
-            } else if (type == typeof(ProjectModel)) {
-                await CreateProject ((ProjectModel)(object)model);
-            } else if (type == typeof(TaskModel)) {
-                await CreateTask ((TaskModel)(object)model);
-            } else if (type == typeof(TimeEntryModel)) {
-                await CreateTimeEntry ((TimeEntryModel)(object)model);
-            } else if (type == typeof(WorkspaceModel)) {
-                await CreateWorkspace ((WorkspaceModel)(object)model);
-            } else if (type == typeof(UserModel)) {
-                await CreateUser ((UserModel)(object)model);
-            } else if (type == typeof(TagModel)) {
-                await CreateTag ((TagModel)(object)model);
-            } else if (type == typeof(WorkspaceUserModel)) {
-                await CreateWorkspaceUser ((WorkspaceUserModel)(object)model);
-            } else if (type == typeof(ProjectUserModel)) {
-                await CreateProjectUser ((ProjectUserModel)(object)model);
+            var type = jsonObject.GetType ();
+            if (type == typeof(ClientJson)) {
+                return (T)(object)await CreateClient ((ClientJson)(object)jsonObject);
+            } else if (type == typeof(ProjectJson)) {
+                return (T)(object)await CreateProject ((ProjectJson)(object)jsonObject);
+            } else if (type == typeof(TaskJson)) {
+                return (T)(object)await CreateTask ((TaskJson)(object)jsonObject);
+            } else if (type == typeof(TimeEntryJson)) {
+                return (T)(object)await CreateTimeEntry ((TimeEntryJson)(object)jsonObject);
+            } else if (type == typeof(WorkspaceJson)) {
+                return (T)(object)await CreateWorkspace ((WorkspaceJson)(object)jsonObject);
+            } else if (type == typeof(UserJson)) {
+                return (T)(object)await CreateUser ((UserJson)(object)jsonObject);
+            } else if (type == typeof(TagJson)) {
+                return (T)(object)await CreateTag ((TagJson)(object)jsonObject);
+            } else if (type == typeof(WorkspaceUserJson)) {
+                return (T)(object)await CreateWorkspaceUser ((WorkspaceUserJson)(object)jsonObject);
+            } else if (type == typeof(ProjectUserJson)) {
+                return (T)(object)await CreateProjectUser ((ProjectUserJson)(object)jsonObject);
             } else {
-                throw new NotSupportedException ("Creating of model (of type T) is not supported.");
+                throw new NotSupportedException (String.Format ("Creating of {0} is not supported.", type));
             }
         }
 
         public async Task<T> Get<T> (long id)
-            where T : Model
+            where T : CommonJson
         {
-            if (typeof(T) == typeof(ClientModel)) {
+            var type = typeof(T);
+            if (type == typeof(ClientJson)) {
                 return (T)(object)await GetClient (id);
-            } else if (typeof(T) == typeof(ProjectModel)) {
+            } else if (type == typeof(ProjectJson)) {
                 return (T)(object)await GetProject (id);
-            } else if (typeof(T) == typeof(TaskModel)) {
+            } else if (type == typeof(TaskJson)) {
                 return (T)(object)await GetTask (id);
-            } else if (typeof(T) == typeof(TimeEntryModel)) {
+            } else if (type == typeof(TimeEntryJson)) {
                 return (T)(object)await GetTimeEntry (id);
-            } else if (typeof(T) == typeof(WorkspaceModel)) {
+            } else if (type == typeof(WorkspaceJson)) {
                 return (T)(object)await GetWorkspace (id);
-            } else if (typeof(T) == typeof(UserModel)) {
+            } else if (type == typeof(UserJson)) {
                 return (T)(object)await GetUser (id);
             } else {
-                throw new NotSupportedException ("Fetching of model (of type T) is not supported.");
+                throw new NotSupportedException (String.Format ("Fetching of {0} is not supported.", type));
             }
         }
 
         public async Task<List<T>> List<T> ()
-            where T : Model
+            where T : CommonJson
         {
-            if (typeof(T) == typeof(ClientModel)) {
+            var type = typeof(T);
+            if (type == typeof(ClientJson)) {
                 return (List<T>)(object)await ListClients ();
-            } else if (typeof(T) == typeof(TimeEntryModel)) {
+            } else if (type == typeof(TimeEntryJson)) {
                 return (List<T>)(object)await ListTimeEntries ();
-            } else if (typeof(T) == typeof(WorkspaceModel)) {
+            } else if (type == typeof(WorkspaceJson)) {
                 return (List<T>)(object)await ListWorkspaces ();
             } else {
-                throw new NotSupportedException ("Listing of models (of type T) is not supported.");
+                throw new NotSupportedException (String.Format ("Listing of {0} is not supported.", type));
             }
         }
 
-        public async Task Update<T> (T model)
-            where T : Model
+        public async Task<T> Update<T> (T jsonObject)
+            where T : CommonJson
         {
-            var type = model.GetType ();
-            if (type == typeof(ClientModel)) {
-                await UpdateClient ((ClientModel)(object)model);
-            } else if (type == typeof(ProjectModel)) {
-                await UpdateProject ((ProjectModel)(object)model);
-            } else if (type == typeof(TaskModel)) {
-                await UpdateTask ((TaskModel)(object)model);
-            } else if (type == typeof(TimeEntryModel)) {
-                await UpdateTimeEntry ((TimeEntryModel)(object)model);
-            } else if (type == typeof(WorkspaceModel)) {
-                await UpdateWorkspace ((WorkspaceModel)(object)model);
-            } else if (type == typeof(UserModel)) {
-                await UpdateUser ((UserModel)(object)model);
-            } else if (type == typeof(TagModel)) {
-                await UpdateTag ((TagModel)(object)model);
-            } else if (type == typeof(WorkspaceUserModel)) {
-                await UpdateWorkspaceUser ((WorkspaceUserModel)(object)model);
-            } else if (type == typeof(ProjectUserModel)) {
-                await UpdateProjectUser ((ProjectUserModel)(object)model);
+            var type = jsonObject.GetType ();
+            if (type == typeof(ClientJson)) {
+                return (T)(object)await UpdateClient ((ClientJson)(object)jsonObject);
+            } else if (type == typeof(ProjectJson)) {
+                return (T)(object)await UpdateProject ((ProjectJson)(object)jsonObject);
+            } else if (type == typeof(TaskJson)) {
+                return (T)(object)await UpdateTask ((TaskJson)(object)jsonObject);
+            } else if (type == typeof(TimeEntryJson)) {
+                return (T)(object)await UpdateTimeEntry ((TimeEntryJson)(object)jsonObject);
+            } else if (type == typeof(WorkspaceJson)) {
+                return (T)(object)await UpdateWorkspace ((WorkspaceJson)(object)jsonObject);
+            } else if (type == typeof(UserJson)) {
+                return (T)(object)await UpdateUser ((UserJson)(object)jsonObject);
+            } else if (type == typeof(TagJson)) {
+                return (T)(object)await UpdateTag ((TagJson)(object)jsonObject);
+            } else if (type == typeof(WorkspaceUserJson)) {
+                return (T)(object)await UpdateWorkspaceUser ((WorkspaceUserJson)(object)jsonObject);
+            } else if (type == typeof(ProjectUserJson)) {
+                return (T)(object)await UpdateProjectUser ((ProjectUserJson)(object)jsonObject);
             } else {
-                throw new NotSupportedException ("Updating of model (of type T) is not supported.");
+                throw new NotSupportedException (String.Format ("Updating of {0} is not supported.", type));
             }
         }
 
-        public async Task Delete<T> (T model)
-            where T : Model
+        public async Task Delete<T> (T jsonObject)
+            where T : CommonJson
         {
-            var type = model.GetType ();
-            if (type == typeof(ClientModel)) {
-                await DeleteClient ((ClientModel)(object)model);
-            } else if (type == typeof(ProjectModel)) {
-                await DeleteProject ((ProjectModel)(object)model);
-            } else if (type == typeof(TaskModel)) {
-                await DeleteTask ((TaskModel)(object)model);
-            } else if (type == typeof(TimeEntryModel)) {
-                await DeleteTimeEntry ((TimeEntryModel)(object)model);
-            } else if (type == typeof(TagModel)) {
-                await DeleteTag ((TagModel)(object)model);
-            } else if (type == typeof(WorkspaceUserModel)) {
-                await DeleteWorkspaceUser ((WorkspaceUserModel)(object)model);
-            } else if (type == typeof(ProjectUserModel)) {
-                await DeleteProjectUser ((ProjectUserModel)(object)model);
+            var type = jsonObject.GetType ();
+            if (type == typeof(ClientJson)) {
+                await DeleteClient ((ClientJson)(object)jsonObject);
+            } else if (type == typeof(ProjectJson)) {
+                await DeleteProject ((ProjectJson)(object)jsonObject);
+            } else if (type == typeof(TaskJson)) {
+                await DeleteTask ((TaskJson)(object)jsonObject);
+            } else if (type == typeof(TimeEntryJson)) {
+                await DeleteTimeEntry ((TimeEntryJson)(object)jsonObject);
+            } else if (type == typeof(TagJson)) {
+                await DeleteTag ((TagJson)(object)jsonObject);
+            } else if (type == typeof(WorkspaceUserJson)) {
+                await DeleteWorkspaceUser ((WorkspaceUserJson)(object)jsonObject);
+            } else if (type == typeof(ProjectUserJson)) {
+                await DeleteProjectUser ((ProjectUserJson)(object)jsonObject);
             } else {
-                throw new NotSupportedException (String.Format ("Deleting of model (of type {0}) is not supported.", type));
+                throw new NotSupportedException (String.Format ("Deleting of {0} is not supported.", type));
             }
         }
 
-        public async Task Delete<T> (IEnumerable<T> models)
-            where T : Model
+        public async Task Delete<T> (IEnumerable<T> jsonObjects)
+            where T : CommonJson
         {
-            if (typeof(T) == typeof(ClientModel)) {
-                await Task.WhenAll (models.Select ((object model) => DeleteClient ((ClientModel)model)));
-            } else if (typeof(T) == typeof(ProjectModel)) {
-                await DeleteProjects (models as IEnumerable<ProjectModel>);
-            } else if (typeof(T) == typeof(TaskModel)) {
-                await DeleteTasks (models as IEnumerable<TaskModel>);
-            } else if (typeof(T) == typeof(TimeEntryModel)) {
-                await Task.WhenAll (models.Select ((object model) => DeleteTimeEntry ((TimeEntryModel)model)));
-            } else if (typeof(T) == typeof(Model)) {
+            var type = typeof(T);
+            if (type == typeof(ClientJson)) {
+                await Task.WhenAll (jsonObjects.Select ((object json) => DeleteClient ((ClientJson)json)));
+            } else if (type == typeof(ProjectJson)) {
+                await DeleteProjects (jsonObjects as IEnumerable<ProjectJson>);
+            } else if (type == typeof(TaskJson)) {
+                await DeleteTasks (jsonObjects as IEnumerable<TaskJson>);
+            } else if (type == typeof(TimeEntryJson)) {
+                await Task.WhenAll (jsonObjects.Select ((object json) => DeleteTimeEntry ((TimeEntryJson)json)));
+            } else if (type == typeof(CommonJson)) {
                 // Cannot use LINQ due to AOT failure when using lambdas that use generic method calls inside them.
                 var tasks = new List<Task> ();
-                foreach (var model in models) {
-                    tasks.Add (Delete (model));
+                foreach (var json in jsonObjects) {
+                    tasks.Add (Delete (json));
                 }
                 await Task.WhenAll (tasks);
             } else {
-                throw new NotSupportedException (String.Format ("Deleting of models (of type {0}) is not supported.", typeof(T)));
+                throw new NotSupportedException (String.Format ("Batch deleting of {0} is not supported.", type));
             }
         }
 
-        private string ModelToJson<T> (T model)
-            where T : Model
+        private string StringifyJson (CommonJson jsonObject)
         {
+            var type = jsonObject.GetType ();
+
             string dataKey;
-            if (typeof(T) == typeof(TimeEntryModel)) {
+            if (type == typeof(TimeEntryJson)) {
                 dataKey = "time_entry";
-            } else if (typeof(T) == typeof(ProjectModel)) {
+            } else if (type == typeof(ProjectJson)) {
                 dataKey = "project";
-            } else if (typeof(T) == typeof(ClientModel)) {
+            } else if (type == typeof(ClientJson)) {
                 dataKey = "client";
-            } else if (typeof(T) == typeof(TaskModel)) {
+            } else if (type == typeof(TaskJson)) {
                 dataKey = "task";
-            } else if (typeof(T) == typeof(WorkspaceModel)) {
+            } else if (type == typeof(WorkspaceJson)) {
                 dataKey = "workspace";
-            } else if (typeof(T) == typeof(UserModel)) {
+            } else if (type == typeof(UserJson)) {
                 dataKey = "user";
-            } else if (typeof(T) == typeof(TagModel)) {
+            } else if (type == typeof(TagJson)) {
                 dataKey = "tag";
-            } else if (typeof(T) == typeof(WorkspaceUserModel)) {
+            } else if (type == typeof(WorkspaceUserJson)) {
                 dataKey = "workspace_user";
-            } else if (typeof(T) == typeof(ProjectUserModel)) {
+            } else if (type == typeof(ProjectUserJson)) {
                 dataKey = "project_user";
             } else {
-                throw new ArgumentException ("Don't know how to handle model of type T.", "model");
+                throw new ArgumentException (String.Format ("Don't know how to handle JSON object of type {0}.", type), "jsonObject");
             }
 
             var json = new JObject ();
-            json.Add (dataKey, JObject.FromObject (model));
+            json.Add (dataKey, JObject.FromObject (jsonObject));
             return json.ToString (Formatting.None);
         }
 
@@ -200,7 +203,7 @@ namespace Toggl.Phoebe.Net
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token != null) {
                 req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                    Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
                         string.Format ("{0}:api_token", authManager.Token))));
             }
             return req;
@@ -216,10 +219,10 @@ namespace Toggl.Phoebe.Net
             }
         }
 
-        private async Task CreateModel<T> (Uri url, T model, Action<T, T> merger = null)
-            where T : Model, new()
+        private async Task<T> CreateObject<T> (Uri url, T jsonObject)
+            where T : CommonJson, new()
         {
-            var json = ModelToJson (model);
+            var json = StringifyJson (jsonObject);
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Post,
                 RequestUri = url,
@@ -232,24 +235,16 @@ namespace Toggl.Phoebe.Net
             var respData = await httpResp.Content.ReadAsStringAsync ()
                 .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
-            if (merger != null)
-                merger (model, wrap.Data);
-            else
-                model.Merge (wrap.Data);
-            // In case the local model has changed in the mean time (and merge does nothing),
-            // make sure that the remote id is set.
-            if (model.RemoteId == null)
-                model.RemoteId = wrap.Data.RemoteId;
+            return wrap.Data;
         }
 
-        private async Task<T> GetModel<T> (Uri url, Func<T, T> selector = null)
-            where T : Model, new()
+        private async Task<T> GetObject<T> (Uri url)
+            where T : CommonJson, new()
         {
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
-            selector = selector ?? Model.Update;
 
             var httpResp = await httpClient.SendAsync (httpReq)
                 .ConfigureAwait (continueOnCapturedContext: false);
@@ -258,14 +253,13 @@ namespace Toggl.Phoebe.Net
             var respData = await httpResp.Content.ReadAsStringAsync ()
                 .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
-
-            return selector (wrap.Data);
+            return wrap.Data;
         }
 
-        private async Task UpdateModel<T> (Uri url, T model, Func<T, T> selector = null)
-            where T : Model, new()
+        private async Task<T> UpdateObject<T> (Uri url, T jsonObject)
+            where T : CommonJson, new()
         {
-            var json = ModelToJson (model);
+            var json = StringifyJson (jsonObject);
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Put,
                 RequestUri = url,
@@ -278,13 +272,11 @@ namespace Toggl.Phoebe.Net
             var respData = await httpResp.Content.ReadAsStringAsync ()
                 .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
-            if (selector != null)
-                wrap.Data = selector (wrap.Data);
-            model.Merge (wrap.Data);
+            return wrap.Data;
         }
 
-        private async Task<List<T>> ListModels<T> (Uri url, Func<T, T> selector = null)
-            where T : Model, new()
+        private async Task<List<T>> ListObjects<T> (Uri url)
+            where T : CommonJson, new()
         {
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Get,
@@ -297,12 +289,10 @@ namespace Toggl.Phoebe.Net
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
                 .ConfigureAwait (continueOnCapturedContext: false);
-            var models = JsonConvert.DeserializeObject<List<T>> (respData) ?? Enumerable.Empty<T> ();
-
-            return models.Select (selector ?? Model.Update).ToList ();
+            return JsonConvert.DeserializeObject<List<T>> (respData) ?? new List<T> (0);
         }
 
-        private async Task DeleteModel (Uri url)
+        private async Task DeleteObject (Uri url)
         {
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Delete,
@@ -313,286 +303,267 @@ namespace Toggl.Phoebe.Net
             PrepareResponse (httpResp);
         }
 
-        private Task DeleteModels (Uri url)
+        private Task DeleteObjects (Uri url)
         {
-            return DeleteModel (url);
+            return DeleteObject (url);
         }
 
         #region Client methods
 
-        public Task CreateClient (ClientModel model)
+        public Task<ClientJson> CreateClient (ClientJson jsonObject)
         {
             var url = new Uri (v8Url, "clients");
-            return CreateModel (url, model);
+            return CreateObject (url, jsonObject);
         }
 
-        public Task<ClientModel> GetClient (long id)
+        public Task<ClientJson> GetClient (long id)
         {
             var url = new Uri (v8Url, String.Format ("clients/{0}", id.ToString ()));
-            return GetModel<ClientModel> (url);
+            return GetObject<ClientJson> (url);
         }
 
-        public Task<List<ClientModel>> ListClients ()
+        public Task<List<ClientJson>> ListClients ()
         {
             var url = new Uri (v8Url, "clients");
-            return ListModels<ClientModel> (url);
+            return ListObjects<ClientJson> (url);
         }
 
-        public Task<List<ClientModel>> ListWorkspaceClients (long workspaceId)
+        public Task<List<ClientJson>> ListWorkspaceClients (long workspaceId)
         {
             var url = new Uri (v8Url, String.Format ("workspaces/{0}/clients", workspaceId.ToString ()));
-            return ListModels<ClientModel> (url);
+            return ListObjects<ClientJson> (url);
         }
 
-        public Task UpdateClient (ClientModel model)
+        public Task<ClientJson> UpdateClient (ClientJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", model.RemoteId.Value.ToString ()));
-            return UpdateModel (url, model);
+            var url = new Uri (v8Url, String.Format ("clients/{0}", jsonObject.Id.Value.ToString ()));
+            return UpdateObject (url, jsonObject);
         }
 
-        public Task DeleteClient (ClientModel model)
+        public Task DeleteClient (ClientJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", model.RemoteId.Value.ToString ()));
-            return DeleteModel (url);
+            var url = new Uri (v8Url, String.Format ("clients/{0}", jsonObject.Id.Value.ToString ()));
+            return DeleteObject (url);
         }
 
         #endregion
 
         #region Project methods
 
-        public Task CreateProject (ProjectModel model)
+        public Task<ProjectJson> CreateProject (ProjectJson jsonObject)
         {
             var url = new Uri (v8Url, "projects");
-            return CreateModel (url, model);
+            return CreateObject (url, jsonObject);
         }
 
-        public Task<ProjectModel> GetProject (long id)
+        public Task<ProjectJson> GetProject (long id)
         {
             var url = new Uri (v8Url, String.Format ("projects/{0}", id.ToString ()));
-            return GetModel<ProjectModel> (url);
+            return GetObject<ProjectJson> (url);
         }
 
-        public Task<List<ProjectModel>> ListWorkspaceProjects (long workspaceId)
+        public Task<List<ProjectJson>> ListWorkspaceProjects (long workspaceId)
         {
             var url = new Uri (v8Url, String.Format ("workspaces/{0}/projects", workspaceId.ToString ()));
-            return ListModels<ProjectModel> (url);
+            return ListObjects<ProjectJson> (url);
         }
 
-        public Task<List<WorkspaceUserModel>> ListWorkspaceUsers (long workspaceId)
+        public Task<List<WorkspaceUserJson>> ListWorkspaceUsers (long workspaceId)
         {
             var url = new Uri (v8Url, String.Format ("workspaces/{0}/workspace_users", workspaceId.ToString ()));
-            return ListModels<WorkspaceUserModel> (url);
+            return ListObjects<WorkspaceUserJson> (url);
         }
 
-        public Task UpdateProject (ProjectModel model)
+        public Task<ProjectJson> UpdateProject (ProjectJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", model.RemoteId.Value.ToString ()));
-            return UpdateModel (url, model);
+            var url = new Uri (v8Url, String.Format ("projects/{0}", jsonObject.Id.Value.ToString ()));
+            return UpdateObject (url, jsonObject);
         }
 
-        public Task DeleteProject (ProjectModel model)
+        public Task DeleteProject (ProjectJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", model.RemoteId.Value.ToString ()));
-            return DeleteModel (url);
+            var url = new Uri (v8Url, String.Format ("projects/{0}", jsonObject.Id.Value.ToString ()));
+            return DeleteObject (url);
         }
 
-        public Task DeleteProjects (IEnumerable<ProjectModel> models)
+        public Task DeleteProjects (IEnumerable<ProjectJson> jsonObjects)
         {
             var url = new Uri (v8Url, String.Format ("projects/{0}",
-                          String.Join (",", models.Select ((model) => model.Id.Value.ToString ()))));
-            return DeleteModels (url);
+                          String.Join (",", jsonObjects.Select ((model) => model.Id.Value.ToString ()))));
+            return DeleteObjects (url);
         }
 
         #endregion
 
         #region Task methods
 
-        public Task CreateTask (TaskModel model)
+        public Task<TaskJson> CreateTask (TaskJson jsonObject)
         {
             var url = new Uri (v8Url, "tasks");
-            return CreateModel (url, model);
+            return CreateObject (url, jsonObject);
         }
 
-        public Task<TaskModel> GetTask (long id)
+        public Task<TaskJson> GetTask (long id)
         {
             var url = new Uri (v8Url, String.Format ("tasks/{0}", id.ToString ()));
-            return GetModel<TaskModel> (url);
+            return GetObject<TaskJson> (url);
         }
 
-        public Task<List<TaskModel>> ListProjectTasks (long projectId)
+        public Task<List<TaskJson>> ListProjectTasks (long projectId)
         {
             var url = new Uri (v8Url, String.Format ("projects/{0}/tasks", projectId.ToString ()));
-            return ListModels<TaskModel> (url);
+            return ListObjects<TaskJson> (url);
         }
 
-        public Task<List<ProjectUserModel>> ListProjectUsers (long projectId)
+        public Task<List<ProjectUserJson>> ListProjectUsers (long projectId)
         {
             var url = new Uri (v8Url, String.Format ("projects/{0}/project_users", projectId.ToString ()));
-            return ListModels<ProjectUserModel> (url);
+            return ListObjects<ProjectUserJson> (url);
         }
 
-        public Task<List<TaskModel>> ListWorkspaceTasks (long workspaceId)
+        public Task<List<TaskJson>> ListWorkspaceTasks (long workspaceId)
         {
             var url = new Uri (v8Url, String.Format ("workspaces/{0}/tasks", workspaceId.ToString ()));
-            return ListModels<TaskModel> (url);
+            return ListObjects<TaskJson> (url);
         }
 
-        public Task UpdateTask (TaskModel model)
+        public Task<TaskJson> UpdateTask (TaskJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", model.RemoteId.Value.ToString ()));
-            return UpdateModel (url, model);
+            var url = new Uri (v8Url, String.Format ("tasks/{0}", jsonObject.Id.Value.ToString ()));
+            return UpdateObject (url, jsonObject);
         }
 
-        public Task DeleteTask (TaskModel model)
+        public Task DeleteTask (TaskJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", model.RemoteId.Value.ToString ()));
-            return DeleteModel (url);
+            var url = new Uri (v8Url, String.Format ("tasks/{0}", jsonObject.Id.Value.ToString ()));
+            return DeleteObject (url);
         }
 
-        public Task DeleteTasks (IEnumerable<TaskModel> models)
+        public Task DeleteTasks (IEnumerable<TaskJson> jsonObjects)
         {
             var url = new Uri (v8Url, String.Format ("tasks/{0}",
-                          String.Join (",", models.Select ((model) => model.Id.Value.ToString ()))));
-            return DeleteModels (url);
+                          String.Join (",", jsonObjects.Select ((json) => json.Id.Value.ToString ()))));
+            return DeleteObjects (url);
         }
 
         #endregion
 
         #region Time entry methods
 
-        public Task CreateTimeEntry (TimeEntryModel model)
+        public Task<TimeEntryJson> CreateTimeEntry (TimeEntryJson jsonObject)
         {
             var url = new Uri (v8Url, "time_entries");
-            model.CreatedWith = Platform.DefaultCreatedWith;
-            return CreateModel (url, model, (te1, te2) => {
-                // Assign the correct user to the response from the server
-                te2.User = ServiceContainer.Resolve<AuthManager> ().User;
-                te1.Merge (te2);
-            });
+            jsonObject.CreatedWith = Platform.DefaultCreatedWith;
+            return CreateObject (url, jsonObject);
         }
 
-        public Task<TimeEntryModel> GetTimeEntry (long id)
+        public Task<TimeEntryJson> GetTimeEntry (long id)
         {
             var url = new Uri (v8Url, String.Format ("time_entries/{0}", id.ToString ()));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
-            return GetModel<TimeEntryModel> (url, (te) => {
-                te.User = user;
-                return Model.Update (te);
-            });
+            return GetObject<TimeEntryJson> (url);
         }
 
-        public Task<List<TimeEntryModel>> ListTimeEntries ()
+        public Task<List<TimeEntryJson>> ListTimeEntries ()
         {
             var url = new Uri (v8Url, "time_entries");
             var user = ServiceContainer.Resolve<AuthManager> ().User;
-            return ListModels<TimeEntryModel> (url, (te) => {
-                te.User = user;
-                return Model.Update (te);
-            });
+            return ListObjects<TimeEntryJson> (url);
         }
 
-        public Task<List<TimeEntryModel>> ListTimeEntries (DateTime start, DateTime end)
+        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end)
         {
             var url = new Uri (v8Url,
                           String.Format ("time_entries?start_date={0}&end_date={1}",
                               WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
-            return ListModels<TimeEntryModel> (url, (te) => {
-                te.User = user;
-                return Model.Update (te);
-            });
+            return ListObjects<TimeEntryJson> (url);
         }
 
-        public Task<List<TimeEntryModel>> ListTimeEntries (DateTime end, int days)
+        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
         {
             var url = new Uri (v8Url,
                           String.Format ("time_entries?end_date={0}&num_of_days={1}",
                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
                               days));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
-            return ListModels<TimeEntryModel> (url, (te) => {
-                te.User = user;
-                return Model.Update (te);
-            });
+            return ListObjects<TimeEntryJson> (url);
         }
 
-        public Task UpdateTimeEntry (TimeEntryModel model)
+        public Task<TimeEntryJson> UpdateTimeEntry (TimeEntryJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", model.RemoteId.Value.ToString ()));
+            var url = new Uri (v8Url, String.Format ("time_entries/{0}", jsonObject.Id.Value.ToString ()));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
-            return UpdateModel (url, model, (te) => {
-                te.User = user;
-                return te;
-            });
+            return UpdateObject (url, jsonObject);
         }
 
-        public Task DeleteTimeEntry (TimeEntryModel model)
+        public Task DeleteTimeEntry (TimeEntryJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", model.RemoteId.Value.ToString ()));
-            return DeleteModel (url);
+            var url = new Uri (v8Url, String.Format ("time_entries/{0}", jsonObject.Id.Value.ToString ()));
+            return DeleteObject (url);
         }
 
         #endregion
 
         #region Workspace methods
 
-        public Task CreateWorkspace (WorkspaceModel model)
+        public Task<WorkspaceJson> CreateWorkspace (WorkspaceJson jsonObject)
         {
             var url = new Uri (v8Url, "workspaces");
-            return CreateModel (url, model);
+            return CreateObject (url, jsonObject);
         }
 
-        public Task<WorkspaceModel> GetWorkspace (long id)
+        public Task<WorkspaceJson> GetWorkspace (long id)
         {
             var url = new Uri (v8Url, String.Format ("workspaces/{0}", id.ToString ()));
-            return GetModel<WorkspaceModel> (url);
+            return GetObject<WorkspaceJson> (url);
         }
 
-        public Task<List<WorkspaceModel>> ListWorkspaces ()
+        public Task<List<WorkspaceJson>> ListWorkspaces ()
         {
             var url = new Uri (v8Url, "workspaces");
-            return ListModels<WorkspaceModel> (url);
+            return ListObjects<WorkspaceJson> (url);
         }
 
-        public Task UpdateWorkspace (WorkspaceModel model)
+        public Task<WorkspaceJson> UpdateWorkspace (WorkspaceJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}", model.RemoteId.Value.ToString ()));
-            return UpdateModel (url, model);
+            var url = new Uri (v8Url, String.Format ("workspaces/{0}", jsonObject.Id.Value.ToString ()));
+            return UpdateObject (url, jsonObject);
         }
 
         #endregion
 
         #region Tag methods
 
-        public Task CreateTag (TagModel model)
+        public Task<TagJson> CreateTag (TagJson jsonObject)
         {
             var url = new Uri (v8Url, "tags");
-            return CreateModel (url, model);
+            return CreateObject (url, jsonObject);
         }
 
-        public Task UpdateTag (TagModel model)
+        public Task<TagJson> UpdateTag (TagJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tags/{0}", model.RemoteId.Value.ToString ()));
-            return UpdateModel (url, model);
+            var url = new Uri (v8Url, String.Format ("tags/{0}", jsonObject.Id.Value.ToString ()));
+            return UpdateObject (url, jsonObject);
         }
 
-        public Task DeleteTag (TagModel model)
+        public Task DeleteTag (TagJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tags/{0}", model.RemoteId.Value.ToString ()));
-            return DeleteModel (url);
+            var url = new Uri (v8Url, String.Format ("tags/{0}", jsonObject.Id.Value.ToString ()));
+            return DeleteObject (url);
         }
 
         #endregion
 
         #region Workspace user methods
 
-        public async Task CreateWorkspaceUser (WorkspaceUserModel model)
+        public async Task<WorkspaceUserJson> CreateWorkspaceUser (WorkspaceUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/invite", model.From.RemoteId.Value.ToString ()));
+            var url = new Uri (v8Url, String.Format ("workspaces/{0}/invite", jsonObject.WorkspaceId.ToString ()));
 
             var json = JsonConvert.SerializeObject (new {
-                emails = new string[] { model.To.Email },
+                emails = new string[] { jsonObject.Email },
             });
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Post,
@@ -605,70 +576,66 @@ namespace Toggl.Phoebe.Net
 
             var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync ()
                 .ConfigureAwait (continueOnCapturedContext: false));
-            var data = wrap ["data"] [0].ToObject<WorkspaceUserModel> ();
-            model.Merge (data);
-            // In case the local model has changed in the mean time (and merge does nothing),
-            // make sure that the remote id is set.
-            if (model.RemoteId == null)
-                model.RemoteId = data.RemoteId;
+            var data = wrap ["data"] [0].ToObject<WorkspaceUserJson> ();
+            return data;
         }
 
-        public Task UpdateWorkspaceUser (WorkspaceUserModel model)
+        public Task<WorkspaceUserJson> UpdateWorkspaceUser (WorkspaceUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", model.RemoteId.Value.ToString ()));
-            return UpdateModel (url, model);
+            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", jsonObject.Id.Value.ToString ()));
+            return UpdateObject (url, jsonObject);
         }
 
-        public Task DeleteWorkspaceUser (WorkspaceUserModel model)
+        public Task DeleteWorkspaceUser (WorkspaceUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", model.RemoteId.Value.ToString ()));
-            return DeleteModel (url);
+            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", jsonObject.Id.Value.ToString ()));
+            return DeleteObject (url);
         }
 
         #endregion
 
         #region Project user methods
 
-        public Task CreateProjectUser (ProjectUserModel model)
+        public Task<ProjectUserJson> CreateProjectUser (ProjectUserJson jsonObject)
         {
             var url = new Uri (v8Url, "project_users");
-            return CreateModel (url, model);
+            return CreateObject (url, jsonObject);
         }
 
-        public Task UpdateProjectUser (ProjectUserModel model)
+        public Task<ProjectUserJson> UpdateProjectUser (ProjectUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("project_users/{0}", model.RemoteId.Value.ToString ()));
-            return UpdateModel (url, model);
+            var url = new Uri (v8Url, String.Format ("project_users/{0}", jsonObject.Id.Value.ToString ()));
+            return UpdateObject (url, jsonObject);
         }
 
-        public Task DeleteProjectUser (ProjectUserModel model)
+        public Task DeleteProjectUser (ProjectUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("project_users/{0}", model.RemoteId.Value.ToString ()));
-            return DeleteModel (url);
+            var url = new Uri (v8Url, String.Format ("project_users/{0}", jsonObject.Id.Value.ToString ()));
+            return DeleteObject (url);
         }
 
         #endregion
 
         #region User methods
 
-        public Task CreateUser (UserModel model)
+        public Task<UserJson> CreateUser (UserJson jsonObject)
         {
-            var url = new Uri (v8Url, model.GoogleAccessToken != null ? "signups?app_name=toggl_mobile" : "signups");
-            model.CreatedWith = Platform.DefaultCreatedWith;
-            return CreateModel (url, model);
+            var url = new Uri (v8Url, jsonObject.GoogleAccessToken != null ? "signups?app_name=toggl_mobile" : "signups");
+            jsonObject.CreatedWith = Platform.DefaultCreatedWith;
+            return CreateObject (url, jsonObject);
         }
 
-        public Task<UserModel> GetUser (long id)
+        public Task<UserJson> GetUser (long id)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token == null || authManager.User.RemoteId != (long?)id)
                 throw new NotSupportedException ("Can only update currently logged in user.");
 
             var url = new Uri (v8Url, "me");
-            return GetModel<UserModel> (url);
+            return GetObject<UserJson> (url);
         }
 
-        public async Task<UserModel> GetUser (string username, string password)
+        public async Task<UserJson> GetUser (string username, string password)
         {
             var url = new Uri (v8Url, "me");
 
@@ -677,7 +644,7 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             };
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                Convert.ToBase64String (Encoding.ASCII.GetBytes (
                     string.Format ("{0}:{1}", username, password))));
             var httpResp = await httpClient.SendAsync (httpReq)
                 .ConfigureAwait (continueOnCapturedContext: false);
@@ -685,12 +652,12 @@ namespace Toggl.Phoebe.Net
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
                 .ConfigureAwait (continueOnCapturedContext: false);
-            var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);
+            var wrap = JsonConvert.DeserializeObject<Wrapper<UserJson>> (respData);
 
-            return Model.Update (wrap.Data);
+            return wrap.Data;
         }
 
-        public async Task<UserModel> GetUser (string googleAccessToken)
+        public async Task<UserJson> GetUser (string googleAccessToken)
         {
             var url = new Uri (v8Url, "me?app_name=toggl_mobile");
 
@@ -699,7 +666,7 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             };
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                Convert.ToBase64String (Encoding.ASCII.GetBytes (
                     string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
             var httpResp = await httpClient.SendAsync (httpReq)
                 .ConfigureAwait (continueOnCapturedContext: false);
@@ -707,24 +674,24 @@ namespace Toggl.Phoebe.Net
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
                 .ConfigureAwait (continueOnCapturedContext: false);
-            var wrap = JsonConvert.DeserializeObject<Wrapper<UserModel>> (respData);
+            var wrap = JsonConvert.DeserializeObject<Wrapper<UserJson>> (respData);
 
-            return Model.Update (wrap.Data);
+            return wrap.Data;
         }
 
-        public Task UpdateUser (UserModel model)
+        public Task<UserJson> UpdateUser (UserJson jsonObject)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.Token == null || authManager.UserId != model.Id)
+            if (authManager.User == null || authManager.User.RemoteId != jsonObject.Id)
                 throw new NotSupportedException ("Can only update currently logged in user.");
 
             var url = new Uri (v8Url, "me");
-            return UpdateModel (url, model);
+            return UpdateObject (url, jsonObject);
         }
 
         #endregion
 
-        public async Task<UserRelatedModels> GetChanges (DateTime? since)
+        public async Task<UserRelatedJson> GetChanges (DateTime? since)
         {
             since = since.ToUtc ();
             var relUrl = "me?with_related_data=true";
@@ -744,71 +711,34 @@ namespace Toggl.Phoebe.Net
                 .ConfigureAwait (continueOnCapturedContext: false);
             var json = JObject.Parse (respData);
 
-            var user = Model.Update (json ["data"].ToObject<UserModel> ());
-            return new UserRelatedModels () {
+            var user = json ["data"].ToObject<UserJson> ();
+            return new UserRelatedJson () {
                 Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
                 User = user,
-                Workspaces = GetChangesModels<WorkspaceModel> (json ["data"] ["workspaces"]),
-                Tags = GetChangesTagModels (json ["data"] ["tags"]),
-                Clients = GetChangesModels<ClientModel> (json ["data"] ["clients"]),
-                Projects = GetChangesModels<ProjectModel> (json ["data"] ["projects"]),
-                Tasks = GetChangesModels<TaskModel> (json ["data"] ["tasks"]),
-                TimeEntries = GetChangesTimeEntryModels (json ["data"] ["time_entries"], user),
+                Workspaces = GetChangesObjects<WorkspaceJson> (json ["data"] ["workspaces"]),
+                Tags = GetChangesObjects<TagJson> (json ["data"] ["tags"]),
+                Clients = GetChangesObjects<ClientJson> (json ["data"] ["clients"]),
+                Projects = GetChangesObjects<ProjectJson> (json ["data"] ["projects"]),
+                Tasks = GetChangesObjects<TaskJson> (json ["data"] ["tasks"]),
+                TimeEntries = GetChangesTimeEntryObjects (json ["data"] ["time_entries"], user),
             };
         }
 
-        private IEnumerable<T> GetChangesModels<T> (JToken json)
-            where T : Model, new()
+        private IEnumerable<T> GetChangesObjects<T> (JToken json)
+            where T : CommonJson, new()
         {
             if (json == null)
                 return Enumerable.Empty<T> ();
-            return json.ToObject<List<T>> ().Select (Model.Update);
+            return json.ToObject<List<T>> ();
         }
 
-        private IEnumerable<TagModel> GetChangesTagModels (JToken json)
+        private IEnumerable<TimeEntryJson> GetChangesTimeEntryObjects (JToken json, UserJson user)
         {
             if (json == null)
-                return Enumerable.Empty<TagModel> ();
-            return json.ToObject<List<TagModel>> ().Select (MergeTag);
-        }
-
-        private TagModel MergeTag (TagModel model)
-        {
-            // Try find existing tag with which to merge:
-            IEnumerable<TagModel> existingTags;
-            // Load database entries into memory
-            existingTags = Model.Query<TagModel> ((m) =>
-                (m.Name == model.Name && m.RemoteId == null) || m.RemoteId == model.RemoteId).ToList ();
-            // Look through the cache to discover the correct items
-            existingTags = Model.Manager.Cached<TagModel> ().Where ((m) =>
-                (m.Name == model.Name && m.RemoteId == null) || m.RemoteId == model.RemoteId).ToList ();
-
-            var tag = existingTags.Where ((m) => m.RemoteId == model.RemoteId).FirstOrDefault ();
-            if (tag == null)
-                tag = existingTags.FirstOrDefault ();
-
-            if (tag != null) {
-                // Merge with existing:
-                tag.Merge (model);
-                // Make sure the remote ID is set for this tag, even if the merge failed
-                if (tag.RemoteId == null) {
-                    tag.RemoteId = model.RemoteId;
-                }
-            } else {
-                // Nothing to merge with, insert
-                tag = Model.Update (model);
-            }
-
-            return tag;
-        }
-
-        private IEnumerable<TimeEntryModel> GetChangesTimeEntryModels (JToken json, UserModel user)
-        {
-            if (json == null)
-                return Enumerable.Empty<TimeEntryModel> ();
-            return json.ToObject<List<TimeEntryModel>> ().Select ((te) => {
-                te.User = user;
-                return Model.Update (te);
+                return Enumerable.Empty<TimeEntryJson> ();
+            return json.ToObject<List<TimeEntryJson>> ().Select ((te) => {
+                te.UserId = user.Id.Value;
+                return te;
             });
         }
 
@@ -822,4 +752,3 @@ namespace Toggl.Phoebe.Net
         }
     }
 }
-

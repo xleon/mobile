@@ -6,6 +6,7 @@ using Android.Text;
 using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -16,6 +17,7 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly string ProjectColorArgument = "com.toggl.timer.project_color";
         private EditText nameEditText;
         private Button positiveButton;
+        private bool isSaving;
 
         public CreateProjectDialogFragment (WorkspaceModel workspace, int color) : this (null, workspace, color)
         {
@@ -74,15 +76,26 @@ namespace Toggl.Joey.UI.Fragments
 
         private TimeEntryModel timeEntry;
         private WorkspaceModel workspace;
+        private bool modelsLoaded;
 
         public override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
 
-            timeEntry = Model.ById<TimeEntryModel> (TimeEntryId);
-            workspace = Model.ById<WorkspaceModel> (WorkspaceId);
-            if (workspace == null) {
+            LoadData ();
+        }
+
+        private async void LoadData ()
+        {
+            timeEntry = new TimeEntryModel (TimeEntryId);
+            workspace = new WorkspaceModel (WorkspaceId);
+            await Task.WhenAll (timeEntry.LoadAsync (), workspace.LoadAsync ());
+
+            if (timeEntry.Workspace == null || timeEntry.Workspace.Id == Guid.Empty) {
+                // TODO: Better logic to determine if the models are actually non-existent
                 Dismiss ();
+            } else {
+                modelsLoaded = true;
             }
         }
 
@@ -117,23 +130,35 @@ namespace Toggl.Joey.UI.Fragments
             SyncButton ();
         }
 
-        private void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
+        private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            if (workspace == null)
+            if (!modelsLoaded || isSaving)
                 return;
 
-            var project = Model.Update (new ProjectModel () {
-                Workspace = workspace,
-                Name = nameEditText.Text,
-                Color = ProjectColor,
-                IsActive = true,
-                IsPersisted = true,
-            });
+            isSaving = true;
+            try {
+                var workspaceModel = workspace;
+                var timeEntryModel = timeEntry;
 
-            if (timeEntry != null) {
-                timeEntry.Workspace = project.Workspace;
-                timeEntry.Project = project;
-                timeEntry.Task = null;
+                if (workspaceModel == null)
+                    return;
+
+                var project = new ProjectModel () {
+                    Workspace = workspaceModel,
+                    Name = nameEditText.Text,
+                    Color = ProjectColor,
+                    IsActive = true,
+                };
+                await project.SaveAsync ();
+
+                if (timeEntryModel != null) {
+                    timeEntryModel.Workspace = project.Workspace;
+                    timeEntryModel.Project = project;
+                    timeEntryModel.Task = null;
+                    await timeEntryModel.SaveAsync ();
+                }
+            } finally {
+                isSaving = false;
             }
         }
 

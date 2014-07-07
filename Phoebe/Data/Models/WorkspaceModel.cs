@@ -1,285 +1,198 @@
 using System;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class WorkspaceModel : Model
+    public class WorkspaceModel : Model<WorkspaceData>
     {
         private static string GetPropertyName<T> (Expression<Func<WorkspaceModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        private readonly RelatedModelsCollection<UserModel, WorkspaceUserModel, WorkspaceModel, UserModel> usersCollection;
+        public static new readonly string PropertyId = Model<WorkspaceData>.PropertyId;
+        public static readonly string PropertyName = GetPropertyName (m => m.Name);
+        public static readonly string PropertyIsPremium = GetPropertyName (m => m.IsPremium);
+        public static readonly string PropertyDefaultRate = GetPropertyName (m => m.DefaultRate);
+        public static readonly string PropertyDefaultCurrency = GetPropertyName (m => m.DefaultCurrency);
+        public static readonly string PropertyProjectCreationPrivileges = GetPropertyName (m => m.ProjectCreationPrivileges);
+        public static readonly string PropertyBillableRatesVisibility = GetPropertyName (m => m.BillableRatesVisibility);
+        public static readonly string PropertyRoundingMode = GetPropertyName (m => m.RoundingMode);
+        public static readonly string PropertyRoundingPercision = GetPropertyName (m => m.RoundingPercision);
+        public static readonly string PropertyLogoUrl = GetPropertyName (m => m.LogoUrl);
 
         public WorkspaceModel ()
         {
-            usersCollection = new RelatedModelsCollection<UserModel, WorkspaceUserModel, WorkspaceModel, UserModel> (this);
         }
 
-        #region Data
+        public WorkspaceModel (WorkspaceData data) : base (data)
+        {
+        }
 
-        private string name;
-        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
+        public WorkspaceModel (Guid id) : base (id)
+        {
+        }
 
-        [JsonProperty ("name")]
+        protected override WorkspaceData Duplicate (WorkspaceData data)
+        {
+            return new WorkspaceData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+        }
+
+        protected override void DetectChangedProperties (WorkspaceData oldData, WorkspaceData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.Name != newData.Name)
+                OnPropertyChanged (PropertyName);
+            if (oldData.IsPremium != newData.IsPremium)
+                OnPropertyChanged (PropertyIsPremium);
+            if (oldData.DefaultRate != newData.DefaultRate)
+                OnPropertyChanged (PropertyDefaultRate);
+            if (oldData.DefaultCurrency != newData.DefaultCurrency)
+                OnPropertyChanged (PropertyDefaultCurrency);
+            if (oldData.ProjectCreationPrivileges != newData.ProjectCreationPrivileges)
+                OnPropertyChanged (PropertyProjectCreationPrivileges);
+            if (oldData.BillableRatesVisibility != newData.BillableRatesVisibility)
+                OnPropertyChanged (PropertyBillableRatesVisibility);
+            if (oldData.RoundingMode != newData.RoundingMode)
+                OnPropertyChanged (PropertyRoundingMode);
+            if (oldData.RoundingPercision != newData.RoundingPercision)
+                OnPropertyChanged (PropertyRoundingPercision);
+            if (oldData.LogoUrl != newData.LogoUrl)
+                OnPropertyChanged (PropertyLogoUrl);
+        }
+
         public string Name {
             get {
-                lock (SyncRoot) {
-                    return name;
-                }
+                EnsureLoaded ();
+                return Data.Name;
             }
             set {
-                lock (SyncRoot) {
-                    if (name == value)
-                        return;
+                if (Name == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyName, delegate {
-                        name = value;
-                    });
-                }
+                MutateData (data => data.Name = value);
             }
         }
 
-        private bool premium;
-        public static readonly string PropertyIsPremium = GetPropertyName ((m) => m.IsPremium);
-
-        [JsonProperty ("premium")]
         public bool IsPremium {
             get {
-                lock (SyncRoot) {
-                    return premium;
-                }
+                EnsureLoaded ();
+                return Data.IsPremium;
             }
             set {
-                lock (SyncRoot) {
-                    if (premium == value)
-                        return;
+                if (IsPremium == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyIsPremium, delegate {
-                        premium = value;
-                    });
-                }
+                MutateData (data => data.IsPremium = value);
             }
         }
 
-        private bool admin;
-        public static readonly string PropertyIsAdmin = GetPropertyName ((m) => m.IsAdmin);
-
-        [JsonProperty ("admin")]
-        public bool IsAdmin {
-            get {
-                lock (SyncRoot) {
-                    return admin;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (admin == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyIsAdmin, delegate {
-                        admin = value;
-                    });
-                }
-            }
-        }
-
-        private decimal? defaultRate;
-        public static readonly string PropertyDefaultRate = GetPropertyName ((m) => m.DefaultRate);
-
-        [JsonProperty ("default_hourly_rate", NullValueHandling = NullValueHandling.Ignore)]
         public decimal? DefaultRate {
             get {
-                lock (SyncRoot) {
-                    return defaultRate;
-                }
+                EnsureLoaded ();
+                return Data.DefaultRate;
             }
             set {
-                lock (SyncRoot) {
-                    if (defaultRate == value)
-                        return;
+                if (DefaultRate == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyDefaultRate, delegate {
-                        defaultRate = value;
-                    });
-                }
+                MutateData (data => data.DefaultRate = value);
             }
         }
 
-        private string defaultCurrency;
-        public static readonly string PropertyDefaultCurrency = GetPropertyName ((m) => m.DefaultCurrency);
-
-        [JsonProperty ("default_currency")]
         public string DefaultCurrency {
             get {
-                lock (SyncRoot) {
-                    return defaultCurrency;
-                }
+                EnsureLoaded ();
+                return Data.DefaultCurrency;
             }
             set {
-                lock (SyncRoot) {
-                    if (defaultCurrency == value)
-                        return;
+                if (DefaultCurrency == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyDefaultCurrency, delegate {
-                        defaultCurrency = value;
-                    });
-                }
+                MutateData (data => data.DefaultCurrency = value);
             }
         }
-
-        private AccessLevel projectCreationPriv = AccessLevel.Any;
-        public static readonly string PropertyProjectCreationPrivileges = GetPropertyName ((m) => m.ProjectCreationPrivileges);
 
         public AccessLevel ProjectCreationPrivileges {
             get {
-                lock (SyncRoot) {
-                    return projectCreationPriv;
-                }
+                EnsureLoaded ();
+                return Data.ProjectCreationPrivileges;
             }
             set {
-                lock (SyncRoot) {
-                    if (value != AccessLevel.Admin && value != AccessLevel.Any)
-                        throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
+                if (ProjectCreationPrivileges == value)
+                    return;
 
-                    if (projectCreationPriv == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyProjectCreationPrivileges, delegate {
-                        projectCreationPriv = value;
-                    });
-                }
+                MutateData (data => data.ProjectCreationPrivileges = value);
             }
         }
-
-        [JsonProperty ("only_admins_may_create_projects")]
-        private bool OnlyAdminsMayCreateProjects {
-            get { return ProjectCreationPrivileges == AccessLevel.Admin; }
-            set { ProjectCreationPrivileges = value ? AccessLevel.Admin : AccessLevel.Any; }
-        }
-
-        private AccessLevel ratesVisbility = AccessLevel.Any;
-        public static readonly string PropertyBillableRatesVisibility = GetPropertyName ((m) => m.BillableRatesVisibility);
 
         public AccessLevel BillableRatesVisibility {
             get {
-                lock (SyncRoot) {
-                    return ratesVisbility;
-                }
+                EnsureLoaded ();
+                return Data.BillableRatesVisibility;
             }
             set {
-                lock (SyncRoot) {
-                    if (value != AccessLevel.Admin && value != AccessLevel.Any)
-                        throw new ArgumentException ("Only a subset of access levels is allowed: Admin, Any");
+                if (BillableRatesVisibility == value)
+                    return;
 
-                    if (ratesVisbility == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyBillableRatesVisibility, delegate {
-                        ratesVisbility = value;
-                    });
-                }
+                MutateData (data => data.BillableRatesVisibility = value);
             }
         }
 
-        [JsonProperty ("only_admins_see_billable_rates")]
-        private bool OnlyAdminsSeeBillableRates {
-            get { return BillableRatesVisibility == AccessLevel.Admin; }
-            set { BillableRatesVisibility = value ? AccessLevel.Admin : AccessLevel.Any; }
-        }
-
-        private RoundingMode roundingMode = RoundingMode.Up;
-        public static readonly string PropertyRoundingMode = GetPropertyName ((m) => m.RoundingMode);
-
-        [JsonProperty ("rounding")]
         public RoundingMode RoundingMode {
             get {
-                lock (SyncRoot) {
-                    return roundingMode;
-                }
+                EnsureLoaded ();
+                return Data.RoundingMode;
             }
             set {
-                lock (SyncRoot) {
-                    if (roundingMode == value)
-                        return;
+                if (RoundingMode == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyRoundingMode, delegate {
-                        roundingMode = value;
-                    });
-                }
+                MutateData (data => data.RoundingMode = value);
             }
         }
 
-        private int roundingPercision;
-        public static readonly string PropertyRoundingPercision = GetPropertyName ((m) => m.RoundingPercision);
-
-        [JsonProperty ("rounding_minutes")]
         public int RoundingPercision {
             get {
-                lock (SyncRoot) {
-                    return roundingPercision;
-                }
+                EnsureLoaded ();
+                return Data.RoundingPercision;
             }
             set {
-                lock (SyncRoot) {
-                    if (roundingPercision == value)
-                        return;
+                if (RoundingPercision == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyRoundingPercision, delegate {
-                        roundingPercision = value;
-                    });
-                }
+                MutateData (data => data.RoundingPercision = value);
             }
         }
 
-        private string logoUrl;
-        public static readonly string PropertyLogoUrl = GetPropertyName ((m) => m.LogoUrl);
-
-        [JsonProperty ("logo_url")]
         public string LogoUrl {
             get {
-                lock (SyncRoot) {
-                    return logoUrl;
-                }
+                EnsureLoaded ();
+                return Data.LogoUrl;
             }
             set {
-                lock (SyncRoot) {
-                    if (logoUrl == value)
-                        return;
+                if (LogoUrl == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyLogoUrl, delegate {
-                        logoUrl = value;
-                    });
-                }
+                MutateData (data => data.LogoUrl = value);
             }
         }
 
-        #endregion
-
-        #region Relations
-
-        public IModelQuery<ClientModel> Clients {
-            get { return Model.Query<ClientModel> ((m) => m.WorkspaceId == Id); }
+        public static explicit operator WorkspaceModel (WorkspaceData data)
+        {
+            if (data == null)
+                return null;
+            return new WorkspaceModel (data);
         }
 
-        public IModelQuery<ProjectModel> Projects {
-            get { return Model.Query<ProjectModel> ((m) => m.WorkspaceId == Id); }
+        public static implicit operator WorkspaceData (WorkspaceModel model)
+        {
+            return model.Data;
         }
-
-        public IModelQuery<TaskModel> Tasks {
-            get { return Model.Query<TaskModel> ((m) => m.WorkspaceId == Id); }
-        }
-
-        public IModelQuery<TimeEntryModel> TimeEntries {
-            get { return Model.Query<TimeEntryModel> ((m) => m.WorkspaceId == Id); }
-        }
-
-        public RelatedModelsCollection<UserModel, WorkspaceUserModel, WorkspaceModel, UserModel> Users {
-            get { return usersCollection; }
-        }
-
-        #endregion
     }
 }

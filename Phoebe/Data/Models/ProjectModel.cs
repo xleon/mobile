@@ -1,258 +1,225 @@
 using System;
+using System.ComponentModel;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class ProjectModel : Model
+    public class ProjectModel : Model<ProjectData>
     {
         private static string GetPropertyName<T> (Expression<Func<ProjectModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        private readonly int workspaceRelationId;
-        private readonly int clientRelationId;
-        private readonly RelatedModelsCollection<UserModel, ProjectUserModel, ProjectModel, UserModel> usersCollection;
+        public static new readonly string PropertyId = Model<ProjectData>.PropertyId;
+        public static readonly string PropertyName = GetPropertyName (m => m.Name);
+        public static readonly string PropertyColor = GetPropertyName (m => m.Color);
+        public static readonly string PropertyIsActive = GetPropertyName (m => m.IsActive);
+        public static readonly string PropertyIsBillable = GetPropertyName (m => m.IsBillable);
+        public static readonly string PropertyIsPrivate = GetPropertyName (m => m.IsPrivate);
+        public static readonly string PropertyIsTemplate = GetPropertyName (m => m.IsTemplate);
+        public static readonly string PropertyUseTasksEstimate = GetPropertyName (m => m.UseTasksEstimate);
+        public static readonly string PropertyWorkspace = GetPropertyName (m => m.Workspace);
+        public static readonly string PropertyClient = GetPropertyName (m => m.Client);
 
-        public ProjectModel ()
-        {
-            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
-            clientRelationId = ForeignRelation<ClientModel> (PropertyClientId, PropertyClient);
-            usersCollection = new RelatedModelsCollection<UserModel, ProjectUserModel, ProjectModel, UserModel> (this);
-        }
-
-        #region Data
-
-        private bool active;
-        public static readonly string PropertyIsActive = GetPropertyName ((m) => m.IsActive);
-
-        [JsonProperty ("active")]
-        public bool IsActive {
-            get {
-                lock (SyncRoot) {
-                    return active;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-
-                    if (active == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyIsActive, delegate {
-                        active = value;
-                    });
-                }
-            }
-        }
-
-        private bool priv;
-        public static readonly string PropertyIsPrivate = GetPropertyName ((m) => m.IsPrivate);
-
-        [JsonProperty ("is_private")]
-        public bool IsPrivate {
-            get {
-                lock (SyncRoot) {
-                    return priv;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-
-                    if (priv == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyIsPrivate, delegate {
-                        priv = value;
-                    });
-                }
-            }
-        }
-
-        private bool taskEstimate;
-        public static readonly string PropertyUseTasksEstimate = GetPropertyName ((m) => m.UseTasksEstimate);
-
-        [JsonProperty ("auto_estimates")]
-        public bool UseTasksEstimate {
-            get {
-                lock (SyncRoot) {
-                    return taskEstimate;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (taskEstimate == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyUseTasksEstimate, delegate {
-                        taskEstimate = value;
-                    });
-                }
-            }
-        }
-
-        private bool billable;
-        public static readonly string PropertyIsBillable = GetPropertyName ((m) => m.IsBillable);
-
-        [JsonProperty ("billable")]
-        public bool IsBillable {
-            get {
-                lock (SyncRoot) {
-                    return billable;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (billable == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyIsBillable, delegate {
-                        billable = value;
-                    });
-                }
-            }
-        }
-
-        private int color;
-        public static readonly string PropertyColor = GetPropertyName ((m) => m.Color);
-
-        public int Color {
-            get {
-                lock (SyncRoot) {
-                    return color;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    value = value % HexColorsIndex.Length;
-                    if (color == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyColor, delegate {
-                        color = value;
-                    });
-                }
-            }
-        }
-
-        private static string[] HexColorsIndex = new string[] {
+        public static readonly string[] HexColors = {
             "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
             "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
             "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
         };
 
-        [JsonProperty ("color")]
-        private String ColorString {
-            get { 
-                return Color.ToString ();
-            }
-            set {
-                try {
-                    Color = Convert.ToInt32 (value) % HexColorsIndex.Length;
-                } catch {
-                    Color = HexColorsIndex.Length - 1; //Default color
-                }
-            }
-        }
+        public static readonly int DefaultColor = HexColors.Length - 1;
 
-        public String GetHexColor ()
+        public ProjectModel ()
         {
-            return HexColorsIndex [Color];
         }
 
-        private bool template;
-        public static readonly string PropertyIsTemplate = GetPropertyName ((m) => m.IsTemplate);
+        public ProjectModel (ProjectData data) : base (data)
+        {
+        }
 
-        [JsonProperty ("template")]
-        public bool IsTemplate {
-            get {
-                lock (SyncRoot) {
-                    return template;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (template == value)
-                        return;
+        public ProjectModel (Guid id) : base (id)
+        {
+        }
 
-                    ChangePropertyAndNotify (PropertyIsTemplate, delegate {
-                        template = value;
-                    });
-                }
+        protected override ProjectData Duplicate (ProjectData data)
+        {
+            return new ProjectData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+            if (Data.WorkspaceId == Guid.Empty) {
+                throw new ValidationException ("Workspace must be set for Project model.");
             }
         }
 
-        private string name;
-        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
+        protected override void DetectChangedProperties (ProjectData oldData, ProjectData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.Name != newData.Name)
+                OnPropertyChanged (PropertyName);
+            if (oldData.Color != newData.Color)
+                OnPropertyChanged (PropertyColor);
+            if (oldData.IsActive != newData.IsActive)
+                OnPropertyChanged (PropertyIsActive);
+            if (oldData.IsBillable != newData.IsBillable)
+                OnPropertyChanged (PropertyIsBillable);
+            if (oldData.IsPrivate != newData.IsPrivate)
+                OnPropertyChanged (PropertyIsPrivate);
+            if (oldData.IsTemplate != newData.IsTemplate)
+                OnPropertyChanged (PropertyIsTemplate);
+            if (oldData.UseTasksEstimate != newData.UseTasksEstimate)
+                OnPropertyChanged (PropertyUseTasksEstimate);
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+                OnPropertyChanged (PropertyWorkspace);
+            if (oldData.ClientId != newData.ClientId || client.IsNewInstance)
+                OnPropertyChanged (PropertyClient);
+        }
 
-        [JsonProperty ("name")]
         public string Name {
             get {
-                lock (SyncRoot) {
-                    return name;
-                }
+                EnsureLoaded ();
+                return Data.Name;
             }
             set {
-                lock (SyncRoot) {
-                    if (name == value)
-                        return;
+                if (Name == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyName, delegate {
-                        name = value;
-                    });
-                }
+                MutateData (data => data.Name = value);
             }
         }
 
-        #endregion
+        public int Color {
+            get {
+                EnsureLoaded ();
+                return Data.Color;
+            }
+            set {
+                // Make sure the value is in valid range:
+                value = value % HexColors.Length;
 
-        #region Relations
+                if (Color == value)
+                    return;
 
-        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
-
-        public Guid? WorkspaceId {
-            get { return GetForeignId (workspaceRelationId); }
-            set { SetForeignId (workspaceRelationId, value); }
+                MutateData (data => data.Color = value);
+            }
         }
 
-        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
+        public string GetHexColor ()
+        {
+            return HexColors [Color % HexColors.Length];
+        }
 
-        [SQLite.Ignore]
-        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        public bool IsActive {
+            get {
+                EnsureLoaded ();
+                return Data.IsActive;
+            }
+            set {
+                if (IsActive == value)
+                    return;
+
+                MutateData (data => data.IsActive = value);
+            }
+        }
+
+        public bool IsBillable {
+            get {
+                EnsureLoaded ();
+                return Data.IsBillable;
+            }
+            set {
+                if (IsBillable == value)
+                    return;
+
+                MutateData (data => data.IsBillable = value);
+            }
+        }
+
+        public bool IsPrivate {
+            get {
+                EnsureLoaded ();
+                return Data.IsPrivate;
+            }
+            set {
+                if (IsPrivate == value)
+                    return;
+
+                MutateData (data => data.IsPrivate = value);
+            }
+        }
+
+        public bool IsTemplate {
+            get {
+                EnsureLoaded ();
+                return Data.IsTemplate;
+            }
+            set {
+                if (IsTemplate == value)
+                    return;
+
+                MutateData (data => data.IsTemplate = value);
+            }
+        }
+
+        public bool UseTasksEstimate { 
+            get {
+                EnsureLoaded ();
+                return Data.UseTasksEstimate;
+            }
+            set {
+                if (UseTasksEstimate == value)
+                    return;
+
+                MutateData (data => data.UseTasksEstimate = value);
+            }
+        }
+
+        private ForeignRelation<WorkspaceModel> workspace;
+        private ForeignRelation<ClientModel> client;
+
+        protected override void InitializeRelations ()
+        {
+            base.InitializeRelations ();
+
+            workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new WorkspaceModel (id),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
+            };
+
+            client = new ForeignRelation<ClientModel> () {
+                Required = false,
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new ClientModel (id),
+                Changed = m => MutateData (data => data.ClientId = GetOptionalId (m)),
+            };
+        }
+
+        [ModelRelation]
         public WorkspaceModel Workspace {
-            get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
-            set { SetForeignModel (workspaceRelationId, value); }
+            get { return workspace.Get (Data.WorkspaceId); }
+            set { workspace.Set (value); }
         }
 
-        public static readonly string PropertyClientId = GetPropertyName ((m) => m.ClientId);
-
-        public Guid? ClientId {
-            get { return GetForeignId (clientRelationId); }
-            set { SetForeignId (clientRelationId, value); }
-        }
-
-        public static readonly string PropertyClient = GetPropertyName ((m) => m.Client);
-
-        [SQLite.Ignore]
-        [JsonProperty ("cid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        [ModelRelation (Required = false)]
         public ClientModel Client {
-            get { return GetForeignModel<ClientModel> (clientRelationId); }
-            set { SetForeignModel (clientRelationId, value); }
+            get { return client.Get (Data.ClientId); }
+            set { client.Set (value); }
         }
 
-        public IModelQuery<TaskModel> Tasks {
-            get { return Model.Query<TaskModel> ((m) => m.ProjectId == Id); }
+        public static explicit operator ProjectModel (ProjectData data)
+        {
+            if (data == null)
+                return null;
+            return new ProjectModel (data);
         }
 
-        public IModelQuery<TimeEntryModel> TimeEntries {
-            get { return Model.Query<TimeEntryModel> ((m) => m.ProjectId == Id); }
+        public static implicit operator ProjectData (ProjectModel model)
+        {
+            return model.Data;
         }
-
-        public RelatedModelsCollection<UserModel, ProjectUserModel, ProjectModel, UserModel> Users {
-            get { return usersCollection; }
-        }
-
-        #endregion
     }
 }

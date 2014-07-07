@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -17,13 +21,37 @@ namespace Toggl.Ross.ViewControllers
     {
         private const float CellSpacing = 4f;
         private readonly TimeEntryModel model;
+        private List<TimeEntryTagData> modelTags;
         private Source source;
+        private bool isSaving;
 
         public TagSelectionViewController (TimeEntryModel model) : base (UITableViewStyle.Plain)
         {
             this.model = model;
 
             Title = "TagTitle".Tr ();
+
+            LoadTags ();
+        }
+
+        private async void LoadTags ()
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            modelTags = await dataStore.Table<TimeEntryTagData> ()
+                .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+            SetupDataSource ();
+        }
+
+        private void SetupDataSource ()
+        {
+            var modelTagsReady = modelTags != null;
+
+            if (source != null || !modelTagsReady || !IsViewLoaded)
+                return;
+
+            // Attach source
+            source = new Source (this, modelTags.Select (data => data.TagId));
+            source.Attach ();
         }
 
         public override void ViewDidLoad ()
@@ -32,8 +60,7 @@ namespace Toggl.Ross.ViewControllers
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-            source = new Source (this);
-            source.Attach ();
+            SetupDataSource ();
 
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "TagSet".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarSetClicked)
@@ -49,42 +76,44 @@ namespace Toggl.Ross.ViewControllers
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
-        private void OnNavigationBarSetClicked (object s, EventArgs e)
+        private async void OnNavigationBarSetClicked (object s, EventArgs e)
         {
-            // Find tags to remove and which to add, don't touch ones which weren't changed.
-            var toRemove = new List<TimeEntryTagModel> ();
-            var toAdd = new List<TagModel> (source.SelectedTags);
+            if (isSaving)
+                return;
 
-            foreach (var m in model.Tags) {
-                var tag = m.To;
-                if (tag == null) {
-                    continue;
-                } else if (!toAdd.Remove (tag)) {
-                    toRemove.Add (m);
-                }
-            }
+            isSaving = true;
+            try {
+                var tags = source.SelectedTags.ToList ();
 
-            foreach (var m in toRemove) {
-                model.Tags.Remove (m);
-            }
-            foreach (var tag in toAdd) {
-                model.Tags.Add (tag);
-            }
+                // Delete unused tag relations:
+                var deleteTasks = modelTags
+                    .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
+                    .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
 
-            NavigationController.PopViewControllerAnimated (true);
+                // Create new tag relations:
+                var createTasks = tags
+                    .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
+                    .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) }.SaveAsync ());
+
+                await Task.WhenAll (deleteTasks.Concat (createTasks));
+
+                NavigationController.PopViewControllerAnimated (true);
+            } finally {
+                isSaving = false;
+            }
         }
 
-        private class Source : PlainDataViewSource<TagModel>
+        private class Source : PlainDataViewSource<TagData>
         {
             private readonly static NSString TagCellId = new NSString ("EntryCellId");
             private readonly TagSelectionViewController controller;
-            private readonly HashSet<TagModel> selectedTags;
+            private readonly HashSet<Guid> selectedTags;
 
-            public Source (TagSelectionViewController controller)
-                : base (controller.TableView, new WorkspaceTagsView (controller.model.WorkspaceId.Value))
+            public Source (TagSelectionViewController controller, IEnumerable<Guid> selectedTagIds)
+                : base (controller.TableView, new WorkspaceTagsView (controller.model.Workspace.Id))
             {
                 this.controller = controller;
-                this.selectedTags = new HashSet<TagModel> (controller.model.Tags.Select (m => m.To).Where (m => m != null));
+                this.selectedTags = new HashSet<Guid> (selectedTagIds);
             }
 
             public override void Attach ()
@@ -108,8 +137,8 @@ namespace Toggl.Ross.ViewControllers
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
                 var cell = (TagCell)tableView.DequeueReusableCell (TagCellId, indexPath);
-                cell.Bind (GetRow (indexPath));
-                cell.Checked = selectedTags.Contains (cell.Model);
+                cell.Bind ((TagModel)GetRow (indexPath));
+                cell.Checked = selectedTags.Contains (cell.TagId);
                 return cell;
             }
 
@@ -117,9 +146,9 @@ namespace Toggl.Ross.ViewControllers
             {
                 var cell = tableView.CellAt (indexPath) as TagCell;
                 if (cell != null) {
-                    if (selectedTags.Remove (cell.Model)) {
+                    if (selectedTags.Remove (cell.TagId)) {
                         cell.Checked = false;
-                    } else if (selectedTags.Add (cell.Model)) {
+                    } else if (selectedTags.Add (cell.TagId)) {
                         cell.Checked = true;
                     }
                 }
@@ -127,15 +156,16 @@ namespace Toggl.Ross.ViewControllers
                 tableView.DeselectRow (indexPath, false);
             }
 
-            public IEnumerable<TagModel> SelectedTags {
-                get { return selectedTags; }
+            public IEnumerable<TagData> SelectedTags {
+                get {
+                    return DataView.Data.Where (data => selectedTags.Contains (data.Id));
+                }
             }
         }
 
-        private class TagCell : UITableViewCell
+        private class TagCell : ModelTableViewCell<TagModel>
         {
             private readonly UILabel nameLabel;
-            private TagModel model;
 
             public TagCell (IntPtr handle) : base (handle)
             {
@@ -163,14 +193,34 @@ namespace Toggl.Ross.ViewControllers
                 nameLabel.Frame = contentFrame;
             }
 
-            public void Bind (TagModel model)
+            protected override void ResetTrackedObservables ()
             {
-                this.model = model;
+                Tracker.MarkAllStale ();
 
-                if (String.IsNullOrWhiteSpace (model.Name)) {
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTagPropertyChanged);
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTagPropertyChanged (string prop)
+            {
+                if (prop == TagModel.PropertyName)
+                    Rebind ();
+            }
+
+            protected override void Rebind ()
+            {
+                ResetTrackedObservables ();
+
+                if (DataSource == null)
+                    return;
+
+                if (String.IsNullOrWhiteSpace (DataSource.Name)) {
                     nameLabel.Text = "TagNoNameTag".Tr ();
                 } else {
-                    nameLabel.Text = model.Name;
+                    nameLabel.Text = DataSource.Name;
                 }
             }
 
@@ -182,10 +232,13 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public TagModel Model {
-                get { return model; }
+            public Guid TagId {
+                get {
+                    if (DataSource != null)
+                        return DataSource.Id;
+                    return Guid.Empty;
+                }
             }
         }
     }
 }
-

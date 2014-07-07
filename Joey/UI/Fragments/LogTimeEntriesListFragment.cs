@@ -5,6 +5,7 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -56,14 +57,15 @@ namespace Toggl.Joey.UI.Fragments
             adapter.ExpandedPosition = adapter.ExpandedPosition != position ? position : (int?)null;
         }
 
-        private void ContinueTimeEntry (TimeEntryModel model)
+        private async void ContinueTimeEntry (TimeEntryModel model)
         {
-            var entry = model.Continue ();
+            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
+
+            var entry = await model.ContinueAsync ();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
 
-            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
         }
 
         public override bool UserVisibleHint {
@@ -87,18 +89,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ConfirmTimeEntryDeletion (TimeEntryModel model)
         {
-            // Make sure that the time entry being edited is persisted (so the changes would actually sync back)
-            model.IsPersisted = true;
-
             var dia = new DeleteTimeEntriesPromptDialogFragment (new List<TimeEntryModel> () { model });
             dia.Show (FragmentManager, "confirm_delete");
         }
 
         private void OpenTimeEntryEdit (TimeEntryModel model)
         {
-            // Make sure that the time entry being edited is persisted (so the changes would actually sync back)
-            model.IsPersisted = true;
-
             var i = new Intent (Activity, typeof(EditTimeEntryActivity));
             i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
             StartActivity (i);
@@ -160,9 +156,9 @@ namespace Toggl.Joey.UI.Fragments
                 if (!isChecked)
                     continue;
 
-                var model = adapter.GetEntry (position) as TimeEntryModel;
-                if (model != null)
-                    toDelete.Add (model);
+                var data = adapter.GetEntry (position) as TimeEntryData;
+                if (data != null)
+                    toDelete.Add ((TimeEntryModel)data);
             }
 
             // Delete models:

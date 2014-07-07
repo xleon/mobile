@@ -5,8 +5,7 @@ using GoogleAnalytics.iOS;
 using MonoTouch.CoreAnimation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -48,15 +47,19 @@ namespace Toggl.Ross.ViewControllers
 
         public Action ProjectSelected { get; set; }
 
-        private void Finish (TaskModel task = null, ProjectModel project = null, WorkspaceModel workspace = null)
+        private async void Finish (TaskModel task = null, ProjectModel project = null, WorkspaceModel workspace = null)
         {
             project = task != null ? task.Project : project;
-            workspace = project != null ? project.Workspace : workspace;
+            if (project != null) {
+                await project.LoadAsync ();
+                workspace = project.Workspace;
+            }
 
             if (project != null || task != null || workspace != null) {
                 model.Workspace = workspace;
                 model.Project = project;
                 model.Task = task;
+                await model.SaveAsync ();
             }
 
             var cb = ProjectSelected;
@@ -143,8 +146,8 @@ namespace Toggl.Ross.ViewControllers
                 if (project != null) {
                     var cell = (ProjectCell)tableView.DequeueReusableCell (ProjectCellId, indexPath);
                     cell.Bind (project);
-                    if (project.Model != null && project.Model.Id != null) {
-                        var projectId = project.Model.Id.Value;
+                    if (project.Data != null && project.Data.Id != Guid.Empty) {
+                        var projectId = project.Data.Id;
                         cell.ToggleTasks = () => ToggleTasksExpanded (projectId);
                     } else {
                         cell.ToggleTasks = null;
@@ -152,10 +155,10 @@ namespace Toggl.Ross.ViewControllers
                     return cell;
                 }
 
-                var task = row as TaskModel;
-                if (task != null) {
+                var taskData = row as TaskData;
+                if (taskData != null) {
                     var cell = (TaskCell)tableView.DequeueReusableCell (TaskCellId, indexPath);
-                    cell.Bind (task);
+                    cell.Bind ((TaskModel)taskData);
 
                     var rows = GetCachedRows (GetSection (indexPath.Section));
                     cell.IsFirst = indexPath.Row < 1 || !(rows [indexPath.Row - 1] is TaskModel);
@@ -187,25 +190,26 @@ namespace Toggl.Ross.ViewControllers
             {
                 var m = GetRow (indexPath);
 
-                if (m is TaskModel) {
-                    controller.Finish ((TaskModel)m);
+                if (m is TaskData) {
+                    var data = (TaskData)m;
+                    controller.Finish ((TaskModel)data);
                 } else if (m is ProjectAndTaskView.Project) {
                     var wrap = (ProjectAndTaskView.Project)m;
                     if (wrap.IsNoProject) {
-                        controller.Finish (workspace: wrap.WorkspaceModel);
+                        controller.Finish (workspace: new WorkspaceModel (wrap.WorkspaceId));
                     } else if (wrap.IsNewProject) {
-                        var proj = wrap.Model;
+                        var proj = (ProjectModel)wrap.Data;
                         // Show create project dialog instead
                         var next = new NewProjectViewController (proj.Workspace, proj.Color) {
                             ProjectCreated = (p) => controller.Finish (project: p),
                         };
                         controller.NavigationController.PushViewController (next, true);
                     } else {
-                        controller.Finish (project: wrap.Model);
+                        controller.Finish (project: (ProjectModel)wrap.Data);
                     }
                 } else if (m is ProjectAndTaskView.Workspace) {
                     var wrap = (ProjectAndTaskView.Workspace)m;
-                    controller.Finish (workspace: wrap.Model);
+                    controller.Finish (workspace: (WorkspaceModel)wrap.Data);
                 }
 
                 tableView.DeselectRow (indexPath, true);
@@ -214,8 +218,8 @@ namespace Toggl.Ross.ViewControllers
             protected override IEnumerable<object> GetRows (string section)
             {
                 foreach (var row in DataView.Data) {
-                    var task = row as TaskModel;
-                    if (task != null && (task.ProjectId == null || !expandedProjects.Contains (task.ProjectId.Value)))
+                    var task = row as TaskData;
+                    if (task != null && !expandedProjects.Contains (task.ProjectId))
                         continue;
 
                     yield return row;
@@ -223,13 +227,13 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private class ProjectCell : BindableTableViewCell<ProjectAndTaskView.Project>
+        private class ProjectCell : ModelTableViewCell<ProjectAndTaskView.Project>
         {
-            private Subscription<ModelChangedMessage> subscriptionModelChanged;
             private UIView textContentView;
             private UILabel projectLabel;
             private UILabel clientLabel;
             private UIButton tasksButton;
+            private ProjectModel model;
 
             public ProjectCell (IntPtr handle) : base (handle)
             {
@@ -259,6 +263,16 @@ namespace Toggl.Ross.ViewControllers
                 textContentView.Layer.Mask = maskLayer;
 
                 tasksButton.TouchUpInside += OnTasksButtonTouchUpInside;
+            }
+
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null) {
+                    model = (ProjectModel)DataSource.Data;
+                }
+
+                base.OnDataSourceChanged ();
             }
 
             private void OnTasksButtonTouchUpInside (object sender, EventArgs e)
@@ -338,55 +352,39 @@ namespace Toggl.Ross.ViewControllers
                 return rect;
             }
 
-            protected override void Dispose (bool disposing)
+            protected override void ResetTrackedObservables ()
             {
-                if (disposing) {
-                    if (subscriptionModelChanged != null) {
-                        var bus = ServiceContainer.Resolve<MessageBus> ();
-                        bus.Unsubscribe (subscriptionModelChanged);
-                        subscriptionModelChanged = null;
+                Tracker.MarkAllStale ();
+
+                if (model != null) {
+                    Tracker.Add (model, HandleProjectPropertyChanged);
+
+                    if (model.Client != null) {
+                        Tracker.Add (model.Client, HandleClientPropertyChanged);
                     }
                 }
 
-                base.Dispose (disposing);
+                Tracker.ClearStale ();
             }
 
-            public override void WillMoveToSuperview (UIView newsuper)
+            private void HandleProjectPropertyChanged (string prop)
             {
-                base.WillMoveToSuperview (newsuper);
-
-                if (newsuper != null) {
-                    if (subscriptionModelChanged == null) {
-                        var bus = ServiceContainer.Resolve<MessageBus> ();
-                        subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> ((msg) => {
-                            if (Handle == IntPtr.Zero)
-                                return;
-
-                            OnModelChanged (msg);
-                        });
-                    }
-                } else {
-                    if (subscriptionModelChanged != null) {
-                        var bus = ServiceContainer.Resolve<MessageBus> ();
-                        bus.Unsubscribe (subscriptionModelChanged);
-                        subscriptionModelChanged = null;
-                    }
-                }
+                if (prop == ProjectModel.PropertyClient
+                    || prop == ProjectModel.PropertyName
+                    || prop == ProjectModel.PropertyColor)
+                    Rebind ();
             }
 
-            protected void OnModelChanged (ModelChangedMessage msg)
+            private void HandleClientPropertyChanged (string prop)
             {
-                if (msg.Model != DataSource.Model)
-                    return;
-
-                if (msg.PropertyName == ProjectModel.PropertyName
-                    || msg.PropertyName == ProjectModel.PropertyColor
-                    || msg.PropertyName == ProjectModel.PropertyClientId)
+                if (prop == ClientModel.PropertyName)
                     Rebind ();
             }
 
             protected override void Rebind ()
             {
+                ResetTrackedObservables ();
+
                 UIColor projectColor;
                 string projectName;
                 string clientName = String.Empty;
@@ -400,14 +398,15 @@ namespace Toggl.Ross.ViewControllers
                     projectColor = Color.LightGray;
                     projectName = "ProjectNewProject".Tr ();
                     projectLabel.Apply (Style.ProjectList.NewProjectLabel);
-                } else {
-                    var project = DataSource.Model;
-                    projectColor = UIColor.Clear.FromHex (project.GetHexColor ());
+                } else if (model != null) {
+                    projectColor = UIColor.Clear.FromHex (model.GetHexColor ());
 
-                    projectName = project.Name;
-                    clientName = project.Client != null ? project.Client.Name : String.Empty;
+                    projectName = model.Name;
+                    clientName = model.Client != null ? model.Client.Name : String.Empty;
                     taskCount = DataSource.Tasks.Count;
                     projectLabel.Apply (Style.ProjectList.ProjectLabel);
+                } else {
+                    return;
                 }
 
                 if (String.IsNullOrWhiteSpace (projectName)) {
@@ -485,18 +484,28 @@ namespace Toggl.Ross.ViewControllers
 
             protected override void Rebind ()
             {
+                ResetTrackedObservables ();
+
                 var taskName = DataSource.Name;
                 if (String.IsNullOrWhiteSpace (taskName))
                     taskName = "ProjectNoNameTask".Tr ();
                 nameLabel.Text = taskName;
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (msg.Model != DataSource)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (msg.PropertyName == TaskModel.PropertyName)
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTaskPropertyChanged);
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTaskPropertyChanged (string prop)
+            {
+                if (prop == TaskModel.PropertyName)
                     Rebind ();
             }
 
@@ -523,10 +532,11 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private class WorkspaceHeaderCell : BindableTableViewCell<ProjectAndTaskView.Workspace>
+        private class WorkspaceHeaderCell : ModelTableViewCell<ProjectAndTaskView.Workspace>
         {
             private const float HorizSpacing = 15f;
             private readonly UILabel nameLabel;
+            private WorkspaceModel model;
 
             public WorkspaceHeaderCell (IntPtr handle) : base (handle)
             {
@@ -536,6 +546,16 @@ namespace Toggl.Ross.ViewControllers
 
                 BackgroundView = new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
                 UserInteractionEnabled = false;
+            }
+
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null) {
+                    model = (WorkspaceModel)DataSource.Data;
+                }
+
+                base.OnDataSourceChanged ();
             }
 
             public override void LayoutSubviews ()
@@ -551,9 +571,30 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
+            protected override void ResetTrackedObservables ()
+            {
+                Tracker.MarkAllStale ();
+
+                if (model != null) {
+                    Tracker.Add (model, HandleClientPropertyChanged);
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == WorkspaceModel.PropertyName)
+                    Rebind ();
+            }
+
             protected override void Rebind ()
             {
-                nameLabel.Text = DataSource.Model.Name;
+                ResetTrackedObservables ();
+
+                if (model != null) {
+                    nameLabel.Text = model.Name;
+                }
             }
         }
     }

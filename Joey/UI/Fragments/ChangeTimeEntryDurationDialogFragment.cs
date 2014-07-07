@@ -59,25 +59,29 @@ namespace Toggl.Joey.UI.Fragments
         private Duration oldDuration;
         private Duration newDuration;
         private int digitsEntered;
+        private bool enabled;
 
         public override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
 
-            model = Model.ById<TimeEntryModel> (TimeEntryId);
-            if (model == null) {
+            LoadData ();
+        }
+
+        private async void LoadData ()
+        {
+            model = new TimeEntryModel (TimeEntryId);
+            await model.LoadAsync ();
+            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Dismiss ();
+            } else {
+                oldDuration = model.GetDuration ();
+                enabled = true;
             }
         }
 
         public override Dialog OnCreateDialog (Bundle state)
         {
-            if (model != null) {
-                oldDuration = model.GetDuration ();
-            } else {
-                oldDuration = Duration.Zero;
-            }
-
             var view = LayoutInflater.From (Activity)
                 .Inflate (Resource.Layout.ChangeTimeEntryDurationDialogFragment, null);
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.Roboto);
@@ -106,7 +110,7 @@ namespace Toggl.Joey.UI.Fragments
             return new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.ChangeTimeEntryDurationDialogTitle)
                 .SetView (view)
-                .SetNegativeButton (Resource.String.ChangeTimeEntryDurationDialogCancel, OnCancelClicked)
+                .SetNegativeButton (Resource.String.ChangeTimeEntryDurationDialogCancel, (IDialogInterfaceOnClickListener)null)
                 .SetPositiveButton (Resource.String.ChangeTimeEntryDurationDialogOk, OnOkClicked)
                 .Create ();
         }
@@ -128,6 +132,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void Rebind ()
         {
+            if (!enabled || DurationTextView == null)
+                return;
+
             var durationShown = digitsEntered > 0 ? newDuration : oldDuration;
             var durationText = durationShown.ToString ();
             var durationSpannable = new SpannableString (durationText);
@@ -173,7 +180,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnDeleteImageButtonClick (object sender, EventArgs e)
         {
-            if (digitsEntered < 1)
+            if (!enabled || digitsEntered < 1)
                 return;
             newDuration = newDuration.RemoveDigit ();
             if (newDuration == Duration.Zero) {
@@ -188,6 +195,9 @@ namespace Toggl.Joey.UI.Fragments
 
         void OnDeleteImageButtonLongClick (object sender, View.LongClickEventArgs e)
         {
+            if (!enabled)
+                return;
+
             newDuration = Duration.Zero;
             digitsEntered = 0;
             Rebind ();
@@ -195,7 +205,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnNumButtonClick (object sender, EventArgs e)
         {
-            if (digitsEntered > 3)
+            if (!enabled || digitsEntered > 3)
                 return;
 
             int num = Array.IndexOf (numButtons, sender);
@@ -209,6 +219,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnAdd5ButtonClick (object sender, EventArgs e)
         {
+            if (!enabled)
+                return;
+
             var duration = newDuration.AddMinutes (5);
             if (!duration.IsValid)
                 return;
@@ -220,6 +233,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnAdd30ButtonClick (object sender, EventArgs e)
         {
+            if (!enabled)
+                return;
+
             var duration = newDuration.AddMinutes (30);
             if (!duration.IsValid)
                 return;
@@ -229,14 +245,9 @@ namespace Toggl.Joey.UI.Fragments
             Rebind ();
         }
 
-        private void OnCancelClicked (object sender, DialogClickEventArgs e)
+        private async void OnOkClicked (object sender, DialogClickEventArgs e)
         {
-            Dismiss ();
-        }
-
-        private void OnOkClicked (object sender, DialogClickEventArgs e)
-        {
-            if (model != null) {
+            if (enabled && model != null) {
                 var duration = model.GetDuration ();
                 if (model.State == TimeEntryState.New) {
                     duration = new TimeSpan (newDuration.Hours, newDuration.Minutes, 0);
@@ -245,8 +256,8 @@ namespace Toggl.Joey.UI.Fragments
                     duration = new TimeSpan (0, newDuration.Hours, newDuration.Minutes, duration.Seconds, duration.Milliseconds);
                 }
                 model.SetDuration (duration);
+                await model.SaveAsync ();
             }
-            Dismiss ();
         }
     }
 }

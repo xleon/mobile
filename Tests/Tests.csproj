@@ -38,16 +38,36 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Test.cs" />
-    <Compile Include="Data\ModelTest.cs" />
-    <Compile Include="Data\ModelManagerTest.cs" />
-    <Compile Include="Data\RelatedModelsCollectionTest.cs" />
-    <Compile Include="Data\TimeEntryModelTest.cs" />
-    <Compile Include="Data\AttributeLookupCacheTest.cs" />
-    <Compile Include="Data\SqliteModelStoreTest.cs" />
     <Compile Include="Bugsnag\CombiningStreamTest.cs" />
     <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
-    <Compile Include="Data\ModelGraphTest.cs" />
     <Compile Include="MessageBusTest.cs" />
+    <Compile Include="Data\DataStoreTest.cs" />
+    <Compile Include="Data\Models\ModelTest.cs" />
+    <Compile Include="Data\Models\ClientModelTest.cs" />
+    <Compile Include="Data\Models\ProjectModelTest.cs" />
+    <Compile Include="Data\Models\ProjectUserModelTest.cs" />
+    <Compile Include="Data\Models\TagModelTest.cs" />
+    <Compile Include="Data\Models\TaskModelTest.cs" />
+    <Compile Include="Data\Models\TimeEntryModelTest.cs" />
+    <Compile Include="Data\Models\TimeEntryTagModelTest.cs" />
+    <Compile Include="Data\Models\UserModelTest.cs" />
+    <Compile Include="Data\Models\WorkspaceModelTest.cs" />
+    <Compile Include="Data\Models\WorkspaceUserModelTest.cs" />
+    <Compile Include="Data\Json\Converters\ClientJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\ProjectJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\ProjectUserJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\WorkspaceUserJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\TagJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\TaskJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\WorkspaceJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\UserJsonConverterTest.cs" />
+    <Compile Include="Data\Json\Converters\TimeEntryJsonConverterTest.cs" />
+    <Compile Include="Data\ForeignRelationManagerTest.cs" />
+    <Compile Include="Data\RelatedDataGraphTest.cs" />
+    <Compile Include="MainThreadSynchronizationContext.cs" />
+    <Compile Include="Views\TimeEntryTagsViewTest.cs" />
+    <Compile Include="Views\DataViewTest.cs" />
+    <Compile Include="Data\ActiveTimeEntryManagerTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -58,10 +78,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Data\RelatedModelsCollectionTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Bugsnag\" />
     <Folder Include="Views\" />
+    <Folder Include="Data\Models\" />
+    <Folder Include="Data\Json\" />
+    <Folder Include="Data\Json\Converters\" />
   </ItemGroup>
 </Project>

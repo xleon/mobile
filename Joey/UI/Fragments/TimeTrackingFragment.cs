@@ -1,10 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
 using Android.Content;
 using Android.OS;
 using Android.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -55,7 +55,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // Make sure that the user will see newest data when they start the activity
-            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
         }
 
         public override void OnSaveInstanceState (Bundle outState)
@@ -73,7 +73,7 @@ namespace Toggl.Joey.UI.Fragments
             ToggleTimerDuration ();
 
             // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
-            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Auto);
+            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Auto);
         }
 
         public override void OnResume ()
@@ -129,9 +129,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnUserTimeEntryStateChange (UserTimeEntryStateChangeMessage msg)
         {
-            if (msg.Model.State == TimeEntryState.Running) {
+            if (msg.Data.State == TimeEntryState.Running) {
                 viewPager.CurrentItem = MainPagerAdapter.EditPosition;
-            } else if (msg.Model.State == TimeEntryState.Finished
+            } else if (msg.Data.State == TimeEntryState.Finished
                        && viewPager.CurrentItem == MainPagerAdapter.EditPosition) {
                 viewPager.CurrentItem = MainPagerAdapter.RecentPosition;
             }
@@ -161,11 +161,8 @@ namespace Toggl.Joey.UI.Fragments
             public const int RecentPosition = 1;
             public const int LogPosition = 2;
             private Context ctx;
-            private TimeEntryModel currentTimeEntry;
-            #pragma warning disable 0414
-            private readonly Subscription<ModelChangedMessage> subscriptionModelChanged;
-            private readonly Subscription<SettingChangedMessage> subscriptionSettingChanged;
-            #pragma warning restore 0414
+            private ActiveTimeEntryManager timeEntryManager;
+            private Subscription<SettingChangedMessage> subscriptionSettingChanged;
 
             public readonly EditCurrentTimeEntryFragment EditFragment = new EditCurrentTimeEntryFragment ();
             public readonly RecentTimeEntriesListFragment RecentFragment = new RecentTimeEntriesListFragment ();
@@ -175,39 +172,39 @@ namespace Toggl.Joey.UI.Fragments
             {
                 this.ctx = ctx;
 
-                currentTimeEntry = TimeEntryModel.FindRunning () ?? TimeEntryModel.GetDraft ();
+                timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+                timeEntryManager.PropertyChanged += OnTimeEntryManagerPropertyChanged;
 
                 var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
                 subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
             }
 
-            private void OnModelChanged (ModelChangedMessage msg)
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    if (subscriptionSettingChanged != null) {
+                        bus.Unsubscribe (subscriptionSettingChanged);
+                        subscriptionSettingChanged = null;
+                    }
+
+                    if (timeEntryManager != null) {
+                        timeEntryManager.PropertyChanged -= OnTimeEntryManagerPropertyChanged;
+                        timeEntryManager = null;
+                    }
+                }
+
+                base.Dispose (disposing);
+            }
+
+            private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero)
                     return;
 
-                if (msg.Model == currentTimeEntry) {
-                    // Listen for changes regarding current running entry
-                    if (msg.PropertyName == TimeEntryModel.PropertyState
-                        || msg.PropertyName == TimeEntryModel.PropertyStopTime
-                        || msg.PropertyName == TimeEntryModel.PropertyDeletedAt) {
-                        if (currentTimeEntry.State == TimeEntryState.Finished || currentTimeEntry.DeletedAt.HasValue) {
-                            currentTimeEntry = TimeEntryModel.GetDraft ();
-                        }
-                        NotifyDataSetChanged ();
-                    }
-                } else if (msg.Model is TimeEntryModel) {
-                    // When some other time entry becomes IsRunning we need to switch over to that
-                    if (msg.PropertyName == TimeEntryModel.PropertyState
-                        || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
-                        var entry = (TimeEntryModel)msg.Model;
-                        if (entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
-                            currentTimeEntry = entry;
-                            NotifyDataSetChanged ();
-                        }
-                    }
+                if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
+                    NotifyDataSetChanged ();
                 }
             }
 
@@ -232,10 +229,10 @@ namespace Toggl.Joey.UI.Fragments
 
                 switch (position) {
                 case EditPosition:
-                    if (currentTimeEntry != null) {
-                        if (currentTimeEntry.State == TimeEntryState.Running) {
+                    if (timeEntryManager != null && timeEntryManager.Active != null) {
+                        if (timeEntryManager.Active.State == TimeEntryState.Running) {
                             return res.GetTextFormatted (Resource.String.TimeTrackingRunningTab);
-                        } else if (currentTimeEntry.State == TimeEntryState.New && currentTimeEntry.StopTime.HasValue) {
+                        } else if (timeEntryManager.Active.State == TimeEntryState.New && timeEntryManager.Active.StopTime.HasValue) {
                             return res.GetTextFormatted (Resource.String.TimeTrackingManualTab);
                         }
                     }
@@ -267,13 +264,6 @@ namespace Toggl.Joey.UI.Fragments
                     throw new InvalidOperationException ("Unknown tab position");
                 }
             }
-
-            private static bool ForCurrentUser (TimeEntryModel model)
-            {
-                var authManager = ServiceContainer.Resolve<AuthManager> ();
-                return model.UserId == authManager.UserId;
-            }
         }
     }
 }
-

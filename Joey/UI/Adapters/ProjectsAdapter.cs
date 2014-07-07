@@ -4,7 +4,7 @@ using System.Linq;
 using Android.Graphics;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Joey.UI.Utils;
@@ -52,7 +52,7 @@ namespace Toggl.Joey.UI.Adapters
                     return ViewTypeNoProject;
                 }
                 return ViewTypeProject;
-            } else if (obj is TaskModel) {
+            } else if (obj is TaskData) {
                 return ViewTypeTask;
             } else if (obj is ProjectAndTaskView.Workspace) {
                 return ViewTypeWorkspace;
@@ -104,6 +104,9 @@ namespace Toggl.Joey.UI.Adapters
                 var holder = (NewProjectListItemHolder)view.Tag;
                 holder.Bind ((ProjectAndTaskView.Project)item);
             } else if (viewType == ViewTypeTask) {
+                var data = (TaskData)item;
+                var model = (TaskModel)data;
+
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.ProjectListTaskItem, parent, false);
@@ -111,7 +114,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (TaskListItemHolder)view.Tag;
-                holder.Bind ((TaskModel)item);
+                holder.Bind (model);
             } else {
                 throw new NotSupportedException ("Got an invalid view type: {0}" + viewType);
             }
@@ -128,14 +131,18 @@ namespace Toggl.Joey.UI.Adapters
 
         private class WorkspaceListItemHolder : ModelViewHolder<ProjectAndTaskView.Workspace>
         {
+            private WorkspaceModel model;
+
             public TextView WorkspaceTextView { get; private set; }
 
-            private WorkspaceModel Model {
-                get {
-                    if (DataSource == null)
-                        return null;
-                    return DataSource.Model;
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null) {
+                    model = (WorkspaceModel)DataSource.Data;
                 }
+
+                base.OnDataSourceChanged ();
             }
 
             public WorkspaceListItemHolder (View root) : base (root)
@@ -143,31 +150,40 @@ namespace Toggl.Joey.UI.Adapters
                 WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView).SetFont (Font.RobotoMedium);
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (Model == null)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (Model == msg.Model) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor
-                        || msg.PropertyName == ProjectModel.PropertyClientId)
-                        Rebind ();
+                if (model != null) {
+                    Tracker.Add (model, HandleWorkspacePropertyChanged);
                 }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleWorkspacePropertyChanged (string prop)
+            {
+                if (prop == WorkspaceModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
-                if (Model == null)
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+                ResetTrackedObservables ();
+                if (model == null)
                     return;
 
-                WorkspaceTextView.Text = (Model.Name ?? String.Empty).ToUpper ();
+                WorkspaceTextView.Text = (model.Name ?? String.Empty).ToUpper ();
             }
         }
 
         private class ProjectListItemHolder : ModelViewHolder<ProjectAndTaskView.Project>
         {
             private readonly ExpandableProjectsView dataView;
+            private ProjectModel model;
 
             public View ColorView { get; private set; }
 
@@ -197,35 +213,59 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnTasksFrameLayoutClick (object sender, EventArgs e)
             {
-                if (DataSource == null)
+                if (model == null)
                     return;
-                dataView.ToggleProjectTasks (Model);
+                dataView.ToggleProjectTasks (model.Id);
             }
 
-            private ProjectModel Model {
-                get {
-                    if (DataSource == null)
-                        return null;
-                    return DataSource.Model;
-                }
-            }
-
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void OnDataSourceChanged ()
             {
-                if (Model == null)
-                    return;
-
-                if (Model == msg.Model) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor
-                        || msg.PropertyName == ProjectModel.PropertyClientId)
-                        Rebind ();
+                model = null;
+                if (DataSource != null) {
+                    model = (ProjectModel)DataSource.Data;
                 }
+
+                base.OnDataSourceChanged ();
+            }
+
+            protected override void ResetTrackedObservables ()
+            {
+                Tracker.MarkAllStale ();
+
+                if (model != null) {
+                    Tracker.Add (model, HandleProjectPropertyChanged);
+
+                    if (model.Client != null) {
+                        Tracker.Add (model.Client, HandleClientPropertyChanged);
+                    }
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleProjectPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyClient
+                    || prop == ProjectModel.PropertyColor
+                    || prop == ProjectModel.PropertyName)
+                    Rebind ();
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
-                if (Model == null) {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
+                ResetTrackedObservables ();
+
+                if (model == null) {
                     ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
                     ProjectTextView.SetText (Resource.String.ProjectsNoProject);
                     ClientTextView.Visibility = ViewStates.Gone;
@@ -233,18 +273,18 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var color = Color.ParseColor (Model.GetHexColor ());
+                var color = Color.ParseColor (model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);
-                ProjectTextView.Text = Model.Name;
-                if (Model.Client != null) {
-                    ClientTextView.Text = Model.Client.Name;
+                ProjectTextView.Text = model.Name;
+                if (model.Client != null) {
+                    ClientTextView.Text = model.Client.Name;
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
                 TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
-                var expanded = dataView.AreProjectTasksVisible (Model);
+                var expanded = dataView.AreProjectTasksVisible (model.Id);
                 TasksTextView.Visibility = expanded ? ViewStates.Invisible : ViewStates.Visible;
                 TasksImageView.Visibility = !expanded ? ViewStates.Invisible : ViewStates.Visible;
             }
@@ -281,17 +321,21 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
             }
 
-            private ProjectModel Model {
-                get {
-                    if (DataSource == null)
-                        return null;
-                    return DataSource.Model;
+            private ProjectModel model;
+
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null && DataSource.Data != null) {
+                    model = new ProjectModel (DataSource.Data);
                 }
+
+                base.OnDataSourceChanged ();
             }
 
             protected override void Rebind ()
             {
-                var color = Color.ParseColor (Model.GetHexColor ());
+                var color = Color.ParseColor (model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);
                 ProjectTextView.SetText (Resource.String.ProjectsNewProject);
             }
@@ -301,30 +345,36 @@ namespace Toggl.Joey.UI.Adapters
         {
             public TextView TaskTextView { get; private set; }
 
-            public TaskModel Model {
-                get { return DataSource; }
-            }
-
             public TaskListItemHolder (View root) : base (root)
             {
                 TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoLight);
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (DataSource == null)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (DataSource == msg.Model) {
-                    if (msg.PropertyName == ProjectModel.PropertyName
-                        || msg.PropertyName == ProjectModel.PropertyColor
-                        || msg.PropertyName == ProjectModel.PropertyClientId)
-                        Rebind ();
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTaskPropertyChanged);
                 }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTaskPropertyChanged (string prop)
+            {
+                if (prop == TaskModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
+                ResetTrackedObservables ();
+
                 if (DataSource == null)
                     return;
 
@@ -336,7 +386,7 @@ namespace Toggl.Joey.UI.Adapters
 
         class ExpandableProjectsView : IDataView<object>, IDisposable
         {
-            private readonly HashSet<Guid?> expandedProjectIds = new HashSet<Guid?> ();
+            private readonly HashSet<Guid> expandedProjectIds = new HashSet<Guid> ();
             private ProjectAndTaskView dataView;
 
             public ExpandableProjectsView ()
@@ -359,17 +409,17 @@ namespace Toggl.Joey.UI.Adapters
                 OnUpdated ();
             }
 
-            public void ToggleProjectTasks (ProjectModel model)
+            public void ToggleProjectTasks (Guid projectId)
             {
-                if (!expandedProjectIds.Remove (model.Id)) {
-                    expandedProjectIds.Add (model.Id);
+                if (!expandedProjectIds.Remove (projectId)) {
+                    expandedProjectIds.Add (projectId);
                 }
                 OnUpdated ();
             }
 
-            public bool AreProjectTasksVisible (ProjectModel model)
+            public bool AreProjectTasksVisible (Guid projectId)
             {
-                return expandedProjectIds.Contains (model.Id);
+                return expandedProjectIds.Contains (projectId);
             }
 
             public event EventHandler Updated;
@@ -399,7 +449,7 @@ namespace Toggl.Joey.UI.Adapters
                 get {
                     if (dataView != null) {
                         foreach (var obj in dataView.Data) {
-                            var task = obj as TaskModel;
+                            var task = obj as TaskData;
                             if (task != null) {
                                 if (!expandedProjectIds.Contains (task.ProjectId))
                                     continue;

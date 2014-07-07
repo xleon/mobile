@@ -7,7 +7,8 @@ namespace Toggl.Phoebe.Net
         public enum Reason
         {
             InvalidCredentials,
-            NetworkError
+            NetworkError,
+            SystemError
         }
 
         private readonly Reason reason;

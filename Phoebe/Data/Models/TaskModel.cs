@@ -1,135 +1,146 @@
 using System;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class TaskModel : Model
+    public class TaskModel : Model<TaskData>
     {
         private static string GetPropertyName<T> (Expression<Func<TaskModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        private readonly int workspaceRelationId;
-        private readonly int projectRelationId;
+        public static new readonly string PropertyId = Model<TaskData>.PropertyId;
+        public static readonly string PropertyName = GetPropertyName (m => m.Name);
+        public static readonly string PropertyIsActive = GetPropertyName (m => m.IsActive);
+        public static readonly string PropertyEstimate = GetPropertyName (m => m.Estimate);
+        public static readonly string PropertyWorkspace = GetPropertyName (m => m.Workspace);
+        public static readonly string PropertyProject = GetPropertyName (m => m.Project);
 
         public TaskModel ()
         {
-            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
-            projectRelationId = ForeignRelation<ProjectModel> (PropertyProjectId, PropertyProject);
         }
 
-        #region Data
+        public TaskModel (TaskData data) : base (data)
+        {
+        }
 
-        private string name;
-        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
+        public TaskModel (Guid id) : base (id)
+        {
+        }
 
-        [JsonProperty ("name")]
+        protected override TaskData Duplicate (TaskData data)
+        {
+            return new TaskData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+            if (Data.WorkspaceId == Guid.Empty) {
+                throw new ValidationException ("Workspace must be set for Task model.");
+            }
+            if (Data.ProjectId == Guid.Empty) {
+                throw new ValidationException ("Project must be set for Task model.");
+            }
+        }
+
+        protected override void DetectChangedProperties (TaskData oldData, TaskData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.Name != newData.Name)
+                OnPropertyChanged (PropertyName);
+            if (oldData.IsActive != newData.IsActive)
+                OnPropertyChanged (PropertyIsActive);
+            if (oldData.Estimate != newData.Estimate)
+                OnPropertyChanged (PropertyEstimate);
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+                OnPropertyChanged (PropertyWorkspace);
+            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance)
+                OnPropertyChanged (PropertyProject);
+        }
+
         public string Name {
             get {
-                lock (SyncRoot) {
-                    return name;
-                }
+                EnsureLoaded ();
+                return Data.Name;
             }
             set {
-                lock (SyncRoot) {
-                    if (name == value)
-                        return;
+                if (Name == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyName, delegate {
-                        name = value;
-                    });
-                }
+                MutateData (data => data.Name = value);
             }
         }
 
-        private bool active;
-        public static readonly string PropertyIsActive = GetPropertyName ((m) => m.IsActive);
-
-        [JsonProperty ("active")]
         public bool IsActive {
             get {
-                lock (SyncRoot) {
-                    return active;
-                }
+                EnsureLoaded ();
+                return Data.IsActive;
             }
             set {
-                lock (SyncRoot) {
-                    if (active == value)
-                        return;
+                if (IsActive == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyIsActive, delegate {
-                        active = value;
-                    });
-                }
+                MutateData (data => data.IsActive = value);
             }
         }
 
-        private long estimate;
-        public static readonly string PropertyEstimate = GetPropertyName ((m) => m.Estimate);
-
-        [JsonProperty ("estimated_seconds")]
         public long Estimate {
             get {
-                lock (SyncRoot) {
-                    return estimate;
-                }
+                EnsureLoaded ();
+                return Data.Estimate;
             }
             set {
-                lock (SyncRoot) {
-                    if (estimate == value)
-                        return;
+                if (Estimate == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyEstimate, delegate {
-                        estimate = value;
-                    });
-                }
+                MutateData (data => data.Estimate = value);
             }
         }
 
-        #endregion
+        private ForeignRelation<WorkspaceModel> workspace;
+        private ForeignRelation<ProjectModel> project;
 
-        #region Relations
+        protected override void InitializeRelations ()
+        {
+            base.InitializeRelations ();
 
-        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
+            workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new WorkspaceModel (id),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
+            };
 
-        public Guid? WorkspaceId {
-            get { return GetForeignId (workspaceRelationId); }
-            set { SetForeignId (workspaceRelationId, value); }
+            project = new ForeignRelation<ProjectModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new ProjectModel (id),
+                Changed = m => MutateData (data => data.ProjectId = m.Id),
+            };
         }
 
-        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        [ModelRelation]
         public WorkspaceModel Workspace {
-            get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
-            set { SetForeignModel (workspaceRelationId, value); }
+            get { return workspace.Get (Data.WorkspaceId); }
+            set { workspace.Set (value); }
         }
 
-        public static readonly string PropertyProjectId = GetPropertyName ((m) => m.ProjectId);
-
-        public Guid? ProjectId {
-            get { return GetForeignId (projectRelationId); }
-            set { SetForeignId (projectRelationId, value); }
-        }
-
-        public static readonly string PropertyProject = GetPropertyName ((m) => m.Project);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("pid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        [ModelRelation]
         public ProjectModel Project {
-            get { return GetForeignModel<ProjectModel> (projectRelationId); }
-            set { SetForeignModel (projectRelationId, value); }
+            get { return project.Get (Data.ProjectId); }
+            set { project.Set (value); }
         }
 
-        public IModelQuery<TimeEntryModel> TimeEntries {
-            get { return Model.Query<TimeEntryModel> ((m) => m.TaskId == Id); }
+        public static explicit operator TaskModel (TaskData data)
+        {
+            if (data == null)
+                return null;
+            return new TaskModel (data);
         }
 
-        #endregion
+        public static implicit operator TaskData (TaskModel model)
+        {
+            return model.Data;
+        }
     }
 }

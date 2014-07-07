@@ -1,463 +1,271 @@
 using System;
-using System.Linq;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
-using System.Collections.Generic;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class UserModel : Model
+    public class UserModel : Model<UserData>
     {
         private static string GetPropertyName<T> (Expression<Func<UserModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        private readonly int defaultWorkspaceRelationId;
-        private readonly RelatedModelsCollection<WorkspaceModel, WorkspaceUserModel, WorkspaceModel, UserModel> workspacesCollection;
-        private readonly RelatedModelsCollection<ProjectModel, ProjectUserModel, ProjectModel, UserModel> projectsCollection;
+        public static new readonly string PropertyId = Model<UserData>.PropertyId;
+        public static readonly string PropertyName = GetPropertyName (m => m.Name);
+        public static readonly string PropertyEmail = GetPropertyName (m => m.Email);
+        public static readonly string PropertyStartOfWeek = GetPropertyName (m => m.StartOfWeek);
+        public static readonly string PropertyDateFormat = GetPropertyName (m => m.DateFormat);
+        public static readonly string PropertyTimeFormat = GetPropertyName (m => m.TimeFormat);
+        public static readonly string PropertyImageUrl = GetPropertyName (m => m.ImageUrl);
+        public static readonly string PropertyLocale = GetPropertyName (m => m.Locale);
+        public static readonly string PropertyTimezone = GetPropertyName (m => m.Timezone);
+        public static readonly string PropertySendProductEmails = GetPropertyName (m => m.SendProductEmails);
+        public static readonly string PropertySendTimerNotifications = GetPropertyName (m => m.SendTimerNotifications);
+        public static readonly string PropertySendWeeklyReport = GetPropertyName (m => m.SendWeeklyReport);
+        public static readonly string PropertyTrackingMode = GetPropertyName (m => m.TrackingMode);
+        public static readonly string PropertyDefaultWorkspace = GetPropertyName (m => m.DefaultWorkspace);
 
         public UserModel ()
         {
-            defaultWorkspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyDefaultWorkspaceId, PropertyDefaultWorkspace);
-            workspacesCollection = new RelatedModelsCollection<WorkspaceModel, WorkspaceUserModel, WorkspaceModel, UserModel> (this);
-            projectsCollection = new RelatedModelsCollection<ProjectModel, ProjectUserModel, ProjectModel, UserModel> (this);
         }
 
-        public IEnumerable<ProjectModel> GetAvailableProjects (WorkspaceModel workspace = null)
+        public UserModel (UserData data) : base (data)
         {
-            lock (SyncRoot) {
-                workspace = workspace ?? DefaultWorkspace;
-                if (workspace == null) {
-                    throw new ArgumentNullException ("workspace", "Must specify a workspace, when user has no default one.");
-                }
+        }
 
-                IEnumerable<ProjectModel> projects;
-                projects = workspace.Projects.NotDeleted ().Where ((m) => m.IsActive && m.IsPrivate != true);
-                projects = projects.Union (Projects.Select ((m) => m.From)
-                    .Where ((m) => m != null && m.IsActive && m.WorkspaceId == workspace.Id));
-                return projects.OrderBy ((m) => m.Name).ToList ();
+        public UserModel (Guid id) : base (id)
+        {
+        }
+
+        protected override UserData Duplicate (UserData data)
+        {
+            return new UserData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+            if (Data.DefaultWorkspaceId == Guid.Empty) {
+                throw new ValidationException ("DefaultWorkspace must be set for User model.");
             }
         }
 
-        public IEnumerable<ProjectModel> GetAllAvailableProjects ()
+        protected override void DetectChangedProperties (UserData oldData, UserData newData)
         {
-            lock (SyncRoot) {
-                var projectIds = Model.Query<ProjectUserModel> (m => m.ToId == Id && m.FromId != null)
-                    .NotDeleted ()
-                    .Select (m => m.FromId)
-                    .ToList ();
-
-                return Model.Query<ProjectModel> (m => m.IsActive)
-                    .Where (m => m.IsPrivate == false || projectIds.Contains (m.Id))
-                    .NotDeleted ()
-                    .OrderBy (m => m.Name)
-                    .ToList ();
-            }
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.Name != newData.Name)
+                OnPropertyChanged (PropertyName);
+            if (oldData.Email != newData.Email)
+                OnPropertyChanged (PropertyEmail);
+            if (oldData.StartOfWeek != newData.StartOfWeek)
+                OnPropertyChanged (PropertyStartOfWeek);
+            if (oldData.DateFormat != newData.DateFormat)
+                OnPropertyChanged (PropertyDateFormat);
+            if (oldData.TimeFormat != newData.TimeFormat)
+                OnPropertyChanged (PropertyTimeFormat);
+            if (oldData.ImageUrl != newData.ImageUrl)
+                OnPropertyChanged (PropertyImageUrl);
+            if (oldData.Locale != newData.Locale)
+                OnPropertyChanged (PropertyLocale);
+            if (oldData.Timezone != newData.Timezone)
+                OnPropertyChanged (PropertyTimezone);
+            if (oldData.SendProductEmails != newData.SendProductEmails)
+                OnPropertyChanged (PropertySendProductEmails);
+            if (oldData.SendTimerNotifications != newData.SendTimerNotifications)
+                OnPropertyChanged (PropertySendTimerNotifications);
+            if (oldData.SendWeeklyReport != newData.SendWeeklyReport)
+                OnPropertyChanged (PropertySendWeeklyReport);
+            if (oldData.TrackingMode != newData.TrackingMode)
+                OnPropertyChanged (PropertyTrackingMode);
+            if (oldData.DefaultWorkspaceId != newData.DefaultWorkspaceId || defaultWorkspace.IsNewInstance)
+                OnPropertyChanged (PropertyDefaultWorkspace);
         }
 
-        #region Data
-
-        private string name;
-        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
-
-        [JsonProperty ("fullname")]
         public string Name {
             get {
-                lock (SyncRoot) {
-                    return name;
-                }
+                EnsureLoaded ();
+                return Data.Name;
             }
             set {
-                lock (SyncRoot) {
-                    if (name == value)
-                        return;
+                if (Name == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyName, delegate {
-                        name = value;
-                    });
-                }
+                MutateData (data => data.Name = value);
             }
         }
 
-        private string email;
-        public static readonly string PropertyEmail = GetPropertyName ((m) => m.Email);
-
-        [JsonProperty ("email")]
         public string Email {
             get {
-                lock (SyncRoot) {
-                    return email;
-                }
+                EnsureLoaded ();
+                return Data.Email;
             }
             set {
-                lock (SyncRoot) {
-                    if (email == value)
-                        return;
+                if (Email == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyEmail, delegate {
-                        email = value;
-                    });
-                }
+                MutateData (data => data.Email = value);
             }
         }
 
-        private string password;
-        public static readonly string PropertyPassword = GetPropertyName ((m) => m.Password);
-
-        [JsonProperty ("password", NullValueHandling = NullValueHandling.Include)]
-        [SQLite.Ignore]
-        public string Password {
-            get {
-                lock (SyncRoot) {
-                    return password;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (password == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyPassword, delegate {
-                        password = value;
-                    });
-                }
-            }
-        }
-
-        private string googleAccessToken;
-        public static readonly string PropertyGoogleAccessToken = GetPropertyName ((m) => m.GoogleAccessToken);
-
-        [JsonProperty ("google_access_token", NullValueHandling = NullValueHandling.Ignore)]
-        [SQLite.Ignore]
-        public string GoogleAccessToken {
-            get {
-                lock (SyncRoot) {
-                    return googleAccessToken;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (googleAccessToken == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyGoogleAccessToken, delegate {
-                        googleAccessToken = value;
-                    });
-                }
-            }
-        }
-
-        private string apiToken;
-        public static readonly string PropertyApiToken = GetPropertyName ((m) => m.ApiToken);
-
-        [DontDirty]
-        [JsonProperty ("api_token", NullValueHandling = NullValueHandling.Ignore)]
-        [SQLite.Ignore]
-        public string ApiToken {
-            get {
-                lock (SyncRoot) {
-                    return apiToken;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (apiToken == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyApiToken, delegate {
-                        apiToken = value;
-                    });
-                }
-            }
-        }
-
-        private DayOfWeek startOfWeek;
-        public static readonly string PropertyStartOfWeek = GetPropertyName ((m) => m.StartOfWeek);
-
-        [JsonProperty ("beginning_of_week")]
         public DayOfWeek StartOfWeek {
             get {
-                lock (SyncRoot) {
-                    return startOfWeek;
-                }
+                EnsureLoaded ();
+                return Data.StartOfWeek;
             }
             set {
-                lock (SyncRoot) {
-                    if (startOfWeek == value)
-                        return;
+                if (StartOfWeek == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyStartOfWeek, delegate {
-                        startOfWeek = value;
-                    });
-                }
+                MutateData (data => data.StartOfWeek = value);
             }
         }
 
-        private string dateFormat;
-        public static readonly string PropertyDateFormat = GetPropertyName ((m) => m.DateFormat);
-
-        [JsonProperty ("date_format")]
         public string DateFormat {
             get {
-                lock (SyncRoot) {
-                    return dateFormat;
-                }
+                EnsureLoaded ();
+                return Data.DateFormat;
             }
             set {
-                lock (SyncRoot) {
-                    if (dateFormat == value)
-                        return;
+                if (DateFormat == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyDateFormat, delegate {
-                        dateFormat = value;
-                    });
-                }
+                MutateData (data => data.DateFormat = value);
             }
         }
 
-        private string timeFormat;
-        public static readonly string PropertyTimeFormat = GetPropertyName ((m) => m.TimeFormat);
-
-        [JsonProperty ("timeofday_format")]
         public string TimeFormat {
             get {
-                lock (SyncRoot) {
-                    return timeFormat;
-                }
+                EnsureLoaded ();
+                return Data.TimeFormat;
             }
             set {
-                lock (SyncRoot) {
-                    if (timeFormat == value)
-                        return;
+                if (TimeFormat == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyTimeFormat, delegate {
-                        timeFormat = value;
-                    });
-                }
+                MutateData (data => data.TimeFormat = value);
             }
         }
 
-        private string imageUrl;
-        public static readonly string PropertyImageUrl = GetPropertyName ((m) => m.ImageUrl);
-
-        [JsonProperty ("image_url")]
         public string ImageUrl {
             get {
-                lock (SyncRoot) {
-                    return imageUrl;
-                }
+                EnsureLoaded ();
+                return Data.ImageUrl;
             }
             set {
-                lock (SyncRoot) {
-                    if (imageUrl == value)
-                        return;
+                if (ImageUrl == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyImageUrl, delegate {
-                        imageUrl = value;
-                    });
-                }
+                MutateData (data => data.ImageUrl = value);
             }
         }
 
-        private string locale;
-        public static readonly string PropertyLocale = GetPropertyName ((m) => m.Locale);
-
-        [JsonProperty ("language")]
         public string Locale {
             get {
-                lock (SyncRoot) {
-                    return locale;
-                }
+                EnsureLoaded ();
+                return Data.Locale;
             }
             set {
-                lock (SyncRoot) {
-                    if (locale == value)
-                        return;
+                if (Locale == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyLocale, delegate {
-                        locale = value;
-                    });
-                }
+                MutateData (data => data.Locale = value);
             }
         }
 
-        private string timezone;
-        public static readonly string PropertyTimezone = GetPropertyName ((m) => m.Timezone);
-
-        [JsonProperty ("timezone")]
         public string Timezone {
             get {
-                lock (SyncRoot) {
-                    return timezone;
-                }
+                EnsureLoaded ();
+                return Data.Timezone;
             }
             set {
-                lock (SyncRoot) {
-                    if (timezone == value)
-                        return;
+                if (Timezone == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyTimezone, delegate {
-                        timezone = value;
-                    });
-                }
+                MutateData (data => data.Timezone = value);
             }
         }
 
-        private bool sendProductEmails;
-        public static readonly string PropertySendProductEmails = GetPropertyName ((m) => m.SendProductEmails);
-
-        [JsonProperty ("send_product_emails")]
         public bool SendProductEmails {
             get {
-                lock (SyncRoot) {
-                    return sendProductEmails;
-                }
+                EnsureLoaded ();
+                return Data.SendProductEmails;
             }
             set {
-                lock (SyncRoot) {
-                    if (sendProductEmails == value)
-                        return;
+                if (SendProductEmails == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertySendProductEmails, delegate {
-                        sendProductEmails = value;
-                    });
-                }
+                MutateData (data => data.SendProductEmails = value);
             }
         }
 
-        private bool sendTimerNotifications;
-        public static readonly string PropertySendTimerNotifications = GetPropertyName ((m) => m.SendTimerNotifications);
-
-        [JsonProperty ("send_timer_notifications")]
         public bool SendTimerNotifications {
             get {
-                lock (SyncRoot) {
-                    return sendTimerNotifications;
-                }
+                EnsureLoaded ();
+                return Data.SendTimerNotifications;
             }
             set {
-                lock (SyncRoot) {
-                    if (sendTimerNotifications == value)
-                        return;
+                if (SendTimerNotifications == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertySendTimerNotifications, delegate {
-                        sendTimerNotifications = value;
-                    });
-                }
+                MutateData (data => data.SendTimerNotifications = value);
             }
         }
 
-        private bool sendWeeklyReport;
-        public static readonly string PropertySendWeeklyReport = GetPropertyName ((m) => m.SendWeeklyReport);
-
-        [JsonProperty ("send_weekly_report")]
         public bool SendWeeklyReport {
             get {
-                lock (SyncRoot) {
-                    return sendWeeklyReport;
-                }
+                EnsureLoaded ();
+                return Data.SendWeeklyReport;
             }
             set {
-                lock (SyncRoot) {
-                    if (sendWeeklyReport == value)
-                        return;
+                if (SendWeeklyReport == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertySendWeeklyReport, delegate {
-                        sendWeeklyReport = value;
-                    });
-                }
+                MutateData (data => data.SendWeeklyReport = value);
             }
         }
-
-        private TrackingMode trackingMode = TrackingMode.StartNew;
-        public static readonly string PropertyTrackingMode = GetPropertyName ((m) => m.TrackingMode);
 
         public TrackingMode TrackingMode {
             get {
-                lock (SyncRoot) {
-                    return trackingMode;
-                }
+                EnsureLoaded ();
+                return Data.TrackingMode;
             }
             set {
-                lock (SyncRoot) {
-                    if (trackingMode == value)
-                        return;
+                if (TrackingMode == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyTrackingMode, delegate {
-                        trackingMode = value;
-                    });
-                }
+                MutateData (data => data.TrackingMode = value);
             }
         }
 
-        [JsonProperty ("store_start_and_stop_time")]
-        private bool StoreStartAndStopTime {
-            get { return TrackingMode == TrackingMode.StartNew; }
-            set { TrackingMode = value ? TrackingMode.StartNew : TrackingMode.Continue; }
+        private ForeignRelation<WorkspaceModel> defaultWorkspace;
+
+        protected override void InitializeRelations ()
+        {
+            base.InitializeRelations ();
+
+            defaultWorkspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new WorkspaceModel (id),
+                Changed = m => MutateData (data => data.DefaultWorkspaceId = m.Id),
+            };
         }
 
-        private string createdWith;
-        public static readonly string PropertyCreatedWith = GetPropertyName ((m) => m.CreatedWith);
-
-        [JsonProperty ("created_with")]
-        [SQLite.Ignore]
-        /// <summary>
-        /// Gets or sets the created with. Created with should be automatically set by <see cref="ITogglClient"/>
-        /// implementation before sending data to server.
-        /// </summary>
-        /// <value>The created with string.</value>
-        public string CreatedWith {
-            get {
-                lock (SyncRoot) {
-                    return createdWith;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (createdWith == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyCreatedWith, delegate {
-                        createdWith = value;
-                    });
-                }
-            }
-        }
-
-        #endregion
-
-        #region Relations
-
-        public static readonly string PropertyDefaultWorkspaceId = GetPropertyName ((m) => m.DefaultWorkspaceId);
-
-        public Guid? DefaultWorkspaceId {
-            get { return GetForeignId (defaultWorkspaceRelationId); }
-            set { SetForeignId (defaultWorkspaceRelationId, value); }
-        }
-
-        public static readonly string PropertyDefaultWorkspace = GetPropertyName ((m) => m.DefaultWorkspace);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("default_wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        [ModelRelation]
         public WorkspaceModel DefaultWorkspace {
-            get { return GetForeignModel<WorkspaceModel> (defaultWorkspaceRelationId); }
-            set { SetForeignModel (defaultWorkspaceRelationId, value); }
+            get { return defaultWorkspace.Get (Data.DefaultWorkspaceId); }
+            set { defaultWorkspace.Set (value); }
         }
 
-        public IModelQuery<TimeEntryModel> TimeEntries {
-            get { return Model.Query<TimeEntryModel> ((m) => m.UserId == Id); }
+        public static explicit operator UserModel (UserData data)
+        {
+            if (data == null)
+                return null;
+            return new UserModel (data);
         }
 
-        public RelatedModelsCollection<WorkspaceModel, WorkspaceUserModel, WorkspaceModel, UserModel> Workspaces {
-            get { return workspacesCollection; }
+        public static implicit operator UserData (UserModel model)
+        {
+            return model.Data;
         }
-
-        public RelatedModelsCollection<ProjectModel, ProjectUserModel, ProjectModel, UserModel> Projects {
-            get { return projectsCollection; }
-        }
-
-        #endregion
     }
 }

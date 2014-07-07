@@ -2,835 +2,647 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using System.Threading.Tasks;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class TimeEntryModel : Model
+    public class TimeEntryModel : Model<TimeEntryData>
     {
+        private const string Tag = "TimeEntryModel";
+
         private static string GetPropertyName<T> (Expression<Func<TimeEntryModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
         private static bool ShouldAddDefaultTag {
-            get {
-                return ServiceContainer.Resolve<ISettingsStore> ().UseDefaultTag;
-            }
+            get { return ServiceContainer.Resolve<ISettingsStore> ().UseDefaultTag; }
         }
 
-        private static readonly string LogTag = "TimeEntryModel";
         internal static readonly string DefaultTag = "mobile";
-        private readonly int workspaceRelationId;
-        private readonly int projectRelationId;
-        private readonly int taskRelationId;
-        private readonly int userRelationId;
-        private readonly TagsCollection tagsCollection;
+        public static new readonly string PropertyId = Model<TimeEntryData>.PropertyId;
+        public static readonly string PropertyState = GetPropertyName (m => m.State);
+        public static readonly string PropertyDescription = GetPropertyName (m => m.Description);
+        public static readonly string PropertyStartTime = GetPropertyName (m => m.StartTime);
+        public static readonly string PropertyStopTime = GetPropertyName (m => m.StopTime);
+        public static readonly string PropertyDurationOnly = GetPropertyName (m => m.DurationOnly);
+        public static readonly string PropertyIsBillable = GetPropertyName (m => m.IsBillable);
+        public static readonly string PropertyUser = GetPropertyName (m => m.User);
+        public static readonly string PropertyWorkspace = GetPropertyName (m => m.Workspace);
+        public static readonly string PropertyProject = GetPropertyName (m => m.Project);
+        public static readonly string PropertyTask = GetPropertyName (m => m.Task);
 
         public TimeEntryModel ()
         {
-            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
-            projectRelationId = ForeignRelation<ProjectModel> (PropertyProjectId, PropertyProject);
-            taskRelationId = ForeignRelation<TaskModel> (PropertyTaskId, PropertyTask);
-            userRelationId = ForeignRelation<UserModel> (PropertyUserId, PropertyUser);
-            tagsCollection = new TagsCollection (this);
         }
 
-        private string GetPropertyName<T> (Expression<Func<T>> expr)
+        public TimeEntryModel (TimeEntryData data) : base (data)
         {
-            return expr.ToPropertyName (this);
         }
 
-        private bool LogicEnabled {
-            get { return IsShared && !IsMerging; }
+        public TimeEntryModel (Guid id) : base (id)
+        {
         }
 
-        #region Data
+        protected override TimeEntryData Duplicate (TimeEntryData data)
+        {
+            return new TimeEntryData (data);
+        }
 
-        private string description;
-        public static readonly string PropertyDescription = GetPropertyName ((m) => m.Description);
+        protected override void OnBeforeSave ()
+        {
+            if (Data.UserId == Guid.Empty) {
+                throw new ValidationException ("User must be set for TimeEntry model.");
+            }
+            if (Data.WorkspaceId == Guid.Empty) {
+                throw new ValidationException ("Workspace must be set for TimeEntry model.");
+            }
+        }
 
-        [JsonProperty ("description")]
+        protected override void DetectChangedProperties (TimeEntryData oldData, TimeEntryData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.State != newData.State)
+                OnPropertyChanged (PropertyState);
+            if (oldData.Description != newData.Description)
+                OnPropertyChanged (PropertyDescription);
+            if (oldData.StartTime != newData.StartTime)
+                OnPropertyChanged (PropertyStartTime);
+            if (oldData.StopTime != newData.StopTime)
+                OnPropertyChanged (PropertyStopTime);
+            if (oldData.DurationOnly != newData.DurationOnly)
+                OnPropertyChanged (PropertyDurationOnly);
+            if (oldData.IsBillable != newData.IsBillable)
+                OnPropertyChanged (PropertyIsBillable);
+            if (oldData.UserId != newData.UserId || user.IsNewInstance)
+                OnPropertyChanged (PropertyUser);
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+                OnPropertyChanged (PropertyWorkspace);
+            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance)
+                OnPropertyChanged (PropertyProject);
+            if (oldData.TaskId != newData.TaskId || task.IsNewInstance)
+                OnPropertyChanged (PropertyTask);
+        }
+
+        public TimeEntryState State {
+            get {
+                EnsureLoaded ();
+                return Data.State;
+            }
+            set {
+                if (State == value)
+                    return;
+
+                MutateData (data => {
+                    // Adjust start-time to keep duration same when switching to running state
+                    if (value == TimeEntryState.Running && data.StopTime.HasValue) {
+                        var duration = GetDuration (data);
+                        var now = Time.UtcNow;
+                        data.StopTime = null;
+                        data.StartTime = (now - duration).Truncate (TimeSpan.TicksPerSecond);
+                    }
+
+                    data.State = value;
+                });
+            }
+        }
+
         public string Description {
             get {
-                lock (SyncRoot) {
-                    return description;
-                }
+                EnsureLoaded ();
+                return Data.Description;
             }
             set {
-                lock (SyncRoot) {
-                    // Make sure that description is never null, but an empty string (prevents weird sync loops)
-                    value = value ?? String.Empty;
-                    if (description == value)
-                        return;
+                if (Description == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyDescription, delegate {
-                        description = value;
-                    });
-                }
+                MutateData (data => data.Description = value);
             }
         }
 
-        private bool billable;
-        public static readonly string PropertyIsBillable = GetPropertyName ((m) => m.IsBillable);
-
-        [JsonProperty ("billable")]
-        public bool IsBillable {
-            get {
-                lock (SyncRoot) {
-                    return billable;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (billable == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyIsBillable, delegate {
-                        billable = value;
-                    });
-                }
-            }
-        }
-
-        private DateTime startTime;
-        public static readonly string PropertyStartTime = GetPropertyName ((m) => m.StartTime);
-
-        [JsonProperty ("start")]
         public DateTime StartTime {
             get {
-                lock (SyncRoot) {
-                    return startTime;
-                }
+                EnsureLoaded ();
+                return Data.StartTime;
             }
             set {
-                value = value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+                value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+                if (StartTime == value)
+                    return;
 
-                lock (SyncRoot) {
-                    if (startTime == value)
-                        return;
+                MutateData (data => {
+                    var duration = GetDuration (data);
 
-                    var duration = GetDuration ();
+                    data.StartTime = value;
 
-                    SetStartTime (value);
+                    if (State != TimeEntryState.Running) {
+                        if (data.StopTime.HasValue) {
+                            data.StopTime = data.StartTime + duration;
+                        } else {
+                            var now = Time.UtcNow;
 
-                    if (LogicEnabled) {
-                        if (State != TimeEntryState.Running) {
-                            if (StopTime.HasValue) {
-                                StopTime = startTime + duration;
-                            } else {
-                                var now = Time.UtcNow;
-
-                                var stopTime = startTime.Date
+                            data.StopTime = data.StartTime.Date
                                     .AddHours (now.Hour)
                                     .AddMinutes (now.Minute)
-                                    .AddSeconds (startTime.Second);
+                                    .AddSeconds (data.StartTime.Second);
 
-                                if (stopTime < startTime) {
-                                    StopTime = startTime + duration;
-                                } else {
-                                    StopTime = stopTime;
-                                }
+                            if (data.StopTime < data.StartTime) {
+                                data.StopTime = data.StartTime + duration;
                             }
                         }
+
+                        data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
+                        data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
                     }
-                }
+                });
             }
         }
 
-        private void SetStartTime (DateTime value)
-        {
-            value = value.Truncate (TimeSpan.TicksPerSecond);
-            if (startTime == value)
-                return;
-
-            ChangePropertyAndNotify (PropertyStartTime, delegate {
-                startTime = value;
-            });
-        }
-
-        private DateTime? stopTime;
-        public static readonly string PropertyStopTime = GetPropertyName ((m) => m.StopTime);
-
-        [JsonProperty ("stop", NullValueHandling = NullValueHandling.Include)]
         public DateTime? StopTime {
             get {
-                lock (SyncRoot) {
-                    return stopTime;
-                }
+                EnsureLoaded ();
+                return Data.StopTime;
             }
             set {
-                value = value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+                value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+                if (StopTime == value)
+                    return;
 
-                lock (SyncRoot) {
-                    if (stopTime == value)
-                        return;
+                MutateData (data => data.StopTime = value);
+            }
+        }
 
-                    ChangePropertyAndNotify (PropertyStopTime, delegate {
-                        stopTime = value;
-                    });
-                }
+        public bool DurationOnly {
+            get {
+                EnsureLoaded ();
+                return Data.DurationOnly;
+            }
+            set {
+                if (DurationOnly == value)
+                    return;
+
+                MutateData (data => data.DurationOnly = value);
+            }
+        }
+
+        public bool IsBillable {
+            get {
+                EnsureLoaded ();
+                return Data.IsBillable;
+            }
+            set {
+                if (IsBillable == value)
+                    return;
+
+                MutateData (data => data.IsBillable = value);
             }
         }
 
         public TimeSpan GetDuration ()
         {
-            return GetDuration (Time.UtcNow);
+            return GetDuration (Data, Time.UtcNow);
         }
 
-        private TimeSpan GetDuration (DateTime now)
+        private TimeSpan GetDuration (TimeEntryData data)
         {
-            lock (SyncRoot) {
-                if (StartTime == DateTime.MinValue) {
-                    return TimeSpan.Zero;
-                }
+            return GetDuration (data, Time.UtcNow);
+        }
 
-                var duration = (StopTime ?? now) - StartTime;
-                if (duration < TimeSpan.Zero) {
-                    duration = TimeSpan.Zero;
-                }
-                return duration;
+        private static TimeSpan GetDuration (TimeEntryData data, DateTime now)
+        {
+            if (data.StartTime == DateTime.MinValue) {
+                return TimeSpan.Zero;
             }
+
+            var duration = (data.StopTime ?? now) - data.StartTime;
+            if (duration < TimeSpan.Zero) {
+                duration = TimeSpan.Zero;
+            }
+            return duration;
         }
 
         public void SetDuration (TimeSpan value)
         {
-            lock (SyncRoot) {
-                var now = Time.UtcNow;
+            MutateData (data => SetDuration (data, value));
+        }
 
-                if (State == TimeEntryState.Finished) {
-                    StopTime = StartTime + value;
-                } else if (State == TimeEntryState.New) {
-                    if (value == TimeSpan.Zero) {
-                        SetStartTime (DateTime.MinValue);
-                        StopTime = null;
-                    } else if (StopTime.HasValue) {
-                        SetStartTime (StopTime.Value - value);
-                    } else {
-                        SetStartTime (now - value);
-                        StopTime = now;
-                    }
+        private static void SetDuration (TimeEntryData data, TimeSpan value)
+        {
+            var now = Time.UtcNow;
+
+            if (data.State == TimeEntryState.Finished) {
+                data.StopTime = data.StartTime + value;
+            } else if (data.State == TimeEntryState.New) {
+                if (value == TimeSpan.Zero) {
+                    data.StartTime = DateTime.MinValue;
+                    data.StopTime = null;
+                } else if (data.StopTime.HasValue) {
+                    data.StartTime = data.StopTime.Value - value;
                 } else {
-                    SetStartTime (now - value);
+                    data.StartTime = now - value;
+                    data.StopTime = now;
                 }
+            } else {
+                data.StartTime = now - value;
             }
+
+            data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
+            data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
         }
 
-        [JsonProperty ("duration")]
-        private long EncodedDuration {
-            get {
-                lock (SyncRoot) {
-                    var now = Time.UtcNow;
+        private ForeignRelation<UserModel> user;
+        private ForeignRelation<WorkspaceModel> workspace;
+        private ForeignRelation<ProjectModel> project;
+        private ForeignRelation<TaskModel> task;
 
-                    var duration = (long)GetDuration (now).TotalSeconds;
-                    if (State == TimeEntryState.Running) {
-                        return (long)(duration - now.ToUnix ().TotalSeconds);
-                    } else {
-                        return duration;
+        protected override void InitializeRelations ()
+        {
+            base.InitializeRelations ();
+
+            user = new ForeignRelation<UserModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new UserModel (id),
+                Changed = m => MutateData (data => data.UserId = m.Id),
+            };
+
+            workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new WorkspaceModel (id),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
+            };
+
+            project = new ForeignRelation<ProjectModel> () {
+                Required = false,
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new ProjectModel (id),
+                Changed = m => MutateData (data => {
+                    if (m != null) {
+                        data.IsBillable = m.IsBillable;
                     }
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (value < 0) {
-                        State = TimeEntryState.Running;
-                        SetDuration (Time.UtcNow.ToUnix () + TimeSpan.FromSeconds (value));
-                    } else {
-                        State = TimeEntryState.Finished;
-                        SetDuration (TimeSpan.FromSeconds (value));
-                    }
-                }
-            }
+                    data.ProjectId = GetOptionalId (m);
+                }),
+            };
+
+            task = new ForeignRelation<TaskModel> () {
+                Required = false,
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new TaskModel (id),
+                Changed = m => MutateData (data => data.TaskId = GetOptionalId (m)),
+            };
         }
 
-        private string createdWith;
-        public static readonly string PropertyCreatedWith = GetPropertyName ((m) => m.CreatedWith);
-
-        [JsonProperty ("created_with")]
-        [SQLite.Ignore]
-        /// <summary>
-        /// Gets or sets the created with. Created with should be automatically set by <see cref="ITogglClient"/>
-        /// implementation before sending data to server.
-        /// </summary>
-        /// <value>The created with string.</value>
-        public string CreatedWith {
-            get {
-                lock (SyncRoot) {
-                    return createdWith;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (createdWith == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyCreatedWith, delegate {
-                        createdWith = value;
-                    });
-                }
-            }
-        }
-
-        private bool durationOnly;
-        public static readonly string PropertyDurationOnly = GetPropertyName ((m) => m.DurationOnly);
-
-        [JsonProperty ("duronly")]
-        public bool DurationOnly {
-            get {
-                lock (SyncRoot) {
-                    return durationOnly;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (durationOnly == value)
-                        return;
-
-                    ChangePropertyAndNotify (PropertyDurationOnly, delegate {
-                        durationOnly = value;
-                    });
-                }
-            }
-        }
-
-        private TimeEntryState state = TimeEntryState.New;
-        public static readonly string PropertyState = GetPropertyName ((m) => m.State);
-
-        public TimeEntryState State {
-            get {
-                lock (SyncRoot) {
-                    return state;
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (state == value)
-                        return;
-
-                    var shouldInvalidate = state == TimeEntryState.Running || value == TimeEntryState.Running;
-
-                    ChangePropertyAndNotify (PropertyState, delegate {
-                        state = value;
-
-                        if (shouldInvalidate) {
-                            RunningCache.Invalidate ();
-                        }
-                    });
-                }
-            }
-        }
-
-        private List<string> stringTagsList;
-
-        [JsonProperty ("tags")]
-        private List<string> StringTags {
-            get {
-                lock (SyncRoot) {
-                    if (stringTagsList != null)
-                        return stringTagsList;
-                    if (!IsShared)
-                        return null;
-                    return Tags.Select ((m) => m.To.Name).ToList ();
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (IsShared && value != null && Workspace != null) {
-                        stringTagsList = null;
-                        foreach (var inter in Tags.ToList()) {
-                            if (!value.Remove (inter.To.Name)) {
-                                inter.Delete ();
-                            }
-                        }
-                        foreach (var tag in value) {
-                            Tags.Add (tag);
-                        }
-                    } else if (value != null) {
-                        stringTagsList = value.Where ((tag) => !String.IsNullOrWhiteSpace (tag)).ToList ();
-                        if (stringTagsList.Count == 0)
-                            stringTagsList = null;
-                    } else {
-                        stringTagsList = null;
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region Relations
-
-        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
-
-        public Guid? WorkspaceId {
-            get { return GetForeignId (workspaceRelationId); }
-            set { SetForeignId (workspaceRelationId, value); }
-        }
-
-        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
-        public WorkspaceModel Workspace {
-            get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
-            set { SetForeignModel (workspaceRelationId, value); }
-        }
-
-        public static readonly string PropertyProjectId = GetPropertyName ((m) => m.ProjectId);
-
-        public Guid? ProjectId {
-            get { return GetForeignId (projectRelationId); }
-            set { SetForeignId (projectRelationId, value); }
-        }
-
-        public static readonly string PropertyProject = GetPropertyName ((m) => m.Project);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("pid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
-        public ProjectModel Project {
-            get { return GetForeignModel<ProjectModel> (projectRelationId); }
-            set { SetForeignModel (projectRelationId, value); }
-        }
-
-        public static readonly string PropertyTaskId = GetPropertyName ((m) => m.TaskId);
-
-        public Guid? TaskId {
-            get { return GetForeignId (taskRelationId); }
-            set { SetForeignId (taskRelationId, value); }
-        }
-
-        public static readonly string PropertyTask = GetPropertyName ((m) => m.Task);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("tid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
-        public TaskModel Task {
-            get { return GetForeignModel<TaskModel> (taskRelationId); }
-            set { SetForeignModel (taskRelationId, value); }
-        }
-
-        public static readonly string PropertyUserId = GetPropertyName ((m) => m.UserId);
-
-        public Guid? UserId {
-            get { return GetForeignId (userRelationId); }
-            set { SetForeignId (userRelationId, value); }
-        }
-
-        public static readonly string PropertyUser = GetPropertyName ((m) => m.User);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("uid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        [ModelRelation]
         public UserModel User {
-            get { return GetForeignModel<UserModel> (userRelationId); }
-            set { SetForeignModel (userRelationId, value); }
+            get { return user.Get (Data.UserId); }
+            set { user.Set (value); }
         }
 
-        [SQLite.Ignore]
-        public TagsCollection Tags {
-            get { return tagsCollection; }
+        [ModelRelation]
+        public WorkspaceModel Workspace {
+            get { return workspace.Get (Data.WorkspaceId); }
+            set { workspace.Set (value); }
         }
 
-        #endregion
-
-        #region Business logic
-
-        protected override void OnPropertyChanged (string property)
-        {
-            base.OnPropertyChanged (property);
-
-            // Make sure the string tags are converted into actual relations as soon as possible:
-            if (property == PropertyIsShared
-                || property == PropertyIsPersisted
-                || property == PropertyWorkspaceId) {
-                if (IsShared && IsPersisted && stringTagsList != null && Workspace != null) {
-                    StringTags = stringTagsList;
-                }
-            }
-
-            if (property == PropertyDeletedAt) {
-                if (State == TimeEntryState.Running) {
-                    RunningCache.Invalidate ();
-                }
-            }
-
-            if (property == PropertyProjectId) {
-                if (IsShared && !IsMerging && Project != null) {
-                    IsBillable = Project.IsBillable;
-                }
-            }
-
-            if (property == PropertyIsShared
-                || property == PropertyState
-                || property == PropertyIsPersisted) {
-                if (IsShared && State == TimeEntryState.Running && IsPersisted) {
-                    // Make sure that this is the only time entry running:
-                    var entries = Model.Manager.Cached<TimeEntryModel> ().Where ((m) => m.UserId == UserId && m.State == TimeEntryState.Running);
-                    foreach (var entry in entries) {
-                        if (entry == this)
-                            continue;
-                        try {
-                            entry.Stop ();
-                        } catch (InvalidOperationException ex) {
-                            var log = ServiceContainer.Resolve<Logger> ();
-                            log.Debug (LogTag, ex, "Failed to stop time entry in memory.");
-                        }
-                    }
-
-                    // Double check the database as well:
-                    entries = Model.Query<TimeEntryModel> (
-                        (m) => m.UserId == UserId && m.State == TimeEntryState.Running && m.Id != Id)
-                        .NotDeleted ();
-                    foreach (var entry in entries) {
-                        try {
-                            entry.Stop ();
-                        } catch (InvalidOperationException ex) {
-                            var log = ServiceContainer.Resolve<Logger> ();
-                            log.Debug (LogTag, ex, "Failed to stop time entry from store.");
-                        }
-                    }
-
-                    RunningCache.Invalidate ();
-                }
-            }
+        [ModelRelation (Required = false)]
+        public ProjectModel Project {
+            get { return project.Get (Data.ProjectId); }
+            set { project.Set (value); }
         }
 
-        public override void Delete ()
-        {
-            lock (SyncRoot) {
-                if (IsShared && IsPersisted && State == TimeEntryState.Running) {
-                    try {
-                        Stop ();
-                    } catch (InvalidOperationException ex) {
-                        var log = ServiceContainer.Resolve<Logger> ();
-                        log.Debug (LogTag, ex, "Failed to stop time entry before deleting it.");
-                    }
-                }
-                base.Delete ();
-                RunningCache.Invalidate ();
-            }
+        [ModelRelation (Required = false)]
+        public TaskModel Task {
+            get { return task.Get (Data.TaskId); }
+            set { task.Set (value); }
         }
 
         /// <summary>
         /// Stores the draft time entry in model store as a running time entry.
         /// </summary>
-        public void Start ()
+        public async Task StartAsync ()
         {
-            lock (SyncRoot) {
-                if (!IsShared || !IsPersisted)
-                    throw new InvalidOperationException ("Model needs to be the shared and persisted.");
-                if (State != TimeEntryState.New)
-                    throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", State));
-                if (StartTime != DateTime.MinValue || StopTime.HasValue)
-                    throw new InvalidOperationException ("Cannot start tracking time entry with start/stop time set already.");
+            await LoadAsync ();
 
-                if (Task != null) {
-                    Project = Task.Project;
-                }
-                if (Project != null) {
-                    Workspace = Project.Workspace;
-                }
-                if (Workspace == null && User != null) {
-                    Workspace = User.DefaultWorkspace;
-                }
-                if (Workspace == null) {
-                    throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
-                }
+            if (Data.State != TimeEntryState.New)
+                throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", Data.State));
+            if (Data.StartTime != DateTime.MinValue || Data.StopTime.HasValue)
+                throw new InvalidOperationException ("Cannot start tracking time entry with start/stop time set already.");
 
-                if (ShouldAddDefaultTag) {
-                    Tags.Add (DefaultTag);
-                }
-                State = TimeEntryState.Running;
-                StartTime = Time.UtcNow;
-                StopTime = null;
+            var task = Task;
+            var project = Project;
+            var workspace = Workspace;
+            var user = User;
+
+            // Preload all pending relations:
+            var pending = new List<Task> ();
+            if (task != null)
+                pending.Add (task.LoadAsync ());
+            if (project != null)
+                pending.Add (project.LoadAsync ());
+            if (workspace != null)
+                pending.Add (workspace.LoadAsync ());
+            if (user != null)
+                pending.Add (user.LoadAsync ());
+            await System.Threading.Tasks.Task.WhenAll (pending);
+
+            if (ModelExists (task))
+                project = task.Project;
+            if (ModelExists (project))
+                workspace = project.Workspace;
+            if (ModelExists (user) && !ModelExists (workspace))
+                workspace = user.DefaultWorkspace;
+            if (!ModelExists (workspace))
+                throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
+
+            MutateData (data => {
+                data.TaskId = task != null ? (Guid?)task.Id : null;
+                data.ProjectId = project != null ? (Guid?)project.Id : null;
+                data.WorkspaceId = workspace.Id;
+                data.UserId = user.Id;
+                data.State = TimeEntryState.Running;
+                data.StartTime = Time.UtcNow;
+                data.StopTime = null;
+            });
+
+            await SaveAsync ();
+            await AddDefaultTags ();
+        }
+
+        private async Task AddDefaultTags ()
+        {
+            if (!ShouldAddDefaultTag)
+                return;
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var timeEntryId = Data.Id;
+            var workspaceId = Data.WorkspaceId;
+
+            await dataStore.ExecuteInTransactionAsync (ctx => AddDefaultTags (ctx, workspaceId, timeEntryId))
+                .ConfigureAwait (false);
+        }
+
+        private static void AddDefaultTags (IDataStoreContext ctx, Guid workspaceId, Guid timeEntryId)
+        {
+            var defaultTag = ctx.Connection.Table<TagData> ()
+                .Where (r => r.Name == DefaultTag && r.DeletedAt == null)
+                .FirstOrDefault ();
+
+            if (defaultTag == null) {
+                defaultTag = ctx.Put (new TagData () {
+                    Name = DefaultTag,
+                    WorkspaceId = workspaceId,
+                });
             }
+
+            ctx.Put (new TimeEntryTagData () {
+                TimeEntryId = timeEntryId,
+                TagId = defaultTag.Id,
+            });
         }
 
         /// <summary>
         /// Stores the draft time entry in model store as a finished time entry.
         /// </summary>
-        public void Store ()
+        public async Task StoreAsync ()
         {
-            lock (SyncRoot) {
-                if (!IsShared || !IsPersisted)
-                    throw new InvalidOperationException ("Model needs to be the shared and persisted.");
-                if (State != TimeEntryState.New)
-                    throw new InvalidOperationException (String.Format ("Cannot store a time entry in {0} state.", State));
-                if (StartTime == DateTime.MinValue || StopTime == null)
-                    throw new InvalidOperationException ("Cannot store time entry with start/stop time not set.");
+            await LoadAsync ();
 
-                if (Task != null) {
-                    Project = Task.Project;
-                }
-                if (Project != null) {
-                    Workspace = Project.Workspace;
-                }
-                if (Workspace == null && User != null) {
-                    Workspace = User.DefaultWorkspace;
-                }
-                if (Workspace == null) {
-                    throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
-                }
+            if (Data.State != TimeEntryState.New)
+                throw new InvalidOperationException (String.Format ("Cannot store a time entry in {0} state.", Data.State));
+            if (Data.StartTime == DateTime.MinValue || Data.StopTime == null)
+                throw new InvalidOperationException ("Cannot store time entry with start/stop time not set.");
 
-                if (ShouldAddDefaultTag) {
-                    Tags.Add (DefaultTag);
-                }
-                State = TimeEntryState.Finished;
-            }
+            var task = Task;
+            var project = Project;
+            var workspace = Workspace;
+            var user = User;
+
+            // Preload all pending relations:
+            var pending = new List<Task> ();
+            if (task != null)
+                pending.Add (task.LoadAsync ());
+            if (project != null)
+                pending.Add (project.LoadAsync ());
+            if (workspace != null)
+                pending.Add (workspace.LoadAsync ());
+            if (user != null)
+                pending.Add (user.LoadAsync ());
+            await System.Threading.Tasks.Task.WhenAll (pending);
+
+            if (ModelExists (task))
+                project = task.Project;
+            if (ModelExists (project))
+                workspace = project.Workspace;
+            if (ModelExists (user) && !ModelExists (workspace))
+                workspace = user.DefaultWorkspace;
+            if (!ModelExists (workspace))
+                throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
+
+            MutateData (data => {
+                data.TaskId = task != null ? (Guid?)task.Id : null;
+                data.ProjectId = project != null ? (Guid?)project.Id : null;
+                data.WorkspaceId = workspace.Id;
+                data.UserId = user.Id;
+                data.State = TimeEntryState.Finished;
+            });
+
+            await SaveAsync ();
+            await AddDefaultTags ();
         }
 
         /// <summary>
         /// Marks the currently running time entry as finished.
         /// </summary>
-        public void Stop ()
+        public async Task StopAsync ()
         {
-            lock (SyncRoot) {
-                if (!IsShared || !IsPersisted)
-                    throw new InvalidOperationException ("Model needs to be the shared and persisted.");
+            await LoadAsync ();
 
-                if (State != TimeEntryState.Running)
-                    throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", State));
+            if (Data.State != TimeEntryState.Running)
+                throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", Data.State));
 
-                StopTime = Time.UtcNow;
-                State = TimeEntryState.Finished;
-            }
+            MutateData (data => {
+                data.State = TimeEntryState.Finished;
+                data.StopTime = Time.UtcNow;
+            });
+
+            await SaveAsync ();
         }
 
         /// <summary>
         /// Continues the finished time entry, either by creating a new time entry or restarting the current one.
         /// </summary>
-        public TimeEntryModel Continue ()
+        public async Task<TimeEntryModel> ContinueAsync ()
         {
-            lock (SyncRoot) {
-                if (!IsShared)
-                    throw new InvalidOperationException ("Model needs to be the shared.");
+            var store = ServiceContainer.Resolve<IDataStore> ();
 
-                // Validate the current state
-                switch (State) {
-                case TimeEntryState.Running:
-                    IsPersisted = true;
-                    return this;
-                case TimeEntryState.Finished:
-                    break;
-                default:
-                    throw new InvalidOperationException (String.Format ("Cannot continue a time entry in {0} state.", State));
-                }
+            await LoadAsync ();
 
-                if (DurationOnly && StartTime.ToLocalTime ().Date == Time.Now.Date) {
-                    if (RemoteId == null) {
-                        IsPersisted = true;
-                        StartTime = Time.UtcNow - GetDuration ();
-                        StopTime = null;
-                        State = TimeEntryState.Running;
-                        return this;
-                    }
-                }
-
-                return Model.Update (new TimeEntryModel () {
-                    WorkspaceId = WorkspaceId,
-                    ProjectId = ProjectId,
-                    TaskId = TaskId,
-                    UserId = UserId,
-                    Description = Description,
-                    StartTime = Time.UtcNow,
-                    DurationOnly = DurationOnly,
-                    StringTags = StringTags,
-                    IsBillable = IsBillable,
-                    State = TimeEntryState.Running,
-                    IsPersisted = true,
-                });
+            // Validate the current state
+            switch (Data.State) {
+            case TimeEntryState.Running:
+                return this;
+            case TimeEntryState.Finished:
+                break;
+            default:
+                throw new InvalidOperationException (String.Format ("Cannot continue a time entry in {0} state.", Data.State));
             }
-        }
 
-        #endregion
-
-        public static TimeEntryModel FindRunning ()
-        {
-            return RunningCache.Get ();
-        }
-
-        public static TimeEntryModel GetDraft ()
-        {
-            lock (SyncRoot) {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                if (user == null)
-                    return null;
-
-                var model = Model.Manager.Cached<TimeEntryModel> ()
-                    .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.User == user);
-
-                if (model == null) {
-                    model = Model.Query<TimeEntryModel> ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
-                        .ToList ()
-                        .FirstOrDefault ((m) => m.State == TimeEntryState.New && m.DeletedAt == null && m.User == user);
-                }
-
-                if (model == null) {
-                    List<string> tags = null;
-                    if (ShouldAddDefaultTag) {
-                        tags = new List<string> () { DefaultTag };
-                    }
-                    return Model.Update (new TimeEntryModel () {
-                        State = TimeEntryState.New,
-                        User = user,
-                        Workspace = user.DefaultWorkspace,
-                        DurationOnly = user.TrackingMode == TrackingMode.Continue,
-                        StringTags = tags,
-                        IsPersisted = true,
+            // We can continue time entries which haven't been synced yet:
+            if (Data.DurationOnly && Data.StartTime.ToLocalTime ().Date == Time.Now.Date) {
+                if (Data.RemoteId == null) {
+                    MutateData (data => {
+                        data.State = TimeEntryState.Running;
+                        data.StartTime = Time.UtcNow - GetDuration ();
+                        data.StopTime = null;
                     });
-                }
 
-                return model;
+                    await SaveAsync ();
+                    return this;
+                }
             }
+
+            // Create new time entry:
+            var newData = new TimeEntryData () {
+                WorkspaceId = Data.WorkspaceId,
+                ProjectId = Data.ProjectId,
+                TaskId = Data.TaskId,
+                UserId = Data.UserId,
+                Description = Data.Description,
+                StartTime = Time.UtcNow,
+                DurationOnly = Data.DurationOnly,
+                IsBillable = Data.IsBillable,
+                State = TimeEntryState.Running,
+            };
+            MarkDirty (newData);
+
+            var parentId = Data.Id;
+            await store.ExecuteInTransactionAsync (ctx => {
+                newData = ctx.Put (newData);
+
+                // Duplicate tag relations as well
+                if (parentId != Guid.Empty) {
+                    var q = ctx.Connection.Table<TimeEntryTagData> ()
+                        .Where (r => r.TimeEntryId == parentId && r.DeletedAt == null);
+                    foreach (var row in q) {
+                        ctx.Put (new TimeEntryTagData () {
+                            TimeEntryId = newData.Id,
+                            TagId = row.TagId,
+                        });
+                    }
+                }
+            });
+
+            var model = new TimeEntryModel (newData);
+
+            return model;
         }
 
-        public static TimeEntryModel CreateFinished (TimeSpan duration)
+        private static TaskCompletionSource<TimeEntryData> draftDataTCS;
+
+        public static async Task<TimeEntryModel> GetDraftAsync ()
+        {
+            TimeEntryData data = null;
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            if (user == null)
+                return null;
+
+            // We're already loading draft data, wait for it to load, no need to create several drafts
+            if (draftDataTCS != null) {
+                data = await draftDataTCS.Task;
+                if (data == null)
+                    return null;
+                data = new TimeEntryData (data);
+                return new TimeEntryModel (data);
+            }
+
+            draftDataTCS = new TaskCompletionSource<TimeEntryData> ();
+
+            try {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+
+                if (user.DefaultWorkspaceId == Guid.Empty) {
+                    // User data has not yet been loaded by AuthManager, duplicate the effort and load ourselves:
+                    var userRows = await store.Table<UserData> ()
+                        .Take (1).QueryAsync (m => m.Id == user.Id);
+                    user = userRows [0];
+                }
+
+                var rows = await store.Table<TimeEntryData> ()
+                    .Where (m => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
+                    .OrderBy (m => m.ModifiedAt)
+                    .Take (1).QueryAsync ();
+                data = rows.FirstOrDefault ();
+
+                if (data == null) {
+                    // Create new draft object
+                    var newData = new TimeEntryData () {
+                        State = TimeEntryState.New,
+                        UserId = user.Id,
+                        WorkspaceId = user.DefaultWorkspaceId,
+                        DurationOnly = user.TrackingMode == TrackingMode.Continue,
+                    };
+                    MarkDirty (newData);
+
+                    await store.ExecuteInTransactionAsync (ctx => {
+                        newData = ctx.Put (newData);
+                        if (ShouldAddDefaultTag) {
+                            AddDefaultTags (ctx, newData.WorkspaceId, newData.Id);
+                        }
+                    });
+
+                    data = newData;
+                }
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Warning (Tag, ex, "Failed to retrieve/create draft.");
+            } finally {
+                draftDataTCS.SetResult (data);
+                draftDataTCS = null;
+            }
+
+            return new TimeEntryModel (data);
+        }
+
+        public static async Task<TimeEntryModel> CreateFinishedAsync (TimeSpan duration)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             if (user == null)
                 return null;
 
+            var store = ServiceContainer.Resolve<IDataStore> ();
             var now = Time.UtcNow;
-            List<string> tags = null;
-            if (ShouldAddDefaultTag) {
-                tags = new List<string> () { DefaultTag };
-            }
-            return Model.Update (new TimeEntryModel () {
+
+            var newData = new TimeEntryData () {
                 State = TimeEntryState.Finished,
                 StartTime = now - duration,
                 StopTime = now,
-                User = user,
-                Workspace = user.DefaultWorkspace,
+                UserId = user.Id,
+                WorkspaceId = user.DefaultWorkspaceId,
                 DurationOnly = user.TrackingMode == TrackingMode.Continue,
-                StringTags = tags,
-                IsPersisted = true,
+            };
+            MarkDirty (newData);
+
+            await store.ExecuteInTransactionAsync (ctx => {
+                newData = ctx.Put (newData);
+                if (ShouldAddDefaultTag) {
+                    AddDefaultTags (ctx, newData.WorkspaceId, newData.Id);
+                }
             });
+
+            return new TimeEntryModel (newData);
         }
 
-        public class TagsCollection : RelatedModelsCollection<TagModel, TimeEntryTagModel, TimeEntryModel, TagModel>
+        public static explicit operator TimeEntryModel (TimeEntryData data)
         {
-            private readonly TimeEntryModel model;
-
-            public TagsCollection (TimeEntryModel model) : base (model)
-            {
-                this.model = model;
-            }
-
-            private TagModel GetTagModel (string tag)
-            {
-                var tagModel = Model.Manager.Cached<TagModel> ()
-                    .Where ((m) => m.WorkspaceId == model.WorkspaceId && m.Name == tag)
-                    .FirstOrDefault ();
-                if (tagModel == null) {
-                    tagModel = Model.Query<TagModel> ((m) => m.WorkspaceId == model.WorkspaceId && m.Name == tag)
-                        .FirstOrDefault ();
-                }
-                return tagModel;
-            }
-
-            public TimeEntryTagModel Add (string tag)
-            {
-                lock (SyncRoot) {
-                    if (!model.WorkspaceId.HasValue)
-                        throw new InvalidOperationException ("Cannot add a tag to a model with no workspace association");
-
-                    var tagModel = GetTagModel (tag);
-                    if (tagModel == null) {
-                        tagModel = Model.Update (new TagModel () {
-                            Name = tag,
-                            WorkspaceId = model.WorkspaceId,
-                            IsPersisted = true,
-                        });
-                        // Since we're auto creating this, we want to be sure that there wouldn't be any conflicts
-                        // with server-side data. Having modified at as something in the very past allows server data
-                        // to take precedence.
-                        tagModel.ModifiedAt = DateTime.MinValue;
-                    }
-
-                    return Add (tagModel);
-                }
-            }
-
-            public void Remove (string tag)
-            {
-                lock (SyncRoot) {
-                    if (!model.WorkspaceId.HasValue)
-                        throw new InvalidOperationException ("Cannot remove a tag to a model with no workspace association");
-
-                    var tagModel = GetTagModel (tag);
-                    if (tagModel != null)
-                        Remove (tagModel);
-                }
-            }
-
-            public bool HasNonDefault {
-                get {
-                    lock (SyncRoot) {
-                        return this.Where ((m) => m.To.Name != TimeEntryModel.DefaultTag).Any ();
-                    }
-                }
-            }
+            if (data == null)
+                return null;
+            return new TimeEntryModel (data);
         }
 
-        static class RunningCache
+        public static implicit operator TimeEntryData (TimeEntryModel model)
         {
-            static readonly object cacheSyncRoot = new object ();
-            static WeakReference<TimeEntryModel> weakModel;
-            static bool needsRequery = true;
-            static Guid? userId;
-
-            public static TimeEntryModel Get ()
-            {
-                var currentUserId = ServiceContainer.Resolve<AuthManager> ().UserId;
-                TimeEntryModel model;
-
-                // Try from cached
-                lock (cacheSyncRoot) {
-                    if (userId != currentUserId) {
-                        needsRequery = true;
-                    }
-                    if (!needsRequery && weakModel != null && weakModel.TryGetTarget (out model)) {
-                        return model;
-                    }
-                    needsRequery = true;
-                }
-
-                lock (SyncRoot) {
-                    IEnumerable<TimeEntryModel> entries;
-                    entries = Model.Query<TimeEntryModel> ((te) => te.State == TimeEntryState.Running && te.UserId == currentUserId && te.DeletedAt == null).ToList ();
-
-                    // Find currently running time entry:
-                    entries = Model.Manager.Cached<TimeEntryModel> ()
-                        .Where ((te) => te.State == TimeEntryState.Running && te.DeletedAt == null && te.IsPersisted == true && te.UserId == currentUserId);
-                    model = entries.FirstOrDefault ();
-                }
-
-                lock (cacheSyncRoot) {
-                    // Update cache
-                    if (model == null) {
-                        weakModel = null;
-                    } else if (weakModel == null) {
-                        weakModel = new WeakReference<TimeEntryModel> (model);
-                    } else {
-                        weakModel.SetTarget (model);
-                    }
-                    userId = currentUserId;
-                    needsRequery = false;
-                }
-
-                return model;
-            }
-
-            public static void Invalidate ()
-            {
-                lock (cacheSyncRoot) {
-                    needsRequery = true;
-                }
-            }
+            return model.Data;
         }
     }
 }

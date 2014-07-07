@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data.Models;
@@ -76,7 +77,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var holder = (HeaderViewHolder)view.Tag;
-                holder.Bind (authManager.User);
+                holder.Bind ((UserModel)authManager.User);
             } else {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -142,34 +143,44 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView TitleTextView { get; private set; }
 
-            protected UserModel Model {
-                get { return DataSource; }
-            }
-
             public HeaderViewHolder (View root) : base (root)
             {
                 IconProfileImageView = root.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
                 TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
             }
 
-            protected override void OnModelChanged (Toggl.Phoebe.Data.ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (msg.Model != Model)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (msg.PropertyName == UserModel.PropertyName
-                    || msg.PropertyName == UserModel.PropertyImageUrl) {
-                    Rebind ();
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleUserPropertyChanged);
                 }
+
+                Tracker.ClearStale ();
             }
+
+            private void HandleUserPropertyChanged (string prop)
+            {
+                if (prop == UserModel.PropertyName
+                    || prop == UserModel.PropertyImageUrl)
+                    Rebind ();
+            }
+
 
             protected override void Rebind ()
             {
-                if (Model == null)
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
                     return;
 
-                IconProfileImageView.ImageUrl = Model.ImageUrl;
-                TitleTextView.Text = Model.Name;
+                ResetTrackedObservables ();
+
+                if (DataSource == null)
+                    return;
+
+                IconProfileImageView.ImageUrl = DataSource.ImageUrl;
+                TitleTextView.Text = DataSource.Name;
             }
         }
 

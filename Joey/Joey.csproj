@@ -124,7 +124,9 @@
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
     <Compile Include="UI\Fragments\RecentTimeEntryContinueDialogFragment.cs" />
+    <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="Net\NetworkPresence.cs" />
+    <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

@@ -1,158 +1,130 @@
 using System;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class WorkspaceUserModel : IntermediateModel<WorkspaceModel, UserModel>
+    public class WorkspaceUserModel : Model<WorkspaceUserData>
     {
         private static string GetPropertyName<T> (Expression<Func<WorkspaceUserModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        protected override void OnPropertyChanged (string property)
+        public static new readonly string PropertyId = Model<WorkspaceUserData>.PropertyId;
+        public static readonly string PropertyIsAdmin = GetPropertyName (m => m.IsAdmin);
+        public static readonly string PropertyIsActive = GetPropertyName (m => m.IsActive);
+        public static readonly string PropertyWorkspace = GetPropertyName (m => m.Workspace);
+        public static readonly string PropertyUser = GetPropertyName (m => m.User);
+
+        public WorkspaceUserModel ()
         {
-            base.OnPropertyChanged (property);
+        }
 
-            if (property == PropertyIsShared && IsShared) {
-                if (!String.IsNullOrEmpty (email)
-                    || !String.IsNullOrEmpty (name)) {
-                    // Magic to keep the related user data up to date
-                    var user = To;
+        public WorkspaceUserModel (WorkspaceUserData data) : base (data)
+        {
+        }
 
-                    if (user.ModifiedAt < ModifiedAt) {
-                        if (!String.IsNullOrEmpty (email))
-                            user.Email = email;
-                        if (!String.IsNullOrEmpty (name))
-                            user.Name = name;
-                        user.ModifiedAt = ModifiedAt;
-                        user.IsDirty = false;
-                        email = null;
-                        name = null;
-                    }
-                }
+        public WorkspaceUserModel (Guid id) : base (id)
+        {
+        }
+
+        protected override WorkspaceUserData Duplicate (WorkspaceUserData data)
+        {
+            return new WorkspaceUserData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+            if (Data.WorkspaceId == Guid.Empty) {
+                throw new ValidationException ("Project must be set for ProjectUser model.");
+            }
+            if (Data.UserId == Guid.Empty) {
+                throw new ValidationException ("User must be set for ProjectUser model.");
             }
         }
 
-        #region Data
+        protected override void DetectChangedProperties (WorkspaceUserData oldData, WorkspaceUserData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.IsAdmin != newData.IsAdmin)
+                OnPropertyChanged (PropertyIsAdmin);
+            if (oldData.IsActive != newData.IsActive)
+                OnPropertyChanged (PropertyIsActive);
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+                OnPropertyChanged (PropertyWorkspace);
+            if (oldData.UserId != newData.UserId || user.IsNewInstance)
+                OnPropertyChanged (PropertyUser);
+        }
 
-        private bool isAdmin;
-        public static readonly string PropertyIsAdmin = GetPropertyName ((m) => m.IsAdmin);
-
-        [JsonProperty ("admin")]
         public bool IsAdmin {
             get {
-                lock (SyncRoot) {
-                    return isAdmin;
-                }
+                EnsureLoaded ();
+                return Data.IsAdmin;
             }
             set {
-                lock (SyncRoot) {
-                    if (isAdmin == value)
-                        return;
+                if (IsAdmin == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyIsAdmin, delegate {
-                        isAdmin = value;
-                    });
-                }
+                MutateData (data => data.IsAdmin = value);
             }
         }
 
-        private bool isActive;
-        public static readonly string PropertyIsActive = GetPropertyName ((m) => m.IsActive);
-
-        [JsonProperty ("active")]
         public bool IsActive {
             get {
-                lock (SyncRoot) {
-                    return isActive;
-                }
+                EnsureLoaded ();
+                return Data.IsActive;
             }
             set {
-                lock (SyncRoot) {
-                    if (isActive == value)
-                        return;
+                if (IsActive == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyIsActive, delegate {
-                        isActive = value;
-                    });
-                }
+                MutateData (data => data.IsActive = value);
             }
         }
 
-        private string name;
+        private ForeignRelation<WorkspaceModel> workspace;
+        private ForeignRelation<UserModel> user;
 
-        [JsonProperty ("name")]
-        private string Name {
-            get {
-                lock (SyncRoot) {
-                    if (!IsShared) {
-                        return name;
-                    } else {
-                        return To.Name;
-                    }
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (!IsShared) {
-                        name = value;
-                    }
-                }
-            }
-        }
-
-        private string email;
-
-        [JsonProperty ("email")]
-        private string Email {
-            get {
-                lock (SyncRoot) {
-                    if (!IsShared) {
-                        return email;
-                    } else {
-                        return To.Email;
-                    }
-                }
-            }
-            set {
-                lock (SyncRoot) {
-                    if (!IsShared) {
-                        email = value;
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region Relations
-
-        [SQLite.Ignore]
-        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
-        public override WorkspaceModel From {
-            get { return base.From; }
-            set { base.From = value; }
-        }
-
-        [SQLite.Ignore]
-        [JsonProperty ("uid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
-        public override UserModel To {
-            get { return base.To; }
-            set { base.To = value; }
-        }
-
-        #endregion
-
-        public static implicit operator WorkspaceModel (WorkspaceUserModel m)
+        protected override void InitializeRelations ()
         {
-            return m.From;
+            base.InitializeRelations ();
+
+            workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new WorkspaceModel (id),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
+            };
+
+            user = new ForeignRelation<UserModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new UserModel (id),
+                Changed = m => MutateData (data => data.UserId = m.Id),
+            };
         }
 
-        public static implicit operator UserModel (WorkspaceUserModel m)
+        [ModelRelation]
+        public WorkspaceModel Workspace {
+            get { return workspace.Get (Data.WorkspaceId); }
+            set { workspace.Set (value); }
+        }
+
+        [ModelRelation]
+        public UserModel User {
+            get { return user.Get (Data.UserId); }
+            set { user.Set (value); }
+        }
+
+        public static explicit operator WorkspaceUserModel (WorkspaceUserData data)
         {
-            return m.To;
+            if (data == null)
+                return null;
+            return new WorkspaceUserModel (data);
+        }
+
+        public static implicit operator WorkspaceUserData (WorkspaceUserModel model)
+        {
+            return model.Data;
         }
     }
 }

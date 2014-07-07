@@ -3,24 +3,72 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.Data;
-using TimeEntryModel = Toggl.Phoebe.Data.Models.TimeEntryModel;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class RecentTimeEntryContinueDialogFragment : BaseDialogFragment
     {
+        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
+
+        public static bool TryShow (FragmentManager fragmentManager, TimeEntryModel model)
+        {
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            if (settingsStore.ReadContinueDialog)
+                return false;
+
+            new RecentTimeEntryContinueDialogFragment (model).Show (fragmentManager, "notice_dialog");
+            return true;
+        }
 
         private TimeEntryModel model;
+        private bool modelLoaded;
 
         public RecentTimeEntryContinueDialogFragment ()
         {
         }
 
+        public RecentTimeEntryContinueDialogFragment (TimeEntryModel model)
+        {
+            var args = new Bundle ();
+            args.PutString (TimeEntryIdArgument, model.Id.ToString ());
+
+            Arguments = args;
+        }
+
         public RecentTimeEntryContinueDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        private Guid TimeEntryId {
+            get {
+                var id = Guid.Empty;
+                if (Arguments != null) {
+                    Guid.TryParse (Arguments.GetString (TimeEntryIdArgument), out id);
+                }
+                return id;
+            }
+        }
+
+        public override void OnCreate (Bundle savedInstanceState)
+        {
+            base.OnCreate (savedInstanceState);
+
+            LoadData ();
+        }
+
+        private async void LoadData ()
+        {
+            model = new TimeEntryModel (TimeEntryId);
+            await model.LoadAsync ();
+            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
+                // Invalid model, do nothing.
+            } else {
+                modelLoaded = true;
+            }
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -33,19 +81,10 @@ namespace Toggl.Joey.UI.Fragments
                 .Create ();
         }
 
-        public static bool ShowConfirm (FragmentManager fragmentManager, TimeEntryModel model)
-        {
-            RecentTimeEntryContinueDialogFragment f = new RecentTimeEntryContinueDialogFragment ();
-            f.Show (fragmentManager, "notice_dialog");
-            f.SetModel (model);
-            return true;
-        }
-
         private void OnOkClicked (object sender, DialogClickEventArgs e)
         {
             ServiceContainer.Resolve<SettingsStore> ().ReadContinueDialog = true;
             ContinueEntry ();
-            Dismiss ();
         }
 
         private void SetModel (TimeEntryModel model)
@@ -53,9 +92,12 @@ namespace Toggl.Joey.UI.Fragments
             this.model = model;
         }
 
-        private void ContinueEntry ()
+        private async void ContinueEntry ()
         {
-            var entry = model.Continue ();
+            if (!modelLoaded)
+                return;
+
+            var entry = await model.ContinueAsync ();
 
             // Notify that the user explicitly started something
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -63,4 +105,3 @@ namespace Toggl.Joey.UI.Fragments
         }
     }
 }
-

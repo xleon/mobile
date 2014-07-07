@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -10,78 +10,262 @@ namespace Toggl.Phoebe.Data.Views
 {
     public class ProjectAndTaskView : IDataView<object>, IDisposable
     {
-        private readonly List<Workspace> data = new List<Workspace> ();
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private readonly List<Workspace> workspaceWrappers = new List<Workspace> ();
+        private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
+        private UserData userData;
+        private Subscription<DataChangeMessage> subscriptionDataChange;
 
         public ProjectAndTaskView ()
         {
-            Reload ();
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+
+            Reload ();
         }
 
         public void Dispose ()
         {
-            if (subscriptionModelChanged != null) {
+            if (subscriptionDataChange != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
+                bus.Unsubscribe (subscriptionDataChange);
+                subscriptionDataChange = null;
             }
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
+        private void OnDataChange (DataChangeMessage msg)
         {
-            if (msg.Model is UserModel
-                && msg.PropertyName == UserModel.PropertyDefaultWorkspaceId) {
+            if (msg.Data is UserData) {
+                OnDataChange ((UserData)msg.Data);
+            } else if (msg.Data is WorkspaceData) {
+                OnDataChange ((WorkspaceData)msg.Data, msg.Action);
+            } else if (msg.Data is ProjectData) {
+                OnDataChange ((ProjectData)msg.Data, msg.Action);
+            } else if (msg.Data is TaskData) {
+                OnDataChange ((TaskData)msg.Data, msg.Action);
+            } else if (msg.Data is ClientData) {
+                OnDataChange ((ClientData)msg.Data, msg.Action);
+            }
+        }
 
-                SortWorkspaces (data);
+        private void OnDataChange (UserData data)
+        {
+            var existingData = userData;
+
+            userData = data;
+            if (existingData == null || existingData.DefaultWorkspaceId != data.DefaultWorkspaceId) {
+                SortWorkspaces (workspaceWrappers);
                 OnUpdated ();
-            } else if (msg.Model is WorkspaceModel) {
-                if (msg.PropertyName == WorkspaceModel.PropertyIsShared
-                    || msg.PropertyName == WorkspaceModel.PropertyDeletedAt) {
+            }
 
-                    var model = (WorkspaceModel)msg.Model;
-                    if (!model.IsShared || model.DeletedAt != null) {
-                        // Make sure this workspace is removed:
-                        if (data.RemoveAll (ws => ws.Model == model) > 0) {
-                            OnUpdated ();
+            userData = data;
+        }
+
+        private void OnDataChange (WorkspaceData data, DataAction action)
+        {
+            var isExcluded = action == DataAction.Delete
+                             || data.DeletedAt.HasValue;
+
+            Workspace workspace;
+
+            if (isExcluded) {
+                if (FindWorkspace (data.Id, out workspace)) {
+                    workspaceWrappers.Remove (workspace);
+                    OnUpdated ();
+                }
+            } else {
+                data = new WorkspaceData (data);
+
+                if (FindWorkspace (data.Id, out workspace)) {
+                    var existingData = workspace.Data;
+
+                    workspace.Data = data;
+                    if (existingData.Name != data.Name) {
+                        SortWorkspaces (workspaceWrappers);
+                    }
+                    OnUpdated ();
+                } else {
+                    workspace = new Workspace (data);
+                    workspaceWrappers.Add (workspace);
+                    SortWorkspaces (workspaceWrappers);
+                    OnUpdated ();
+                }
+            }
+        }
+
+        private void OnDataChange (ProjectData data, DataAction action)
+        {
+            var isExcluded = action == DataAction.Delete
+                             || data.DeletedAt.HasValue
+                             || !data.IsActive;
+
+            Workspace workspace;
+            Project project;
+
+            if (isExcluded) {
+                if (FindProject (data.Id, out workspace, out project)) {
+                    workspace.Projects.Remove (project);
+                    OnUpdated ();
+                }
+            } else {
+                data = new ProjectData (data);
+
+                if (FindProject (data.Id, out workspace, out project)) {
+                    var existingData = project.Data;
+
+                    var shouldReparent = existingData.WorkspaceId != data.WorkspaceId;
+                    var shouldSort = existingData.Name != data.Name
+                                     || existingData.ClientId != data.ClientId
+                                     || shouldReparent;
+
+                    project.Data = data;
+
+                    if (shouldReparent) {
+                        workspace.Projects.Remove (project);
+                        if (FindWorkspace (data.WorkspaceId, out workspace)) {
+                            workspace.Projects.Add (project);
                         }
                     }
-                }
-            } else if (msg.Model is ProjectModel) {
-                if (msg.PropertyName == WorkspaceModel.PropertyIsShared
-                    || msg.PropertyName == WorkspaceModel.PropertyDeletedAt) {
 
-                    var model = (ProjectModel)msg.Model;
-                    if (!model.IsShared || model.DeletedAt != null) {
-                        // Make sure this project is removed:
-                        var removals = 0;
-                        foreach (var ws in data) {
-                            removals += ws.Projects.RemoveAll (p => p.Model == model);
+                    if (shouldSort && workspace != null) {
+                        SortProjects (workspace.Projects, clientDataObjects);
+                    }
+                    OnUpdated ();
+                } else if (FindWorkspace (data.WorkspaceId, out workspace)) {
+                    project = new Project (data);
+
+                    workspace.Projects.Add (project);
+                    SortProjects (workspace.Projects, clientDataObjects);
+                    OnUpdated ();
+                }
+            }
+        }
+
+        private void OnDataChange (TaskData data, DataAction action)
+        {
+            var isExcluded = action == DataAction.Delete
+                             || data.DeletedAt.HasValue
+                             || !data.IsActive;
+
+            Workspace workspace;
+            Project project;
+            TaskData existingData;
+
+            if (isExcluded) {
+                if (FindTask (data.Id, out workspace, out project, out existingData)) {
+                    project.Tasks.Remove (existingData);
+                    OnUpdated ();
+                }
+            } else {
+                data = new TaskData (data);
+
+                if (FindTask (data.Id, out workspace, out project, out existingData)) {
+                    var shouldReparent = existingData.ProjectId != data.ProjectId;
+                    var shouldSort = existingData.Name != data.Name
+                                     || shouldReparent;
+
+                    if (shouldReparent) {
+                        project.Tasks.Remove (existingData);
+
+                        if (FindProject (data.ProjectId, out workspace, out project)) {
+                            project.Tasks.Add (data);
                         }
-                        if (removals > 0) {
-                            OnUpdated ();
+                    } else {
+                        project.Tasks.UpdateData (data);
+                    }
+
+                    if (shouldSort) {
+                        SortTasks (project.Tasks);
+                    }
+
+                    OnUpdated ();
+                } else if (FindProject (data.ProjectId, out workspace, out project)) {
+                    project.Tasks.Add (data);
+                    SortTasks (project.Tasks);
+                    OnUpdated ();
+                }
+            }
+        }
+
+        private void OnDataChange (ClientData data, DataAction action)
+        {
+            var isExcluded = action == DataAction.Delete
+                             || data.DeletedAt.HasValue;
+
+            var existingData = clientDataObjects.FirstOrDefault (item => data.Matches (item));
+
+            if (isExcluded) {
+                if (existingData != null) {
+                    clientDataObjects.Remove (existingData);
+                }
+            } else {
+                data = new ClientData (data);
+
+                if (existingData != null) {
+                    clientDataObjects.UpdateData (data);
+
+                    var shouldSort = data.Name != existingData.Name;
+
+                    if (shouldSort) {
+                        Workspace workspace;
+                        if (FindWorkspace (data.WorkspaceId, out workspace)) {
+                            SortProjects (workspace.Projects, clientDataObjects);
                         }
                     }
+                } else {
+                    clientDataObjects.Add (data);
                 }
-            } else if (msg.Model is TaskModel) {
-                if (msg.PropertyName == WorkspaceModel.PropertyIsShared
-                    || msg.PropertyName == WorkspaceModel.PropertyDeletedAt) {
+            }
+        }
 
-                    var model = (TaskModel)msg.Model;
-                    if (!model.IsShared || model.DeletedAt != null) {
-                        // Make sure this task is removed:
-                        var removals = 0;
-                        foreach (var proj in data.SelectMany(ws => ws.Projects)) {
-                            removals += proj.Tasks.RemoveAll (t => t == model);
-                        }
-                        if (removals > 0) {
-                            OnUpdated ();
+        private bool FindWorkspace (Guid id, out Workspace workspace)
+        {
+            foreach (var ws in workspaceWrappers) {
+                if (ws.Data.Id == id) {
+                    workspace = ws;
+                    return true;
+                }
+            }
+
+            workspace = null;
+            return false;
+        }
+
+        private bool FindProject (Guid id, out Workspace workspace, out Project project)
+        {
+            foreach (var ws in workspaceWrappers) {
+                foreach (var proj in ws.Projects) {
+                    if (proj.Data != null && proj.Data.Id == id) {
+                        workspace = ws;
+                        project = proj;
+                        return true;
+                    }
+                }
+            }
+
+            workspace = null;
+            project = null;
+            return false;
+        }
+
+        private bool FindTask (Guid id, out Workspace workspace, out Project project, out TaskData existingData)
+        {
+            foreach (var ws in workspaceWrappers) {
+                foreach (var proj in ws.Projects) {
+                    foreach (var task in proj.Tasks) {
+                        if (task.Id == id) {
+                            workspace = ws;
+                            project = proj;
+                            existingData = task;
+                            return true;
                         }
                     }
                 }
             }
+
+            workspace = null;
+            project = null;
+            existingData = null;
+            return false;
         }
 
         public event EventHandler Updated;
@@ -100,74 +284,69 @@ namespace Toggl.Phoebe.Data.Views
                 return;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            var shouldSubscribe = subscriptionModelChanged != null;
+            var shouldSubscribe = subscriptionDataChange != null;
 
-            if (subscriptionModelChanged != null) {
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
+            if (subscriptionDataChange != null) {
+                bus.Unsubscribe (subscriptionDataChange);
+                subscriptionDataChange = null;
                 shouldSubscribe = true;
             }
 
-            IsLoading = true;
-            data.Clear ();
-            OnUpdated ();
-
             try {
-                data.AddRange (await LoadDataAsync ());
+                var store = ServiceContainer.Resolve<IDataStore> ();
+
+                userData = ServiceContainer.Resolve<AuthManager> ().User;
+                var userId = userData != null ? userData.Id : (Guid?)null;
+
+                IsLoading = true;
+                this.workspaceWrappers.Clear ();
+                clientDataObjects.Clear ();
+                OnUpdated ();
+
+                var workspacesTask = store.Table<WorkspaceData> ()
+                    .QueryAsync (r => r.DeletedAt == null);
+                var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
+                var tasksTask = store.Table<TaskData> ()
+                    .QueryAsync (r => r.DeletedAt == null && r.IsActive == true);
+                var clientsTask = store.Table<ClientData> ()
+                    .QueryAsync (r => r.DeletedAt == null);
+
+                await Task.WhenAll (workspacesTask, projectsTask, tasksTask, clientsTask);
+
+                var workspaces = workspacesTask.Result;
+                foreach (var workspaceData in workspaces) {
+                    var workspace = new Workspace (workspaceData);
+
+                    var projects = projectsTask.Result.Where (r => r.WorkspaceId == workspaceData.Id);
+                    foreach (var projectData in projects) {
+                        var project = new Project (projectData);
+
+                        var tasks = tasksTask.Result.Where (r => r.ProjectId == projectData.Id);
+                        project.Tasks.AddRange (tasks);
+                        workspace.Projects.Add (project);
+                    }
+
+                    workspaceWrappers.Add (workspace);
+                }
+
+                clientDataObjects.AddRange (clientsTask.Result);
+
+                // Sort everything:
+                SortWorkspaces (workspaceWrappers);
+                foreach (var workspace in workspaceWrappers) {
+                    SortProjects (workspace.Projects, clientDataObjects);
+                    foreach (var project in workspace.Projects) {
+                        SortTasks (project.Tasks);
+                    }
+                }
             } finally {
                 IsLoading = false;
                 OnUpdated ();
+
                 if (shouldSubscribe) {
-                    subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+                    subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
                 }
             }
-        }
-
-        private static Task<IEnumerable<Workspace>> LoadDataAsync ()
-        {
-            return Task.Factory.StartNew (() => {
-                // Get all workspaces
-                var data = Model.Query<WorkspaceModel> ()
-                    .NotDeleted ()
-                    .Select ((m) => new Workspace (m))
-                    .ToList ();
-
-                // Load projects
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                if (user != null) {
-                    foreach (var proj in user.GetAllAvailableProjects()) {
-                        var ws = data.FirstOrDefault (m => m.Model.Id == proj.WorkspaceId);
-                        if (ws == null)
-                            continue;
-
-                        ws.Projects.Add (new Project (proj));
-                    }
-                }
-
-                // Load tasks
-                var tasks = Model.Query<TaskModel> (m => m.IsActive)
-                    .NotDeleted ();
-                foreach (var task in tasks) {
-                    var proj = data.SelectMany (ws => ws.Projects)
-                        .Where (m => m.Model != null)
-                        .FirstOrDefault (m => m.Model.Id == task.ProjectId);
-                    if (proj == null)
-                        continue;
-
-                    proj.Tasks.Add (task);
-                }
-
-                // Sort everything:
-                SortWorkspaces (data);
-                foreach (var ws in data) {
-                    ws.SortProjects ();
-                    foreach (var proj in ws.Projects) {
-                        proj.SortTasks ();
-                    }
-                }
-
-                return (IEnumerable<Workspace>)data;
-            });
         }
 
         private static void SortWorkspaces (List<Workspace> data)
@@ -175,18 +354,57 @@ namespace Toggl.Phoebe.Data.Views
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             data.Sort ((a, b) => {
                 if (user != null) {
-                    if (a.Model != null && a.Model.Id == user.DefaultWorkspaceId) {
+                    if (a.Data != null && a.Data.Id == user.DefaultWorkspaceId) {
                         return -1;
                     }
-                    if (b.Model != null && b.Model.Id == user.DefaultWorkspaceId) {
+                    if (b.Data != null && b.Data.Id == user.DefaultWorkspaceId) {
                         return 1;
                     }
                 }
 
-                var aName = a.Model != null ? (a.Model.Name ?? String.Empty) : String.Empty;
-                var bName = b.Model != null ? (b.Model.Name ?? String.Empty) : String.Empty;
+                var aName = a.Data != null ? (a.Data.Name ?? String.Empty) : String.Empty;
+                var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
                 return String.Compare (aName, bName, StringComparison.Ordinal);
             });
+        }
+
+        private static void SortProjects (List<Project> data, List<ClientData> clients)
+        {
+            data.Sort ((a, b) => {
+                if (a.IsNoProject != b.IsNoProject) {
+                    return a.IsNoProject ? -1 : 1;
+                }
+
+                if (a.IsNewProject != b.IsNewProject) {
+                    return a.IsNewProject ? 1 : -1;
+                }
+
+                var aName = a.Data != null ? (a.Data.Name ?? String.Empty) : String.Empty;
+                var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
+                var res = String.Compare (aName, bName, StringComparison.Ordinal);
+
+                // Try to order by client name when same project name
+                if (res == 0) {
+                    var aClient = a.Data != null ? clients.FirstOrDefault (r => r.Id == a.Data.ClientId) : null;
+                    var bClient = b.Data != null ? clients.FirstOrDefault (r => r.Id == b.Data.ClientId) : null;
+
+                    var aClientName = aClient != null ? aClient.Name ?? String.Empty : String.Empty;
+                    var bClientName = bClient != null ? bClient.Name ?? String.Empty : String.Empty;
+
+                    res = String.Compare (aClientName, bClientName, StringComparison.Ordinal);
+                }
+
+                return res;
+            });
+        }
+
+        private static void SortTasks (List<TaskData> data)
+        {
+            data.Sort ((a, b) => String.Compare (
+                a.Name ?? String.Empty,
+                b.Name ?? String.Empty,
+                StringComparison.Ordinal
+            ));
         }
 
         public void LoadMore ()
@@ -195,9 +413,9 @@ namespace Toggl.Phoebe.Data.Views
 
         public IEnumerable<object> Data {
             get {
-                var includeWorkspaces = data.Count > 1;
+                var includeWorkspaces = workspaceWrappers.Count > 1;
 
-                foreach (var ws in data) {
+                foreach (var ws in workspaceWrappers) {
                     if (includeWorkspaces) {
                         yield return ws;
                     }
@@ -214,7 +432,7 @@ namespace Toggl.Phoebe.Data.Views
         }
 
         public IEnumerable<Workspace> Workspaces {
-            get { return data; }
+            get { return workspaceWrappers; }
         }
 
         public long Count {
@@ -229,45 +447,28 @@ namespace Toggl.Phoebe.Data.Views
 
         public class Workspace
         {
-            private readonly WorkspaceModel model;
+            private WorkspaceData dataObject;
             private readonly List<Project> projects = new List<Project> ();
 
-            public Workspace (WorkspaceModel model)
+            public Workspace (WorkspaceData dataObject)
             {
-                this.model = model;
-                projects.Add (new Project (model));
-                projects.Add (new Project (new ProjectModel () {
-                    Workspace = model,
+                this.dataObject = dataObject;
+                projects.Add (new Project (dataObject));
+                projects.Add (new Project (new ProjectData () {
+                    WorkspaceId = dataObject.Id,
                     Color = new Random ().Next (),
                 }));
             }
 
-            public void SortProjects ()
-            {
-                projects.Sort ((a, b) => {
-                    if (a.IsNoProject != b.IsNoProject) {
-                        return a.IsNoProject ? -1 : 1;
-                    }
-
-                    if (a.IsNewProject != b.IsNewProject) {
-                        return a.IsNewProject ? 1 : -1;
-                    }
-
-                    var aName = a.Model != null ? (a.Model.Name ?? String.Empty) : String.Empty;
-                    var bName = b.Model != null ? (b.Model.Name ?? String.Empty) : String.Empty;
-                    var res = String.Compare (aName, bName, StringComparison.Ordinal);
-                    if (res == 0) {
-                        // Same project names, order by client name
-                        aName = (a.Model != null && a.Model.Client != null) ? (a.Model.Client.Name ?? String.Empty) : String.Empty;
-                        bName = (b.Model != null && b.Model.Client != null) ? (b.Model.Client.Name ?? String.Empty) : String.Empty;
-                        res = String.Compare (aName, bName, StringComparison.Ordinal);
-                    }
-                    return res;
-                });
-            }
-
-            public WorkspaceModel Model {
-                get { return model; }
+            public WorkspaceData Data {
+                get { return dataObject; }
+                set {
+                    if (value == null)
+                        throw new ArgumentNullException ("value");
+                    if (dataObject.Id != value.Id)
+                        throw new ArgumentException ("Cannot change Id of the workspace.", "value");
+                    dataObject = value;
+                }
             }
 
             public List<Project> Projects {
@@ -277,48 +478,46 @@ namespace Toggl.Phoebe.Data.Views
 
         public class Project
         {
-            private readonly ProjectModel model;
-            private readonly List<TaskModel> tasks = new List<TaskModel> ();
-            private readonly WorkspaceModel workspaceModel;
+            private ProjectData dataObject;
+            private readonly List<TaskData> tasks = new List<TaskData> ();
+            private readonly Guid workspaceId;
 
-            public Project (ProjectModel model)
+            public Project (ProjectData dataObject)
             {
-                this.model = model;
-                workspaceModel = null;
+                this.dataObject = dataObject;
+                workspaceId = dataObject.WorkspaceId;
             }
 
-            public Project (WorkspaceModel model)
+            public Project (WorkspaceData workspaceData)
             {
-                this.model = null;
-                workspaceModel = model;
-            }
-
-            public void SortTasks ()
-            {
-                tasks.Sort ((a, b) => String.Compare (
-                    a.Name ?? String.Empty,
-                    b.Name ?? String.Empty,
-                    StringComparison.Ordinal
-                ));
+                this.dataObject = null;
+                workspaceId = workspaceData.Id;
             }
 
             public bool IsNoProject {
-                get { return model == null; }
+                get { return dataObject == null; }
             }
 
             public bool IsNewProject {
-                get { return model != null && !model.IsShared; }
+                get { return dataObject != null && dataObject.Id == Guid.Empty; }
             }
 
-            public WorkspaceModel WorkspaceModel {
-                get { return model != null ? model.Workspace : workspaceModel; }
+            public Guid WorkspaceId {
+                get { return dataObject != null ? dataObject.WorkspaceId : workspaceId; }
             }
 
-            public ProjectModel Model {
-                get { return model; }
+            public ProjectData Data {
+                get { return dataObject; }
+                set {
+                    if (value == null)
+                        throw new ArgumentNullException ("value");
+                    if (dataObject.Id != value.Id)
+                        throw new ArgumentException ("Cannot change Id of the project.", "value");
+                    dataObject = value;
+                }
             }
 
-            public List<TaskModel> Tasks {
+            public List<TaskData> Tasks {
                 get { return tasks; }
             }
         }

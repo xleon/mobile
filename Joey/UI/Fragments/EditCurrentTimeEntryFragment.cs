@@ -1,45 +1,62 @@
-﻿using Toggl.Phoebe.Data;
+﻿using System;
+using System.ComponentModel;
+using Android.OS;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class EditCurrentTimeEntryFragment : EditTimeEntryFragment
+    public class EditCurrentTimeEntryFragment : BaseEditTimeEntryFragment
     {
-        public override void OnStart ()
-        {
-            TimeEntry = TimeEntryModel.FindRunning () ?? TimeEntryModel.GetDraft ();
+        private ActiveTimeEntryManager timeEntryManager;
 
-            base.OnStart ();
+        public EditCurrentTimeEntryFragment ()
+        {
         }
 
-        protected override void OnModelChanged (ModelChangedMessage msg)
+        public EditCurrentTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
-            base.OnModelChanged (msg);
-
-            if (msg.Model != TimeEntry && msg.Model is TimeEntryModel) {
-                // When some other time entry becomes IsRunning we need to switch over to that
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyIsShared) {
-                    var entry = (TimeEntryModel)msg.Model;
-                    if (entry.State == TimeEntryState.Running && ForCurrentUser (entry)) {
-                        TimeEntry = entry;
-                        Rebind ();
-                    }
-                }
-            }
         }
 
-        protected override void Rebind ()
+        private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (TimeEntry == null || !CanRebind)
+            if (Handle == IntPtr.Zero)
                 return;
 
-            if (TimeEntry.State == TimeEntryState.Finished || TimeEntry.DeletedAt.HasValue) {
-                TimeEntry = TimeEntryModel.GetDraft ();
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
+                ResetModel ();
+            }
+        }
+
+        public override void OnCreate (Bundle savedInstanceState)
+        {
+            base.OnCreate (savedInstanceState);
+
+            if (timeEntryManager == null) {
+                timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+                timeEntryManager.PropertyChanged += OnTimeEntryManagerPropertyChanged;
             }
 
-            base.Rebind ();
+            ResetModel ();
+        }
+
+        public override void OnDestroy ()
+        {
+            if (timeEntryManager != null) {
+                timeEntryManager.PropertyChanged -= OnTimeEntryManagerPropertyChanged;
+                timeEntryManager = null;
+            }
+
+            base.OnDestroy ();
+        }
+
+        protected override void ResetModel ()
+        {
+            // Need to create a new model (instead of reusing old) as the logic in BaseEditTimeEntries uses
+            // Id changes to detect deletions. And would yield in a recursive loop of calling this method.
+            TimeEntry = (TimeEntryModel)timeEntryManager.Active;
         }
     }
 }

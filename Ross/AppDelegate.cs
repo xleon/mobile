@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
-using Toggl.Joey.Net;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
@@ -57,7 +56,7 @@ namespace Toggl.Ross
         public override void OnActivated (UIApplication application)
         {
             // Make sure the user data is refreshed when the application becomes active
-            ServiceContainer.Resolve<SyncManager> ().Run (SyncMode.Full);
+            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
 
             isResuming = true;
         }
@@ -69,25 +68,15 @@ namespace Toggl.Ross
 
         private void RegisterComponents ()
         {
-            // Register common Phoebe components:
-            ServiceContainer.Register<MessageBus> ();
-            ServiceContainer.Register<Logger> ();
-            ServiceContainer.Register<ModelManager> ();
-            ServiceContainer.Register<AuthManager> ();
-            ServiceContainer.Register<SyncManager> ();
-            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
-            ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
+            Services.Register ();
+
+            // Override default implementation
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider ());
 
             // Register Ross components:
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> ();
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
-            ServiceContainer.Register<IModelStore> (delegate {
-                string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
-                var path = System.IO.Path.Combine (folder, "toggl.db");
-                return new SQLiteModelStore (path);
-            });
             ServiceContainer.Register<BugsnagClient> (delegate {
                 return new Toggl.Ross.Bugsnag.BugsnagClient (Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
@@ -100,10 +89,9 @@ namespace Toggl.Ross
                     #endif
                 };
             });
-            ServiceContainer.Register<BugsnagUserManager> ();
             ServiceContainer.Register<IGAITracker> (
                 () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
-            ServiceContainer.Register<INetworkPresence>(() => new NetworkPresence());
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
         }
 
         string IPlatformInfo.AppIdentifier {
@@ -123,4 +111,3 @@ namespace Toggl.Ross
         }
     }
 }
-

@@ -15,7 +15,7 @@ namespace Toggl.Joey.Net
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
 
-            var syncManager = ServiceContainer.Resolve<SyncManager> ();
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
             if (syncManager.IsRunning) {
                 StartSyncService ();
             }

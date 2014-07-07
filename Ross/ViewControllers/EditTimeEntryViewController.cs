@@ -8,9 +8,9 @@ using MonoTouch.CoreAnimation;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
@@ -31,7 +31,8 @@ namespace Toggl.Ross.ViewControllers
         private bool hideDatePicker = true;
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
         private readonly TimeEntryModel model;
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
+        private readonly TimeEntryTagsView tagsView;
+        private PropertyChangeTracker propertyTracker = new PropertyChangeTracker ();
         private bool descriptionChanging;
         private bool autoCommitScheduled;
         private int autoCommitId;
@@ -40,6 +41,9 @@ namespace Toggl.Ross.ViewControllers
         public EditTimeEntryViewController (TimeEntryModel model)
         {
             this.model = model;
+
+            tagsView = new TimeEntryTagsView (model.Id);
+
             timerController = new TimerNavigationController (model);
         }
 
@@ -48,10 +52,12 @@ namespace Toggl.Ross.ViewControllers
             base.Dispose (disposing);
 
             if (disposing) {
-                if (subscriptionModelChanged != null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    bus.Unsubscribe (subscriptionModelChanged);
-                    subscriptionModelChanged = null;
+                if (tagsView != null) {
+                    tagsView.Updated -= OnTagsUpdated;
+                }
+                if (propertyTracker != null) {
+                    propertyTracker.Dispose ();
+                    propertyTracker = null;
                 }
             }
         }
@@ -81,6 +87,7 @@ namespace Toggl.Ross.ViewControllers
         {
             if (descriptionChanging) {
                 model.Description = descriptionTextField.Text;
+                model.SaveAsync ();
             }
             descriptionChanging = false;
             CancelDescriptionChangeAutoCommit ();
@@ -92,42 +99,67 @@ namespace Toggl.Ross.ViewControllers
             CancelDescriptionChangeAutoCommit ();
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
+        private void OnTagsUpdated (object sender, EventArgs args)
         {
-            if (msg.Model == model) {
-                // Listen for changes regarding current running entry
-                if (msg.PropertyName == TimeEntryModel.PropertyState
-                    || msg.PropertyName == TimeEntryModel.PropertyStartTime
-                    || msg.PropertyName == TimeEntryModel.PropertyStopTime
-                    || msg.PropertyName == TimeEntryModel.PropertyDescription
-                    || msg.PropertyName == TimeEntryModel.PropertyIsBillable
-                    || msg.PropertyName == TimeEntryModel.PropertyProjectId
-                    || msg.PropertyName == TimeEntryModel.PropertyTaskId) {
-                    Rebind ();
+            RebindTags ();
+        }
+
+        private void ResetTrackedObservables ()
+        {
+            if (propertyTracker == null)
+                return;
+
+            propertyTracker.MarkAllStale ();
+
+            if (model != null) {
+                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
+
+                if (model.Project != null) {
+                    propertyTracker.Add (model.Project, HandleProjectPropertyChanged);
+
+                    if (model.Project.Client != null) {
+                        propertyTracker.Add (model.Project.Client, HandleClientPropertyChanged);
+                    }
                 }
-            } else if (model != null && model.ProjectId == msg.Model.Id && model.Project == msg.Model) {
-                if (msg.PropertyName == ProjectModel.PropertyName
-                    || msg.PropertyName == ProjectModel.PropertyColor
-                    || msg.PropertyName == ProjectModel.PropertyClientId) {
-                    Rebind ();
-                }
-            } else if (model != null && model.TaskId == msg.Model.Id && model.Task == msg.Model) {
-                if (msg.PropertyName == TaskModel.PropertyName) {
-                    Rebind ();
-                }
-            } else if (model != null && model.ProjectId != null && model.Project != null
-                       && model.Project.ClientId == msg.Model.Id && model.Project.Client == msg.Model) {
-                if (msg.PropertyName == ClientModel.PropertyName) {
-                    Rebind ();
-                }
-            } else if (model != null && msg.Model is TimeEntryTagModel) {
-                var inter = (TimeEntryTagModel)msg.Model;
-                if (inter.FromId == model.Id) {
-                    // Schedule rebind, as if we do it right away the RelatedModelsCollection will not
-                    // have been updated yet
-                    DispatchQueue.MainQueue.DispatchAfter (TimeSpan.FromMilliseconds (1), Rebind);
+
+                if (model.Task != null) {
+                    propertyTracker.Add (model.Task, HandleTaskPropertyChanged);
                 }
             }
+
+            propertyTracker.ClearStale ();
+        }
+
+        private void HandleTimeEntryPropertyChanged (string prop)
+        {
+            if (prop == TimeEntryModel.PropertyProject
+                || prop == TimeEntryModel.PropertyTask
+                || prop == TimeEntryModel.PropertyStartTime
+                || prop == TimeEntryModel.PropertyStopTime
+                || prop == TimeEntryModel.PropertyState
+                || prop == TimeEntryModel.PropertyIsBillable
+                || prop == TimeEntryModel.PropertyDescription)
+                Rebind ();
+        }
+
+        private void HandleProjectPropertyChanged (string prop)
+        {
+            if (prop == ProjectModel.PropertyClient
+                || prop == ProjectModel.PropertyName
+                || prop == ProjectModel.PropertyColor)
+                Rebind ();
+        }
+
+        private void HandleClientPropertyChanged (string prop)
+        {
+            if (prop == ClientModel.PropertyName)
+                Rebind ();
+        }
+
+        private void HandleTaskPropertyChanged (string prop)
+        {
+            if (prop == TaskModel.PropertyName)
+                Rebind ();
         }
 
         private void BindStartStopView (StartStopView v)
@@ -186,7 +218,10 @@ namespace Toggl.Ross.ViewControllers
 
         private void BindTagsButton (UIButton v)
         {
-            var text = String.Join (", ", model.Tags.Select ((t) => t.To.Name));
+            if (tagsView == null)
+                return;
+
+            var text = String.Join (", ", tagsView.Data);
             if (String.IsNullOrEmpty (text)) {
                 v.Apply (Style.EditTimeEntry.NoTags);
                 v.SetTitle ("EditEntryTagsHint".Tr (), UIControlState.Normal);
@@ -204,19 +239,25 @@ namespace Toggl.Ross.ViewControllers
 
         private void Rebind ()
         {
+            ResetTrackedObservables ();
+
             var billableHidden = billableSwitch.Hidden;
 
             startStopView.Apply (BindStartStopView);
             datePicker.Apply (BindDatePicker);
             projectButton.Apply (BindProjectButton);
             descriptionTextField.Apply (BindDescriptionField);
-            tagsButton.Apply (BindTagsButton);
             billableSwitch.Apply (BindBillableSwitch);
 
             if (billableHidden != billableSwitch.Hidden) {
                 wrapper.RemoveConstraints (wrapper.Constraints);
                 wrapper.AddConstraints (VerticalLinearLayout (wrapper));
             }
+        }
+
+        private void RebindTags ()
+        {
+            tagsButton.Apply (BindTagsButton);
         }
 
         public override void LoadView ()
@@ -287,6 +328,8 @@ namespace Toggl.Ross.ViewControllers
             );
 
             View = scrollView;
+
+            ResetTrackedObservables ();
         }
 
         public override void ViewDidLoad ()
@@ -305,6 +348,8 @@ namespace Toggl.Ross.ViewControllers
                 model.StopTime = datePicker.Date.ToDateTime ();
                 break;
             }
+
+            model.SaveAsync ();
         }
 
         private void OnProjectButtonTouchUpInside (object sender, EventArgs e)
@@ -332,6 +377,7 @@ namespace Toggl.Ross.ViewControllers
         private void OnBillableSwitchValueChanged (object sender, EventArgs e)
         {
             model.IsBillable = billableSwitch.Switch.On;
+            model.SaveAsync ();
         }
 
         private void OnDeleteButtonTouchUpInside (object sender, EventArgs e)
@@ -342,10 +388,10 @@ namespace Toggl.Ross.ViewControllers
                             null,
                             "EditEntryConfirmCancel".Tr (),
                             "EditEntryConfirmDelete".Tr ());
-            alert.Clicked += (s, ev) => {
+            alert.Clicked += async (s, ev) => {
                 if (ev.ButtonIndex == 1) {
                     NavigationController.PopToRootViewController (true);
-                    model.Delete ();
+                    await model.DeleteAsync ();
                 }
             };
             alert.Show ();
@@ -373,10 +419,10 @@ namespace Toggl.Ross.ViewControllers
                 }
             });
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionModelChanged == null) {
-                subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
+            if (tagsView != null) {
+                tagsView.Updated += OnTagsUpdated;
             }
+            RebindTags ();
 
             if (shouldRebindOnAppear) {
                 Rebind ();
@@ -406,14 +452,12 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillDisappear (animated);
 
+            if (tagsView != null) {
+                tagsView.Updated -= OnTagsUpdated;
+            }
+
             NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
             notificationObjects.Clear ();
-
-            if (subscriptionModelChanged != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
-            }
         }
 
         public override void ViewDidDisappear (bool animated)

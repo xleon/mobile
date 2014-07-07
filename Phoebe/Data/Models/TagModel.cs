@@ -1,74 +1,95 @@
 using System;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class TagModel : Model
+    public class TagModel : Model<TagData>
     {
         private static string GetPropertyName<T> (Expression<Func<TagModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        private readonly int workspaceRelationId;
-        private readonly RelatedModelsCollection<TimeEntryModel, TimeEntryTagModel, TimeEntryModel, TagModel> timeEntriesCollection;
+        public static new readonly string PropertyId = Model<TagData>.PropertyId;
+        public static readonly string PropertyName = GetPropertyName (m => m.Name);
+        public static readonly string PropertyWorkspace = GetPropertyName (m => m.Workspace);
 
         public TagModel ()
         {
-            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
-            timeEntriesCollection = new RelatedModelsCollection<TimeEntryModel, TimeEntryTagModel, TimeEntryModel, TagModel> (this);
         }
 
-        #region Data
+        public TagModel (TagData data) : base (data)
+        {
+        }
 
-        private string name;
-        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
+        public TagModel (Guid id) : base (id)
+        {
+        }
 
-        [JsonProperty ("name")]
+        protected override TagData Duplicate (TagData data)
+        {
+            return new TagData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+            if (Data.WorkspaceId == Guid.Empty) {
+                throw new ValidationException ("Workspace must be set for Tag model.");
+            }
+        }
+
+        protected override void DetectChangedProperties (TagData oldData, TagData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.Name != newData.Name)
+                OnPropertyChanged (PropertyName);
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+                OnPropertyChanged (PropertyWorkspace);
+        }
+
         public string Name {
             get {
-                lock (SyncRoot) {
-                    return name;
-                }
+                EnsureLoaded ();
+                return Data.Name;
             }
             set {
-                lock (SyncRoot) {
-                    if (name == value)
-                        return;
+                if (Name == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyName, delegate {
-                        name = value;
-                    });
-                }
+                MutateData (data => data.Name = value);
             }
         }
 
-        #endregion
+        private ForeignRelation<WorkspaceModel> workspace;
 
-        #region Relations
+        protected override void InitializeRelations ()
+        {
+            base.InitializeRelations ();
 
-        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
-
-        public Guid? WorkspaceId {
-            get { return GetForeignId (workspaceRelationId); }
-            set { SetForeignId (workspaceRelationId, value); }
+            workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new WorkspaceModel (id),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
+            };
         }
 
-        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
-
-        [SQLite.Ignore]
-        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        [ModelRelation]
         public WorkspaceModel Workspace {
-            get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
-            set { SetForeignModel (workspaceRelationId, value); }
+            get { return workspace.Get (Data.WorkspaceId); }
+            set { workspace.Set (value); }
         }
 
-        [SQLite.Ignore]
-        public RelatedModelsCollection<TimeEntryModel, TimeEntryTagModel, TimeEntryModel, TagModel> TimeEntries {
-            get { return timeEntriesCollection; }
+        public static explicit operator TagModel (TagData data)
+        {
+            if (data == null)
+                return null;
+            return new TagModel (data);
         }
 
-        #endregion
+        public static implicit operator TagData (TagModel model)
+        {
+            return model.Data;
+        }
     }
 }

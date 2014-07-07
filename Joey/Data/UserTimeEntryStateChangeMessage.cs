@@ -1,21 +1,20 @@
 ﻿using System;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.Data
 {
     public class UserTimeEntryStateChangeMessage : Message
     {
-        private readonly TimeEntryModel model;
+        private readonly TimeEntryData data;
 
-        public UserTimeEntryStateChangeMessage (object sender, TimeEntryModel model) : base (sender)
+        public UserTimeEntryStateChangeMessage (object sender, TimeEntryData data) : base (sender)
         {
-            this.model = model;
+            this.data = data;
         }
 
-        public TimeEntryModel Model {
-            get { return model; }
+        public TimeEntryData Data {
+            get { return data; }
         }
     }
 }
-

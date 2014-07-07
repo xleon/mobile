@@ -20,7 +20,6 @@ namespace Toggl.Joey.UI.Activities
 
         private FrameLayout DoneFrameLayout { get; set; }
 
-        private Subscription<ModelChangedMessage> subscriptionModelChanged;
         private TimeEntryModel model;
 
         protected override void OnCreateActivity (Bundle state)
@@ -40,8 +39,9 @@ namespace Toggl.Joey.UI.Activities
 
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 
+            CreateModelFromIntent ();
+
             if (state == null) {
-                model = GetModelFromIntent ();
                 if (model == null) {
                     Finish ();
                 } else {
@@ -52,39 +52,24 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        protected override void OnResumeActivity ()
-        {
-            base.OnResumeActivity ();
-
-            EnsureModel ();
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionModelChanged = bus.Subscribe<ModelChangedMessage> (OnModelChanged);
-        }
-
-        protected override void OnPause ()
-        {
-            if (subscriptionModelChanged != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionModelChanged);
-                subscriptionModelChanged = null;
-            }
-
-            base.OnPause ();
-        }
-
-        private TimeEntryModel GetModelFromIntent ()
+        private async void CreateModelFromIntent ()
         {
             var extras = Intent.Extras;
             if (extras == null)
-                return null;
+                return;
 
             var extraIdStr = extras.GetString (ExtraTimeEntryId);
             Guid extraId;
             if (!Guid.TryParse (extraIdStr, out extraId))
-                return null;
+                return;
 
-            return Model.ById<TimeEntryModel> (extraId);
+            model = new TimeEntryModel (extraId);
+
+            // Ensure that the model exists
+            await model.LoadAsync ();
+            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
+                Finish ();
+            }
         }
 
         private View CreateDoneActionBarView ()
@@ -93,26 +78,9 @@ namespace Toggl.Joey.UI.Activities
             return inflater.Inflate (Resource.Layout.DoneActionBarView, null);
         }
 
-        private void OnModelChanged (ModelChangedMessage msg)
-        {
-            if (Handle == IntPtr.Zero)
-                return;
-
-            if (msg.Model == model) {
-                EnsureModel ();
-            }
-        }
-
         private void OnDoneFrameLayoutClick (object sender, EventArgs e)
         {
             Finish ();
-        }
-
-        private void EnsureModel ()
-        {
-            if (model == null || model.DeletedAt.HasValue) {
-                Finish ();
-            }
         }
     }
 }

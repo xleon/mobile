@@ -1,6 +1,7 @@
-﻿using Android.Views;
+﻿using System;
+using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Joey.UI.Utils;
@@ -8,9 +9,9 @@ using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class TagsAdapter : BaseDataViewAdapter<TagModel>
+    public class TagsAdapter : BaseDataViewAdapter<TagData>
     {
-        public TagsAdapter (IDataView<TagModel> view) : base (view)
+        public TagsAdapter (IDataView<TagData> view) : base (view)
         {
         }
 
@@ -23,16 +24,12 @@ namespace Toggl.Joey.UI.Adapters
                 view.Tag = new TagListItemHolder (view);
             }
             var holder = (TagListItemHolder)view.Tag;
-            holder.Bind (GetEntry (position));
+            holder.Bind ((TagModel)GetEntry (position));
             return view;
         }
 
         private class TagListItemHolder : ModelViewHolder<TagModel>
         {
-            private TagModel Model {
-                get { return DataSource; }
-            }
-
             public CheckedTextView NameCheckedTextView { get; private set; }
 
             public TagListItemHolder (View root) : base (root)
@@ -40,24 +37,35 @@ namespace Toggl.Joey.UI.Adapters
                 NameCheckedTextView = root.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView).SetFont (Font.Roboto);
             }
 
-            protected override void OnModelChanged (ModelChangedMessage msg)
+            protected override void ResetTrackedObservables ()
             {
-                if (Model == null)
-                    return;
+                Tracker.MarkAllStale ();
 
-                if (Model == msg.Model) {
-                    if (msg.PropertyName == TagModel.PropertyName) {
-                        Rebind ();
-                    }
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTagPropertyChanged);
                 }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTagPropertyChanged (string prop)
+            {
+                if (prop == TagModel.PropertyName)
+                    Rebind ();
             }
 
             protected override void Rebind ()
             {
-                if (Model == null)
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
                     return;
 
-                NameCheckedTextView.Text = Model.Name;
+                ResetTrackedObservables ();
+
+                if (DataSource == null)
+                    return;
+
+                NameCheckedTextView.Text = DataSource.Name;
             }
         }
     }

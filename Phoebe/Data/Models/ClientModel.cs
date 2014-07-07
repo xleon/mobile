@@ -1,72 +1,97 @@
 using System;
 using System.Linq.Expressions;
-using Newtonsoft.Json;
+using Toggl.Phoebe.Data.DataObjects;
+using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class ClientModel : Model
+    public class ClientModel : Model<ClientData>
     {
         private static string GetPropertyName<T> (Expression<Func<ClientModel, T>> expr)
         {
             return expr.ToPropertyName ();
         }
 
-        private readonly int workspaceRelationId;
+        public static new readonly string PropertyId = Model<ClientData>.PropertyId;
+        public static readonly string PropertyName = GetPropertyName (m => m.Name);
+        public static readonly string PropertyWorkspace = GetPropertyName (m => m.Workspace);
 
         public ClientModel ()
         {
-            workspaceRelationId = ForeignRelation<WorkspaceModel> (PropertyWorkspaceId, PropertyWorkspace);
         }
 
-        #region Data
+        public ClientModel (ClientData data) : base (data)
+        {
+        }
 
-        private string name;
-        public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
+        public ClientModel (Guid id) : base (id)
+        {
+        }
 
-        [JsonProperty ("name")]
+        protected override ClientData Duplicate (ClientData data)
+        {
+            return new ClientData (data);
+        }
+
+        protected override void OnBeforeSave ()
+        {
+            if (Data.WorkspaceId == Guid.Empty) {
+                throw new ValidationException ("Workspace must be set for Client model.");
+            }
+        }
+
+        protected override void DetectChangedProperties (ClientData oldData, ClientData newData)
+        {
+            base.DetectChangedProperties (oldData, newData);
+            if (oldData.Name != newData.Name)
+                OnPropertyChanged (PropertyName);
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+                OnPropertyChanged (PropertyWorkspace);
+        }
+
         public string Name {
             get {
-                lock (SyncRoot) {
-                    return name;
-                }
+                EnsureLoaded ();
+                return Data.Name;
             }
             set {
-                lock (SyncRoot) {
-                    if (name == value)
-                        return;
+                if (Name == value)
+                    return;
 
-                    ChangePropertyAndNotify (PropertyName, delegate {
-                        name = value;
-                    });
-                }
+                MutateData (data => data.Name = value);
             }
         }
 
-        #endregion
+        private ForeignRelation<WorkspaceModel> workspace;
 
-        #region Relations
+        protected override void InitializeRelations ()
+        {
+            base.InitializeRelations ();
 
-        public static readonly string PropertyWorkspaceId = GetPropertyName ((m) => m.WorkspaceId);
-
-        public Guid? WorkspaceId {
-            get { return GetForeignId (workspaceRelationId); }
-            set { SetForeignId (workspaceRelationId, value); }
+            workspace = new ForeignRelation<WorkspaceModel> () {
+                ShouldLoad = EnsureLoaded,
+                Factory = id => new WorkspaceModel (id),
+                Changed = m => MutateData (data => data.WorkspaceId = m.Id),
+            };
         }
 
-        public static readonly string PropertyWorkspace = GetPropertyName ((m) => m.Workspace);
-
-        [DontDirty]
-        [SQLite.Ignore]
-        [JsonProperty ("wid"), JsonConverter (typeof(ForeignKeyJsonConverter))]
+        [ModelRelation]
         public WorkspaceModel Workspace {
-            get { return GetForeignModel<WorkspaceModel> (workspaceRelationId); }
-            set { SetForeignModel (workspaceRelationId, value); }
+            get { return workspace.Get (Data.WorkspaceId); }
+            set { workspace.Set (value); }
         }
 
-        public IModelQuery<ProjectModel> Projects {
-            get { return Model.Query<ProjectModel> ((m) => m.ClientId == Id); }
+        public static explicit operator ClientModel (ClientData data)
+        {
+            if (data == null)
+                return null;
+            return new ClientModel (data);
         }
 
-        #endregion
+        public static implicit operator ClientData (ClientModel model)
+        {
+            return model.Data;
+        }
     }
 }

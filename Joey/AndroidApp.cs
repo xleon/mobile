@@ -4,13 +4,13 @@ using Android.App;
 using Android.Content;
 using Android.Net;
 using Google.Analytics.Tracking;
-using Toggl.Joey.Net;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
+using Toggl.Joey.Net;
 
 namespace Toggl.Joey
 {
@@ -43,14 +43,7 @@ namespace Toggl.Joey
 
         private void RegisterComponents ()
         {
-            // Register common Phoebe components:
-            ServiceContainer.Register<MessageBus> ();
-            ServiceContainer.Register<ModelManager> ();
-            ServiceContainer.Register<AuthManager> ();
-            ServiceContainer.Register<SyncManager> ();
-            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
-            ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
-            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
+            Services.Register ();
 
             // Register Joey components:
             ServiceContainer.Register<Logger> (() => new AndroidLogger ());
@@ -58,11 +51,6 @@ namespace Toggl.Joey
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
-            ServiceContainer.Register<IModelStore> (delegate {
-                string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
-                var path = System.IO.Path.Combine (folder, "toggl.db");
-                return new SQLiteModelStore (path);
-            });
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
@@ -72,7 +60,6 @@ namespace Toggl.Joey
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };
             });
-            ServiceContainer.Register<BugsnagUserManager> ();
             ServiceContainer.Register<EasyTracker> (delegate {
                 #if DEBUG
                 GoogleAnalytics.GetInstance (this).SetDryRun (true);
@@ -82,7 +69,7 @@ namespace Toggl.Joey
                 tracker.Set (Fields.TrackingId, Build.GoogleAnalyticsId);
                 return tracker;
             });
-            ServiceContainer.Register<INetworkPresence>(() => new NetworkPresence(Context, (ConnectivityManager) GetSystemService(ConnectivityService)));
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
         }
 
         private void InitializeStartupComponents ()
@@ -107,7 +94,6 @@ namespace Toggl.Joey
             base.OnTrimMemory (level);
 
             if (level <= TrimMemory.Moderate) {
-                ServiceContainer.Resolve<IModelStore> ().Commit ();
                 if (level <= TrimMemory.Complete) {
                     System.GC.Collect (GC.MaxGeneration);
                 } else {

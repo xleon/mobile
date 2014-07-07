@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -9,13 +8,13 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class TimeEntryJsonConverter : BaseJsonConverter
     {
-        public async Task<TimeEntryJson> Export (TimeEntryData data)
+        public TimeEntryJson Export (IDataStoreContext ctx, TimeEntryData data)
         {
-            var userIdTask = GetRemoteId<UserData> (data.UserId);
-            var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
-            var projectIdTask = GetRemoteId<ProjectData> (data.ProjectId);
-            var taskIdTask = GetRemoteId<TaskData> (data.TaskId);
-            var tagsTask = GetTimeEntryTags (data.Id);
+            var userId = GetRemoteId<UserData> (ctx, data.UserId);
+            var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);
+            var projectId = GetRemoteId<ProjectData> (ctx, data.ProjectId);
+            var taskId = GetRemoteId<TaskData> (ctx, data.TaskId);
+            var tags = GetTimeEntryTags (ctx, data.Id);
 
             return new TimeEntryJson () {
                 Id = data.RemoteId,
@@ -26,19 +25,19 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 StopTime = data.StopTime.ToUtc (),
                 DurationOnly = data.DurationOnly,
                 Duration = EncodeDuration (data),
-                Tags = await tagsTask.ConfigureAwait (false),
-                UserId = await userIdTask.ConfigureAwait (false),
-                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
-                ProjectId = await projectIdTask.ConfigureAwait (false),
-                TaskId = await taskIdTask.ConfigureAwait (false),
+                Tags = tags,
+                UserId = userId,
+                WorkspaceId = workspaceId,
+                ProjectId = projectId,
+                TaskId = taskId,
             };
         }
 
-        private async Task<List<string>> GetTimeEntryTags (Guid id)
+        private List<string> GetTimeEntryTags (IDataStoreContext ctx, Guid id)
         {
             if (id == Guid.Empty)
                 return new List<string> (0);
-            return await DataStore.GetTimeEntryTagNames (id).ConfigureAwait (false);
+            return ctx.GetTimeEntryTagNames (id);
         }
 
         private static long EncodeDuration (TimeEntryData data)
@@ -87,112 +86,110 @@ namespace Toggl.Phoebe.Data.Json.Converters
             }
         }
 
-        private static Task<Guid> GetUserLocalId (long id)
+        private static Guid GetUserLocalId (IDataStoreContext ctx, long id)
         {
             if (id == 0) {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
                 if (authManager.User == null) {
                     throw new ArgumentException ("Cannot import TimeEntry with missing user when no authenticated user.", "id");
                 }
-                return Task.FromResult (authManager.User.Id);
+                return authManager.User.Id;
             }
-            return GetLocalId<UserData> (id);
+            return GetLocalId<UserData> (ctx, id);
         }
 
-        private static async Task Merge (TimeEntryData data, TimeEntryJson json)
+        private static void Merge (IDataStoreContext ctx, TimeEntryData data, TimeEntryJson json)
         {
-            var userIdTask = GetUserLocalId (json.UserId);
-            var workspaceIdTask = GetLocalId<WorkspaceData> (json.WorkspaceId);
-            var projectIdTask = GetLocalId<ProjectData> (json.ProjectId);
-            var taskIdTask = GetLocalId<TaskData> (json.TaskId);
+            var userId = GetUserLocalId (ctx, json.UserId);
+            var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
+            var projectId = GetLocalId<ProjectData> (ctx, json.ProjectId);
+            var taskId = GetLocalId<TaskData> (ctx, json.TaskId);
 
             data.Description = json.Description;
             data.IsBillable = json.IsBillable;
             data.DurationOnly = json.DurationOnly;
-            data.UserId = await userIdTask.ConfigureAwait (false);
-            data.WorkspaceId = await workspaceIdTask.ConfigureAwait (false);
-            data.ProjectId = await projectIdTask.ConfigureAwait (false);
-            data.TaskId = await taskIdTask.ConfigureAwait (false);
+            data.UserId = userId;
+            data.WorkspaceId = workspaceId;
+            data.ProjectId = projectId;
+            data.TaskId = taskId;
             DecodeDuration (data, json);
 
             MergeCommon (data, json);
         }
 
-        private static Task ResetTags (TimeEntryData timeEntryData, TimeEntryJson json)
+        private static void ResetTags (IDataStoreContext ctx, TimeEntryData timeEntryData, TimeEntryJson json)
         {
             // Don't touch the tags when the field is null
             if (json.Tags == null) {
-                return Task.FromResult<object> (null);
+                return;
             }
 
-            return DataStore.ExecuteInTransactionAsync (ctx => {
-                var con = ctx.Connection;
+            var con = ctx.Connection;
 
-                // Resolve tags to IDs:
-                var tagIds = new List<Guid> ();
-                foreach (var tagName in json.Tags) {
-                    // Prevent importing empty (invalid) tags:
-                    if (String.IsNullOrWhiteSpace (tagName))
-                        continue;
+            // Resolve tags to IDs:
+            var tagIds = new List<Guid> ();
+            foreach (var tagName in json.Tags) {
+                // Prevent importing empty (invalid) tags:
+                if (String.IsNullOrWhiteSpace (tagName))
+                    continue;
 
-                    var id = ctx.GetTagIdFromName (timeEntryData.WorkspaceId, tagName);
+                var id = ctx.GetTagIdFromName (timeEntryData.WorkspaceId, tagName);
 
-                    if (id == Guid.Empty) {
-                        // Need to create a new tag:
-                        var tagData = new TagData () {
-                            Name = tagName,
-                            WorkspaceId = timeEntryData.WorkspaceId,
-                        };
-                        con.Insert (tagData);
+                if (id == Guid.Empty) {
+                    // Need to create a new tag:
+                    var tagData = new TagData () {
+                        Name = tagName,
+                        WorkspaceId = timeEntryData.WorkspaceId,
+                    };
+                    con.Insert (tagData);
 
-                        id = timeEntryData.Id;
-                    }
-
-                    tagIds.Add (id);
+                    id = timeEntryData.Id;
                 }
 
-                // Iterate over TimeEntryTags and determine which to keep and which to discard:
-                var inters = con.Table<TimeEntryTagData> ().Where (m => m.TimeEntryId == timeEntryData.Id);
-                var toDelete = new List<TimeEntryTagData> ();
-                foreach (var inter in inters) {
-                    if (tagIds.Contains (inter.TagId)) {
-                        tagIds.Remove (inter.TagId);
-                    } else {
-                        toDelete.Add (inter);
-                    }
-                }
+                tagIds.Add (id);
+            }
 
-                // Delete unused tags intermediate rows:
-                foreach (var inter in toDelete) {
-                    ctx.Delete (inter);
+            // Iterate over TimeEntryTags and determine which to keep and which to discard:
+            var inters = con.Table<TimeEntryTagData> ().Where (m => m.TimeEntryId == timeEntryData.Id);
+            var toDelete = new List<TimeEntryTagData> ();
+            foreach (var inter in inters) {
+                if (tagIds.Contains (inter.TagId)) {
+                    tagIds.Remove (inter.TagId);
+                } else {
+                    toDelete.Add (inter);
                 }
+            }
 
-                // Create new intermediate rows:
-                foreach (var tagId in tagIds) {
-                    ctx.Put (new TimeEntryTagData () {
-                        TagId = tagId,
-                        TimeEntryId = timeEntryData.Id,
-                    });
-                }
-            });
+            // Delete unused tags intermediate rows:
+            foreach (var inter in toDelete) {
+                ctx.Delete (inter);
+            }
+
+            // Create new intermediate rows:
+            foreach (var tagId in tagIds) {
+                ctx.Put (new TimeEntryTagData () {
+                    TagId = tagId,
+                    TimeEntryId = timeEntryData.Id,
+                });
+            }
         }
 
-        public async Task<TimeEntryData> Import (TimeEntryJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public TimeEntryData Import (IDataStoreContext ctx, TimeEntryJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
-            var data = await GetByRemoteId<TimeEntryData> (json.Id.Value, localIdHint).ConfigureAwait (false);
+            var data = GetByRemoteId<TimeEntryData> (ctx, json.Id.Value, localIdHint);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
                     // TODO: Delete TimeEntryTag intermediate data
-                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
+                    ctx.Delete (data);
                     data = null;
                 }
             } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = data ?? new TimeEntryData ();
-                await Merge (data, json).ConfigureAwait (false);
-                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                Merge (ctx, data, json);
+                data = ctx.Put (data);
                 // Also update tags from the JSON we are merging:
-                await ResetTags (data, json).ConfigureAwait (false);
+                ResetTags (ctx, data, json);
             }
 
             return data;

@@ -7,162 +7,172 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public static class JsonExtensions
     {
-        public static async Task<CommonData> Import (this CommonJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static CommonData Import (this CommonJson json, IDataStoreContext ctx,
+                                         Guid? localIdHint = null, bool forceUpdate = false)
         {
             var type = json.GetType ();
             if (type == typeof(ClientJson)) {
-                return await Import ((ClientJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((ClientJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(ProjectJson)) {
-                return await Import ((ProjectJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((ProjectJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(ProjectUserJson)) {
-                return await Import ((ProjectUserJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((ProjectUserJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(TagJson)) {
-                return await Import ((TagJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((TagJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(TaskJson)) {
-                return await Import ((TaskJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((TaskJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(TimeEntryJson)) {
-                return await Import ((TimeEntryJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((TimeEntryJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(UserJson)) {
-                return await Import ((UserJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((UserJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(WorkspaceJson)) {
-                return await Import ((WorkspaceJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((WorkspaceJson)json, ctx, localIdHint, forceUpdate);
             } else if (type == typeof(WorkspaceUserJson)) {
-                return await Import ((WorkspaceUserJson)json, localIdHint, forceUpdate).ConfigureAwait (false);
+                return Import ((WorkspaceUserJson)json, ctx, localIdHint, forceUpdate);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
 
-        public static async Task<CommonJson> Export (this CommonData data)
+        public static CommonJson Export (this CommonData data, IDataStoreContext ctx)
         {
             var type = data.GetType ();
             if (type == typeof(ClientData)) {
-                return await Export ((ClientData)data).ConfigureAwait (false);
+                return Export ((ClientData)data, ctx);
             } else if (type == typeof(ProjectData)) {
-                return await Export ((ProjectData)data).ConfigureAwait (false);
+                return Export ((ProjectData)data, ctx);
             } else if (type == typeof(ProjectUserData)) {
-                return await Export ((ProjectUserData)data).ConfigureAwait (false);
+                return Export ((ProjectUserData)data, ctx);
             } else if (type == typeof(TagData)) {
-                return await Export ((TagData)data).ConfigureAwait (false);
+                return Export ((TagData)data, ctx);
             } else if (type == typeof(TaskData)) {
-                return await Export ((TaskData)data).ConfigureAwait (false);
+                return Export ((TaskData)data, ctx);
             } else if (type == typeof(TimeEntryData)) {
-                return await Export ((TimeEntryData)data).ConfigureAwait (false);
+                return Export ((TimeEntryData)data, ctx);
             } else if (type == typeof(UserData)) {
-                return await Export ((UserData)data).ConfigureAwait (false);
+                return Export ((UserData)data, ctx);
             } else if (type == typeof(WorkspaceData)) {
-                return await Export ((WorkspaceData)data).ConfigureAwait (false);
+                return Export ((WorkspaceData)data, ctx);
             } else if (type == typeof(WorkspaceUserData)) {
-                return await Export ((WorkspaceUserData)data).ConfigureAwait (false);
+                return Export ((WorkspaceUserData)data, ctx);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
 
-        public static Task<ClientData> Import (this ClientJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static ClientData Import (this ClientJson json, IDataStoreContext ctx,
+                                         Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<ClientJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<ClientJson> Export (this ClientData data)
+        public static ClientJson Export (this ClientData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<ClientJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<ProjectData> Import (this ProjectJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static ProjectData Import (this ProjectJson json, IDataStoreContext ctx,
+                                          Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<ProjectJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<ProjectJson> Export (this ProjectData data)
+        public static ProjectJson Export (this ProjectData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<ProjectJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<ProjectUserData> Import (this ProjectUserJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static ProjectUserData Import (this ProjectUserJson json, IDataStoreContext ctx,
+                                              Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<ProjectUserJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<ProjectUserJson> Export (this ProjectUserData data)
+        public static ProjectUserJson Export (this ProjectUserData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<ProjectUserJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<TagData> Import (this TagJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static TagData Import (this TagJson json, IDataStoreContext ctx,
+                                      Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<TagJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<TagJson> Export (this TagData data)
+        public static TagJson Export (this TagData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<TagJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<TaskData> Import (this TaskJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static TaskData Import (this TaskJson json, IDataStoreContext ctx,
+                                       Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<TaskJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<TaskJson> Export (this TaskData data)
+        public static TaskJson Export (this TaskData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<TaskJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<TimeEntryData> Import (this TimeEntryJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static TimeEntryData Import (this TimeEntryJson json, IDataStoreContext ctx,
+                                            Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<TimeEntryJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<TimeEntryJson> Export (this TimeEntryData data)
+        public static TimeEntryJson Export (this TimeEntryData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<TimeEntryJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<UserData> Import (this UserJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static UserData Import (this UserJson json, IDataStoreContext ctx,
+                                       Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<UserJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<UserJson> Export (this UserData data)
+        public static UserJson Export (this UserData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<UserJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<WorkspaceData> Import (this WorkspaceJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static WorkspaceData Import (this WorkspaceJson json, IDataStoreContext ctx,
+                                            Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<WorkspaceJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<WorkspaceJson> Export (this WorkspaceData data)
+        public static WorkspaceJson Export (this WorkspaceData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<WorkspaceJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
 
-        public static Task<WorkspaceUserData> Import (this WorkspaceUserJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public static WorkspaceUserData Import (this WorkspaceUserJson json, IDataStoreContext ctx,
+                                                Guid? localIdHint = null, bool forceUpdate = false)
         {
             var converter = ServiceContainer.Resolve<WorkspaceUserJsonConverter> ();
-            return converter.Import (json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, forceUpdate);
         }
 
-        public static Task<WorkspaceUserJson> Export (this WorkspaceUserData data)
+        public static WorkspaceUserJson Export (this WorkspaceUserData data, IDataStoreContext ctx)
         {
             var converter = ServiceContainer.Resolve<WorkspaceUserJsonConverter> ();
-            return converter.Export (data);
+            return converter.Export (ctx, data);
         }
     }
 }

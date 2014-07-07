@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class WorkspaceJsonConverter : BaseJsonConverter
     {
-        public Task<WorkspaceJson> Export (WorkspaceData data)
+        public WorkspaceJson Export (IDataStoreContext ctx, WorkspaceData data)
         {
-            return Task.FromResult (new WorkspaceJson () {
+            return new WorkspaceJson () {
                 Id = data.RemoteId,
                 ModifiedAt = data.ModifiedAt.ToUtc (),
                 Name = data.Name,
@@ -20,7 +19,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 RoundingMode = data.RoundingMode,
                 RoundingPercision = data.RoundingPercision,
                 LogoUrl = data.LogoUrl,
-            });
+            };
         }
 
         private static void Merge (WorkspaceData data, WorkspaceJson json)
@@ -38,19 +37,19 @@ namespace Toggl.Phoebe.Data.Json.Converters
             MergeCommon (data, json);
         }
 
-        public async Task<WorkspaceData> Import (WorkspaceJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public WorkspaceData Import (IDataStoreContext ctx, WorkspaceJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
-            var data = await GetByRemoteId<WorkspaceData> (json.Id.Value, localIdHint).ConfigureAwait (false);
+            var data = GetByRemoteId<WorkspaceData> (ctx, json.Id.Value, localIdHint);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
-                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
+                    ctx.Delete (data);
                     data = null;
                 }
             } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = data ?? new WorkspaceData ();
                 Merge (data, json);
-                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                data = ctx.Put (data);
             }
 
             return data;

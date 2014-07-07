@@ -88,7 +88,8 @@ namespace Toggl.Phoebe.Net
                 // Import the user into our database:
                 UserData userData;
                 try {
-                    userData = await userJson.Import ();
+                    var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                    userData = await dataStore.ExecuteInTransactionAsync (ctx => userJson.Import (ctx));
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<Logger> ();
                     log.Error (Tag, ex, "Failed to import authenticated user.");

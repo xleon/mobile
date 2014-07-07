@@ -1,52 +1,51 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class ProjectUserJsonConverter : BaseJsonConverter
     {
-        public async Task<ProjectUserJson> Export (ProjectUserData data)
+        public ProjectUserJson Export (IDataStoreContext ctx, ProjectUserData data)
         {
-            var projectIdTask = GetRemoteId<ProjectData> (data.ProjectId);
-            var userIdTask = GetRemoteId<UserData> (data.UserId);
+            var projectId = GetRemoteId<ProjectData> (ctx, data.ProjectId);
+            var userId = GetRemoteId<UserData> (ctx, data.UserId);
 
             return new ProjectUserJson () {
                 Id = data.RemoteId,
                 ModifiedAt = data.ModifiedAt.ToUtc (),
                 HourlyRate = data.HourlyRate,
                 IsManager = data.IsManager,
-                ProjectId = await projectIdTask.ConfigureAwait (false),
-                UserId = await userIdTask.ConfigureAwait (false),
+                ProjectId = projectId,
+                UserId = userId,
             };
         }
 
-        private static async Task Merge (ProjectUserData data, ProjectUserJson json)
+        private static void Merge (IDataStoreContext ctx, ProjectUserData data, ProjectUserJson json)
         {
-            var projectIdTask = GetLocalId<ProjectData> (json.ProjectId);
-            var userIdTask = GetLocalId<UserData> (json.UserId);
+            var projectId = GetLocalId<ProjectData> (ctx, json.ProjectId);
+            var userId = GetLocalId<UserData> (ctx, json.UserId);
 
             data.HourlyRate = json.HourlyRate;
             data.IsManager = json.IsManager;
-            data.ProjectId = await projectIdTask.ConfigureAwait (false);
-            data.UserId = await userIdTask.ConfigureAwait (false);
+            data.ProjectId = projectId;
+            data.UserId = userId;
 
             MergeCommon (data, json);
         }
 
-        public async Task<ProjectUserData> Import (ProjectUserJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public ProjectUserData Import (IDataStoreContext ctx, ProjectUserJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
-            var data = await GetByRemoteId<ProjectUserData> (json.Id.Value, localIdHint).ConfigureAwait (false);
+            var data = GetByRemoteId<ProjectUserData> (ctx, json.Id.Value, localIdHint);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
-                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
+                    ctx.Delete (data);
                     data = null;
                 }
             } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
                 data = data ?? new ProjectUserData ();
-                await Merge (data, json).ConfigureAwait (false);
-                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                Merge (ctx, data, json);
+                data = ctx.Put (data);
             }
 
             return data;

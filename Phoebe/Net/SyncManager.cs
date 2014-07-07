@@ -153,54 +153,68 @@ namespace Toggl.Phoebe.Net
             var changes = await client.GetChanges (lastRun).ConfigureAwait (false);
 
             // Import data (in parallel batches)
-            var userData = await changes.User.Import ();
-            await Task.WhenAll (changes.Workspaces.Select (async (json) => {
-                var workspaceData = await json.Import ().ConfigureAwait (false);
+            var userData = await store.ExecuteInTransactionAsync (ctx => changes.User.Import (ctx));
+            await store.ExecuteInTransactionAsync (ctx => {
+                foreach (var json in changes.Workspaces) {
+                    var workspaceData = json.Import (ctx);
 
-                // Make sure that the user relation exists and is up to date
-                if (workspaceData != null) {
-                    var workspaceUserRows = await store.Table<WorkspaceUserData> ()
-                        .QueryAsync (r => r.WorkspaceId == workspaceData.Id && r.UserId == userData.Id && r.DeletedAt == null)
-                        .ConfigureAwait (false);
+                    // Make sure that the user relation exists and is up to date
+                    if (workspaceData != null) {
+                        var workspaceUserRows = ctx.Connection.Table<WorkspaceUserData> ()
+                        .Where (r => r.WorkspaceId == workspaceData.Id && r.UserId == userData.Id && r.DeletedAt == null);
 
-                    var workspaceUserData = workspaceUserRows.FirstOrDefault ();
-                    if (workspaceUserData == null) {
-                        workspaceUserData = new WorkspaceUserData () {
-                            WorkspaceId = workspaceData.Id,
-                            UserId = userData.Id,
-                            IsAdmin = json.IsAdmin,
-                        };
-                    } else {
-                        workspaceUserData.IsAdmin = json.IsAdmin;
-                    }
+                        var workspaceUserData = workspaceUserRows.FirstOrDefault ();
+                        if (workspaceUserData == null) {
+                            workspaceUserData = new WorkspaceUserData () {
+                                WorkspaceId = workspaceData.Id,
+                                UserId = userData.Id,
+                                IsAdmin = json.IsAdmin,
+                            };
+                        } else {
+                            workspaceUserData.IsAdmin = json.IsAdmin;
+                        }
 
-                    await store.PutAsync (workspaceUserData).ConfigureAwait (false);
-                }
-            }));
-            await Task.WhenAll (changes.Tags.Select (json => json.Import ()));
-            await Task.WhenAll (changes.Clients.Select (json => json.Import ()));
-            await Task.WhenAll (changes.Projects.Select (async (json) => {
-                var projectData = await json.Import ().ConfigureAwait (false);
-
-                // Make sure that the user relation exists
-                if (projectData != null) {
-                    var projectUserRows = await store.Table<ProjectUserData> ()
-                        .QueryAsync (r => r.ProjectId == projectData.Id && r.UserId == userData.Id && r.DeletedAt == null)
-                        .ConfigureAwait (false);
-
-                    var projectUserData = projectUserRows.FirstOrDefault ();
-                    if (projectUserData == null) {
-                        projectUserData = new ProjectUserData () {
-                            ProjectId = projectData.Id,
-                            UserId = userData.Id,
-                        };
-
-                        await store.PutAsync (projectUserData).ConfigureAwait (false);
+                        ctx.Put (workspaceUserData);
                     }
                 }
-            }));
-            await Task.WhenAll (changes.Tasks.Select (json => json.Import ()));
-            await Task.WhenAll (changes.TimeEntries.Select (json => json.Import ()));
+            });
+            await store.ExecuteInTransactionAsync (ctx => {
+                foreach (var json in changes.Tags)
+                    json.Import (ctx);
+            });
+            await store.ExecuteInTransactionAsync (ctx => {
+                foreach (var json in changes.Clients)
+                    json.Import (ctx);
+            });
+            await store.ExecuteInTransactionAsync (ctx => {
+                foreach (var json in changes.Projects) {
+                    var projectData = json.Import (ctx);
+
+                    // Make sure that the user relation exists
+                    if (projectData != null) {
+                        var projectUserRows = ctx.Connection.Table<ProjectUserData> ()
+                            .Where (r => r.ProjectId == projectData.Id && r.UserId == userData.Id && r.DeletedAt == null);
+
+                        var projectUserData = projectUserRows.FirstOrDefault ();
+                        if (projectUserData == null) {
+                            projectUserData = new ProjectUserData () {
+                                ProjectId = projectData.Id,
+                                UserId = userData.Id,
+                            };
+
+                            ctx.Put (projectUserData);
+                        }
+                    }
+                }
+            });
+            await store.ExecuteInTransactionAsync (ctx => {
+                foreach (var json in changes.Tasks)
+                    json.Import (ctx);
+            });
+            await store.ExecuteInTransactionAsync (ctx => {
+                foreach (var json in changes.TimeEntries)
+                    json.Import (ctx);
+            });
 
             return changes.Timestamp;
         }
@@ -330,7 +344,7 @@ namespace Toggl.Phoebe.Net
                 if (dataObject.DeletedAt != null) {
                     if (dataObject.RemoteId != null) {
                         // Delete model
-                        var json = await dataObject.Export ().ConfigureAwait (false);
+                        var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                         await client.Delete (json).ConfigureAwait (false);
                         await store.DeleteAsync (dataObject).ConfigureAwait (false);
                     } else {
@@ -338,18 +352,20 @@ namespace Toggl.Phoebe.Net
                         await store.DeleteAsync (dataObject).ConfigureAwait (false);
                     }
                 } else if (dataObject.RemoteId != null) {
-                    var json = await dataObject.Export ().ConfigureAwait (false);
+                    var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                     json = await client.Update (json).ConfigureAwait (false);
-                    await json.Import (
+                    await store.ExecuteInTransactionAsync (ctx => json.Import (
+                        ctx,
                         forceUpdate: true
-                    ).ConfigureAwait (false);
+                    )).ConfigureAwait (false);
                 } else {
-                    var json = await dataObject.Export ().ConfigureAwait (false);
+                    var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                     json = await client.Create (json).ConfigureAwait (false);
-                    await json.Import (
+                    await store.ExecuteInTransactionAsync (ctx => json.Import (
+                        ctx,
                         localIdHint: dataObject.Id,
                         forceUpdate: true
-                    ).ConfigureAwait (false);
+                    )).ConfigureAwait (false);
                 }
             } catch (ServerValidationException ex) {
                 error = ex;

@@ -1,33 +1,30 @@
 ﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class TagJsonConverter : BaseJsonConverter
     {
-        public async Task<TagJson> Export (TagData data)
+        public TagJson Export (IDataStoreContext ctx, TagData data)
         {
-            var workspaceIdTask = GetRemoteId<WorkspaceData> (data.WorkspaceId);
+            var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);
 
             return new TagJson () {
                 Id = data.RemoteId,
                 ModifiedAt = data.ModifiedAt.ToUtc (),
                 Name = data.Name,
-                WorkspaceId = await workspaceIdTask.ConfigureAwait (false),
+                WorkspaceId = workspaceId,
             };
         }
 
-        private static async Task<TagData> Merge (TagData data, TagJson json)
+        private static TagData Merge (IDataStoreContext ctx, TagData data, TagJson json)
         {
-            var workspaceId = await GetLocalId<WorkspaceData> (json.WorkspaceId).ConfigureAwait (false);
+            var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
 
             if (data == null) {
                 // Fallback to name lookup for unsynced tags:
-                var rows = await DataStore.Table<TagData> ().Take (1)
-                    .QueryAsync (r => r.WorkspaceId == workspaceId && r.Name == json.Name && r.RemoteId == null)
-                    .ConfigureAwait (false);
+                var rows = ctx.Connection.Table<TagData> ().Take (1)
+                    .Where (r => r.WorkspaceId == workspaceId && r.Name == json.Name && r.RemoteId == null);
                 data = rows.FirstOrDefault ();
             }
 
@@ -42,18 +39,18 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return data;
         }
 
-        public async Task<TagData> Import (TagJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public TagData Import (IDataStoreContext ctx, TagJson json, Guid? localIdHint = null, bool forceUpdate = false)
         {
-            var data = await GetByRemoteId<TagData> (json.Id.Value, localIdHint).ConfigureAwait (false);
+            var data = GetByRemoteId<TagData> (ctx, json.Id.Value, localIdHint);
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
-                    await DataStore.DeleteAsync (data).ConfigureAwait (false);
+                    ctx.Delete (data);
                     data = null;
                 }
             } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
-                data = await Merge (data, json).ConfigureAwait (false);
-                data = await DataStore.PutAsync (data).ConfigureAwait (false);
+                data = Merge (ctx, data, json);
+                data = ctx.Put (data);
             }
 
             return data;

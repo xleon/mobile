@@ -9,16 +9,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 <!-- The navigation drawer -->
-    <ListView
-        android:id="@+id/DrawerListView"
+    <FrameLayout
+        android:id="@+id/DrawerFrameLayout"
         android:layout_width="240dp"
         android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:choiceMode="singleChoice"
-        android:divider="@color/drawer_serparator_gray"
-        android:dividerHeight="1dp"
-        android:paddingTop="0dp"
-        android:paddingLeft="0dp"
-        android:paddingRight="0dp"
-        android:background="@android:color/white" />
+        android:layout_gravity="start">
+        <ListView
+            android:id="@+id/DrawerListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:choiceMode="singleChoice"
+            android:divider="@color/drawer_serparator_gray"
+            android:dividerHeight="1dp"
+            android:paddingTop="0dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:background="@android:color/white" />
+        <include
+            layout="@layout/MainDrawerSyncStatus" />
+    </FrameLayout>
 </android.support.v4.widget.DrawerLayout>

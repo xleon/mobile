@@ -54,9 +54,16 @@ namespace Toggl.Joey.UI.Fragments
 
         protected override void ResetModel ()
         {
-            // Need to create a new model (instead of reusing old) as the logic in BaseEditTimeEntries uses
-            // Id changes to detect deletions. And would yield in a recursive loop of calling this method.
-            TimeEntry = (TimeEntryModel)timeEntryManager.Active;
+            // Need to be careful when updating model data as the logic in BaseEditTimeEntries uses
+            // Id changes to detect deletions. This would result in recursive loop with this function.
+            var model = TimeEntry;
+            var data = timeEntryManager.Active;
+
+            if (model == null || data == null || model.Id != data.Id) {
+                TimeEntry = (TimeEntryModel)data;
+            } else {
+                model.Data = data;
+            }
         }
     }
 }

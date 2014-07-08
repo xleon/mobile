@@ -93,20 +93,26 @@ namespace Toggl.Joey.UI.Components
         private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
             if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
-                SyncModel ();
+                if (SyncModel ())
+                    Rebind ();
             }
         }
 
-        private void SyncModel ()
+        private bool SyncModel ()
         {
+            var shouldRebind = true;
+
             var data = ActiveTimeEntryData;
             if (data != null) {
                 if (backingActiveTimeEntry == null) {
                     backingActiveTimeEntry = new TimeEntryModel (data);
                 } else {
                     backingActiveTimeEntry.Data = data;
+                    shouldRebind = false;
                 }
             }
+
+            return shouldRebind;
         }
 
         private TimeEntryData ActiveTimeEntryData {

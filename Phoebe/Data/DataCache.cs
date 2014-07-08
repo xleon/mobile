@@ -186,7 +186,7 @@ namespace Toggl.Phoebe.Data
             bool IsLoading { get; }
         }
 
-        private class Entry<T>
+        private class Entry<T> : IEntry
             where T : CommonData, new()
         {
             private TaskCompletionSource<CommonData> loadTCS;

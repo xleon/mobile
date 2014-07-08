@@ -91,7 +91,9 @@ namespace Toggl.Phoebe.Data
                     if (registry.Count > sizeLimit) {
                         // Sort list by access time in descending order and trim excess
                         registry.Sort ((a, b) => b.AccessTime.CompareTo (a.AccessTime));
-                        registry.RemoveRange (sizeLimit - 1, registry.Count - sizeLimit);
+
+                        var startIdx = sizeLimit - 1;
+                        registry.RemoveRange (startIdx, registry.Count - startIdx);
                     }
                 } else {
                     // Purge all items that have been dead for more than the grace period

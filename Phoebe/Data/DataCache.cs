@@ -7,12 +7,13 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
-    public class DataCache
+    public sealed class DataCache : IDisposable
     {
         private readonly object syncRoot = new Object ();
         private readonly List<IEntry> registry = new List<IEntry> ();
         private readonly int sizeLimit;
         private readonly TimeSpan deadGracePeriod;
+        private Subscription<DataChangeMessage> subscriptionDataChange;
 
         public DataCache () : this (1000, TimeSpan.FromMinutes (5))
         {
@@ -22,6 +23,55 @@ namespace Toggl.Phoebe.Data
         {
             this.sizeLimit = sizeLimit;
             this.deadGracePeriod = deadGracePeriod;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+        }
+
+        ~DataCache ()
+        {
+            Dispose (false);
+        }
+
+        public void Dispose ()
+        {
+            Dispose (true);
+            GC.SuppressFinalize (this);
+        }
+
+        private void Dispose (bool disposing)
+        {
+            if (disposing) {
+                registry.Clear ();
+
+                if (subscriptionDataChange != null) {
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    bus.Unsubscribe (subscriptionDataChange);
+                    subscriptionDataChange = null;
+                }
+            }
+        }
+
+        private void OnDataChange (DataChangeMessage msg)
+        {
+            var data = msg.Data as CommonData;
+            if (data == null)
+                return;
+
+            lock (syncRoot) {
+                if (msg.Action == DataAction.Delete) {
+                    // Clear the item from cache
+                    registry.RemoveAll (e => EntryMatches (e, data));
+                } else {
+                    // Update the item in cache if it is cached
+                    foreach (var entry in registry) {
+                        if (EntryMatches (entry, data)) {
+                            entry.Data.SetTarget (data);
+                            entry.Touch ();
+                        }
+                    }
+                }
+            }
         }
 
         public async Task<T> GetAsync<T> (Guid id)
@@ -45,7 +95,7 @@ namespace Toggl.Phoebe.Data
                     }
                 } else {
                     // Purge all items that have been dead for more than the grace period
-                    registry.RemoveAll (e => IsDeadEntry (e) && e.AccessTime < DateTime.UtcNow - deadGracePeriod);
+                    registry.RemoveAll (e => IsDeadEntry (e) && e.AccessTime < Time.UtcNow - deadGracePeriod);
                 }
             }
         }
@@ -114,6 +164,11 @@ namespace Toggl.Phoebe.Data
             return !entry.IsLoading && !entry.Data.TryGetTarget (out data);
         }
 
+        private static bool EntryMatches (IEntry entry, CommonData data)
+        {
+            return entry.Id == data.Id && entry.DataType == data.GetType ();
+        }
+
         private interface IEntry
         {
             void Touch ();
@@ -145,7 +200,7 @@ namespace Toggl.Phoebe.Data
 
             public void Touch ()
             {
-                AccessTime = DateTime.UtcNow;
+                AccessTime = Time.UtcNow;
             }
 
             public Task<CommonData> LoadAsync ()

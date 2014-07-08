@@ -236,7 +236,7 @@ namespace Toggl.Joey
             return new NotificationCompat.Builder (ctx)
                     .SetAutoCancel (false)
                     .SetOngoing (true)
-                    .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+                    .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
                     .SetContentIntent (pendingOpenIntent)
                     .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
                     .SetContentText (res.GetString (Resource.String.IdleNotificationText));

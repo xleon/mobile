@@ -13,6 +13,7 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<ActiveTimeEntryManager> ();
+            ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));

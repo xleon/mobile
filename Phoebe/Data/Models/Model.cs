@@ -43,20 +43,39 @@ namespace Toggl.Phoebe.Data.Models
         private bool isLoaded;
         private T data;
 
-        protected Model () : this (new T ())
+        protected Model () : this (Guid.Empty, null)
         {
-            this.isLoaded = true;
         }
 
-        protected Model (Guid id) : this (new T () { Id = id })
+        protected Model (Guid id) : this (id, null)
         {
-            this.isLoaded = id == Guid.Empty;
         }
 
-        protected Model (T data)
+        protected Model (T data) : this (Guid.Empty, data)
         {
+        }
+
+        private Model (Guid id, T data)
+        {
+            var isLoaded = true;
+
+            if (data != null) {
+                // Model was initialized with data already loaded
+            } else if (id != Guid.Empty) {
+                // Check cache for model
+                var dataCache = ServiceContainer.Resolve<DataCache> ();
+                if (!dataCache.TryGetCached (id, out data)) {
+                    // Not in cache, need to load data later
+                    data = new T () { Id = id };
+                    isLoaded = false;
+                }
+            } else {
+                // Initialize a new instance for the model
+                data = new T ();
+            }
+
             this.data = data;
-            this.isLoaded = true;
+            this.isLoaded = isLoaded;
 
             // Listen for global data changes
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -96,18 +115,14 @@ namespace Toggl.Phoebe.Data.Models
                 return;
 
             loadingTCS = new TaskCompletionSource<object> ();
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var dataCache = ServiceContainer.Resolve<DataCache> ();
             var pk = Data.Id;
 
-            var rows = await dataStore.Table<T> ()
-                .Where (m => m.Id == pk && m.DeletedAt == null)
-                .Take (1)
-                .QueryAsync ();
-
+            var data = await dataCache.GetAsync<T> (pk);
             // When the data is not found in the database, leave the object as a temporary one, hoping that it will
             // be committed to the database soon enough and picked up by the change monitor
-            if (rows.Count > 0) {
-                Data = rows [0];
+            if (data != null && data.DeletedAt == null) {
+                Data = data;
             }
 
             isLoaded = true;

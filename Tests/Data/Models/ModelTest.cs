@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Data.Models
 {
@@ -15,6 +16,18 @@ namespace Toggl.Phoebe.Tests.Data.Models
         where T : IModel
     {
         protected static readonly string[] ExemptProperties = { "Data" };
+
+        public override void SetUp ()
+        {
+            base.SetUp ();
+
+            ResetDataCache ();
+        }
+
+        private void ResetDataCache ()
+        {
+            ServiceContainer.Register<DataCache> ();
+        }
 
         [Test]
         public void VerifyPropertyNames ()
@@ -157,6 +170,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 foreach (var prop in properties) {
                     int changeCount = 2;
                     var tcs = new TaskCompletionSource<object> ();
+
+                    ResetDataCache ();
 
                     var inst = (T)Activator.CreateInstance (type, pk);
                     inst.PropertyChanged += (s, e) => {

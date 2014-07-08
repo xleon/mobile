@@ -89,11 +89,21 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        private void OnStopTimeEntry (TimeEntryModel model)
+        {
+            var handler = HandleTimeEntryStop;
+            if (handler != null) {
+                handler (model);
+            }
+        }
+
         public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
 
         public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
 
         public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
+
+        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
 
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
@@ -235,6 +245,11 @@ namespace Toggl.Joey.UI.Adapters
             {
                 if (DataSource == null)
                     return;
+
+                if (DataSource.State == TimeEntryState.Running) {
+                    adapter.OnStopTimeEntry (DataSource);
+                    return;
+                }
                 adapter.OnContinueTimeEntry (DataSource);
             }
 
@@ -401,6 +416,19 @@ namespace Toggl.Joey.UI.Adapters
                 if (DataSource.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
+                }
+                ShowStopButton ();
+            }
+
+            private void ShowStopButton ()
+            {
+                if (DataSource == null || Handle == IntPtr.Zero)
+                    return;
+
+                if (DataSource.State == TimeEntryState.Running) {
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
+                } else {
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcContinue);
                 }
             }
 

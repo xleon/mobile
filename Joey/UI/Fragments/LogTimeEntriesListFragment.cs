@@ -68,6 +68,11 @@ namespace Toggl.Joey.UI.Fragments
 
         }
 
+        private async void StopTimeEntry (TimeEntryModel model)
+        {
+            await model.StopAsync ();
+        }
+
         public override bool UserVisibleHint {
             get { return base.UserVisibleHint; }
             set {
@@ -83,6 +88,7 @@ namespace Toggl.Joey.UI.Fragments
                 adapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
                 adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
                 adapter.HandleTimeEntryContinue = ContinueTimeEntry;
+                adapter.HandleTimeEntryStop = StopTimeEntry;
                 ListAdapter = adapter;
             }
         }

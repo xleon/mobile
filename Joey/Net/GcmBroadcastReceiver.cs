@@ -12,9 +12,9 @@ namespace Toggl.Joey.Net
     {
         public override void OnReceive (Context context, Intent intent)
         {
-            var comp = new ComponentName (context,
-                           Java.Lang.Class.FromType (typeof(GcmService)));
-            StartWakefulService (context, (intent.SetComponent (comp)));
+            var serviceIntent = new Intent (context, typeof(GcmService));
+            serviceIntent.ReplaceExtras (intent.Extras);
+            StartWakefulService (context, serviceIntent);
 
             ResultCode = Result.Ok;
         }

@@ -64,6 +64,11 @@ namespace Toggl.Joey.UI.Fragments
         private async void OnSendClick (object sender, EventArgs e) 
         {
             SubmitFeedbackButton.Enabled = false;
+            FeedbackMessageEditText.Enabled = false;
+            FeedbackPositiveButton.Enabled = false;
+            FeedbackNeutralButton.Enabled = false;
+            FeedbackNegativeButton.Enabled = false;
+
             SubmitFeedbackButton.SetText(Resource.String.SendFeedbackButtonActiveText);
             bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
             if (send == true) {
@@ -72,6 +77,10 @@ namespace Toggl.Joey.UI.Fragments
                 } else {
                     ThankForFeedback ();
                 }
+                FeedbackMessageEditText.Enabled = true;
+                FeedbackPositiveButton.Enabled = true;
+                FeedbackNeutralButton.Enabled = true;
+                FeedbackNegativeButton.Enabled = true;
             }
         }
 

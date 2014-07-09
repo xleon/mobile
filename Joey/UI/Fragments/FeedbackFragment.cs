@@ -1,20 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Runtime;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
-
 
 namespace Toggl.Joey.UI.Fragments
 {

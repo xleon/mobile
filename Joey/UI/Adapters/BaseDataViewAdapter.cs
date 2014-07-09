@@ -59,6 +59,12 @@ namespace Toggl.Joey.UI.Adapters
             return dataView.Data.ElementAt (position);
         }
 
+        public override bool IsEnabled (int position)
+        {
+            var type = GetItemViewType (position);
+            return type != ViewTypeLoaderPlaceholder;
+        }
+
         public override long GetItemId (int position)
         {
             return position;

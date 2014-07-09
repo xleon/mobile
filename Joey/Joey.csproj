@@ -495,12 +495,12 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNavFeedbackDefault.png" />
     <AndroidResource Include="Resources\drawable\IcNavFeedback.xml" />
     <AndroidResource Include="Resources\layout\FeedbackFragment.axml" />
-    <AndroidResource Include="Resources\drawable\FeedbackSubmitButton.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\FeedbackButtonDisabled.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\FeedbackButtonDisabled.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\FeedbackButtonDisabled.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\FeedbackButtonDisabled.9.png" />
-    <AndroidResource Include="Resources\drawable\FeedbackRatingButton.axml" />
+    <AndroidResource Include="Resources\drawable\FeedbackRatingButton.xml" />
+    <AndroidResource Include="Resources\drawable\FeedbackSubmitButton.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

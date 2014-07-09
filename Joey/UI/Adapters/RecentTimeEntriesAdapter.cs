@@ -15,6 +15,8 @@ namespace Toggl.Joey.UI.Adapters
 {
     public class RecentTimeEntriesAdapter : BaseDataViewAdapter<TimeEntryData>
     {
+        protected static readonly int ViewTypeFooterView = ViewTypeContent + 1;
+
         public RecentTimeEntriesAdapter () : base (new RecentTimeEntriesView ())
         {
         }
@@ -22,14 +24,67 @@ namespace Toggl.Joey.UI.Adapters
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
-            if (view == null) {
-                view = LayoutInflater.FromContext (parent.Context).Inflate (
-                    Resource.Layout.RecentTimeEntryListItem, parent, false);
-                view.Tag = new RecentTimeEntryListItemHolder (view);
+            var viewType = GetItemViewType (position);
+
+            if (viewType == ViewTypeContent) {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.RecentTimeEntryListItem, parent, false);
+                    view.Tag = new RecentTimeEntryListItemHolder (view);
+                }
+                var holder = (RecentTimeEntryListItemHolder)view.Tag;
+                holder.Bind ((TimeEntryModel)GetEntry (position));
+            } else if (viewType == ViewTypeFooterView) {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.RecentTimeEntriesListFooterFragment, parent, false);
+                }
             }
-            var holder = (RecentTimeEntryListItemHolder)view.Tag;
-            holder.Bind ((TimeEntryModel)GetEntry (position));
+
             return view;
+        }
+
+        public override int Count {
+            get {
+                if (HasFooterView)
+                    return base.Count + 1; // Add virtual footer view
+                return base.Count;
+            }
+        }
+
+        private bool HasFooterView {
+            get { return !DataView.IsLoading && !DataView.HasMore; }
+        }
+
+        public override int ViewTypeCount {
+            get { return base.ViewTypeCount + 1; }
+        }
+
+        public override TimeEntryData GetEntry (int position)
+        {
+            if (HasFooterView && position == DataView.Count)
+                return null;
+            return base.GetEntry (position);
+        }
+
+        public override bool IsEnabled (int position)
+        {
+            var type = GetItemViewType (position);
+            return type != ViewTypeFooterView && base.IsEnabled (position);
+        }
+
+        public override int GetItemViewType (int position)
+        {
+            if (position == DataView.Count && DataView.IsLoading)
+                return ViewTypeLoaderPlaceholder;
+            else if (position < 0 || position > DataView.Count)
+                throw new ArgumentOutOfRangeException ("position");
+            else if (position < DataView.Count)
+                return ViewTypeContent;
+            else if (HasFooterView && position == DataView.Count)
+                return ViewTypeFooterView;
+
+            throw new NotSupportedException ("No view type defined for given object.");
         }
 
         private class RecentTimeEntryListItemHolder : ModelViewHolder<TimeEntryModel>

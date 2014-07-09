@@ -475,6 +475,7 @@
     <AndroidResource Include="Resources\drawable-hdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNotificationIconIdle.png" />
+    <AndroidResource Include="Resources\layout\RecentTimeEntriesListFooterFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

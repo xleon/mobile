@@ -34,6 +34,7 @@
     <string name="RecentTimeEntryNoProject">(no project)</string>
     <string name="RecentTimeEntryNamelessProject">(nameless project)</string>
     <string name="RecentTimeEntryNoItemsTitle">No recent entries</string>
+    <string name="RecentTimeEntriesListFooterText">Swipe left to see older entries in log view</string>
     <string name="RecentTimeEntryContinueDialogTitle">Continue recent entry</string>
     <string name="RecentTimeEntryContinueDialogMessage">Tapping on recent entries continues them. Use log view to see entry details and edit them.</string>
     <string name="RecentTimeEntryContinueDialogOk">Continue</string>

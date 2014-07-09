@@ -45,10 +45,11 @@ namespace Toggl.Joey.UI.Fragments
 
             SubmitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton).SetFont (Font.Roboto);
             SubmitFeedbackButton.Click += OnSendClick;
-            if(savedInstanceState != null)
-                SetRating(savedInstanceState.GetInt("rating"));
-            else
+            if (savedInstanceState != null) {
+                SetRating (savedInstanceState.GetInt ("rating"));
+            } else {
                 SetRating (RatingNotSet);
+            }
             ValidateForm ();
             return view;
         }
@@ -66,10 +67,11 @@ namespace Toggl.Joey.UI.Fragments
             SubmitFeedbackButton.SetText(Resource.String.SendFeedbackButtonActiveText);
             bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
             if (send == true) {
-                if (FeedbackRating == RatingPositive)
+                if (FeedbackRating == RatingPositive) {
                     AskPublishToAppStore ();
-                else
-                    ThankForFeedback();
+                } else {
+                    ThankForFeedback ();
+                }
             }
         }
 
@@ -85,10 +87,11 @@ namespace Toggl.Joey.UI.Fragments
         {
             FeedbackMessage = FeedbackMessageEditText.Text;
             bool enabled = false;
-            if (FeedbackMessage.Length == 0 || FeedbackRating == RatingNotSet)
+            if (FeedbackMessage.Length == 0 || FeedbackRating == RatingNotSet) {
                 enabled = false;
-            else 
+            } else {
                 enabled = true;
+            }
             SubmitFeedbackButton.Enabled = enabled;
         }
 

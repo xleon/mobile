@@ -20,7 +20,7 @@ namespace Toggl.Ross.ViewControllers
 {
     public class LogViewController : BaseTimerTableViewController
     {
-        private readonly NavigationMenuController navMenuController;
+        private NavigationMenuController navMenuController;
         private UIView emptyView;
 
         public LogViewController () : base (UITableViewStyle.Plain)
@@ -62,6 +62,18 @@ namespace Toggl.Ross.ViewControllers
             var tracker = ServiceContainer.Resolve<IGAITracker> ();
             tracker.Set (GAIConstants.ScreenName, "Log View");
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+        }
+
+        protected override void Dispose (bool disposing)
+        {
+            if (disposing) {
+                if (navMenuController != null) {
+                    navMenuController.Detach ();
+                    navMenuController = null;
+                }
+            }
+
+            base.Dispose (disposing);
         }
 
         class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryData>

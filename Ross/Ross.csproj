@@ -255,6 +255,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Net\NetworkPresence.cs" />
+    <Compile Include="TogglWindow.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -19,7 +19,7 @@ namespace Toggl.Ross.ViewControllers
 {
     public class RecentViewController : BaseTimerTableViewController
     {
-        private readonly NavigationMenuController navMenuController;
+        private NavigationMenuController navMenuController;
         private UIView emptyView;
 
         public RecentViewController () : base (UITableViewStyle.Plain)
@@ -62,6 +62,18 @@ namespace Toggl.Ross.ViewControllers
             var tracker = ServiceContainer.Resolve<IGAITracker> ();
             tracker.Set (GAIConstants.ScreenName, "Recent View");
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+        }
+
+        protected override void Dispose (bool disposing)
+        {
+            if (disposing) {
+                if (navMenuController != null) {
+                    navMenuController.Detach ();
+                    navMenuController = null;
+                }
+            }
+
+            base.Dispose (disposing);
         }
 
         class Source : GroupedDataViewSource<TimeEntryData, string, TimeEntryData>

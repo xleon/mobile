@@ -20,7 +20,7 @@ namespace Toggl.Ross
     [Register ("AppDelegate")]
     public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
-        private UIWindow window;
+        private TogglWindow window;
         private bool isResuming;
 
         public override bool FinishedLaunching (UIApplication app, NSDictionary options)
@@ -37,7 +37,7 @@ namespace Toggl.Ross
             Toggl.Ross.Theme.Style.Initialize ();
 
             // Start app
-            window = new UIWindow (UIScreen.MainScreen.Bounds);
+            window = new TogglWindow (UIScreen.MainScreen.Bounds);
             window.RootViewController = new MainViewController ();
             window.MakeKeyAndVisible ();
             
@@ -92,6 +92,12 @@ namespace Toggl.Ross
             ServiceContainer.Register<IGAITracker> (
                 () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
+        }
+
+        public static TogglWindow TogglWindow {
+            get {
+                return ((AppDelegate)UIApplication.SharedApplication.Delegate).window;
+            }
         }
 
         string IPlatformInfo.AppIdentifier {

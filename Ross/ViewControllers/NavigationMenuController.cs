@@ -20,14 +20,51 @@ namespace Toggl.Ross.ViewControllers
         private UIButton[] menuButtons;
         private UIView[] separators;
         private bool menuShown;
+        private bool isAnimating;
+        private TogglWindow window;
 
         public void Attach (UIViewController controller)
         {
             this.controller = controller;
 
+            window = AppDelegate.TogglWindow;
+
+            window.OnHitTest += OnTogglWindowHit;
+
             controller.NavigationItem.LeftBarButtonItem = new UIBarButtonItem (
                 Image.IconNav.ImageWithRenderingMode (UIImageRenderingMode.AlwaysOriginal),
                 UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
+        }
+
+        public void Detach ()
+        {
+            if (window != null)
+                window.OnHitTest -= OnTogglWindowHit;
+            window = null;
+        }
+
+        private void OnTogglWindowHit (UIView view)
+        {
+            if (menuShown) {
+                bool hitInsideMenu = IsSubviewOfMenu (view);
+                if (!hitInsideMenu)
+                    ToggleMenu ();
+            }
+        }
+
+        private bool IsSubviewOfMenu (UIView other)
+        {
+            if (menuView == null)
+                return false;
+
+            var enumerator = menuView.Subviews.GetEnumerator ();
+
+            while (enumerator.MoveNext ()) {
+                if (enumerator.Current == other)
+                    return true;
+            }
+
+            return false;
         }
 
         private void EnsureViews ()
@@ -151,10 +188,15 @@ namespace Toggl.Ross.ViewControllers
 
         private void ToggleMenu ()
         {
+            if (isAnimating)
+                return;
+
             EnsureViews ();
 
             if (containerView == null)
                 return;
+
+            isAnimating = true;
 
             if (menuShown) {
                 UIView.Animate (
@@ -173,6 +215,7 @@ namespace Toggl.Ross.ViewControllers
                             // Remove from subview
                             containerView.RemoveFromSuperview ();
                         }
+                        isAnimating = false;
                     });
             } else {
                 UIView.Animate (
@@ -185,7 +228,9 @@ namespace Toggl.Ross.ViewControllers
                             width: containerView.Frame.Width,
                             height: containerView.Frame.Height
                         );
-                    }, null);
+                    }, delegate {
+                    isAnimating = false;
+                });
 
                 // Make sure that the containerView has been added the the view hiearchy
                 if (containerView.Superview == null) {

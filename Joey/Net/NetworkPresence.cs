@@ -63,7 +63,7 @@ namespace Toggl.Joey.Net
                 if (intent.Extras != null) {
                     var info = intent.Extras.Get (ConnectivityManager.ExtraNetworkInfo) as NetworkInfo;
                     if (info != null && IsNetworkConnected (info)) {
-                        ServiceContainer.Resolve<SyncManager> ().Run ();
+                        ServiceContainer.Resolve<ISyncManager> ().Run ();
                     }
                 }
             }

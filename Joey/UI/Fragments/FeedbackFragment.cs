@@ -11,7 +11,6 @@ using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
-
 namespace Toggl.Joey.UI.Fragments
 {
     public class FeedbackFragment : Fragment

@@ -9,12 +9,13 @@ using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
+using FragmentManager = Android.Support.V4.App.FragmentManager;
+
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class FeedbackFragment : Fragment
     {
-        private Context ctx;
         public ImageButton FeedbackPositiveButton { get; private set;}
         public ImageButton FeedbackNeutralButton { get; private set;}
         public ImageButton FeedbackNegativeButton { get; private set;}
@@ -30,15 +31,14 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.FeedbackFragment, container, false);
-            ctx = ServiceContainer.Resolve<Context> ();
 
             FeedbackPositiveButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackPositiveButton);
             FeedbackNeutralButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNeutralButton);
             FeedbackNegativeButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNegativeButton);
 
-            FeedbackPositiveButton.Click  += (sender, e) => SetRating(RatingPositive);
-            FeedbackNeutralButton.Click  += (sender, e) => SetRating(RatingNeutral);
-            FeedbackNegativeButton.Click  += (sender, e) => SetRating(RatingNegative);
+            FeedbackPositiveButton.Click  += (sender, e) => SetRating (RatingPositive);
+            FeedbackNeutralButton.Click  += (sender, e) => SetRating (RatingNeutral);
+            FeedbackNegativeButton.Click  += (sender, e) => SetRating (RatingNegative);
 
             FeedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText).SetFont (Font.Roboto);
             FeedbackMessageEditText.AfterTextChanged += OnEdit;
@@ -54,9 +54,9 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnResume()
+        public override void OnResume ()
         {
-            SetRating(FeedbackRating);
+            SetRating (FeedbackRating);
             ValidateForm ();
             base.OnResume ();
         }
@@ -69,30 +69,34 @@ namespace Toggl.Joey.UI.Fragments
             FeedbackNeutralButton.Enabled = false;
             FeedbackNegativeButton.Enabled = false;
 
-            SubmitFeedbackButton.SetText(Resource.String.SendFeedbackButtonActiveText);
+            SubmitFeedbackButton.SetText (Resource.String.SendFeedbackButtonActiveText);
             bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
             if (send == true) {
                 if (FeedbackRating == RatingPositive) {
-                    AskPublishToAppStore ();
+                    var args = new Bundle ();
+                    args.PutString ("feedbackMessage", FeedbackMessage);
+                    new AskPublishToAppStore (args).Show (FragmentManager);
                 } else {
-                    ThankForFeedback ();
+                    new ThankForFeedbackDialog ().Show (FragmentManager);
                 }
-                FeedbackMessageEditText.Enabled = true;
-                FeedbackPositiveButton.Enabled = true;
-                FeedbackNeutralButton.Enabled = true;
-                FeedbackNegativeButton.Enabled = true;
+                ResetFeedbackForm ();
+            } else {
+                Context ctx = ServiceContainer.Resolve<Context> ();
+                Toast toast = Toast.MakeText (ctx, Resource.String.FeedbackSendFailedText, ToastLength.Long);
+                toast.Show ();
+                EnableForm ();
             }
         }
 
         public override void OnSaveInstanceState (Bundle outState)
         {
             base.OnSaveInstanceState (outState);
-            if (FeedbackRating != null) {
+            if (FeedbackRating != RatingNotSet) {
                 outState.PutInt ("rating", FeedbackRating);
             }
         }
 
-        private void ValidateForm()
+        private void ValidateForm ()
         {
             FeedbackMessage = FeedbackMessageEditText.Text;
             bool enabled = false;
@@ -106,8 +110,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private bool prevSendResult;
         private async Task<bool> SendFeedbackData ( string feedback, int rating ) {
-            await Task.Delay(TimeSpan.FromSeconds(1));
-            prevSendResult = true;
+            await Task.Delay (TimeSpan.FromSeconds(1));
+            prevSendResult = !prevSendResult;
             return prevSendResult;
         }
 
@@ -116,71 +120,118 @@ namespace Toggl.Joey.UI.Fragments
             FeedbackRating = rating;
             ResetRatingButtonImages ();
             if (FeedbackRating  == RatingPositive) {
-                FeedbackPositiveButton.SetImageResource(Resource.Drawable.IcFeedbackPositiveActive);
+                FeedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositiveActive);
             } else if (FeedbackRating == RatingNeutral) {
-                FeedbackNeutralButton.SetImageResource(Resource.Drawable.IcFeedbackNeutralActive);
+                FeedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutralActive);
             } else if (FeedbackRating == RatingNegative) {
-                FeedbackNegativeButton.SetImageResource(Resource.Drawable.IcFeedbackNegativeActive);
+                FeedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegativeActive);
             }
             ValidateForm ();
         }
 
-        private void ResetRatingButtonImages()
+        private void ResetRatingButtonImages ()
         {
-            FeedbackPositiveButton.SetImageResource(Resource.Drawable.IcFeedbackPositive);
-            FeedbackNeutralButton.SetImageResource(Resource.Drawable.IcFeedbackNeutral);
-            FeedbackNegativeButton.SetImageResource(Resource.Drawable.IcFeedbackNegative);
+            FeedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositive);
+            FeedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutral);
+            FeedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegative);
         }
 
-        private void AskPublishToAppStore()
+        private void OnEdit (object sender, EventArgs e)
         {
-            new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.FeedbackAskPublishTitle)
-                .SetMessage (Resource.String.FeedbackAskPublishMessage)
-                .SetCancelable (true)
-                .SetNegativeButton(Resource.String.FeedbackAskPublishCancel, (IDialogInterfaceOnClickListener)null )
-                .SetPositiveButton (Resource.String.FeedbackAskPublishOK, OnCopyOkClicked)
-                .Show ();
+            ValidateForm ();
         }
 
-        private void ThankForFeedback()
+        private void ResetFeedbackForm ()
         {
-            new AlertDialog.Builder (Activity)
+            SetRating (RatingNotSet);
+            FeedbackMessageEditText.Text = "";
+            EnableForm ();
+        }
+
+        private void EnableForm (){
+            SubmitFeedbackButton.SetText (Resource.String.SendFeedbackButtonText);
+            SubmitFeedbackButton.Enabled = true;
+            FeedbackMessageEditText.Enabled = true;
+            FeedbackPositiveButton.Enabled = true;
+            FeedbackNeutralButton.Enabled = true;
+            FeedbackNegativeButton.Enabled = true;
+        }
+    }
+
+    public class ThankForFeedbackDialog : BaseDialogFragment {
+
+
+        public ThankForFeedbackDialog ()
+        {
+        }
+
+        public ThankForFeedbackDialog (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
+        public void Show (FragmentManager fragmentManager)
+        {
+            new ThankForFeedbackDialog ().Show (fragmentManager, "thankforfeedback_dialog");
+        }
+
+        public override Dialog OnCreateDialog (Bundle savedInstanceState)
+        {
+            return new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.FeedbackThankYouTitle)
                 .SetMessage (Resource.String.FeedbackThankYouMessage)
                 .SetCancelable (true)
                 .SetPositiveButton (Resource.String.FeedbackThankYouOK, (IDialogInterfaceOnClickListener)null)
-                .Show ();
-            ResetFeedbackForm ();
+                .Create ();
+        }
+    }
+
+    public class AskPublishToAppStore : BaseDialogFragment{
+
+        private readonly Bundle args;
+        public AskPublishToAppStore ()
+        {
         }
 
-        private void OnCopyOkClicked (object sender, DialogClickEventArgs e)
+        public AskPublishToAppStore (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
-            Android.Content.ClipboardManager clipboard = (Android.Content.ClipboardManager) ctx.GetSystemService(Context.ClipboardService); 
-            Android.Content.ClipData clip = Android.Content.ClipData.NewPlainText(Resource.String.AppName.ToString(), FeedbackMessage);
+        }
+
+        public AskPublishToAppStore (Bundle arguments)
+        {
+            args = arguments;
+        }
+
+        public void Show (FragmentManager fragmentManager)
+        {
+            new AskPublishToAppStore (args).Show (fragmentManager, "askpublishtoappstore_dialog");
+        }
+
+        public override Dialog OnCreateDialog (Bundle savedInstanceState)
+        {
+            return new AlertDialog.Builder (Activity)
+                .SetTitle (Resource.String.FeedbackAskPublishTitle)
+                .SetMessage (Resource.String.FeedbackAskPublishMessage)
+                .SetCancelable (true)
+                .SetNegativeButton (Resource.String.FeedbackAskPublishCancel, (IDialogInterfaceOnClickListener)null)
+                .SetPositiveButton (Resource.String.FeedbackAskPublishOK, OnPositiveClick)
+                .Create ();
+        }
+
+        private void OnPositiveClick (object sender, DialogClickEventArgs e)
+        {
+            Context ctx = ServiceContainer.Resolve<Context> ();
+            ClipboardManager clipboard = (ClipboardManager) ctx.GetSystemService (Context.ClipboardService);
+            ClipData clip = ClipData.NewPlainText (Resource.String.AppName.ToString(), args.GetString ("feedbackMessage"));
             clipboard.PrimaryClip = clip;
 
-            Toast toast = Toast.MakeText(ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
+            Toast toast = Toast.MakeText (ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
             toast.Show ();
 
             StartActivity (new Intent (
                 Intent.ActionView,
                 Android.Net.Uri.Parse (Toggl.Phoebe.Build.GooglePlayUrl)
             ));
-            ResetFeedbackForm ();
         }
-
-        private void OnEdit(object sender, EventArgs e)
-        {
-            ValidateForm ();
-        }
-
-        private void ResetFeedbackForm(){
-            SetRating (RatingNotSet);
-            FeedbackMessageEditText.Text = "";
-            SubmitFeedbackButton.SetText(Resource.String.SendFeedbackButtonText);
-        }
-
     }
 }
 

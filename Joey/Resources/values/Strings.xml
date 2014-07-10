@@ -129,5 +129,5 @@
     <string name="FeedbackThankYouMessage">We\'ll write you back as soon as possible!</string>
     <string name="FeedbackThankYouTitle">Thank you</string>
     <string name="FeedbackThankYouOK">OK</string>
-
+    <string name="FeedbackSendFailedText">Could not send to server. Please try again.</string>
 </resources>

@@ -87,6 +87,10 @@ namespace Toggl.Joey.UI.Fragments
             TimePicker = view.FindViewById<TimePicker> (Resource.Id.TimePicker);
             DatePicker = view.FindViewById<DatePicker> (Resource.Id.DatePicker);
 
+            // WORKAROUND: Without these two lines the app will crash on rotation. See #258.
+            TimePicker.SaveFromParentEnabled = false;
+            TimePicker.SaveEnabled = true;
+
             TabsRadioGroup.CheckedChange += OnTabsRadioGroupCheckedChange;
 
             SetupViews ();

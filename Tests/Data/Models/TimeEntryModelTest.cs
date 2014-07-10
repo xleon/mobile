@@ -33,6 +33,25 @@ namespace Toggl.Phoebe.Tests.Data.Models
         }
 
         [Test]
+        public void TestChangeTimeNormalization ()
+        {
+            var entry = new TimeEntryModel () {
+                User = user,
+                StartTime = new DateTime (2013, 01, 01, 10, 0, 0, DateTimeKind.Utc),
+                StopTime = new DateTime (2013, 01, 01, 12, 0, 0, DateTimeKind.Utc),
+                State = TimeEntryState.Finished,
+            };
+
+            entry.StartTime = new DateTime (2013, 01, 01, 11, 0, 0, 100, DateTimeKind.Local);
+            Assert.AreEqual (DateTimeKind.Utc, entry.StartTime.Kind);
+            Assert.AreEqual (0, entry.StartTime.Millisecond);
+
+            entry.StopTime = new DateTime (2013, 01, 01, 13, 0, 0, 100, DateTimeKind.Local);
+            Assert.AreEqual (DateTimeKind.Utc, entry.StopTime.Value.Kind);
+            Assert.AreEqual (0, entry.StopTime.Value.Millisecond);
+        }
+
+        [Test]
         public void TestStart ()
         {
             RunAsync (async delegate {

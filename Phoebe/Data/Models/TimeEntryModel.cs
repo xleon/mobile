@@ -129,7 +129,7 @@ namespace Toggl.Phoebe.Data.Models
                 return Data.StartTime;
             }
             set {
-                value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+                value = value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
                 if (StartTime == value)
                     return;
 
@@ -167,7 +167,7 @@ namespace Toggl.Phoebe.Data.Models
                 return Data.StopTime;
             }
             set {
-                value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+                value = value.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
                 if (StopTime == value)
                     return;
 

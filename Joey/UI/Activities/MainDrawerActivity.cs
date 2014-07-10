@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Android.App;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Views;
 using Android.Widget;
+using Android.Text.Format;
+using Android.Content;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
@@ -32,8 +38,10 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
         private readonly List<int> pageStack = new List<int> ();
         private DrawerListAdapter drawerAdapter;
+        private DrawerSyncManager SyncManager;
 
         private ListView DrawerListView { get; set; }
+
 
         private DrawerLayout DrawerLayout { get; set; }
 
@@ -49,12 +57,13 @@ namespace Toggl.Joey.UI.Activities
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
+            SyncManager = new DrawerSyncManager ( FindViewById<FrameLayout> (Resource.Id.DrawerSyncStatus) );
+
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
             DrawerToggle = new ActionBarDrawerToggle (this, DrawerLayout, Resource.Drawable.IcDrawer, Resource.String.EntryName, Resource.String.EntryName);
 
             DrawerLayout.SetDrawerShadow (Resource.Drawable.drawershadow, (int)GravityFlags.Start);
             DrawerLayout.SetDrawerListener (DrawerToggle);
-
             Timer.OnCreate (this);
             var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
             lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
@@ -189,6 +198,77 @@ namespace Toggl.Joey.UI.Activities
 
         public TimerComponent Timer {
             get { return barTimer; }
+        }
+
+        private class DrawerSyncManager {
+
+            private FrameLayout DrawerSyncView { get; set; }
+            private ImageButton SyncRetryButton;
+            private TextView SyncStatusText;
+            private SyncManager SyncManager;
+            private DateTime LastSync;
+            private Subscription<SyncStartedMessage> DrawerSyncStarted;
+            private Subscription<SyncFinishedMessage> DrawerSyncFinished;
+
+            public DrawerSyncManager(FrameLayout frame)
+            {
+                SyncManager = ServiceContainer.Resolve<SyncManager>();
+
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                DrawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
+                DrawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
+
+                SyncRetryButton = frame.FindViewById<ImageButton> (Resource.Id.SyncRetryButton);
+                SyncStatusText = frame.FindViewById<TextView> (Resource.Id.SyncStatusText);
+
+                UpdateSyncStatus();
+                SyncRetryButton.Click += OnSyncRetryClick;
+            }
+
+            private void SyncStarted(SyncStartedMessage msg)
+            {
+                SyncRetryButton.Enabled = false;
+                SyncStatusText.SetText(Resource.String.CurrentlySyncingStatusText);
+
+            }
+
+            private void SyncFinished(SyncFinishedMessage msg)
+            {
+                SyncRetryButton.Enabled = true;
+                LastSync = Toggl.Phoebe.Time.Now;
+                UpdateSyncStatus ();
+//
+//                if (!msg.HadErrors)
+//                    UpdateSyncStatusText ("...");
+//                Console.WriteLine ("Last sync {0}", TimeFromLastSync());
+//                TimeFromLastSync ();
+//                UpdateSyncStatusText ("Sync finished with errors");
+            }
+
+            private void OnSyncRetryClick(object sender, EventArgs e)
+            {
+                SyncManager.Run ();
+            }
+
+            private void TimeFromLastSync(){
+                long NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
+                long LastSyncInMillis = LastSync.Ticks / TimeSpan.TicksPerMillisecond;
+                SyncStatusText.Text = "Last sync " + DateUtils.GetRelativeTimeSpanString (LastSyncInMillis, NowInMillis, 0L);
+            }
+
+            private async Task<bool> UpdateSyncStatus()
+            {
+                await Task.Delay(TimeSpan.FromSeconds(3));
+                TimeFromLastSync ();
+                UpdateSyncStatus();
+                return true;
+            }
+            public void OnDestroy ()
+            {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Unsubscribe (DrawerSyncStarted);
+                bus.Unsubscribe (DrawerSyncFinished);
+            }
         }
     }
 }

@@ -5,6 +5,8 @@ using System.Linq;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Ross.DataSources
@@ -102,6 +104,22 @@ namespace Toggl.Ross.DataSources
             });
         }
 
+        protected virtual bool SectionsMatch (TSection a, TSection b)
+        {
+            var data = a as CommonData;
+            if (data != null)
+                return data.Matches (b);
+            return Object.ReferenceEquals (a, b);
+        }
+
+        protected virtual bool RowsMatch (TRow a, TRow b)
+        {
+            var data = a as CommonData;
+            if (data != null)
+                return data.Matches (b);
+            return Object.ReferenceEquals (a, b);
+        }
+
         protected virtual void Update ()
         {
             var oldCache = cache;
@@ -109,60 +127,51 @@ namespace Toggl.Ross.DataSources
 
             tableView.BeginUpdates ();
 
-            // Find sections and rows to delete:
-            var sectionIdx = 0;
-            foreach (var section in oldCache.GetSections()) {
-                if (!newCache.GetSections ().Contains (section)) {
-                    tableView.DeleteSections (new NSIndexSet ((uint)sectionIdx), UITableViewRowAnimation.Automatic);
-                } else {
-                    var oldRows = oldCache.GetRows (section);
-                    var newRows = newCache.GetRows (section);
-                    var rowIdx = 0;
-                    foreach (var row in oldRows) {
-                        if (!newRows.Contains (row)) {
-                            tableView.DeleteRows (new[] { NSIndexPath.FromRowSection (rowIdx, sectionIdx) }, UITableViewRowAnimation.Automatic);
+            var oldSections = oldCache.GetSections ();
+            var newSections = newCache.GetSections ();
+            var sectionChanges = ChangesResolver.Resolve (oldSections, newSections, SectionsMatch);
+
+            foreach (var change in sectionChanges) {
+                if (change.Action == ChangesResolver.ResolvedAction.Delete) {
+                    tableView.DeleteSections (NSIndexSet.FromIndex (change.OldIndex), UITableViewRowAnimation.Automatic);
+                } else if (change.Action == ChangesResolver.ResolvedAction.Insert) {
+                    tableView.InsertSections (NSIndexSet.FromIndex (change.NewIndex), UITableViewRowAnimation.Automatic);
+                } else if (change.Action == ChangesResolver.ResolvedAction.Keep) {
+                    // Detect changes in section rows
+                    var oldRows = oldCache.GetRows (oldSections [change.OldIndex]);
+                    var newRows = newCache.GetRows (newSections [change.NewIndex]);
+                    var rowsMaxCount = Math.Max (oldRows.Count, newRows.Count);
+
+                    for (var rowIdx = 0; rowIdx < rowsMaxCount; rowIdx++) {
+                        var hasOldRow = rowIdx < oldRows.Count;
+                        var hasNewRow = rowIdx < newRows.Count;
+                        var oldRow = hasOldRow ? oldRows [rowIdx] : default(TRow);
+                        var newRow = hasNewRow ? newRows [rowIdx] : default(TRow);
+
+                        if (RowsMatch (oldRow, newRow))
+                            continue;
+
+                        if (hasOldRow) {
+                            // Determine if we should delete this row
+                            if (!newRows.Any (r => RowsMatch (oldRow, r))) {
+                                tableView.DeleteRows (new[] { NSIndexPath.FromRowSection (rowIdx, change.OldIndex) }, UITableViewRowAnimation.Automatic);
+                            }
                         }
 
-                        rowIdx += 1;
-                    }
-                }
-
-                sectionIdx += 1;
-            }
-
-            // Determine new items and moved items
-            sectionIdx = 0;
-            foreach (var section in newCache.GetSections()) {
-                var sectionOldIdx = oldCache.GetSections ().IndexOf (section);
-                if (sectionOldIdx < 0) {
-                    // New section needs to be inserted
-                    tableView.InsertSections (new NSIndexSet ((uint)sectionIdx), UITableViewRowAnimation.Automatic);
-                } else {
-                    if (sectionIdx != sectionOldIdx) {
-                        // Old section has changed idx, mark as moved
-                        tableView.MoveSection (sectionOldIdx, sectionIdx);
-                    }
-
-                    var oldRows = oldCache.GetRows (section);
-                    var newRows = newCache.GetRows (section);
-                    var rowIdx = 0;
-                    foreach (var row in newRows) {
-                        var rowOldIdx = oldRows.IndexOf (row);
-                        if (rowOldIdx < 0) {
-                            // New row needs to be inserted
-                            tableView.InsertRows (new[] { NSIndexPath.FromRowSection (rowIdx, sectionIdx) }, UITableViewRowAnimation.Automatic);
-                        } else if (rowIdx != rowOldIdx) {
-                            // Old row has changed idx, mark as moved
-                            tableView.MoveRow (
-                                NSIndexPath.FromRowSection (rowOldIdx, sectionOldIdx),
-                                NSIndexPath.FromRowSection (rowIdx, sectionIdx));
+                        if (hasNewRow) {
+                            // Determine if we should insert or move this row
+                            var oldRowIdx = oldRows.FindIndex (r => RowsMatch (newRow, r));
+                            if (oldRowIdx >= 0) {
+                                tableView.MoveRow (
+                                    NSIndexPath.FromRowSection (oldRowIdx, change.OldIndex),
+                                    NSIndexPath.FromRowSection (rowIdx, change.NewIndex));
+                            } else {
+                                // No old row found, insert this as new row
+                                tableView.InsertRows (new[] { NSIndexPath.FromRowSection (rowIdx, change.NewIndex) }, UITableViewRowAnimation.Automatic);
+                            }
                         }
-
-                        rowIdx += 1;
                     }
                 }
-
-                sectionIdx += 1;
             }
 
             tableView.EndUpdates ();

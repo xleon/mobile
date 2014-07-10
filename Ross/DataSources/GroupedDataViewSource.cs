@@ -5,6 +5,8 @@ using System.Linq;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Ross.DataSources
@@ -104,11 +106,17 @@ namespace Toggl.Ross.DataSources
 
         protected virtual bool SectionsMatch (TSection a, TSection b)
         {
+            var data = a as CommonData;
+            if (data != null)
+                return data.Matches (b);
             return Object.ReferenceEquals (a, b);
         }
 
         protected virtual bool RowsMatch (TRow a, TRow b)
         {
+            var data = a as CommonData;
+            if (data != null)
+                return data.Matches (b);
             return Object.ReferenceEquals (a, b);
         }
 

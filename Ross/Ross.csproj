@@ -256,6 +256,7 @@
     </Compile>
     <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="TogglWindow.cs" />
+    <Compile Include="DataSources\ChangesResolver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

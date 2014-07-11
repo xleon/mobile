@@ -683,7 +683,15 @@ namespace Toggl.Ross.ViewControllers
                         duration.Minutes
                     );
                 }
-                return String.Format ("LogHeaderDurationMinutes".Tr (), duration.Minutes);
+
+                if (duration.Minutes > 0) {
+                    return String.Format (
+                        "LogHeaderDurationMinutes".Tr (),
+                        duration.Minutes
+                    );
+                }
+
+                return String.Empty;
             }
         }
     }

@@ -10,6 +10,7 @@ using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Ross.DataSources;
@@ -549,6 +550,8 @@ namespace Toggl.Ross.ViewControllers
             private readonly UILabel dateLabel;
             private readonly UILabel totalDurationLabel;
             private AllTimeEntriesView.DateGroup data;
+            private List<TimeEntryModel> models;
+            private PropertyChangeTracker propertyTracker = new PropertyChangeTracker ();
             private int rebindCounter;
 
             public SectionHeaderView (IntPtr ptr) : base (ptr)
@@ -582,19 +585,79 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (propertyTracker != null) {
+                        propertyTracker.Dispose ();
+                        propertyTracker = null;
+                    }
+                    if (data != null) {
+                        data.Updated -= OnDateGroupUpdated;
+                        data = null;
+                    }
+                    if (models != null) {
+                        models.Clear ();
+                        models = null;
+                    }
+                }
+                base.Dispose (disposing);
+            }
+
             public void Bind (AllTimeEntriesView.DateGroup data)
             {
+                if (this.data != null) {
+                    this.data.Updated -= OnDateGroupUpdated;
+                    this.data = null;
+                }
+
                 this.data = data;
+                this.data.Updated += OnDateGroupUpdated;
+
+                Rebind ();
+            }
+
+            private void ResetTrackedObservables ()
+            {
+                if (propertyTracker == null)
+                    return;
+
+                propertyTracker.MarkAllStale ();
+
+                foreach (var model in models) {
+                    propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
+                }
+
+                propertyTracker.ClearStale ();
+            }
+
+            private void HandleTimeEntryPropertyChanged (string prop)
+            {
+                if (prop == TimeEntryModel.PropertyState
+                    || prop == TimeEntryModel.PropertyStartTime
+                    || prop == TimeEntryModel.PropertyStopTime)
+                    RebindDuration ();
+            }
+
+            private void OnDateGroupUpdated (object sender, EventArgs args)
+            {
                 Rebind ();
             }
 
             private void Rebind ()
             {
+                models = data.DataObjects.Select (d => new TimeEntryModel (d)).ToList ();
+
+                ResetTrackedObservables ();
+                RebindDuration ();
+            }
+
+            private void RebindDuration ()
+            {
                 rebindCounter++;
 
                 dateLabel.Text = data.Date.ToLocalizedDateString ();
 
-                var models = data.DataObjects.Select (d => new TimeEntryModel (d)).ToList ();
                 var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
                 totalDurationLabel.Text = FormatDuration (duration);
 
@@ -605,7 +668,7 @@ namespace Toggl.Ross.ViewControllers
                         TimeSpan.FromMilliseconds (60000 - duration.Seconds * 1000 - duration.Milliseconds),
                         delegate {
                             if (counter == rebindCounter) {
-                                Rebind ();
+                                RebindDuration ();
                             }
                         });
                 }

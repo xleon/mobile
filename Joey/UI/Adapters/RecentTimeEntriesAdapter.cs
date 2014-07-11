@@ -53,7 +53,7 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         private bool HasFooterView {
-            get { return !DataView.IsLoading && !DataView.HasMore; }
+            get { return !DataView.IsLoading && !DataView.HasMore && DataView.Count > 0; }
         }
 
         public override int ViewTypeCount {

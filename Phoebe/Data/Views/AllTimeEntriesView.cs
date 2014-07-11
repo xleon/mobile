@@ -66,10 +66,10 @@ namespace Toggl.Phoebe.Data.Views
                     var date = entry.StartTime.ToLocalTime ().Date;
                     if (grp.Date != date) {
                         // Need to move entry:
-                        grp.DataObjects.Remove (existingEntry);
+                        grp.Remove (existingEntry);
 
                         grp = GetGroupFor (entry);
-                        grp.DataObjects.Add (entry);
+                        grp.Add (entry);
                     } else {
                         grp.DataObjects.UpdateData (entry);
                     }
@@ -80,7 +80,7 @@ namespace Toggl.Phoebe.Data.Views
                 OnUpdated ();
             } else {
                 grp = GetGroupFor (entry);
-                grp.DataObjects.Add (entry);
+                grp.Add (entry);
                 Sort ();
                 OnUpdated ();
             }
@@ -91,7 +91,7 @@ namespace Toggl.Phoebe.Data.Views
             DateGroup grp;
             TimeEntryData oldEntry;
             if (FindExistingEntry (entry, out grp, out oldEntry)) {
-                grp.DataObjects.Remove (oldEntry);
+                grp.Remove (oldEntry);
                 if (grp.DataObjects.Count == 0) {
                     dateGroups.Remove (grp);
                 }
@@ -130,7 +130,7 @@ namespace Toggl.Phoebe.Data.Views
         private void Sort ()
         {
             foreach (var grp in dateGroups) {
-                grp.DataObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                grp.Sort ();
             }
             dateGroups.Sort ((a, b) => b.Date.CompareTo (a.Date));
         }
@@ -307,6 +307,34 @@ namespace Toggl.Phoebe.Data.Views
 
             public List<TimeEntryData> DataObjects {
                 get { return dataObjects; }
+            }
+
+            public event EventHandler Updated;
+
+            private void OnUpdated ()
+            {
+                var handler = Updated;
+                if (handler != null) {
+                    handler (this, EventArgs.Empty);
+                }
+            }
+
+            public void Add (TimeEntryData dataObject)
+            {
+                dataObjects.Add (dataObject);
+                OnUpdated ();
+            }
+
+            public void Remove (TimeEntryData dataObject)
+            {
+                dataObjects.Remove (dataObject);
+                OnUpdated ();
+            }
+
+            public void Sort ()
+            {
+                dataObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                OnUpdated ();
             }
         }
 

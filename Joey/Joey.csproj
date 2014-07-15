@@ -124,9 +124,9 @@
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
     <Compile Include="UI\Fragments\RecentTimeEntryContinueDialogFragment.cs" />
-    <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
+    <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -476,6 +476,8 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\layout\RecentTimeEntriesListFooterFragment.axml" />
+    <AndroidResource Include="Resources\drawable\TagsView.xml" />
+    <AndroidResource Include="Resources\layout\TagViewChip.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

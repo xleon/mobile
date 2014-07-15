@@ -11,6 +11,12 @@ using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
+using Android.Text.Style;
+using Android.Text;
+using Android.Content;
+using Android.Graphics.Drawables;
+using MeasureSpec = Android.Views.View.MeasureSpec;
+using Android.Graphics;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -23,6 +29,7 @@ namespace Toggl.Joey.UI.Fragments
         private bool canRebind;
         private bool descriptionChanging;
         private bool autoCommitScheduled;
+        private ViewGroup cont;
 
         protected BaseEditTimeEntryFragment ()
         {
@@ -231,13 +238,45 @@ namespace Toggl.Joey.UI.Fragments
         {
             RebindTags ();
         }
-
+            
         protected virtual void RebindTags ()
         {
             if (tagsView == null || !canRebind)
                 return;
 
-            TagsEditText.Text = String.Join (", ", tagsView.Data);
+            SpannableStringBuilder tags = new SpannableStringBuilder(String.Join (" ", tagsView.Data));
+
+            int x = 0;
+            foreach (String tagText in tagsView.Data) {
+                tags.SetSpan (new ImageSpan (MakeTagChip(tagText)), x, x + tagText.Length, SpanTypes.ExclusiveExclusive);
+                x = x + tagText.Length + 1;
+            }
+            TagsEditText.SetText (tags, EditText.BufferType.Spannable);
+        }
+
+        private BitmapDrawable MakeTagChip(String tagText)
+        {
+            Context ctx = ServiceContainer.Resolve<Context> ();
+            LayoutInflater Inflater = LayoutInflater.FromContext (ctx);
+            TextView tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, cont , false);
+
+            tagChipView.Text  =  tagText.ToUpper();
+            int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
+            tagChipView.Measure (spec, spec);
+            tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
+            Bitmap b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
+
+            Canvas canvas = new Canvas (b);
+            canvas.Translate (-tagChipView.ScrollX, -tagChipView.ScrollY);
+            tagChipView.Draw (canvas);
+            tagChipView.DrawingCacheEnabled = true;
+
+            Bitmap cacheBmp = tagChipView.DrawingCache;
+            Bitmap viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
+            tagChipView.DestroyDrawingCache ();
+            BitmapDrawable bmpDrawable = new BitmapDrawable (viewBmp);
+            bmpDrawable.SetBounds (0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
+            return bmpDrawable;
         }
 
         protected TextView DateTextView { get; private set; }
@@ -261,7 +300,7 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle state)
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
-
+            cont = container;
             DateTextView = view.FindViewById<TextView> (Resource.Id.DateTextView).SetFont (Font.Roboto);
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.Roboto);
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);

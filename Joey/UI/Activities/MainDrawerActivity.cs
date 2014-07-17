@@ -1,13 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Android.App;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
+using Android.Text.Format;
 using Android.Views;
 using Android.Widget;
-using Android.Text.Format;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;

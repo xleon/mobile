@@ -243,8 +243,14 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (tagsView == null || !canRebind)
                 return;
+            if (tagsView.Count == 0) {
+                TagsEditText.Text = "";
+                return;
+            }
 
-            SpannableStringBuilder tags = new SpannableStringBuilder(String.Join (" ", tagsView.Data));
+            SpannableStringBuilder tags = new SpannableStringBuilder(String.Join (" ", tagsView.Data) + " ");
+            //The extra whitespace prevents the ImageSpans and the text they are over
+            // to break at different positions, leaving zero linespacing on edge cases.
 
             int x = 0;
             foreach (String tagText in tagsView.Data) {

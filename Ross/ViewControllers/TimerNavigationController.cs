@@ -74,7 +74,10 @@ namespace Toggl.Ross.ViewControllers
                 if (currentTimeEntry != null) {
                     await currentTimeEntry.StopAsync ();
                 } else if (timeEntryManager != null) {
-                    currentTimeEntry = (TimeEntryModel)timeEntryManager.Active;
+                    currentTimeEntry = (TimeEntryModel)timeEntryManager.Draft;
+                    if (currentTimeEntry == null)
+                        return;
+
                     await currentTimeEntry.StartAsync ();
 
                     var controllers = new List<UIViewController> (parentController.NavigationController.ViewControllers);

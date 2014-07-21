@@ -122,10 +122,10 @@ namespace Toggl.Ross.DataSources
 
         protected virtual void Update ()
         {
+            tableView.BeginUpdates ();
+
             var oldCache = cache;
             var newCache = cache = new DataCache (this);
-
-            tableView.BeginUpdates ();
 
             var oldSections = oldCache.GetSections ();
             var newSections = newCache.GetSections ();

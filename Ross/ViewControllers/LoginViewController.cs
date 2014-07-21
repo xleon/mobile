@@ -2,15 +2,18 @@
 using Cirrious.FluentLayouts.Touch;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
-using Toggl.Ross.Views;
 using XPlatUtils;
 using Toggl.Ross.Theme;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class LoginViewController : UIViewController
     {
+        private const string Tag = "LoginViewController";
+
         private UIView inputsContainer;
         private UIView topBorder;
         private UIView middleBorder;
@@ -44,7 +47,7 @@ namespace Toggl.Ross.ViewControllers
 
             inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
-            inputsContainer.Add(passwordTextField = new PasswordTextField () {
+            inputsContainer.Add (passwordTextField = new PasswordTextField () {
                 Placeholder = "LoginPasswordHint".Tr (),
                 AutocapitalizationType = UITextAutocapitalizationType.None,
                 AutocorrectionType = UITextAutocorrectionType.No,
@@ -153,6 +156,9 @@ namespace Toggl.Ross.ViewControllers
                     // Start the initial sync for the user
                     ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
                 }
+            } catch (InvalidOperationException ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Info (Tag, ex, "Failed to authenticate (password) the user.");
             } finally {
                 IsAuthenticating = false;
             }

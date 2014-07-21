@@ -2,6 +2,7 @@
 using Cirrious.FluentLayouts.Touch;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -10,6 +11,8 @@ namespace Toggl.Ross.ViewControllers
 {
     public class WelcomeViewController : UIViewController
     {
+        private const string Tag = "WelcomeViewController";
+
         private UINavigationController navController;
         private UIImageView logoImageView;
         private UILabel sloganLabel;
@@ -160,6 +163,9 @@ namespace Toggl.Ross.ViewControllers
                             "WelcomeGoogleErrorMessage".Tr (),
                             null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
                     }
+                } catch (InvalidOperationException ex) {
+                    var log = ServiceContainer.Resolve<Logger> ();
+                    log.Info (Tag, ex, "Failed to authenticate (G+) the user.");
                 } finally {
                     IsAuthenticating = false;
                 }

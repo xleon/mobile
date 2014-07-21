@@ -2,6 +2,7 @@
 using Cirrious.FluentLayouts.Touch;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -11,6 +12,8 @@ namespace Toggl.Ross.ViewControllers
 {
     public class LoginViewController : UIViewController
     {
+        private const string Tag = "LoginViewController";
+
         private UIView inputsContainer;
         private UIView topBorder;
         private UIView middleBorder;
@@ -153,6 +156,9 @@ namespace Toggl.Ross.ViewControllers
                     // Start the initial sync for the user
                     ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
                 }
+            } catch (InvalidOperationException ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Info (Tag, ex, "Failed to authenticate (password) the user.");
             } finally {
                 IsAuthenticating = false;
             }

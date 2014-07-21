@@ -35,11 +35,11 @@ namespace Toggl.Joey.UI.Activities
         private readonly List<int> pageStack = new List<int> ();
         private readonly Handler handler = new Handler ();
         private DrawerListAdapter drawerAdapter;
-        private ImageButton SyncRetryButton;
-        private TextView SyncStatusText;
-        private DateTime LastSyncTime;
-        private Subscription<SyncStartedMessage> DrawerSyncStarted;
-        private Subscription<SyncFinishedMessage> DrawerSyncFinished;
+        private ImageButton syncRetryButton;
+        private TextView syncStatusText;
+        private DateTime lastSyncTime;
+        private Subscription<SyncStartedMessage> drawerSyncStarted;
+        private Subscription<SyncFinishedMessage> drawerSyncFinished;
 
         private ListView DrawerListView { get; set; }
 
@@ -70,14 +70,14 @@ namespace Toggl.Joey.UI.Activities
             lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            DrawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
-            DrawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
+            drawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
+            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
 
             DrawerSyncView = FindViewById<FrameLayout> (Resource.Id.DrawerSyncStatus);
 
-            SyncRetryButton = DrawerSyncView.FindViewById<ImageButton> (Resource.Id.SyncRetryButton);
-            SyncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
-            SyncRetryButton.Click += OnSyncRetryClick;
+            syncRetryButton = DrawerSyncView.FindViewById<ImageButton> (Resource.Id.SyncRetryButton);
+            syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
+            syncRetryButton.Click += OnSyncRetryClick;
             UpdateSyncStatus ();
 
             ActionBar.SetCustomView (Timer.Root, lp);
@@ -212,16 +212,16 @@ namespace Toggl.Joey.UI.Activities
 
         protected void SyncStarted (SyncStartedMessage msg)
         {
-            SyncRetryButton.Enabled = false;
+            syncRetryButton.Enabled = false;
             isSyncing = true;
-            SyncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
+            syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
         }
 
         private void SyncFinished (SyncFinishedMessage msg)
         {
-            SyncRetryButton.Enabled = true;
+            syncRetryButton.Enabled = true;
             isSyncing = false;
-            LastSyncTime = Toggl.Phoebe.Time.Now;
+            lastSyncTime = Toggl.Phoebe.Time.Now;
         }
 
         private void OnSyncRetryClick (object sender, EventArgs e)
@@ -233,11 +233,11 @@ namespace Toggl.Joey.UI.Activities
         private void UpdateSyncStatus ()
         {
             if (isSyncing) {
-                SyncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
+                syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
             } else {
                 long NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
-                long LastSyncInMillis = LastSyncTime.Ticks / TimeSpan.TicksPerMillisecond;
-                SyncStatusText.Text = "Last sync " + DateUtils.GetRelativeTimeSpanString (LastSyncInMillis, NowInMillis, 0L);
+                long LastSyncInMillis = lastSyncTime.Ticks / TimeSpan.TicksPerMillisecond;
+                syncStatusText.Text = "Last sync " + DateUtils.GetRelativeTimeSpanString (LastSyncInMillis, NowInMillis, 0L);
             }
             handler.RemoveCallbacks (UpdateSyncStatus);
             handler.PostDelayed (UpdateSyncStatus, 1000);

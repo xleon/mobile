@@ -114,6 +114,7 @@
     <string name="CreateProjectDialogHint">Project name&#8230;</string>
     <string name="CreateProjectDialogOk">Create</string>
     <string name="ActionBarDoneButton">Done</string>
-    <string name="LastSyncStatusText">Last sync </string>
+    <string name="LastSyncStatusText">Last sync {0}</string>
     <string name="CurrentlySyncingStatusText">Syncing&#8230;</string>
+    <string name="LastSyncJustNow"> just now</string>
 </resources>

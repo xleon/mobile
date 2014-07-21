@@ -235,12 +235,20 @@ namespace Toggl.Joey.UI.Activities
             if (isSyncing) {
                 syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
             } else {
-                long NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
                 long LastSyncInMillis = lastSyncTime.Ticks / TimeSpan.TicksPerMillisecond;
-                syncStatusText.Text = "Last sync " + DateUtils.GetRelativeTimeSpanString (LastSyncInMillis, NowInMillis, 0L);
+                syncStatusText.Text = String.Format (Resources.GetString (Resource.String.LastSyncStatusText), ResolveLastSyncTime (LastSyncInMillis));
             }
             handler.RemoveCallbacks (UpdateSyncStatus);
             handler.PostDelayed (UpdateSyncStatus, 1000);
+        }
+
+        private String ResolveLastSyncTime (long lastSyncTime)
+        {
+            if (lastSyncTime < DateUtils.MinuteInMillis) {
+                return Resources.GetString (Resource.String.LastSyncJustNow);
+            }
+            long NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            return DateUtils.GetRelativeTimeSpanString (lastSyncTime, NowInMillis, 0L);
         }
 
         public TimerComponent Timer {

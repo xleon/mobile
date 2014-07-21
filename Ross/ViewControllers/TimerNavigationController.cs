@@ -71,8 +71,9 @@ namespace Toggl.Ross.ViewControllers
             isActing = true;
 
             try {
-                if (currentTimeEntry != null) {
+                if (currentTimeEntry != null && currentTimeEntry.State == TimeEntryState.Running) {
                     await currentTimeEntry.StopAsync ();
+                    currentTimeEntry = null;
                 } else if (timeEntryManager != null) {
                     currentTimeEntry = (TimeEntryModel)timeEntryManager.Active;
                     await currentTimeEntry.StartAsync ();
@@ -98,7 +99,7 @@ namespace Toggl.Ross.ViewControllers
 
             rebindCounter++;
 
-            if (currentTimeEntry == null) {
+            if (currentTimeEntry == null || currentTimeEntry.State == TimeEntryState.Finished) {
                 durationButton.SetTitle (DefaultDurationText, UIControlState.Normal);
                 actionButton.Apply (Style.NavTimer.StartButton);
             } else {

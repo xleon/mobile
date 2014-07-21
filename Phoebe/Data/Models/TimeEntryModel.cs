@@ -565,7 +565,7 @@ namespace Toggl.Phoebe.Data.Models
                     // User data has not yet been loaded by AuthManager, duplicate the effort and load ourselves:
                     var userRows = await store.Table<UserData> ()
                         .Take (1).QueryAsync (m => m.Id == user.Id);
-                    user = userRows [0];
+                    user = userRows.First ();
                 }
 
                 var rows = await store.Table<TimeEntryData> ()

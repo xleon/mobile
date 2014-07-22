@@ -117,4 +117,6 @@
     <string name="LastSyncStatusText">Last sync {0}</string>
     <string name="CurrentlySyncingStatusText">Syncing&#8230;</string>
     <string name="LastSyncJustNow">just now</string>
+    <string name="LastSyncFatalError">Sync failed</string>
+    <string name="LastSyncHadErrors">Synced with errors</string>
 </resources>

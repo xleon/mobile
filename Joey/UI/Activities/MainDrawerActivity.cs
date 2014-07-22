@@ -29,6 +29,8 @@ namespace Toggl.Joey.UI.Activities
     public class MainDrawerActivity : BaseActivity
     {
         private const string PageStackExtra = "com.toggl.timer.page_stack";
+        private const string LastSyncArgument = "com.toggl.timer.last_sync";
+        private const string LastSyncResultArgument = "com.toggl.timer.last_sync_result";
         private readonly TimerComponent barTimer = new TimerComponent ();
         private readonly Lazy<TimeTrackingFragment> trackingFragment = new Lazy<TimeTrackingFragment> ();
         private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
@@ -37,9 +39,14 @@ namespace Toggl.Joey.UI.Activities
         private DrawerListAdapter drawerAdapter;
         private ImageButton syncRetryButton;
         private TextView syncStatusText;
-        private DateTime lastSyncTime;
+        private long lastSyncInMillis;
         private Subscription<SyncStartedMessage> drawerSyncStarted;
         private Subscription<SyncFinishedMessage> drawerSyncFinished;
+        private int syncStatus { get; set; }
+        private static readonly int syncing = 0;
+        private static readonly int syncSuccessful = 1;
+        private static readonly int syncHadErrors = 2;
+        private static readonly int syncFatalError = 3;
 
         private ListView DrawerListView { get; set; }
 
@@ -78,7 +85,6 @@ namespace Toggl.Joey.UI.Activities
             syncRetryButton = DrawerSyncView.FindViewById<ImageButton> (Resource.Id.SyncRetryButton);
             syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
             syncRetryButton.Click += OnSyncRetryClick;
-            UpdateSyncStatus ();
 
             ActionBar.SetCustomView (Timer.Root, lp);
             ActionBar.SetDisplayShowCustomEnabled (true);
@@ -100,11 +106,19 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnSaveInstanceState (Bundle outState)
         {
             outState.PutIntArray (PageStackExtra, pageStack.ToArray ());
+            outState.PutLong (LastSyncArgument, lastSyncInMillis);
+            outState.PutInt (LastSyncResultArgument, syncStatus);
+
             base.OnSaveInstanceState (outState);
         }
 
         protected override void OnPostCreate (Bundle savedInstanceState)
         {
+            if (savedInstanceState != null ) {
+                lastSyncInMillis = savedInstanceState.GetLong (LastSyncArgument);
+                syncStatus = savedInstanceState.GetInt (LastSyncResultArgument);
+                UpdateSyncStatus ();
+            }
             base.OnPostCreate (savedInstanceState);
             DrawerToggle.SyncState ();
         }
@@ -209,19 +223,24 @@ namespace Toggl.Joey.UI.Activities
         }
 
         private bool isSyncing { get; set; }
-
         protected void SyncStarted (SyncStartedMessage msg)
         {
             syncRetryButton.Enabled = false;
-            isSyncing = true;
+            syncStatus = syncing;
             syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
         }
 
         private void SyncFinished (SyncFinishedMessage msg)
         {
             syncRetryButton.Enabled = true;
-            isSyncing = false;
-            lastSyncTime = Toggl.Phoebe.Time.Now;
+            if (msg.FatalError != null) {
+                syncStatus = syncFatalError;
+            } else if (msg.HadErrors) {
+                syncStatus = syncHadErrors;
+            } else {
+                syncStatus = syncSuccessful;
+            }
+            lastSyncInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
             UpdateSyncStatus ();
         }
 
@@ -233,11 +252,14 @@ namespace Toggl.Joey.UI.Activities
 
         private void UpdateSyncStatus ()
         {
-            if (isSyncing) {
+            if (syncStatus == syncing) {
                 syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
+            } else if (syncStatus == syncHadErrors) {
+                syncStatusText.SetText (Resource.String.LastSyncHadErrors);
+            } else if (syncStatus == syncFatalError) {
+                syncStatusText.SetText (Resource.String.LastSyncFatalError);
             } else {
-                long LastSyncInMillis = lastSyncTime.Ticks / TimeSpan.TicksPerMillisecond;
-                syncStatusText.Text = String.Format (Resources.GetString (Resource.String.LastSyncStatusText), ResolveLastSyncTime (LastSyncInMillis));
+                syncStatusText.Text = String.Format (Resources.GetString (Resource.String.LastSyncStatusText), ResolveLastSyncTime ());
             }
             handler.RemoveCallbacks (UpdateSyncStatus);
             handler.PostDelayed (UpdateSyncStatus, DateUtils.MinuteInMillis);
@@ -245,13 +267,13 @@ namespace Toggl.Joey.UI.Activities
 
 
 
-        private String ResolveLastSyncTime (long lastSyncTime)
+        private String ResolveLastSyncTime ()
         {
             var NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            if (NowInMillis - lastSyncTime < DateUtils.MinuteInMillis) {
+            if (NowInMillis - lastSyncInMillis < DateUtils.MinuteInMillis) {
                 return Resources.GetString (Resource.String.LastSyncJustNow);
             }
-            return DateUtils.GetRelativeTimeSpanString (lastSyncTime, NowInMillis, 0L);
+            return DateUtils.GetRelativeTimeSpanString (lastSyncInMillis, NowInMillis, 0L);
         }
 
         public TimerComponent Timer {

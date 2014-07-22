@@ -24,6 +24,7 @@
             android:paddingTop="0dp"
             android:paddingLeft="0dp"
             android:paddingRight="0dp"
+            android:paddingBottom="48dp"
             android:background="@android:color/white" />
         <include
             layout="@layout/MainDrawerSyncStatus" />

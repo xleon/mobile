@@ -222,6 +222,7 @@ namespace Toggl.Joey.UI.Activities
             syncRetryButton.Enabled = true;
             isSyncing = false;
             lastSyncTime = Toggl.Phoebe.Time.Now;
+            UpdateSyncStatus ();
         }
 
         private void OnSyncRetryClick (object sender, EventArgs e)
@@ -239,15 +240,17 @@ namespace Toggl.Joey.UI.Activities
                 syncStatusText.Text = String.Format (Resources.GetString (Resource.String.LastSyncStatusText), ResolveLastSyncTime (LastSyncInMillis));
             }
             handler.RemoveCallbacks (UpdateSyncStatus);
-            handler.PostDelayed (UpdateSyncStatus, 1000);
+            handler.PostDelayed (UpdateSyncStatus, DateUtils.MinuteInMillis);
         }
+
+
 
         private String ResolveLastSyncTime (long lastSyncTime)
         {
-            if (lastSyncTime < DateUtils.MinuteInMillis) {
+            var NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            if (NowInMillis - lastSyncTime < DateUtils.MinuteInMillis) {
                 return Resources.GetString (Resource.String.LastSyncJustNow);
             }
-            long NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
             return DateUtils.GetRelativeTimeSpanString (lastSyncTime, NowInMillis, 0L);
         }
 

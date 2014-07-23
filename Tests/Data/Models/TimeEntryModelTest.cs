@@ -1,4 +1,5 @@
 ﻿using System;
+using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -160,6 +161,41 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 Assert.AreNotEqual (Guid.Empty, entry.Id);
                 Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
                 Assert.AreEqual (TimeEntryState.New, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestDraftDefaultTag ()
+        {
+            ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
+                (store) => store.ApiToken == "test" &&
+                store.UserId == user.Id &&
+                store.UseDefaultTag == true));
+
+            RunAsync (async delegate {
+                var entry = await TimeEntryModel.GetDraftAsync ();
+
+                var rows = await DataStore.Table<TimeEntryTagData> ()
+                    .QueryAsync (r => r.TimeEntryId == entry.Id);
+                Assert.That (rows, Has.Count.EqualTo (1));
+                var firstTagId = rows [0].TagId;
+
+                // Change user default workspace, to make sure that the draft uses the correct workspace default tag
+                user.DefaultWorkspace = new WorkspaceModel () {
+                    Name = "Other workspace",
+                };
+
+                await user.DefaultWorkspace.SaveAsync ();
+                await user.SaveAsync ();
+
+                // Check data again:
+                await entry.DeleteAsync ();
+                entry = await TimeEntryModel.GetDraftAsync ();
+
+                rows = await DataStore.Table<TimeEntryTagData> ()
+                    .QueryAsync (r => r.TimeEntryId == entry.Id);
+                Assert.That (rows, Has.Count.EqualTo (1));
+                Assert.AreNotEqual (firstTagId, rows [0].TagId);
             });
         }
 

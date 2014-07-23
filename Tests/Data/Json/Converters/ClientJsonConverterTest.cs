@@ -59,7 +59,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
 
             Assert.That (() => RunAsync (async delegate {
                 await DataStore.ExecuteInTransactionAsync (ctx => converter.Export (ctx, clientData));
-            }), Throws.Exception.TypeOf<InvalidOperationException> ());
+            }), Throws.Exception.TypeOf<RelationRemoteIdMissingException> ());
         }
 
         [Test]

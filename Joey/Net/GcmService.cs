@@ -96,7 +96,7 @@ namespace Toggl.Joey.Net
 
             try {
                 // Check if we need can skip sync
-                if (intent != null) {
+                if (intent != null && intent.Extras != null) {
                     var extras = intent.Extras;
                     var entryId = Convert.ToInt64 (extras.GetString ("task_id", String.Empty));
                     // updated_at is null (usually) when the time entry was just created, in that

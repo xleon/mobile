@@ -385,7 +385,7 @@ namespace Toggl.Phoebe.Data.Models
         private static void AddDefaultTags (IDataStoreContext ctx, Guid workspaceId, Guid timeEntryId)
         {
             var defaultTag = ctx.Connection.Table<TagData> ()
-                .Where (r => r.Name == DefaultTag && r.DeletedAt == null)
+                .Where (r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null)
                 .FirstOrDefault ();
 
             if (defaultTag == null) {

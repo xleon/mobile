@@ -35,6 +35,7 @@ namespace Toggl.Phoebe.Data.Models
                 // Unregister event listener
                 if (model != null) {
                     model.PropertyChanged -= OnModelPropertyChanged;
+                    model = null;
                 }
 
                 if (foreignKey.HasValue) {

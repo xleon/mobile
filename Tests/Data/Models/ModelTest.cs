@@ -204,21 +204,36 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 if (idProp == null)
                     continue;
 
+                // Create model, get data item, etc
                 var inst = Activator.CreateInstance<T> ();
                 var data = dataProp.GetValue (inst);
+                var initialData = data;
                 var val = idProp.GetValue (data);
                 Assert.IsNull (val, String.Format ("Initial {0} should be null.", idProp.Name));
 
+                // Assign a dummy model to the property
                 var pk = Guid.NewGuid ();
                 prop.SetValue (inst, Activator.CreateInstance (prop.PropertyType, pk));
                 data = dataProp.GetValue (inst);
+                var assignedData = data;
                 val = idProp.GetValue (data);
                 Assert.AreEqual (pk, val, "Id was not updated.");
 
+                // Assign an empty model to the property
                 prop.SetValue (inst, Activator.CreateInstance (prop.PropertyType));
                 data = dataProp.GetValue (inst);
                 val = idProp.GetValue (data);
                 Assert.IsNull (val, String.Format ("{0} should be null for empty model.", idProp.Name));
+
+                // Update data to update model:
+                dataProp.SetValue (inst, assignedData);
+                var model = (IModel)prop.GetValue (inst);
+                Assert.AreEqual (idProp.GetValue (assignedData), model.Id);
+
+                // Update data to update model:
+                dataProp.SetValue (inst, initialData);
+                model = (IModel)prop.GetValue (inst);
+                Assert.IsNull (model);
             }
         }
 

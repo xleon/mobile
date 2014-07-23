@@ -15,39 +15,39 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class FeedbackFragment : Fragment
     {
-        public ImageButton FeedbackPositiveButton { get; private set;}
-        public ImageButton FeedbackNeutralButton { get; private set;}
-        public ImageButton FeedbackNegativeButton { get; private set;}
-        public Button SubmitFeedbackButton { get; private set; }
-        public EditText FeedbackMessageEditText { get; private set; }
-        public int FeedbackRating { get; private set; }
-        public String FeedbackMessage { get; private set; }
-        private const int RatingNotSet = 0;
-        private const int RatingPositive = 1;
-        private const int RatingNeutral = 2;
-        private const int RatingNegative = 3;
+        private ImageButton feedbackPositiveButton { get; set;}
+        private ImageButton feedbackNeutralButton { get; set;}
+        private ImageButton feedbackNegativeButton { get; set;}
+        private Button submitFeedbackButton { get; set; }
+        private EditText feedbackMessageEditText { get; set; }
+        private int feedbackRating { get; set; }
+        private String feedbackMessage { get; set; }
+        private static readonly int ratingNotSet = 0;
+        private static readonly int ratingPositive = 1;
+        private static readonly int ratingNeutral = 2;
+        private static readonly int ratingNegative = 3;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.FeedbackFragment, container, false);
 
-            FeedbackPositiveButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackPositiveButton);
-            FeedbackNeutralButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNeutralButton);
-            FeedbackNegativeButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNegativeButton);
+            feedbackPositiveButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackPositiveButton);
+            feedbackNeutralButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNeutralButton);
+            feedbackNegativeButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNegativeButton);
 
-            FeedbackPositiveButton.Click  += (sender, e) => SetRating (RatingPositive);
-            FeedbackNeutralButton.Click  += (sender, e) => SetRating (RatingNeutral);
-            FeedbackNegativeButton.Click  += (sender, e) => SetRating (RatingNegative);
+            feedbackPositiveButton.Click  += (sender, e) => SetRating (ratingPositive);
+            feedbackNeutralButton.Click  += (sender, e) => SetRating (ratingNeutral);
+            feedbackNegativeButton.Click  += (sender, e) => SetRating (ratingNegative);
 
-            FeedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText).SetFont (Font.Roboto);
-            FeedbackMessageEditText.AfterTextChanged += OnEdit;
+            feedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText).SetFont (Font.Roboto);
+            feedbackMessageEditText.AfterTextChanged += OnEdit;
 
-            SubmitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton).SetFont (Font.Roboto);
-            SubmitFeedbackButton.Click += OnSendClick;
+            submitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton).SetFont (Font.Roboto);
+            submitFeedbackButton.Click += OnSendClick;
             if (savedInstanceState != null) {
                 SetRating (savedInstanceState.GetInt ("rating"));
             } else {
-                SetRating (RatingNotSet);
+                SetRating (ratingNotSet);
             }
             ValidateForm ();
             return view;
@@ -55,24 +55,24 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnResume ()
         {
-            SetRating (FeedbackRating);
+            SetRating (feedbackRating);
             ValidateForm ();
             base.OnResume ();
         }
 
         private async void OnSendClick (object sender, EventArgs e) 
         {
-            SubmitFeedbackButton.Enabled = false;
-            FeedbackMessageEditText.Enabled = false;
-            FeedbackPositiveButton.Enabled = false;
-            FeedbackNeutralButton.Enabled = false;
-            FeedbackNegativeButton.Enabled = false;
+            submitFeedbackButton.Enabled = false;
+            feedbackMessageEditText.Enabled = false;
+            feedbackPositiveButton.Enabled = false;
+            feedbackNeutralButton.Enabled = false;
+            feedbackNegativeButton.Enabled = false;
 
-            SubmitFeedbackButton.SetText (Resource.String.SendFeedbackButtonActiveText);
-            bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
+            submitFeedbackButton.SetText (Resource.String.SendFeedbackButtonActiveText);
+            bool send = await SendFeedbackData (feedbackMessage, feedbackRating);
             if (send == true) {
-                if (FeedbackRating == RatingPositive) {
-                    AskPublishToAppStore.Show (FeedbackMessage, FragmentManager);
+                if (feedbackRating == ratingPositive) {
+                    AskPublishToAppStore.Show (feedbackMessage, FragmentManager);
                 } else {
                     ThankForFeedbackDialog.Show (FragmentManager);
                 }
@@ -88,21 +88,21 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnSaveInstanceState (Bundle outState)
         {
             base.OnSaveInstanceState (outState);
-            if (FeedbackRating != RatingNotSet) {
-                outState.PutInt ("rating", FeedbackRating);
+            if (feedbackRating != ratingNotSet) {
+                outState.PutInt ("rating", feedbackRating);
             }
         }
 
         private void ValidateForm ()
         {
-            FeedbackMessage = FeedbackMessageEditText.Text;
+            feedbackMessage = feedbackMessageEditText.Text;
             bool enabled = false;
-            if (FeedbackMessage.Length == 0 || FeedbackRating == RatingNotSet) {
+            if (feedbackMessage.Length == 0 || feedbackRating == ratingNotSet) {
                 enabled = false;
             } else {
                 enabled = true;
             }
-            SubmitFeedbackButton.Enabled = enabled;
+            submitFeedbackButton.Enabled = enabled;
         }
 
         private bool prevSendResult;
@@ -114,23 +114,23 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetRating (int rating)
         {
-            FeedbackRating = rating;
+            feedbackRating = rating;
             ResetRatingButtonImages ();
-            if (FeedbackRating  == RatingPositive) {
-                FeedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositiveActive);
-            } else if (FeedbackRating == RatingNeutral) {
-                FeedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutralActive);
-            } else if (FeedbackRating == RatingNegative) {
-                FeedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegativeActive);
+            if (feedbackRating  == ratingPositive) {
+                feedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositiveActive);
+            } else if (feedbackRating == ratingNeutral) {
+                feedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutralActive);
+            } else if (feedbackRating == ratingNegative) {
+                feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegativeActive);
             }
             ValidateForm ();
         }
 
         private void ResetRatingButtonImages ()
         {
-            FeedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositive);
-            FeedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutral);
-            FeedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegative);
+            feedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositive);
+            feedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutral);
+            feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegative);
         }
 
         private void OnEdit (object sender, EventArgs e)
@@ -140,18 +140,18 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ResetFeedbackForm ()
         {
-            SetRating (RatingNotSet);
-            FeedbackMessageEditText.Text = "";
+            SetRating (ratingNotSet);
+            feedbackMessageEditText.Text = "";
             EnableForm ();
         }
 
         private void EnableForm (){
-            SubmitFeedbackButton.SetText (Resource.String.SendFeedbackButtonText);
-            SubmitFeedbackButton.Enabled = true;
-            FeedbackMessageEditText.Enabled = true;
-            FeedbackPositiveButton.Enabled = true;
-            FeedbackNeutralButton.Enabled = true;
-            FeedbackNegativeButton.Enabled = true;
+            submitFeedbackButton.SetText (Resource.String.SendFeedbackButtonText);
+            submitFeedbackButton.Enabled = true;
+            feedbackMessageEditText.Enabled = true;
+            feedbackPositiveButton.Enabled = true;
+            feedbackNeutralButton.Enabled = true;
+            feedbackNegativeButton.Enabled = true;
         }
     }
 

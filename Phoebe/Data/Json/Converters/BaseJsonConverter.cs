@@ -35,10 +35,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             var remoteId = ctx.GetRemoteId<T> (id);
             if (remoteId == 0) {
-                throw new InvalidOperationException (String.Format (
-                    "Cannot export data with local-only relation ({0}#{1}) to JSON.",
-                    typeof(T).Name, id
-                ));
+                throw new RelationRemoteIdMissingException (typeof(T), id);
             }
             return remoteId;
         }
@@ -50,10 +47,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 return null;
             var remoteId = ctx.GetRemoteId<T> (id.Value);
             if (remoteId == 0) {
-                throw new InvalidOperationException (String.Format (
-                    "Cannot export data with local-only relation ({0}#{1}) to JSON.",
-                    typeof(T).Name, id
-                ));
+                throw new RelationRemoteIdMissingException (typeof(T), id.Value);
             }
             return remoteId;
         }

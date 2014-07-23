@@ -40,9 +40,9 @@ namespace Toggl.Joey.UI.Activities
         private ImageButton syncRetryButton;
         private TextView syncStatusText;
         private long lastSyncInMillis;
+        private int syncStatus { get; set; }
         private Subscription<SyncStartedMessage> drawerSyncStarted;
         private Subscription<SyncFinishedMessage> drawerSyncFinished;
-        private int syncStatus { get; set; }
         private static readonly int syncing = 0;
         private static readonly int syncSuccessful = 1;
         private static readonly int syncHadErrors = 2;
@@ -108,7 +108,6 @@ namespace Toggl.Joey.UI.Activities
             outState.PutIntArray (PageStackExtra, pageStack.ToArray ());
             outState.PutLong (LastSyncArgument, lastSyncInMillis);
             outState.PutInt (LastSyncResultArgument, syncStatus);
-
             base.OnSaveInstanceState (outState);
         }
 
@@ -223,6 +222,7 @@ namespace Toggl.Joey.UI.Activities
         }
 
         private bool isSyncing { get; set; }
+
         protected void SyncStarted (SyncStartedMessage msg)
         {
             syncRetryButton.Enabled = false;
@@ -264,8 +264,6 @@ namespace Toggl.Joey.UI.Activities
             handler.RemoveCallbacks (UpdateSyncStatus);
             handler.PostDelayed (UpdateSyncStatus, DateUtils.MinuteInMillis);
         }
-
-
 
         private String ResolveLastSyncTime ()
         {

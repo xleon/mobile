@@ -72,16 +72,14 @@ namespace Toggl.Joey.UI.Fragments
             bool send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
             if (send == true) {
                 if (FeedbackRating == RatingPositive) {
-                    var args = new Bundle ();
-                    args.PutString ("feedbackMessage", FeedbackMessage);
-                    new AskPublishToAppStore (args).Show (FragmentManager);
+                    AskPublishToAppStore.Show (FeedbackMessage, FragmentManager);
                 } else {
-                    new ThankForFeedbackDialog ().Show (FragmentManager);
+                    ThankForFeedbackDialog.Show (FragmentManager);
                 }
                 ResetFeedbackForm ();
             } else {
-                Context ctx = ServiceContainer.Resolve<Context> ();
-                Toast toast = Toast.MakeText (ctx, Resource.String.FeedbackSendFailedText, ToastLength.Long);
+                var ctx = ServiceContainer.Resolve<Context> ();
+                var toast = Toast.MakeText (ctx, Resource.String.FeedbackSendFailedText, ToastLength.Long);
                 toast.Show ();
                 EnableForm ();
             }
@@ -168,7 +166,7 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public void Show (FragmentManager fragmentManager)
+        public static void Show (FragmentManager fragmentManager)
         {
             new ThankForFeedbackDialog ().Show (fragmentManager, "thankforfeedback_dialog");
         }
@@ -186,7 +184,8 @@ namespace Toggl.Joey.UI.Fragments
 
     public class AskPublishToAppStore : BaseDialogFragment{
 
-        private readonly Bundle args;
+        private static readonly string UserMessageArgument = "com.toggl.timer.user_message";
+
         public AskPublishToAppStore ()
         {
         }
@@ -195,14 +194,25 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public AskPublishToAppStore (Bundle arguments)
+        public AskPublishToAppStore (String userMessage)
         {
-            args = arguments;
+            var args = new Bundle ();
+            args.PutString (UserMessageArgument, userMessage);
+            Arguments = args;
         }
 
-        public void Show (FragmentManager fragmentManager)
+        public static void Show (String userMessage, FragmentManager fragmentManager)
         {
-            new AskPublishToAppStore (args).Show (fragmentManager, "askpublishtoappstore_dialog");
+            new AskPublishToAppStore (userMessage).Show (fragmentManager, "askpublishtoappstore_dialog");
+        }
+
+        private String UserMessage {
+            get {
+                if (Arguments != null) {
+                    return Arguments.GetString (UserMessageArgument);
+                }
+                return null;
+            }
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -218,12 +228,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnPositiveClick (object sender, DialogClickEventArgs e)
         {
-            Context ctx = ServiceContainer.Resolve<Context> ();
-            ClipboardManager clipboard = (ClipboardManager) ctx.GetSystemService (Context.ClipboardService);
-            ClipData clip = ClipData.NewPlainText (Resource.String.AppName.ToString(), args.GetString ("feedbackMessage"));
+            var ctx = ServiceContainer.Resolve<Context> ();
+            var clipboard = (ClipboardManager) ctx.GetSystemService (Context.ClipboardService);
+            var clip = ClipData.NewPlainText (Resources.GetString(Resource.String.AppName), UserMessage);
             clipboard.PrimaryClip = clip;
 
-            Toast toast = Toast.MakeText (ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
+            var toast = Toast.MakeText (ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);
             toast.Show ();
 
             StartActivity (new Intent (

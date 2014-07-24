@@ -115,6 +115,45 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        public void ImportUpdated ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var clientData = await DataStore.PutAsync (new ClientData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var clientJson = new ClientJson () {
+                    Id = 2,
+                    Name = "Github",
+                    WorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc).ToLocalTime (), // JSON deserialized to local
+                };
+
+                clientData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
+                Assert.AreNotEqual (Guid.Empty, clientData.Id);
+                Assert.AreEqual (2, clientData.RemoteId);
+                Assert.AreEqual ("Github", clientData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc), clientData.ModifiedAt);
+                Assert.AreEqual (workspaceData.Id, clientData.WorkspaceId);
+                Assert.IsFalse (clientData.IsDirty);
+                Assert.IsFalse (clientData.RemoteRejected);
+                Assert.IsNull (clientData.DeletedAt);
+            });
+
+            // Warn the user that the test result might be invalid
+            if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now).TotalMinutes >= 0) {
+                Assert.Inconclusive ("The test machine timezone should be set to GTM-1 or less to test datetime comparison.");
+            }
+        }
+
+        [Test]
         public void ImportMissingWorkspace ()
         {
             RunAsync (async delegate {

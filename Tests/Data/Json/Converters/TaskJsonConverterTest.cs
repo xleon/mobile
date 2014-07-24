@@ -115,7 +115,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var projectData = await DataStore.PutAsync (new ProjectData () {
                     RemoteId = 3,
                     Name = "Hosting",
-                    WorkspaceId = Guid.NewGuid (),
+                    WorkspaceId = workspaceData.Id,
                     ModifiedAt = new DateTime (2014, 1, 2),
                 });
                 var taskJson = new TaskJson () {
@@ -137,6 +137,54 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 Assert.IsFalse (taskData.RemoteRejected);
                 Assert.IsNull (taskData.DeletedAt);
             });
+        }
+
+        [Test]
+        public void ImportUpdated ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 3,
+                    Name = "Hosting",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var taskData = await DataStore.PutAsync (new TaskData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ProjectId = projectData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var taskJson = new TaskJson () {
+                    Id = 2,
+                    Name = "Install Linux",
+                    WorkspaceId = 1,
+                    ProjectId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc).ToLocalTime (), // JSON deserialized to local
+                };
+
+                taskData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
+                Assert.AreNotEqual (Guid.Empty, taskData.Id);
+                Assert.AreEqual (2, taskData.RemoteId);
+                Assert.AreEqual ("Install Linux", taskData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc), taskData.ModifiedAt);
+                Assert.AreEqual (workspaceData.Id, taskData.WorkspaceId);
+                Assert.AreEqual (projectData.Id, taskData.ProjectId);
+                Assert.IsFalse (taskData.IsDirty);
+                Assert.IsFalse (taskData.RemoteRejected);
+                Assert.IsNull (taskData.DeletedAt);
+            });
+
+            // Warn the user that the test result might be invalid
+            if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now).TotalMinutes >= 0) {
+                Assert.Inconclusive ("The test machine timezone should be set to GTM-1 or less to test datetime comparison.");
+            }
         }
 
         [Test]

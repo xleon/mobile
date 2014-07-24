@@ -115,6 +115,45 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        public void ImportUpdated ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var tagData = await DataStore.PutAsync (new TagData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var tagJson = new TagJson () {
+                    Id = 2,
+                    Name = "Mobile",
+                    WorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc).ToLocalTime (), // JSON deserialized to local
+                };
+
+                tagData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, tagJson));
+                Assert.AreNotEqual (Guid.Empty, tagData.Id);
+                Assert.AreEqual (2, tagData.RemoteId);
+                Assert.AreEqual ("Mobile", tagData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc), tagData.ModifiedAt);
+                Assert.AreEqual (workspaceData.Id, tagData.WorkspaceId);
+                Assert.IsFalse (tagData.IsDirty);
+                Assert.IsFalse (tagData.RemoteRejected);
+                Assert.IsNull (tagData.DeletedAt);
+            });
+
+            // Warn the user that the test result might be invalid
+            if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now).TotalMinutes >= 0) {
+                Assert.Inconclusive ("The test machine timezone should be set to GTM-1 or less to test datetime comparison.");
+            }
+        }
+
+        [Test]
         public void ImportMissingWorkspace ()
         {
             RunAsync (async delegate {

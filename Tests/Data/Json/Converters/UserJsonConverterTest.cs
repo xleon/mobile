@@ -112,6 +112,44 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        public void ImportUpdated ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 1,
+                    Name = "",
+                    DefaultWorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var userJson = new UserJson () {
+                    Id = 1,
+                    Name = "John",
+                    DefaultWorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc).ToLocalTime (), // JSON deserialized to local
+                };
+
+                userData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, userJson));
+                Assert.AreNotEqual (Guid.Empty, userData.Id);
+                Assert.AreEqual (1, userData.RemoteId);
+                Assert.AreEqual ("John", userData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc), userData.ModifiedAt);
+                Assert.IsFalse (userData.IsDirty);
+                Assert.IsFalse (userData.RemoteRejected);
+                Assert.IsNull (userData.DeletedAt);
+            });
+
+            // Warn the user that the test result might be invalid
+            if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now).TotalMinutes >= 0) {
+                Assert.Inconclusive ("The test machine timezone should be set to GTM-1 or less to test datetime comparison.");
+            }
+        }
+
+        [Test]
         public void ImportDeleted ()
         {
             RunAsync (async delegate {

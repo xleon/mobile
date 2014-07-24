@@ -75,6 +75,37 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        public void ImportUpdated ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "",
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var workspaceJson = new WorkspaceJson () {
+                    Id = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc).ToLocalTime (), // JSON deserialized to local
+                };
+
+                workspaceData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, workspaceJson));
+                Assert.AreNotEqual (Guid.Empty, workspaceData.Id);
+                Assert.AreEqual (1, workspaceData.RemoteId);
+                Assert.AreEqual ("Test", workspaceData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc), workspaceData.ModifiedAt);
+                Assert.IsFalse (workspaceData.IsDirty);
+                Assert.IsFalse (workspaceData.RemoteRejected);
+                Assert.IsNull (workspaceData.DeletedAt);
+            });
+
+            // Warn the user that the test result might be invalid
+            if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now).TotalMinutes >= 0) {
+                Assert.Inconclusive ("The test machine timezone should be set to GTM-1 or less to test datetime comparison.");
+            }
+        }
+
+        [Test]
         public void ImportDeleted ()
         {
             RunAsync (async delegate {

@@ -126,6 +126,48 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        public void ImportUpdated ()
+        {
+            RunAsync (async delegate {
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 3),
+                });
+                var projectUserData = await DataStore.PutAsync (new ProjectUserData () {
+                    RemoteId = 2,
+                    ProjectId = Guid.Empty,
+                    UserId = Guid.Empty,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var projectUserJson = new ProjectUserJson () {
+                    Id = 2,
+                    ProjectId = 1,
+                    UserId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc).ToLocalTime (), // JSON deserialized to local
+                };
+
+                projectUserData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
+                Assert.AreNotEqual (Guid.Empty, projectUserData.Id);
+                Assert.AreEqual (2, projectUserData.RemoteId);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc), projectUserData.ModifiedAt);
+                Assert.AreEqual (projectData.Id, projectUserData.ProjectId);
+                Assert.AreEqual (userData.Id, projectUserData.UserId);
+                Assert.IsFalse (projectUserData.IsDirty);
+                Assert.IsFalse (projectUserData.RemoteRejected);
+                Assert.IsNull (projectUserData.DeletedAt);
+            });
+
+            // Warn the user that the test result might be invalid
+            if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now).TotalMinutes >= 0) {
+                Assert.Inconclusive ("The test machine timezone should be set to GTM-1 or less to test datetime comparison.");
+            }
+        }
+
+        [Test]
         public void ImportMissingProjectAndUser ()
         {
             RunAsync (async delegate {

@@ -72,7 +72,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     ctx.Delete (data);
                     data = null;
                 }
-            } else if (data == null || forceUpdate || data.ModifiedAt < json.ModifiedAt) {
+            } else if (data == null || forceUpdate || data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ()) {
                 data = data ?? new WorkspaceUserData ();
                 Merge (ctx, data, json);
                 data = ctx.Put (data);

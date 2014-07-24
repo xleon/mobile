@@ -194,6 +194,54 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        public void ImportUpdated ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 3,
+                    Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var timeEntryData = await DataStore.PutAsync (new TimeEntryData () {
+                    RemoteId = 2,
+                    Description = "",
+                    WorkspaceId = workspaceData.Id,
+                    UserId = userData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var timeEntryJson = new TimeEntryJson () {
+                    Id = 2,
+                    Description = "Morning coffee",
+                    WorkspaceId = 1,
+                    UserId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc).ToLocalTime (), // JSON deserialized to local
+                };
+
+                timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
+                Assert.AreNotEqual (Guid.Empty, timeEntryData.Id);
+                Assert.AreEqual (2, timeEntryData.RemoteId);
+                Assert.AreEqual ("Morning coffee", timeEntryData.Description);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc), timeEntryData.ModifiedAt);
+                Assert.AreEqual (workspaceData.Id, timeEntryData.WorkspaceId);
+                Assert.AreEqual (userData.Id, timeEntryData.UserId);
+                Assert.IsFalse (timeEntryData.IsDirty);
+                Assert.IsFalse (timeEntryData.RemoteRejected);
+                Assert.IsNull (timeEntryData.DeletedAt);
+            });
+
+            // Warn the user that the test result might be invalid
+            if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now).TotalMinutes >= 0) {
+                Assert.Inconclusive ("The test machine timezone should be set to GTM-1 or less to test datetime comparison.");
+            }
+        }
+
+        [Test]
         public void ImportDefaultUser ()
         {
             RunAsync (async delegate {

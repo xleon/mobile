@@ -42,6 +42,7 @@ namespace Toggl.Ross
             window.MakeKeyAndVisible ();
             
             // Make sure critical services are running are running:
+            ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<BugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
 

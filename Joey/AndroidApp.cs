@@ -74,6 +74,7 @@ namespace Toggl.Joey
 
         private void InitializeStartupComponents ()
         {
+            ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<BugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
         }

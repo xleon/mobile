@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data
 {
@@ -81,6 +82,24 @@ namespace Toggl.Phoebe.Data
                         "WHERE t.DeletedAt IS NULL AND tet.DeletedAt IS NULL ",
                         "AND tet.TimeEntryId=?");
             return ds.QueryAsync<TagData> (q, timeEntryId);
+        }
+
+        public static Task ResetAllModificationTimes (this IDataStore ds)
+        {
+            return ds.ExecuteInTransactionAsync (ctx => {
+                foreach (var type in SqliteDataStore.DiscoverDataObjectTypes()) {
+                    var con = ctx.Connection;
+                    var tbl = con.GetMapping (type).TableName;
+
+                    if (type.IsSubclassOf (typeof(CommonData))) {
+                        var q = String.Concat (
+                                    "UPDATE ", tbl, " SET ModifiedAt = ? ",
+                                    "WHERE RemoteId IS NOT NULL AND DeletedAt IS NULL ",
+                                    "AND (IsDirty = 0 OR RemoteRejected = 1)");
+                        ctx.Connection.Execute (q, DateTime.MinValue);
+                    }
+                }
+            });
         }
 
         private class ColumnRow<T>

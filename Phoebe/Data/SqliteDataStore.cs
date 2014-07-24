@@ -34,7 +34,7 @@ namespace Toggl.Phoebe.Data
             bus.Send (new DataStoreIdleMessage (this));
         }
 
-        private static IEnumerable<Type> DiscoverDataObjectTypes ()
+        internal static IEnumerable<Type> DiscoverDataObjectTypes ()
         {
             var dataType = typeof(Toggl.Phoebe.Data.DataObjects.TimeEntryData);
             return from t in dataType.Assembly.GetTypes ()

@@ -11,6 +11,7 @@ namespace Toggl.Phoebe
         public static void Register ()
         {
             ServiceContainer.Register<MessageBus> ();
+            ServiceContainer.Register<UpgradeManger> ();
             ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<ActiveTimeEntryManager> ();
             ServiceContainer.Register<DataCache> ();

@@ -18,6 +18,7 @@ namespace Toggl.Joey.Data
         private const string PhoebeApiTokenKey = "phoebeApiToken";
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
+        private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
@@ -201,6 +202,13 @@ namespace Toggl.Joey.Data
                 SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
                 OnSettingChanged (PropertyUseDefaultTag);
             }
+        }
+
+        public static readonly string PropertyLastAppVersion = GetPropertyName (s => s.LastAppVersion);
+
+        public string LastAppVersion {
+            get { return GetString (PhoebeLastAppVersionKey); }
+            set { SetString (PhoebeLastAppVersionKey, value); }
         }
 
         public static readonly string PropertyGotWelcomeMessage = GetPropertyName (s => s.GotWelcomeMessage);

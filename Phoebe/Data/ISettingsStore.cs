@@ -11,5 +11,7 @@ namespace Toggl.Phoebe.Data
         DateTime? SyncLastRun { get; set; }
 
         bool UseDefaultTag { get; set; }
+
+        string LastAppVersion { get; set; }
     }
 }

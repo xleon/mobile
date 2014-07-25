@@ -46,28 +46,15 @@ namespace Toggl.Joey.UI.Fragments
             submitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton).SetFont (Font.Roboto);
             submitFeedbackButton.Click += OnSendClick;
 
-            if (savedInstanceState != null) {
-                SetRating (savedInstanceState.GetInt (feedbackRatingArgument));
-            } else {
-                SetRating (ratingNotSet);
-            }
-            ValidateForm ();
+            SetRating (feedbackRating);
             SyncItems ();
             return view;
         }
 
-        public override void OnResume ()
+        public override void OnCreate(Bundle state)
         {
-            SetRating (feedbackRating);
-            base.OnResume ();
-        }
-
-        public override void OnSaveInstanceState (Bundle outState)
-        {
-            base.OnSaveInstanceState (outState);
-            if (feedbackRating != ratingNotSet) {
-                outState.PutInt (feedbackRatingArgument, feedbackRating);
-            }
+            base.OnCreate (state);
+            RetainInstance = true;
         }
 
         private async void OnSendClick (object sender, EventArgs e) 
@@ -90,20 +77,21 @@ namespace Toggl.Joey.UI.Fragments
             IsSendingFeedback = false;
         }
 
-        private void ValidateForm ()
-        {
-            feedbackMessage = feedbackMessageEditText.Text;
-            var enabled = false;
-            if (feedbackMessage.Length == 0 || feedbackRating == ratingNotSet) {
-                enabled = false;
-            } else {
-                enabled = true;
-            }
-            submitFeedbackButton.Enabled = enabled;
-        }
+//        private void ValidateForm ()
+//        {
+//            feedbackMessage = feedbackMessageEditText.Text;
+//            var enabled = false;
+//            if (feedbackMessage.Length == 0 || feedbackRating == ratingNotSet) {
+//                enabled = false;
+//            } else {
+//                enabled = true;
+//            }
+//            submitFeedbackButton.Enabled = enabled;
+//        }
 
         private bool prevSendResult;
-        private async Task<bool> SendFeedbackData ( string feedback, int rating ) {
+        private async Task<bool> SendFeedbackData ( string feedback, int rating )
+        {
             await Task.Delay (TimeSpan.FromSeconds(1));
             prevSendResult = !prevSendResult;
             return prevSendResult;
@@ -120,7 +108,8 @@ namespace Toggl.Joey.UI.Fragments
             } else if (feedbackRating == ratingNegative) {
                 feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegativeActive);
             }
-            ValidateForm ();
+//            ValidateForm ();
+            SyncItems ();
         }
 
         private void ResetRatingButtonImages ()
@@ -132,7 +121,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnEdit (object sender, EventArgs e)
         {
-            ValidateForm ();
+//            ValidateForm ();
+            feedbackMessage = feedbackMessageEditText.Text;
+            SyncItems ();
         }
 
         private void ResetForm ()
@@ -144,7 +135,7 @@ namespace Toggl.Joey.UI.Fragments
         private void SyncItems()
         {
             submitFeedbackButton.SetText (isSendingFeedback ? Resource.String.SendFeedbackButtonActiveText : Resource.String.SendFeedbackButtonText );
-            submitFeedbackButton.Enabled = !isSendingFeedback;
+            submitFeedbackButton.Enabled = feedbackRating != ratingNotSet && feedbackMessage != String.Empty && !isSendingFeedback;
             feedbackMessageEditText.Enabled = !isSendingFeedback;
             feedbackPositiveButton.Enabled = !isSendingFeedback;
             feedbackNeutralButton.Enabled = !isSendingFeedback;

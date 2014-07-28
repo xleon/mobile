@@ -50,6 +50,10 @@
         <item name="android:background">@drawable/buttongreen</item>
         <item name="android:textColor">@color/buttongreentextcolor</item>
     </style>
+    <style name="Button.FeedbackSubmitButton">
+        <item name="android:background">@drawable/feedbacksubmitbutton</item>
+        <item name="android:textColor">@color/buttongreentextcolor</item>
+    </style>
 
     <style name="TimeEntryListItem">
     </style>
@@ -142,4 +146,11 @@
         <item name="android:background">?android:attr/selectableItemBackground</item>
         <item name="android:textSize">24dp</item>
     </style>
+
+    <style name="FeedbackView">
+    </style>
+    <style name="FeedbackView.Button">
+        <item name="android:padding">20dp</item>
+    </style>
+
 </resources>

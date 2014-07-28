@@ -14,6 +14,7 @@ namespace Toggl.Phoebe.Data.Merge
         protected CommonMerger (T baseData)
         {
             this.baseData = baseData;
+            baseData.ModifiedAt = baseData.ModifiedAt.ToUtc ();
         }
 
         protected virtual T Merge ()
@@ -49,6 +50,7 @@ namespace Toggl.Phoebe.Data.Merge
 
         public void Add (T change)
         {
+            change.ModifiedAt = change.ModifiedAt.ToUtc ();
             changes.Add (change);
             resultData = null;
         }

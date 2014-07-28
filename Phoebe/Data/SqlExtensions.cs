@@ -102,6 +102,13 @@ namespace Toggl.Phoebe.Data
             });
         }
 
+        public static int PurgeDatedTimeCorrections (this IDataStoreContext ctx, DateTime time)
+        {
+            var tbl = ctx.Connection.GetMapping<TimeCorrectionData> ().TableName;
+            var q = String.Concat ("DELETE FROM ", tbl, " WHERE MeasuredAt < ?");
+            return ctx.Connection.Execute (q, time);
+        }
+
         private class ColumnRow<T>
         {
             public T Value { get; set; }

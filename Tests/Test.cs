@@ -34,6 +34,7 @@ namespace Toggl.Phoebe.Tests
             // Create MessageBus egerly to avoid it being created in the background thread with invalid synchronization context.
             ServiceContainer.Register<MessageBus> (new MessageBus ());
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
+            ServiceContainer.Register<TimeCorrectionManager> ();
             ServiceContainer.Register<IDataStore> (delegate {
                 databasePath = Path.GetTempFileName ();
                 return new SqliteDataStore (databasePath);

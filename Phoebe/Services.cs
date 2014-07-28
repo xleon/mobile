@@ -16,6 +16,7 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<ActiveTimeEntryManager> ();
             ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
+            ServiceContainer.Register<TimeCorrectionManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());

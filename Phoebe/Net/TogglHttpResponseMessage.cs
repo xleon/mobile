@@ -10,10 +10,14 @@ namespace Toggl.Phoebe.Net
         public TogglHttpResponseMessage (object sender, HttpResponseMessage resp, TimeSpan? latency = null) : base (sender)
         {
             StatusCode = resp.StatusCode;
+            if (resp.Headers.Date.HasValue)
+                ServerTime = resp.Headers.Date.Value.UtcDateTime;
             Latency = latency;
         }
 
         public HttpStatusCode StatusCode { get; private set; }
+
+        public DateTime? ServerTime { get; private set; }
 
         public TimeSpan? Latency { get; private set; }
     }

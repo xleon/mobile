@@ -70,6 +70,7 @@
     <Compile Include="Data\ActiveTimeEntryManagerTest.cs" />
     <Compile Include="Data\DataCacheTest.cs" />
     <Compile Include="UpgradeManagerTest.cs" />
+    <Compile Include="TimeCorrectionManagerTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

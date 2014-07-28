@@ -117,9 +117,9 @@
     <string name="ActionBarDoneButton">Done</string>
     <string name="FeedbackHeaderTextView">FEEDBACK</string>
     <string name="FeedbackSmallHeaderTextView">How are you feeling?</string>
-    <string name="FeedbackMessageHint">Your message...</string>
+    <string name="FeedbackMessageHint">Your message&#8230;</string>
     <string name="SendFeedbackButtonText">Send</string>
-    <string name="SendFeedbackButtonActiveText">Sending...</string>
+    <string name="SendFeedbackButtonActiveText">Sending&#8230;</string>
     <string name="FeedbackAskPublishTitle">Share on Google Play?</string>
     <string name="FeedbackAskPublishMessage">Want to share your opinion on Google Play Store?</string>
     <string name="FeedbackCopiedToClipboardToast">Your feedback is copied to clipboard!</string>

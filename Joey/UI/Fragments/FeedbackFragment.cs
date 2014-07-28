@@ -47,7 +47,7 @@ namespace Toggl.Joey.UI.Fragments
             submitFeedbackButton.Click += OnSendClick;
 
             SetRating (feedbackRating);
-            SyncItems ();
+
             return view;
         }
 
@@ -60,11 +60,11 @@ namespace Toggl.Joey.UI.Fragments
         private async void OnSendClick (object sender, EventArgs e) 
         {
             IsSendingFeedback = true;
-            var send = await SendFeedbackData (feedbackMessage, feedbackRating);
+            var send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
            
             if (send) {
                 if (feedbackRating == ratingPositive) {
-                    AskPublishToAppStore.Show (feedbackMessage, FragmentManager);
+                    AskPublishToAppStore.Show (FeedbackMessage, FragmentManager);
                 } else {
                     ThankForFeedbackDialog.Show (FragmentManager);
                 }
@@ -77,18 +77,6 @@ namespace Toggl.Joey.UI.Fragments
             IsSendingFeedback = false;
         }
 
-//        private void ValidateForm ()
-//        {
-//            feedbackMessage = feedbackMessageEditText.Text;
-//            var enabled = false;
-//            if (feedbackMessage.Length == 0 || feedbackRating == ratingNotSet) {
-//                enabled = false;
-//            } else {
-//                enabled = true;
-//            }
-//            submitFeedbackButton.Enabled = enabled;
-//        }
-
         private bool prevSendResult;
         private async Task<bool> SendFeedbackData ( string feedback, int rating )
         {
@@ -99,31 +87,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetRating (int rating)
         {
-            feedbackRating = rating;
-            ResetRatingButtonImages ();
-            if (feedbackRating == ratingPositive) {
-                feedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositiveActive);
-            } else if (feedbackRating == ratingNeutral) {
-                feedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutralActive);
-            } else if (feedbackRating == ratingNegative) {
-                feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegativeActive);
-            }
-//            ValidateForm ();
-            SyncItems ();
-        }
-
-        private void ResetRatingButtonImages ()
-        {
-            feedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositive);
-            feedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutral);
-            feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegative);
+            FeedbackRating = rating;
         }
 
         private void OnEdit (object sender, EventArgs e)
         {
-//            ValidateForm ();
-            feedbackMessage = feedbackMessageEditText.Text;
-            SyncItems ();
+            FeedbackMessage = feedbackMessageEditText.Text;
         }
 
         private void ResetForm ()
@@ -135,11 +104,27 @@ namespace Toggl.Joey.UI.Fragments
         private void SyncItems()
         {
             submitFeedbackButton.SetText (isSendingFeedback ? Resource.String.SendFeedbackButtonActiveText : Resource.String.SendFeedbackButtonText );
-            submitFeedbackButton.Enabled = feedbackRating != ratingNotSet && feedbackMessage != String.Empty && !isSendingFeedback;
+            submitFeedbackButton.Enabled = FeedbackRating != ratingNotSet && FeedbackMessage != String.Empty && !isSendingFeedback;
             feedbackMessageEditText.Enabled = !isSendingFeedback;
             feedbackPositiveButton.Enabled = !isSendingFeedback;
             feedbackNeutralButton.Enabled = !isSendingFeedback;
             feedbackNegativeButton.Enabled = !isSendingFeedback;
+
+            ResetRatingButtonImages ();
+            if (FeedbackRating == ratingPositive) {
+                feedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositiveActive);
+            } else if (FeedbackRating == ratingNeutral) {
+                feedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutralActive);
+            } else if (FeedbackRating == ratingNegative) {
+                feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegativeActive);
+            }
+        }
+
+        private void ResetRatingButtonImages ()
+        {
+            feedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositive);
+            feedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutral);
+            feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegative);
         }
 
         private bool IsSendingFeedback {
@@ -150,10 +135,30 @@ namespace Toggl.Joey.UI.Fragments
                 SyncItems ();
             }
         }
+
+        private String FeedbackMessage {
+            set {
+                feedbackMessage = value;
+                SyncItems ();
+            }
+            get {
+                feedbackMessage = feedbackMessageEditText.Text;
+                return feedbackMessage;
+            }
+        }
+
+        private int FeedbackRating {
+            set {
+                feedbackRating = value;
+                SyncItems ();
+            }
+            get {
+                return feedbackRating;
+            }
+        }
     }
 
     public class ThankForFeedbackDialog : BaseDialogFragment {
-
 
         public ThankForFeedbackDialog ()
         {
@@ -240,4 +245,3 @@ namespace Toggl.Joey.UI.Fragments
         }
     }
 }
-

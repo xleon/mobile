@@ -71,6 +71,16 @@
     <Compile Include="Data\DataCacheTest.cs" />
     <Compile Include="UpgradeManagerTest.cs" />
     <Compile Include="TimeCorrectionManagerTest.cs" />
+    <Compile Include="Data\Merge\ClientMergerTest.cs" />
+    <Compile Include="Data\Merge\MergeTest.cs" />
+    <Compile Include="Data\Merge\ProjectMergerTest.cs" />
+    <Compile Include="Data\Merge\ProjectUserMergerTest.cs" />
+    <Compile Include="Data\Merge\TagMergerTest.cs" />
+    <Compile Include="Data\Merge\TaskMergerTest.cs" />
+    <Compile Include="Data\Merge\TimeEntryMergerTest.cs" />
+    <Compile Include="Data\Merge\UserMergerTest.cs" />
+    <Compile Include="Data\Merge\WorkspaceMergerTest.cs" />
+    <Compile Include="Data\Merge\WorkspaceUserMergerTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -90,5 +100,6 @@
     <Folder Include="Data\Models\" />
     <Folder Include="Data\Json\" />
     <Folder Include="Data\Json\Converters\" />
+    <Folder Include="Data\Merge\" />
   </ItemGroup>
 </Project>

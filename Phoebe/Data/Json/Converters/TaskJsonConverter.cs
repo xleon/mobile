@@ -1,5 +1,6 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Merge;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
@@ -21,7 +22,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static void Merge (IDataStoreContext ctx, TaskData data, TaskJson json)
+        private static void ImportJson (IDataStoreContext ctx, TaskData data, TaskJson json)
         {
             var projectId = GetLocalId<ProjectData> (ctx, json.ProjectId);
             var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
@@ -32,21 +33,31 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.ProjectId = projectId;
             data.WorkspaceId = workspaceId;
 
-            MergeCommon (data, json);
+            ImportCommonJson (data, json);
         }
 
-        public TaskData Import (IDataStoreContext ctx, TaskJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public TaskData Import (IDataStoreContext ctx, TaskJson json, Guid? localIdHint = null, TaskData mergeBase = null)
         {
             var data = GetByRemoteId<TaskData> (ctx, json.Id.Value, localIdHint);
+
+            var merger = mergeBase != null ? new TaskMerger (mergeBase) : null;
+            if (merger != null && data != null)
+                merger.Add (new TaskData (data));
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
                     ctx.Delete (data);
                     data = null;
                 }
-            } else if (data == null || forceUpdate || data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ()) {
+            } else {
                 data = data ?? new TaskData ();
-                Merge (ctx, data, json);
+                ImportJson (ctx, data, json);
+
+                if (merger != null) {
+                    merger.Add (data);
+                    data = merger.Result;
+                }
+
                 data = ctx.Put (data);
             }
 

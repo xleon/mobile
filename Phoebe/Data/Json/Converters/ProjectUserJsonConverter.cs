@@ -1,5 +1,6 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Merge;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
@@ -20,7 +21,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static void Merge (IDataStoreContext ctx, ProjectUserData data, ProjectUserJson json)
+        private static void ImportJson (IDataStoreContext ctx, ProjectUserData data, ProjectUserJson json)
         {
             var projectId = GetLocalId<ProjectData> (ctx, json.ProjectId);
             var userId = GetLocalId<UserData> (ctx, json.UserId);
@@ -30,21 +31,31 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.ProjectId = projectId;
             data.UserId = userId;
 
-            MergeCommon (data, json);
+            ImportCommonJson (data, json);
         }
 
-        public ProjectUserData Import (IDataStoreContext ctx, ProjectUserJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public ProjectUserData Import (IDataStoreContext ctx, ProjectUserJson json, Guid? localIdHint = null, ProjectUserData mergeBase = null)
         {
             var data = GetByRemoteId<ProjectUserData> (ctx, json.Id.Value, localIdHint);
+
+            var merger = mergeBase != null ? new ProjectUserMerger (mergeBase) : null;
+            if (merger != null && data != null)
+                merger.Add (new ProjectUserData (data));
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
                     ctx.Delete (data);
                     data = null;
                 }
-            } else if (data == null || forceUpdate || data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ()) {
+            } else {
                 data = data ?? new ProjectUserData ();
-                Merge (ctx, data, json);
+                ImportJson (ctx, data, json);
+
+                if (merger != null) {
+                    merger.Add (data);
+                    data = merger.Result;
+                }
+
                 data = ctx.Put (data);
             }
 

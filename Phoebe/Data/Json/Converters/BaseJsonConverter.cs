@@ -6,7 +6,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public abstract class BaseJsonConverter
     {
-        protected static void MergeCommon (CommonData data, CommonJson json)
+        protected static void ImportCommonJson (CommonData data, CommonJson json)
         {
             data.RemoteId = json.Id;
             data.RemoteRejected = false;

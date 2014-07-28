@@ -1,5 +1,6 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Merge;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
@@ -17,7 +18,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static TagData Merge (IDataStoreContext ctx, TagData data, TagJson json)
+        private static TagData ImportJson (IDataStoreContext ctx, TagData data, TagJson json)
         {
             var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
 
@@ -34,22 +35,32 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.Name = json.Name;
             data.WorkspaceId = workspaceId;
 
-            MergeCommon (data, json);
+            ImportCommonJson (data, json);
 
             return data;
         }
 
-        public TagData Import (IDataStoreContext ctx, TagJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public TagData Import (IDataStoreContext ctx, TagJson json, Guid? localIdHint = null, TagData mergeBase = null)
         {
             var data = GetByRemoteId<TagData> (ctx, json.Id.Value, localIdHint);
+
+            var merger = mergeBase != null ? new TagMerger (mergeBase) : null;
+            if (merger != null && data != null)
+                merger.Add (new TagData (data));
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
                     ctx.Delete (data);
                     data = null;
                 }
-            } else if (data == null || forceUpdate || data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ()) {
-                data = Merge (ctx, data, json);
+            } else {
+                data = ImportJson (ctx, data, json);
+
+                if (merger != null) {
+                    merger.Add (data);
+                    data = merger.Result;
+                }
+
                 data = ctx.Put (data);
             }
 

@@ -19,12 +19,13 @@ namespace Toggl.Phoebe.Data.Merge
         protected virtual T Merge ()
         {
             var data = (T)Activator.CreateInstance (typeof(T), baseData);
+            var latestData = changes [0];
 
             // Merge common data
             data.RemoteId = GetValue (d => d.RemoteId);
-            data.ModifiedAt = GetValue (d => d.ModifiedAt);
+            data.ModifiedAt = latestData.ModifiedAt;
             data.DeletedAt = GetValue (d => d.DeletedAt);
-            data.IsDirty = GetValue (d => d.IsDirty);
+            data.IsDirty = latestData.IsDirty;
             data.RemoteRejected = false;
 
             return data;

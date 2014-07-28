@@ -12,6 +12,7 @@ using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using NotificationCompat = Android.Support.V4.App.NotificationCompat;
+using Google.Analytics.Tracking;
 
 namespace Toggl.Joey
 {
@@ -173,10 +174,12 @@ namespace Toggl.Joey
                 }
             } else {
                 notificationManager.Cancel (IdleNotifId);
+                var correction = ServiceContainer.Resolve<TimeCorrectionManager> ().Correction;
+                var startTime = currentTimeEntry.StartTime - correction;
                 runningBuilder
                     .SetContentTitle (GetProjectName (currentTimeEntry))
                     .SetContentText (GetDescription (currentTimeEntry))
-                    .SetWhen ((long)currentTimeEntry.StartTime.ToUnix ().TotalMilliseconds);
+                    .SetWhen ((long)startTime.ToUnix ().TotalMilliseconds);
 
                 notificationManager.Notify (RunningNotifId, runningBuilder.Build ());
             }

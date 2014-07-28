@@ -85,7 +85,7 @@ namespace Toggl.Phoebe.Tests.Data
             get {
                 var dataType = typeof(WorkspaceData);
                 return from t in dataType.Assembly.GetTypes ()
-                                   where t.Namespace == dataType.Namespace && !t.IsAbstract
+                                   where t.Namespace == dataType.Namespace && !t.IsAbstract && typeof(CommonData).IsAssignableFrom (t)
                                    select t;
             }
         }

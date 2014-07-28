@@ -40,7 +40,7 @@ namespace Toggl.Joey.UI.Activities
         private ImageButton syncRetryButton;
         private TextView syncStatusText;
         private long lastSyncInMillis;
-        private int syncStatus { get; set; }
+        private int syncStatus;
         private Subscription<SyncStartedMessage> drawerSyncStarted;
         private Subscription<SyncFinishedMessage> drawerSyncFinished;
         private static readonly int syncing = 0;
@@ -83,8 +83,9 @@ namespace Toggl.Joey.UI.Activities
             DrawerSyncView = FindViewById<FrameLayout> (Resource.Id.DrawerSyncStatus);
 
             syncRetryButton = DrawerSyncView.FindViewById<ImageButton> (Resource.Id.SyncRetryButton);
-            syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
             syncRetryButton.Click += OnSyncRetryClick;
+
+            syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
 
             ActionBar.SetCustomView (Timer.Root, lp);
             ActionBar.SetDisplayShowCustomEnabled (true);
@@ -147,6 +148,22 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnStop ();
             Timer.OnStop ();
+        }
+
+        protected override void OnDestroy ()
+        {
+            base.OnDestroy ();
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+
+            if (drawerSyncStarted != null) {
+                bus.Unsubscribe (drawerSyncStarted);
+                drawerSyncStarted = null;
+            }
+
+            if (drawerSyncFinished != null) {
+                bus.Unsubscribe (drawerSyncFinished);
+                drawerSyncFinished = null;
+            }
         }
 
         public override void OnBackPressed ()
@@ -220,8 +237,6 @@ namespace Toggl.Joey.UI.Activities
 
             DrawerLayout.CloseDrawers ();
         }
-
-        private bool isSyncing { get; set; }
 
         protected void SyncStarted (SyncStartedMessage msg)
         {

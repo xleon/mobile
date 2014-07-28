@@ -480,6 +480,14 @@
     <AndroidResource Include="Resources\drawable-mdpi\BgMainListButtonSelected.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\BgMainListButtonSelected.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\BgMainListButtonSelected.9.png" />
+    <AndroidResource Include="Resources\layout\MainDrawerSyncStatus.axml" />
+    <AndroidResource Include="Resources\drawable-mdpi\ButtonSyncRetryDefault.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ButtonSyncRetryPressed.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ButtonSyncRetryDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ButtonSyncRetryDefault.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ButtonSyncRetryPressed.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonSyncRetryPressed.png" />
+    <AndroidResource Include="Resources\drawable\SyncRetryButton.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

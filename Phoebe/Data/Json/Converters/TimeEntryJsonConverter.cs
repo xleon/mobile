@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Merge;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -98,7 +99,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return GetLocalId<UserData> (ctx, id);
         }
 
-        private static void Merge (IDataStoreContext ctx, TimeEntryData data, TimeEntryJson json)
+        private static void ImportJson (IDataStoreContext ctx, TimeEntryData data, TimeEntryJson json)
         {
             var userId = GetUserLocalId (ctx, json.UserId);
             var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
@@ -114,7 +115,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.TaskId = taskId;
             DecodeDuration (data, json);
 
-            MergeCommon (data, json);
+            ImportCommonJson (data, json);
         }
 
         private static void ResetTags (IDataStoreContext ctx, TimeEntryData timeEntryData, TimeEntryJson json)
@@ -174,9 +175,13 @@ namespace Toggl.Phoebe.Data.Json.Converters
             }
         }
 
-        public TimeEntryData Import (IDataStoreContext ctx, TimeEntryJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public TimeEntryData Import (IDataStoreContext ctx, TimeEntryJson json, Guid? localIdHint = null, TimeEntryData mergeBase = null)
         {
             var data = GetByRemoteId<TimeEntryData> (ctx, json.Id.Value, localIdHint);
+
+            var merger = mergeBase != null ? new TimeEntryMerger (mergeBase) : null;
+            if (merger != null && data != null)
+                merger.Add (new TimeEntryData (data));
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
@@ -184,12 +189,21 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     ctx.Delete (data);
                     data = null;
                 }
-            } else if (data == null || forceUpdate || data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ()) {
+            } else {
                 data = data ?? new TimeEntryData ();
-                Merge (ctx, data, json);
+                ImportJson (ctx, data, json);
+
+                if (merger != null) {
+                    merger.Add (data);
+                    data = merger.Result;
+                }
+
                 data = ctx.Put (data);
+
                 // Also update tags from the JSON we are merging:
-                ResetTags (ctx, data, json);
+                if (mergeBase == null || (mergeBase != null && mergeBase.ModifiedAt != data.ModifiedAt)) {
+                    ResetTags (ctx, data, json);
+                }
             }
 
             return data;

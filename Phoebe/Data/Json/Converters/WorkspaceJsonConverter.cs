@@ -1,5 +1,6 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Merge;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
@@ -22,7 +23,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static void Merge (WorkspaceData data, WorkspaceJson json)
+        private static void ImportJson (WorkspaceData data, WorkspaceJson json)
         {
             data.Name = json.Name;
             data.IsPremium = json.IsPremium;
@@ -34,21 +35,31 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.RoundingPercision = json.RoundingPercision;
             data.LogoUrl = json.LogoUrl;
 
-            MergeCommon (data, json);
+            ImportCommonJson (data, json);
         }
 
-        public WorkspaceData Import (IDataStoreContext ctx, WorkspaceJson json, Guid? localIdHint = null, bool forceUpdate = false)
+        public WorkspaceData Import (IDataStoreContext ctx, WorkspaceJson json, Guid? localIdHint = null, WorkspaceData mergeBase = null)
         {
             var data = GetByRemoteId<WorkspaceData> (ctx, json.Id.Value, localIdHint);
+
+            var merger = mergeBase != null ? new WorkspaceMerger (mergeBase) : null;
+            if (merger != null && data != null)
+                merger.Add (new WorkspaceData (data));
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
                     ctx.Delete (data);
                     data = null;
                 }
-            } else if (data == null || forceUpdate || data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ()) {
+            } else {
                 data = data ?? new WorkspaceData ();
-                Merge (data, json);
+                ImportJson (data, json);
+
+                if (merger != null) {
+                    merger.Add (data);
+                    data = merger.Result;
+                }
+
                 data = ctx.Put (data);
             }
 

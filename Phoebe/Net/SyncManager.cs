@@ -356,7 +356,7 @@ namespace Toggl.Phoebe.Net
                     json = await client.Update (json).ConfigureAwait (false);
                     await store.ExecuteInTransactionAsync (ctx => json.Import (
                         ctx,
-                        forceUpdate: true
+                        mergeBase: dataObject
                     )).ConfigureAwait (false);
                 } else {
                     var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
@@ -364,7 +364,7 @@ namespace Toggl.Phoebe.Net
                     await store.ExecuteInTransactionAsync (ctx => json.Import (
                         ctx,
                         localIdHint: dataObject.Id,
-                        forceUpdate: true
+                        mergeBase: dataObject
                     )).ConfigureAwait (false);
                 }
             } catch (ServerValidationException ex) {

@@ -8,27 +8,27 @@ namespace Toggl.Phoebe.Data.Json.Converters
     public static class JsonExtensions
     {
         public static CommonData Import (this CommonJson json, IDataStoreContext ctx,
-                                         Guid? localIdHint = null, bool forceUpdate = false)
+                                         Guid? localIdHint = null, CommonData mergeBase = null)
         {
             var type = json.GetType ();
             if (type == typeof(ClientJson)) {
-                return Import ((ClientJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((ClientJson)json, ctx, localIdHint, (ClientData)mergeBase);
             } else if (type == typeof(ProjectJson)) {
-                return Import ((ProjectJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((ProjectJson)json, ctx, localIdHint, (ProjectData)mergeBase);
             } else if (type == typeof(ProjectUserJson)) {
-                return Import ((ProjectUserJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((ProjectUserJson)json, ctx, localIdHint, (ProjectUserData)mergeBase);
             } else if (type == typeof(TagJson)) {
-                return Import ((TagJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((TagJson)json, ctx, localIdHint, (TagData)mergeBase);
             } else if (type == typeof(TaskJson)) {
-                return Import ((TaskJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((TaskJson)json, ctx, localIdHint, (TaskData)mergeBase);
             } else if (type == typeof(TimeEntryJson)) {
-                return Import ((TimeEntryJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((TimeEntryJson)json, ctx, localIdHint, (TimeEntryData)mergeBase);
             } else if (type == typeof(UserJson)) {
-                return Import ((UserJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((UserJson)json, ctx, localIdHint, (UserData)mergeBase);
             } else if (type == typeof(WorkspaceJson)) {
-                return Import ((WorkspaceJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((WorkspaceJson)json, ctx, localIdHint, (WorkspaceData)mergeBase);
             } else if (type == typeof(WorkspaceUserJson)) {
-                return Import ((WorkspaceUserJson)json, ctx, localIdHint, forceUpdate);
+                return Import ((WorkspaceUserJson)json, ctx, localIdHint, (WorkspaceUserData)mergeBase);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
@@ -59,10 +59,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static ClientData Import (this ClientJson json, IDataStoreContext ctx,
-                                         Guid? localIdHint = null, bool forceUpdate = false)
+                                         Guid? localIdHint = null, ClientData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<ClientJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static ClientJson Export (this ClientData data, IDataStoreContext ctx)
@@ -72,10 +72,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static ProjectData Import (this ProjectJson json, IDataStoreContext ctx,
-                                          Guid? localIdHint = null, bool forceUpdate = false)
+                                          Guid? localIdHint = null, ProjectData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<ProjectJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static ProjectJson Export (this ProjectData data, IDataStoreContext ctx)
@@ -85,10 +85,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static ProjectUserData Import (this ProjectUserJson json, IDataStoreContext ctx,
-                                              Guid? localIdHint = null, bool forceUpdate = false)
+                                              Guid? localIdHint = null, ProjectUserData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<ProjectUserJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static ProjectUserJson Export (this ProjectUserData data, IDataStoreContext ctx)
@@ -98,10 +98,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static TagData Import (this TagJson json, IDataStoreContext ctx,
-                                      Guid? localIdHint = null, bool forceUpdate = false)
+                                      Guid? localIdHint = null, TagData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<TagJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static TagJson Export (this TagData data, IDataStoreContext ctx)
@@ -111,10 +111,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static TaskData Import (this TaskJson json, IDataStoreContext ctx,
-                                       Guid? localIdHint = null, bool forceUpdate = false)
+                                       Guid? localIdHint = null, TaskData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<TaskJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static TaskJson Export (this TaskData data, IDataStoreContext ctx)
@@ -124,10 +124,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static TimeEntryData Import (this TimeEntryJson json, IDataStoreContext ctx,
-                                            Guid? localIdHint = null, bool forceUpdate = false)
+                                            Guid? localIdHint = null, TimeEntryData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<TimeEntryJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static TimeEntryJson Export (this TimeEntryData data, IDataStoreContext ctx)
@@ -137,10 +137,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static UserData Import (this UserJson json, IDataStoreContext ctx,
-                                       Guid? localIdHint = null, bool forceUpdate = false)
+                                       Guid? localIdHint = null, UserData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<UserJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static UserJson Export (this UserData data, IDataStoreContext ctx)
@@ -150,10 +150,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static WorkspaceData Import (this WorkspaceJson json, IDataStoreContext ctx,
-                                            Guid? localIdHint = null, bool forceUpdate = false)
+                                            Guid? localIdHint = null, WorkspaceData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<WorkspaceJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static WorkspaceJson Export (this WorkspaceData data, IDataStoreContext ctx)
@@ -163,10 +163,10 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         public static WorkspaceUserData Import (this WorkspaceUserJson json, IDataStoreContext ctx,
-                                                Guid? localIdHint = null, bool forceUpdate = false)
+                                                Guid? localIdHint = null, WorkspaceUserData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<WorkspaceUserJsonConverter> ();
-            return converter.Import (ctx, json, localIdHint, forceUpdate);
+            return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
         public static WorkspaceUserJson Export (this WorkspaceUserData data, IDataStoreContext ctx)

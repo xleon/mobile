@@ -455,6 +455,8 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView TimeTextView { get; private set; }
 
+            public TextView TagTextView { get; private set; }
+
             public ImageButton DeleteImageButton { get; private set; }
 
             public ImageButton CloseImageButton { get; private set; }
@@ -469,6 +471,7 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
                 TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
+                TagTextView = root.FindViewById<TextView> (Resource.Id.TagTextView).SetFont (Font.RobotoLight);
                 DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
                 CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
                 EditImageButton = root.FindViewById<ImageButton> (Resource.Id.EditImageButton);

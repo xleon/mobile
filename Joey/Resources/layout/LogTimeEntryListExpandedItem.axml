@@ -61,6 +61,18 @@
         </LinearLayout>
         <View
             style="@style/TimeEntryDetailsBox.Divider" />
+        <LinearLayout
+            style="@style/TimeEntryDetailsBox.Row">
+            <ImageView
+                style="@style/TimeEntryDetailsBox.Indicator"
+                android:src="@drawable/IcTagsMiniGray" />
+            <TextView
+                style="@style/TimeEntryDetailsBox.Text"
+                android:id="@+id/TagTextView"
+                android:text="mobile" />
+        </LinearLayout>
+        <View
+            style="@style/TimeEntryDetailsBox.Divider" />
         <FrameLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"

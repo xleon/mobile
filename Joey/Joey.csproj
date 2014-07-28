@@ -476,6 +476,10 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\layout\RecentTimeEntriesListFooterFragment.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\BgMainListButtonSelected.9.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\BgMainListButtonSelected.9.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\BgMainListButtonSelected.9.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\BgMainListButtonSelected.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.0/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

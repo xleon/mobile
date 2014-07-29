@@ -58,6 +58,20 @@
                 style="@style/TimeEntryDetailsBox.Text"
                 android:id="@+id/TimeTextView"
                 android:text="01:23 - 12:34" />
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="right">
+                <ImageView
+                    android:id="@+id/IsBillableView"
+                    android:src="@drawable/IcBillableMiniGray"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginRight="8dp"
+                    android:visibility="invisible" />
+            </LinearLayout>
         </LinearLayout>
         <View
             style="@style/TimeEntryDetailsBox.Divider" />

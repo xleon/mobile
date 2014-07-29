@@ -458,6 +458,8 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView TagTextView { get; private set; }
 
+            public ImageView IsBillableView { get; private set; }
+
             public ImageButton DeleteImageButton { get; private set; }
 
             public ImageButton CloseImageButton { get; private set; }
@@ -476,6 +478,7 @@ namespace Toggl.Joey.UI.Adapters
                 DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
                 CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
                 EditImageButton = root.FindViewById<ImageButton> (Resource.Id.EditImageButton);
+                IsBillableView = root.FindViewById<ImageView> (Resource.Id.IsBillableView);
 
                 DeleteImageButton.Click += OnDeleteImageButton;
                 CloseImageButton.Click += OnCloseImageButton;
@@ -577,6 +580,12 @@ namespace Toggl.Joey.UI.Adapters
                 var shape = ColorView.Background as GradientDrawable;
                 if (shape != null) {
                     shape.SetColor (color);
+                }
+
+                if (DataSource.IsBillable) {
+                    IsBillableView.Visibility = ViewStates.Visible;
+                } else {
+                    IsBillableView.Visibility = ViewStates.Invisible;
                 }
 
                 if (DataSource.StopTime.HasValue) {

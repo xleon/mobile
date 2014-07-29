@@ -16,6 +16,7 @@ namespace Toggl.Ross.ViewControllers
         private UIButton logButton;
         private UIButton recentButton;
         private UIButton settingsButton;
+        private UIButton feedbackButton;
         private UIButton signOutButton;
         private UIButton[] menuButtons;
         private UIView[] separators;
@@ -86,11 +87,13 @@ namespace Toggl.Ross.ViewControllers
                 // (recentButton = new UIButton ()),
                 (logButton = new UIButton ()),
                 (settingsButton = new UIButton ()),
+                (feedbackButton = new UIButton ()),
                 (signOutButton = new UIButton ()),
             };
             // recentButton.SetTitle ("NavMenuRecent".Tr (), UIControlState.Normal);
             logButton.SetTitle ("NavMenuLog".Tr (), UIControlState.Normal);
             settingsButton.SetTitle ("NavMenuSettings".Tr (), UIControlState.Normal);
+            feedbackButton.SetTitle ("NavMenuFeedback".Tr (), UIControlState.Normal);
             signOutButton.SetTitle ("NavMenuSignOut".Tr (), UIControlState.Normal);
 
             foreach (var menuButton in menuButtons) {
@@ -174,6 +177,9 @@ namespace Toggl.Ross.ViewControllers
             } else if (sender == settingsButton) {
                 var navController = controller.NavigationController;
                 navController.PushViewController (new SettingsViewController (), true);
+            } else if (sender == feedbackButton) {
+                var navController = controller.NavigationController;
+                navController.PushViewController (new FeedbackViewController (), true);
             } else if (sender == signOutButton) {
                 ServiceContainer.Resolve<AuthManager> ().Forget ();
             }

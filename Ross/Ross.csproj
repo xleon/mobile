@@ -219,6 +219,7 @@
     <Compile Include="ObjectExtensions.cs" />
     <Compile Include="NSDateExtensions.cs" />
     <Compile Include="ViewControllers\ProjectSelectionViewController.cs" />
+    <Compile Include="ViewControllers\FeedbackViewController.cs" />
     <Compile Include="Theme\Style.ProjectList.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>

@@ -50,5 +50,7 @@ namespace Toggl.Phoebe.Net
         Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days);
 
         Task<UserRelatedJson> GetChanges (DateTime? since);
+
+        Task CreateFeedback (FeedbackJson jsonObject);
     }
 }

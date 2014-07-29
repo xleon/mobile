@@ -1,10 +1,10 @@
 using System;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -59,7 +59,19 @@ namespace Toggl.Joey.UI.Fragments
         private async void OnSendClick (object sender, EventArgs e)
         {
             IsSendingFeedback = true;
-            var sent = await SendFeedbackData (UserMessage, UserRating);
+
+            var mood = FeedbackMessage.Mood.Neutral;
+            if (UserRating == ratingPositive) {
+                mood = FeedbackMessage.Mood.Positive;
+            } else if (UserRating == ratingNegative) {
+                mood = FeedbackMessage.Mood.Negative;
+            }
+
+            var msg = new FeedbackMessage () {
+                CurrentMood = mood,
+                Message = UserMessage,
+            };
+            var sent = await msg.Send ();
            
             if (sent) {
                 if (userRating == ratingPositive) {
@@ -74,15 +86,6 @@ namespace Toggl.Joey.UI.Fragments
                 toast.Show ();
             }
             IsSendingFeedback = false;
-        }
-
-        private bool prevSendResult;
-
-        private async Task<bool> SendFeedbackData (string feedback, int rating)
-        {
-            await Task.Delay (TimeSpan.FromSeconds (1));
-            prevSendResult = !prevSendResult;
-            return prevSendResult;
         }
 
         private void SetRating (int rating)

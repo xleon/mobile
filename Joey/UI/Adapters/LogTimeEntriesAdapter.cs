@@ -17,6 +17,7 @@ using XPlatUtils;
 using Toggl.Joey.UI.Text;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using System.Collections.Generic;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -566,6 +567,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 RebindProjectTextView (ctx);
                 RebindDescriptionTextView (ctx);
+                RebindTagView ();
 
                 var color = Color.Transparent;
                 if (DataSource.Project != null) {
@@ -660,6 +662,23 @@ namespace Toggl.Joey.UI.Adapters
                 spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
 
                 DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
+            }
+
+            private async void RebindTagView ()
+            {
+                List<String> tagList = new List<String> ();
+
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                var tagsList = await store.GetTimeEntryTags (DataSource.Id);
+                if (tagsList.Count() == 0) {
+                    TagTextView.SetText (Resource.String.RecentTimeEntryNoTags);
+                    return;
+                }
+
+                foreach (var tag in tagsList) {
+                    tagList.Add(tag.Name);
+                }
+                    TagTextView.Text = String.Join (", ", tagList);
             }
         }
     }

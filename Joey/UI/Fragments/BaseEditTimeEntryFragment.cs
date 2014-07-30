@@ -248,7 +248,7 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            SpannableStringBuilder tags = new SpannableStringBuilder(String.Join (" ", tagsView.Data) + " ");
+            var tags = new SpannableStringBuilder(String.Join (" ", tagsView.Data) + " ");
             //The extra whitespace prevents the ImageSpans and the text they are over
             // to break at different positions, leaving zero linespacing on edge cases.
 
@@ -262,25 +262,25 @@ namespace Toggl.Joey.UI.Fragments
 
         private BitmapDrawable MakeTagChip(String tagText)
         {
-            Context ctx = ServiceContainer.Resolve<Context> ();
-            LayoutInflater Inflater = LayoutInflater.FromContext (ctx);
-            TextView tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, cont , false);
+            var ctx = ServiceContainer.Resolve<Context> ();
+            var Inflater = LayoutInflater.FromContext (ctx);
+            var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, cont , false);
 
             tagChipView.Text  =  tagText.ToUpper();
             int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
             tagChipView.Measure (spec, spec);
             tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
-            Bitmap b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
+            var b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
 
-            Canvas canvas = new Canvas (b);
+            var canvas = new Canvas (b);
             canvas.Translate (-tagChipView.ScrollX, -tagChipView.ScrollY);
             tagChipView.Draw (canvas);
             tagChipView.DrawingCacheEnabled = true;
 
-            Bitmap cacheBmp = tagChipView.DrawingCache;
-            Bitmap viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
+            var cacheBmp = tagChipView.DrawingCache;
+            var viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
             tagChipView.DestroyDrawingCache ();
-            BitmapDrawable bmpDrawable = new BitmapDrawable (viewBmp);
+            var bmpDrawable = new BitmapDrawable (viewBmp);
             bmpDrawable.SetBounds (0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
             return bmpDrawable;
         }

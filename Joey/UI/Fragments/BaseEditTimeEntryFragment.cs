@@ -248,25 +248,25 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            var tags = new SpannableStringBuilder(String.Join (" ", tagsView.Data) + " ");
+            var tags = new SpannableStringBuilder (String.Join (" ", tagsView.Data) + " ");
             //The extra whitespace prevents the ImageSpans and the text they are over
             // to break at different positions, leaving zero linespacing on edge cases.
 
             int x = 0;
             foreach (String tagText in tagsView.Data) {
-                tags.SetSpan (new ImageSpan (MakeTagChip(tagText)), x, x + tagText.Length, SpanTypes.ExclusiveExclusive);
+                tags.SetSpan (new ImageSpan (MakeTagChip (tagText)), x, x + tagText.Length, SpanTypes.ExclusiveExclusive);
                 x = x + tagText.Length + 1;
             }
             TagsEditText.SetText (tags, EditText.BufferType.Spannable);
         }
 
-        private BitmapDrawable MakeTagChip(String tagText)
+        private BitmapDrawable MakeTagChip (String tagText)
         {
             var ctx = ServiceContainer.Resolve<Context> ();
             var Inflater = LayoutInflater.FromContext (ctx);
             var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, cont , false);
 
-            tagChipView.Text  =  tagText.ToUpper();
+            tagChipView.Text = tagText.ToUpper ();
             int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
             tagChipView.Measure (spec, spec);
             tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
@@ -280,7 +280,7 @@ namespace Toggl.Joey.UI.Fragments
             var cacheBmp = tagChipView.DrawingCache;
             var viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
             tagChipView.DestroyDrawingCache ();
-            var bmpDrawable = new BitmapDrawable (viewBmp);
+            var bmpDrawable = new BitmapDrawable (Resources, viewBmp);
             bmpDrawable.SetBounds (0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
             return bmpDrawable;
         }

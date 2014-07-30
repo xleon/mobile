@@ -1,10 +1,10 @@
 using System;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -15,14 +15,13 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class FeedbackFragment : Fragment
     {
-        private const string feedbackRatingArgument = "com.toggl.timer.feedback_rating";
         private ImageButton feedbackPositiveButton;
         private ImageButton feedbackNeutralButton;
         private ImageButton feedbackNegativeButton;
         private Button submitFeedbackButton;
         private EditText feedbackMessageEditText;
-        private int feedbackRating;
-        private String feedbackMessage;
+        private int userRating;
+        private String userMessage;
         private bool isSendingFeedback;
         private static readonly int ratingNotSet = 0;
         private static readonly int ratingPositive = 1;
@@ -36,9 +35,9 @@ namespace Toggl.Joey.UI.Fragments
             feedbackNeutralButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNeutralButton);
             feedbackNegativeButton = view.FindViewById<ImageButton> (Resource.Id.FeedbackNegativeButton);
 
-            feedbackPositiveButton.Click  += (sender, e) => SetRating (ratingPositive);
-            feedbackNeutralButton.Click  += (sender, e) => SetRating (ratingNeutral);
-            feedbackNegativeButton.Click  += (sender, e) => SetRating (ratingNegative);
+            feedbackPositiveButton.Click += (sender, e) => SetRating (ratingPositive);
+            feedbackNeutralButton.Click += (sender, e) => SetRating (ratingNeutral);
+            feedbackNegativeButton.Click += (sender, e) => SetRating (ratingNegative);
 
             feedbackMessageEditText = view.FindViewById<EditText> (Resource.Id.FeedbackMessageText).SetFont (Font.Roboto);
             feedbackMessageEditText.AfterTextChanged += OnEdit;
@@ -46,25 +45,37 @@ namespace Toggl.Joey.UI.Fragments
             submitFeedbackButton = view.FindViewById<Button> (Resource.Id.SendFeedbackButton).SetFont (Font.Roboto);
             submitFeedbackButton.Click += OnSendClick;
 
-            SetRating (feedbackRating);
+            SetRating (userRating);
 
             return view;
         }
 
-        public override void OnCreate(Bundle state)
+        public override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
             RetainInstance = true;
         }
 
-        private async void OnSendClick (object sender, EventArgs e) 
+        private async void OnSendClick (object sender, EventArgs e)
         {
             IsSendingFeedback = true;
-            var send = await SendFeedbackData (FeedbackMessage, FeedbackRating);
+
+            var mood = FeedbackMessage.Mood.Neutral;
+            if (UserRating == ratingPositive) {
+                mood = FeedbackMessage.Mood.Positive;
+            } else if (UserRating == ratingNegative) {
+                mood = FeedbackMessage.Mood.Negative;
+            }
+
+            var msg = new FeedbackMessage () {
+                CurrentMood = mood,
+                Message = UserMessage,
+            };
+            var sent = await msg.Send ();
            
-            if (send) {
-                if (feedbackRating == ratingPositive) {
-                    AskPublishToAppStore.Show (FeedbackMessage, FragmentManager);
+            if (sent) {
+                if (userRating == ratingPositive) {
+                    AskPublishToAppStore.Show (UserMessage, FragmentManager);
                 } else {
                     ThankForFeedbackDialog.Show (FragmentManager);
                 }
@@ -77,22 +88,14 @@ namespace Toggl.Joey.UI.Fragments
             IsSendingFeedback = false;
         }
 
-        private bool prevSendResult;
-        private async Task<bool> SendFeedbackData ( string feedback, int rating )
-        {
-            await Task.Delay (TimeSpan.FromSeconds(1));
-            prevSendResult = !prevSendResult;
-            return prevSendResult;
-        }
-
         private void SetRating (int rating)
         {
-            FeedbackRating = rating;
+            UserRating = rating;
         }
 
         private void OnEdit (object sender, EventArgs e)
         {
-            FeedbackMessage = feedbackMessageEditText.Text;
+            UserMessage = feedbackMessageEditText.Text;
         }
 
         private void ResetForm ()
@@ -101,21 +104,21 @@ namespace Toggl.Joey.UI.Fragments
             feedbackMessageEditText.Text = String.Empty;
         }
 
-        private void SyncItems()
+        private void SyncItems ()
         {
-            submitFeedbackButton.SetText (isSendingFeedback ? Resource.String.SendFeedbackButtonActiveText : Resource.String.SendFeedbackButtonText );
-            submitFeedbackButton.Enabled = FeedbackRating != ratingNotSet && FeedbackMessage != String.Empty && !isSendingFeedback;
+            submitFeedbackButton.SetText (isSendingFeedback ? Resource.String.SendFeedbackButtonActiveText : Resource.String.SendFeedbackButtonText);
+            submitFeedbackButton.Enabled = UserRating != ratingNotSet && UserMessage != String.Empty && !isSendingFeedback;
             feedbackMessageEditText.Enabled = !isSendingFeedback;
             feedbackPositiveButton.Enabled = !isSendingFeedback;
             feedbackNeutralButton.Enabled = !isSendingFeedback;
             feedbackNegativeButton.Enabled = !isSendingFeedback;
 
             ResetRatingButtonImages ();
-            if (FeedbackRating == ratingPositive) {
+            if (UserRating == ratingPositive) {
                 feedbackPositiveButton.SetImageResource (Resource.Drawable.IcFeedbackPositiveActive);
-            } else if (FeedbackRating == ratingNeutral) {
+            } else if (UserRating == ratingNeutral) {
                 feedbackNeutralButton.SetImageResource (Resource.Drawable.IcFeedbackNeutralActive);
-            } else if (FeedbackRating == ratingNegative) {
+            } else if (UserRating == ratingNegative) {
                 feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegativeActive);
             }
         }
@@ -136,29 +139,30 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private String FeedbackMessage {
+        private String UserMessage {
             set {
-                feedbackMessage = value;
+                userMessage = value;
                 SyncItems ();
             }
             get {
-                feedbackMessage = feedbackMessageEditText.Text;
-                return feedbackMessage;
+                userMessage = feedbackMessageEditText.Text;
+                return userMessage;
             }
         }
 
-        private int FeedbackRating {
+        private int UserRating {
             set {
-                feedbackRating = value;
+                userRating = value;
                 SyncItems ();
             }
             get {
-                return feedbackRating;
+                return userRating;
             }
         }
     }
 
-    public class ThankForFeedbackDialog : BaseDialogFragment {
+    public class ThankForFeedbackDialog : BaseDialogFragment
+    {
 
         public ThankForFeedbackDialog ()
         {
@@ -184,7 +188,8 @@ namespace Toggl.Joey.UI.Fragments
         }
     }
 
-    public class AskPublishToAppStore : BaseDialogFragment{
+    public class AskPublishToAppStore : BaseDialogFragment
+    {
 
         private static readonly string UserMessageArgument = "com.toggl.timer.user_message";
 
@@ -231,8 +236,8 @@ namespace Toggl.Joey.UI.Fragments
         private void OnPositiveClick (object sender, DialogClickEventArgs e)
         {
             var ctx = ServiceContainer.Resolve<Context> ();
-            var clipboard = (ClipboardManager) ctx.GetSystemService (Context.ClipboardService);
-            var clip = ClipData.NewPlainText (Resources.GetString(Resource.String.AppName), UserMessage);
+            var clipboard = (ClipboardManager)ctx.GetSystemService (Context.ClipboardService);
+            var clip = ClipData.NewPlainText (Resources.GetString (Resource.String.AppName), UserMessage);
             clipboard.PrimaryClip = clip;
 
             var toast = Toast.MakeText (ctx, Resource.String.FeedbackCopiedToClipboardToast, ToastLength.Short);

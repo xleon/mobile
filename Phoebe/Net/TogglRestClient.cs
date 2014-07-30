@@ -745,6 +745,22 @@ namespace Toggl.Phoebe.Net
             });
         }
 
+        public async Task CreateFeedback (FeedbackJson jsonObject)
+        {
+            var url = new Uri (v8Url, "feedback");
+
+            jsonObject.AppVersion = String.Format ("{0}/{1}", Platform.AppIdentifier, Platform.AppVersion);
+            jsonObject.Timestamp = Time.Now;
+
+            var json = JsonConvert.SerializeObject (jsonObject);
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Post,
+                RequestUri = url,
+                Content = new StringContent (json, Encoding.UTF8, "application/json"),
+            });
+            await SendAsync (httpReq).ConfigureAwait (continueOnCapturedContext: false);
+        }
+
         private class Wrapper<T>
         {
             [JsonProperty ("data")]

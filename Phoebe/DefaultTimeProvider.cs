@@ -19,7 +19,12 @@ namespace Toggl.Phoebe
 
         public string TimeZoneId {
             get {
-                var tz = TimeZoneInfo.Local;
+                TimeZoneInfo tz;
+                try {
+                    tz = TimeZoneInfo.Local;
+                } catch (TimeZoneNotFoundException) {
+                    tz = null;
+                }
                 return tz == null ? "UTC" : tz.Id;
             }
         }

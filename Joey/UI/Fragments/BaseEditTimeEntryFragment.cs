@@ -255,7 +255,7 @@ namespace Toggl.Joey.UI.Fragments
 
             foreach (String tagText in tagsView.Data) {
                 if (tagText.Length > maxTagLength) {
-                    t = tagText.Substring (0, maxTagLength - 1).Trim() + "...";
+                    t = tagText.Substring (0, maxTagLength - 1).Trim () + "...";
                 } else {
                     t = tagText;
                 }

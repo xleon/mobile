@@ -17,6 +17,7 @@ using Android.Content;
 using Android.Graphics.Drawables;
 using MeasureSpec = Android.Views.View.MeasureSpec;
 using Android.Graphics;
+using System.Collections.Generic;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -241,19 +242,31 @@ namespace Toggl.Joey.UI.Fragments
             
         protected virtual void RebindTags ()
         {
+            List<String> tagList = new List<String> ();
+            String t;
+            int maxTagLength = 30;
+
             if (tagsView == null || !canRebind)
                 return;
             if (tagsView.Count == 0) {
-                TagsEditText.Text = "";
+                TagsEditText.Text = String.Empty;
                 return;
             }
 
-            var tags = new SpannableStringBuilder (String.Join (" ", tagsView.Data) + " ");
+            foreach (String tagText in tagsView.Data) {
+                if (tagText.Length > maxTagLength) {
+                    t = tagText.Substring (0, maxTagLength - 1).Trim() + "...";
+                } else {
+                    t = tagText;
+                }
+                tagList.Add (t);
+            }
+            var tags = new SpannableStringBuilder (String.Join (" ", tagList) + " ");
             //The extra whitespace prevents the ImageSpans and the text they are over
             // to break at different positions, leaving zero linespacing on edge cases.
 
             int x = 0;
-            foreach (String tagText in tagsView.Data) {
+            foreach (String tagText in tagList) {
                 tags.SetSpan (new ImageSpan (MakeTagChip (tagText)), x, x + tagText.Length, SpanTypes.ExclusiveExclusive);
                 x = x + tagText.Length + 1;
             }
@@ -264,12 +277,13 @@ namespace Toggl.Joey.UI.Fragments
         {
             var ctx = ServiceContainer.Resolve<Context> ();
             var Inflater = LayoutInflater.FromContext (ctx);
-            var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, cont , false);
+            var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, cont, false);
 
             tagChipView.Text = tagText.ToUpper ();
             int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
             tagChipView.Measure (spec, spec);
             tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
+
             var b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
 
             var canvas = new Canvas (b);

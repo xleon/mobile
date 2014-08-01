@@ -395,7 +395,7 @@ namespace Toggl.Ross.ViewControllers
                     projectName = "ProjectNoProject".Tr ();
                     projectLabel.Apply (Style.ProjectList.NoProjectLabel);
                 } else if (DataSource.IsNewProject) {
-                    projectColor = Color.LightGray;
+                    projectColor = Color.LightestGray;
                     projectName = "ProjectNewProject".Tr ();
                     projectLabel.Apply (Style.ProjectList.NewProjectLabel);
                 } else if (model != null) {

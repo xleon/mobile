@@ -149,6 +149,18 @@
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
     <BundleResource Include="Resources\*.png" />
     <BundleResource Include="Resources\Fonts\icomoon.ttf" />
+    <BundleResource Include="Resources\icon-negative-filled.png" />
+    <BundleResource Include="Resources\icon-negative-filled%402x.png" />
+    <BundleResource Include="Resources\icon-negative.png" />
+    <BundleResource Include="Resources\icon-negative%402x.png" />
+    <BundleResource Include="Resources\icon-neutral-filled.png" />
+    <BundleResource Include="Resources\icon-neutral-filled%402x.png" />
+    <BundleResource Include="Resources\icon-neutral.png" />
+    <BundleResource Include="Resources\icon-neutral%402x.png" />
+    <BundleResource Include="Resources\icon-positive-filled.png" />
+    <BundleResource Include="Resources\icon-positive-filled%402x.png" />
+    <BundleResource Include="Resources\icon-positive.png" />
+    <BundleResource Include="Resources\icon-positive%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -219,6 +231,7 @@
     <Compile Include="ObjectExtensions.cs" />
     <Compile Include="NSDateExtensions.cs" />
     <Compile Include="ViewControllers\ProjectSelectionViewController.cs" />
+    <Compile Include="ViewControllers\FeedbackViewController.cs" />
     <Compile Include="Theme\Style.ProjectList.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -257,6 +270,9 @@
     <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="TogglWindow.cs" />
     <Compile Include="DataSources\ChangesResolver.cs" />
+    <Compile Include="Theme\Style.Feedback.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

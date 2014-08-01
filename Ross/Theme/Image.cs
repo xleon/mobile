@@ -44,6 +44,30 @@ namespace Toggl.Ross.Theme
             get { return UIImage.FromBundle ("icon-nav"); }
         }
 
+        public static UIImage IconNegative {
+            get { return UIImage.FromBundle ("icon-negative"); }
+        }
+
+        public static UIImage IconNegativeFilled {
+            get { return UIImage.FromBundle ("icon-negative-filled"); }
+        }
+
+        public static UIImage IconNeutral {
+            get { return UIImage.FromBundle ("icon-neutral"); }
+        }
+
+        public static UIImage IconNeutralFilled {
+            get { return UIImage.FromBundle ("icon-neutral-filled"); }
+        }
+
+        public static UIImage IconPositive {
+            get { return UIImage.FromBundle ("icon-positive"); }
+        }
+
+        public static UIImage IconPositiveFilled {
+            get { return UIImage.FromBundle ("icon-positive-filled"); }
+        }
+
         public static UIImage IconRunning {
             get { return UIImage.FromBundle ("icon-running"); }
         }

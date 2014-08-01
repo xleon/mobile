@@ -9,7 +9,7 @@ namespace Toggl.Ross.Theme
         {
             public static void HeaderBackgroundView (UIView v)
             {
-                v.BackgroundColor = Color.LightGray;
+                v.BackgroundColor = Color.LightestGray;
             }
 
             public static void HeaderLabel (UILabel v)

@@ -980,7 +980,7 @@ namespace Toggl.Ross.ViewControllers
                     if (value == Color.White) {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectHintLabel);
                         SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
-                        SetBackgroundImage (Color.LightGray.ToImage (), UIControlState.Highlighted);
+                        SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);
                     } else {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectLabel);
                         SetBackgroundImage (value.ToImage (), UIControlState.Normal);

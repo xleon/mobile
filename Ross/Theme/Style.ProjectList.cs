@@ -10,7 +10,7 @@ namespace Toggl.Ross.Theme
         {
             public static void HeaderBackgroundView (UIView v)
             {
-                v.BackgroundColor = Color.LightGray;
+                v.BackgroundColor = Color.LightestGray;
             }
 
             public static void HeaderLabel (UILabel v)
@@ -31,7 +31,7 @@ namespace Toggl.Ross.Theme
             {
                 v.Font = UIFont.FromName ("HelveticaNeue", 17f);
                 v.TextAlignment = UITextAlignment.Left;
-                v.TextColor = Color.LightGray;
+                v.TextColor = Color.LightestGray;
             }
 
             public static void NewProjectLabel (UILabel v)
@@ -89,7 +89,7 @@ namespace Toggl.Ross.Theme
 
             public static void TaskSeparator (UIView v)
             {
-                v.BackgroundColor = Color.LightGray;
+                v.BackgroundColor = Color.LightestGray;
             }
         }
     }

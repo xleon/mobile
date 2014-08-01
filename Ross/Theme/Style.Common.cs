@@ -8,7 +8,7 @@ namespace Toggl.Ross.Theme
     {
         public static void Screen (UIView v)
         {
-            v.BackgroundColor = Color.LightGray;
+            v.BackgroundColor = Color.LightestGray;
         }
 
         public static void NavigationBar (UINavigationBar v)
@@ -29,12 +29,12 @@ namespace Toggl.Ross.Theme
 
         public static void TableViewHeader (TableViewHeaderView v)
         {
-            v.BackgroundColor = Color.LightGray;
+            v.BackgroundColor = Color.LightestGray;
         }
 
         public static void CellSelectedBackground (UIView v)
         {
-            v.BackgroundColor = Color.LightGray;
+            v.BackgroundColor = Color.LightestGray;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Toggl.Ross.Theme
                 Font = UIFont.FromName ("HelveticaNeue", 20f),
             });
             UINavigationBar.Appearance.TintColor = Color.Gray;
-            UINavigationBar.Appearance.BackgroundColor = Color.LightGray;
+            UINavigationBar.Appearance.BackgroundColor = Color.LightestGray;
         }
     }
 }

@@ -12,12 +12,12 @@ namespace Toggl.Ross.Theme
             {
                 v.Font = UIFont.FromName ("HelveticaNeue", 13f);
                 v.TextAlignment = UITextAlignment.Center;
-                v.TextColor = Color.AlmostLightGray;
+                v.TextColor = Color.LightGray;
             }
 
             public static void MoodSeparator (UIView v)
             {
-                v.BackgroundColor = Color.AlmostLightGray;
+                v.BackgroundColor = Color.LightGray;
             }
 
             public static void PositiveMoodButtonSelected (UIButton v)
@@ -55,7 +55,7 @@ namespace Toggl.Ross.Theme
 
             public static void MessageBorder (UIView v)
             {
-                v.BackgroundColor = Color.AlmostLightGray.ColorWithAlpha (0.75f);
+                v.BackgroundColor = Color.LightGray.ColorWithAlpha (0.75f);
             }
 
             public static void MessageField (UITextView v)

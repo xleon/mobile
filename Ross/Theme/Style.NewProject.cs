@@ -19,7 +19,7 @@ namespace Toggl.Ross.Theme
             public static void ClientButton (UIButton v)
             {
                 v.SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
-                v.SetBackgroundImage (Color.LightGray.ToImage (), UIControlState.Highlighted);
+                v.SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);
                 v.ContentEdgeInsets = new UIEdgeInsets (0, 15f, 0, 15f);
                 v.Font = UIFont.FromName ("HelveticaNeue-Light", 17f);
                 v.HorizontalAlignment = UIControlContentHorizontalAlignment.Fill;

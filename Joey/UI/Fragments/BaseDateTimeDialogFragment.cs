@@ -97,7 +97,7 @@ namespace Toggl.Joey.UI.Fragments
             Rebind ();
 
             var dia = new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.ChangeTimeEntryStartTimeDialogTitle)
+                .SetTitle (DialogTitleId ())
                 .SetView (view)
                 .SetPositiveButton (Resource.String.ChangeTimeEntryStartTimeDialogOk, OnOkButtonClicked)
                 .Create ();
@@ -185,5 +185,7 @@ namespace Toggl.Joey.UI.Fragments
         protected abstract DateTime GetInitialDate ();
 
         protected abstract void UpdateDate (DateTime dateTime);
+
+        protected abstract int DialogTitleId ();
     }
 }

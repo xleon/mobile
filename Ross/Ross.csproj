@@ -161,6 +161,10 @@
     <BundleResource Include="Resources\icon-positive-filled%402x.png" />
     <BundleResource Include="Resources\icon-positive.png" />
     <BundleResource Include="Resources\icon-positive%402x.png" />
+    <BundleResource Include="Resources\icon-cancel.png" />
+    <BundleResource Include="Resources\icon-cancel%402x.png" />
+    <BundleResource Include="Resources\icon-retry.png" />
+    <BundleResource Include="Resources\icon-retry%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -274,6 +278,9 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\SyncStatusViewController.cs" />
+    <Compile Include="Theme\Style.SyncStatus.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

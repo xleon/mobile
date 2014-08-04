@@ -74,9 +74,11 @@
             </LinearLayout>
         </LinearLayout>
         <View
-            style="@style/TimeEntryDetailsBox.Divider" />
+            style="@style/TimeEntryDetailsBox.Divider"
+            android:id="@+id/TagListViewSeparator" />
         <LinearLayout
-            style="@style/TimeEntryDetailsBox.Row">
+            style="@style/TimeEntryDetailsBox.Row"
+            android:id="@+id/TagListView">
             <ImageView
                 style="@style/TimeEntryDetailsBox.Indicator"
                 android:src="@drawable/IcTagsMiniGray" />

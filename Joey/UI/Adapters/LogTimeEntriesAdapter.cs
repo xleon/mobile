@@ -466,6 +466,10 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton EditImageButton { get; private set; }
 
+            public LinearLayout TagListView { get; private set; }
+
+            public View TagListViewSeparator { get; private set; }
+
             public ExpandedListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
             {
                 this.adapter = adapter;
@@ -474,6 +478,8 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
                 TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
+                TagListView = root.FindViewById<LinearLayout> (Resource.Id.TagListView);
+                TagListViewSeparator = root.FindViewById<View> (Resource.Id.TagListViewSeparator);
                 TagTextView = root.FindViewById<TextView> (Resource.Id.TagTextView).SetFont (Font.RobotoLight);
                 DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
                 CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
@@ -673,21 +679,17 @@ namespace Toggl.Joey.UI.Adapters
                 DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
             }
 
-            private async void RebindTagView ()
+            private void RebindTagView ()
             {
-                List<String> tagList = new List<String> ();
-
-                var store = ServiceContainer.Resolve<IDataStore> ();
-                var tagsList = await store.GetTimeEntryTags (DataSource.Id);
-                if (tagsList.Count() == 0) {
-                    TagTextView.SetText (Resource.String.RecentTimeEntryNoTags);
-                    return;
+                var tagsView = new TimeEntryTagsView (DataSource.Id);
+                if (tagsView.Count == 0) {
+                    TagListView.Visibility = ViewStates.Gone;
+                    TagListViewSeparator.Visibility = ViewStates.Gone;
+                } else {
+                    TagListView.Visibility = ViewStates.Visible;
+                    TagListViewSeparator.Visibility = ViewStates.Visible;
+                    TagTextView.Text = String.Join (", ", tagsView.Data);
                 }
-
-                foreach (var tag in tagsList) {
-                    tagList.Add(tag.Name);
-                }
-                    TagTextView.Text = String.Join (", ", tagList);
             }
         }
     }

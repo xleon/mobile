@@ -160,6 +160,7 @@ namespace Toggl.Ross.ViewControllers
 
             private void OnContinue (TimeEntryModel model)
             {
+                DurationOnlyNoticeAlertView.TryShow ();
                 controller.TableView.ScrollRectToVisible (new RectangleF (0, 0, 1, 1), true);
             }
         }

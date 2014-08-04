@@ -273,6 +273,7 @@
     <Compile Include="Theme\Style.Feedback.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="Views\DurationOnlyNoticeAlertView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

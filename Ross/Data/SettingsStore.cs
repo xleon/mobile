@@ -17,6 +17,7 @@ namespace Toggl.Ross.Data
         private const string RossInstallIdKey = "rossInstallId";
         private const string RossPreferredStartViewKey = "rossPreferredStartView";
         private const string RossChooseProjectForNewKey = "rossChooseProjectForNewKey";
+        private const string RossReadDurOnlyNoticeKey = "rossReadDurOnlyNotice";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -173,6 +174,16 @@ namespace Toggl.Ross.Data
             set {
                 SetInt (RossChooseProjectForNewKey, value ? 1 : 0);
                 OnSettingChanged (PropertyChooseProjectForNew);
+            }
+        }
+
+        public static readonly string PropertyReadDurOnlyNotice = GetPropertyName (s => s.ReadDurOnlyNotice);
+
+        public bool ReadDurOnlyNotice {
+            get { return GetInt (RossReadDurOnlyNoticeKey) == 1; }
+            set {
+                SetInt (RossReadDurOnlyNoticeKey, value ? 1 : 0);
+                OnSettingChanged (PropertyReadDurOnlyNotice);
             }
         }
     }

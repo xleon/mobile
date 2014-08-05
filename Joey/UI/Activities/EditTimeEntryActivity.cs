@@ -64,6 +64,7 @@ namespace Toggl.Joey.UI.Activities
                 return;
 
             model = new TimeEntryModel (extraId);
+            model.PropertyChanged += OnPropertyChange;
 
             // Ensure that the model exists
             await model.LoadAsync ();
@@ -81,6 +82,13 @@ namespace Toggl.Joey.UI.Activities
         private void OnDoneFrameLayoutClick (object sender, EventArgs e)
         {
             Finish ();
+        }
+
+        private void OnPropertyChange (object sender, EventArgs e)
+        {
+            if (model.Id == Guid.Empty) {
+                Finish ();
+            }
         }
     }
 }

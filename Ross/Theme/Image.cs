@@ -88,10 +88,6 @@ namespace Toggl.Ross.Theme
             get { return UIImage.FromBundle ("icon-tag-billable"); }
         }
 
-        public static UIImage IconTickBlue {
-            get { return UIImage.FromBundle ("icon-tick-blue"); }
-        }
-
         public static UIImage Logo {
             get { return UIImage.FromBundle ("logo"); }
         }

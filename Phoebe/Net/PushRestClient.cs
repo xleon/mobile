@@ -15,7 +15,9 @@ namespace Toggl.Phoebe.Net
         public PushRestClient (Uri url)
         {
             v8Url = new Uri (url, "v8/push_service/");
-            httpClient = new HttpClient ();
+            httpClient = new HttpClient () {
+                Timeout = TimeSpan.FromSeconds (10),
+            };
             var headers = httpClient.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
             headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));

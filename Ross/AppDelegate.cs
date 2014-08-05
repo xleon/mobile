@@ -58,6 +58,7 @@ namespace Toggl.Ross
         {
             // Make sure the user data is refreshed when the application becomes active
             ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
+            ServiceContainer.Resolve<NetworkIndicatorManager> ();
 
             isResuming = true;
         }
@@ -93,6 +94,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<IGAITracker> (
                 () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
+            ServiceContainer.Register<NetworkIndicatorManager> ();
         }
 
         public static TogglWindow TogglWindow {

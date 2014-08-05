@@ -463,7 +463,6 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcEdit.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcEdit.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcEdit.png" />
-    <AndroidResource Include="Resources\layout\ChangeTimeEntryStopTimeDialogFragment.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcStop.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcStop.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcStop.png" />

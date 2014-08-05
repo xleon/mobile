@@ -40,5 +40,10 @@ namespace Toggl.Joey.UI.Fragments
             Model.StartTime = dateTime;
             await Model.SaveAsync ();
         }
+
+        protected override int DialogTitleId ()
+        {
+            return Resource.String.ChangeTimeEntryStartTimeDialogTitle;
+        }
     }
 }

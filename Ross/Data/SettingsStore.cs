@@ -16,8 +16,9 @@ namespace Toggl.Ross.Data
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
         private const string RossInstallIdKey = "rossInstallId";
         private const string RossPreferredStartViewKey = "rossPreferredStartView";
-        private const string RossChooseProjectForNewKey = "rossChooseProjectForNewKey";
+        private const string RossChooseProjectForNewKey = "rossChooseProjectForNew";
         private const string RossReadDurOnlyNoticeKey = "rossReadDurOnlyNotice";
+        private const string RossIgnoreSyncErrorsUntilKey = "rossIgnoreSyncErrorsUntil";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -186,6 +187,15 @@ namespace Toggl.Ross.Data
                 OnSettingChanged (PropertyReadDurOnlyNotice);
             }
         }
+
+        public static readonly string PropertyIgnoreSyncErrorsUntil = GetPropertyName (s => s.IgnoreSyncErrorsUntil);
+
+        public DateTime? IgnoreSyncErrorsUntil {
+            get { return GetDateTime (RossIgnoreSyncErrorsUntilKey); }
+            set {
+                SetDateTime (RossIgnoreSyncErrorsUntilKey, value);
+                OnSettingChanged (PropertyIgnoreSyncErrorsUntil);
+            }
+        }
     }
 }
-

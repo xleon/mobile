@@ -19,41 +19,13 @@ using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class LogViewController : BaseTimerTableViewController
+    public class LogViewController : SyncStatusViewController
     {
         private NavigationMenuController navMenuController;
-        private UIView emptyView;
 
-        public LogViewController () : base (UITableViewStyle.Plain)
+        public LogViewController () : base (new ContentController ())
         {
             navMenuController = new NavigationMenuController ();
-        }
-
-        public override void ViewDidLoad ()
-        {
-            base.ViewDidLoad ();
-
-            EdgesForExtendedLayout = UIRectEdge.None;
-
-            emptyView = new SimpleEmptyView () {
-                Title = "LogEmptyTitle".Tr (),
-                Message = "LogEmptyMessage".Tr (),
-            };
-
-            var source = new Source (this) {
-                EmptyView = emptyView,
-            };
-            source.Attach ();
-            TableView.TableHeaderView = new TableViewHeaderView ();
-
-            navMenuController.Attach (this);
-        }
-
-        public override void ViewDidLayoutSubviews ()
-        {
-            base.ViewDidLayoutSubviews ();
-
-            emptyView.Frame = new RectangleF (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
         }
 
         public override void ViewDidAppear (bool animated)
@@ -63,6 +35,13 @@ namespace Toggl.Ross.ViewControllers
             var tracker = ServiceContainer.Resolve<IGAITracker> ();
             tracker.Set (GAIConstants.ScreenName, "Log View");
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+        }
+
+        public override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
+
+            navMenuController.Attach (this);
         }
 
         protected override void Dispose (bool disposing)
@@ -77,18 +56,52 @@ namespace Toggl.Ross.ViewControllers
             base.Dispose (disposing);
         }
 
+        private class ContentController : BaseTimerTableViewController
+        {
+            private UIView emptyView;
+
+            public ContentController () : base (UITableViewStyle.Plain)
+            {
+            }
+
+            public override void ViewDidLoad ()
+            {
+                base.ViewDidLoad ();
+
+                EdgesForExtendedLayout = UIRectEdge.None;
+
+                emptyView = new SimpleEmptyView () {
+                    Title = "LogEmptyTitle".Tr (),
+                    Message = "LogEmptyMessage".Tr (),
+                };
+
+                var source = new Source (this) {
+                    EmptyView = emptyView,
+                };
+                source.Attach ();
+                TableView.TableHeaderView = new TableViewHeaderView ();
+            }
+
+            public override void ViewDidLayoutSubviews ()
+            {
+                base.ViewDidLayoutSubviews ();
+
+                emptyView.Frame = new RectangleF (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+            }
+        }
+
         class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryData>
         {
             readonly static NSString EntryCellId = new NSString ("EntryCellId");
             readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
-            readonly LogViewController controller;
+            readonly ContentController controller;
             readonly AllTimeEntriesView dataView;
 
-            public Source (LogViewController controller) : this (controller, new AllTimeEntriesView ())
+            public Source (ContentController controller) : this (controller, new AllTimeEntriesView ())
             {
             }
 
-            private Source (LogViewController controller, AllTimeEntriesView dataView) : base (controller.TableView, dataView)
+            private Source (ContentController controller, AllTimeEntriesView dataView) : base (controller.TableView, dataView)
             {
                 this.controller = controller;
                 this.dataView = dataView;

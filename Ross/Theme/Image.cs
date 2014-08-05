@@ -36,6 +36,10 @@ namespace Toggl.Ross.Theme
             get { return UIImage.FromBundle ("icon-billable"); }
         }
 
+        public static UIImage IconCancel {
+            get { return UIImage.FromBundle ("icon-cancel"); }
+        }
+
         public static UIImage IconDurationArrow {
             get { return UIImage.FromBundle ("icon-duration-arrow"); }
         }
@@ -66,6 +70,10 @@ namespace Toggl.Ross.Theme
 
         public static UIImage IconPositiveFilled {
             get { return UIImage.FromBundle ("icon-positive-filled"); }
+        }
+
+        public static UIImage IconRetry {
+            get { return UIImage.FromBundle ("icon-retry"); }
         }
 
         public static UIImage IconRunning {

@@ -17,42 +17,20 @@ using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class RecentViewController : BaseTimerTableViewController
+    public class RecentViewController : SyncStatusViewController
     {
         private NavigationMenuController navMenuController;
-        private UIView emptyView;
 
-        public RecentViewController () : base (UITableViewStyle.Plain)
+        public RecentViewController () : base (new ContentController ())
         {
             navMenuController = new NavigationMenuController ();
-
         }
 
         public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
-            EdgesForExtendedLayout = UIRectEdge.None;
-
-            emptyView = new SimpleEmptyView () {
-                Title = "RecentEmptyTitle".Tr (),
-                Message = "RecentEmptyMessage".Tr (),
-            };
-
-            var source = new Source (this) {
-                EmptyView = emptyView,
-            };
-            source.Attach ();
-            TableView.TableHeaderView = new TableViewHeaderView ();
-
             navMenuController.Attach (this);
-        }
-
-        public override void ViewDidLayoutSubviews ()
-        {
-            base.ViewDidLayoutSubviews ();
-
-            emptyView.Frame = new RectangleF (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
         }
 
         public override void ViewDidAppear (bool animated)
@@ -76,18 +54,52 @@ namespace Toggl.Ross.ViewControllers
             base.Dispose (disposing);
         }
 
+        private class ContentController : BaseTimerTableViewController
+        {
+            private UIView emptyView;
+
+            public ContentController () : base (UITableViewStyle.Plain)
+            {
+            }
+
+            public override void ViewDidLoad ()
+            {
+                base.ViewDidLoad ();
+
+                EdgesForExtendedLayout = UIRectEdge.None;
+
+                emptyView = new SimpleEmptyView () {
+                    Title = "RecentEmptyTitle".Tr (),
+                    Message = "RecentEmptyMessage".Tr (),
+                };
+
+                var source = new Source (this) {
+                    EmptyView = emptyView,
+                };
+                source.Attach ();
+                TableView.TableHeaderView = new TableViewHeaderView ();
+            }
+
+            public override void ViewDidLayoutSubviews ()
+            {
+                base.ViewDidLayoutSubviews ();
+
+                emptyView.Frame = new RectangleF (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+            }
+        }
+
         class Source : GroupedDataViewSource<TimeEntryData, string, TimeEntryData>
         {
             readonly static NSString EntryCellId = new NSString ("EntryCellId");
             readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
-            readonly RecentViewController controller;
+            readonly ContentController controller;
             readonly RecentTimeEntriesView dataView;
 
-            public Source (RecentViewController controller) : this (controller, new RecentTimeEntriesView ())
+            public Source (ContentController controller) : this (controller, new RecentTimeEntriesView ())
             {
             }
 
-            private Source (RecentViewController controller, RecentTimeEntriesView dataView) : base (controller.TableView, dataView)
+            private Source (ContentController controller, RecentTimeEntriesView dataView) : base (controller.TableView, dataView)
             {
                 this.controller = controller;
                 this.dataView = dataView;

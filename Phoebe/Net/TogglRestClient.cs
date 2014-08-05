@@ -23,7 +23,9 @@ namespace Toggl.Phoebe.Net
         public TogglRestClient (Uri url)
         {
             v8Url = new Uri (url, "v8/");
-            httpClient = new HttpClient ();
+            httpClient = new HttpClient () {
+                Timeout = TimeSpan.FromSeconds (10),
+            };
             var headers = httpClient.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
             headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));

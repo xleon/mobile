@@ -66,18 +66,19 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         private static void DecodeDuration (TimeEntryData data, TimeEntryJson json)
         {
+            var now = Time.UtcNow.Truncate (TimeSpan.TicksPerSecond);
+
             // Decode duration:
             TimeSpan duration;
             if (json.Duration < 0) {
                 data.State = TimeEntryState.Running;
-                duration = Time.UtcNow.ToUnix () + TimeSpan.FromSeconds (json.Duration);
+                duration = now.ToUnix () + TimeSpan.FromSeconds (json.Duration);
             } else {
                 data.State = TimeEntryState.Finished;
                 duration = TimeSpan.FromSeconds (json.Duration);
             }
 
             // Set start and stop times based on the duration:
-            var now = Time.UtcNow;
             if (data.State == TimeEntryState.Finished) {
                 data.StartTime = json.StartTime.ToUtc ();
                 data.StopTime = json.StartTime.ToUtc () + duration;

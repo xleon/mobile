@@ -8,6 +8,7 @@ using MonoTouch.CoreAnimation;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
@@ -173,12 +174,18 @@ namespace Toggl.Ross.ViewControllers
             if (startStopView == null)
                 return;
 
+            var currentValue = v.Date.ToDateTime ().ToUtc ();
+
             switch (startStopView.Selected) {
             case TimeKind.Start:
-                v.SetDate (model.StartTime.ToNSDate (), !v.Hidden);
+                if (currentValue != model.StartTime) {
+                    v.SetDate (model.StartTime.ToNSDate (), !v.Hidden);
+                }
                 break;
             case TimeKind.Stop:
-                v.SetDate (model.StopTime.Value.ToNSDate (), !v.Hidden);
+                if (currentValue != model.StopTime) {
+                    v.SetDate (model.StopTime.Value.ToNSDate (), !v.Hidden);
+                }
                 break;
             }
         }

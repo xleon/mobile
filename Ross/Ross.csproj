@@ -282,6 +282,7 @@
     <Compile Include="Theme\Style.SyncStatus.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
+    <Compile Include="Net\NetworkIndicatorManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -190,7 +190,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     ctx.Delete (data);
                     data = null;
                 }
-            } else {
+            } else if (merger != null || ShouldOverwrite (data, json)) {
                 data = data ?? new TimeEntryData ();
                 ImportJson (ctx, data, json);
 

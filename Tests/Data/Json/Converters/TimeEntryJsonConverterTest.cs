@@ -288,6 +288,158 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        [Description ("Overwrite local non-dirty data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteNonDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 3,
+                    Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var timeEntryData = await DataStore.PutAsync (new TimeEntryData () {
+                    RemoteId = 2,
+                    Description = "",
+                    WorkspaceId = workspaceData.Id,
+                    UserId = userData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var timeEntryJson = new TimeEntryJson () {
+                    Id = 2,
+                    Description = "Morning coffee",
+                    WorkspaceId = 1,
+                    UserId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc).ToLocalTime (), // Remote modified is less than local
+                };
+
+                timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
+                Assert.AreEqual ("Morning coffee", timeEntryData.Description);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc), timeEntryData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite dirty local data if imported data has a modification time greater than local.")]
+        public void ImportUpdatedOverwriteDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 3,
+                    Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var timeEntryData = await DataStore.PutAsync (new TimeEntryData () {
+                    RemoteId = 2,
+                    Description = "",
+                    WorkspaceId = workspaceData.Id,
+                    UserId = userData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 59, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var timeEntryJson = new TimeEntryJson () {
+                    Id = 2,
+                    Description = "Morning coffee",
+                    WorkspaceId = 1,
+                    UserId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
+                Assert.AreEqual ("Morning coffee", timeEntryData.Description);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), timeEntryData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite local dirty-but-rejected data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteRejectedLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 3,
+                    Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var timeEntryData = await DataStore.PutAsync (new TimeEntryData () {
+                    RemoteId = 2,
+                    Description = "",
+                    WorkspaceId = workspaceData.Id,
+                    UserId = userData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                    RemoteRejected = true,
+                });
+                var timeEntryJson = new TimeEntryJson () {
+                    Id = 2,
+                    Description = "Morning coffee",
+                    WorkspaceId = 1,
+                    UserId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
+                Assert.AreEqual ("Morning coffee", timeEntryData.Description);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), timeEntryData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Keep local dirty data when imported data has same or older modification time.")]
+        public void ImportUpdatedKeepDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 3,
+                    Name = "John",
+                    DefaultWorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var timeEntryData = await DataStore.PutAsync (new TimeEntryData () {
+                    RemoteId = 2,
+                    Description = "",
+                    WorkspaceId = workspaceData.Id,
+                    UserId = userData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var timeEntryJson = new TimeEntryJson () {
+                    Id = 2,
+                    Description = "Morning coffee",
+                    WorkspaceId = 1,
+                    UserId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
+                Assert.AreEqual ("", timeEntryData.Description);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), timeEntryData.ModifiedAt);
+            });
+        }
+
+        [Test]
         public void ImportDefaultUser ()
         {
             RunAsync (async delegate {

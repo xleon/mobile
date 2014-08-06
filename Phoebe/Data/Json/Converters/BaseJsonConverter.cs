@@ -84,5 +84,19 @@ namespace Toggl.Phoebe.Data.Json.Converters
             });
             return data.Id;
         }
+
+        protected static bool ShouldOverwrite (CommonData data, CommonJson json)
+        {
+            if (data == null)
+                return true;
+
+            if (!data.IsDirty || data.RemoteRejected)
+                return true;
+
+            if (data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ())
+                return true;
+
+            return false;
+        }
     }
 }

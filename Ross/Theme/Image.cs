@@ -8,6 +8,13 @@ namespace Toggl.Ross.Theme
             get { return UIImage.FromBundle ("bg"); }
         }
 
+        public static UIImage TagBackground {
+            get {
+                return UIImage.FromBundle ("bg-tag").CreateResizableImage (
+                    new UIEdgeInsets (5f, 5f, 5f, 5f), UIImageResizingMode.Tile);
+            }
+        }
+
         public static UIImage CircleStart {
             get { return UIImage.FromBundle ("circle-start"); }
         }
@@ -86,10 +93,6 @@ namespace Toggl.Ross.Theme
 
         public static UIImage IconTagBillable {
             get { return UIImage.FromBundle ("icon-tag-billable"); }
-        }
-
-        public static UIImage IconTickBlue {
-            get { return UIImage.FromBundle ("icon-tick-blue"); }
         }
 
         public static UIImage Logo {

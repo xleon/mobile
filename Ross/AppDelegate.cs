@@ -11,6 +11,7 @@ using XPlatUtils;
 using Toggl.Ross.Data;
 using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross
 {
@@ -95,6 +96,7 @@ namespace Toggl.Ross
                 () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
+            ServiceContainer.Register<TagChipCache> ();
         }
 
         public static TogglWindow TogglWindow {

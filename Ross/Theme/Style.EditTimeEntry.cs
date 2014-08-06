@@ -76,18 +76,26 @@ namespace Toggl.Ross.Theme
                 v.SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
                 v.SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);
                 v.ContentEdgeInsets = new UIEdgeInsets (0, 15f, 0, 15f);
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 17f);
                 v.HorizontalAlignment = UIControlContentHorizontalAlignment.Fill;
+                v.LineBreakMode = UILineBreakMode.TailTruncation;
             }
 
-            public static void NoTags (UIButton v)
-            {
-                v.SetTitleColor (Color.Gray, UIControlState.Normal);
+            public static UIStringAttributes NoTags {
+                get {
+                    return new UIStringAttributes () {
+                        Font = UIFont.FromName ("HelveticaNeue-Light", 17f),
+                        ForegroundColor = Color.Gray,
+                    };
+                }
             }
 
-            public static void WithTags (UIButton v)
-            {
-                v.SetTitleColor (Color.Black, UIControlState.Normal);
+            public static UIStringAttributes WithTags {
+                get {
+                    return new UIStringAttributes () {
+                        Font = UIFont.FromName ("HelveticaNeue", 13f),
+                        ForegroundColor = Color.Gray,
+                    };
+                }
             }
 
             public static void BillableContainer<T> (T v)

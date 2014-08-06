@@ -228,13 +228,28 @@ namespace Toggl.Ross.ViewControllers
             if (tagsView == null)
                 return;
 
-            var text = String.Join (", ", tagsView.Data);
-            if (String.IsNullOrEmpty (text)) {
-                v.Apply (Style.EditTimeEntry.NoTags);
-                v.SetTitle ("EditEntryTagsHint".Tr (), UIControlState.Normal);
+            // Construct tags attributed strings:
+            NSMutableAttributedString text = null;
+            foreach (var tag in tagsView.Data) {
+                if (String.IsNullOrWhiteSpace (tag))
+                    continue;
+
+                var chip = NSAttributedString.CreateFrom (new NSTextAttachment () {
+                    Image = ServiceContainer.Resolve<TagChipCache> ().Get (tag, v),
+                });
+
+                if (text == null) {
+                    text = new NSMutableAttributedString (chip);
+                } else {
+                    text.Append (new NSAttributedString (" ", Style.EditTimeEntry.WithTags));
+                    text.Append (chip);
+                }
+            }
+
+            if (text == null) {
+                v.SetAttributedTitle (new NSAttributedString ("EditEntryTagsHint".Tr (), Style.EditTimeEntry.NoTags), UIControlState.Normal);
             } else {
-                v.Apply (Style.EditTimeEntry.WithTags);
-                v.SetTitle (text, UIControlState.Normal);
+                v.SetAttributedTitle (text, UIControlState.Normal);
             }
         }
 

@@ -57,7 +57,29 @@
             <TextView
                 style="@style/TimeEntryDetailsBox.Text"
                 android:id="@+id/TimeTextView"
+                android:layout_weight="1"
                 android:text="01:23 - 12:34" />
+            <ImageView
+                android:id="@+id/IsBillableView"
+                android:src="@drawable/IcBillableMiniGray"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginRight="8dp" />
+        </LinearLayout>
+        <View
+            style="@style/TimeEntryDetailsBox.Divider"
+            android:id="@+id/TagListViewSeparator" />
+        <LinearLayout
+            style="@style/TimeEntryDetailsBox.Row"
+            android:id="@+id/TagListView">
+            <ImageView
+                style="@style/TimeEntryDetailsBox.Indicator"
+                android:src="@drawable/IcTagsMiniGray" />
+            <TextView
+                style="@style/TimeEntryDetailsBox.Text"
+                android:id="@+id/TagTextView"
+                android:text="mobile" />
         </LinearLayout>
         <View
             style="@style/TimeEntryDetailsBox.Divider" />

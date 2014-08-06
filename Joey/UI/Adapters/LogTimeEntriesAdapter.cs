@@ -446,6 +446,7 @@ namespace Toggl.Joey.UI.Adapters
         private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
         {
             private readonly LogTimeEntriesAdapter adapter;
+            private TimeEntryTagsView tagsView;
 
             public View ColorView { get; private set; }
 
@@ -455,11 +456,19 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView TimeTextView { get; private set; }
 
+            public TextView TagTextView { get; private set; }
+
+            public ImageView IsBillableView { get; private set; }
+
             public ImageButton DeleteImageButton { get; private set; }
 
             public ImageButton CloseImageButton { get; private set; }
 
             public ImageButton EditImageButton { get; private set; }
+
+            public LinearLayout TagListView { get; private set; }
+
+            public View TagListViewSeparator { get; private set; }
 
             public ExpandedListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
             {
@@ -469,9 +478,13 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
                 TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
+                TagListView = root.FindViewById<LinearLayout> (Resource.Id.TagListView);
+                TagListViewSeparator = root.FindViewById<View> (Resource.Id.TagListViewSeparator);
+                TagTextView = root.FindViewById<TextView> (Resource.Id.TagTextView).SetFont (Font.RobotoLight);
                 DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
                 CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
                 EditImageButton = root.FindViewById<ImageButton> (Resource.Id.EditImageButton);
+                IsBillableView = root.FindViewById<ImageView> (Resource.Id.IsBillableView);
 
                 DeleteImageButton.Click += OnDeleteImageButton;
                 CloseImageButton.Click += OnCloseImageButton;
@@ -516,6 +529,11 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 Tracker.ClearStale ();
+            }
+
+            private void OnTagsUpdated (object sender, EventArgs args)
+            {
+                RebindTags ();
             }
 
             private void HandleTimeEntryPropertyChanged (string prop)
@@ -574,6 +592,12 @@ namespace Toggl.Joey.UI.Adapters
                     shape.SetColor (color);
                 }
 
+                if (DataSource.IsBillable) {
+                    IsBillableView.Visibility = ViewStates.Visible;
+                } else {
+                    IsBillableView.Visibility = ViewStates.Invisible;
+                }
+
                 if (DataSource.StopTime.HasValue) {
                     TimeTextView.Text = String.Format ("{0} - {1}",
                         DataSource.StartTime.ToLocalTime ().ToDeviceTimeString (),
@@ -581,6 +605,23 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     TimeTextView.Text = DataSource.StartTime.ToLocalTime ().ToDeviceTimeString ();
                 }
+            }
+
+            protected override void OnDataSourceChanged ()
+            {
+                if (tagsView != null) {
+                    tagsView.Updated -= OnTagsUpdated;
+                    tagsView = null;
+                }
+
+                if (DataSource != null) {
+                    tagsView = new TimeEntryTagsView (DataSource.Id);
+                    tagsView.Updated += OnTagsUpdated;
+                }
+
+                RebindTags ();
+
+                base.OnDataSourceChanged ();
             }
 
             private void RebindProjectTextView (Context ctx)
@@ -657,6 +698,17 @@ namespace Toggl.Joey.UI.Adapters
                 spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
 
                 DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
+            }
+
+            private void RebindTags ()
+            {
+                var tagsViewState = tagsView.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TagListView.Visibility = tagsViewState;
+                TagListViewSeparator.Visibility = tagsViewState;
+
+                if (tagsView.Count > 0) {
+                    TagTextView.Text = String.Join (", ", tagsView.Data);
+                }
             }
         }
     }

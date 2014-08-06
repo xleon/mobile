@@ -606,14 +606,23 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     TimeTextView.Text = DataSource.StartTime.ToLocalTime ().ToDeviceTimeString ();
                 }
+            }
 
+            protected override void OnDataSourceChanged ()
+            {
                 if (tagsView != null) {
                     tagsView.Updated -= OnTagsUpdated;
+                    tagsView = null;
                 }
-                tagsView = new TimeEntryTagsView (DataSource.Id);
-                tagsView.Updated += OnTagsUpdated;
+
+                if (DataSource != null) {
+                    tagsView = new TimeEntryTagsView (DataSource.Id);
+                    tagsView.Updated += OnTagsUpdated;
+                }
 
                 RebindTags ();
+
+                base.OnDataSourceChanged ();
             }
 
             private void RebindProjectTextView (Context ctx)

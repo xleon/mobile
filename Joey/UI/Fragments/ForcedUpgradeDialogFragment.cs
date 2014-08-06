@@ -28,11 +28,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnStart ()
         {
-            // TODO: Remove workaround after support library upgrade!
-            // base.OnStart ();
-            Android.Runtime.JNIEnv.CallNonvirtualVoidMethod (Handle, ThresholdClass,
-                Android.Runtime.JNIEnv.GetMethodID (ThresholdClass, "onStart", "()V"));
-            // End of workaround
+            base.OnStart ();
 
             // Hook up the listener like that such that the dialog wouldn't be dismissed on pressing the button.
             var btn = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);

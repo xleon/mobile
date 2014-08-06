@@ -196,6 +196,12 @@ namespace Toggl.Phoebe.Tests.Data.Models
                     .QueryAsync (r => r.TimeEntryId == entry.Id);
                 Assert.That (rows, Has.Count.EqualTo (1));
                 Assert.AreNotEqual (firstTagId, rows [0].TagId);
+
+                // Make sure that we don't add duplicate tags when starting:
+                await entry.StartAsync ();
+                rows = await DataStore.Table<TimeEntryTagData> ()
+                    .QueryAsync (r => r.TimeEntryId == entry.Id);
+                Assert.That (rows, Has.Count.EqualTo (1));
             });
         }
 

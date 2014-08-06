@@ -248,7 +248,7 @@ namespace Toggl.Ross.ViewControllers
 
             if (text == null) {
                 v.Apply (Style.EditTimeEntry.NoTags);
-                v.SetTitle ("EditEntryTagsHint".Tr (), UIControlState.Normal);
+                v.SetAttributedTitle (new NSAttributedString ("EditEntryTagsHint".Tr ()), UIControlState.Normal);
             } else {
                 v.Apply (Style.EditTimeEntry.WithTags);
                 v.SetAttributedTitle (text, UIControlState.Normal);

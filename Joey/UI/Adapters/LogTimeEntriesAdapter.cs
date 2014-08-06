@@ -447,6 +447,7 @@ namespace Toggl.Joey.UI.Adapters
         private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
         {
             private readonly LogTimeEntriesAdapter adapter;
+            private TimeEntryTagsView tagsView;
 
             public View ColorView { get; private set; }
 
@@ -531,6 +532,11 @@ namespace Toggl.Joey.UI.Adapters
                 Tracker.ClearStale ();
             }
 
+            private void OnTagsUpdated (object sender, EventArgs args)
+            {
+                RebindTags ();
+            }
+
             private void HandleTimeEntryPropertyChanged (string prop)
             {
                 if (prop == TimeEntryModel.PropertyProject
@@ -576,7 +582,6 @@ namespace Toggl.Joey.UI.Adapters
 
                 RebindProjectTextView (ctx);
                 RebindDescriptionTextView (ctx);
-                RebindTagView ();
 
                 var color = Color.Transparent;
                 if (DataSource.Project != null) {
@@ -601,6 +606,14 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     TimeTextView.Text = DataSource.StartTime.ToLocalTime ().ToDeviceTimeString ();
                 }
+
+                if (tagsView != null) {
+                    tagsView.Updated -= OnTagsUpdated;
+                }
+                tagsView = new TimeEntryTagsView (DataSource.Id);
+                tagsView.Updated += OnTagsUpdated;
+
+                RebindTags ();
             }
 
             private void RebindProjectTextView (Context ctx)
@@ -679,15 +692,13 @@ namespace Toggl.Joey.UI.Adapters
                 DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
             }
 
-            private void RebindTagView ()
+            private void RebindTags ()
             {
-                var tagsView = new TimeEntryTagsView (DataSource.Id);
-                if (tagsView.Count == 0) {
-                    TagListView.Visibility = ViewStates.Gone;
-                    TagListViewSeparator.Visibility = ViewStates.Gone;
-                } else {
-                    TagListView.Visibility = ViewStates.Visible;
-                    TagListViewSeparator.Visibility = ViewStates.Visible;
+                var tagsViewState = tagsView.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TagListView.Visibility = tagsViewState;
+                TagListViewSeparator.Visibility = tagsViewState;
+
+                if (tagsView.Count > 0) {
                     TagTextView.Text = String.Join (", ", tagsView.Data);
                 }
             }

@@ -17,6 +17,9 @@ namespace Toggl.Joey.UI.Fragments
     public class ChangeTimeEntryDurationDialogFragment : BaseDialogFragment
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
+        private const string NewDurationHoursKey = "com.toggl.timer.new_duration_hours";
+        private const string NewDurationMinutesKey = "com.toggl.timer.new_duration_mins";
+        private const string DigitsEnteredKey = "com.toggl.timer.digits_entered";
 
         public ChangeTimeEntryDurationDialogFragment (TimeEntryModel model) : base ()
         {
@@ -65,7 +68,23 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (state);
 
+            if (state != null) {
+                digitsEntered = state.GetInt (DigitsEnteredKey, digitsEntered);
+                newDuration = new Duration (
+                    state.GetInt (NewDurationHoursKey, newDuration.Hours),
+                    state.GetInt (NewDurationMinutesKey, newDuration.Minutes));
+            }
+
             LoadData ();
+        }
+
+        public override void OnSaveInstanceState (Bundle outState)
+        {
+            base.OnSaveInstanceState (outState);
+
+            outState.PutInt (DigitsEnteredKey, digitsEntered);
+            outState.PutInt (NewDurationHoursKey, newDuration.Hours);
+            outState.PutInt (NewDurationMinutesKey, newDuration.Minutes);
         }
 
         private async void LoadData ()

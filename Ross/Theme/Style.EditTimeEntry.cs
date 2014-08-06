@@ -78,6 +78,7 @@ namespace Toggl.Ross.Theme
                 v.ContentEdgeInsets = new UIEdgeInsets (0, 15f, 0, 15f);
                 v.Font = UIFont.FromName ("HelveticaNeue-Light", 17f);
                 v.HorizontalAlignment = UIControlContentHorizontalAlignment.Fill;
+                v.LineBreakMode = UILineBreakMode.TailTruncation;
             }
 
             public static void NoTags (UIButton v)

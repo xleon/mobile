@@ -188,6 +188,158 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        [Description ("Overwrite local non-dirty data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteNonDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 3,
+                    Name = "Hosting",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var taskData = await DataStore.PutAsync (new TaskData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ProjectId = projectData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var taskJson = new TaskJson () {
+                    Id = 2,
+                    Name = "Install Linux",
+                    WorkspaceId = 1,
+                    ProjectId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc).ToLocalTime (), // Remote modified is less than local
+                };
+
+                taskData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
+                Assert.AreEqual ("Install Linux", taskData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc), taskData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite dirty local data if imported data has a modification time greater than local.")]
+        public void ImportUpdatedOverwriteDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 3,
+                    Name = "Hosting",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var taskData = await DataStore.PutAsync (new TaskData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ProjectId = projectData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 59, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var taskJson = new TaskJson () {
+                    Id = 2,
+                    Name = "Install Linux",
+                    WorkspaceId = 1,
+                    ProjectId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                taskData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
+                Assert.AreEqual ("Install Linux", taskData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), taskData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite local dirty-but-rejected data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteRejectedLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 3,
+                    Name = "Hosting",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var taskData = await DataStore.PutAsync (new TaskData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ProjectId = projectData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                    RemoteRejected = true,
+                });
+                var taskJson = new TaskJson () {
+                    Id = 2,
+                    Name = "Install Linux",
+                    WorkspaceId = 1,
+                    ProjectId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                taskData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
+                Assert.AreEqual ("Install Linux", taskData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), taskData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Keep local dirty data when imported data has same or older modification time.")]
+        public void ImportUpdatedKeepDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 3,
+                    Name = "Hosting",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var taskData = await DataStore.PutAsync (new TaskData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ProjectId = projectData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var taskJson = new TaskJson () {
+                    Id = 2,
+                    Name = "Install Linux",
+                    WorkspaceId = 1,
+                    ProjectId = 3,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                taskData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, taskJson));
+                Assert.AreEqual ("", taskData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), taskData.ModifiedAt);
+            });
+        }
+
+        [Test]
         public void ImportMissingWorkspaceAndProject ()
         {
             RunAsync (async delegate {

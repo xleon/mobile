@@ -168,6 +168,138 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        [Description ("Overwrite local non-dirty data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteNonDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 3),
+                });
+                var projectUserData = await DataStore.PutAsync (new ProjectUserData () {
+                    RemoteId = 2,
+                    ProjectId = Guid.Empty,
+                    UserId = Guid.Empty,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var projectUserJson = new ProjectUserJson () {
+                    Id = 2,
+                    ProjectId = 1,
+                    UserId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc).ToLocalTime (), // Remote modified is less than local
+                };
+
+                projectUserData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
+                Assert.AreEqual (projectData.Id, projectUserData.ProjectId);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc), projectUserData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite dirty local data if imported data has a modification time greater than local.")]
+        public void ImportUpdatedOverwriteDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 3),
+                });
+                var projectUserData = await DataStore.PutAsync (new ProjectUserData () {
+                    RemoteId = 2,
+                    ProjectId = Guid.Empty,
+                    UserId = Guid.Empty,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 59, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var projectUserJson = new ProjectUserJson () {
+                    Id = 2,
+                    ProjectId = 1,
+                    UserId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                projectUserData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
+                Assert.AreEqual (projectData.Id, projectUserData.ProjectId);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), projectUserData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite local dirty-but-rejected data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteRejectedLocal ()
+        {
+            RunAsync (async delegate {
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 3),
+                });
+                var projectUserData = await DataStore.PutAsync (new ProjectUserData () {
+                    RemoteId = 2,
+                    ProjectId = Guid.Empty,
+                    UserId = Guid.Empty,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                    RemoteRejected = true,
+                });
+                var projectUserJson = new ProjectUserJson () {
+                    Id = 2,
+                    ProjectId = 1,
+                    UserId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                projectUserData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
+                Assert.AreEqual (projectData.Id, projectUserData.ProjectId);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), projectUserData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Keep local dirty data when imported data has same or older modification time.")]
+        public void ImportUpdatedKeepDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var userData = await DataStore.PutAsync (new UserData () {
+                    RemoteId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 3),
+                });
+                var projectUserData = await DataStore.PutAsync (new ProjectUserData () {
+                    RemoteId = 2,
+                    ProjectId = Guid.Empty,
+                    UserId = Guid.Empty,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var projectUserJson = new ProjectUserJson () {
+                    Id = 2,
+                    ProjectId = 1,
+                    UserId = 2,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                projectUserData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
+                Assert.AreEqual (Guid.Empty, projectUserData.ProjectId);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), projectUserData.ModifiedAt);
+            });
+        }
+
+        [Test]
         public void ImportMissingProjectAndUser ()
         {
             RunAsync (async delegate {

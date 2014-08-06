@@ -154,6 +154,126 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         }
 
         [Test]
+        [Description ("Overwrite local non-dirty data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteNonDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var clientData = await DataStore.PutAsync (new ClientData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                });
+                var clientJson = new ClientJson () {
+                    Id = 2,
+                    Name = "Github",
+                    WorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc).ToLocalTime (), // Remote modified is less than local
+                };
+
+                clientData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
+                Assert.AreEqual ("Github", clientData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 9, 59, 0, DateTimeKind.Utc), clientData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite dirty local data if imported data has a modification time greater than local.")]
+        public void ImportUpdatedOverwriteDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var clientData = await DataStore.PutAsync (new ClientData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 9, 59, 59, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var clientJson = new ClientJson () {
+                    Id = 2,
+                    Name = "Github",
+                    WorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                clientData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
+                Assert.AreEqual ("Github", clientData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), clientData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Overwrite local dirty-but-rejected data regardless of the modification times.")]
+        public void ImportUpdatedOverwriteRejectedLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var clientData = await DataStore.PutAsync (new ClientData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 1, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                    RemoteRejected = true,
+                });
+                var clientJson = new ClientJson () {
+                    Id = 2,
+                    Name = "Github",
+                    WorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                clientData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
+                Assert.AreEqual ("Github", clientData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), clientData.ModifiedAt);
+            });
+        }
+
+        [Test]
+        [Description ("Keep local dirty data when imported data has same or older modification time.")]
+        public void ImportUpdatedKeepDirtyLocal ()
+        {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var clientData = await DataStore.PutAsync (new ClientData () {
+                    RemoteId = 2,
+                    Name = "",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                    IsDirty = true,
+                });
+                var clientJson = new ClientJson () {
+                    Id = 2,
+                    Name = "Github",
+                    WorkspaceId = 1,
+                    ModifiedAt = new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc).ToLocalTime (),
+                };
+
+                clientData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
+                Assert.AreEqual ("", clientData.Name);
+                Assert.AreEqual (new DateTime (2014, 1, 2, 10, 0, 0, DateTimeKind.Utc), clientData.ModifiedAt);
+            });
+        }
+
+        [Test]
         public void ImportMissingWorkspace ()
         {
             RunAsync (async delegate {

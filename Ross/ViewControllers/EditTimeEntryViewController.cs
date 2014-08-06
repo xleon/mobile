@@ -241,16 +241,14 @@ namespace Toggl.Ross.ViewControllers
                 if (text == null) {
                     text = new NSMutableAttributedString (chip);
                 } else {
-                    text.Append (new NSAttributedString (" "));
+                    text.Append (new NSAttributedString (" ", Style.EditTimeEntry.WithTags));
                     text.Append (chip);
                 }
             }
 
             if (text == null) {
-                v.Apply (Style.EditTimeEntry.NoTags);
-                v.SetAttributedTitle (new NSAttributedString ("EditEntryTagsHint".Tr ()), UIControlState.Normal);
+                v.SetAttributedTitle (new NSAttributedString ("EditEntryTagsHint".Tr (), Style.EditTimeEntry.NoTags), UIControlState.Normal);
             } else {
-                v.Apply (Style.EditTimeEntry.WithTags);
                 v.SetAttributedTitle (text, UIControlState.Normal);
             }
         }

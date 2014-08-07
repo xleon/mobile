@@ -17,12 +17,10 @@ namespace Toggl.Phoebe.Tests
 
         public bool Run ()
         {
-            int count;
             Job job;
 
             lock (syncRoot) {
-                count = jobs.Count;
-                if (count < 1)
+                if (jobs.Count < 1)
                     return false;
                 job = jobs.Dequeue ();
             }
@@ -35,7 +33,7 @@ namespace Toggl.Phoebe.Tests
                 }
             }
 
-            return count > 1;
+            return true;
         }
 
         public override void Post (SendOrPostCallback d, object state)

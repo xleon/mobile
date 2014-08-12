@@ -157,6 +157,10 @@ namespace Toggl.Phoebe.Tests.Data.Models
         {
             RunAsync (async delegate {
                 var type = typeof(T);
+                var isLoadedField = type.BaseType.GetField ("isLoaded",
+                                        BindingFlags.NonPublic | BindingFlags.Instance);
+                var loadingTCSField = type.BaseType.GetField ("loadingTCS",
+                                          BindingFlags.NonPublic | BindingFlags.Instance);
 
                 // Create dummy element (with default values) to load:
                 var pk = await CreateDummyData ();
@@ -168,24 +172,26 @@ namespace Toggl.Phoebe.Tests.Data.Models
                     .Where (prop => !ExemptProperties.Contains (prop.Name));
 
                 foreach (var prop in properties) {
-                    int changeCount = 2;
-                    var tcs = new TaskCompletionSource<object> ();
-
                     ResetDataCache ();
 
                     var inst = (T)Activator.CreateInstance (type, pk);
-                    inst.PropertyChanged += (s, e) => {
-                        if (e.PropertyName == prop.Name) {
-                            if (--changeCount < 1) {
-                                tcs.SetResult (null);
-                            }
-                        }
-                    };
+
+                    var isLoaded = (bool)isLoadedField.GetValue (inst);
+                    var loadingTCS = (TaskCompletionSource<object>)loadingTCSField.GetValue (inst);
+                    Assert.False (isLoaded);
+                    Assert.IsNull (loadingTCS);
 
                     SimulatePropertyChange (inst, prop);
 
-                    Assert.AreEqual (tcs.Task, await Task.WhenAny (tcs.Task, Task.Delay (100)),
-                        String.Format ("Property {0} failed to trigger lazy load.", prop.Name));
+                    // Check private field isLoaded to determine that autoload has finished
+                    loadingTCS = (TaskCompletionSource<object>)loadingTCSField.GetValue (inst);
+                    isLoaded = (bool)isLoadedField.GetValue (inst);
+
+                    if (isLoaded) {
+                        Assert.Inconclusive ("Model was loaded too fast. If this happens every time, there is a problem.");
+                    } else {
+                        Assert.NotNull (loadingTCS);
+                    }
                 }
             });
         }

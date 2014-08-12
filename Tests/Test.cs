@@ -72,13 +72,18 @@ namespace Toggl.Phoebe.Tests
 
             // Wait for the auth manager to load user data:
             var tcs = new TaskCompletionSource<object> ();
-            authManager.PropertyChanged += (sender, e) => {
-                if (e.PropertyName == AuthManager.PropertyUser) {
-                    if (authManager.User.DefaultWorkspaceId != Guid.Empty) {
-                        tcs.TrySetResult (null);
-                    }
+            Action checkUser = delegate {
+                if (authManager.User != null && authManager.User.DefaultWorkspaceId != Guid.Empty) {
+                    tcs.TrySetResult (null);
                 }
             };
+            authManager.PropertyChanged += (sender, e) => {
+                if (e.PropertyName == AuthManager.PropertyUser) {
+                    checkUser ();
+                }
+            };
+
+            checkUser ();
             await tcs.Task;
 
             MessageBus.Send (new AuthChangedMessage (authManager));

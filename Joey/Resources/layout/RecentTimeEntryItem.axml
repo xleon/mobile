@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent">
+    <View
+        android:id="@+id/ColorView"
+        android:layout_width="4dp"
+        android:layout_height="60dp"
+        android:background="@drawable/ColoredSideShape" />
+    <TextView
+        android:id="@+id/ProjectTextView"
+        style="@style/TimeEntryListItem.Text.Project"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="Project" />
+    <TextView
+        android:id="@+id/ClientTextView"
+        style="@style/TimeEntryListItem.Text.Client"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:text="Client" />
+    <TextView
+        android:id="@+id/TaskTextView"
+        style="@style/TimeEntryListItem.Text.Task"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_marginRight="8dp"
+        android:text="" />
+    <TextView
+        android:id="@+id/DescriptionTextView"
+        style="@style/TimeEntryListItem.Text.Description"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/RecentTimeEntryNoDescription" />
+</merge>

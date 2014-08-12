@@ -28,8 +28,9 @@ namespace Toggl.Joey.UI.Adapters
 
             if (viewType == ViewTypeContent) {
                 if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.RecentTimeEntryListItem, parent, false);
+                    view = (RecentTimeEntryItem) LayoutInflater.FromContext (parent.Context).Inflate (
+                        Resource.Layout.RecentTimeEntryItemRow, parent, false);
+                    Console.WriteLine ("view: {0}", view);
                     view.Tag = new RecentTimeEntryListItemHolder (view);
                 }
                 var holder = (RecentTimeEntryListItemHolder)view.Tag;

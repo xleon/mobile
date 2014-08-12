@@ -97,13 +97,15 @@ namespace Toggl.Phoebe.Tests.Data
                 var pk = data.Id;
 
                 var cache = new DataCache ();
-                var loadTask = cache.GetAsync<WorkspaceData> (pk);
+                cache.GetAsync<WorkspaceData> (pk);
 
                 var success = cache.TryGetCached (pk, out data);
-                Assert.IsFalse (success);
-                Assert.IsNull (data);
-
-                await loadTask;
+                if (success) {
+                    Assert.IsNotNull (data);
+                    Assert.Inconclusive ("Data was loaded before we could check that cache was empty. If it happens all the time, there is a problem.");
+                } else {
+                    Assert.IsNull (data);
+                }
             });
         }
 

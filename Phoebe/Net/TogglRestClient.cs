@@ -18,18 +18,25 @@ namespace Toggl.Phoebe.Net
     {
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri v8Url;
-        private readonly HttpClient httpClient;
 
         public TogglRestClient (Uri url)
         {
             v8Url = new Uri (url, "v8/");
-            httpClient = new HttpClient () {
+        }
+
+        private HttpClient MakeHttpClient ()
+        {
+            // Cannot share HttpClient instance between threads as it might (and will) cause InvalidOperationExceptions
+            // occasionally.
+            var client = new HttpClient () {
                 Timeout = TimeSpan.FromSeconds (10),
             };
-            var headers = httpClient.DefaultRequestHeaders;
+            var headers = client.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
             headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));
             headers.Accept.Add (new MediaTypeWithQualityHeaderValue ("application/json"));
+
+            return client;
         }
 
         public async Task<T> Create<T> (T jsonObject)
@@ -224,14 +231,17 @@ namespace Toggl.Phoebe.Net
 
         private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq)
         {
-            var reqTimer = Stopwatch.StartNew ();
-            var httpResp = await httpClient.SendAsync (httpReq)
+            using (var httpClient = MakeHttpClient ()) {
+
+                var reqTimer = Stopwatch.StartNew ();
+                var httpResp = await httpClient.SendAsync (httpReq)
                 .ConfigureAwait (continueOnCapturedContext: false);
-            reqTimer.Stop ();
+                reqTimer.Stop ();
 
-            PrepareResponse (httpResp, reqTimer.Elapsed);
+                PrepareResponse (httpResp, reqTimer.Elapsed);
 
-            return httpResp;
+                return httpResp;
+            }
         }
 
         private async Task<T> CreateObject<T> (Uri url, T jsonObject)

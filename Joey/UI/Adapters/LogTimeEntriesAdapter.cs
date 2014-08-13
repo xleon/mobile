@@ -702,6 +702,10 @@ namespace Toggl.Joey.UI.Adapters
 
             private void RebindTags ()
             {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero)
+                    return;
+
                 var tagsViewState = tagsView.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
                 TagListView.Visibility = tagsViewState;
                 TagListViewSeparator.Visibility = tagsViewState;

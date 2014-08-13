@@ -353,32 +353,34 @@ namespace Toggl.Ross.Bugsnag
 
         private Task<bool> SendNotification (Stream stream)
         {
-            using (var httpClient = MakeHttpClient ()) {
-                var req = new HttpRequestMessage () {
-                    Method = HttpMethod.Post,
-                    RequestUri = BaseUrl,
-                    Content = new StreamContent (stream),
-                };
-                req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
+            var httpClient = MakeHttpClient ();
 
-                return httpClient.SendAsync (req).ContinueWith ((t) => {
-                    try {
-                        var resp = t.Result;
-                        if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
-                            LogError ("Failed to send notification due to invalid API key.");
-                        } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
-                            LogError ("Failed to send notification due to invalid payload.");
-                        } else {
-                            return true;
-                        }
-                    } catch (Exception ex) {
-                        // Keep the stored file, it will be retried on next app start
-                        LogError (String.Format ("Failed to send notification: {0}", ex));
+            var req = new HttpRequestMessage () {
+                Method = HttpMethod.Post,
+                RequestUri = BaseUrl,
+                Content = new StreamContent (stream),
+            };
+            req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
+
+            return httpClient.SendAsync (req).ContinueWith ((t) => {
+                try {
+                    var resp = t.Result;
+                    if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+                        LogError ("Failed to send notification due to invalid API key.");
+                    } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
+                        LogError ("Failed to send notification due to invalid payload.");
+                    } else {
+                        return true;
                     }
+                } catch (Exception ex) {
+                    // Keep the stored file, it will be retried on next app start
+                    LogError (String.Format ("Failed to send notification: {0}", ex));
+                } finally {
+                    httpClient.Dispose ();
+                }
 
-                    return false;
-                });
-            }
+                return false;
+            });
         }
 
         protected override void LogError (string msg)

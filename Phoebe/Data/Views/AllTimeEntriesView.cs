@@ -20,6 +20,8 @@ namespace Toggl.Phoebe.Data.Views
         private UpdateMode updateMode = UpdateMode.Immediate;
         private DateTime startFrom;
         private Subscription<DataChangeMessage> subscriptionDataChange;
+        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+        private bool reloadScheduled;
 
         public AllTimeEntriesView ()
         {
@@ -36,6 +38,10 @@ namespace Toggl.Phoebe.Data.Views
             if (subscriptionDataChange != null) {
                 bus.Unsubscribe (subscriptionDataChange);
                 subscriptionDataChange = null;
+            }
+            if (subscriptionSyncFinished != null) {
+                bus.Unsubscribe (subscriptionSyncFinished);
+                subscriptionSyncFinished = null;
             }
         }
 
@@ -135,6 +141,21 @@ namespace Toggl.Phoebe.Data.Views
             dateGroups.Sort ((a, b) => b.Date.CompareTo (a.Date));
         }
 
+        private void OnSyncFinished (SyncFinishedMessage msg)
+        {
+            if (reloadScheduled) {
+                reloadScheduled = false;
+                IsLoading = false;
+                Load (true);
+            }
+
+            if (subscriptionSyncFinished != null) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Unsubscribe (subscriptionSyncFinished);
+                subscriptionSyncFinished = null;
+            }
+        }
+
         public event EventHandler Updated;
 
         private void OnUpdated ()
@@ -171,7 +192,20 @@ namespace Toggl.Phoebe.Data.Views
             dateGroups.Clear ();
             HasMore = true;
 
-            Load (true);
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
+            if (syncManager.IsRunning) {
+                // Fake loading until initial sync has finished
+                IsLoading = true;
+                OnUpdated ();
+
+                reloadScheduled = true;
+                if (subscriptionSyncFinished == null) {
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+                }
+            } else {
+                Load (true);
+            }
         }
 
         public void LoadMore ()

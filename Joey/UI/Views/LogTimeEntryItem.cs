@@ -12,24 +12,32 @@ using Android.Widget;
 
 namespace Toggl.Joey.UI.Views
 {
-    public class RecentTimeEntryItem : ViewGroup
+    public class LogTimeEntryItem : ViewGroup
     {
         private View colorView;
         private TextView projectTextView;
         private TextView clientTextView;
         private TextView taskTextView;
         private TextView descriptionTextView;
+        private ImageButton continueImageButton;
+        private View continueButtonSeparator;
+        private ImageView icTagsMiniGray;
+        private ImageView icBillableMiniGray;
+        private TextView durationTextView;
+        private ImageView billableIcon;
+        private ImageView tagsIcon;
+
         private View view;
 
-        public RecentTimeEntryItem (Context context, IAttributeSet attrs) : base (context, attrs)
+        public LogTimeEntryItem (Context context, IAttributeSet attrs) : base (context, attrs)
         {
-            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.RecentTimeEntryItem, this, true);
+            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.LogTimeEntryItem, this, true);
             Initialize ();
         }
 
-        public RecentTimeEntryItem (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
+        public LogTimeEntryItem (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
         {
-            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.RecentTimeEntryItem, this, true);
+            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.LogTimeEntryItem, this, true);
             Initialize ();
         }
 
@@ -41,6 +49,13 @@ namespace Toggl.Joey.UI.Views
             clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView);
             taskTextView = view.FindViewById<TextView> (Resource.Id.TaskTextView);
             descriptionTextView = view.FindViewById<TextView> (Resource.Id.DescriptionTextView);
+            continueImageButton = view.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
+            continueButtonSeparator = view.FindViewById<View> (Resource.Id.ContinueButtonSeparator);
+            durationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
+            billableIcon = view.FindViewById<ImageView> (Resource.Id.BillableIcon);
+            tagsIcon = view.FindViewById<ImageView> (Resource.Id.TagsIcon);
+
+
         }
 
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
@@ -56,6 +71,12 @@ namespace Toggl.Joey.UI.Views
             MeasureChildWithMargins (descriptionTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (clientTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (taskTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
+
+            MeasureChildWithMargins (continueButtonSeparator, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
+            MeasureChildWithMargins (continueImageButton, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
+            MeasureChildWithMargins (durationTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
+            MeasureChildWithMargins (billableIcon, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
+            MeasureChildWithMargins (tagsIcon, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
 
             int heightSize = heightUsed + PaddingTop + PaddingBottom;
             SetMeasuredDimension (widthSize, heightSize);
@@ -80,6 +101,16 @@ namespace Toggl.Joey.UI.Views
             } else {
                 layoutView (descriptionTextView, contentLeft, currentTop, descriptionTextView.MeasuredWidth, descriptionTextView.MeasuredHeight);
             }
+            int continueButtonLeft = r - getWidthWithMargins (continueImageButton);
+            int durationLeft = continueButtonLeft - getWidthWithMargins (durationTextView);
+            int billableLeft = durationLeft - getWidthWithMargins (billableIcon);
+            int tagsLeft = billableLeft- getWidthWithMargins (tagsIcon);
+
+            layoutView (continueButtonSeparator, continueButtonLeft, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
+            layoutView (continueImageButton, continueButtonLeft, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
+            layoutView (durationTextView, durationLeft, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
+            layoutView (billableIcon, billableLeft, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
+            layoutView (tagsIcon, tagsLeft, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
 
         }
 
@@ -117,15 +148,14 @@ namespace Toggl.Joey.UI.Views
             return child.MeasuredHeight + lp.TopMargin + lp.BottomMargin;
         }
 
-        public override LayoutParams GenerateLayoutParams(IAttributeSet attrs)
-        {
+        public override LayoutParams GenerateLayoutParams(IAttributeSet attrs) {
             return new MarginLayoutParams(Context, attrs);
         }
 
-        protected override LayoutParams GenerateDefaultLayoutParams()
-        {
+        protected override LayoutParams GenerateDefaultLayoutParams() {
             return new MarginLayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent);
         }
+
     }
 }
 

@@ -135,7 +135,7 @@ namespace Toggl.Joey.UI.Adapters
                 var model = (TimeEntryModel)data;
                 if (view == null) {
                     view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
-                        Resource.Layout.LogTimeEntryListItem, parent, false);
+                        Resource.Layout.LogTimeEntryItemRow, parent, false);
                     view.Tag = new TimeEntryListItemHolder (handler, this, view);
                 }
                 var holder = (TimeEntryListItemHolder)view.Tag;

@@ -129,6 +129,7 @@
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
     <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="UI\Views\RecentTimeEntryItem.cs" />
+    <Compile Include="UI\Views\LogTimeEntryItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -532,6 +533,8 @@
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryItemRow.axml" />
+    <AndroidResource Include="Resources\layout\LogTimeEntryItem.axml" />
+    <AndroidResource Include="Resources\layout\LogTimeEntryItemRow.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

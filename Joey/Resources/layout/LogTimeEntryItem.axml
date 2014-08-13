@@ -37,4 +37,40 @@
         android:layout_width="wrap_content"
         android:text="@string/RecentTimeEntryNoDescription"
         android:paddingTop="32dp" />
+    <ImageView
+        android:id="@+id/TagsIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="3dp"
+        android:paddingTop="13dp"
+        android:src="@drawable/IcTagsMiniGray" />
+    <ImageView
+        android:id="@+id/BillableIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="3dp"
+        android:paddingTop="13dp"
+        android:src="@drawable/IcBillableMiniGray" />
+    <TextView
+        android:id="@+id/DurationTextView"
+        style="@style/TimeEntryListItem.Text.Duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:paddingTop="10dp"
+        android:paddingRight="6dp"
+        android:text="04:15:34" />
+    <View
+        android:layout_width="1dp"
+        android:layout_height="60dp"
+        android:background="#ECECEC"
+        android:id="@+id/ContinueButtonSeparator" />
+    <ImageButton
+        android:src="@drawable/IcContinue"
+        android:layout_width="40dp"
+        android:layout_height="60dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:id="@+id/ContinueImageButton"
+        style="?android:attr/borderlessButtonStyle" />
 </merge>

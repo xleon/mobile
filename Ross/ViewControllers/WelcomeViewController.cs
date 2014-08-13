@@ -156,6 +156,9 @@ namespace Toggl.Ross.ViewControllers
                                 "WelcomeLoginErrorTitle".Tr (),
                                 "WelcomeLoginErrorMessage".Tr (),
                                 null, "WelcomeLoginErrorOk".Tr (), null).Show ();
+                        } else {
+                            // Start the initial sync for the user
+                            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
                         }
                     } else {
                         new UIAlertView (

@@ -255,6 +255,9 @@ namespace Toggl.Joey.UI.Activities
                 PasswordEditText.RequestFocus ();
 
                 new InvalidCredentialsDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+            } else {
+                // Start the initial sync for the user
+                ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
             }
 
             StartAuthActivity ();
@@ -271,6 +274,9 @@ namespace Toggl.Joey.UI.Activities
                 EmailEditText.RequestFocus ();
 
                 new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+            } else {
+                // Start the initial sync for the user
+                ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
             }
 
             StartAuthActivity ();

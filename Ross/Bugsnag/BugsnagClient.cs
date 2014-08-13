@@ -353,30 +353,32 @@ namespace Toggl.Ross.Bugsnag
 
         private Task<bool> SendNotification (Stream stream)
         {
-            var req = new HttpRequestMessage () {
-                Method = HttpMethod.Post,
-                RequestUri = BaseUrl,
-                Content = new StreamContent (stream),
-            };
-            req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
+            using (var httpClient = MakeHttpClient ()) {
+                var req = new HttpRequestMessage () {
+                    Method = HttpMethod.Post,
+                    RequestUri = BaseUrl,
+                    Content = new StreamContent (stream),
+                };
+                req.Content.Headers.ContentType = new MediaTypeHeaderValue ("application/json");
 
-            return HttpClient.SendAsync (req).ContinueWith ((t) => {
-                try {
-                    var resp = t.Result;
-                    if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
-                        LogError ("Failed to send notification due to invalid API key.");
-                    } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
-                        LogError ("Failed to send notification due to invalid payload.");
-                    } else {
-                        return true;
+                return httpClient.SendAsync (req).ContinueWith ((t) => {
+                    try {
+                        var resp = t.Result;
+                        if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+                            LogError ("Failed to send notification due to invalid API key.");
+                        } else if (resp.StatusCode == System.Net.HttpStatusCode.BadRequest) {
+                            LogError ("Failed to send notification due to invalid payload.");
+                        } else {
+                            return true;
+                        }
+                    } catch (Exception ex) {
+                        // Keep the stored file, it will be retried on next app start
+                        LogError (String.Format ("Failed to send notification: {0}", ex));
                     }
-                } catch (Exception ex) {
-                    // Keep the stored file, it will be retried on next app start
-                    LogError (String.Format ("Failed to send notification: {0}", ex));
-                }
 
-                return false;
-            });
+                    return false;
+                });
+            }
         }
 
         protected override void LogError (string msg)

@@ -10,19 +10,27 @@ namespace Toggl.Phoebe.Net
     public class PushRestClient : IPushClient
     {
         private readonly Uri v8Url;
-        private readonly HttpClient httpClient;
 
         public PushRestClient (Uri url)
         {
             v8Url = new Uri (url, "v8/push_service/");
-            httpClient = new HttpClient () {
+        }
+
+        private HttpClient MakeHttpClient ()
+        {
+            // Cannot share HttpClient instance between threads as it might (and will) cause InvalidOperationExceptions
+            // occasionally.
+            var client = new HttpClient () {
                 Timeout = TimeSpan.FromSeconds (10),
             };
-            var headers = httpClient.DefaultRequestHeaders;
+            var headers = client.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
             headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));
             headers.Accept.Add (new MediaTypeWithQualityHeaderValue ("application/json"));
+
+            return client;
         }
+
 
         private string GetPayload (PushService service, string regid)
         {
@@ -51,32 +59,36 @@ namespace Toggl.Phoebe.Net
 
         public Task Register (string authToken, PushService service, string regid)
         {
-            var url = new Uri (v8Url, "subscribe");
-            string json = GetPayload (service, regid);
+            using (var httpClient = MakeHttpClient ()) {
+                var url = new Uri (v8Url, "subscribe");
+                string json = GetPayload (service, regid);
 
-            var httpReq = new HttpRequestMessage () {
-                Method = HttpMethod.Post,
-                RequestUri = url,
-                Content = new StringContent (json, Encoding.UTF8, "application/json"),
-            };
-            AddAuthToken (authToken, httpReq);
+                var httpReq = new HttpRequestMessage () {
+                    Method = HttpMethod.Post,
+                    RequestUri = url,
+                    Content = new StringContent (json, Encoding.UTF8, "application/json"),
+                };
+                AddAuthToken (authToken, httpReq);
 
-            return httpClient.SendAsync (httpReq);
+                return httpClient.SendAsync (httpReq);
+            }
         }
 
         public Task Unregister (string authToken, PushService service, string regid)
         {
-            var url = new Uri (v8Url, "unsubscribe");
-            string json = GetPayload (service, regid);
+            using (var httpClient = MakeHttpClient ()) {
+                var url = new Uri (v8Url, "unsubscribe");
+                string json = GetPayload (service, regid);
 
-            var httpReq = new HttpRequestMessage () {
-                Method = HttpMethod.Post,
-                RequestUri = url,
-                Content = new StringContent (json, Encoding.UTF8, "application/json"),
-            };
-            AddAuthToken (authToken, httpReq);
+                var httpReq = new HttpRequestMessage () {
+                    Method = HttpMethod.Post,
+                    RequestUri = url,
+                    Content = new StringContent (json, Encoding.UTF8, "application/json"),
+                };
+                AddAuthToken (authToken, httpReq);
 
-            return httpClient.SendAsync (httpReq);
+                return httpClient.SendAsync (httpReq);
+            }
         }
     }
 }

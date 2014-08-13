@@ -22,7 +22,6 @@ namespace Toggl.Phoebe.Bugsnag
             Url = "https://github.com/toggl/mobile",
         };
         private readonly Metadata metadata = new Metadata ();
-        private HttpClient httpClient;
 
         public BugsnagClient (string apiKey)
         {
@@ -32,9 +31,6 @@ namespace Toggl.Phoebe.Bugsnag
 
             this.apiKey = apiKey;
             this.baseUrl = new Uri ("https://notify.bugsnag.com/");
-            this.httpClient = new HttpClient ();
-            this.httpClient.DefaultRequestHeaders.Accept.Add (
-                new MediaTypeWithQualityHeaderValue ("application/json"));
             AutoNotify = true;
 
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -57,11 +53,6 @@ namespace Toggl.Phoebe.Bugsnag
             if (disposing) {
                 AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
                 TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
-
-                if (httpClient != null) {
-                    httpClient.Dispose ();
-                    httpClient = null;
-                }
             }
         }
 
@@ -146,8 +137,15 @@ namespace Toggl.Phoebe.Bugsnag
             get { return notifierInfo; }
         }
 
-        protected HttpClient HttpClient {
-            get { return httpClient; }
+        protected HttpClient MakeHttpClient ()
+        {
+            // Cannot share HttpClient instance between threads as it might (and will) cause InvalidOperationExceptions
+            // occasionally.
+            var client = new HttpClient ();
+            client.DefaultRequestHeaders.Accept.Add (
+                new MediaTypeWithQualityHeaderValue ("application/json"));
+
+            return client;
         }
 
         public async void TrackUser ()
@@ -162,15 +160,17 @@ namespace Toggl.Phoebe.Bugsnag
             // Do the serialization and sending on the thread pool
             try {
                 await Task.Factory.StartNew (async delegate {
-                    var data = JsonConvert.SerializeObject (metrics);
+                    using (var httpClient = MakeHttpClient ()) {
+                        var data = JsonConvert.SerializeObject (metrics);
 
-                    var req = new HttpRequestMessage () {
-                        RequestUri = new Uri (baseUrl, "metrics"),
-                        Method = HttpMethod.Post,
-                        Content = new StringContent (data, System.Text.Encoding.UTF8, "application/json"),
-                    };
+                        var req = new HttpRequestMessage () {
+                            RequestUri = new Uri (baseUrl, "metrics"),
+                            Method = HttpMethod.Post,
+                            Content = new StringContent (data, System.Text.Encoding.UTF8, "application/json"),
+                        };
 
-                    await httpClient.SendAsync (req);
+                        await httpClient.SendAsync (req);
+                    }
                 }).ConfigureAwait (continueOnCapturedContext: false);
             } catch (Exception exc) {
                 LogError (String.Format ("Failed to track user: {0}", exc));

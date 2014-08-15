@@ -57,7 +57,7 @@ namespace Toggl.Phoebe.Net
                     string.Format ("{0}:api_token", authToken))));
         }
 
-        public Task Register (string authToken, PushService service, string regid)
+        public async Task Register (string authToken, PushService service, string regid)
         {
             using (var httpClient = MakeHttpClient ()) {
                 var url = new Uri (v8Url, "subscribe");
@@ -70,11 +70,11 @@ namespace Toggl.Phoebe.Net
                 };
                 AddAuthToken (authToken, httpReq);
 
-                return httpClient.SendAsync (httpReq);
+                await httpClient.SendAsync (httpReq).ConfigureAwait (false);
             }
         }
 
-        public Task Unregister (string authToken, PushService service, string regid)
+        public async Task Unregister (string authToken, PushService service, string regid)
         {
             using (var httpClient = MakeHttpClient ()) {
                 var url = new Uri (v8Url, "unsubscribe");
@@ -87,7 +87,7 @@ namespace Toggl.Phoebe.Net
                 };
                 AddAuthToken (authToken, httpReq);
 
-                return httpClient.SendAsync (httpReq);
+                await httpClient.SendAsync (httpReq).ConfigureAwait (false);
             }
         }
     }

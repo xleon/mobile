@@ -20,12 +20,20 @@ namespace Toggl.Joey.UI.Activities
         private Subscription<SyncStartedMessage> subscriptionSyncStarted;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private Subscription<TogglHttpResponseMessage> subscriptionTogglHttpResponse;
+        private int syncCount;
 
         private void OnSyncStarted (SyncStartedMessage msg)
         {
             if (Handle == IntPtr.Zero)
                 return;
-            Handler.PostDelayed (ResetSyncProgressBar, 2500);
+
+            // Make sure we only show sync progress bar after 2.5 seconds from the start of the latest sync.
+            var currentSync = ++syncCount;
+            Handler.PostDelayed (delegate {
+                if (currentSync == syncCount) {
+                    ResetSyncProgressBar ();
+                }
+            }, 2500);
         }
 
         private void OnSyncFinished (SyncFinishedMessage msg)

@@ -109,7 +109,7 @@ namespace Toggl.Joey.Net
                     var entry = rows.FirstOrDefault ();
 
                     // Make sure that we need to start sync
-                    var localDataNewer = entry != null && modifiedAt <= entry.ModifiedAt;
+                    var localDataNewer = entry != null && modifiedAt <= entry.ModifiedAt.ToUtc ();
                     var shouldBeSynced = lastSyncTime.HasValue && modifiedAt < lastSyncTime.Value;
 
                     if (localDataNewer || shouldBeSynced) {

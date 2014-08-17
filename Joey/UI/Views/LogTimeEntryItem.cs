@@ -41,9 +41,9 @@ namespace Toggl.Joey.UI.Views
             Initialize ();
         }
 
-        private void Initialize () 
+        private void Initialize ()
         {
-            view.SetBackgroundDrawable (Resources.GetDrawable(Resource.Drawable.MainListButton));
+            view.SetBackgroundDrawable (Resources.GetDrawable (Resource.Drawable.MainListButton));
             colorView = FindViewById (Resource.Id.ColorView);
             projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
             clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView);
@@ -54,15 +54,13 @@ namespace Toggl.Joey.UI.Views
             durationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
             billableIcon = view.FindViewById<ImageView> (Resource.Id.BillableIcon);
             tagsIcon = view.FindViewById<ImageView> (Resource.Id.TagsIcon);
-
-
         }
 
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
         {
             int widthUsed = 0;
             int heightUsed = 0;
-            int widthSize = MeasureSpec.GetSize(widthMeasureSpec);
+            int widthSize = MeasureSpec.GetSize (widthMeasureSpec);
 
             MeasureChildWithMargins (colorView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             heightUsed += getMeasuredHeightWithMargins (colorView); // should be 64dp in xml (Make it the height defining element of the layout)
@@ -92,7 +90,7 @@ namespace Toggl.Joey.UI.Views
             int contentLeft = getWidthWithMargins (colorView) + paddingLeft + 20;
 
             layoutView (projectTextView, contentLeft, currentTop, projectTextView.MeasuredWidth, projectTextView.MeasuredHeight);
-            int widthUsedFirstRow = getWidthWithMargins (projectTextView)  + contentLeft;
+            int widthUsedFirstRow = getWidthWithMargins (projectTextView) + contentLeft;
             layoutView (clientTextView, widthUsedFirstRow, currentTop + 8, clientTextView.MeasuredWidth, clientTextView.MeasuredHeight);
             if (taskTextView.Text.Length > 0) {
                 layoutView (taskTextView, contentLeft, currentTop, taskTextView.MeasuredWidth, taskTextView.MeasuredHeight);
@@ -101,11 +99,11 @@ namespace Toggl.Joey.UI.Views
             } else {
                 layoutView (descriptionTextView, contentLeft, currentTop, descriptionTextView.MeasuredWidth, descriptionTextView.MeasuredHeight);
             }
-            int continueButtonLeft = r - getWidthWithMargins (continueImageButton);
-            int durationLeft = continueButtonLeft - getWidthWithMargins (durationTextView);
-            int billableLeft = durationLeft - getWidthWithMargins (billableIcon);
-            int tagsLeft = billableLeft- getWidthWithMargins (tagsIcon);
 
+            int continueButtonLeft = r - getMeasuredWidthWithMargins (continueImageButton); // use getMeasuredWidthWithMargins instead getWidthWithMargins, otherwise car will break down.
+            int durationLeft = continueButtonLeft - getMeasuredWidthWithMargins (durationTextView);
+            int billableLeft = durationLeft - getMeasuredWidthWithMargins (billableIcon);
+            int tagsLeft = billableLeft - getMeasuredWidthWithMargins (tagsIcon);
             layoutView (continueButtonSeparator, continueButtonLeft, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
             layoutView (continueImageButton, continueButtonLeft, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
             layoutView (durationTextView, durationLeft, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
@@ -114,46 +112,48 @@ namespace Toggl.Joey.UI.Views
 
         }
 
-        private void layoutView(View view, int left, int top, int width, int height)
+        private void layoutView (View view, int left, int top, int width, int height)
         {
-            var margins = (MarginLayoutParams) view.LayoutParameters;
+            var margins = (MarginLayoutParams)view.LayoutParameters;
             int leftWithMargins = left + margins.LeftMargin;
             int topWithMargins = top + margins.TopMargin;
 
-            view.Layout(leftWithMargins, topWithMargins,
+            view.Layout (leftWithMargins, topWithMargins,
                 leftWithMargins + width, topWithMargins + height);
         }
 
         private int getWidthWithMargins (View child)
         {
-            MarginLayoutParams lp = (MarginLayoutParams) child.LayoutParameters;
+            MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.Width + lp.LeftMargin + lp.RightMargin;
         }
 
         private int getHeightWithMargins (View child)
         {
-            MarginLayoutParams lp = (MarginLayoutParams) child.LayoutParameters;
+            MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredHeight + lp.TopMargin + lp.BottomMargin;
         }
 
-        private int getMeasuredWidthWithMargins(View child)
+        private int getMeasuredWidthWithMargins (View child)
         {
-            MarginLayoutParams lp = (MarginLayoutParams) child.LayoutParameters;
+            MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredWidth + lp.LeftMargin + lp.RightMargin;
         }
 
-        private int getMeasuredHeightWithMargins(View child)
+        private int getMeasuredHeightWithMargins (View child)
         {
-            MarginLayoutParams lp = (MarginLayoutParams) child.LayoutParameters;
+            MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredHeight + lp.TopMargin + lp.BottomMargin;
         }
 
-        public override LayoutParams GenerateLayoutParams(IAttributeSet attrs) {
-            return new MarginLayoutParams(Context, attrs);
+        public override LayoutParams GenerateLayoutParams (IAttributeSet attrs)
+        {
+            return new MarginLayoutParams (Context, attrs);
         }
 
-        protected override LayoutParams GenerateDefaultLayoutParams() {
-            return new MarginLayoutParams(LayoutParams.WrapContent, LayoutParams.WrapContent);
+        protected override LayoutParams GenerateDefaultLayoutParams ()
+        {
+            return new MarginLayoutParams (LayoutParams.WrapContent, LayoutParams.WrapContent);
         }
 
     }

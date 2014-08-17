@@ -86,6 +86,9 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnPropertyChange (object sender, EventArgs e)
         {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero)
+                return;
             if (model.Id == Guid.Empty) {
                 Finish ();
             }

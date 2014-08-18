@@ -41,8 +41,9 @@
         android:id="@+id/TagsIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="3dp"
-        android:paddingTop="13dp"
+        android:layout_marginRight="1dp"
+        android:layout_marginLeft="1dp"
+        android:paddingTop="15dp"
         android:src="@drawable/IcTagsMiniGray" />
     <ImageView
         android:id="@+id/BillableIcon"
@@ -56,7 +57,7 @@
         style="@style/TimeEntryListItem.Text.Duration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="5dp"
+        android:layout_marginLeft="3dp"
         android:paddingTop="10dp"
         android:paddingRight="6dp"
         android:text="04:15:34" />

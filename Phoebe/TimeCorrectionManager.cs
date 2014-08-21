@@ -12,6 +12,7 @@ namespace Toggl.Phoebe
     {
         private const int SampleSize = 21;
 
+        private readonly object syncRoot = new Object ();
         private readonly Queue<TimeCorrectionData> sample = new Queue<TimeCorrectionData> (SampleSize + 1);
         private Subscription<TogglHttpResponseMessage> subscriptionHttpResponseMessage;
         private TimeSpan? lastCorrection;
@@ -50,11 +51,13 @@ namespace Toggl.Phoebe
 
         public void AddMeasurement (TimeCorrectionData data)
         {
-            sample.Enqueue (data);
-            lastCorrection = null;
+            lock (syncRoot) {
+                sample.Enqueue (data);
+                lastCorrection = null;
 
-            while (sample.Count >= SampleSize) {
-                sample.Dequeue ();
+                while (sample.Count >= SampleSize) {
+                    sample.Dequeue ();
+                }
             }
 
             SaveMeasurement (data);
@@ -80,33 +83,37 @@ namespace Toggl.Phoebe
 
             rows.Reverse ();
 
-            foreach (var measurement in rows) {
-                sample.Enqueue (measurement);
+            lock (syncRoot) {
+                foreach (var measurement in rows) {
+                    sample.Enqueue (measurement);
+                }
+                lastCorrection = null;
             }
-            lastCorrection = null;
         }
 
         public TimeSpan Correction {
             get {
-                if (lastCorrection.HasValue)
-                    return lastCorrection.Value;
+                lock (syncRoot) {
+                    if (lastCorrection.HasValue)
+                        return lastCorrection.Value;
 
-                if (sample.Count < 1) {
-                    lastCorrection = TimeSpan.Zero;
-                } else {
-                    // Get the median correction from the samples
-                    var dataset = sample.Select (a => a.Correction).ToList ();
-                    dataset.Sort ((a, b) => a.CompareTo (b));
-
-                    int midIdx = dataset.Count / 2;
-                    if (dataset.Count % 2 == 0) {
-                        lastCorrection = TimeSpan.FromTicks ((dataset [midIdx] + dataset [midIdx - 1]) / 2);
+                    if (sample.Count < 1) {
+                        lastCorrection = TimeSpan.Zero;
                     } else {
-                        lastCorrection = TimeSpan.FromTicks (dataset [midIdx]);
-                    }
-                }
+                        // Get the median correction from the samples
+                        var dataset = sample.Select (a => a.Correction).ToList ();
+                        dataset.Sort ((a, b) => a.CompareTo (b));
 
-                return lastCorrection.Value;
+                        int midIdx = dataset.Count / 2;
+                        if (dataset.Count % 2 == 0) {
+                            lastCorrection = TimeSpan.FromTicks ((dataset [midIdx] + dataset [midIdx - 1]) / 2);
+                        } else {
+                            lastCorrection = TimeSpan.FromTicks (dataset [midIdx]);
+                        }
+                    }
+
+                    return lastCorrection.Value;
+                }
             }
         }
     }

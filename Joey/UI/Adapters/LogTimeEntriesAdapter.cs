@@ -359,6 +359,7 @@ namespace Toggl.Joey.UI.Adapters
                     ClientTextView.Text = DataSource.Project.Client.Name;
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
+                    ClientTextView.Text = String.Empty;
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
@@ -366,6 +367,7 @@ namespace Toggl.Joey.UI.Adapters
                     TaskTextView.Text = DataSource.Task.Name;
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
+                    TaskTextView.Text = String.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 }
 

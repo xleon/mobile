@@ -6,7 +6,8 @@
         android:id="@+id/ColorView"
         android:layout_width="4dp"
         android:layout_height="60dp"
-        android:background="@drawable/ColoredSideShape" />
+        android:background="@drawable/ColoredSideShape"
+        android:layout_marginRight="10dp" />
     <TextView
         android:id="@+id/ProjectTextView"
         style="@style/TimeEntryListItem.Text.Project"
@@ -21,7 +22,13 @@
         android:layout_width="wrap_content"
         android:layout_marginLeft="8dp"
         android:text="Client"
-        android:paddingTop="6dp" />
+        android:paddingTop="10dp" />
+    <ImageView
+        android:id="@+id/FaderFirstLine"
+        android:background="@drawable/fadeOut"
+        android:layout_width="15dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="5dp" />
     <TextView
         android:id="@+id/TaskTextView"
         style="@style/TimeEntryListItem.Text.Task"
@@ -29,7 +36,11 @@
         android:layout_width="wrap_content"
         android:layout_marginRight="8dp"
         android:text=""
-        android:paddingTop="32dp" />
+        android:paddingTop="32dp"
+        android:paddingRight="4dp"
+        android:fadingEdge="horizontal"
+        android:singleLine="true"
+        android:ellipsize="marquee" />
     <TextView
         android:id="@+id/DescriptionTextView"
         style="@style/TimeEntryListItem.Text.Description"
@@ -61,6 +72,12 @@
         android:paddingTop="10dp"
         android:paddingRight="6dp"
         android:text="04:15:34" />
+    <ImageView
+        android:id="@+id/FaderSecondLine"
+        android:background="@drawable/fadeOut"
+        android:layout_width="15dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="32dp" />
     <View
         android:layout_width="1dp"
         android:layout_height="60dp"

@@ -3,4 +3,7 @@
     <declare-styleable name="FadeLinearLayout">
         <attr name="fadeLength" format="dimension" />
     </declare-styleable>
+    <declare-styleable name="FadeView">
+        <attr name="fadingLength" format="dimension" />
+    </declare-styleable>
 </resources>

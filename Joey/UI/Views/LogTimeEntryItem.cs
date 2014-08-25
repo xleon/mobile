@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
+﻿using Android.Content;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using System;
 
 namespace Toggl.Joey.UI.Views
 {
@@ -21,11 +15,11 @@ namespace Toggl.Joey.UI.Views
         private TextView descriptionTextView;
         private ImageButton continueImageButton;
         private View continueButtonSeparator;
-        private ImageView icTagsMiniGray;
-        private ImageView icBillableMiniGray;
         private TextView durationTextView;
         private ImageView billableIcon;
         private ImageView tagsIcon;
+        private ImageView faderFirstRow;
+        private ImageView faderSecondRow;
 
         private View view;
 
@@ -54,6 +48,9 @@ namespace Toggl.Joey.UI.Views
             durationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
             billableIcon = view.FindViewById<ImageView> (Resource.Id.BillableIcon);
             tagsIcon = view.FindViewById<ImageView> (Resource.Id.TagsIcon);
+            faderFirstRow = view.FindViewById<ImageView> (Resource.Id.FaderFirstLine);
+            faderSecondRow = view.FindViewById<ImageView> (Resource.Id.FaderSecondLine);
+
         }
 
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
@@ -63,18 +60,19 @@ namespace Toggl.Joey.UI.Views
             int widthSize = MeasureSpec.GetSize (widthMeasureSpec);
 
             MeasureChildWithMargins (colorView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
-            heightUsed += getMeasuredHeightWithMargins (colorView); // should be 64dp in xml (Make it the height defining element of the layout)
+            heightUsed += getMeasuredHeightWithMargins (colorView);
 
             MeasureChildWithMargins (projectTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (descriptionTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (clientTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (taskTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
-
             MeasureChildWithMargins (continueButtonSeparator, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (continueImageButton, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (durationTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (billableIcon, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (tagsIcon, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
+            MeasureChildWithMargins (faderFirstRow, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
+            MeasureChildWithMargins (faderSecondRow, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
 
             int heightSize = heightUsed + PaddingTop + PaddingBottom;
             SetMeasuredDimension (widthSize, heightSize);
@@ -83,33 +81,71 @@ namespace Toggl.Joey.UI.Views
         protected override void OnLayout (bool changed, int l, int t, int r, int b)
         {
             int paddingLeft = PaddingLeft;
-            int paddingTop = PaddingTop;
-            int currentTop = paddingTop;
+            int currentTop = PaddingTop;
 
             layoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
-            int contentLeft = getWidthWithMargins (colorView) + paddingLeft + 20;
+            paddingLeft += getWidthWithMargins (colorView);
 
-            layoutView (projectTextView, contentLeft, currentTop, projectTextView.MeasuredWidth, projectTextView.MeasuredHeight);
-            int widthUsedFirstRow = getWidthWithMargins (projectTextView) + contentLeft;
-            layoutView (clientTextView, widthUsedFirstRow, currentTop + 8, clientTextView.MeasuredWidth, clientTextView.MeasuredHeight);
-            if (taskTextView.Text.Length > 0) {
-                layoutView (taskTextView, contentLeft, currentTop, taskTextView.MeasuredWidth, taskTextView.MeasuredHeight);
-                int widthUsedSecondRow = getWidthWithMargins (taskTextView) + contentLeft;
-                layoutView (descriptionTextView, widthUsedSecondRow, currentTop, descriptionTextView.MeasuredWidth, descriptionTextView.MeasuredHeight);
-            } else {
-                layoutView (descriptionTextView, contentLeft, currentTop, descriptionTextView.MeasuredWidth, descriptionTextView.MeasuredHeight);
+            int durationBar = r - getMeasuredWidthWithMargins (continueImageButton);
+            layoutView (continueButtonSeparator, durationBar, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
+            layoutView (continueImageButton, durationBar, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
+            int secondLineMark = durationBar;
+            durationBar -= getMeasuredWidthWithMargins (durationTextView);
+            layoutView (durationTextView, durationBar, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
+
+            if (billableIcon.Visibility == ViewStates.Visible) {
+                durationBar -= getMeasuredWidthWithMargins (billableIcon);
+                layoutView (billableIcon, durationBar, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
             }
+            if (tagsIcon.Visibility == ViewStates.Visible) {
+                durationBar -= getMeasuredWidthWithMargins (tagsIcon);
+                layoutView (tagsIcon, durationBar, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
+            }
+            durationBar -= 15;
+            int usableWidthFirstLine = durationBar - paddingLeft;
+            Boolean clientVisible = clientTextView.Text != String.Empty;
+            int widthNeededFirstLine = clientVisible ? clientTextView.MeasuredWidth + projectTextView.MeasuredWidth : projectTextView.MeasuredWidth;
 
-            int continueButtonLeft = r - getMeasuredWidthWithMargins (continueImageButton); // use getMeasuredWidthWithMargins instead getWidthWithMargins, otherwise car will break down.
-            int durationLeft = continueButtonLeft - getMeasuredWidthWithMargins (durationTextView);
-            int billableLeft = durationLeft - getMeasuredWidthWithMargins (billableIcon);
-            int tagsLeft = billableLeft - getMeasuredWidthWithMargins (tagsIcon);
-            layoutView (continueButtonSeparator, continueButtonLeft, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
-            layoutView (continueImageButton, continueButtonLeft, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
-            layoutView (durationTextView, durationLeft, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
-            layoutView (billableIcon, billableLeft, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
-            layoutView (tagsIcon, tagsLeft, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
+            if (widthNeededFirstLine > usableWidthFirstLine) {
+                if (clientVisible) {
+                    if (projectTextView.MeasuredWidth > usableWidthFirstLine) {
+                        layoutView (projectTextView, paddingLeft, currentTop, usableWidthFirstLine, projectTextView.MeasuredHeight);    
+                    } else {
+                        layoutView (projectTextView, paddingLeft, currentTop, projectTextView.MeasuredWidth, projectTextView.MeasuredHeight);
+                        layoutView (clientTextView, paddingLeft + projectTextView.MeasuredWidth, currentTop, usableWidthFirstLine - projectTextView.MeasuredWidth, clientTextView.MeasuredHeight);
+                    }
+                } else {
+                    layoutView (projectTextView, paddingLeft, currentTop, usableWidthFirstLine, projectTextView.MeasuredHeight);
+                }
+            } else {
+                layoutView (projectTextView, paddingLeft, currentTop, projectTextView.MeasuredWidth, projectTextView.MeasuredHeight);
+                layoutView (clientTextView, paddingLeft + projectTextView.MeasuredWidth, currentTop, clientTextView.MeasuredWidth, clientTextView.MeasuredHeight);
+            }
+            layoutView (faderFirstRow, durationBar - faderFirstRow.MeasuredWidth, currentTop, faderFirstRow.MeasuredWidth, faderFirstRow.MeasuredHeight);
 
+
+            secondLineMark -= 15;
+            int usableWidthSecondLine = secondLineMark - paddingLeft;
+            Boolean taskVisible = taskTextView.Text != String.Empty;
+            int widthNeededSecondLine = taskVisible ? descriptionTextView.MeasuredWidth + taskTextView.MeasuredWidth : descriptionTextView.MeasuredWidth;
+
+            if (widthNeededSecondLine > usableWidthSecondLine) {
+                if (taskVisible) {
+                    if (taskTextView.MeasuredWidth > usableWidthSecondLine) {
+                        layoutView (taskTextView, paddingLeft, currentTop, usableWidthSecondLine, taskTextView.MeasuredHeight);
+                    } else {
+                        layoutView (taskTextView, paddingLeft, currentTop, taskTextView.MeasuredWidth, taskTextView.MeasuredHeight);
+                        usableWidthSecondLine -= taskTextView.MeasuredWidth;
+                        layoutView (descriptionTextView, paddingLeft + taskTextView.MeasuredWidth, currentTop, usableWidthSecondLine, descriptionTextView.MeasuredHeight);
+                    }
+                } else {
+                    layoutView (descriptionTextView, paddingLeft, currentTop, usableWidthSecondLine, descriptionTextView.MeasuredHeight);
+                }
+            } else {
+                layoutView (taskTextView, paddingLeft, currentTop, taskTextView.MeasuredWidth, taskTextView.MeasuredHeight);
+                layoutView (descriptionTextView, paddingLeft + taskTextView.MeasuredWidth, currentTop, descriptionTextView.MeasuredWidth, descriptionTextView.MeasuredHeight);
+            }
+            layoutView (faderSecondRow, secondLineMark - faderSecondRow.MeasuredWidth, currentTop, faderSecondRow.MeasuredWidth, faderSecondRow.MeasuredHeight);
         }
 
         private void layoutView (View view, int left, int top, int width, int height)

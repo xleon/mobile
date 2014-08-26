@@ -86,66 +86,59 @@ namespace Toggl.Joey.UI.Views
             layoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
             paddingLeft += getWidthWithMargins (colorView);
 
-            int durationBar = r - getMeasuredWidthWithMargins (continueImageButton);
-            layoutView (continueButtonSeparator, durationBar, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
+            int durationBar = r - continueImageButton.MeasuredWidth;
+            layoutView (continueButtonSeparator, durationBar + 6, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
             layoutView (continueImageButton, durationBar, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
             int secondLineMark = durationBar;
-            durationBar -= getMeasuredWidthWithMargins (durationTextView);
+            durationBar -= durationTextView.MeasuredWidth;
             layoutView (durationTextView, durationBar, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
 
             if (billableIcon.Visibility == ViewStates.Visible) {
-                durationBar -= getMeasuredWidthWithMargins (billableIcon);
+                durationBar -= billableIcon.MeasuredWidth;
                 layoutView (billableIcon, durationBar, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
             }
             if (tagsIcon.Visibility == ViewStates.Visible) {
-                durationBar -= getMeasuredWidthWithMargins (tagsIcon);
+                durationBar -= tagsIcon.MeasuredWidth;
                 layoutView (tagsIcon, durationBar, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
             }
+
             durationBar -= 15;
             int usableWidthFirstLine = durationBar - paddingLeft;
-            Boolean clientVisible = clientTextView.Text != String.Empty;
-            int widthNeededFirstLine = clientVisible ? clientTextView.MeasuredWidth + projectTextView.MeasuredWidth : projectTextView.MeasuredWidth;
+            int firstWidth = getFirstElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth);
 
-            if (widthNeededFirstLine > usableWidthFirstLine) {
-                if (clientVisible) {
-                    if (projectTextView.MeasuredWidth > usableWidthFirstLine) {
-                        layoutView (projectTextView, paddingLeft, currentTop, usableWidthFirstLine, projectTextView.MeasuredHeight);    
-                    } else {
-                        layoutView (projectTextView, paddingLeft, currentTop, projectTextView.MeasuredWidth, projectTextView.MeasuredHeight);
-                        layoutView (clientTextView, paddingLeft + projectTextView.MeasuredWidth, currentTop, usableWidthFirstLine - projectTextView.MeasuredWidth, clientTextView.MeasuredHeight);
-                    }
-                } else {
-                    layoutView (projectTextView, paddingLeft, currentTop, usableWidthFirstLine, projectTextView.MeasuredHeight);
-                }
-            } else {
-                layoutView (projectTextView, paddingLeft, currentTop, projectTextView.MeasuredWidth, projectTextView.MeasuredHeight);
-                layoutView (clientTextView, paddingLeft + projectTextView.MeasuredWidth, currentTop, clientTextView.MeasuredWidth, clientTextView.MeasuredHeight);
+            layoutView (projectTextView, paddingLeft, currentTop, firstWidth, projectTextView.MeasuredHeight);    
+            if (clientTextView.Text != String.Empty) {
+                layoutView (clientTextView, paddingLeft + firstWidth, currentTop, getSecondElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth, clientTextView.MeasuredWidth), clientTextView.MeasuredHeight);    
             }
-            layoutView (faderFirstRow, durationBar - faderFirstRow.MeasuredWidth, currentTop, faderFirstRow.MeasuredWidth, faderFirstRow.MeasuredHeight);
-
+            layoutView (faderFirstRow, usableWidthFirstLine + paddingLeft - faderFirstRow.MeasuredWidth, currentTop, faderFirstRow.MeasuredWidth, faderFirstRow.MeasuredHeight);
 
             secondLineMark -= 15;
             int usableWidthSecondLine = secondLineMark - paddingLeft;
-            Boolean taskVisible = taskTextView.Text != String.Empty;
-            int widthNeededSecondLine = taskVisible ? descriptionTextView.MeasuredWidth + taskTextView.MeasuredWidth : descriptionTextView.MeasuredWidth;
 
-            if (widthNeededSecondLine > usableWidthSecondLine) {
-                if (taskVisible) {
-                    if (taskTextView.MeasuredWidth > usableWidthSecondLine) {
-                        layoutView (taskTextView, paddingLeft, currentTop, usableWidthSecondLine, taskTextView.MeasuredHeight);
-                    } else {
-                        layoutView (taskTextView, paddingLeft, currentTop, taskTextView.MeasuredWidth, taskTextView.MeasuredHeight);
-                        usableWidthSecondLine -= taskTextView.MeasuredWidth;
-                        layoutView (descriptionTextView, paddingLeft + taskTextView.MeasuredWidth, currentTop, usableWidthSecondLine, descriptionTextView.MeasuredHeight);
-                    }
-                } else {
-                    layoutView (descriptionTextView, paddingLeft, currentTop, usableWidthSecondLine, descriptionTextView.MeasuredHeight);
-                }
+            if (taskTextView.Text != String.Empty) {
+                layoutView (taskTextView, paddingLeft, currentTop, getFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth), taskTextView.MeasuredHeight);    
+                layoutView (descriptionTextView, paddingLeft + getFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth), currentTop, getSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);    
             } else {
-                layoutView (taskTextView, paddingLeft, currentTop, taskTextView.MeasuredWidth, taskTextView.MeasuredHeight);
-                layoutView (descriptionTextView, paddingLeft + taskTextView.MeasuredWidth, currentTop, descriptionTextView.MeasuredWidth, descriptionTextView.MeasuredHeight);
+                layoutView (descriptionTextView, paddingLeft, currentTop, getSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);    
             }
             layoutView (faderSecondRow, secondLineMark - faderSecondRow.MeasuredWidth, currentTop, faderSecondRow.MeasuredWidth, faderSecondRow.MeasuredHeight);
+        }
+
+        private int getFirstElementWidth (int usable, int first)
+        {
+            return first > usable ? usable : first;
+        }
+
+        private int getSecondElementWidth (int usable, int first, int second)
+        {
+            int firstActual = getFirstElementWidth (usable, first);
+            if (firstActual == usable) {
+                return 0;
+            } else if (usable < firstActual + second) {
+                return usable - firstActual;
+            } else {
+                return second;
+            }
         }
 
         private void layoutView (View view, int left, int top, int width, int height)

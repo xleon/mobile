@@ -7,22 +7,22 @@
         android:layout_width="4dp"
         android:layout_height="60dp"
         android:background="@drawable/ColoredSideShape"
-        android:layout_marginRight="10dp" />
+        android:layout_marginRight="12dp" />
     <TextView
         android:id="@+id/ProjectTextView"
         style="@style/TimeEntryListItem.Text.Project"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:text="Project"
-        android:paddingTop="6dp" />
+        android:paddingTop="5dp" />
     <TextView
         android:id="@+id/ClientTextView"
         style="@style/TimeEntryListItem.Text.Client"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_marginLeft="8dp"
+        android:paddingLeft="8dp"
         android:text="Client"
-        android:paddingTop="10dp" />
+        android:paddingTop="9dp" />
     <ImageView
         android:id="@+id/FaderFirstLine"
         android:background="@drawable/fadeOut"
@@ -34,13 +34,8 @@
         style="@style/TimeEntryListItem.Text.Task"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_marginRight="8dp"
-        android:text=""
         android:paddingTop="32dp"
-        android:paddingRight="4dp"
-        android:fadingEdge="horizontal"
-        android:singleLine="true"
-        android:ellipsize="marquee" />
+        android:paddingRight="5dp" />
     <TextView
         android:id="@+id/DescriptionTextView"
         style="@style/TimeEntryListItem.Text.Description"
@@ -52,15 +47,15 @@
         android:id="@+id/TagsIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="1dp"
-        android:layout_marginLeft="1dp"
+        android:paddingLeft="3dp"
+        android:paddingRight="3dp"
         android:paddingTop="15dp"
         android:src="@drawable/IcTagsMiniGray" />
     <ImageView
         android:id="@+id/BillableIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="3dp"
+        android:paddingRight="7dp"
         android:paddingTop="13dp"
         android:src="@drawable/IcBillableMiniGray" />
     <TextView
@@ -68,9 +63,8 @@
         style="@style/TimeEntryListItem.Text.Duration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="3dp"
         android:paddingTop="10dp"
-        android:paddingRight="6dp"
+        android:paddingRight="7dp"
         android:text="04:15:34" />
     <ImageView
         android:id="@+id/FaderSecondLine"
@@ -85,7 +79,7 @@
         android:id="@+id/ContinueButtonSeparator" />
     <ImageButton
         android:src="@drawable/IcContinue"
-        android:layout_width="40dp"
+        android:layout_width="49dp"
         android:layout_height="60dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"

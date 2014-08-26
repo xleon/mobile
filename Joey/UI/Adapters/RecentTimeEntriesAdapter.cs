@@ -28,7 +28,7 @@ namespace Toggl.Joey.UI.Adapters
 
             if (viewType == ViewTypeContent) {
                 if (view == null) {
-                    view = (RecentTimeEntryItem) LayoutInflater.FromContext (parent.Context).Inflate (
+                    view = (RecentTimeEntryItem)LayoutInflater.FromContext (parent.Context).Inflate (
                         Resource.Layout.RecentTimeEntryItemRow, parent, false);
                     view.Tag = new RecentTimeEntryListItemHolder (view);
                 }
@@ -183,6 +183,7 @@ namespace Toggl.Joey.UI.Adapters
                     TaskTextView.Text = DataSource.Task.Name;
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
+                    TaskTextView.Text = String.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 }
 

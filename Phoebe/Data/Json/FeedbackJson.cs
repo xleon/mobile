@@ -23,6 +23,12 @@ namespace Toggl.Phoebe.Data.Json
 
         [JsonProperty ("date")]
         public DateTime Timestamp { get; set; }
+
+        [JsonProperty ("attachment")]
+        public byte[] AttachmentData { get; set; }
+
+        [JsonProperty ("attachment_name")]
+        public string AttachmentName { get; set; }
     }
 }
 

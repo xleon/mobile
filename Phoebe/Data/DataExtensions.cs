@@ -38,6 +38,12 @@ namespace Toggl.Phoebe.Data
             return updateCount > 0;
         }
 
+        public static string ToIdString (this CommonData data)
+        {
+            var id = data.RemoteId.HasValue ? data.RemoteId.ToString () : data.Id.ToString ();
+            return String.Concat (data.GetType ().Name, "#", id);
+        }
+
         public static async Task<CommonData> PutDataAsync (this IDataStore ds, CommonData data)
         {
             var type = data.GetType ();

@@ -51,8 +51,9 @@ namespace Toggl.Phoebe
         private void LogToFile (Level level, string tag, string message, Exception exc)
         {
             var logStore = ServiceContainer.Resolve<LogStore> ();
-
-            logStore.Record (level, tag, message, exc);
+            if (logStore != null) {
+                logStore.Record (level, tag, message, exc);
+            }
         }
 
         private void LogToBugsnag (Level level, string tag, string message, Exception exc)
@@ -76,7 +77,10 @@ namespace Toggl.Phoebe
                 md.AddToTab ("Logger", "Tag", tag);
                 md.AddToTab ("Logger", "Message", message);
 
-                ServiceContainer.Resolve<BugsnagClient> ().Notify (exc, severity, md);
+                var bugsnagClient = ServiceContainer.Resolve<BugsnagClient> ();
+                if (bugsnagClient != null) {
+                    bugsnagClient.Notify (exc, severity, md);
+                }
             }
         }
 

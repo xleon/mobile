@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
+using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -39,6 +40,9 @@ namespace Toggl.Phoebe.Tests
                 databasePath = Path.GetTempFileName ();
                 return new SqliteDataStore (databasePath);
             });
+            ServiceContainer.Register<LogStore> ((LogStore)null);
+            ServiceContainer.Register<BugsnagClient> ((BugsnagClient)null);
+            ServiceContainer.Register<Logger> ();
         }
 
         [TearDown]

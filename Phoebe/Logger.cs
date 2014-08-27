@@ -15,13 +15,16 @@ namespace Toggl.Phoebe
         }
 
         private readonly Level threshold;
+        private readonly Level consoleThreshold;
 
         public Logger ()
         {
             #if DEBUG
             threshold = Level.Debug;
+            consoleThreshold = Level.Debug;
             #else
             threshold = Level.Info;
+            consoleThreshold = Level.Warning;
             #endif
         }
 
@@ -32,14 +35,27 @@ namespace Toggl.Phoebe
 
         private void Process (Level level, string tag, string message, Exception exc = null)
         {
-            var logStore = ServiceContainer.Resolve<LogStore> ();
-
-            Log (level, tag, message, exc);
-            logStore.Record (level, tag, message, exc);
-            SendException (level, tag, message, exc);
+            LogToConsole (level, tag, message, exc);
+            LogToFile (level, tag, message, exc);
+            LogToBugsnag (level, tag, message, exc);
         }
 
-        private void SendException (Level level, string tag, string message, Exception exc)
+        private void LogToConsole (Level level, string tag, string message, Exception exc)
+        {
+            if (level < consoleThreshold)
+                return;
+
+            WriteConsole (level, tag, message, exc);
+        }
+
+        private void LogToFile (Level level, string tag, string message, Exception exc)
+        {
+            var logStore = ServiceContainer.Resolve<LogStore> ();
+
+            logStore.Record (level, tag, message, exc);
+        }
+
+        private void LogToBugsnag (Level level, string tag, string message, Exception exc)
         {
             // Send warnings and errors to Bugsnag:
             if (level >= Level.Warning) {
@@ -64,7 +80,7 @@ namespace Toggl.Phoebe
             }
         }
 
-        protected virtual void Log (Level level, string tag, string message, Exception exc)
+        protected virtual void WriteConsole (Level level, string tag, string message, Exception exc)
         {
             Console.WriteLine ("[{1}] {0}: {2}", level, tag, message);
             if (exc != null) {

@@ -13,7 +13,7 @@ namespace Toggl.Joey
         {
         }
 
-        protected override void Log (Level level, string tag, string message, Exception exc)
+        protected override void WriteConsole (Level level, string tag, string message, Exception exc)
         {
             switch (level) {
             case Level.Debug:

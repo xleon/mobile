@@ -32,8 +32,15 @@ namespace Toggl.Phoebe
 
         private void Process (Level level, string tag, string message, Exception exc = null)
         {
-            Log (level, tag, message, exc);
+            var logStore = ServiceContainer.Resolve<LogStore> ();
 
+            Log (level, tag, message, exc);
+            logStore.Record (level, tag, message, exc);
+            SendException (level, tag, message, exc);
+        }
+
+        private void SendException (Level level, string tag, string message, Exception exc)
+        {
             // Send warnings and errors to Bugsnag:
             if (level >= Level.Warning) {
                 Toggl.Phoebe.Bugsnag.Data.ErrorSeverity severity;

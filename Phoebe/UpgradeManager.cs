@@ -4,12 +4,15 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe
 {
-    public class UpgradeManger
+    public sealed class UpgradeManger
     {
+        private const string Tag = "UpgradeManager";
+
         public void TryUpgrade ()
         {
             var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
             var platformInfo = ServiceContainer.Resolve<IPlatformInfo> ();
+            var log = ServiceContainer.Resolve<Logger> ();
 
             var oldVersion = settingsStore.LastAppVersion;
             var newVersion = platformInfo.AppVersion;
@@ -17,6 +20,8 @@ namespace Toggl.Phoebe
             // User hasn't upgraded, do nothing.
             if (oldVersion == newVersion)
                 return;
+
+            log.Info (Tag, "App has been upgraded from '{0}' to '{1}'", oldVersion, newVersion);
 
             UpgradeAlaways ();
 

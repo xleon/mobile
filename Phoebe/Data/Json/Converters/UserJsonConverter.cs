@@ -1,11 +1,14 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Merge;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class UserJsonConverter : BaseJsonConverter
     {
+        private const string Tag = "UserJsonConverter";
+
         public UserJson Export (IDataStoreContext ctx, UserData data)
         {
             var defaultWorkspaceId = GetRemoteId<WorkspaceData> (ctx, data.DefaultWorkspaceId);
@@ -52,6 +55,8 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         public UserData Import (IDataStoreContext ctx, UserJson json, Guid? localIdHint = null, UserData mergeBase = null)
         {
+            var log = ServiceContainer.Resolve<Logger> ();
+
             var data = GetByRemoteId<UserData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new UserMerger (mergeBase) : null;
@@ -60,6 +65,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
+                    log.Info (Tag, "Deleting local data for {0}.", data.ToIdString ());
                     ctx.Delete (data);
                     data = null;
                 }
@@ -72,7 +78,15 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     data = merger.Result;
                 }
 
+                if (merger != null) {
+                    log.Info (Tag, "Importing {0}, merging with local data.", data.ToIdString ());
+                } else {
+                    log.Info (Tag, "Importing {0}, replacing local data.", data.ToIdString ());
+                }
+
                 data = ctx.Put (data);
+            } else {
+                log.Info (Tag, "Skipping import of {0}.", json.ToIdString ());
             }
 
             return data;

@@ -87,7 +87,6 @@ namespace Toggl.Phoebe.Net
             var log = ServiceContainer.Resolve<Logger> ();
 
             var syncDuration = Stopwatch.StartNew ();
-            log.Info (Tag, "Starting {0} sync.", mode.ToString ());
 
             // Resolve automatic sync mode to actual mode
             if (mode == SyncMode.Auto) {
@@ -96,6 +95,9 @@ namespace Toggl.Phoebe.Net
                 } else {
                     mode = SyncMode.Full;
                 }
+                log.Info (Tag, "Starting automatic ({0}) sync.", mode.ToString ());
+            } else {
+                log.Info (Tag, "Starting {0} sync.", mode.ToString ());
             }
 
             bus.Send (new SyncStartedMessage (this, mode));

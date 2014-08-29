@@ -9,6 +9,8 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public sealed class TimeEntryJsonConverter : BaseJsonConverter
     {
+        private const string Tag = "TimeEntryJsonConverter";
+
         public TimeEntryJson Export (IDataStoreContext ctx, TimeEntryData data)
         {
             var userId = GetRemoteId<UserData> (ctx, data.UserId);
@@ -178,6 +180,8 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         public TimeEntryData Import (IDataStoreContext ctx, TimeEntryJson json, Guid? localIdHint = null, TimeEntryData mergeBase = null)
         {
+            var log = ServiceContainer.Resolve<Logger> ();
+
             var data = GetByRemoteId<TimeEntryData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new TimeEntryMerger (mergeBase) : null;
@@ -187,6 +191,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             if (json.DeletedAt.HasValue) {
                 if (data != null) {
                     // TODO: Delete TimeEntryTag intermediate data
+                    log.Info (Tag, "Deleting local data for {0}.", data.ToIdString ());
                     ctx.Delete (data);
                     data = null;
                 }
@@ -199,12 +204,21 @@ namespace Toggl.Phoebe.Data.Json.Converters
                     data = merger.Result;
                 }
 
+                if (merger != null) {
+                    log.Info (Tag, "Importing {0}, merging with local data.", data.ToIdString ());
+                } else {
+                    log.Info (Tag, "Importing {0}, replacing local data.", data.ToIdString ());
+                }
+
                 data = ctx.Put (data);
 
                 // Also update tags from the JSON we are merging:
                 if (mergeBase == null || (mergeBase != null && mergeBase.ModifiedAt != data.ModifiedAt)) {
+                    log.Info (Tag, "Resetting tags for {0}.", data.ToIdString ());
                     ResetTags (ctx, data, json);
                 }
+            } else {
+                log.Info (Tag, "Skipping import of {0}.", json.ToIdString ());
             }
 
             return data;

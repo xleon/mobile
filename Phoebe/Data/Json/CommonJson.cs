@@ -18,5 +18,10 @@ namespace Toggl.Phoebe.Data.Json
 
         [JsonProperty ("server_deleted_at", NullValueHandling = NullValueHandling.Ignore)]
         public DateTime? DeletedAt { get; set; }
+
+        internal string ToIdString ()
+        {
+            return String.Concat (GetType ().Name, "#", Id.ToString ());
+        }
     }
 }

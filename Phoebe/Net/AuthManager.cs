@@ -118,19 +118,28 @@ namespace Toggl.Phoebe.Net
 
         public Task<bool> Authenticate (string username, string password)
         {
+            var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
+
+            log.Info (Tag, "Authenticating with email ({0}).", username);
             return Authenticate (() => client.GetUser (username, password));
         }
 
         public Task<bool> AuthenticateWithGoogle (string accessToken)
         {
+            var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
+
+            log.Info (Tag, "Authenticating with Google access token.");
             return Authenticate (() => client.GetUser (accessToken));
         }
 
         public Task<bool> Signup (string email, string password)
         {
+            var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
+
+            log.Info (Tag, "Signing up with email ({0}).", email);
             return Authenticate (() => client.Create (new UserJson () {
                 Email = email,
                 Password = password,
@@ -140,7 +149,10 @@ namespace Toggl.Phoebe.Net
 
         public Task<bool> SignupWithGoogle (string accessToken)
         {
+            var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
+
+            log.Info (Tag, "Signing up with email Google access token.");
             return Authenticate (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
@@ -151,6 +163,9 @@ namespace Toggl.Phoebe.Net
         {
             if (!IsAuthenticated)
                 throw new InvalidOperationException ("Cannot forget credentials which don't exist.");
+
+            var log = ServiceContainer.Resolve<Logger> ();
+            log.Info (Tag, "Forgetting current user.");
 
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             credStore.UserId = null;

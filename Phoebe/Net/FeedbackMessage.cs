@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.Net
                 return false;
 
             var json = new FeedbackJson () {
-                Subject = "-- TOGGL MOBILE FEEDBACK",
+                Subject = "-- Toggl Mobile Feedback",
                 IsMobile = true,
             };
 
@@ -38,8 +38,13 @@ namespace Toggl.Phoebe.Net
             await AppendTimeEntryStats (sb).ConfigureAwait (false);
 
             var client = ServiceContainer.Resolve<ITogglClient> ();
+            var logStore = ServiceContainer.Resolve<LogStore> ();
             try {
                 json.Message = sb.ToString ();
+                json.AttachmentData = await logStore.Compress ().ConfigureAwait (false);
+                if (json.AttachmentData != null)
+                    json.AttachmentName = "log.gz";
+
                 await client.CreateFeedback (json).ConfigureAwait (false);
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();

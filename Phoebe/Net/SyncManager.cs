@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
@@ -85,6 +86,8 @@ namespace Toggl.Phoebe.Net
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var log = ServiceContainer.Resolve<Logger> ();
 
+            var syncDuration = Stopwatch.StartNew ();
+
             // Resolve automatic sync mode to actual mode
             if (mode == SyncMode.Auto) {
                 if (lastRun != null && lastRun > Time.UtcNow - TimeSpan.FromMinutes (5)) {
@@ -92,6 +95,9 @@ namespace Toggl.Phoebe.Net
                 } else {
                     mode = SyncMode.Full;
                 }
+                log.Info (Tag, "Starting automatic ({0}) sync.", mode.ToString ());
+            } else {
+                log.Info (Tag, "Starting {0} sync.", mode.ToString ());
             }
 
             bus.Send (new SyncStartedMessage (this, mode));
@@ -122,6 +128,8 @@ namespace Toggl.Phoebe.Net
                 hasErrors = true;
                 ex = e;
             } finally {
+                syncDuration.Stop ();
+                log.Info (Tag, "Sync finished in {0}ms{1}.", syncDuration.ElapsedMilliseconds, hasErrors ? " (with errors)" : String.Empty);
                 bus.Send (new SyncFinishedMessage (this, mode, hasErrors, ex));
             }
 
@@ -150,6 +158,14 @@ namespace Toggl.Phoebe.Net
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var store = ServiceContainer.Resolve<IDataStore> ();
+            var log = ServiceContainer.Resolve<Logger> ();
+
+            if (lastRun == null) {
+                log.Info (Tag, "Importing all user data from server.");
+            } else {
+                log.Info (Tag, "Importing changes from server (since {0}).", lastRun);
+            }
+
             var changes = await client.GetChanges (lastRun).ConfigureAwait (false);
 
             // Import data (in parallel batches)
@@ -224,6 +240,8 @@ namespace Toggl.Phoebe.Net
             var log = ServiceContainer.Resolve<Logger> ();
             var hasErrors = false;
 
+            log.Info (Tag, "Pushing local changes to server.");
+
             // Construct dependency graph:
             var allDirtyData = await GetAllDirtyData ().ConfigureAwait (false);
             var graph = await RelatedDataGraph.FromDirty (allDirtyData).ConfigureAwait (false);
@@ -242,8 +260,10 @@ namespace Toggl.Phoebe.Net
                         if (dataObject.RemoteId == null) {
                             // Creation has failed, so remove the whole branch.
                             graph.RemoveBranch (dataObject);
+                            log.Info (Tag, "Skipping {0} and everything that depends on it.", dataObject.ToIdString ());
                         } else {
                             graph.Remove (dataObject);
+                            log.Info (Tag, "Skipping {0}.", dataObject.ToIdString ());
                         }
                     } else {
                         tasks.Add (PushDataObject (dataObject));
@@ -271,13 +291,12 @@ namespace Toggl.Phoebe.Net
                         hasErrors = true;
 
                         // Log error
-                        var id = dataObject.RemoteId.HasValue ? dataObject.RemoteId.ToString () : dataObject.Id.ToString ();
                         if (error is ServerValidationException) {
-                            log.Info (Tag, error, "Server rejected {0}#{1}.", dataObject.GetType ().Name, id);
+                            log.Info (Tag, error, "Server rejected {0}.", dataObject.ToIdString ());
                         } else if (error is System.Net.Http.HttpRequestException) {
-                            log.Info (Tag, error, "Failed to sync {0}#{1}.", dataObject.GetType ().Name, id);
+                            log.Info (Tag, error, "Failed to sync {0}.", dataObject.ToIdString ());
                         } else {
-                            log.Warning (Tag, error, "Failed to sync {0}#{1}.", dataObject.GetType ().Name, id);
+                            log.Warning (Tag, error, "Failed to sync {0}.", dataObject.ToIdString ());
                         }
                     } else {
                         graph.Remove (dataObject);
@@ -337,6 +356,7 @@ namespace Toggl.Phoebe.Net
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var store = ServiceContainer.Resolve<IDataStore> ();
+            var log = ServiceContainer.Resolve<Logger> ();
 
             Exception error = null;
 
@@ -344,14 +364,20 @@ namespace Toggl.Phoebe.Net
                 if (dataObject.DeletedAt != null) {
                     if (dataObject.RemoteId != null) {
                         // Delete model
+                        log.Info (Tag, "Deleting {0} from server.", dataObject.ToIdString ());
+
                         var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                         await client.Delete (json).ConfigureAwait (false);
                         await store.DeleteAsync (dataObject).ConfigureAwait (false);
                     } else {
                         // Some weird combination where the DeletedAt exists and remote Id doesn't:
+                        log.Info (Tag, "Deleting {0} from local store.", dataObject.ToIdString ());
+
                         await store.DeleteAsync (dataObject).ConfigureAwait (false);
                     }
                 } else if (dataObject.RemoteId != null) {
+                    log.Info (Tag, "Pushing {0} changes to server.", dataObject.ToIdString ());
+
                     var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                     json = await client.Update (json).ConfigureAwait (false);
                     await store.ExecuteInTransactionAsync (ctx => json.Import (
@@ -359,6 +385,8 @@ namespace Toggl.Phoebe.Net
                         mergeBase: dataObject
                     )).ConfigureAwait (false);
                 } else {
+                    log.Info (Tag, "Pushing {0} to server.", dataObject.ToIdString ());
+
                     var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                     json = await client.Create (json).ConfigureAwait (false);
                     await store.ExecuteInTransactionAsync (ctx => json.Import (

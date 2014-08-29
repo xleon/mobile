@@ -21,6 +21,7 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<IDataStore> (CreateDataStore);
+            ServiceContainer.Register<LogStore> ();
 
             // Core services that are most likelly to be overriden by UI code:
             ServiceContainer.Register<Logger> ();

@@ -67,7 +67,7 @@ namespace Toggl.Phoebe.Data.Models
             base.DetectChangedProperties (oldData, newData);
             if (oldData.State != newData.State)
                 OnPropertyChanged (PropertyState);
-            if (oldData.Description != newData.Description)
+            if (ReturnEmptyIfNull(oldData.Description) != ReturnEmptyIfNull(newData.Description))
                 OnPropertyChanged (PropertyDescription);
             if (oldData.StartTime != newData.StartTime)
                 OnPropertyChanged (PropertyStartTime);
@@ -85,6 +85,10 @@ namespace Toggl.Phoebe.Data.Models
                 OnPropertyChanged (PropertyProject);
             if (oldData.TaskId != newData.TaskId || task.IsNewInstance)
                 OnPropertyChanged (PropertyTask);
+        }
+
+        private string ReturnEmptyIfNull(String s){
+            return String.IsNullOrEmpty (s) ? String.Empty : s;
         }
 
         public TimeEntryState State {
@@ -113,9 +117,11 @@ namespace Toggl.Phoebe.Data.Models
         public string Description {
             get {
                 EnsureLoaded ();
-                return Data.Description;
+                return ReturnEmptyIfNull (Data.Description);
             }
             set {
+                value = ReturnEmptyIfNull (value);
+
                 if (Description == value)
                     return;
 

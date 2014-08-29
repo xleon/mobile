@@ -222,10 +222,8 @@ namespace Toggl.Phoebe.Net
         private void PrepareResponse (HttpResponseMessage resp, TimeSpan requestTime)
         {
             ServiceContainer.Resolve<MessageBus> ().Send (new TogglHttpResponseMessage (this, resp, requestTime));
-            if (resp.StatusCode == HttpStatusCode.BadRequest) {
-                throw new ServerValidationException ();
-            } else if (!resp.IsSuccessStatusCode) {
-                throw new HttpRequestException (String.Format ("{0} ({1})", (int)resp.StatusCode, resp.ReasonPhrase));
+            if (!resp.IsSuccessStatusCode) {
+                throw new UnsuccessfulRequestException (resp.StatusCode, resp.ReasonPhrase);
             }
         }
 

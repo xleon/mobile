@@ -289,15 +289,6 @@ namespace Toggl.Phoebe.Net
                             graph.Remove (dataObject);
                         }
                         hasErrors = true;
-
-                        // Log error
-                        if (error is ServerValidationException) {
-                            log.Info (Tag, error, "Server rejected {0}.", dataObject.ToIdString ());
-                        } else if (error is System.Net.Http.HttpRequestException) {
-                            log.Info (Tag, error, "Failed to sync {0}.", dataObject.ToIdString ());
-                        } else {
-                            log.Warning (Tag, error, "Failed to sync {0}.", dataObject.ToIdString ());
-                        }
                     } else {
                         graph.Remove (dataObject);
                     }
@@ -395,15 +386,27 @@ namespace Toggl.Phoebe.Net
                         mergeBase: dataObject
                     )).ConfigureAwait (false);
                 }
-            } catch (ServerValidationException ex) {
-                error = ex;
-            } catch (System.Net.Http.HttpRequestException ex) {
+            } catch (Exception ex) {
                 error = ex;
             }
 
-            if (error is ServerValidationException) {
+            // Log & handle errors
+            var reqError = error as UnsuccessfulRequestException;
+
+            if (reqError != null && reqError.IsNonExistent) {
+                log.Info (Tag, error, "Failed to update {0} as it has been deleted.", dataObject.ToIdString ());
+                await store.DeleteAsync (dataObject).ConfigureAwait (false);
+
+            } else if (reqError != null && reqError.IsValidationError) {
+                log.Info (Tag, error, "Server rejected {0}.", dataObject.ToIdString ());
                 dataObject.RemoteRejected = true;
-                await store.PutDataAsync (dataObject);
+                await store.PutDataAsync (dataObject).ConfigureAwait (false);
+
+            } else if (error != null && error.IsNetworkFailure ()) {
+                log.Info (Tag, error, "Failed to sync {0}.", dataObject.ToIdString ());
+
+            } else if (error != null) {
+                log.Warning (Tag, error, "Failed to sync {0}.", dataObject.ToIdString ());
             }
 
             return error;

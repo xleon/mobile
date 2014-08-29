@@ -396,6 +396,47 @@ namespace Toggl.Phoebe.Tests.Data.Models
         }
 
         [Test]
+        public void TestRunningNullForDescription ()
+        {
+            var entry = new TimeEntryModel (new TimeEntryData () {
+                State = TimeEntryState.Running,
+                UserId = user.Id,
+                Description = null,
+            });
+
+            Assert.AreEqual (String.Empty, entry.Description);
+        }
+
+        [Test]
+        public void TestRunningChangeDescriptionToNull ()
+        {
+            var entry = new TimeEntryModel (new TimeEntryData () {
+                State = TimeEntryState.Running,
+                UserId = user.Id,
+                Description = String.Empty,
+            });
+
+            entry.Description = null;
+            Assert.AreEqual (String.Empty, entry.Description);
+        }
+
+        [Test]
+        public void TestNullVsEmptyComparison ()
+        {
+            var model = new TimeEntryModel (new TimeEntryData () {
+                Description = String.Empty,
+            });
+
+            model.PropertyChanged += delegate {
+                Assert.Fail ("Property shouldn't change");
+            };
+
+            model.Data = new TimeEntryData () {
+                Description = null,
+            };
+        }
+
+        [Test]
         public void TestStoppedStartChange ()
         {
             var entry = new TimeEntryModel (new TimeEntryData () {

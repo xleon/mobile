@@ -381,7 +381,9 @@ namespace Toggl.Joey.UI.Fragments
 
             // Make sure that we're commiting 1 second after the user has stopped typing
             CancelDescriptionChangeAutoCommit ();
-            ScheduleDescriptionChangeAutoCommit ();
+            if (descriptionChanging) {
+                ScheduleDescriptionChangeAutoCommit ();
+            }
         }
 
         private void OnDescriptionFocusChange (object sender, View.FocusChangeEventArgs e)

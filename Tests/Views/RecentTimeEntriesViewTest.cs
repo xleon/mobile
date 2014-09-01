@@ -317,6 +317,30 @@ namespace Toggl.Phoebe.Tests.Views
             });
         }
 
+        [Test]
+        [Description ("Make sure that the view updates it's internal data objects when no reordering happens.")]
+        public void TestDataUpdate ()
+        {
+            RunAsync (async delegate {
+                var view = new RecentTimeEntriesView ();
+                await WaitForLoaded (view);
+
+                Assert.AreEqual (
+                    new long[] { 5, 4, 3, 2 },
+                    view.Data.Select ((entry) => entry.RemoteId.Value).ToArray ()
+                );
+
+                // Update data
+                var workspaceId = Guid.NewGuid ();
+                var data = await GetByRemoteId<TimeEntryData> (5);
+                data.WorkspaceId = workspaceId;
+                await DataStore.PutAsync (data);
+
+                Assert.AreEqual (workspaceId, view.Data.ElementAt (0).WorkspaceId,
+                    "View failed to update internal data with latest information.");
+            });
+        }
+
         private async Task CreateTestData ()
         {
             workspace = await DataStore.PutAsync (new WorkspaceData () {

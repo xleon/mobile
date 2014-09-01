@@ -66,7 +66,6 @@ namespace Toggl.Phoebe.Data.Views
                     OnUpdated ();
                 } else {
                     var groupChanged = !grp.CanContain (entry);
-                    var startChanged = existingEntry.StartTime != entry.StartTime;
 
                     if (groupChanged) {
                         // Remove from old group:
@@ -79,7 +78,7 @@ namespace Toggl.Phoebe.Data.Views
                         data.Add (entry);
                         data.Sort ();
                         OnUpdated ();
-                    } else if (startChanged) {
+                    } else {
                         // Update group and resort data:
                         grp.Update (entry);
                         data.Sort ();

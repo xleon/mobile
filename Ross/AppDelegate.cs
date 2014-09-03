@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Bugsnag;
 using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -44,7 +44,7 @@ namespace Toggl.Ross
             
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
-            ServiceContainer.Resolve<BugsnagClient> ();
+            ServiceContainer.Resolve<IBugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
 
             #if DEBUG
@@ -80,8 +80,8 @@ namespace Toggl.Ross
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> ();
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
-            ServiceContainer.Register<BugsnagClient> (delegate {
-                return new Toggl.Ross.Bugsnag.BugsnagClient (Build.BugsnagApiKey) {
+            ServiceContainer.Register<IBugsnagClient> (delegate {
+                return new BugsnagClient (Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                     NotifyReleaseStages = new List<string> () { "production" },

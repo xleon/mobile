@@ -266,11 +266,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="UIImageEffects.cs" />
-    <Compile Include="Bugsnag\BugsnagClient.cs" />
-    <Compile Include="Bugsnag\Data\ApplicationInfo.cs" />
-    <Compile Include="Bugsnag\Data\ApplicationState.cs" />
-    <Compile Include="Bugsnag\Data\SystemInfo.cs" />
-    <Compile Include="Bugsnag\Data\SystemState.cs" />
     <Compile Include="Views\SimpleEmptyView.cs" />
     <Compile Include="Theme\Style.EmptyView.cs">
       <DependentUpon>Style.cs</DependentUpon>
@@ -313,8 +308,6 @@
     <Folder Include="Theme\" />
     <Folder Include="DataSources\" />
     <Folder Include="Views\" />
-    <Folder Include="Bugsnag\" />
-    <Folder Include="Bugsnag\Data\" />
     <Folder Include="Net\" />
   </ItemGroup>
   <ItemGroup>

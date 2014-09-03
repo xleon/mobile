@@ -38,7 +38,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Test.cs" />
-    <Compile Include="Bugsnag\CombiningStreamTest.cs" />
     <Compile Include="Views\RecentTimeEntriesViewTest.cs" />
     <Compile Include="MessageBusTest.cs" />
     <Compile Include="Data\DataStoreTest.cs" />
@@ -95,7 +94,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
-    <Folder Include="Bugsnag\" />
     <Folder Include="Views\" />
     <Folder Include="Data\Models\" />
     <Folder Include="Data\Json\" />

@@ -55,5 +55,8 @@ namespace Toggl.Phoebe.Data.Json
 
         [JsonProperty ("default_wid")]
         public long DefaultWorkspaceId { get; set; }
+
+        [JsonProperty ("duration_format")]
+        public DurationFormat DurationFormat { get; set; }
     }
 }

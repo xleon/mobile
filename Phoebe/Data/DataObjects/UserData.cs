@@ -25,6 +25,7 @@ namespace Toggl.Phoebe.Data.DataObjects
             SendWeeklyReport = other.SendWeeklyReport;
             TrackingMode = other.TrackingMode;
             DefaultWorkspaceId = other.DefaultWorkspaceId;
+            DurationFormat = other.DurationFormat;
         }
 
         public string Name { get; set; }
@@ -50,6 +51,8 @@ namespace Toggl.Phoebe.Data.DataObjects
         public bool SendWeeklyReport { get; set; }
 
         public TrackingMode TrackingMode { get; set; }
+
+        public DurationFormat DurationFormat { get; set; }
 
         [ForeignRelation (typeof(WorkspaceData))]
         public Guid DefaultWorkspaceId { get; set; }

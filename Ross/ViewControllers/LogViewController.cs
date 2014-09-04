@@ -462,7 +462,7 @@ namespace Toggl.Ross.ViewControllers
                 RebindTags ();
 
                 var duration = model.GetDuration ();
-                durationLabel.Text = duration.ToString (@"h\:mm\:ss");
+                durationLabel.Text = model.GetFormattedDuration ();
 
                 runningImageView.Hidden = model.State != TimeEntryState.Running;
 

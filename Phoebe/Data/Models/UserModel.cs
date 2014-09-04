@@ -25,6 +25,7 @@ namespace Toggl.Phoebe.Data.Models
         public static readonly string PropertySendWeeklyReport = GetPropertyName (m => m.SendWeeklyReport);
         public static readonly string PropertyTrackingMode = GetPropertyName (m => m.TrackingMode);
         public static readonly string PropertyDefaultWorkspace = GetPropertyName (m => m.DefaultWorkspace);
+        public static readonly string PropertyDurationFormat = GetPropertyName (m => m.DurationFormat);
 
         public UserModel ()
         {
@@ -79,6 +80,8 @@ namespace Toggl.Phoebe.Data.Models
                 OnPropertyChanged (PropertyTrackingMode);
             if (oldData.DefaultWorkspaceId != newData.DefaultWorkspaceId || defaultWorkspace.IsNewInstance)
                 OnPropertyChanged (PropertyDefaultWorkspace);
+            if (oldData.DurationFormat != newData.DurationFormat)
+                OnPropertyChanged (PropertyDurationFormat);
         }
 
         public string Name {
@@ -234,6 +237,19 @@ namespace Toggl.Phoebe.Data.Models
                     return;
 
                 MutateData (data => data.TrackingMode = value);
+            }
+        }
+
+        public DurationFormat DurationFormat {
+            get {
+                EnsureLoaded ();
+                return Data.DurationFormat;
+            }
+            set {
+                if (DurationFormat == value)
+                    return;
+
+                MutateData (data => data.DurationFormat = value);
             }
         }
 

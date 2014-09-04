@@ -411,7 +411,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
 
                 var duration = DataSource.GetDuration ();
-                DurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
+                DurationTextView.Text = DataSource.GetFormattedDuration ();
 
                 if (DataSource.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);

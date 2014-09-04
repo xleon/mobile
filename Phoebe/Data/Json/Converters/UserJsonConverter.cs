@@ -29,6 +29,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 SendWeeklyReport = data.SendWeeklyReport,
                 StoreStartAndStopTime = data.TrackingMode == TrackingMode.StartNew,
                 DefaultWorkspaceId = defaultWorkspaceId,
+                DurationFormat = data.DurationFormat
             };
         }
 
@@ -49,6 +50,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.SendWeeklyReport = json.SendWeeklyReport;
             data.TrackingMode = json.StoreStartAndStopTime ? TrackingMode.StartNew : TrackingMode.Continue;
             data.DefaultWorkspaceId = defaultWorkspaceId;
+            data.DurationFormat = json.DurationFormat;
 
             ImportCommonJson (data, json);
         }

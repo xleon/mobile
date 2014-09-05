@@ -1,107 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="64dp"
-    android:orientation="horizontal"
-    android:descendantFocusability="blocksDescendants"
-    android:background="@drawable/MainListButton">
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent">
     <View
         android:id="@+id/ColorView"
         android:layout_width="4dp"
-        android:layout_height="match_parent"
-        android:background="@drawable/ColoredSideShape" />
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_marginLeft="12dp"
-        android:paddingBottom="4dp"
-        android:orientation="vertical"
-        android:gravity="center_vertical">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
-            android:orientation="horizontal"
-            android:baselineAligned="true">
-            <toggl.joey.ui.views.FadeLinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginRight="5dp"
-                android:orientation="horizontal"
-                android:baselineAligned="true"
-                android:baselineAlignedChildIndex="0"
-                app:fadeLength="15dp">
-                <TextView
-                    android:id="@+id/ProjectTextView"
-                    style="@style/TimeEntryListItem.Text.Project"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Project" />
-                <TextView
-                    android:id="@+id/ClientTextView"
-                    style="@style/TimeEntryListItem.Text.Client"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:text="Client" />
-            </toggl.joey.ui.views.FadeLinearLayout>
-            <ImageView
-                android:id="@+id/TagsIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="3dp"
-                android:baselineAlignBottom="true"
-                android:src="@drawable/IcTagsMiniGray" />
-            <ImageView
-                android:id="@+id/BillableIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="3dp"
-                android:baselineAlignBottom="true"
-                android:src="@drawable/IcBillableMiniGray" />
-            <TextView
-                android:id="@+id/DurationTextView"
-                style="@style/TimeEntryListItem.Text.Duration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:text="04:15:34" />
-        </LinearLayout>
-        <toggl.joey.ui.views.FadeLinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:baselineAligned="true"
-            app:fadeLength="15dp">
-            <TextView
-                android:id="@+id/TaskTextView"
-                style="@style/TimeEntryListItem.Text.Task"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:layout_marginRight="8dp"
-                android:text="Super Task" />
-            <TextView
-                android:id="@+id/DescriptionTextView"
-                style="@style/TimeEntryListItem.Text.Description"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:text="@string/RecentTimeEntryNoDescription" />
-        </toggl.joey.ui.views.FadeLinearLayout>
-    </LinearLayout>
+        android:layout_height="60dp"
+        android:background="@drawable/ColoredSideShape"
+        android:layout_marginRight="12dp" />
+    <TextView
+        android:id="@+id/ProjectTextView"
+        style="@style/TimeEntryListItem.Text.Project"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="Project"
+        android:paddingTop="5dp" />
+    <TextView
+        android:id="@+id/ClientTextView"
+        style="@style/TimeEntryListItem.Text.Client"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:paddingLeft="8dp"
+        android:text="Client"
+        android:paddingTop="9dp" />
+    <ImageView
+        android:id="@+id/FaderFirstLine"
+        android:background="@drawable/fadeOut"
+        android:layout_width="15dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="5dp" />
+    <TextView
+        android:id="@+id/TaskTextView"
+        style="@style/TimeEntryListItem.Text.Task"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:paddingTop="32dp"
+        android:paddingRight="5dp" />
+    <TextView
+        android:id="@+id/DescriptionTextView"
+        style="@style/TimeEntryListItem.Text.Description"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/RecentTimeEntryNoDescription"
+        android:paddingTop="32dp" />
+    <ImageView
+        android:id="@+id/TagsIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="3dp"
+        android:paddingRight="3dp"
+        android:paddingTop="15dp"
+        android:src="@drawable/IcTagsMiniGray" />
+    <ImageView
+        android:id="@+id/BillableIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingRight="7dp"
+        android:paddingTop="13dp"
+        android:src="@drawable/IcBillableMiniGray" />
+    <TextView
+        android:id="@+id/DurationTextView"
+        style="@style/TimeEntryListItem.Text.Duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
+        android:paddingRight="7dp"
+        android:text="04:15:34" />
+    <ImageView
+        android:id="@+id/FaderSecondLine"
+        android:background="@drawable/fadeOut"
+        android:layout_width="15dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="32dp" />
     <View
         android:layout_width="1dp"
-        android:layout_height="match_parent"
+        android:layout_height="60dp"
         android:background="#ECECEC"
-        android:layout_marginLeft="10dp" />
+        android:id="@+id/ContinueButtonSeparator" />
     <ImageButton
         android:src="@drawable/IcContinue"
-        android:layout_width="40dp"
-        android:layout_height="fill_parent"
+        android:layout_width="49dp"
+        android:layout_height="60dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:id="@+id/ContinueImageButton"
         style="?android:attr/borderlessButtonStyle" />
-</LinearLayout>
+</merge>

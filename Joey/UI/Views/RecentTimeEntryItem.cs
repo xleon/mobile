@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Android.App;
 using Android.Content;
-using Android.OS;
-using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -24,13 +18,13 @@ namespace Toggl.Joey.UI.Views
 
         public RecentTimeEntryItem (Context context, IAttributeSet attrs) : base (context, attrs)
         {
-            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.RecentTimeEntryItem, this, true);
+            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.RecentTimeEntryListItem, this, true);
             Initialize ();
         }
 
         public RecentTimeEntryItem (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
         {
-            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.RecentTimeEntryItem, this, true);
+            view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.RecentTimeEntryListItem, this, true);
             Initialize ();
         }
 

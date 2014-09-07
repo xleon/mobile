@@ -1,14 +1,14 @@
 ﻿using System;
-using MonoTouch.UIKit;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Ross.Views;
-using Toggl.Ross.Theme;
 using System.Collections.Generic;
-using Cirrious.FluentLayouts.Touch;
 using System.Linq;
-using XPlatUtils;
+using Cirrious.FluentLayouts.Touch;
 using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
+using MonoTouch.UIKit;
+using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
+using Toggl.Ross.Theme;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -16,7 +16,6 @@ namespace Toggl.Ross.ViewControllers
     {
         private readonly ClientModel model;
         private TextField nameTextField;
-        private UIButton clientButton;
         private bool shouldRebindOnAppear;
         private bool isSaving;
 

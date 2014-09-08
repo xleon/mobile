@@ -97,6 +97,11 @@ namespace Toggl.Ross.ViewControllers
 
                 await Task.WhenAll (deleteTasks.Concat (createTasks));
 
+                if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
+                    model.SetTimeEntryAsDirty ();
+                    await model.SaveAsync ();
+                }
+
                 NavigationController.PopViewControllerAnimated (true);
             } finally {
                 isSaving = false;

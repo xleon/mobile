@@ -290,7 +290,7 @@ namespace Toggl.Ross.ViewControllers
 
                 var contentFrame = ContentView.Frame;
 
-                const float durationLabelWidth = 75f;
+                const float durationLabelWidth = 80f;
                 durationLabel.Frame = new RectangleF (
                     x: contentFrame.Width - durationLabelWidth - HorizPadding,
                     y: 0,
@@ -462,7 +462,7 @@ namespace Toggl.Ross.ViewControllers
                 RebindTags ();
 
                 var duration = model.GetDuration ();
-                durationLabel.Text = duration.ToString (@"h\:mm\:ss");
+                durationLabel.Text = model.GetFormattedDuration ();
 
                 runningImageView.Hidden = model.State != TimeEntryState.Running;
 

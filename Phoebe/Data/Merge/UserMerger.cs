@@ -25,6 +25,7 @@ namespace Toggl.Phoebe.Data.Merge
             data.SendWeeklyReport = GetValue (d => d.SendWeeklyReport);
             data.TrackingMode = GetValue (d => d.TrackingMode);
             data.DefaultWorkspaceId = GetValue (d => d.DefaultWorkspaceId);
+            data.DurationFormat = GetValue (d => d.DurationFormat);
 
             return data;
         }

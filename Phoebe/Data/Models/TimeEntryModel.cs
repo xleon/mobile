@@ -67,7 +67,7 @@ namespace Toggl.Phoebe.Data.Models
             base.DetectChangedProperties (oldData, newData);
             if (oldData.State != newData.State)
                 OnPropertyChanged (PropertyState);
-            if (ReturnEmptyIfNull(oldData.Description) != ReturnEmptyIfNull(newData.Description))
+            if (ReturnEmptyIfNull (oldData.Description) != ReturnEmptyIfNull (newData.Description))
                 OnPropertyChanged (PropertyDescription);
             if (oldData.StartTime != newData.StartTime)
                 OnPropertyChanged (PropertyStartTime);
@@ -87,7 +87,8 @@ namespace Toggl.Phoebe.Data.Models
                 OnPropertyChanged (PropertyTask);
         }
 
-        private string ReturnEmptyIfNull(String s){
+        private string ReturnEmptyIfNull (String s)
+        {
             return String.IsNullOrEmpty (s) ? String.Empty : s;
         }
 
@@ -205,6 +206,28 @@ namespace Toggl.Phoebe.Data.Models
 
                 MutateData (data => data.IsBillable = value);
             }
+        }
+
+        public string GetFormattedDuration ()
+        {
+            TimeSpan duration = GetDuration (Data, Time.UtcNow);
+            string formattedString = duration.ToString (@"h\:mm\:ss");
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            if (user == null)
+                return formattedString;
+
+            if (user.DurationFormat == DurationFormat.Classic) {
+                if (duration.TotalMinutes < 1)
+                    formattedString = duration.ToString (@"s\ \s\e\c");
+                else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60)
+                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
+                else
+                    formattedString = duration.ToString (@"hh\:mm\:ss"); 
+            } else if (user.DurationFormat == DurationFormat.Decimal) {
+                formattedString = String.Format ("{0:0.00} h", duration.TotalHours); 
+            }
+            return formattedString;
         }
 
         public TimeSpan GetDuration ()

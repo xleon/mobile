@@ -247,7 +247,7 @@ namespace Toggl.Phoebe.Net
             var graph = await RelatedDataGraph.FromDirty (allDirtyData).ConfigureAwait (false);
 
             // Start pushing the dependencies from the end nodes up
-            var tasks = new List<Task<Exception>> ();
+            var tasks = new List<PushTask> ();
             while (true) {
                 tasks.Clear ();
 
@@ -266,7 +266,10 @@ namespace Toggl.Phoebe.Net
                             log.Info (Tag, "Skipping {0}.", dataObject.ToIdString ());
                         }
                     } else {
-                        tasks.Add (PushDataObject (dataObject));
+                        tasks.Add (new PushTask () {
+                            Task = PushDataObject (dataObject),
+                            Data = dataObject,
+                        });
                     }
                 }
 
@@ -274,11 +277,11 @@ namespace Toggl.Phoebe.Net
                 if (tasks.Count < 1)
                     continue;
 
-                await Task.WhenAll (tasks).ConfigureAwait (false);
+                await Task.WhenAll (tasks.Select (p => p.Task)).ConfigureAwait (false);
 
-                for (var i = 0; i < tasks.Count; i++) {
-                    var dataObject = dirtyDataObjects [i];
-                    var error = tasks [i].Result;
+                foreach (var pushTask in tasks) {
+                    var dataObject = pushTask.Data;
+                    var error = pushTask.Task.Result;
 
                     if (error != null) {
                         if (dataObject.RemoteId == null) {
@@ -417,6 +420,12 @@ namespace Toggl.Phoebe.Net
         private DateTime? LastRun {
             get { return ServiceContainer.Resolve<ISettingsStore> ().SyncLastRun; }
             set { ServiceContainer.Resolve<ISettingsStore> ().SyncLastRun = value; }
+        }
+
+        private class PushTask
+        {
+            public Task<Exception> Task;
+            public CommonData Data;
         }
     }
 }

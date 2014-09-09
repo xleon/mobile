@@ -17,6 +17,7 @@ using XPlatUtils;
 using Toggl.Joey.UI.Text;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Android.Util;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -134,8 +135,7 @@ namespace Toggl.Joey.UI.Adapters
                 var data = (TimeEntryData)entry;
                 var model = (TimeEntryModel)data;
                 if (view == null) {
-                    view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
-                        Resource.Layout.LogTimeEntryItemRow, parent, false);
+                    view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
                     view.Tag = new TimeEntryListItemHolder (handler, this, view);
                 }
                 var holder = (TimeEntryListItemHolder)view.Tag;

@@ -130,6 +130,7 @@
     <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="UI\Views\RecentTimeEntryItem.cs" />
     <Compile Include="UI\Views\LogTimeEntryItem.cs" />
+    <Compile Include="UI\Views\Fader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -530,8 +531,6 @@
     <AndroidResource Include="Resources\drawable\FeedbackSubmitButton.xml" />
     <AndroidResource Include="Resources\drawable\TagsView.xml" />
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
-    <AndroidResource Include="Resources\layout\RecentTimeEntryItemRow.axml" />
-    <AndroidResource Include="Resources\layout\LogTimeEntryItemRow.axml" />
     <AndroidResource Include="Resources\drawable\gradient.png" />
     <AndroidResource Include="Resources\drawable\fadeOut.xml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />

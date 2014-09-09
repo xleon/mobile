@@ -46,7 +46,7 @@ namespace Toggl.Joey.UI.Views
             int widthSize = MeasureSpec.GetSize (widthMeasureSpec);
 
             MeasureChildWithMargins (colorView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
-            heightUsed += getMeasuredHeightWithMargins (colorView); // should be 64dp in xml (Make it the height defining element of the layout)
+            heightUsed += GetMeasuredHeightWithMargins (colorView); // should be 64dp in xml (Make it the height defining element of the layout)
 
             MeasureChildWithMargins (projectTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (descriptionTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
@@ -64,35 +64,35 @@ namespace Toggl.Joey.UI.Views
             int paddingTop = PaddingTop;
             int currentTop = paddingTop;
 
-            layoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
-            int contentLeft = getWidthWithMargins (colorView) + paddingLeft + 20;
+            LayoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
+            int contentLeft = GetWidthWithMargins (colorView) + paddingLeft + 20;
 
             int fadeFrom = r - 15;
             int usableWidth = fadeFrom - contentLeft;
 
-            layoutView (projectTextView, contentLeft, currentTop, getFirstElementWidth (usableWidth, projectTextView.MeasuredWidth), projectTextView.MeasuredHeight);
+            LayoutView (projectTextView, contentLeft, currentTop, GetFirstElementWidth (usableWidth, projectTextView.MeasuredWidth), projectTextView.MeasuredHeight);
             if (clientTextView.Text != String.Empty) {
-                layoutView (clientTextView, contentLeft + getFirstElementWidth (usableWidth, projectTextView.MeasuredWidth), currentTop, getSecondElementWidth (usableWidth, projectTextView.MeasuredWidth, clientTextView.MeasuredWidth), clientTextView.MeasuredHeight);
+                LayoutView (clientTextView, contentLeft + GetFirstElementWidth (usableWidth, projectTextView.MeasuredWidth), currentTop, GetSecondElementWidth (usableWidth, projectTextView.MeasuredWidth, clientTextView.MeasuredWidth), clientTextView.MeasuredHeight);
             }
 
             if (taskTextView.Text != String.Empty) {
-                layoutView (taskTextView, contentLeft, currentTop, getFirstElementWidth (usableWidth, taskTextView.MeasuredWidth), taskTextView.MeasuredHeight);
-                layoutView (descriptionTextView, contentLeft + getFirstElementWidth (usableWidth, taskTextView.MeasuredWidth), currentTop, getSecondElementWidth (usableWidth, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);
+                LayoutView (taskTextView, contentLeft, currentTop, GetFirstElementWidth (usableWidth, taskTextView.MeasuredWidth), taskTextView.MeasuredHeight);
+                LayoutView (descriptionTextView, contentLeft + GetFirstElementWidth (usableWidth, taskTextView.MeasuredWidth), currentTop, GetSecondElementWidth (usableWidth, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);
             } else {
-                layoutView (descriptionTextView, contentLeft, currentTop, getFirstElementWidth (usableWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);
+                LayoutView (descriptionTextView, contentLeft, currentTop, GetFirstElementWidth (usableWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);
             }
-            layoutView (fader, fadeFrom - fader.MeasuredWidth, currentTop, fader.MeasuredWidth, fader.MeasuredHeight);
+            LayoutView (fader, fadeFrom - fader.MeasuredWidth, currentTop, fader.MeasuredWidth, fader.MeasuredHeight);
 
         }
 
-        private int getFirstElementWidth (int usable, int first)
+        private int GetFirstElementWidth (int usable, int first)
         {
             return first > usable ? usable : first;
         }
 
-        private int getSecondElementWidth (int usable, int first, int second)
+        private int GetSecondElementWidth (int usable, int first, int second)
         {
-            int firstActual = getFirstElementWidth (usable, first);
+            int firstActual = GetFirstElementWidth (usable, first);
             if (firstActual == usable) {
                 return 0;
             } else if (usable < firstActual + second) {
@@ -102,7 +102,7 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        private void layoutView (View view, int left, int top, int width, int height)
+        private void LayoutView (View view, int left, int top, int width, int height)
         {
             var margins = (MarginLayoutParams)view.LayoutParameters;
             int leftWithMargins = left + margins.LeftMargin;
@@ -112,25 +112,25 @@ namespace Toggl.Joey.UI.Views
                 leftWithMargins + width, topWithMargins + height);
         }
 
-        private int getWidthWithMargins (View child)
+        private int GetWidthWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.Width + lp.LeftMargin + lp.RightMargin;
         }
 
-        private int getHeightWithMargins (View child)
+        private int GetHeightWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredHeight + lp.TopMargin + lp.BottomMargin;
         }
 
-        private int getMeasuredWidthWithMargins (View child)
+        private int GetMeasuredWidthWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredWidth + lp.LeftMargin + lp.RightMargin;
         }
 
-        private int getMeasuredHeightWithMargins (View child)
+        private int GetMeasuredHeightWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredHeight + lp.TopMargin + lp.BottomMargin;

@@ -23,9 +23,8 @@
         android:paddingLeft="8dp"
         android:text="Client"
         android:paddingTop="9dp" />
-    <ImageView
+    <toggl.joey.ui.views.Fader
         android:id="@+id/FaderFirstLine"
-        android:background="@drawable/fadeOut"
         android:layout_width="15dp"
         android:layout_height="20dp"
         android:layout_marginTop="5dp" />
@@ -66,9 +65,8 @@
         android:paddingTop="10dp"
         android:paddingRight="7dp"
         android:text="04:15:34" />
-    <ImageView
+    <toggl.joey.ui.views.Fader
         android:id="@+id/FaderSecondLine"
-        android:background="@drawable/fadeOut"
         android:layout_width="15dp"
         android:layout_height="20dp"
         android:layout_marginTop="32dp" />

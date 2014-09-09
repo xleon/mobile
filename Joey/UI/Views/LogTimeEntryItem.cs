@@ -37,6 +37,7 @@ namespace Toggl.Joey.UI.Views
 
         private void Initialize ()
         {
+            this.DescendantFocusability = DescendantFocusability.BlockDescendants;
             view.SetBackgroundDrawable (Resources.GetDrawable (Resource.Drawable.MainListButton));
             colorView = FindViewById (Resource.Id.ColorView);
             projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
@@ -60,7 +61,7 @@ namespace Toggl.Joey.UI.Views
             int widthSize = MeasureSpec.GetSize (widthMeasureSpec);
 
             MeasureChildWithMargins (colorView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
-            heightUsed += getMeasuredHeightWithMargins (colorView);
+            heightUsed += GetMeasuredHeightWithMargins (colorView);
 
             MeasureChildWithMargins (projectTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (descriptionTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
@@ -84,54 +85,54 @@ namespace Toggl.Joey.UI.Views
             int currentTop = PaddingTop;
             int faderMargin = 10;
 
-            layoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
-            paddingLeft += getWidthWithMargins (colorView);
+            LayoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
+            paddingLeft += GetWidthWithMargins (colorView);
 
             int durationBar = r - continueImageButton.MeasuredWidth;
-            layoutView (continueButtonSeparator, durationBar + 6, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
-            layoutView (continueImageButton, durationBar, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
+            LayoutView (continueButtonSeparator, durationBar + 6, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
+            LayoutView (continueImageButton, durationBar, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
             int secondLineMark = durationBar - faderMargin;
             durationBar -= durationTextView.MeasuredWidth;
-            layoutView (durationTextView, durationBar, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
+            LayoutView (durationTextView, durationBar, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
 
             if (billableIcon.Visibility == ViewStates.Visible) {
                 durationBar -= billableIcon.MeasuredWidth;
-                layoutView (billableIcon, durationBar, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
+                LayoutView (billableIcon, durationBar, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
             }
             if (tagsIcon.Visibility == ViewStates.Visible) {
                 durationBar -= tagsIcon.MeasuredWidth;
-                layoutView (tagsIcon, durationBar, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
+                LayoutView (tagsIcon, durationBar, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
             }
 
             durationBar -= faderMargin;
             int usableWidthFirstLine = durationBar - paddingLeft;
-            int firstWidth = getFirstElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth);
+            int firstWidth = GetFirstElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth);
 
-            layoutView (projectTextView, paddingLeft, currentTop, firstWidth, projectTextView.MeasuredHeight);    
+            LayoutView (projectTextView, paddingLeft, currentTop, firstWidth, projectTextView.MeasuredHeight);    
             if (clientTextView.Text != String.Empty) {
-                layoutView (clientTextView, paddingLeft + firstWidth, currentTop, getSecondElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth, clientTextView.MeasuredWidth), clientTextView.MeasuredHeight);    
+                LayoutView (clientTextView, paddingLeft + firstWidth, currentTop, GetSecondElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth, clientTextView.MeasuredWidth), clientTextView.MeasuredHeight);    
             }
-            layoutView (faderFirstRow, usableWidthFirstLine + paddingLeft - faderFirstRow.MeasuredWidth, currentTop, faderFirstRow.MeasuredWidth, faderFirstRow.MeasuredHeight);
+            LayoutView (faderFirstRow, usableWidthFirstLine + paddingLeft - faderFirstRow.MeasuredWidth, currentTop, faderFirstRow.MeasuredWidth, faderFirstRow.MeasuredHeight);
 
             int usableWidthSecondLine = secondLineMark - paddingLeft;
 
             if (taskTextView.Text != String.Empty) {
-                layoutView (taskTextView, paddingLeft, currentTop, getFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth), taskTextView.MeasuredHeight);    
-                layoutView (descriptionTextView, paddingLeft + getFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth), currentTop, getSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);    
+                LayoutView (taskTextView, paddingLeft, currentTop, GetFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth), taskTextView.MeasuredHeight);    
+                LayoutView (descriptionTextView, paddingLeft + GetFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth), currentTop, GetSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);    
             } else {
-                layoutView (descriptionTextView, paddingLeft, currentTop, getSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);    
+                LayoutView (descriptionTextView, paddingLeft, currentTop, GetSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);    
             }
-            layoutView (faderSecondRow, secondLineMark - faderSecondRow.MeasuredWidth, currentTop, faderSecondRow.MeasuredWidth, faderSecondRow.MeasuredHeight);
+            LayoutView (faderSecondRow, secondLineMark - faderSecondRow.MeasuredWidth, currentTop, faderSecondRow.MeasuredWidth, faderSecondRow.MeasuredHeight);
         }
 
-        private int getFirstElementWidth (int usable, int first)
+        private int GetFirstElementWidth (int usable, int first)
         {
             return first > usable ? usable : first;
         }
 
-        private int getSecondElementWidth (int usable, int first, int second)
+        private int GetSecondElementWidth (int usable, int first, int second)
         {
-            int firstActual = getFirstElementWidth (usable, first);
+            int firstActual = GetFirstElementWidth (usable, first);
             if (firstActual == usable) {
                 return 0;
             } else if (usable < firstActual + second) {
@@ -141,7 +142,7 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        private void layoutView (View view, int left, int top, int width, int height)
+        private void LayoutView (View view, int left, int top, int width, int height)
         {
             var margins = (MarginLayoutParams)view.LayoutParameters;
             int leftWithMargins = left + margins.LeftMargin;
@@ -151,25 +152,25 @@ namespace Toggl.Joey.UI.Views
                 leftWithMargins + width, topWithMargins + height);
         }
 
-        private int getWidthWithMargins (View child)
+        private int GetWidthWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.Width + lp.LeftMargin + lp.RightMargin;
         }
 
-        private int getHeightWithMargins (View child)
+        private int GetHeightWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredHeight + lp.TopMargin + lp.BottomMargin;
         }
 
-        private int getMeasuredWidthWithMargins (View child)
+        private int GetMeasuredWidthWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredWidth + lp.LeftMargin + lp.RightMargin;
         }
 
-        private int getMeasuredHeightWithMargins (View child)
+        private int GetMeasuredHeightWithMargins (View child)
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.LayoutParameters;
             return child.MeasuredHeight + lp.TopMargin + lp.BottomMargin;

@@ -12,12 +12,22 @@ namespace Toggl.Phoebe.Data
     /// </summary>
     public static class SqlExtensions
     {
-        public static long GetRemoteId<T> (this IDataStoreContext ctx, Guid id)
+        public static long? GetRemoteId<T> (this IDataStoreContext ctx, Guid id)
             where T : CommonData
         {
             var tbl = ctx.Connection.GetMapping<T> ().TableName;
             var q = String.Concat ("SELECT RemoteId FROM ", tbl, " WHERE Id=?");
-            return ctx.Connection.ExecuteScalar<long> (q, id);
+            try {
+                var remoteId = ctx.Connection.ExecuteScalar<long> (q, id);
+                if (remoteId == 0) {
+                    // Relation doesn't exist or RemoteId is set to zero
+                    return null;
+                }
+                return remoteId;
+            } catch (NullReferenceException) {
+                // This happens when the RemoteId of the relation is set to null
+                return null;
+            }
         }
 
         public static Guid GetLocalId<T> (this IDataStoreContext ctx, long remoteId)

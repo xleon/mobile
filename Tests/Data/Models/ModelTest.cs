@@ -269,6 +269,24 @@ namespace Toggl.Phoebe.Tests.Data.Models
         }
 
         [Test]
+        public virtual void TestTouching ()
+        {
+            var type = typeof(T);
+
+            // Create dummy element (with default values) to load:
+            var data = CreateDataInstance ();
+            var inst = (T)Activator.CreateInstance (typeof(T), data);
+
+            // Touch instance
+            type.GetMethod ("Touch").Invoke (inst, new object[0]);
+
+            // Make sure that the underlying data in the model is marked as dirty
+            data = (CommonData)type.GetProperty ("Data").GetValue (inst);
+            Assert.IsTrue (data.IsDirty);
+            Assert.IsFalse (data.RemoteRejected);
+        }
+
+        [Test]
         public virtual void TestSaving ()
         {
             var type = typeof(T);

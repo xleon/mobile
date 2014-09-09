@@ -258,11 +258,6 @@ namespace Toggl.Phoebe.Data.Models
             MutateData (data => SetDuration (data, value));
         }
 
-        public void SetTimeEntryAsDirty ()
-        {
-            MarkDirty (Data);
-        }
-
         private static void SetDuration (TimeEntryData data, TimeSpan value)
         {
             var now = Time.UtcNow;

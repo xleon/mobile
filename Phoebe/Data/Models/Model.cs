@@ -130,6 +130,12 @@ namespace Toggl.Phoebe.Data.Models
             loadingTCS = null;
         }
 
+        public void Touch ()
+        {
+            MutateData (delegate {
+            });
+        }
+
         public async Task SaveAsync ()
         {
             OnBeforeSave ();

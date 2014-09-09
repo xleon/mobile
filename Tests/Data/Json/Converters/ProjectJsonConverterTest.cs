@@ -60,6 +60,32 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
         [Test]
         public void ExportInvalidClient ()
         {
+            RunAsync (async delegate {
+                var workspaceData = await DataStore.PutAsync (new WorkspaceData () {
+                    RemoteId = 1,
+                    Name = "Test",
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
+                var projectData = await DataStore.PutAsync (new ProjectData () {
+                    RemoteId = 3,
+                    Name = "Hosting",
+                    Color = 2,
+                    IsActive = true,
+                    ClientId = Guid.NewGuid (),
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 3),
+                });
+
+                await DataStore.ExecuteInTransactionAsync (ctx => {
+                    var json = converter.Export (ctx, projectData);
+                    Assert.IsNull (json.ClientId);
+                });
+            });
+        }
+
+        [Test]
+        public void ExportMissingClientRemoteId ()
+        {
             ProjectData projectData = null;
 
             RunAsync (async delegate {
@@ -68,12 +94,17 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     Name = "Test",
                     ModifiedAt = new DateTime (2014, 1, 2),
                 });
+                var clientData = await DataStore.PutAsync (new ClientData () {
+                    Name = "Test",
+                    WorkspaceId = workspaceData.Id,
+                    ModifiedAt = new DateTime (2014, 1, 2),
+                });
                 projectData = await DataStore.PutAsync (new ProjectData () {
                     RemoteId = 3,
                     Name = "Hosting",
                     Color = 2,
                     IsActive = true,
-                    ClientId = Guid.NewGuid (),
+                    ClientId = clientData.Id,
                     WorkspaceId = workspaceData.Id,
                     ModifiedAt = new DateTime (2014, 1, 3),
                 });

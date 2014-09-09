@@ -34,20 +34,24 @@ namespace Toggl.Phoebe.Data.Json.Converters
             where T : CommonData
         {
             var remoteId = ctx.GetRemoteId<T> (id);
-            if (remoteId == 0) {
+            if (remoteId == null) {
                 throw new RelationRemoteIdMissingException (typeof(T), id);
             }
-            return remoteId;
+            return remoteId.Value;
         }
 
         protected static long? GetRemoteId<T> (IDataStoreContext ctx, Guid? id)
-            where T : CommonData
+            where T : CommonData, new()
         {
             if (id == null)
                 return null;
             var remoteId = ctx.GetRemoteId<T> (id.Value);
-            if (remoteId == 0) {
-                throw new RelationRemoteIdMissingException (typeof(T), id.Value);
+            if (remoteId == null) {
+                // Check that the relation is actually non-existent, not just remoteId unset
+                var hasRelation = ctx.Connection.Table<T> ().Count (r => r.Id == id) > 0;
+                if (hasRelation) {
+                    throw new RelationRemoteIdMissingException (typeof(T), id.Value);
+                }
             }
             return remoteId;
         }

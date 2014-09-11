@@ -199,6 +199,11 @@ namespace Toggl.Joey.UI.Fragments
 
                 await Task.WhenAll (deleteTasks.Concat (createTasks));
 
+                if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
+                    model.Touch ();
+                    await model.SaveAsync ();
+                }
+
                 Dismiss ();
             } finally {
                 isSaving = false;

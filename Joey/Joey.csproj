@@ -130,7 +130,7 @@
     <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="UI\Views\RecentTimeEntryItem.cs" />
     <Compile Include="UI\Views\LogTimeEntryItem.cs" />
-    <Compile Include="UI\Views\Fader.cs" />
+    <Compile Include="UI\Views\FadeDrawable.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

@@ -23,11 +23,6 @@
         android:paddingLeft="8dp"
         android:text="Client"
         android:paddingTop="9dp" />
-    <toggl.joey.ui.views.Fader
-        android:id="@+id/FaderFirstLine"
-        android:layout_width="15dp"
-        android:layout_height="20dp"
-        android:layout_marginTop="5dp" />
     <TextView
         android:id="@+id/TaskTextView"
         style="@style/TimeEntryListItem.Text.Task"
@@ -65,11 +60,6 @@
         android:paddingTop="10dp"
         android:paddingRight="7dp"
         android:text="04:15:34" />
-    <toggl.joey.ui.views.Fader
-        android:id="@+id/FaderSecondLine"
-        android:layout_width="15dp"
-        android:layout_height="20dp"
-        android:layout_marginTop="32dp" />
     <View
         android:layout_width="1dp"
         android:layout_height="60dp"

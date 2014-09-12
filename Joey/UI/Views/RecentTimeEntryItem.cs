@@ -3,6 +3,8 @@ using Android.Content;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Android.Graphics.Drawables;
+using System.Drawing;
 
 namespace Toggl.Joey.UI.Views
 {
@@ -14,7 +16,10 @@ namespace Toggl.Joey.UI.Views
         private TextView taskTextView;
         private TextView descriptionTextView;
         private View view;
-        private ImageView fader;
+
+        private Drawable fadeDrawable;
+        private int fadeWidth;
+        private Rectangle fadeRect;
 
         public RecentTimeEntryItem (Context context, IAttributeSet attrs) : base (context, attrs)
         {
@@ -36,7 +41,18 @@ namespace Toggl.Joey.UI.Views
             clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView);
             taskTextView = view.FindViewById<TextView> (Resource.Id.TaskTextView);
             descriptionTextView = view.FindViewById<TextView> (Resource.Id.DescriptionTextView);
-            fader = view.FindViewById<ImageView> (Resource.Id.FadeOut);
+
+            ReplaceDrawable (ref fadeDrawable, ref fadeWidth, MakeFadeDrawable ());
+        }
+
+        private FadeDrawable MakeFadeDrawable ()
+        {
+            var width = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 20, Resources.DisplayMetrics);
+
+            var d = new FadeDrawable (width);
+            d.SetStateColor (new[] { Android.Resource.Attribute.StatePressed }, Android.Graphics.Color.Rgb (245, 245, 245));
+            d.SetStateColor (new int[] { }, Android.Graphics.Color.White);
+            return d;
         }
 
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
@@ -52,7 +68,6 @@ namespace Toggl.Joey.UI.Views
             MeasureChildWithMargins (descriptionTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (clientTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (taskTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
-            MeasureChildWithMargins (fader, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
 
             int heightSize = heightUsed + PaddingTop + PaddingBottom;
             SetMeasuredDimension (widthSize, heightSize);
@@ -76,13 +91,49 @@ namespace Toggl.Joey.UI.Views
             }
 
             if (taskTextView.Text != String.Empty) {
-                LayoutView (taskTextView, contentLeft, currentTop, GetFirstElementWidth (usableWidth, taskTextView.MeasuredWidth), taskTextView.MeasuredHeight);
-                LayoutView (descriptionTextView, contentLeft + GetFirstElementWidth (usableWidth, taskTextView.MeasuredWidth), currentTop, GetSecondElementWidth (usableWidth, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);
+                LayoutView (
+                    taskTextView,
+                    contentLeft,
+                    currentTop,
+                    GetFirstElementWidth (usableWidth, taskTextView.MeasuredWidth),
+                    taskTextView.MeasuredHeight
+                );
+                LayoutView (
+                    descriptionTextView,
+                    contentLeft + GetFirstElementWidth (usableWidth, taskTextView.MeasuredWidth),
+                    currentTop,
+                    GetSecondElementWidth (usableWidth, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth),
+                    descriptionTextView.MeasuredHeight
+                );
             } else {
-                LayoutView (descriptionTextView, contentLeft, currentTop, GetFirstElementWidth (usableWidth, descriptionTextView.MeasuredWidth), descriptionTextView.MeasuredHeight);
+                LayoutView (
+                    descriptionTextView,
+                    contentLeft,
+                    currentTop,
+                    GetFirstElementWidth (usableWidth, descriptionTextView.MeasuredWidth),
+                    descriptionTextView.MeasuredHeight
+                );
             }
-            LayoutView (fader, fadeFrom - fader.MeasuredWidth, currentTop, fader.MeasuredWidth, fader.MeasuredHeight);
+            var heightD = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 10, Resources.DisplayMetrics);
+            var topP = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 3, Resources.DisplayMetrics);
 
+            fadeRect = new Rectangle (
+                fadeFrom, currentTop + topP,
+                0, view.MeasuredHeight - heightD
+            );
+
+            ConfigureDrawables ();
+
+        }
+
+        protected override void DispatchDraw (Android.Graphics.Canvas canvas)
+        {
+            base.DispatchDraw (canvas);
+
+            // Draw gradients on-top of others
+            if (fadeDrawable != null) {
+                fadeDrawable.Draw (canvas);
+            }
         }
 
         private int GetFirstElementWidth (int usable, int first)
@@ -144,6 +195,89 @@ namespace Toggl.Joey.UI.Views
         protected override LayoutParams GenerateDefaultLayoutParams ()
         {
             return new MarginLayoutParams (LayoutParams.WrapContent, LayoutParams.WrapContent);
+        }
+
+        private void ConfigureDrawables ()
+        {
+            if (fadeDrawable != null) {
+                fadeDrawable.SetBounds (
+                    fadeRect.X - fadeWidth,
+                    fadeRect.Y,
+                    fadeRect.X,
+                    fadeRect.Y + fadeRect.Height
+                );
+            }
+        }
+
+        public override void InvalidateDrawable (Drawable drawable)
+        {
+            if (drawable == fadeDrawable) {
+                Invalidate ();
+            } else {
+                base.InvalidateDrawable (drawable);
+            }
+        }
+
+        private void ReplaceDrawable (ref Drawable field, ref int width, Drawable value)
+        {
+            if (field == value)
+                return;
+
+            if (field != null) {
+                field.Callback = null;
+                UnscheduleDrawable (field);
+            }
+
+            field = value;
+            if (field != null) {
+                field.Callback = this;
+                if (field.IsStateful) {
+                    field.SetState (GetDrawableState ());
+                }
+
+                field.SetVisible (Visibility == ViewStates.Visible, true);
+
+                width = field.IntrinsicWidth;
+            } else {
+                width = 0;
+            }
+
+            ConfigureDrawables ();
+            Invalidate ();
+        }
+
+        protected override void DrawableStateChanged ()
+        {
+            base.DrawableStateChanged ();
+            if (fadeDrawable != null && fadeDrawable.IsStateful) {
+                fadeDrawable.SetState (GetDrawableState ());
+            }
+        }
+
+        public override ViewStates Visibility {
+            get { return base.Visibility; }
+            set {
+                base.Visibility = value;
+                if (fadeDrawable != null) {
+                    fadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
+                }
+            }
+        }
+
+        protected override void OnAttachedToWindow ()
+        {
+            base.OnAttachedToWindow ();
+            if (fadeDrawable != null) {
+                fadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
+            }
+        }
+
+        protected override void OnDetachedFromWindow ()
+        {
+            base.OnDetachedFromWindow ();
+            if (fadeDrawable != null) {
+                fadeDrawable.SetVisible (false, false);
+            }
         }
     }
 }

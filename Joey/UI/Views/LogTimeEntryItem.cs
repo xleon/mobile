@@ -69,8 +69,8 @@ namespace Toggl.Joey.UI.Views
             var width = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 20, Resources.DisplayMetrics);
 
             var d = new FadeDrawable (width);
-            d.SetStateColor (new[] { Android.Resource.Attribute.StatePressed }, Android.Graphics.Color.White);
-            d.SetStateColor (new[] { Android.Resource.Attribute.StateSelected }, Android.Graphics.Color.Black);
+            d.SetStateColor (new[] { Android.Resource.Attribute.StatePressed }, Android.Graphics.Color.Rgb (245, 245, 245));
+            d.SetStateColor (new[] { Android.Resource.Attribute.StateActivated }, Android.Graphics.Color.Rgb (222, 222, 222));
             d.SetStateColor (new int[] { }, Android.Graphics.Color.White);
             return d;
         }

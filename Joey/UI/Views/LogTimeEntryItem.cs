@@ -107,7 +107,7 @@ namespace Toggl.Joey.UI.Views
             paddingLeft += GetWidthWithMargins (colorView);
 
             int durationBar = r - continueImageButton.MeasuredWidth;
-            LayoutView (continueButtonSeparator, durationBar + 6, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
+            LayoutView (continueButtonSeparator, durationBar, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
             LayoutView (continueImageButton, durationBar, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
             int secondLineMark = durationBar;
             durationBar -= durationTextView.MeasuredWidth;

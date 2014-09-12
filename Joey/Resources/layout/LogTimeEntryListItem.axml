@@ -58,7 +58,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingTop="10dp"
-        android:paddingRight="7dp"
+        android:paddingRight="10dp"
         android:text="04:15:34" />
     <View
         android:layout_width="1dp"
@@ -67,7 +67,7 @@
         android:id="@+id/ContinueButtonSeparator" />
     <ImageButton
         android:src="@drawable/IcContinue"
-        android:layout_width="49dp"
+        android:layout_width="46dp"
         android:layout_height="60dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"

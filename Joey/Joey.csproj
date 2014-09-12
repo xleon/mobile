@@ -106,7 +106,6 @@
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
     <Compile Include="UI\Utils\ModelViewHolder.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryProjectDialogFragment.cs" />
-    <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
     <Compile Include="UI\Utils\Font.cs" />
     <Compile Include="Data\UserTimeEntryStateChangeMessage.cs" />
@@ -531,8 +530,6 @@
     <AndroidResource Include="Resources\drawable\FeedbackSubmitButton.xml" />
     <AndroidResource Include="Resources\drawable\TagsView.xml" />
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
-    <AndroidResource Include="Resources\drawable\gradient.png" />
-    <AndroidResource Include="Resources\drawable\fadeOut.xml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
   </ItemGroup>

@@ -66,10 +66,10 @@
       <HintPath>..\Components\googleanalytics-3.0.3.4\lib\android\GoogleAnalytics.Android.dll</HintPath>
     </Reference>
     <Reference Include="Bugsnag">
-      <HintPath>..\packages\Toggl.Bugsnag.1.0\lib\MonoAndroid10\Bugsnag.dll</HintPath>
+      <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoAndroid10\Bugsnag.dll</HintPath>
     </Reference>
     <Reference Include="Bugsnag.Android">
-      <HintPath>..\packages\Toggl.Bugsnag.1.0\lib\MonoAndroid10\Bugsnag.Android.dll</HintPath>
+      <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoAndroid10\Bugsnag.Android.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

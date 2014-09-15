@@ -145,10 +145,10 @@
       <HintPath>..\Components\googleplusandplayios-1.3.0.1\lib\ios\Google.Plus.dll</HintPath>
     </Reference>
     <Reference Include="Bugsnag">
-      <HintPath>..\packages\Toggl.Bugsnag.1.0\lib\MonoTouch10\Bugsnag.dll</HintPath>
+      <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoTouch10\Bugsnag.dll</HintPath>
     </Reference>
     <Reference Include="Bugsnag.iOS">
-      <HintPath>..\packages\Toggl.Bugsnag.1.0\lib\MonoTouch10\Bugsnag.iOS.dll</HintPath>
+      <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoTouch10\Bugsnag.iOS.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

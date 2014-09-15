@@ -106,7 +106,6 @@
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
     <Compile Include="UI\Utils\ModelViewHolder.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryProjectDialogFragment.cs" />
-    <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
     <Compile Include="UI\Utils\Font.cs" />
     <Compile Include="Data\UserTimeEntryStateChangeMessage.cs" />
@@ -128,6 +127,9 @@
     <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
     <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
+    <Compile Include="UI\Views\RecentTimeEntryItem.cs" />
+    <Compile Include="UI\Views\LogTimeEntryItem.cs" />
+    <Compile Include="UI\Views\FadeDrawable.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -139,8 +141,6 @@
   <ItemGroup>
     <AndroidResource Include="Resources\values\Strings.xml" />
     <AndroidResource Include="Resources\layout\LoginActivity.axml" />
-    <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\menu\LogTimeEntriesContextMenu.axml" />
     <AndroidResource Include="Resources\values\Plurals.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDialogAlertHoloLight.png" />
@@ -530,6 +530,8 @@
     <AndroidResource Include="Resources\drawable\FeedbackSubmitButton.xml" />
     <AndroidResource Include="Resources\drawable\TagsView.xml" />
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
+    <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
+    <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

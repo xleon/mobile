@@ -10,6 +10,7 @@ using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Android.Util;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -28,8 +29,7 @@ namespace Toggl.Joey.UI.Adapters
 
             if (viewType == ViewTypeContent) {
                 if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.RecentTimeEntryListItem, parent, false);
+                    view =  new RecentTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null );
                     view.Tag = new RecentTimeEntryListItemHolder (view);
                 }
                 var holder = (RecentTimeEntryListItemHolder)view.Tag;
@@ -183,6 +183,7 @@ namespace Toggl.Joey.UI.Adapters
                     TaskTextView.Text = DataSource.Task.Name;
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
+                    TaskTextView.Text = String.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 }
 

@@ -50,9 +50,7 @@ Xamarin Studio settings > Text Editor > Behavior.
 
 ## We are hiring!
 
-Want to write open source code for a living? Love writing mobile applications using Xamarin technologies? Sick of the daily commute to the office?
-
-Check out our jobs page for the [Xamarin/.NET mobile developer position](http://jobs.toggl.com/#xamarin).
+Check out our [jobs page](http://jobs.toggl.com/) for current open positions.
 
 ## License
 

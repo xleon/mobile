@@ -1,6 +1,5 @@
-using System;
 using System.ComponentModel;
-using Toggl.Phoebe.Bugsnag;
+using Bugsnag;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -23,7 +22,7 @@ namespace Toggl.Phoebe.Net
 
         private void UpdateUser ()
         {
-            var bugsnag = ServiceContainer.Resolve<BugsnagClient> ();
+            var bugsnag = ServiceContainer.Resolve<IBugsnagClient> ();
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
             if (user == null) {

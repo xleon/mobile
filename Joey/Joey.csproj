@@ -39,7 +39,7 @@
     <ConsolePause>false</ConsolePause>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <AndroidLinkMode>Full</AndroidLinkMode>
-    <AndroidLinkSkip>Phoebe;Joey</AndroidLinkSkip>
+    <AndroidLinkSkip>Bugsnag;Bugsnag.Android;Phoebe;Joey</AndroidLinkSkip>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -65,6 +65,12 @@
     <Reference Include="GoogleAnalytics.Android">
       <HintPath>..\Components\googleanalytics-3.0.3.4\lib\android\GoogleAnalytics.Android.dll</HintPath>
     </Reference>
+    <Reference Include="Bugsnag">
+      <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoAndroid10\Bugsnag.dll</HintPath>
+    </Reference>
+    <Reference Include="Bugsnag.Android">
+      <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoAndroid10\Bugsnag.Android.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -81,12 +87,6 @@
     <Compile Include="Net\GcmService.cs" />
     <Compile Include="Net\GcmRegistrationManager.cs" />
     <Compile Include="UI\Fragments\DeleteTimeEntriesPromptDialogFragment.cs" />
-    <Compile Include="Bugsnag\Data\ApplicationInfo.cs" />
-    <Compile Include="Bugsnag\Data\ApplicationState.cs" />
-    <Compile Include="Bugsnag\Data\SystemInfo.cs" />
-    <Compile Include="Bugsnag\Data\SystemState.cs" />
-    <Compile Include="Bugsnag\Json\OrientationConverter.cs" />
-    <Compile Include="Bugsnag\BugsnagClient.cs" />
     <Compile Include="AndroidLogger.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopRunningTimeEntryService.cs" />
@@ -550,9 +550,6 @@
     <Folder Include="Resources\drawable-hdpi\" />
     <Folder Include="Resources\drawable-mdpi\" />
     <Folder Include="Resources\drawable-xhdpi\" />
-    <Folder Include="Bugsnag\" />
-    <Folder Include="Bugsnag\Data\" />
-    <Folder Include="Bugsnag\Json\" />
     <Folder Include="Resources\drawable-xxhdpi\" />
     <Folder Include="UI\Utils\" />
     <Folder Include="UI\Components\" />

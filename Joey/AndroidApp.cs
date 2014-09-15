@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.Net;
+using Bugsnag;
 using Google.Analytics.Tracking;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -54,8 +54,8 @@ namespace Toggl.Joey
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
-            ServiceContainer.Register<BugsnagClient> (delegate {
-                return new Toggl.Joey.Bugsnag.BugsnagClient (this, Build.BugsnagApiKey) {
+            ServiceContainer.Register<IBugsnagClient> (delegate {
+                return new BugsnagClient (this, Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };
@@ -75,7 +75,7 @@ namespace Toggl.Joey
         private void InitializeStartupComponents ()
         {
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
-            ServiceContainer.Resolve<BugsnagClient> ();
+            ServiceContainer.Resolve<IBugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
         }
 

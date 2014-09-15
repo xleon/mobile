@@ -1,5 +1,5 @@
 using System;
-using Toggl.Phoebe.Bugsnag;
+using Bugsnag;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -60,24 +60,25 @@ namespace Toggl.Phoebe
         {
             // Send warnings and errors to Bugsnag:
             if (level >= Level.Warning) {
-                Toggl.Phoebe.Bugsnag.Data.ErrorSeverity severity;
+                Bugsnag.Data.ErrorSeverity severity;
+
                 switch (level) {
                 case Level.Warning:
-                    severity = Toggl.Phoebe.Bugsnag.Data.ErrorSeverity.Warning;
+                    severity = Bugsnag.Data.ErrorSeverity.Warning;
                     break;
                 case Level.Error:
-                    severity = Toggl.Phoebe.Bugsnag.Data.ErrorSeverity.Error;
+                    severity = Bugsnag.Data.ErrorSeverity.Error;
                     break;
                 default:
-                    severity = Toggl.Phoebe.Bugsnag.Data.ErrorSeverity.Info;
+                    severity = Bugsnag.Data.ErrorSeverity.Info;
                     break;
                 }
 
-                var md = new Phoebe.Bugsnag.Data.Metadata ();
+                var md = new Bugsnag.Data.Metadata ();
                 md.AddToTab ("Logger", "Tag", tag);
                 md.AddToTab ("Logger", "Message", message);
 
-                var bugsnagClient = ServiceContainer.Resolve<BugsnagClient> ();
+                var bugsnagClient = ServiceContainer.Resolve<IBugsnagClient> ();
                 if (bugsnagClient != null) {
                     bugsnagClient.Notify (exc, severity, md);
                 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using Cirrious.FluentLayouts.Touch;
 using GoogleAnalytics.iOS;
+using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
@@ -9,7 +10,7 @@ using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class WelcomeViewController : UIViewController
+    public class WelcomeViewController : UIViewController, Google.Plus.ISignInDelegate
     {
         private const string Tag = "WelcomeViewController";
 
@@ -92,7 +93,7 @@ namespace Toggl.Ross.ViewControllers
                 navController.SetNavigationBarHidden (true, animated);
             }
 
-            Google.Plus.SignIn.SharedInstance.Finished += OnGPlusFinished;
+            Google.Plus.SignIn.SharedInstance.Delegate = this;
         }
 
         public override void ViewDidAppear (bool animated)
@@ -113,7 +114,9 @@ namespace Toggl.Ross.ViewControllers
                 navController = null;
             }
 
-            Google.Plus.SignIn.SharedInstance.Finished -= OnGPlusFinished;
+            if (Google.Plus.SignIn.SharedInstance.Delegate == this) {
+                Google.Plus.SignIn.SharedInstance.Delegate = null;
+            }
         }
 
         private bool IsAuthenticating {
@@ -136,35 +139,25 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void OnGPlusFinished (object sender, Google.Plus.SignInDelegateFinishedEventArgs e)
+        public void Finished (Google.OpenSource.OAuth2Authentication auth, NSError error)
         {
             InvokeOnMainThread (async delegate {
                 try {
-                    if (e.Error == null) {
+                    if (error == null) {
                         IsAuthenticating = true;
-
                         var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
-
                         var authManager = ServiceContainer.Resolve<AuthManager> ();
                         var success = await authManager.AuthenticateWithGoogle (token);
-
                         // No need to keep the users Google account access around anymore
                         Google.Plus.SignIn.SharedInstance.Disconnect ();
-
                         if (!success) {
-                            new UIAlertView (
-                                "WelcomeLoginErrorTitle".Tr (),
-                                "WelcomeLoginErrorMessage".Tr (),
-                                null, "WelcomeLoginErrorOk".Tr (), null).Show ();
+                            new UIAlertView ("WelcomeLoginErrorTitle".Tr (), "WelcomeLoginErrorMessage".Tr (), null, "WelcomeLoginErrorOk".Tr (), null).Show ();
                         } else {
                             // Start the initial sync for the user
                             ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
                         }
                     } else {
-                        new UIAlertView (
-                            "WelcomeGoogleErrorTitle".Tr (),
-                            "WelcomeGoogleErrorMessage".Tr (),
-                            null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
+                        new UIAlertView ("WelcomeGoogleErrorTitle".Tr (), "WelcomeGoogleErrorMessage".Tr (), null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
                     }
                 } catch (InvalidOperationException ex) {
                     var log = ServiceContainer.Resolve<Logger> ();

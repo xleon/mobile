@@ -11,7 +11,7 @@ using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class SignupViewController : UIViewController
+    public class SignupViewController : UIViewController, Google.Plus.ISignInDelegate
     {
         private UIView inputsContainer;
         private UIView topBorder;
@@ -49,7 +49,7 @@ namespace Toggl.Ross.ViewControllers
 
             inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Signup.InputsBorder));
 
-            inputsContainer.Add(passwordTextField = new PasswordTextField () {
+            inputsContainer.Add (passwordTextField = new PasswordTextField () {
                 Placeholder = "SignupPasswordHint".Tr (),
                 AutocapitalizationType = UITextAutocapitalizationType.None,
                 AutocorrectionType = UITextAutocorrectionType.No,
@@ -135,7 +135,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillAppear (animated);
 
-            Google.Plus.SignIn.SharedInstance.Finished += OnGPlusFinished;
+            Google.Plus.SignIn.SharedInstance.Delegate = this;
         }
 
         public override void ViewDidAppear (bool animated)
@@ -151,7 +151,9 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillDisappear (animated);
 
-            Google.Plus.SignIn.SharedInstance.Finished -= OnGPlusFinished;
+            if (Google.Plus.SignIn.SharedInstance.Delegate == this) {
+                Google.Plus.SignIn.SharedInstance.Delegate = null;
+            }
         }
 
         private void OnTextFieldEditingChanged (object sender, EventArgs e)
@@ -231,11 +233,11 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void OnGPlusFinished (object sender, Google.Plus.SignInDelegateFinishedEventArgs e)
+        public void Finished (Google.OpenSource.OAuth2Authentication auth, NSError error)
         {
             InvokeOnMainThread (async delegate {
                 try {
-                    if (e.Error == null) {
+                    if (error == null) {
                         IsAuthenticating = true;
 
                         var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;

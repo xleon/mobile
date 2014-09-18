@@ -130,6 +130,7 @@
     <Compile Include="UI\Views\RecentTimeEntryItem.cs" />
     <Compile Include="UI\Views\LogTimeEntryItem.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
+    <Compile Include="UI\Views\FadeLinearLayout.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

@@ -181,6 +181,9 @@ namespace Toggl.Joey.UI.Fragments
 
             isSaving = true;
             try {
+                // Store the model reference so it wouldn't get nulled by OnDestroy while doing async things.
+                var model = this.model;
+
                 // Resolve selected indexes into TagData:
                 var selected = listView.CheckedItemPositions;
                 var tags = workspaceTagsView.Data

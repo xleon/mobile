@@ -147,6 +147,10 @@ namespace Toggl.Joey.UI.Activities
 
         private void SyncContent ()
         {
+            // Views not loaded yet/anymore?
+            if (LoginButton == null)
+                return;
+
             if (CurrentMode == Mode.Login) {
                 LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
                 LegalTextView.Visibility = ViewStates.Gone;

@@ -10,6 +10,7 @@ namespace Toggl.Phoebe
 {
     public class TimeCorrectionManager : IDisposable
     {
+        private const string LogTag = "TimeCorrectionManager";
         private const int SampleSize = 21;
 
         private readonly object syncRoot = new Object ();
@@ -74,20 +75,28 @@ namespace Toggl.Phoebe
 
         private async void LoadMeasurements ()
         {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var rows = await dataStore.Table<TimeCorrectionData> ()
+            try {
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var rows = await dataStore.Table<TimeCorrectionData> ()
                 .OrderBy (r => r.MeasuredAt, asc: false)
                 .Take (SampleSize)
                 .QueryAsync ()
                 .ConfigureAwait (false);
 
-            rows.Reverse ();
+                rows.Reverse ();
 
-            lock (syncRoot) {
-                foreach (var measurement in rows) {
-                    sample.Enqueue (measurement);
+                lock (syncRoot) {
+                    foreach (var measurement in rows) {
+                        sample.Enqueue (measurement);
+                    }
+                    lastCorrection = null;
                 }
-                lastCorrection = null;
+            } catch (InvalidCastException ex) {
+                // For whatever reason an InvalidCastException is thrown in the above code occasionally.
+                // As it's not clear where or how, it's better to just log this warning and not let it
+                // crash the whole app.
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Warning (LogTag, ex, "Failed to load previous measurements.");
             }
         }
 

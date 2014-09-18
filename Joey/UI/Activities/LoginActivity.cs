@@ -29,6 +29,8 @@ namespace Toggl.Joey.UI.Activities
         Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
+        private const string LogTag = "LoginActivity";
+
         private static readonly string ExtraShowPassword = "com.toggl.timer.show_password";
         private bool hasGoogleAccounts;
         private bool showPassword;
@@ -251,8 +253,16 @@ namespace Toggl.Joey.UI.Activities
         {
             IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            var success = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
-            IsAuthenticating = false;
+            bool success;
+            try {
+                success = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
+            } catch (InvalidOperationException ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Info (LogTag, ex, "Failed to authenticate user with password.");
+                return;
+            } finally {
+                IsAuthenticating = false;
+            }
 
             if (!success) {
                 PasswordEditText.Text = String.Empty;
@@ -271,8 +281,16 @@ namespace Toggl.Joey.UI.Activities
         {
             IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            var success = await authManager.Signup (EmailEditText.Text, PasswordEditText.Text);
-            IsAuthenticating = false;
+            bool success;
+            try {
+                success = await authManager.Signup (EmailEditText.Text, PasswordEditText.Text);
+            } catch (InvalidOperationException ex) {
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Info (LogTag, ex, "Failed to signup user with password.");
+                return;
+            } finally {
+                IsAuthenticating = false;
+            }
 
             if (!success) {
                 EmailEditText.RequestFocus ();
@@ -449,6 +467,10 @@ namespace Toggl.Joey.UI.Activities
                     var authManager = ServiceContainer.Resolve<AuthManager> ();
                     var ctx = Activity;
 
+                    // No point in trying to reauth when old authentication is still running.
+                    if (authManager.IsAuthenticating)
+                        return;
+
                     // Workaround for Android linker bug which forgets to register JNI types
                     Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GoogleAuthException", typeof(GoogleAuthException));
                     Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GooglePlayServicesAvailabilityException", typeof(GooglePlayServicesAvailabilityException));
@@ -466,9 +488,9 @@ namespace Toggl.Joey.UI.Activities
                         StartActivityForResult (exc.Intent, GoogleAuthRequestCode);
                     } catch (Java.IO.IOException exc) {
                         // Connectivity error.. nothing to do really?
-                        log.Info (Tag, exc, "Failed to login with Google due to network issues.");
+                        log.Info (LogTag, exc, "Failed to login with Google due to network issues.");
                     } catch (Exception exc) {
-                        log.Error (Tag, exc, "Failed to get access token for '{0}'.", Email);
+                        log.Error (LogTag, exc, "Failed to get access token for '{0}'.", Email);
                     }
 
                     // Failed to get token
@@ -476,23 +498,27 @@ namespace Toggl.Joey.UI.Activities
                         return;
                     }
 
-                    activity = Activity as LoginActivity;
-                    if (activity != null && activity.CurrentMode == Mode.Signup) {
-                        // Signup with Google
-                        var success = await authManager.SignupWithGoogle (token);
-                        if (!success) {
-                            GoogleAuthUtil.InvalidateToken (ctx, token);
+                    try {
+                        activity = Activity as LoginActivity;
+                        if (activity != null && activity.CurrentMode == Mode.Signup) {
+                            // Signup with Google
+                            var success = await authManager.SignupWithGoogle (token);
+                            if (!success) {
+                                GoogleAuthUtil.InvalidateToken (ctx, token);
 
-                            new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
-                        }
-                    } else {
-                        // Authenticate client
-                        var success = await authManager.AuthenticateWithGoogle (token);
-                        if (!success) {
-                            GoogleAuthUtil.InvalidateToken (ctx, token);
+                                new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                            }
+                        } else {
+                            // Authenticate client
+                            var success = await authManager.AuthenticateWithGoogle (token);
+                            if (!success) {
+                                GoogleAuthUtil.InvalidateToken (ctx, token);
 
-                            new NoAccountDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                                new NoAccountDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                            }
                         }
+                    } catch (InvalidOperationException ex) {
+                        log.Info (LogTag, ex, "Failed to authenticate user with Google login.");
                     }
                 } finally {
                     IsAuthenticating = false;

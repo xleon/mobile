@@ -42,8 +42,9 @@ namespace Toggl.Joey.UI.Adapters
         {
             // Need to access the Handle property, else mono optimises/loses the context and we get a weird
             // low-level exception about "'jobject' must not be IntPtr.Zero".
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
             NotifyDataSetChanged ();
         }
 
@@ -54,8 +55,9 @@ namespace Toggl.Joey.UI.Adapters
 
         public virtual T GetEntry (int position)
         {
-            if (dataView.IsLoading && position == dataView.Count)
+            if (dataView.IsLoading && position == dataView.Count) {
                 return default(T);
+            }
             return dataView.Data.ElementAt (position);
         }
 
@@ -70,14 +72,16 @@ namespace Toggl.Joey.UI.Adapters
             return position;
         }
 
-        public override bool HasStableIds {
+        public override bool HasStableIds
+        {
             get { return false; }
         }
 
         public override int GetItemViewType (int position)
         {
-            if (position == dataView.Count && dataView.IsLoading)
+            if (position == dataView.Count && dataView.IsLoading) {
                 return ViewTypeLoaderPlaceholder;
+            }
 
             return ViewTypeContent;
         }
@@ -98,8 +102,9 @@ namespace Toggl.Joey.UI.Adapters
 
         protected virtual View GetLoadIndicatorView (int position, View convertView, ViewGroup parent)
         {
-            if (convertView != null)
+            if (convertView != null) {
                 return convertView;
+            }
 
             var view = LayoutInflater.FromContext (parent.Context).Inflate (
                            Resource.Layout.TimeEntryListLoadingItem, parent, false);
@@ -113,19 +118,23 @@ namespace Toggl.Joey.UI.Adapters
 
         protected abstract View GetModelView (int position, View convertView, ViewGroup parent);
 
-        public override int ViewTypeCount {
+        public override int ViewTypeCount
+        {
             get { return 2; }
         }
 
-        public override int Count {
+        public override int Count
+        {
             get {
-                if (dataView.IsLoading)
+                if (dataView.IsLoading) {
                     return (int)dataView.Count + 1;
+                }
                 return (int)dataView.Count;
             }
         }
 
-        protected CachingDataView<T> DataView {
+        protected CachingDataView<T> DataView
+        {
             get { return dataView; }
         }
     }

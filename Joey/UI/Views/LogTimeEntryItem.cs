@@ -125,7 +125,7 @@ namespace Toggl.Joey.UI.Views
             int usableWidthFirstLine = durationBar - paddingLeft;
             int firstWidth = GetFirstElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth);
 
-            LayoutView (projectTextView, paddingLeft, currentTop, firstWidth, projectTextView.MeasuredHeight);    
+            LayoutView (projectTextView, paddingLeft, currentTop, firstWidth, projectTextView.MeasuredHeight);
             if (clientTextView.Text != String.Empty) {
                 LayoutView (clientTextView, paddingLeft + firstWidth, currentTop, GetSecondElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth, clientTextView.MeasuredWidth), clientTextView.MeasuredHeight);
             }
@@ -206,7 +206,7 @@ namespace Toggl.Joey.UI.Views
             int topWithMargins = top + margins.TopMargin;
 
             view.Layout (leftWithMargins, topWithMargins,
-                leftWithMargins + width, topWithMargins + height);
+                         leftWithMargins + width, topWithMargins + height);
         }
 
         private int GetWidthWithMargins (View child)
@@ -275,8 +275,9 @@ namespace Toggl.Joey.UI.Views
 
         private void ReplaceDrawable (ref Drawable field, ref int width, Drawable value)
         {
-            if (field == value)
+            if (field == value) {
                 return;
+            }
 
             if (field != null) {
                 field.Callback = null;
@@ -312,7 +313,8 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public override ViewStates Visibility {
+        public override ViewStates Visibility
+        {
             get { return base.Visibility; }
             set {
                 base.Visibility = value;

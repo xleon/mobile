@@ -22,8 +22,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
 
             if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
                 ResetModel ();

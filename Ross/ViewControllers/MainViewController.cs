@@ -151,10 +151,12 @@ namespace Toggl.Ross.ViewControllers
         {
             // Make sure we're not mid transition or have too few view controllers
             var transitionCoordinator = this.GetTransitionCoordinator ();
-            if (transitionCoordinator != null && transitionCoordinator.IsAnimated)
+            if (transitionCoordinator != null && transitionCoordinator.IsAnimated) {
                 return false;
-            if (ViewControllers.Length <= 1)
+            }
+            if (ViewControllers.Length <= 1) {
                 return false;
+            }
 
             var fromViewController = ViewControllers [ViewControllers.Length - 1];
             var toViewController = ViewControllers [ViewControllers.Length - 2];
@@ -162,8 +164,9 @@ namespace Toggl.Ross.ViewControllers
             var fromDurationViewController = fromViewController as DurationChangeViewController;
 
             if (fromDurationViewController != null && fromDurationViewController.PreviousControllerType == toViewController.GetType ()) {
-                if (recognizer == interactiveEdgePanGestureRecognizer)
+                if (recognizer == interactiveEdgePanGestureRecognizer) {
                     return true;
+                }
             } else if (recognizer == InteractivePopGestureRecognizer) {
                 return true;
             }

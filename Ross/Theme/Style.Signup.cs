@@ -54,10 +54,10 @@ namespace Toggl.Ross.Theme
                     ParagraphStyle = new NSMutableParagraphStyle () {
                         Alignment = UITextAlignment.Center,
                     },
-                }.Dictionary;
+                } .Dictionary;
                 v.ActiveLinkAttributes = new UIStringAttributes () {
                     ForegroundColor = Color.DarkGreen,
-                }.Dictionary;
+                } .Dictionary;
             }
         }
     }

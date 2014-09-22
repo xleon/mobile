@@ -17,20 +17,20 @@ namespace Toggl.Joey.UI.Utils
         private static string GetMd5Hash (string input)
         {
             var md5Hash = MD5.Create ();
-            // Convert the input string to a byte array and compute the hash. 
+            // Convert the input string to a byte array and compute the hash.
             byte[] data = md5Hash.ComputeHash (Encoding.UTF8.GetBytes (input));
 
-            // Create a new Stringbuilder to collect the bytes 
+            // Create a new Stringbuilder to collect the bytes
             // and create a string.
             StringBuilder sBuilder = new StringBuilder ();
 
-            // Loop through each byte of the hashed data  
-            // and format each one as a hexadecimal string. 
+            // Loop through each byte of the hashed data
+            // and format each one as a hexadecimal string.
             for (int i = 0; i < data.Length; i++) {
                 sBuilder.Append (data [i].ToString ("x2"));
             }
 
-            // Return the hexadecimal string. 
+            // Return the hexadecimal string.
             return sBuilder.ToString ();
         }
 
@@ -52,7 +52,7 @@ namespace Toggl.Joey.UI.Utils
                 return File.Exists (imagePath) ? BitmapFactory.DecodeFile (imagePath) : null;
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
-                log.Warning (LogTag, ex, "Failed to load bitmap from cache."); 
+                log.Warning (LogTag, ex, "Failed to load bitmap from cache.");
                 return null;
             }
         }

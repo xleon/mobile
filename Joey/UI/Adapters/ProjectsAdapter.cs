@@ -30,17 +30,20 @@ namespace Toggl.Joey.UI.Adapters
             this.dataView = dataView;
         }
 
-        public override int ViewTypeCount {
+        public override int ViewTypeCount
+        {
             get { return base.ViewTypeCount + 4; }
         }
 
         public override int GetItemViewType (int position)
         {
-            if (position == DataView.Count && DataView.IsLoading)
+            if (position == DataView.Count && DataView.IsLoading) {
                 return ViewTypeLoaderPlaceholder;
+            }
 
-            if (position < 0 || position >= DataView.Count)
+            if (position < 0 || position >= DataView.Count) {
                 throw new ArgumentOutOfRangeException ("position");
+            }
 
             var obj = DataView.Data.ElementAt (position);
             if (obj is ProjectAndTaskView.Project) {
@@ -70,7 +73,7 @@ namespace Toggl.Joey.UI.Adapters
             if (viewType == ViewTypeWorkspace) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.ProjectListWorkspaceItem, parent, false);
+                               Resource.Layout.ProjectListWorkspaceItem, parent, false);
                     view.Tag = new WorkspaceListItemHolder (view);
                 }
 
@@ -79,7 +82,7 @@ namespace Toggl.Joey.UI.Adapters
             } else if (viewType == ViewTypeProject) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.ProjectListProjectItem, parent, false);
+                               Resource.Layout.ProjectListProjectItem, parent, false);
                     view.Tag = new ProjectListItemHolder (dataView, view);
                 }
 
@@ -88,7 +91,7 @@ namespace Toggl.Joey.UI.Adapters
             } else if (viewType == ViewTypeNoProject) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.ProjectListNoProjectItem, parent, false);
+                               Resource.Layout.ProjectListNoProjectItem, parent, false);
                     view.Tag = new NoProjectListItemHolder (view);
                 }
 
@@ -97,7 +100,7 @@ namespace Toggl.Joey.UI.Adapters
             } else if (viewType == ViewTypeNewProject) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.ProjectListNewProjectItem, parent, false);
+                               Resource.Layout.ProjectListNewProjectItem, parent, false);
                     view.Tag = new NewProjectListItemHolder (view);
                 }
 
@@ -109,7 +112,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.ProjectListTaskItem, parent, false);
+                               Resource.Layout.ProjectListTaskItem, parent, false);
                     view.Tag = new TaskListItemHolder (view);
                 }
 
@@ -163,18 +166,21 @@ namespace Toggl.Joey.UI.Adapters
 
             private void HandleWorkspacePropertyChanged (string prop)
             {
-                if (prop == WorkspaceModel.PropertyName)
+                if (prop == WorkspaceModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
                 ResetTrackedObservables ();
-                if (model == null)
+                if (model == null) {
                     return;
+                }
 
                 WorkspaceTextView.Text = (model.Name ?? String.Empty).ToUpper ();
             }
@@ -213,8 +219,9 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnTasksFrameLayoutClick (object sender, EventArgs e)
             {
-                if (model == null)
+                if (model == null) {
                     return;
+                }
                 dataView.ToggleProjectTasks (model.Id);
             }
 
@@ -246,22 +253,25 @@ namespace Toggl.Joey.UI.Adapters
             private void HandleProjectPropertyChanged (string prop)
             {
                 if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyColor
-                    || prop == ProjectModel.PropertyName)
+                        || prop == ProjectModel.PropertyColor
+                        || prop == ProjectModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == ProjectModel.PropertyName)
+                if (prop == ProjectModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 ResetTrackedObservables ();
 
@@ -363,20 +373,23 @@ namespace Toggl.Joey.UI.Adapters
 
             private void HandleTaskPropertyChanged (string prop)
             {
-                if (prop == TaskModel.PropertyName)
+                if (prop == TaskModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 TaskTextView.Text = DataSource.Name;
             }
@@ -435,24 +448,28 @@ namespace Toggl.Joey.UI.Adapters
 
             public void Reload ()
             {
-                if (dataView != null)
+                if (dataView != null) {
                     dataView.Reload ();
+                }
             }
 
             public void LoadMore ()
             {
-                if (dataView != null)
+                if (dataView != null) {
                     dataView.LoadMore ();
+                }
             }
 
-            public IEnumerable<object> Data {
+            public IEnumerable<object> Data
+            {
                 get {
                     if (dataView != null) {
                         foreach (var obj in dataView.Data) {
                             var task = obj as TaskData;
                             if (task != null) {
-                                if (!expandedProjectIds.Contains (task.ProjectId))
+                                if (!expandedProjectIds.Contains (task.ProjectId)) {
                                     continue;
+                                }
                             }
                             yield return obj;
                         }
@@ -462,7 +479,8 @@ namespace Toggl.Joey.UI.Adapters
 
             private long? cachedCount;
 
-            public long Count {
+            public long Count
+            {
                 get {
                     if (cachedCount == null) {
                         cachedCount = Data.LongCount ();
@@ -471,18 +489,22 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            public bool HasMore {
+            public bool HasMore
+            {
                 get {
-                    if (dataView != null)
+                    if (dataView != null) {
                         return dataView.HasMore;
+                    }
                     return false;
                 }
             }
 
-            public bool IsLoading {
+            public bool IsLoading
+            {
                 get {
-                    if (dataView != null)
+                    if (dataView != null) {
                         return dataView.IsLoading;
+                    }
                     return false;
                 }
             }

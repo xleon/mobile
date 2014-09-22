@@ -41,7 +41,7 @@ namespace Toggl.Ross
             window = new TogglWindow (UIScreen.MainScreen.Bounds);
             window.RootViewController = new MainViewController ();
             window.MakeKeyAndVisible ();
-            
+
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<IBugsnagClient> ();
@@ -99,23 +99,26 @@ namespace Toggl.Ross
             ServiceContainer.Register<TagChipCache> ();
         }
 
-        public static TogglWindow TogglWindow {
+        public static TogglWindow TogglWindow
+        {
             get {
                 return ((AppDelegate)UIApplication.SharedApplication.Delegate).window;
             }
         }
 
-        string IPlatformInfo.AppIdentifier {
+        string IPlatformInfo.AppIdentifier
+        {
             get { return Build.AppIdentifier; }
         }
 
         private string appVersion;
 
-        string IPlatformInfo.AppVersion {
+        string IPlatformInfo.AppVersion
+        {
             get {
                 if (appVersion == null) {
                     appVersion = NSBundle.MainBundle.InfoDictionary.ObjectForKey (
-                        new NSString ("CFBundleVersion")).ToString ();
+                                     new NSString ("CFBundleVersion")).ToString ();
                 }
                 return appVersion;
             }

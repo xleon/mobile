@@ -16,11 +16,13 @@ namespace Toggl.Joey.UI.Utils
             this.style = style;
         }
 
-        public string Path {
+        public string Path
+        {
             get { return path; }
         }
 
-        public Typeface Typeface {
+        public Typeface Typeface
+        {
             get {
                 if (typeface == null) {
                     var ctx = ServiceContainer.Resolve<Context> ();
@@ -30,7 +32,8 @@ namespace Toggl.Joey.UI.Utils
             }
         }
 
-        public TypefaceStyle Style {
+        public TypefaceStyle Style
+        {
             get { return style; }
         }
 

@@ -48,7 +48,7 @@ namespace Toggl.Phoebe.Tests.Data
                 // Verify that single message was sent
                 Assert.That (messages, Has.Count.EqualTo (1));
                 Assert.That (messages, Has.Exactly (1)
-                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj2.Matches (msg.Data)));
+                             .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj2.Matches (msg.Data)));
             });
         }
 
@@ -71,7 +71,7 @@ namespace Toggl.Phoebe.Tests.Data
                 // Verify that the message about object update was delivered
                 Assert.That (messages, Has.Count.EqualTo (2));
                 Assert.That (messages, Has.Exactly (2)
-                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj2.Matches (msg.Data)));
+                             .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj2.Matches (msg.Data)));
             });
         }
 
@@ -91,9 +91,9 @@ namespace Toggl.Phoebe.Tests.Data
                 // Verify that the message about object delete was delivered
                 Assert.That (messages, Has.Count.EqualTo (2));
                 Assert.That (messages, Has.Exactly (1)
-                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj1.Matches (msg.Data)));
+                             .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Put && obj1.Matches (msg.Data)));
                 Assert.That (messages, Has.Exactly (1)
-                    .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Delete && obj1.Matches (msg.Data)));
+                             .Matches<DataChangeMessage> (msg => msg.Action == DataAction.Delete && obj1.Matches (msg.Data)));
             });
         }
 
@@ -143,9 +143,9 @@ namespace Toggl.Phoebe.Tests.Data
                 }
 
                 data = await DataStore.Table<WorkspaceData> ()
-                    .OrderBy ((m) => m.Name)
-                    .Take (1).Skip (1)
-                    .QueryAsync ((m) => m.Name.StartsWith ("Test"));
+                       .OrderBy ((m) => m.Name)
+                       .Take (1).Skip (1)
+                       .QueryAsync ((m) => m.Name.StartsWith ("Test"));
                 Assert.AreEqual (1, data.Count, "Should've received only a single result");
                 Assert.AreEqual ("Test #2", data [0].Name, "Invalid item returned");
 
@@ -171,7 +171,7 @@ namespace Toggl.Phoebe.Tests.Data
                 // Verify messages
                 Assert.That (messages, Has.Count.EqualTo (1));
                 Assert.That (messages, Has.Exactly (1)
-                    .Matches<DataChangeMessage> ((msg) => msg.Action == DataAction.Put));
+                             .Matches<DataChangeMessage> ((msg) => msg.Action == DataAction.Put));
             });
         }
 

@@ -69,8 +69,8 @@ namespace Toggl.Phoebe.Tests
         protected async Task SetUpFakeUser (Guid userId)
         {
             ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
-                (store) => store.ApiToken == "test" &&
-                store.UserId == userId));
+                        (store) => store.ApiToken == "test" &&
+                        store.UserId == userId));
             var authManager = new AuthManager ();
             ServiceContainer.Register<AuthManager> (authManager);
 
@@ -105,11 +105,13 @@ namespace Toggl.Phoebe.Tests
             awaiter.GetResult ();
         }
 
-        protected MessageBus MessageBus {
+        protected MessageBus MessageBus
+        {
             get { return ServiceContainer.Resolve<MessageBus> (); }
         }
 
-        protected IDataStore DataStore {
+        protected IDataStore DataStore
+        {
             get { return ServiceContainer.Resolve<IDataStore> (); }
         }
     }

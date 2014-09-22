@@ -22,7 +22,7 @@ namespace Toggl.Joey
         }
 
         public StopRunningTimeEntryService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-            : base (javaRef, transfer)
+        : base (javaRef, transfer)
         {
         }
 
@@ -52,11 +52,11 @@ namespace Toggl.Joey
 
             // Find running tasks:
             var runningEntries = await dataStore.Table<TimeEntryData> ()
-                .QueryAsync (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId)
-                .ConfigureAwait (false);
+                                 .QueryAsync (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId)
+                                 .ConfigureAwait (false);
 
             var stopTasks = runningEntries
-                .Select (data => new TimeEntryModel (data).StopAsync ());
+                            .Select (data => new TimeEntryModel (data).StopAsync ());
             await Task.WhenAll (stopTasks).ConfigureAwait (false);
         }
 

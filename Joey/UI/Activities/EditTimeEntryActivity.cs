@@ -12,8 +12,8 @@ using Toggl.Phoebe;
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
-        Exported = false,
-        WindowSoftInputMode = SoftInput.StateHidden)]
+         Exported = false,
+         WindowSoftInputMode = SoftInput.StateHidden)]
     public class EditTimeEntryActivity : BaseActivity
     {
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
@@ -33,8 +33,8 @@ namespace Toggl.Joey.UI.Activities
             ActionBar.SetDisplayOptions (
                 ActionBarDisplayOptions.ShowCustom,
                 (ActionBarDisplayOptions)((int)ActionBarDisplayOptions.ShowCustom
-                | (int)ActionBarDisplayOptions.ShowHome
-                | (int)ActionBarDisplayOptions.ShowTitle));
+                                          | (int)ActionBarDisplayOptions.ShowHome
+                                          | (int)ActionBarDisplayOptions.ShowTitle));
             ActionBar.CustomView = actionBarView;
 
             SetContentView (Resource.Layout.EditTimeEntryActivity);
@@ -46,8 +46,8 @@ namespace Toggl.Joey.UI.Activities
                     Finish ();
                 } else {
                     FragmentManager.BeginTransaction ()
-                        .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (model))
-                        .Commit ();
+                    .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (model))
+                    .Commit ();
                 }
             }
         }
@@ -55,13 +55,15 @@ namespace Toggl.Joey.UI.Activities
         private async void CreateModelFromIntent ()
         {
             var extras = Intent.Extras;
-            if (extras == null)
+            if (extras == null) {
                 return;
+            }
 
             var extraIdStr = extras.GetString (ExtraTimeEntryId);
             Guid extraId;
-            if (!Guid.TryParse (extraIdStr, out extraId))
+            if (!Guid.TryParse (extraIdStr, out extraId)) {
                 return;
+            }
 
             model = new TimeEntryModel (extraId);
             model.PropertyChanged += OnPropertyChange;
@@ -87,8 +89,9 @@ namespace Toggl.Joey.UI.Activities
         private void OnPropertyChange (object sender, EventArgs e)
         {
             // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
             if (model.Id == Guid.Empty) {
                 Finish ();
             }

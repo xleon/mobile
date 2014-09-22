@@ -62,10 +62,10 @@ namespace Toggl.Joey.UI.Views
                 }
 
                 var gradient = new LinearGradient (
-                                   fadeRect.Left, fadeRect.Top,
-                                   isHoriz ? fadeRect.Right : fadeRect.Left, isHoriz ? fadeRect.Top : fadeRect.Bottom,
-                                   new Color (255, 255, 255, 255), new Color (255, 255, 255, 0),
-                                   Shader.TileMode.Clamp);
+                    fadeRect.Left, fadeRect.Top,
+                    isHoriz ? fadeRect.Right : fadeRect.Left, isHoriz ? fadeRect.Top : fadeRect.Bottom,
+                    new Color (255, 255, 255, 255), new Color (255, 255, 255, 0),
+                    Shader.TileMode.Clamp);
                 fadePaint.SetShader (gradient);
 
                 canvas.DrawRect (fadeRect, fadePaint);
@@ -74,11 +74,13 @@ namespace Toggl.Joey.UI.Views
 
         private int fadeLength;
 
-        public int FadeLength {
+        public int FadeLength
+        {
             get { return fadeLength; }
             set {
-                if (fadeLength == value)
+                if (fadeLength == value) {
                     return;
+                }
                 fadeLength = value;
 
                 var fadeEnabled = fadeLength > 0;

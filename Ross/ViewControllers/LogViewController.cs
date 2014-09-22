@@ -270,17 +270,20 @@ namespace Toggl.Ross.ViewControllers
 
             protected override async void OnContinue ()
             {
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
                 await DataSource.ContinueAsync ();
-                if (ContinueCallback != null)
+                if (ContinueCallback != null) {
                     ContinueCallback (DataSource);
+                }
             }
 
             protected override async void OnDelete ()
             {
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
                 await DataSource.DeleteAsync ();
             }
 
@@ -317,7 +320,7 @@ namespace Toggl.Ross.ViewControllers
                 );
 
                 textContentView.Frame = new RectangleF (
-                    x: 0, y: 0, 
+                    x: 0, y: 0,
                     width: billableTagsImageView.Frame.X - 2f,
                     height: contentFrame.Height
                 );
@@ -404,8 +407,9 @@ namespace Toggl.Ross.ViewControllers
             {
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 rebindCounter++;
 
@@ -471,11 +475,11 @@ namespace Toggl.Ross.ViewControllers
                     var counter = rebindCounter;
                     DispatchQueue.MainQueue.DispatchAfter (
                         TimeSpan.FromMilliseconds (1000 - duration.Milliseconds),
-                        delegate {
-                            if (counter == rebindCounter) {
-                                Rebind ();
-                            }
-                        });
+                    delegate {
+                        if (counter == rebindCounter) {
+                            Rebind ();
+                        }
+                    });
                 }
 
                 LayoutIfNeeded ();
@@ -484,8 +488,9 @@ namespace Toggl.Ross.ViewControllers
             private void RebindTags ()
             {
                 var model = DataSource;
-                if (model == null || tagsView == null)
+                if (model == null || tagsView == null) {
                     return;
+                }
 
                 var hasTags = tagsView.HasNonDefault;
                 var isBillable = model.IsBillable;
@@ -526,33 +531,37 @@ namespace Toggl.Ross.ViewControllers
             private void HandleTimeEntryPropertyChanged (string prop)
             {
                 if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
-                    || prop == TimeEntryModel.PropertyStartTime
-                    || prop == TimeEntryModel.PropertyStopTime
-                    || prop == TimeEntryModel.PropertyState
-                    || prop == TimeEntryModel.PropertyIsBillable
-                    || prop == TimeEntryModel.PropertyDescription)
+                        || prop == TimeEntryModel.PropertyTask
+                        || prop == TimeEntryModel.PropertyStartTime
+                        || prop == TimeEntryModel.PropertyStopTime
+                        || prop == TimeEntryModel.PropertyState
+                        || prop == TimeEntryModel.PropertyIsBillable
+                        || prop == TimeEntryModel.PropertyDescription) {
                     Rebind ();
+                }
             }
 
             private void HandleProjectPropertyChanged (string prop)
             {
                 if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyName
-                    || prop == ProjectModel.PropertyColor)
+                        || prop == ProjectModel.PropertyName
+                        || prop == ProjectModel.PropertyColor) {
                     Rebind ();
+                }
             }
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == ClientModel.PropertyName)
+                if (prop == ClientModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleTaskPropertyChanged (string prop)
             {
-                if (prop == TaskModel.PropertyName)
+                if (prop == TaskModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             public Action<TimeEntryModel> ContinueCallback { get; set; }
@@ -633,8 +642,9 @@ namespace Toggl.Ross.ViewControllers
 
             private void ResetTrackedObservables ()
             {
-                if (propertyTracker == null)
+                if (propertyTracker == null) {
                     return;
+                }
 
                 propertyTracker.MarkAllStale ();
 
@@ -648,9 +658,10 @@ namespace Toggl.Ross.ViewControllers
             private void HandleTimeEntryPropertyChanged (string prop)
             {
                 if (prop == TimeEntryModel.PropertyState
-                    || prop == TimeEntryModel.PropertyStartTime
-                    || prop == TimeEntryModel.PropertyStopTime)
+                        || prop == TimeEntryModel.PropertyStartTime
+                        || prop == TimeEntryModel.PropertyStopTime) {
                     RebindDuration ();
+                }
             }
 
             private void OnDateGroupUpdated (object sender, EventArgs args)
@@ -680,11 +691,11 @@ namespace Toggl.Ross.ViewControllers
                     var counter = rebindCounter;
                     DispatchQueue.MainQueue.DispatchAfter (
                         TimeSpan.FromMilliseconds (60000 - duration.Seconds * 1000 - duration.Milliseconds),
-                        delegate {
-                            if (counter == rebindCounter) {
-                                RebindDuration ();
-                            }
-                        });
+                    delegate {
+                        if (counter == rebindCounter) {
+                            RebindDuration ();
+                        }
+                    });
                 }
             }
 
@@ -692,17 +703,17 @@ namespace Toggl.Ross.ViewControllers
             {
                 if (duration.TotalHours >= 1f) {
                     return String.Format (
-                        "LogHeaderDurationHoursMinutes".Tr (),
-                        (int)duration.TotalHours,
-                        duration.Minutes
-                    );
+                               "LogHeaderDurationHoursMinutes".Tr (),
+                               (int)duration.TotalHours,
+                               duration.Minutes
+                           );
                 }
 
                 if (duration.Minutes > 0) {
                     return String.Format (
-                        "LogHeaderDurationMinutes".Tr (),
-                        duration.Minutes
-                    );
+                               "LogHeaderDurationMinutes".Tr (),
+                               duration.Minutes
+                           );
                 }
 
                 return String.Empty;

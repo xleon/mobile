@@ -31,7 +31,7 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             View = new UIView ()
-                .Apply (Style.Screen);
+            .Apply (Style.Screen);
 
             View.Add (inputsContainer = new UIView ().Apply (Style.Signup.InputsContainer));
 
@@ -44,7 +44,7 @@ namespace Toggl.Ross.ViewControllers
                 ReturnKeyType = UIReturnKeyType.Next,
                 ClearButtonMode = UITextFieldViewMode.Always,
                 ShouldReturn = HandleShouldReturn,
-            }.Apply (Style.Signup.EmailField));
+            } .Apply (Style.Signup.EmailField));
             emailTextField.EditingChanged += OnTextFieldEditingChanged;
 
             inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Signup.InputsBorder));
@@ -56,24 +56,24 @@ namespace Toggl.Ross.ViewControllers
                 SecureTextEntry = true,
                 ReturnKeyType = UIReturnKeyType.Go,
                 ShouldReturn = HandleShouldReturn,
-            }.Apply (Style.Signup.PasswordField));
+            } .Apply (Style.Signup.PasswordField));
             passwordTextField.EditingChanged += OnTextFieldEditingChanged;
 
             inputsContainer.Add (bottomBorder = new UIView ().Apply (Style.Signup.InputsBorder));
 
             View.Add (passwordActionButton = new UIButton ()
-                .Apply (Style.Signup.SignupButton));
+            .Apply (Style.Signup.SignupButton));
             passwordActionButton.SetTitle ("SignupSignupButtonText".Tr (), UIControlState.Normal);
             passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 
             View.Add (googleActionButton = new UIButton ()
-                .Apply (Style.Signup.GoogleButton));
+            .Apply (Style.Signup.GoogleButton));
             googleActionButton.SetTitle ("SignupGoogleButtonText".Tr (), UIControlState.Normal);
             googleActionButton.TouchUpInside += OnGoogleActionButtonTouchUpInside;
 
             View.Add (legalLabel = new TTTAttributedLabel () {
                 Delegate = new LegalLabelDelegate (),
-            }.Apply (Style.Signup.LegalLabel));
+            } .Apply (Style.Signup.LegalLabel));
             SetLegalText (legalLabel);
 
             inputsContainer.AddConstraints (
@@ -212,8 +212,9 @@ namespace Toggl.Ross.ViewControllers
 
         private async void TryPasswordSignup ()
         {
-            if (IsAuthenticating)
+            if (IsAuthenticating) {
                 return;
+            }
 
             IsAuthenticating = true;
 
@@ -268,7 +269,8 @@ namespace Toggl.Ross.ViewControllers
 
         private bool isAuthenticating;
 
-        private bool IsAuthenticating {
+        private bool IsAuthenticating
+        {
             get { return isAuthenticating; }
             set {
                 isAuthenticating = value;

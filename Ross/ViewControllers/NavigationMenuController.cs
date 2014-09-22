@@ -39,8 +39,9 @@ namespace Toggl.Ross.ViewControllers
 
         public void Detach ()
         {
-            if (window != null)
+            if (window != null) {
                 window.OnHitTest -= OnTogglWindowHit;
+            }
             window = null;
         }
 
@@ -48,21 +49,24 @@ namespace Toggl.Ross.ViewControllers
         {
             if (menuShown) {
                 bool hitInsideMenu = IsSubviewOfMenu (view);
-                if (!hitInsideMenu)
+                if (!hitInsideMenu) {
                     ToggleMenu ();
+                }
             }
         }
 
         private bool IsSubviewOfMenu (UIView other)
         {
-            if (menuView == null)
+            if (menuView == null) {
                 return false;
+            }
 
             var enumerator = menuView.Subviews.GetEnumerator ();
 
             while (enumerator.MoveNext ()) {
-                if (enumerator.Current == other)
+                if (enumerator.Current == other) {
                     return true;
+                }
             }
 
             return false;
@@ -70,12 +74,14 @@ namespace Toggl.Ross.ViewControllers
 
         private void EnsureViews ()
         {
-            if (containerView != null)
+            if (containerView != null) {
                 return;
+            }
 
             var navController = controller.NavigationController;
-            if (navController == null)
+            if (navController == null) {
                 return;
+            }
 
             containerView = new UIView () {
                 ClipsToBounds = true,
@@ -194,13 +200,15 @@ namespace Toggl.Ross.ViewControllers
 
         private void ToggleMenu ()
         {
-            if (isAnimating)
+            if (isAnimating) {
                 return;
+            }
 
             EnsureViews ();
 
-            if (containerView == null)
+            if (containerView == null) {
                 return;
+            }
 
             isAnimating = true;
 
@@ -208,33 +216,33 @@ namespace Toggl.Ross.ViewControllers
                 UIView.Animate (
                     0.4, 0,
                     UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseIn,
-                    delegate {
-                        menuView.Frame = new RectangleF (
-                            x: 0,
-                            y: -containerView.Frame.Height,
-                            width: containerView.Frame.Width,
-                            height: containerView.Frame.Height
-                        );
-                    },
-                    delegate {
-                        if (!menuShown) {
-                            // Remove from subview
-                            containerView.RemoveFromSuperview ();
-                        }
-                        isAnimating = false;
-                    });
+                delegate {
+                    menuView.Frame = new RectangleF (
+                        x: 0,
+                        y: -containerView.Frame.Height,
+                        width: containerView.Frame.Width,
+                        height: containerView.Frame.Height
+                    );
+                },
+                delegate {
+                    if (!menuShown) {
+                        // Remove from subview
+                        containerView.RemoveFromSuperview ();
+                    }
+                    isAnimating = false;
+                });
             } else {
                 UIView.Animate (
                     0.4, 0,
                     UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseOut,
-                    delegate {
-                        menuView.Frame = new RectangleF (
-                            x: 0,
-                            y: 0,
-                            width: containerView.Frame.Width,
-                            height: containerView.Frame.Height
-                        );
-                    }, delegate {
+                delegate {
+                    menuView.Frame = new RectangleF (
+                        x: 0,
+                        y: 0,
+                        width: containerView.Frame.Width,
+                        height: containerView.Frame.Height
+                    );
+                }, delegate {
                     isAnimating = false;
                 });
 

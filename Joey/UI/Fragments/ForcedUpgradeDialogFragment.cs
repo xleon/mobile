@@ -20,10 +20,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             Cancelable = false;
             return new AlertDialog.Builder (Activity)
-                    .SetTitle (Resource.String.ForcedUpgradeDialogTitle)
-                    .SetMessage (Resource.String.ForcedUpgradeDialogMessage)
-                    .SetPositiveButton (Resource.String.ForcedUpgradeDialogUpdate, (IDialogInterfaceOnClickListener)null)
-                    .Create ();
+                   .SetTitle (Resource.String.ForcedUpgradeDialogTitle)
+                   .SetMessage (Resource.String.ForcedUpgradeDialogMessage)
+                   .SetPositiveButton (Resource.String.ForcedUpgradeDialogUpdate, (IDialogInterfaceOnClickListener)null)
+                   .Create ();
         }
 
         public override void OnStart ()
@@ -38,9 +38,9 @@ namespace Toggl.Joey.UI.Fragments
         void View.IOnClickListener.OnClick (View v)
         {
             StartActivity (new Intent (
-                Intent.ActionView,
-                Android.Net.Uri.Parse (Toggl.Phoebe.Build.GooglePlayUrl)
-            ));
+                               Intent.ActionView,
+                               Android.Net.Uri.Parse (Toggl.Phoebe.Build.GooglePlayUrl)
+                           ));
         }
     }
 }

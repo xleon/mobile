@@ -93,8 +93,9 @@ namespace Toggl.Joey.UI.Components
         private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
             if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
-                if (SyncModel ())
+                if (SyncModel ()) {
                     Rebind ();
+                }
             }
         }
 
@@ -115,26 +116,31 @@ namespace Toggl.Joey.UI.Components
             return shouldRebind;
         }
 
-        private TimeEntryData ActiveTimeEntryData {
+        private TimeEntryData ActiveTimeEntryData
+        {
             get {
-                if (timeEntryManager == null)
+                if (timeEntryManager == null) {
                     return null;
+                }
                 return timeEntryManager.Active;
             }
         }
 
-        private TimeEntryModel ActiveTimeEntry {
+        private TimeEntryModel ActiveTimeEntry
+        {
             get {
-                if (ActiveTimeEntryData == null)
+                if (ActiveTimeEntryData == null) {
                     return null;
+                }
                 return backingActiveTimeEntry;
             }
         }
 
         private void ResetTrackedObservables ()
         {
-            if (propertyTracker == null)
+            if (propertyTracker == null) {
                 return;
+            }
 
             propertyTracker.MarkAllStale ();
 
@@ -149,16 +155,18 @@ namespace Toggl.Joey.UI.Components
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyState
-                || prop == TimeEntryModel.PropertyStartTime
-                || prop == TimeEntryModel.PropertyStopTime)
+                    || prop == TimeEntryModel.PropertyStartTime
+                    || prop == TimeEntryModel.PropertyStopTime) {
                 Rebind ();
+            }
         }
 
         void OnDurationTextClicked (object sender, EventArgs e)
         {
             var currentEntry = ActiveTimeEntry;
-            if (currentEntry == null)
+            if (currentEntry == null) {
                 return;
+            }
             new ChangeTimeEntryDurationDialogFragment (currentEntry).Show (activity.SupportFragmentManager, "duration_dialog");
         }
 
@@ -167,8 +175,9 @@ namespace Toggl.Joey.UI.Components
             ResetTrackedObservables ();
 
             var currentEntry = ActiveTimeEntry;
-            if (!canRebind || currentEntry == null)
+            if (!canRebind || currentEntry == null) {
                 return;
+            }
 
             var res = activity.Resources;
             if (currentEntry.State == TimeEntryState.New && currentEntry.StopTime.HasValue) {
@@ -200,7 +209,8 @@ namespace Toggl.Joey.UI.Components
             }
         }
 
-        public bool HideDuration {
+        public bool HideDuration
+        {
             get { return hideDuration; }
             set {
                 if (hideDuration != value) {
@@ -210,7 +220,8 @@ namespace Toggl.Joey.UI.Components
             }
         }
 
-        public bool HideAction {
+        public bool HideAction
+        {
             get { return hideAction; }
             set {
                 if (hideAction != value) {
@@ -223,14 +234,16 @@ namespace Toggl.Joey.UI.Components
         private async void OnActionButtonClicked (object sender, EventArgs e)
         {
             // Protect from double clicks
-            if (isProcessingAction)
+            if (isProcessingAction) {
                 return;
+            }
 
             isProcessingAction = true;
             try {
                 var entry = ActiveTimeEntry;
-                if (entry == null)
+                if (entry == null) {
                     return;
+                }
 
                 // Make sure that we work on the copy of the entry to not affect the rest of the logic.
                 entry = new TimeEntryModel (new TimeEntryData (entry.Data));
@@ -253,8 +266,9 @@ namespace Toggl.Joey.UI.Components
                             // Wait for the start and count to finish
                             await Task.WhenAll (startTask, countTask);
 
-                            if (countTask.Result > 0)
+                            if (countTask.Result > 0) {
                                 showProjectSelection = true;
+                            }
                         } else {
                             await startTask;
                         }
@@ -275,7 +289,8 @@ namespace Toggl.Joey.UI.Components
             }
         }
 
-        private bool ChooseProjectForNew {
+        private bool ChooseProjectForNew
+        {
             get {
                 return ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew;
             }

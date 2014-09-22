@@ -34,7 +34,7 @@ namespace Toggl.Ross.ViewControllers
 
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "ClientNewClient".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
-                .Apply (Style.NavLabelButton);
+            .Apply (Style.NavLabelButton);
         }
 
         public override void ViewDidAppear (bool animated)
@@ -63,7 +63,7 @@ namespace Toggl.Ross.ViewControllers
             private readonly ClientSelectionViewController controller;
 
             public Source (ClientSelectionViewController controller)
-                : base (controller.TableView, GetClientView (controller.workspace))
+            : base (controller.TableView, GetClientView (controller.workspace))
             {
                 this.controller = controller;
             }
@@ -73,7 +73,7 @@ namespace Toggl.Ross.ViewControllers
                 var workspaceId = model.Id;
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var q = dataStore.Table<ClientData> ()
-                    .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+                        .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
                 return new DataQueryView<ClientData> (q, 50);
             }
 

@@ -11,20 +11,20 @@ namespace Toggl.Phoebe.Tests.Views
         protected DateTime MakeTime (int hour, int minute, int second = 0)
         {
             return Time.UtcNow.Date
-                .AddHours (hour)
-                .AddMinutes (minute)
-                .AddSeconds (second);
+                   .AddHours (hour)
+                   .AddMinutes (minute)
+                   .AddSeconds (second);
         }
 
         protected async Task<T> GetByRemoteId<T> (long remoteId)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             var rows = await DataStore.Table<T> ().QueryAsync (r => r.RemoteId == remoteId);
             return rows.Single ();
         }
 
         protected async Task ChangeData<T> (long remoteId, Action<T> modifier)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             var model = await GetByRemoteId<T> (remoteId);
             modifier (model);
@@ -33,15 +33,17 @@ namespace Toggl.Phoebe.Tests.Views
 
         protected async Task WaitForLoaded<T> (IDataView<T> view)
         {
-            if (!view.IsLoading)
+            if (!view.IsLoading) {
                 return;
+            }
 
             var tcs = new TaskCompletionSource<object> ();
             EventHandler onUpdated = null;
 
             onUpdated = delegate {
-                if (view.IsLoading)
+                if (view.IsLoading) {
                     return;
+                }
                 view.Updated -= onUpdated;
                 tcs.SetResult (null);
             };
@@ -56,8 +58,9 @@ namespace Toggl.Phoebe.Tests.Views
             EventHandler onUpdated = null;
 
             onUpdated = delegate {
-                if (--count > 0)
+                if (--count > 0) {
                     return;
+                }
                 view.Updated -= onUpdated;
                 tcs.TrySetResult (null);
             };

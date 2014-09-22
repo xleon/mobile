@@ -40,8 +40,9 @@ namespace Toggl.Ross.DataSources
         {
             // Find best combination of groups with most items present
             var selectionSize = groups.Count;
-            if (selectionSize < 1)
+            if (selectionSize < 1) {
                 return new List<DetectionGroup> (0);
+            }
 
             bool[] bestSelection = new bool[selectionSize];
             int bestScore = 0;
@@ -69,8 +70,9 @@ namespace Toggl.Ross.DataSources
                     var prevLast = -1;
                     var selectedGroups = groups.Where ((_, i) => currentSelection [i]);
                     foreach (var grp in selectedGroups) {
-                        if (grp.First <= prevLast)
+                        if (grp.First <= prevLast) {
                             break;
+                        }
 
                         prevLast = grp.Last;
                         score += grp.Size;
@@ -91,8 +93,8 @@ namespace Toggl.Ross.DataSources
         {
             // Make an array of old indexes that correspond to the new array items
             var idxMap = newList
-                .Select (newItem => oldList.FindIndex (oldItem => comparer (newItem, oldItem)))
-                .ToList ();
+                         .Select (newItem => oldList.FindIndex (oldItem => comparer (newItem, oldItem)))
+                         .ToList ();
 
             // Find groups to keep
             var groups = new Queue<DetectionGroup> (FindGroupsToKeep (DetectGroups (idxMap)));
@@ -150,15 +152,13 @@ namespace Toggl.Ross.DataSources
             public int Size;
         }
 
-        public enum ResolvedAction
-        {
+        public enum ResolvedAction {
             Insert,
             Delete,
             Keep,
         }
 
-        public struct ResolveResult
-        {
+        public struct ResolveResult {
             public int OldIndex;
             public int NewIndex;
             public ResolvedAction Action;

@@ -35,12 +35,13 @@ namespace Toggl.Phoebe.Tests.Data
                 await SetUpFakeUser (user.Id);
 
                 ServiceContainer.Register<ISyncManager> (Mock.Of<ISyncManager> (
-                    (mgr) => mgr.IsRunning == syncManagerRunning));
+                            (mgr) => mgr.IsRunning == syncManagerRunning));
                 ServiceContainer.Register<ActiveTimeEntryManager> (new ActiveTimeEntryManager ());
             });
         }
 
-        private ActiveTimeEntryManager ActiveManager {
+        private ActiveTimeEntryManager ActiveManager
+        {
             get { return ServiceContainer.Resolve<ActiveTimeEntryManager> (); }
         }
 
@@ -48,16 +49,16 @@ namespace Toggl.Phoebe.Tests.Data
         {
             syncManagerRunning = true;
             MessageBus.Send (new SyncStartedMessage (
-                ServiceContainer.Resolve<ISyncManager> (),
-                SyncMode.Full));
+                                 ServiceContainer.Resolve<ISyncManager> (),
+                                 SyncMode.Full));
         }
 
         private void StopSync ()
         {
             syncManagerRunning = false;
             MessageBus.Send (new SyncFinishedMessage (
-                ServiceContainer.Resolve<ISyncManager> (),
-                SyncMode.Full, false, null));
+                                 ServiceContainer.Resolve<ISyncManager> (),
+                                 SyncMode.Full, false, null));
         }
 
         private async Task<TimeEntryData> GetEntry (Guid id)

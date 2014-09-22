@@ -23,12 +23,14 @@ namespace Toggl.Joey.UI.Fragments
         public static bool TryShow (FragmentManager fragmentManager)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.User == null || authManager.User.TrackingMode == TrackingMode.StartNew)
+            if (authManager.User == null || authManager.User.TrackingMode == TrackingMode.StartNew) {
                 return false;
+            }
 
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            if (settingsStore.ReadDurOnlyNotice)
+            if (settingsStore.ReadDurOnlyNotice) {
                 return false;
+            }
 
             new DurOnlyNoticeDialogFragment ().Show (fragmentManager, "notice_dialog");
             return true;
@@ -37,10 +39,10 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             return new AlertDialog.Builder (Activity)
-                    .SetTitle (Resource.String.DurOnlyNoticeDialogTitle)
-                    .SetMessage (Resource.String.DurOnlyNoticeDialogMessage)
-                    .SetPositiveButton (Resource.String.DurOnlyNoticeDialogOk, OnOkClicked)
-                    .Create ();
+                   .SetTitle (Resource.String.DurOnlyNoticeDialogTitle)
+                   .SetMessage (Resource.String.DurOnlyNoticeDialogMessage)
+                   .SetPositiveButton (Resource.String.DurOnlyNoticeDialogOk, OnOkClicked)
+                   .Create ();
         }
 
         private void OnOkClicked (object sender, DialogClickEventArgs e)

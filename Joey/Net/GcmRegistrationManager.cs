@@ -14,9 +14,9 @@ namespace Toggl.Joey.Net
     {
         private static readonly string Tag = "GcmRegistrationManager";
         private string authToken;
-        #pragma warning disable 0414
+#pragma warning disable 0414
         private readonly object subscriptionAuthChanged;
-        #pragma warning restore 0414
+#pragma warning restore 0414
 
         public GcmRegistrationManager ()
         {
@@ -31,12 +31,14 @@ namespace Toggl.Joey.Net
 
         private void CheckRegistrationId ()
         {
-            if (!HasGcmSupport)
+            if (!HasGcmSupport) {
                 return;
+            }
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (!authManager.IsAuthenticated)
+            if (!authManager.IsAuthenticated) {
                 return;
+            }
 
             if (RegistrationId == null) {
                 // Registration ID missing (either due update or something else)
@@ -44,10 +46,12 @@ namespace Toggl.Joey.Net
             }
         }
 
-        private bool HasGcmSupport {
+        private bool HasGcmSupport
+        {
             get {
-                if (String.IsNullOrEmpty (Build.GcmSenderId))
+                if (String.IsNullOrEmpty (Build.GcmSenderId)) {
                     return false;
+                }
                 var ctx = ServiceContainer.Resolve<Context> ();
                 return GooglePlayServicesUtil.IsGooglePlayServicesAvailable (ctx) == ConnectionResult.Success;
             }
@@ -72,7 +76,8 @@ namespace Toggl.Joey.Net
             }
         }
 
-        private string RegistrationId {
+        private string RegistrationId
+        {
             get {
                 var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
                 var id = settingsStore.GcmRegistrationId;
@@ -85,8 +90,7 @@ namespace Toggl.Joey.Net
                 }
 
                 return id;
-            }
-            set {
+            } set {
                 var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
                 if (value == null) {
                     settingsStore.GcmRegistrationId = null;
@@ -98,7 +102,8 @@ namespace Toggl.Joey.Net
             }
         }
 
-        private int AppVersion {
+        private int AppVersion
+        {
             get {
                 var ctx = ServiceContainer.Resolve<Context> ();
                 var info = ctx.PackageManager.GetPackageInfo (ctx.PackageName, 0);
@@ -117,7 +122,7 @@ namespace Toggl.Joey.Net
 
                 try {
                     RegistrationId = regId = await Task.Factory.StartNew (() =>
-                        gcm.Register (Build.GcmSenderId));
+                                             gcm.Register (Build.GcmSenderId));
                 } catch (Exception exc) {
                     var log = ServiceContainer.Resolve<Logger> ();
                     log.Info (Tag, exc, "Failed register device for GCM push.");
@@ -132,8 +137,9 @@ namespace Toggl.Joey.Net
 
         private void UnregisterDevice ()
         {
-            if (authToken == null)
+            if (authToken == null) {
                 return;
+            }
 
             var regId = RegistrationId;
             if (regId != null) {

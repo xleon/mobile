@@ -32,7 +32,8 @@ namespace Toggl.Joey.UI.Utils
             base.OnRootDetachedFromWindow (sender, e);
         }
 
-        protected PropertyChangeTracker Tracker {
+        protected PropertyChangeTracker Tracker
+        {
             get { return tracker; }
         }
 

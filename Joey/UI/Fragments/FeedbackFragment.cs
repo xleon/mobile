@@ -72,7 +72,7 @@ namespace Toggl.Joey.UI.Fragments
                 Message = UserMessage,
             };
             var sent = await msg.Send ();
-           
+
             if (sent) {
                 if (userRating == ratingPositive) {
                     AskPublishToAppStore.Show (UserMessage, FragmentManager);
@@ -130,16 +130,19 @@ namespace Toggl.Joey.UI.Fragments
             feedbackNegativeButton.SetImageResource (Resource.Drawable.IcFeedbackNegative);
         }
 
-        private bool IsSendingFeedback {
+        private bool IsSendingFeedback
+        {
             set {
-                if (isSendingFeedback == value)
+                if (isSendingFeedback == value) {
                     return;
+                }
                 isSendingFeedback = value;
                 SyncItems ();
             }
         }
 
-        private String UserMessage {
+        private String UserMessage
+        {
             set {
                 userMessage = value;
                 SyncItems ();
@@ -150,7 +153,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private int UserRating {
+        private int UserRating
+        {
             set {
                 userRating = value;
                 SyncItems ();
@@ -180,11 +184,11 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             return new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.FeedbackThankYouTitle)
-                .SetMessage (Resource.String.FeedbackThankYouMessage)
-                .SetCancelable (true)
-                .SetPositiveButton (Resource.String.FeedbackThankYouOK, (IDialogInterfaceOnClickListener)null)
-                .Create ();
+                   .SetTitle (Resource.String.FeedbackThankYouTitle)
+                   .SetMessage (Resource.String.FeedbackThankYouMessage)
+                   .SetCancelable (true)
+                   .SetPositiveButton (Resource.String.FeedbackThankYouOK, (IDialogInterfaceOnClickListener)null)
+                   .Create ();
         }
     }
 
@@ -213,7 +217,8 @@ namespace Toggl.Joey.UI.Fragments
             new AskPublishToAppStore (userMessage).Show (fragmentManager, "askpublishtoappstore_dialog");
         }
 
-        private String UserMessage {
+        private String UserMessage
+        {
             get {
                 if (Arguments != null) {
                     return Arguments.GetString (UserMessageArgument);
@@ -225,12 +230,12 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             return new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.FeedbackAskPublishTitle)
-                .SetMessage (Resource.String.FeedbackAskPublishMessage)
-                .SetCancelable (true)
-                .SetNegativeButton (Resource.String.FeedbackAskPublishCancel, (IDialogInterfaceOnClickListener)null)
-                .SetPositiveButton (Resource.String.FeedbackAskPublishOK, OnPositiveClick)
-                .Create ();
+                   .SetTitle (Resource.String.FeedbackAskPublishTitle)
+                   .SetMessage (Resource.String.FeedbackAskPublishMessage)
+                   .SetCancelable (true)
+                   .SetNegativeButton (Resource.String.FeedbackAskPublishCancel, (IDialogInterfaceOnClickListener)null)
+                   .SetPositiveButton (Resource.String.FeedbackAskPublishOK, OnPositiveClick)
+                   .Create ();
         }
 
         private void OnPositiveClick (object sender, DialogClickEventArgs e)
@@ -244,9 +249,9 @@ namespace Toggl.Joey.UI.Fragments
             toast.Show ();
 
             StartActivity (new Intent (
-                Intent.ActionView,
-                Android.Net.Uri.Parse (Toggl.Phoebe.Build.GooglePlayUrl)
-            ));
+                               Intent.ActionView,
+                               Android.Net.Uri.Parse (Toggl.Phoebe.Build.GooglePlayUrl)
+                           ));
         }
     }
 }

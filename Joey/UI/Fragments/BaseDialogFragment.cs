@@ -18,8 +18,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Make sure we don't show the dialog twice
             var frag = manager.FindFragmentByTag (tag);
-            if (frag != null)
+            if (frag != null) {
                 return;
+            }
 
             base.Show (manager, tag);
         }

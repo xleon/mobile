@@ -17,8 +17,9 @@ namespace Toggl.Joey.UI.Fragments
         public static bool TryShow (FragmentManager fragmentManager, TimeEntryModel model)
         {
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            if (settingsStore.ReadContinueDialog)
+            if (settingsStore.ReadContinueDialog) {
                 return false;
+            }
 
             new RecentTimeEntryContinueDialogFragment (model).Show (fragmentManager, "notice_dialog");
             return true;
@@ -43,7 +44,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId {
+        private Guid TimeEntryId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -74,11 +76,11 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             return new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.RecentTimeEntryContinueDialogTitle)
-                .SetMessage (Resource.String.RecentTimeEntryContinueDialogMessage)
-                .SetPositiveButton (Resource.String.RecentTimeEntryContinueDialogOk, OnOkClicked)
-                .SetNegativeButton (Resource.String.RecentTimeEntryContinueDialogCancel, (EventHandler<DialogClickEventArgs>)null)
-                .Create ();
+                   .SetTitle (Resource.String.RecentTimeEntryContinueDialogTitle)
+                   .SetMessage (Resource.String.RecentTimeEntryContinueDialogMessage)
+                   .SetPositiveButton (Resource.String.RecentTimeEntryContinueDialogOk, OnOkClicked)
+                   .SetNegativeButton (Resource.String.RecentTimeEntryContinueDialogCancel, (EventHandler<DialogClickEventArgs>)null)
+                   .Create ();
         }
 
         private void OnOkClicked (object sender, DialogClickEventArgs e)
@@ -94,8 +96,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void ContinueEntry ()
         {
-            if (!modelLoaded)
+            if (!modelLoaded) {
                 return;
+            }
 
             var entry = await model.ContinueAsync ();
 

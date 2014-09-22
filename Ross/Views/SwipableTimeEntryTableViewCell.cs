@@ -21,13 +21,13 @@ namespace Toggl.Ross.Views
         {
             continueActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryContinue".Tr (),
-            }.Apply (Style.TimeEntryCell.SwipeActionLabel);
+            } .Apply (Style.TimeEntryCell.SwipeActionLabel);
             deleteActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryDelete".Tr (),
-            }.Apply (Style.TimeEntryCell.SwipeActionLabel);
+            } .Apply (Style.TimeEntryCell.SwipeActionLabel);
             confirmActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryConfirm".Tr (),
-            }.Apply (Style.TimeEntryCell.SwipeActionLabel);
+            } .Apply (Style.TimeEntryCell.SwipeActionLabel);
             actualContentView = new UIView ().Apply (Style.Log.CellContentView);
 
             BackgroundView = new UIView ();
@@ -48,8 +48,7 @@ namespace Toggl.Ross.Views
 
         protected abstract void OnDelete ();
 
-        enum PanLock
-        {
+        enum PanLock {
             None,
             Left,
             Right
@@ -130,8 +129,8 @@ namespace Toggl.Ross.Views
                 var shouldAnimate = oldLock != panLock;
                 if (shouldAnimate) {
                     UIView.Animate (0.1, 0,
-                        UIViewAnimationOptions.CurveEaseOut,
-                        LayoutActualContentView, null);
+                                    UIViewAnimationOptions.CurveEaseOut,
+                                    LayoutActualContentView, null);
                 } else {
                     LayoutActualContentView ();
                 }
@@ -139,28 +138,30 @@ namespace Toggl.Ross.Views
                 if (!panDeleteConfirmed && panLock == PanLock.Right) {
                     // Queue cross fade animation
                     UIView.Animate (0.6, 0.4,
-                        UIViewAnimationOptions.CurveEaseInOut,
-                        delegate {
-                            confirmActionLabel.Alpha = 0;
-                        },
-                        delegate {
-                            if (panLock != PanLock.Right)
-                                return;
-                            panDeleteConfirmed = true;
-                        });
+                                    UIViewAnimationOptions.CurveEaseInOut,
+                    delegate {
+                        confirmActionLabel.Alpha = 0;
+                    },
+                    delegate {
+                        if (panLock != PanLock.Right) {
+                            return;
+                        }
+                        panDeleteConfirmed = true;
+                    });
 
                     UIView.Animate (0.4, 0.8,
-                        UIViewAnimationOptions.CurveEaseInOut,
-                        delegate {
-                            deleteActionLabel.Alpha = 1;
-                        }, null);
+                                    UIViewAnimationOptions.CurveEaseInOut,
+                    delegate {
+                        deleteActionLabel.Alpha = 1;
+                    }, null);
                 }
 
                 break;
             case UIGestureRecognizerState.Cancelled:
             case UIGestureRecognizerState.Ended:
-                if (!gesture.Enabled)
+                if (!gesture.Enabled) {
                     gesture.Enabled = true;
+                }
                 panLockInHorizDirection = false;
                 panDeltaX = 0;
 
@@ -168,14 +169,16 @@ namespace Toggl.Ross.Views
                 var shouldDelete = panLock == PanLock.Right && panDeleteConfirmed;
 
                 UIView.Animate (0.3, 0,
-                    UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
-                    LayoutActualContentView,
-                    delegate {
-                        if (shouldContinue)
-                            OnContinue ();
-                        if (shouldDelete)
-                            OnDelete ();
-                    });
+                                UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
+                                LayoutActualContentView,
+                delegate {
+                    if (shouldContinue) {
+                        OnContinue ();
+                    }
+                    if (shouldDelete) {
+                        OnDelete ();
+                    }
+                });
                 break;
             }
         }
@@ -235,7 +238,8 @@ namespace Toggl.Ross.Views
             );
         }
 
-        protected UIView ActualContentView {
+        protected UIView ActualContentView
+        {
             get { return actualContentView; }
         }
     }

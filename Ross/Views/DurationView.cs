@@ -44,17 +44,20 @@ namespace Toggl.Ross.Views
             );
         }
 
-        public Duration Hint {
+        public Duration Hint
+        {
             get { return hintDuration; }
             set {
-                if (hintDuration == value)
+                if (hintDuration == value) {
                     return;
+                }
                 hintDuration = value;
                 UpdateText ();
             }
         }
 
-        public Duration EnteredDuration {
+        public Duration EnteredDuration
+        {
             get { return duration; }
         }
 
@@ -71,22 +74,22 @@ namespace Toggl.Ross.Views
                 var sepIdx = durationText.IndexOf (":", StringComparison.Ordinal);
                 if (sepIdx >= 0) {
                     durationAttributed.AddAttributes (
-                        new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
-                        new NSRange (sepIdx, 1)
+                    new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
+                    new NSRange (sepIdx, 1)
                     );
                 }
                 // Color entered minutes
                 var minutesLength = Math.Min (digitsEntered, 2);
                 durationAttributed.AddAttributes (
-                    new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
-                    new NSRange (durationText.Length - 1 - minutesLength, minutesLength)
+                new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
+                new NSRange (durationText.Length - 1 - minutesLength, minutesLength)
                 );
                 // Color entered hours
                 if (digitsEntered > 2) {
                     var hoursLength = digitsEntered - 2;
                     durationAttributed.AddAttributes (
-                        new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
-                        new NSRange (1 + 2 - hoursLength, hoursLength)
+                    new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
+                    new NSRange (1 + 2 - hoursLength, hoursLength)
                     );
                 }
             }
@@ -103,24 +106,28 @@ namespace Toggl.Ross.Views
             }
         }
 
-        public override bool CanBecomeFirstResponder {
+        public override bool CanBecomeFirstResponder
+        {
             get { return true; }
         }
 
         [Export ("autocapitalizationType")]
-        UITextAutocapitalizationType AutocapitalizationType {
+        UITextAutocapitalizationType AutocapitalizationType
+        {
             get { return UITextAutocapitalizationType.None; }
             set { throw new InvalidOperationException (); }
         }
 
         [Export ("autocorrectionType")]
-        UITextAutocorrectionType AutocorrectionType {
+        UITextAutocorrectionType AutocorrectionType
+        {
             get { return UITextAutocorrectionType.No; }
             set { throw new InvalidOperationException (); }
         }
 
         [Export ("enablesReturnKeyAutomatically")]
-        bool EnablesReturnKeyAutomatically {
+        bool EnablesReturnKeyAutomatically
+        {
             get { return true; }
             set { throw new InvalidOperationException (); }
         }
@@ -129,24 +136,28 @@ namespace Toggl.Ross.Views
         UIKeyboardAppearance KeyboardAppearance { get; set; }
 
         [Export ("keyboardType")]
-        UIKeyboardType KeyboardType {
+        UIKeyboardType KeyboardType
+        {
             get { return UIKeyboardType.NumberPad; }
             set { throw new InvalidOperationException (); }
         }
 
         [Export ("returnKeyType")]
-        UIReturnKeyType ReturnKeyType {
+        UIReturnKeyType ReturnKeyType
+        {
             get { return UIReturnKeyType.Default; }
             set { throw new InvalidOperationException (); }
         }
 
         [Export ("secureTextEntry")]
-        bool SecureTextEntry {
+        bool SecureTextEntry
+        {
             get { return false; }
             set { throw new InvalidOperationException (); }
         }
 
-        public bool HasText {
+        public bool HasText
+        {
             [Export ("hasText")]
             get { return digitsEntered > 0; }
         }
@@ -154,8 +165,9 @@ namespace Toggl.Ross.Views
         [Export ("deleteBackward")]
         public void DeleteBackward ()
         {
-            if (digitsEntered < 1)
+            if (digitsEntered < 1) {
                 return;
+            }
             duration = duration.RemoveDigit ();
             if (duration == Duration.Zero) {
                 // Clear all entered digits, is no value remains
@@ -173,12 +185,14 @@ namespace Toggl.Ross.Views
             if (text == null) {
                 throw new ArgumentNullException ("text");
             }
-            if (digitsEntered > 3)
+            if (digitsEntered > 3) {
                 return;
+            }
 
             int num;
-            if (!Int32.TryParse (text, out num) || num < 0 || num > 9)
+            if (!Int32.TryParse (text, out num) || num < 0 || num > 9) {
                 return;
+            }
 
             duration = duration.AppendDigit (num);
             digitsEntered += 1;
@@ -207,29 +221,29 @@ namespace Toggl.Ross.Views
 
                 cursorView.Alpha = 0;
                 UIView.Animate (0.5f, 0,
-                    UIViewAnimationOptions.CurveEaseInOut
-                    | UIViewAnimationOptions.Autoreverse
-                    | UIViewAnimationOptions.AllowUserInteraction,
+                                UIViewAnimationOptions.CurveEaseInOut
+                                | UIViewAnimationOptions.Autoreverse
+                                | UIViewAnimationOptions.AllowUserInteraction,
+                delegate {
+                    cursorView.Alpha = 1;
+                },
+                delegate {
+                    cursorView.Alpha = 0;
+                }
+                               );
+
+                cursorTimer = NSTimer.CreateRepeatingScheduledTimer (1.75f, delegate {
+                    UIView.Animate (0.5f, 0,
+                                    UIViewAnimationOptions.CurveEaseInOut
+                                    | UIViewAnimationOptions.Autoreverse
+                                    | UIViewAnimationOptions.AllowUserInteraction,
                     delegate {
                         cursorView.Alpha = 1;
                     },
                     delegate {
                         cursorView.Alpha = 0;
                     }
-                );
-
-                cursorTimer = NSTimer.CreateRepeatingScheduledTimer (1.75f, delegate {
-                    UIView.Animate (0.5f, 0,
-                        UIViewAnimationOptions.CurveEaseInOut
-                        | UIViewAnimationOptions.Autoreverse
-                        | UIViewAnimationOptions.AllowUserInteraction,
-                        delegate {
-                            cursorView.Alpha = 1;
-                        },
-                        delegate {
-                            cursorView.Alpha = 0;
-                        }
-                    );
+                                   );
                 });
 
             }

@@ -37,33 +37,38 @@ namespace Toggl.Joey.UI.Adapters
             } else if (viewType == ViewTypeFooterView) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.RecentTimeEntriesListFooterFragment, parent, false);
+                               Resource.Layout.RecentTimeEntriesListFooterFragment, parent, false);
                 }
             }
 
             return view;
         }
 
-        public override int Count {
+        public override int Count
+        {
             get {
-                if (HasFooterView)
-                    return base.Count + 1; // Add virtual footer view
+                if (HasFooterView) {
+                    return base.Count + 1;    // Add virtual footer view
+                }
                 return base.Count;
             }
         }
 
-        private bool HasFooterView {
+        private bool HasFooterView
+        {
             get { return !DataView.IsLoading && !DataView.HasMore && DataView.Count > 0; }
         }
 
-        public override int ViewTypeCount {
+        public override int ViewTypeCount
+        {
             get { return base.ViewTypeCount + 1; }
         }
 
         public override TimeEntryData GetEntry (int position)
         {
-            if (HasFooterView && position == DataView.Count)
+            if (HasFooterView && position == DataView.Count) {
                 return null;
+            }
             return base.GetEntry (position);
         }
 
@@ -75,14 +80,15 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position == DataView.Count && DataView.IsLoading)
+            if (position == DataView.Count && DataView.IsLoading) {
                 return ViewTypeLoaderPlaceholder;
-            else if (position < 0 || position > DataView.Count)
+            } else if (position < 0 || position > DataView.Count) {
                 throw new ArgumentOutOfRangeException ("position");
-            else if (position < DataView.Count)
+            } else if (position < DataView.Count) {
                 return ViewTypeContent;
-            else if (HasFooterView && position == DataView.Count)
+            } else if (HasFooterView && position == DataView.Count) {
                 return ViewTypeFooterView;
+            }
 
             throw new NotSupportedException ("No view type defined for given object.");
         }
@@ -134,41 +140,47 @@ namespace Toggl.Joey.UI.Adapters
             private void HandleTimeEntryPropertyChanged (string prop)
             {
                 if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
-                    || prop == TimeEntryModel.PropertyDescription)
+                        || prop == TimeEntryModel.PropertyTask
+                        || prop == TimeEntryModel.PropertyDescription) {
                     Rebind ();
+                }
             }
 
             private void HandleProjectPropertyChanged (string prop)
             {
                 if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyColor
-                    || prop == ProjectModel.PropertyName)
+                        || prop == ProjectModel.PropertyColor
+                        || prop == ProjectModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == ProjectModel.PropertyName)
+                if (prop == ProjectModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleTaskPropertyChanged (string prop)
             {
-                if (prop == TaskModel.PropertyName)
+                if (prop == TaskModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 var ctx = ServiceContainer.Resolve<Context> ();
 

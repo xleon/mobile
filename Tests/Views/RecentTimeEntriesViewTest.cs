@@ -17,7 +17,8 @@ namespace Toggl.Phoebe.Tests.Views
         private WorkspaceData workspace;
         private UserData user;
 
-        private AuthManager AuthManager {
+        private AuthManager AuthManager
+        {
             get { return ServiceContainer.Resolve<AuthManager> (); }
         }
 
@@ -29,10 +30,10 @@ namespace Toggl.Phoebe.Tests.Views
                 await CreateTestData ();
 
                 ServiceContainer.Register<ISyncManager> (Mock.Of<ISyncManager> (
-                    (mgr) => mgr.IsRunning == false));
+                            (mgr) => mgr.IsRunning == false));
                 ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
-                    (store) => store.ApiToken == "test" &&
-                    store.UserId == user.Id));
+                            (store) => store.ApiToken == "test" &&
+                            store.UserId == user.Id));
                 ServiceContainer.Register<AuthManager> (new AuthManager ());
             });
         }
@@ -337,7 +338,7 @@ namespace Toggl.Phoebe.Tests.Views
                 await DataStore.PutAsync (data);
 
                 Assert.AreEqual (workspaceId, view.Data.ElementAt (0).WorkspaceId,
-                    "View failed to update internal data with latest information.");
+                                 "View failed to update internal data with latest information.");
             });
         }
 

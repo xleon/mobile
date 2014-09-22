@@ -229,17 +229,20 @@ namespace Toggl.Ross.ViewControllers
 
             protected override async void OnContinue ()
             {
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
                 await DataSource.ContinueAsync ();
-                if (ContinueCallback != null)
+                if (ContinueCallback != null) {
                     ContinueCallback (DataSource);
+                }
             }
 
             protected override async void OnDelete ()
             {
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
                 await DataSource.DeleteAsync ();
             }
 
@@ -346,8 +349,9 @@ namespace Toggl.Ross.ViewControllers
             {
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 rebindCounter++;
 
@@ -409,11 +413,11 @@ namespace Toggl.Ross.ViewControllers
                     var counter = rebindCounter;
                     DispatchQueue.MainQueue.DispatchAfter (
                         TimeSpan.FromMilliseconds (1000 - duration.Milliseconds),
-                        delegate {
-                            if (counter == rebindCounter) {
-                                Rebind ();
-                            }
-                        });
+                    delegate {
+                        if (counter == rebindCounter) {
+                            Rebind ();
+                        }
+                    });
                 }
 
                 LayoutIfNeeded ();
@@ -445,33 +449,37 @@ namespace Toggl.Ross.ViewControllers
             private void HandleTimeEntryPropertyChanged (string prop)
             {
                 if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
-                    || prop == TimeEntryModel.PropertyStartTime
-                    || prop == TimeEntryModel.PropertyStopTime
-                    || prop == TimeEntryModel.PropertyState
-                    || prop == TimeEntryModel.PropertyIsBillable
-                    || prop == TimeEntryModel.PropertyDescription)
+                        || prop == TimeEntryModel.PropertyTask
+                        || prop == TimeEntryModel.PropertyStartTime
+                        || prop == TimeEntryModel.PropertyStopTime
+                        || prop == TimeEntryModel.PropertyState
+                        || prop == TimeEntryModel.PropertyIsBillable
+                        || prop == TimeEntryModel.PropertyDescription) {
                     Rebind ();
+                }
             }
 
             private void HandleProjectPropertyChanged (string prop)
             {
                 if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyName
-                    || prop == ProjectModel.PropertyColor)
+                        || prop == ProjectModel.PropertyName
+                        || prop == ProjectModel.PropertyColor) {
                     Rebind ();
+                }
             }
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == ClientModel.PropertyName)
+                if (prop == ClientModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleTaskPropertyChanged (string prop)
             {
-                if (prop == TaskModel.PropertyName)
+                if (prop == TaskModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             public Action<TimeEntryModel> ContinueCallback { get; set; }

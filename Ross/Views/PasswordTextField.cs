@@ -16,12 +16,11 @@ namespace Toggl.Ross.Views
             obfuscateButton.SetTitle(ShowText, UIControlState.Normal);
             obfuscateButton.SetTitleColor(UIColor.LightGray, UIControlState.Normal);
             obfuscateButton.Font = buttonFont;
-            obfuscateButton.TouchUpInside += (sender, args) =>
-                {
-                    SecureTextEntry = !SecureTextEntry;
-                    Text = Text; //need this to address cursor position update issue
-                    obfuscateButton.SetTitle(SecureTextEntry ? ShowText : HideText, UIControlState.Normal);
-                };
+            obfuscateButton.TouchUpInside += (sender, args) => {
+                SecureTextEntry = !SecureTextEntry;
+                Text = Text; //need this to address cursor position update issue
+                obfuscateButton.SetTitle(SecureTextEntry ? ShowText : HideText, UIControlState.Normal);
+            };
             RightViewMode = UITextFieldViewMode.WhileEditing;
             RightView = obfuscateButton;
         }

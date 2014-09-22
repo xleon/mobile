@@ -31,11 +31,13 @@ namespace Toggl.Joey.UI.Text
             var oldStyle = oldTypeface != null ? oldTypeface.Style : TypefaceStyle.Normal;
             var fakeStyle = oldStyle & ~font.Typeface.Style;
 
-            if ((fakeStyle & TypefaceStyle.Bold) != 0)
+            if ((fakeStyle & TypefaceStyle.Bold) != 0) {
                 p.FakeBoldText = true;
+            }
 
-            if ((fakeStyle & TypefaceStyle.Italic) != 0)
+            if ((fakeStyle & TypefaceStyle.Italic) != 0) {
                 p.TextSkewX = -0.25f;
+            }
 
             p.SetTypeface (font.Typeface);
         }

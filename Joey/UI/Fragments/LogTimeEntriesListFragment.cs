@@ -47,12 +47,14 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
             var adapter = ListView.Adapter as LogTimeEntriesAdapter;
-            if (adapter == null)
+            if (adapter == null) {
                 return;
+            }
 
             var model = adapter.GetEntry (position);
-            if (model == null)
+            if (model == null) {
                 return;
+            }
 
             adapter.ExpandedPosition = adapter.ExpandedPosition != position ? position : (int?)null;
         }
@@ -73,7 +75,8 @@ namespace Toggl.Joey.UI.Fragments
             await model.StopAsync ();
         }
 
-        public override bool UserVisibleHint {
+        public override bool UserVisibleHint
+        {
             get { return base.UserVisibleHint; }
             set {
                 base.UserVisibleHint = value;
@@ -148,8 +151,9 @@ namespace Toggl.Joey.UI.Fragments
         private void DeleteCheckedTimeEntries ()
         {
             var adapter = ListView.Adapter as LogTimeEntriesAdapter;
-            if (adapter == null)
+            if (adapter == null) {
                 return;
+            }
 
             // Find models to delete:
             var checkedPositions = ListView.CheckedItemPositions;
@@ -159,12 +163,14 @@ namespace Toggl.Joey.UI.Fragments
             for (var i = 0; i < arrSize; i++) {
                 var position = checkedPositions.KeyAt (i);
                 var isChecked = checkedPositions.Get (position);
-                if (!isChecked)
+                if (!isChecked) {
                     continue;
+                }
 
                 var data = adapter.GetEntry (position) as TimeEntryData;
-                if (data != null)
+                if (data != null) {
                     toDelete.Add ((TimeEntryModel)data);
+                }
             }
 
             // Delete models:

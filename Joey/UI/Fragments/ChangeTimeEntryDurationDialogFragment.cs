@@ -37,7 +37,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId {
+        private Guid TimeEntryId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -102,7 +103,7 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle state)
         {
             var view = LayoutInflater.From (Activity)
-                .Inflate (Resource.Layout.ChangeTimeEntryDurationDialogFragment, null);
+                       .Inflate (Resource.Layout.ChangeTimeEntryDurationDialogFragment, null);
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.Roboto);
             DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
             Add5Button = view.FindViewById<Button> (Resource.Id.Add5Button).SetFont (Font.RobotoLight);
@@ -127,11 +128,11 @@ namespace Toggl.Joey.UI.Fragments
             Add30Button.Click += OnAdd30ButtonClick;
 
             return new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.ChangeTimeEntryDurationDialogTitle)
-                .SetView (view)
-                .SetNegativeButton (Resource.String.ChangeTimeEntryDurationDialogCancel, (IDialogInterfaceOnClickListener)null)
-                .SetPositiveButton (Resource.String.ChangeTimeEntryDurationDialogOk, OnOkClicked)
-                .Create ();
+                   .SetTitle (Resource.String.ChangeTimeEntryDurationDialogTitle)
+                   .SetView (view)
+                   .SetNegativeButton (Resource.String.ChangeTimeEntryDurationDialogCancel, (IDialogInterfaceOnClickListener)null)
+                   .SetPositiveButton (Resource.String.ChangeTimeEntryDurationDialogOk, OnOkClicked)
+                   .Create ();
         }
 
         public override void OnStart ()
@@ -147,8 +148,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void Rebind ()
         {
-            if (!enabled || DurationTextView == null)
+            if (!enabled || DurationTextView == null) {
                 return;
+            }
 
             var durationShown = digitsEntered > 0 ? newDuration : oldDuration;
             var durationText = durationShown.ToString ();
@@ -195,8 +197,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnDeleteImageButtonClick (object sender, EventArgs e)
         {
-            if (!enabled || digitsEntered < 1)
+            if (!enabled || digitsEntered < 1) {
                 return;
+            }
             newDuration = newDuration.RemoveDigit ();
             if (newDuration == Duration.Zero) {
                 // Clear all entered digits, is no value remains
@@ -210,8 +213,9 @@ namespace Toggl.Joey.UI.Fragments
 
         void OnDeleteImageButtonLongClick (object sender, View.LongClickEventArgs e)
         {
-            if (!enabled)
+            if (!enabled) {
                 return;
+            }
 
             newDuration = Duration.Zero;
             digitsEntered = 0;
@@ -220,12 +224,14 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnNumButtonClick (object sender, EventArgs e)
         {
-            if (!enabled || digitsEntered > 3)
+            if (!enabled || digitsEntered > 3) {
                 return;
+            }
 
             int num = Array.IndexOf (numButtons, sender);
-            if (num < 0)
+            if (num < 0) {
                 return;
+            }
 
             newDuration = newDuration.AppendDigit (num);
             digitsEntered += 1;
@@ -234,12 +240,14 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnAdd5ButtonClick (object sender, EventArgs e)
         {
-            if (!enabled)
+            if (!enabled) {
                 return;
+            }
 
             var duration = newDuration.AddMinutes (5);
-            if (!duration.IsValid)
+            if (!duration.IsValid) {
                 return;
+            }
 
             newDuration = duration;
             digitsEntered = 4;
@@ -248,12 +256,14 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnAdd30ButtonClick (object sender, EventArgs e)
         {
-            if (!enabled)
+            if (!enabled) {
                 return;
+            }
 
             var duration = newDuration.AddMinutes (30);
-            if (!duration.IsValid)
+            if (!duration.IsValid) {
                 return;
+            }
 
             newDuration = duration;
             digitsEntered = 4;

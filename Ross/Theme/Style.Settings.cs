@@ -8,13 +8,13 @@ namespace Toggl.Ross.Theme
         public static class Settings
         {
             public static void RowBackground<T> (T v)
-                where T : UIView
+            where T : UIView
             {
                 v.BackgroundColor = Color.White;
             }
 
             public static void Separator<T> (T v)
-                where T : UIView
+            where T : UIView
             {
                 v.BackgroundColor = Color.Gray.ColorWithAlpha (0.1f);
             }

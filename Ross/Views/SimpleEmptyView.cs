@@ -40,21 +40,25 @@ namespace Toggl.Ross.Views
             );
         }
 
-        public string Title {
+        public string Title
+        {
             get { return titleLabel.Text; }
             set {
-                if (titleLabel.Text == value)
+                if (titleLabel.Text == value) {
                     return;
+                }
                 titleLabel.Text = value;
                 SetNeedsLayout ();
             }
         }
 
-        public string Message {
+        public string Message
+        {
             get { return messageLabel.Text; }
             set {
-                if (messageLabel.Text == value)
+                if (messageLabel.Text == value) {
                     return;
+                }
                 messageLabel.Text = value;
                 SetNeedsLayout ();
             }

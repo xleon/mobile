@@ -39,39 +39,39 @@ namespace Toggl.Ross.ViewControllers
             Add (moodLabel = new UILabel () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = "FeedbackMood".Tr (),
-            }.Apply (Style.Feedback.MoodLabel));
+            } .Apply (Style.Feedback.MoodLabel));
 
             Add (positiveMoodButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.PositiveMoodButton));
+            } .Apply (Style.Feedback.PositiveMoodButton));
             positiveMoodButton.TouchUpInside += OnMoodButtonTouchUpInside;
             Add (neutralMoodButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.NeutralMoodButton));
+            } .Apply (Style.Feedback.NeutralMoodButton));
             neutralMoodButton.TouchUpInside += OnMoodButtonTouchUpInside;
             Add (negativeMoodButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.NegativeMoodButton));
+            } .Apply (Style.Feedback.NegativeMoodButton));
             negativeMoodButton.TouchUpInside += OnMoodButtonTouchUpInside;
             Add (positiveMoodSeparatorView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.MoodSeparator));
+            } .Apply (Style.Feedback.MoodSeparator));
             Add (negativeMoodSeparatorView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.MoodSeparator));
+            } .Apply (Style.Feedback.MoodSeparator));
             Add (messageTopBorderView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.MessageBorder));
+            } .Apply (Style.Feedback.MessageBorder));
             Add (messageTextView = new UITextView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.MessageField));
+            } .Apply (Style.Feedback.MessageField));
             messageTextView.Changed += (s, e) => RebindSendButton ();
             Add (messageBottomBorderView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.MessageBorder));
+            } .Apply (Style.Feedback.MessageBorder));
             Add (sendButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Feedback.SendButton));
+            } .Apply (Style.Feedback.SendButton));
             sendButton.TouchUpInside += OnSendTouchUpInside;
 
             RebindSendButton ();
@@ -199,8 +199,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnMoodButtonTouchUpInside (object sender, EventArgs e)
         {
-            if (isSending)
+            if (isSending) {
                 return;
+            }
             if (sender == positiveMoodButton) {
                 userMood = FeedbackMessage.Mood.Positive;
             } else if (sender == neutralMoodButton) {
@@ -271,11 +272,11 @@ namespace Toggl.Ross.ViewControllers
 
                     if (askReview) {
                         var alert = new UIAlertView (
-                                        "FeedbackReviewTitle".Tr (),
-                                        "FeedbackReviewMessage".Tr (),
-                                        null,
-                                        "FeedbackReviewCancel".Tr (),
-                                        "FeedbackReviewAppStore".Tr ());
+                            "FeedbackReviewTitle".Tr (),
+                            "FeedbackReviewMessage".Tr (),
+                            null,
+                            "FeedbackReviewCancel".Tr (),
+                            "FeedbackReviewAppStore".Tr ());
                         alert.Clicked += (sender, e) => {
                             if (e.ButtonIndex == 1) {
                                 UIPasteboard.General.String = userMessage;

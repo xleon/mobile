@@ -58,18 +58,21 @@ namespace Toggl.Joey.UI.Fragments
                 adapter = (RecentTimeEntriesAdapter)l.Adapter;
             }
 
-            if (adapter == null || position < 0 || position >= adapter.Count)
+            if (adapter == null || position < 0 || position >= adapter.Count) {
                 return;
+            }
 
             var data = adapter.GetEntry (position);
-            if (data == null)
+            if (data == null) {
                 return;
+            }
 
             var model = new TimeEntryModel (data);
 
             // Show a notice about tapping on entries acts as continue.
-            if (RecentTimeEntryContinueDialogFragment.TryShow (FragmentManager, model))
+            if (RecentTimeEntryContinueDialogFragment.TryShow (FragmentManager, model)) {
                 return;
+            }
 
             // Scroll to top (where the new model will appear)
             ListView.SmoothScrollToPosition (0);
@@ -83,7 +86,8 @@ namespace Toggl.Joey.UI.Fragments
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
         }
 
-        public override bool UserVisibleHint {
+        public override bool UserVisibleHint
+        {
             get { return base.UserVisibleHint; }
             set {
                 base.UserVisibleHint = value;
@@ -135,7 +139,7 @@ namespace Toggl.Joey.UI.Fragments
                 root.FindViewById<TextView> (Resource.Id.SwipeRightTextView).SetFont (Font.RobotoLight);
                 root.FindViewById<TextView> (Resource.Id.TapToContinueTextView).SetFont (Font.RobotoLight);
                 root.FindViewById<Button> (Resource.Id.GotItButton)
-                    .SetFont (Font.Roboto).Click += OnGotItButtonClick;
+                .SetFont (Font.Roboto).Click += OnGotItButtonClick;
                 return root;
             }
 

@@ -25,11 +25,11 @@ namespace Toggl.Ross.ViewControllers
         {
             View = new UIImageView () {
                 UserInteractionEnabled = true,
-            }.Apply (Style.Welcome.Background);
+            } .Apply (Style.Welcome.Background);
             View.Add (logoImageView = new UIImageView ().Apply (Style.Welcome.Logo));
             View.Add (sloganLabel = new UILabel () {
                 Text = "WelcomeSlogan".Tr (),
-            }.Apply (Style.Welcome.Slogan));
+            } .Apply (Style.Welcome.Slogan));
             View.Add (createButton = new UIButton ().Apply (Style.Welcome.CreateAccount));
             View.Add (passwordButton = new UIButton ().Apply (Style.Welcome.PasswordLogin));
             View.Add (googleButton = new UIButton ().Apply (Style.Welcome.GoogleLogin));
@@ -119,22 +119,24 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private bool IsAuthenticating {
+        private bool IsAuthenticating
+        {
             get { return !View.UserInteractionEnabled; }
             set {
-                if (View.UserInteractionEnabled == !value)
+                if (View.UserInteractionEnabled == !value) {
                     return;
+                }
 
                 View.UserInteractionEnabled = !value;
                 UIView.Animate (0.3, 0,
-                    UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
-                    delegate {
-                        createButton.Alpha = value ? 0 : 1;
-                        googleButton.Alpha = value ? 0 : 1;
-                    },
-                    delegate {
-                    }
-                );
+                                UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
+                delegate {
+                    createButton.Alpha = value ? 0 : 1;
+                    googleButton.Alpha = value ? 0 : 1;
+                },
+                delegate {
+                }
+                               );
                 passwordButton.SetTitle (value ? "WelcomeLoggingIn".Tr () : "WelcomePassword".Tr (), UIControlState.Normal);
             }
         }

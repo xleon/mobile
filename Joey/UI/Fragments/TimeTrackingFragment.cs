@@ -145,7 +145,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private TimerComponent Timer {
+        private TimerComponent Timer
+        {
             get {
                 var activity = Activity as MainDrawerActivity;
                 if (activity != null) {
@@ -200,8 +201,9 @@ namespace Toggl.Joey.UI.Fragments
             private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
                     NotifyDataSetChanged ();
@@ -211,15 +213,17 @@ namespace Toggl.Joey.UI.Fragments
             private void OnSettingChanged (SettingChangedMessage msg)
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 if (msg.Name == SettingsStore.PropertyGotWelcomeMessage) {
                     NotifyDataSetChanged ();
                 }
             }
 
-            public override int Count {
+            public override int Count
+            {
                 get { return PagesCount; }
             }
 

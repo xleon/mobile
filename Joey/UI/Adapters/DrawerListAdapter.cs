@@ -59,7 +59,8 @@ namespace Toggl.Joey.UI.Adapters
             authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 
-        public override int ViewTypeCount {
+        public override int ViewTypeCount
+        {
             get { return 2; }
         }
 
@@ -79,7 +80,7 @@ namespace Toggl.Joey.UI.Adapters
             if (GetItemViewType (position) == ViewTypeDrawerHeader) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.MainDrawerListHeader, parent, false);
+                               Resource.Layout.MainDrawerListHeader, parent, false);
                     view.Tag = new HeaderViewHolder (view);
                 }
 
@@ -88,7 +89,7 @@ namespace Toggl.Joey.UI.Adapters
             } else {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.MainDrawerListItem, parent, false);
+                               Resource.Layout.MainDrawerListItem, parent, false);
                     view.Tag = new DrawerItemViewHolder (view);
                 }
 
@@ -99,8 +100,9 @@ namespace Toggl.Joey.UI.Adapters
             return view;
         }
 
-        public override int Count {
-            get{ return rowItems.Count + 1; } // + 1 is for header
+        public override int Count
+        {
+            get { return rowItems.Count + 1; } // + 1 is for header
         }
 
         public override Java.Lang.Object GetItem (int position)
@@ -116,8 +118,9 @@ namespace Toggl.Joey.UI.Adapters
 
         private DrawerItem GetDrawerItem (int position)
         {
-            if (position == 0)
+            if (position == 0) {
                 return null;
+            }
             return rowItems [position - 1]; //Header is 0
         }
 
@@ -170,21 +173,24 @@ namespace Toggl.Joey.UI.Adapters
             private void HandleUserPropertyChanged (string prop)
             {
                 if (prop == UserModel.PropertyName
-                    || prop == UserModel.PropertyImageUrl)
+                        || prop == UserModel.PropertyImageUrl) {
                     Rebind ();
+                }
             }
 
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 IconProfileImageView.ImageUrl = DataSource.ImageUrl;
                 TitleTextView.Text = DataSource.Name;
@@ -205,8 +211,9 @@ namespace Toggl.Joey.UI.Adapters
 
             protected override void Rebind ()
             {
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
                 IconImageView.SetImageResource (DataSource.ImageResId);
                 TitleTextView.SetText (DataSource.TextResId);
                 TitleTextView.Enabled = DataSource.IsEnabled;

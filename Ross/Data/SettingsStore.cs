@@ -28,8 +28,9 @@ namespace Toggl.Ross.Data
         protected Guid? GetGuid (string key)
         {
             var val = (string)(NSString)NSUserDefaults.StandardUserDefaults [key];
-            if (String.IsNullOrEmpty (val))
+            if (String.IsNullOrEmpty (val)) {
                 return null;
+            }
             return Guid.Parse (val);
         }
 
@@ -61,8 +62,9 @@ namespace Toggl.Ross.Data
         protected int? GetInt (string key)
         {
             var raw = NSUserDefaults.StandardUserDefaults [key];
-            if (raw == null)
+            if (raw == null) {
                 return null;
+            }
             return (int)(NSNumber)raw;
         }
 
@@ -79,8 +81,9 @@ namespace Toggl.Ross.Data
         protected DateTime? GetDateTime (string key)
         {
             var raw = NSUserDefaults.StandardUserDefaults [key];
-            if (raw == null)
+            if (raw == null) {
                 return null;
+            }
             return DateTime.FromBinary ((long)(NSNumber)raw);
         }
 
@@ -102,7 +105,8 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertyUserId = GetPropertyName (s => s.UserId);
 
-        public Guid? UserId {
+        public Guid? UserId
+        {
             get { return GetGuid (PhoebeUserIdKey); }
             set {
                 SetGuid (PhoebeUserIdKey, value);
@@ -110,7 +114,8 @@ namespace Toggl.Ross.Data
             }
         }
 
-        public string InstallId {
+        public string InstallId
+        {
             get {
                 var val = GetString (RossInstallIdKey);
                 if (String.IsNullOrEmpty (val)) {
@@ -123,7 +128,8 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertyApiToken = GetPropertyName (s => s.ApiToken);
 
-        public string ApiToken {
+        public string ApiToken
+        {
             get { return GetString (PhoebeApiTokenKey); }
             set {
                 SetString (PhoebeApiTokenKey, value);
@@ -133,7 +139,8 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertySyncLastRun = GetPropertyName (s => s.SyncLastRun);
 
-        public DateTime? SyncLastRun {
+        public DateTime? SyncLastRun
+        {
             get { return GetDateTime (PhoebeSyncLastRunKey); }
             set {
                 SetDateTime (PhoebeSyncLastRunKey, value);
@@ -143,7 +150,8 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertyUseDefaultTag = GetPropertyName (s => s.UseDefaultTag);
 
-        public bool UseDefaultTag {
+        public bool UseDefaultTag
+        {
             get { return (GetInt (PhoebeUseDefaultTagKey) ?? 1) == 1; }
             set {
                 SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
@@ -153,14 +161,16 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertyLastAppVersion = GetPropertyName (s => s.LastAppVersion);
 
-        public string LastAppVersion {
+        public string LastAppVersion
+        {
             get { return GetString (PhoebeLastAppVersionKey); }
             set { SetString (PhoebeLastAppVersionKey, value); }
         }
 
         public static readonly string PropertyPreferredStartView = GetPropertyName (s => s.PreferredStartView);
 
-        public string PreferredStartView {
+        public string PreferredStartView
+        {
             get { return GetString (RossPreferredStartViewKey); }
             set {
                 SetString (RossPreferredStartViewKey, value);
@@ -170,7 +180,8 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertyChooseProjectForNew = GetPropertyName (s => s.ChooseProjectForNew);
 
-        public bool ChooseProjectForNew {
+        public bool ChooseProjectForNew
+        {
             get { return (GetInt (RossChooseProjectForNewKey) ?? 1) == 1; }
             set {
                 SetInt (RossChooseProjectForNewKey, value ? 1 : 0);
@@ -180,7 +191,8 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertyReadDurOnlyNotice = GetPropertyName (s => s.ReadDurOnlyNotice);
 
-        public bool ReadDurOnlyNotice {
+        public bool ReadDurOnlyNotice
+        {
             get { return GetInt (RossReadDurOnlyNoticeKey) == 1; }
             set {
                 SetInt (RossReadDurOnlyNoticeKey, value ? 1 : 0);
@@ -190,7 +202,8 @@ namespace Toggl.Ross.Data
 
         public static readonly string PropertyIgnoreSyncErrorsUntil = GetPropertyName (s => s.IgnoreSyncErrorsUntil);
 
-        public DateTime? IgnoreSyncErrorsUntil {
+        public DateTime? IgnoreSyncErrorsUntil
+        {
             get { return GetDateTime (RossIgnoreSyncErrorsUntilKey); }
             set {
                 SetDateTime (RossIgnoreSyncErrorsUntilKey, value);

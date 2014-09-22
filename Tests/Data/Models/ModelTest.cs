@@ -35,8 +35,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
             const string fieldPrefix = "Property";
             var type = typeof(T);
             var fields = type.GetFields (BindingFlags.Static | BindingFlags.Public)
-                .Where (t => t.Name.StartsWith (fieldPrefix, StringComparison.Ordinal))
-                .ToList ();
+                         .Where (t => t.Name.StartsWith (fieldPrefix, StringComparison.Ordinal))
+                         .ToList ();
 
             Assert.That (fields, Has.Count.AtLeast (1), String.Format ("{0} should define some property names.", type.Name));
 
@@ -78,8 +78,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
             var type = typeof(T);
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
-                .Where (prop => prop.CanWrite)
-                .Where (prop => !ExemptProperties.Contains (prop.Name));
+                             .Where (prop => prop.CanWrite)
+                             .Where (prop => !ExemptProperties.Contains (prop.Name));
 
             foreach (var prop in properties) {
                 var changed = new List<string> ();
@@ -90,7 +90,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
 
                 // Verify that the property changed event was fired:
                 Assert.That (changed, Has.Some.Matches<string> (name => name == prop.Name),
-                    String.Format ("{0} did not raise a PropertyChanged event.", prop.Name));
+                             String.Format ("{0} did not raise a PropertyChanged event.", prop.Name));
             }
         }
 
@@ -100,8 +100,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
             var type = typeof(T);
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
-                .Where (prop => prop.PropertyType.GetInterfaces ().Contains (typeof(IModel)))
-                .Where (prop => !ExemptProperties.Contains (prop.Name));
+                             .Where (prop => prop.PropertyType.GetInterfaces ().Contains (typeof(IModel)))
+                             .Where (prop => !ExemptProperties.Contains (prop.Name));
 
             foreach (var prop in properties) {
                 var relationAttr = prop.GetCustomAttribute<ModelRelationAttribute> ();
@@ -117,11 +117,11 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 if (relationAttr.Required) {
                     Assert.IsNotNull (val, String.Format ("{0} (required) property default value shouldn't be null.", prop.Name));
                     Assert.That (
-                        (TestDelegate)delegate {
-                            prop.SetValue (inst, null);
-                        },
-                        Throws.TargetInvocationException.With.InnerException.TypeOf<ArgumentNullException> (),
-                        String.Format ("{0} (required) property should throw ArgumentNullException when setting null.", prop.Name)
+                    (TestDelegate)delegate {
+                        prop.SetValue (inst, null);
+                    },
+                    Throws.TargetInvocationException.With.InnerException.TypeOf<ArgumentNullException> (),
+                    String.Format ("{0} (required) property should throw ArgumentNullException when setting null.", prop.Name)
                     );
                 } else {
                     Assert.IsNull (val, String.Format ("{0} (optional) property default value should be null.", prop.Name));
@@ -158,9 +158,9 @@ namespace Toggl.Phoebe.Tests.Data.Models
             RunAsync (async delegate {
                 var type = typeof(T);
                 var isLoadedField = type.BaseType.GetField ("isLoaded",
-                                        BindingFlags.NonPublic | BindingFlags.Instance);
+                                    BindingFlags.NonPublic | BindingFlags.Instance);
                 var loadingTCSField = type.BaseType.GetField ("loadingTCS",
-                                          BindingFlags.NonPublic | BindingFlags.Instance);
+                                      BindingFlags.NonPublic | BindingFlags.Instance);
 
                 // Create dummy element (with default values) to load:
                 var pk = await CreateDummyData ();
@@ -168,8 +168,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 // Test property autoload by setting the value to something else and waiting to see if it is replaced
                 // by autoloaded data.
                 var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
-                    .Where (prop => prop.CanWrite)
-                    .Where (prop => !ExemptProperties.Contains (prop.Name));
+                                 .Where (prop => prop.CanWrite)
+                                 .Where (prop => !ExemptProperties.Contains (prop.Name));
 
                 foreach (var prop in properties) {
                     ResetDataCache ();
@@ -203,12 +203,13 @@ namespace Toggl.Phoebe.Tests.Data.Models
             var dataProp = type.GetProperty ("Data");
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
-                .Where (IsOptionalRelationProperty);
+                             .Where (IsOptionalRelationProperty);
 
             foreach (var prop in properties) {
                 var idProp = dataProp.PropertyType.GetProperty (String.Concat (prop.Name, "Id"));
-                if (idProp == null)
+                if (idProp == null) {
                     continue;
+                }
 
                 // Create model, get data item, etc
                 var inst = Activator.CreateInstance<T> ();
@@ -293,7 +294,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
             var validData = new Dictionary<PropertyInfo, Func<object>> ();
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
-                .Where (IsRequiredRelationProperty);
+                             .Where (IsRequiredRelationProperty);
             foreach (var prop in properties) {
                 validData.Add (prop, () => Activator.CreateInstance (prop.PropertyType, Guid.NewGuid ()));
             }
@@ -316,8 +317,9 @@ namespace Toggl.Phoebe.Tests.Data.Models
                     inst = Activator.CreateInstance<T> ();
 
                     foreach (var prop in properties) {
-                        if (prop == exemptProp)
+                        if (prop == exemptProp) {
                             continue;
+                        }
 
                         prop.SetValue (inst, validData [prop] ());
                     }
@@ -414,8 +416,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
         private async Task<CommonData> PutData (CommonData data)
         {
             var putTask = (Task)DataStore.GetType ().GetMethod ("PutAsync")
-                .MakeGenericMethod (data.GetType ())
-                .Invoke (DataStore, new[] { data });
+                          .MakeGenericMethod (data.GetType ())
+                          .Invoke (DataStore, new[] { data });
             await putTask;
             return (CommonData)putTask.GetType ().GetProperty ("Result").GetValue (putTask);
         }
@@ -425,8 +427,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
             var tbl = DataStore.GetTableName (dataType);
             var sql = String.Concat ("SELECT * FROM ", tbl, " WHERE Id=?");
             var rowsTask = (Task)DataStore.GetType ().GetMethod ("QueryAsync")
-                .MakeGenericMethod (dataType)
-                .Invoke (DataStore, new object[] { sql, new object[] { id } });
+                           .MakeGenericMethod (dataType)
+                           .Invoke (DataStore, new object[] { sql, new object[] { id } });
             await rowsTask;
 
             var rows = (IEnumerable)rowsTask.GetType ().GetProperty ("Result").GetValue (rowsTask);

@@ -15,12 +15,12 @@ using Toggl.Joey.Net;
 namespace Toggl.Joey
 {
     [Application (
-        Icon = "@drawable/Icon",
-        Label = "@string/AppName",
-        Description = "@string/AppDescription",
-        Theme = "@style/Theme.Toggl.App")]
+         Icon = "@drawable/Icon",
+         Label = "@string/AppName",
+         Description = "@string/AppDescription",
+         Theme = "@style/Theme.Toggl.App")]
     [MetaData ("com.google.android.gms.version",
-        Value = "@integer/google_play_services_version")]
+               Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo
     {
         bool componentsInitialized = false;
@@ -81,8 +81,9 @@ namespace Toggl.Joey
 
         public void InitializeComponents ()
         {
-            if (componentsInitialized)
+            if (componentsInitialized) {
                 return;
+            }
 
             componentsInitialized = true;
             ServiceContainer.Resolve<SyncMonitor> ();
@@ -103,15 +104,18 @@ namespace Toggl.Joey
             }
         }
 
-        public string AppIdentifier {
+        public string AppIdentifier
+        {
             get { return Build.AppIdentifier; }
         }
 
-        public string AppVersion {
+        public string AppVersion
+        {
             get { return PackageManager.GetPackageInfo (PackageName, 0).VersionName; }
         }
 
-        public bool ComponentsInitialized {
+        public bool ComponentsInitialized
+        {
             get { return componentsInitialized; }
         }
     }

@@ -46,11 +46,13 @@ namespace Toggl.Ross.DataSources
             TryLoadMore ();
         }
 
-        public bool IsEmpty {
+        public bool IsEmpty
+        {
             get { return !HasData && !dataView.IsLoading && !dataView.HasMore; }
         }
 
-        protected virtual bool HasData {
+        protected virtual bool HasData
+        {
             get {
                 var sections = cache.GetSections ();
                 if (sections.Count == 1) {
@@ -80,8 +82,9 @@ namespace Toggl.Ross.DataSources
 
         private void OnDataViewUpdated (object sender, EventArgs e)
         {
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
             ScheduleUpdate ();
             TryLoadMore ();
         }
@@ -90,8 +93,9 @@ namespace Toggl.Ross.DataSources
 
         protected void ScheduleUpdate ()
         {
-            if (updateScheduled)
+            if (updateScheduled) {
                 return;
+            }
             updateScheduled = true;
 
             // For whatever reason we need to dispatch the message again in order for the data to update
@@ -107,16 +111,18 @@ namespace Toggl.Ross.DataSources
         protected virtual bool SectionsMatch (TSection a, TSection b)
         {
             var data = a as CommonData;
-            if (data != null)
+            if (data != null) {
                 return data.Matches (b);
+            }
             return Object.ReferenceEquals (a, b);
         }
 
         protected virtual bool RowsMatch (TRow a, TRow b)
         {
             var data = a as CommonData;
-            if (data != null)
+            if (data != null) {
                 return data.Matches (b);
+            }
             return Object.ReferenceEquals (a, b);
         }
 
@@ -148,8 +154,9 @@ namespace Toggl.Ross.DataSources
                         var oldRow = hasOldRow ? oldRows [rowIdx] : default(TRow);
                         var newRow = hasNewRow ? newRows [rowIdx] : default(TRow);
 
-                        if (RowsMatch (oldRow, newRow))
+                        if (RowsMatch (oldRow, newRow)) {
                             continue;
+                        }
 
                         if (hasOldRow) {
                             // Determine if we should delete this row
@@ -225,11 +232,13 @@ namespace Toggl.Ross.DataSources
             return GetCachedRows (GetSection (indexPath.Section)) [indexPath.Row];
         }
 
-        public UITableView TableView {
+        public UITableView TableView
+        {
             get { return tableView; }
         }
 
-        public IDataView<TData> DataView {
+        public IDataView<TData> DataView
+        {
             get { return dataView; }
         }
 

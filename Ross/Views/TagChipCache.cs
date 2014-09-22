@@ -54,10 +54,10 @@ namespace Toggl.Ross.Views
 
             var image = Image.TagBackground;
             var imageBounds = new RectangleF (
-                                  0, 0,
-                                  (float)Math.Ceiling (titleBounds.Width) + image.CapInsets.Left + image.CapInsets.Right + 4f,
-                                  (float)Math.Ceiling (titleBounds.Height) + image.CapInsets.Top + image.CapInsets.Bottom
-                              );
+                0, 0,
+                (float)Math.Ceiling (titleBounds.Width) + image.CapInsets.Left + image.CapInsets.Right + 4f,
+                (float)Math.Ceiling (titleBounds.Height) + image.CapInsets.Top + image.CapInsets.Bottom
+            );
 
             titleBounds.X = image.CapInsets.Left + 2f;
             titleBounds.Y = image.CapInsets.Top;

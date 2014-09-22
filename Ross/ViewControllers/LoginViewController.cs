@@ -30,7 +30,7 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             View = new UIView ()
-                .Apply (Style.Screen);
+            .Apply (Style.Screen);
 
             View.Add (inputsContainer = new UIView ().Apply (Style.Login.InputsContainer));
 
@@ -43,7 +43,7 @@ namespace Toggl.Ross.ViewControllers
                 ReturnKeyType = UIReturnKeyType.Next,
                 ClearButtonMode = UITextFieldViewMode.Always,
                 ShouldReturn = HandleShouldReturn,
-            }.Apply (Style.Login.EmailField));
+            } .Apply (Style.Login.EmailField));
 
             inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
@@ -54,12 +54,12 @@ namespace Toggl.Ross.ViewControllers
                 SecureTextEntry = true,
                 ReturnKeyType = UIReturnKeyType.Go,
                 ShouldReturn = HandleShouldReturn,
-            }.Apply (Style.Login.PasswordField));
+            } .Apply (Style.Login.PasswordField));
 
             inputsContainer.Add (bottomBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
             View.Add (passwordActionButton = new UIButton ()
-                .Apply (Style.Login.LoginButton));
+            .Apply (Style.Login.LoginButton));
             passwordActionButton.SetTitle ("LoginLoginButtonText".Tr (), UIControlState.Normal);
             passwordActionButton.TouchUpInside += OnPasswordActionButtonTouchUpInside;
 
@@ -137,8 +137,9 @@ namespace Toggl.Ross.ViewControllers
 
         private async void TryPasswordAuth ()
         {
-            if (IsAuthenticating)
+            if (IsAuthenticating) {
                 return;
+            }
 
             IsAuthenticating = true;
 
@@ -166,7 +167,8 @@ namespace Toggl.Ross.ViewControllers
 
         private bool isAuthenticating;
 
-        private bool IsAuthenticating {
+        private bool IsAuthenticating
+        {
             get { return isAuthenticating; }
             set {
                 isAuthenticating = value;

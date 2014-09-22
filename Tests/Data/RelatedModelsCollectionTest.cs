@@ -13,7 +13,8 @@ namespace Toggl.Phoebe.Tests.Data
     {
         private string tmpDb;
 
-        private IModelStore ModelStore {
+        private IModelStore ModelStore
+        {
             get { return ServiceContainer.Resolve<IModelStore> (); }
         }
 
@@ -64,29 +65,35 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestManyRelations ()
         {
             var items = new ItemModel[] {
-                Model.Update (new ItemModel () {
+                Model.Update (new ItemModel ()
+                {
                     Name = "Phone",
                     IsPersisted = true,
                 }),
-                Model.Update (new ItemModel () {
+                Model.Update (new ItemModel ()
+                {
                     Name = "Fridge",
                     IsPersisted = true,
                 }),
-                Model.Update (new ItemModel () {
+                Model.Update (new ItemModel ()
+                {
                     Name = "Cup",
                     IsPersisted = true,
                 }),
             };
             var tags = new TagModel[] {
-                Model.Update (new TagModel () {
+                Model.Update (new TagModel ()
+                {
                     Name = "Wired",
                     IsPersisted = true,
                 }),
-                Model.Update (new TagModel () {
+                Model.Update (new TagModel ()
+                {
                     Name = "Kitchen",
                     IsPersisted = true,
                 }),
-                Model.Update (new TagModel () {
+                Model.Update (new TagModel ()
+                {
                     Name = "Container",
                     IsPersisted = true,
                 }),
@@ -294,11 +301,13 @@ namespace Toggl.Phoebe.Tests.Data
             private string name;
             public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
 
-            public string Name {
+            public string Name
+            {
                 get { return name; }
                 set {
-                    if (name == value)
+                    if (name == value) {
                         return;
+                    }
 
                     ChangePropertyAndNotify (PropertyName, delegate {
                         name = value;
@@ -306,7 +315,8 @@ namespace Toggl.Phoebe.Tests.Data
                 }
             }
 
-            public RelatedModelsCollection<ItemModel, ItemTagModel, ItemModel, TagModel> Items {
+            public RelatedModelsCollection<ItemModel, ItemTagModel, ItemModel, TagModel> Items
+            {
                 get { return itemsCollection; }
             }
         }
@@ -334,11 +344,13 @@ namespace Toggl.Phoebe.Tests.Data
             private string name;
             public static readonly string PropertyName = GetPropertyName ((m) => m.Name);
 
-            public string Name {
+            public string Name
+            {
                 get { return name; }
                 set {
-                    if (name == value)
+                    if (name == value) {
                         return;
+                    }
 
                     ChangePropertyAndNotify (PropertyName, delegate {
                         name = value;
@@ -346,7 +358,8 @@ namespace Toggl.Phoebe.Tests.Data
                 }
             }
 
-            public RelatedModelsCollection<TagModel, ItemTagModel, ItemModel, TagModel> Tags {
+            public RelatedModelsCollection<TagModel, ItemTagModel, ItemModel, TagModel> Tags
+            {
                 get { return tagsCollection; }
             }
         }

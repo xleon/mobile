@@ -38,16 +38,19 @@ namespace Toggl.Ross.Views
             base.UpdateConstraints ();
         }
 
-        public string Text {
+        public string Text
+        {
             get { return label.Text; }
             set { label.Text = value; }
         }
 
-        public UILabel Label {
+        public UILabel Label
+        {
             get { return label; }
         }
 
-        public UISwitch Switch {
+        public UISwitch Switch
+        {
             get { return toggle; }
         }
 

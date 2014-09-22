@@ -13,7 +13,8 @@ namespace Toggl.Joey.Data
             this.data = data;
         }
 
-        public TimeEntryData Data {
+        public TimeEntryData Data
+        {
             get { return data; }
         }
     }

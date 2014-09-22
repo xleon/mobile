@@ -20,8 +20,9 @@ namespace Toggl.Phoebe.Tests
             Job job;
 
             lock (syncRoot) {
-                if (jobs.Count < 1)
+                if (jobs.Count < 1) {
                     return false;
+                }
                 job = jobs.Dequeue ();
             }
 
@@ -64,8 +65,7 @@ namespace Toggl.Phoebe.Tests
             }
         }
 
-        struct Job
-        {
+        struct Job {
             public SendOrPostCallback Callback;
             public object State;
             public Action OnProcessed;

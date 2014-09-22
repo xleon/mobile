@@ -12,8 +12,9 @@ namespace Toggl.Ross
         public override UIView HitTest (PointF point, UIEvent uievent)
         {
             var view = base.HitTest (point, uievent);
-            if (OnHitTest != null)
+            if (OnHitTest != null) {
                 OnHitTest (view);
+            }
             return view;
         }
 

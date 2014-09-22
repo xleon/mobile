@@ -1,0 +1,7 @@
+--style=1tbs
+--indent=spaces=4
+--indent-namespaces
+--indent-preproc-cond
+--convert-tabs
+--lineend=linux
+--keep-one-line-blocks

@@ -76,10 +76,12 @@ namespace Toggl.Joey
             }
         }
 
-        private TimeEntryData RunningTimeEntryData {
+        private TimeEntryData RunningTimeEntryData
+        {
             get {
-                if (timeEntryManager == null)
+                if (timeEntryManager == null) {
                     return null;
+                }
                 return timeEntryManager.Running;
             }
         }
@@ -96,18 +98,21 @@ namespace Toggl.Joey
             }
         }
 
-        private TimeEntryModel RunningTimeEntry {
+        private TimeEntryModel RunningTimeEntry
+        {
             get {
-                if (RunningTimeEntryData == null)
+                if (RunningTimeEntryData == null) {
                     return null;
+                }
                 return backingRunningTimeEntry;
             }
         }
 
         private void ResetTrackedObservables ()
         {
-            if (propertyTracker == null)
+            if (propertyTracker == null) {
                 return;
+            }
 
             propertyTracker.MarkAllStale ();
 
@@ -130,22 +135,25 @@ namespace Toggl.Joey
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyProject
-                || prop == TimeEntryModel.PropertyTask
-                || prop == TimeEntryModel.PropertyDescription
-                || prop == TimeEntryModel.PropertyStartTime)
+                    || prop == TimeEntryModel.PropertyTask
+                    || prop == TimeEntryModel.PropertyDescription
+                    || prop == TimeEntryModel.PropertyStartTime) {
                 SyncNotification ();
+            }
         }
 
         private void HandleProjectPropertyChanged (string prop)
         {
-            if (prop == ProjectModel.PropertyName)
+            if (prop == ProjectModel.PropertyName) {
                 SyncNotification ();
+            }
         }
 
         private void HandleTaskPropertyChanged (string prop)
         {
-            if (prop == TaskModel.PropertyName)
+            if (prop == TaskModel.PropertyName) {
                 SyncNotification ();
+            }
         }
 
         private void OnSettingChanged (SettingChangedMessage msg)
@@ -177,9 +185,9 @@ namespace Toggl.Joey
                 var correction = ServiceContainer.Resolve<TimeCorrectionManager> ().Correction;
                 var startTime = currentTimeEntry.StartTime - correction;
                 runningBuilder
-                    .SetContentTitle (GetProjectName (currentTimeEntry))
-                    .SetContentText (GetDescription (currentTimeEntry))
-                    .SetWhen ((long)startTime.ToUnix ().TotalMilliseconds);
+                .SetContentTitle (GetProjectName (currentTimeEntry))
+                .SetContentText (GetDescription (currentTimeEntry))
+                .SetWhen ((long)startTime.ToUnix ().TotalMilliseconds);
 
                 notificationManager.Notify (RunningNotifId, runningBuilder.Build ());
             }
@@ -218,13 +226,13 @@ namespace Toggl.Joey
             var pendingStopIntent = PendingIntent.GetBroadcast (ctx, 0, stopIntent, PendingIntentFlags.UpdateCurrent);
 
             return new NotificationCompat.Builder (ctx)
-                    .SetAutoCancel (false)
-                    .SetUsesChronometer (true)
-                    .SetOngoing (true)
-                    .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
-                    .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
+                   .SetAutoCancel (false)
+                   .SetUsesChronometer (true)
+                   .SetOngoing (true)
+                   .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+                   .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
 //                    .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
-                    .SetContentIntent (pendingOpenIntent);
+                   .SetContentIntent (pendingOpenIntent);
         }
 
         private static NotificationCompat.Builder CreateIdleNotificationBuilder (Context ctx)
@@ -237,12 +245,12 @@ namespace Toggl.Joey
             var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
 
             return new NotificationCompat.Builder (ctx)
-                    .SetAutoCancel (false)
-                    .SetOngoing (true)
-                    .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
-                    .SetContentIntent (pendingOpenIntent)
-                    .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
-                    .SetContentText (res.GetString (Resource.String.IdleNotificationText));
+                   .SetAutoCancel (false)
+                   .SetOngoing (true)
+                   .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
+                   .SetContentIntent (pendingOpenIntent)
+                   .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
+                   .SetContentText (res.GetString (Resource.String.IdleNotificationText));
         }
     }
 }

@@ -24,9 +24,9 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
-        Exported = false,
-        WindowSoftInputMode = SoftInput.StateHidden,
-        Theme = "@style/Theme.Toggl.Login")]
+         Exported = false,
+         WindowSoftInputMode = SoftInput.StateHidden,
+         Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener
     {
         private const string LogTag = "LoginActivity";
@@ -94,10 +94,10 @@ namespace Toggl.Joey.UI.Activities
         {
             var am = AccountManager.Get (this);
             var emails = am.GetAccounts ()
-                .Select ((a) => a.Name)
-                .Where ((a) => a.Contains ("@"))
-                .Distinct ()
-                .ToList ();
+                         .Select ((a) => a.Name)
+                         .Where ((a) => a.Contains ("@"))
+                         .Distinct ()
+                         .ToList ();
             return new ArrayAdapter<string> (this, Android.Resource.Layout.SelectDialogItem, emails);
         }
 
@@ -150,8 +150,9 @@ namespace Toggl.Joey.UI.Activities
         private void SyncContent ()
         {
             // Views not loaded yet/anymore?
-            if (LoginButton == null)
+            if (LoginButton == null) {
                 return;
+            }
 
             if (CurrentMode == Mode.Login) {
                 LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
@@ -316,27 +317,31 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private List<string> GoogleAccounts {
+        private List<string> GoogleAccounts
+        {
             get {
                 var am = AccountManager.Get (this);
                 return am.GetAccounts ()
-                    .Where ((a) => a.Type == GoogleAuthUtil.GoogleAccountType)
-                    .Select ((a) => a.Name)
-                    .Distinct ()
-                    .ToList ();
+                       .Where ((a) => a.Type == GoogleAuthUtil.GoogleAccountType)
+                       .Select ((a) => a.Name)
+                       .Distinct ()
+                       .ToList ();
             }
         }
 
-        private bool IsAuthenticating {
+        private bool IsAuthenticating
+        {
             set {
-                if (isAuthenticating == value)
+                if (isAuthenticating == value) {
                     return;
+                }
                 isAuthenticating = value;
                 SyncContent ();
             }
         }
 
-        private ISpannable FormattedLegalText {
+        private ISpannable FormattedLegalText
+        {
             get {
                 if (formattedLegalText == null) {
                     var template = Resources.GetText (Resource.String.LoginSignupLegalText);
@@ -366,7 +371,8 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private Mode CurrentMode {
+        private Mode CurrentMode
+        {
             get {
                 switch (TabsRadioGroup != null ? TabsRadioGroup.CheckedRadioButtonId : -1) {
                 case Resource.Id.SignupTabRadioButton:
@@ -377,8 +383,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private enum Mode
-        {
+        private enum Mode {
             Login,
             Signup
         }
@@ -404,8 +409,9 @@ namespace Toggl.Joey.UI.Activities
                 }
 
                 var tx = mgr.BeginTransaction ();
-                if (frag != null)
+                if (frag != null) {
                     tx.Remove (frag);
+                }
                 tx.Add (new GoogleAuthFragment (email), "google_auth");
                 tx.Commit ();
             }
@@ -439,8 +445,9 @@ namespace Toggl.Joey.UI.Activities
 
                 // Restore IsAuthenticating value
                 var activity = Activity as LoginActivity;
-                if (activity != null)
+                if (activity != null) {
                     activity.IsAuthenticating = IsAuthenticating;
+                }
             }
 
             public override void OnActivityResult (int requestCode, int resultCode, Intent data)
@@ -456,8 +463,9 @@ namespace Toggl.Joey.UI.Activities
 
             private async void StartAuth ()
             {
-                if (IsAuthenticating)
+                if (IsAuthenticating) {
                     return;
+                }
                 IsAuthenticating = true;
 
                 LoginActivity activity;
@@ -468,8 +476,9 @@ namespace Toggl.Joey.UI.Activities
                     var ctx = Activity;
 
                     // No point in trying to reauth when old authentication is still running.
-                    if (authManager.IsAuthenticating)
+                    if (authManager.IsAuthenticating) {
                         return;
+                    }
 
                     // Workaround for Android linker bug which forgets to register JNI types
                     Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GoogleAuthException", typeof(GoogleAuthException));
@@ -527,8 +536,8 @@ namespace Toggl.Joey.UI.Activities
                 // Clean up self:
                 if (Activity != null) {
                     FragmentManager.BeginTransaction ()
-                        .Remove (this)
-                        .Commit ();
+                    .Remove (this)
+                    .Commit ();
                 }
 
                 // Try to make the activity recheck auth status
@@ -538,7 +547,8 @@ namespace Toggl.Joey.UI.Activities
                 }
             }
 
-            private string Email {
+            private string Email
+            {
                 get {
                     return Arguments != null ? Arguments.GetString (EmailArgument) : null;
                 }
@@ -546,7 +556,8 @@ namespace Toggl.Joey.UI.Activities
 
             private bool isAuthenticating;
 
-            private bool IsAuthenticating {
+            private bool IsAuthenticating
+            {
                 get { return isAuthenticating; }
                 set {
                     isAuthenticating = value;
@@ -567,10 +578,10 @@ namespace Toggl.Joey.UI.Activities
                 accountsAdapter = MakeAccountsAdapter ();
 
                 return new AlertDialog.Builder (Activity)
-                        .SetTitle (Resource.String.LoginAccountsDialogTitle)
-                        .SetAdapter (MakeAccountsAdapter (), OnAccountSelected)
-                        .SetNegativeButton (Resource.String.LoginAccountsDialogCancelButton, OnCancelButtonClicked)
-                        .Create ();
+                       .SetTitle (Resource.String.LoginAccountsDialogTitle)
+                       .SetAdapter (MakeAccountsAdapter (), OnAccountSelected)
+                       .SetNegativeButton (Resource.String.LoginAccountsDialogCancelButton, OnCancelButtonClicked)
+                       .Create ();
             }
 
             private void OnAccountSelected (object sender, DialogClickEventArgs args)
@@ -589,10 +600,10 @@ namespace Toggl.Joey.UI.Activities
             {
                 var am = AccountManager.Get (Activity);
                 var emails = am.GetAccounts ()
-                                    .Where ((a) => a.Type == GoogleAuthUtil.GoogleAccountType)
-                                    .Select ((a) => a.Name)
-                                    .Distinct ()
-                                    .ToList ();
+                             .Where ((a) => a.Type == GoogleAuthUtil.GoogleAccountType)
+                             .Select ((a) => a.Name)
+                             .Distinct ()
+                             .ToList ();
 
                 return new ArrayAdapter<string> (Activity, Android.Resource.Layout.SimpleListItem1, emails);
             }
@@ -603,10 +614,10 @@ namespace Toggl.Joey.UI.Activities
             public override Dialog OnCreateDialog (Bundle savedInstanceState)
             {
                 return new AlertDialog.Builder (Activity)
-                        .SetTitle (Resource.String.LoginInvalidCredentialsDialogTitle)
-                        .SetMessage (Resource.String.LoginInvalidCredentialsDialogText)
-                        .SetPositiveButton (Resource.String.LoginInvalidCredentialsDialogOk, OnOkButtonClicked)
-                        .Create ();
+                       .SetTitle (Resource.String.LoginInvalidCredentialsDialogTitle)
+                       .SetMessage (Resource.String.LoginInvalidCredentialsDialogText)
+                       .SetPositiveButton (Resource.String.LoginInvalidCredentialsDialogOk, OnOkButtonClicked)
+                       .Create ();
             }
 
             private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
@@ -620,10 +631,10 @@ namespace Toggl.Joey.UI.Activities
             public override Dialog OnCreateDialog (Bundle savedInstanceState)
             {
                 return new AlertDialog.Builder (Activity)
-                        .SetTitle (Resource.String.LoginSignupFailedDialogTitle)
-                        .SetMessage (Resource.String.LoginSignupFailedDialogText)
-                        .SetPositiveButton (Resource.String.LoginSignupFailedDialogOk, OnOkButtonClicked)
-                        .Create ();
+                       .SetTitle (Resource.String.LoginSignupFailedDialogTitle)
+                       .SetMessage (Resource.String.LoginSignupFailedDialogText)
+                       .SetPositiveButton (Resource.String.LoginSignupFailedDialogOk, OnOkButtonClicked)
+                       .Create ();
             }
 
             private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
@@ -637,10 +648,10 @@ namespace Toggl.Joey.UI.Activities
             public override Dialog OnCreateDialog (Bundle savedInstanceState)
             {
                 return new AlertDialog.Builder (Activity)
-                        .SetTitle (Resource.String.LoginNoAccountDialogTitle)
-                        .SetMessage (Resource.String.LoginNoAccountDialogText)
-                        .SetPositiveButton (Resource.String.LoginNoAccountDialogOk, OnOkButtonClicked)
-                        .Create ();
+                       .SetTitle (Resource.String.LoginNoAccountDialogTitle)
+                       .SetMessage (Resource.String.LoginNoAccountDialogText)
+                       .SetPositiveButton (Resource.String.LoginNoAccountDialogOk, OnOkButtonClicked)
+                       .Create ();
             }
 
             private void OnOkButtonClicked (object sender, DialogClickEventArgs args)

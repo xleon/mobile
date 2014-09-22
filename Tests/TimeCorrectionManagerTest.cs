@@ -8,7 +8,8 @@ namespace Toggl.Phoebe.Tests
     [TestFixture]
     public class TimeCorrectionManagerTest : Test
     {
-        public TimeCorrectionManager TimeManager {
+        public TimeCorrectionManager TimeManager
+        {
             get { return ServiceContainer.Resolve<TimeCorrectionManager> (); }
         }
 

@@ -18,10 +18,9 @@ Phoebe has several project files ([Phoebe.Android.csproj](https://github.com/tog
 
 ## Setting up
 
-You should begin by initializing git submodules we reference:
+You should begin by initializing git hooks and submodules:
 
-	$ git submodule init
-	$ git submodule update
+	$ make setup
 
 You also need to restore NuGet packages for the solution. In Xamarin Studio 5.0 you can find the
 *Restore Packages* under *Project* menu.
@@ -37,16 +36,10 @@ changes and submit a [pull request](https://github.com/toggl/mobile/pulls).
 
 ### Code style
 
-We're lazy, so instead of having official coding style, we have a Xamarin Studio code formatting
-settings. And our IDEs configured to automatically format the file when saving.
+There is a pre-commit git hook, that prevents commits with invalid code style. To reformat all of
+the source files, just run:
 
-If you plan on contributing it's best to have the same settings. You can copy the
-[Default.mdpolicy.xml](https://github.com/toggl/mobile/blob/master/Default.mdpolicy.xml) to
-`~/Library/XamarinStudio-4.0/Policies/` directory (on OSX).
-
-Then make sure that you have "Custom" policy selected under Xamarin Studio settings > Source Code >
-Code Formatting > C# source code. And don't forget to turn on "Format document on save" under
-Xamarin Studio settings > Text Editor > Behavior.
+	$ make format
 
 ## We are hiring!
 

@@ -15,8 +15,8 @@ namespace Toggl.Phoebe.Tests.Data
         public void VerifyRelations (Type dataType)
         {
             var relationProps = dataType.GetProperties (BindingFlags.Instance | BindingFlags.Public)
-                .Where (p => p.GetCustomAttribute<ForeignRelationAttribute> () != null)
-                .ToList ();
+                                .Where (p => p.GetCustomAttribute<ForeignRelationAttribute> () != null)
+                                .ToList ();
 
             // Create test data object:
             var inst = Activator.CreateInstance (dataType);
@@ -81,12 +81,13 @@ namespace Toggl.Phoebe.Tests.Data
             });
         }
 
-        public static IEnumerable<Type> DataObjectTypes {
+        public static IEnumerable<Type> DataObjectTypes
+        {
             get {
                 var dataType = typeof(WorkspaceData);
                 return from t in dataType.Assembly.GetTypes ()
-                                   where t.Namespace == dataType.Namespace && !t.IsAbstract && typeof(CommonData).IsAssignableFrom (t)
-                                   select t;
+                       where t.Namespace == dataType.Namespace && !t.IsAbstract && typeof(CommonData).IsAssignableFrom (t)
+                       select t;
             }
         }
     }

@@ -80,7 +80,8 @@ namespace Toggl.Ross.Theme
                 v.LineBreakMode = UILineBreakMode.TailTruncation;
             }
 
-            public static UIStringAttributes NoTags {
+            public static UIStringAttributes NoTags
+            {
                 get {
                     return new UIStringAttributes () {
                         Font = UIFont.FromName ("HelveticaNeue-Light", 17f),
@@ -89,7 +90,8 @@ namespace Toggl.Ross.Theme
                 }
             }
 
-            public static UIStringAttributes WithTags {
+            public static UIStringAttributes WithTags
+            {
                 get {
                     return new UIStringAttributes () {
                         Font = UIFont.FromName ("HelveticaNeue", 13f),
@@ -99,7 +101,7 @@ namespace Toggl.Ross.Theme
             }
 
             public static void BillableContainer<T> (T v)
-                where T : UIView
+            where T : UIView
             {
                 v.BackgroundColor = Color.White;
             }

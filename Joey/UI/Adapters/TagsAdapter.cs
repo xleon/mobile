@@ -20,7 +20,7 @@ namespace Toggl.Joey.UI.Adapters
             View view = convertView;
             if (view == null) {
                 view = LayoutInflater.FromContext (parent.Context).Inflate (
-                    Resource.Layout.TagListItem, parent, false);
+                           Resource.Layout.TagListItem, parent, false);
                 view.Tag = new TagListItemHolder (view);
             }
             var holder = (TagListItemHolder)view.Tag;
@@ -50,24 +50,26 @@ namespace Toggl.Joey.UI.Adapters
 
             private void HandleTagPropertyChanged (string prop)
             {
-                if (prop == TagModel.PropertyName)
+                if (prop == TagModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 NameCheckedTextView.Text = DataSource.Name;
             }
         }
     }
 }
-    

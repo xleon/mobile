@@ -43,7 +43,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId {
+        private Guid TimeEntryId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -94,7 +95,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             modelTags = await dataStore.Table<TimeEntryTagData> ()
-                .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+                        .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
             SelectInitialTags ();
         }
 
@@ -114,10 +115,12 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private Guid WorkspaceId {
+        private Guid WorkspaceId
+        {
             get {
-                if (model != null && model.Workspace != null)
+                if (model != null && model.Workspace != null) {
                     return model.Workspace.Id;
+                }
                 return Guid.Empty;
             }
         }
@@ -125,11 +128,11 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle state)
         {
             var dia = new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.ChooseTimeEntryTagsDialogTitle)
-                .SetAdapter (new TagsAdapter (workspaceTagsView), (IDialogInterfaceOnClickListener)null)
-                .SetNegativeButton (Resource.String.ChooseTimeEntryTagsDialogCancel, OnCancelButtonClicked)
-                .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, OnOkButtonClicked)
-                .Create ();
+            .SetTitle (Resource.String.ChooseTimeEntryTagsDialogTitle)
+            .SetAdapter (new TagsAdapter (workspaceTagsView), (IDialogInterfaceOnClickListener)null)
+            .SetNegativeButton (Resource.String.ChooseTimeEntryTagsDialogCancel, OnCancelButtonClicked)
+            .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, OnOkButtonClicked)
+            .Create ();
 
             listView = dia.ListView;
             listView.ItemsCanFocus = false;
@@ -145,8 +148,9 @@ namespace Toggl.Joey.UI.Fragments
             var modelTagsReady = modelTags != null;
             var workspaceTagsReady = workspaceTagsView != null && !workspaceTagsView.IsLoading;
 
-            if (tagsSelected || !hasStarted || !modelTagsReady || !workspaceTagsReady)
+            if (tagsSelected || !hasStarted || !modelTagsReady || !workspaceTagsReady) {
                 return;
+            }
 
             // Select tags
             var i = 0;
@@ -176,8 +180,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnOkButtonClicked (object sender, DialogClickEventArgs args)
         {
-            if (isSaving)
+            if (isSaving) {
                 return;
+            }
 
             isSaving = true;
             try {
@@ -187,18 +192,18 @@ namespace Toggl.Joey.UI.Fragments
                 // Resolve selected indexes into TagData:
                 var selected = listView.CheckedItemPositions;
                 var tags = workspaceTagsView.Data
-                    .Where ((tag, idx) => selected.Get (idx, false))
-                    .ToList ();
+                           .Where ((tag, idx) => selected.Get (idx, false))
+                           .ToList ();
 
                 // Delete unused tag relations:
                 var deleteTasks = modelTags
-                    .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
-                    .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
+                                  .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
+                                  .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
 
                 // Create new tag relations:
                 var createTasks = tags
-                    .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-                    .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) }.SaveAsync ());
+                                  .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
+                .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ());
 
                 await Task.WhenAll (deleteTasks.Concat (createTasks));
 

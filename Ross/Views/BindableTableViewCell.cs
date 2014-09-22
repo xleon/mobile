@@ -24,7 +24,8 @@ namespace Toggl.Ross.Views
 
         protected abstract void Rebind ();
 
-        public T DataSource {
+        public T DataSource
+        {
             get { return dataSource; }
         }
     }

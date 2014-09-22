@@ -18,7 +18,8 @@ namespace Toggl.Joey.Net
             this.connectivityManager = connectivityManager;
         }
 
-        public bool IsNetworkPresent {
+        public bool IsNetworkPresent
+        {
             get {
                 return IsNetworkConnected (connectivityManager.ActiveNetworkInfo);
             }
@@ -40,11 +41,13 @@ namespace Toggl.Joey.Net
             var setting = context.PackageManager.GetComponentEnabledSetting (receiver);
 
             if (enable) {
-                if (setting != ComponentEnabledState.Enabled)
+                if (setting != ComponentEnabledState.Enabled) {
                     context.PackageManager.SetComponentEnabledSetting (receiver, ComponentEnabledState.Enabled, ComponentEnableOption.DontKillApp);
+                }
             } else {
-                if (setting == ComponentEnabledState.Enabled)
+                if (setting == ComponentEnabledState.Enabled) {
                     context.PackageManager.SetComponentEnabledSetting (receiver, ComponentEnabledState.Disabled, ComponentEnableOption.DontKillApp);
+                }
             }
         }
 
@@ -53,9 +56,9 @@ namespace Toggl.Joey.Net
             return networkInfo != null && networkInfo.IsConnected;
         }
 
-        [BroadcastReceiver (Enabled = false), 
-            IntentFilter (new[] { ConnectivityManager.ConnectivityAction }, 
-            Categories = new[] { "com.toggl.timer" })]
+        [BroadcastReceiver (Enabled = false),
+         IntentFilter (new[] { ConnectivityManager.ConnectivityAction },
+                       Categories = new[] { "com.toggl.timer" })]
         public class SyncOnNetworkPresentChangeReceiver : BroadcastReceiver
         {
             public override void OnReceive (Context context, Intent intent)

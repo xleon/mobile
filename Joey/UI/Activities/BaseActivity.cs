@@ -24,8 +24,9 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnSyncStarted (SyncStartedMessage msg)
         {
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
 
             // Make sure we only show sync progress bar after 2.5 seconds from the start of the latest sync.
             var currentSync = ++syncCount;
@@ -38,15 +39,17 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
             ToggleProgressBar (false);
         }
 
         private void OnTogglHttpResponse (TogglHttpResponseMessage msg)
         {
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
             if (msg.StatusCode == System.Net.HttpStatusCode.Gone) {
                 new ForcedUpgradeDialogFragment ().Show (FragmentManager, "upgrade_dialog");
             }
@@ -78,7 +81,8 @@ namespace Toggl.Joey.UI.Activities
             return false;
         }
 
-        private BugsnagClient BugsnagClient {
+        private BugsnagClient BugsnagClient
+        {
             get { return (BugsnagClient)ServiceContainer.Resolve<IBugsnagClient> (); }
         }
 
@@ -166,7 +170,8 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        public new FragmentManager FragmentManager {
+        public new FragmentManager FragmentManager
+        {
             get { return SupportFragmentManager; }
         }
     }

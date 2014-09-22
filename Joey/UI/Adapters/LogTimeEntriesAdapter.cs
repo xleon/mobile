@@ -39,8 +39,9 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position == DataView.Count && DataView.IsLoading)
+            if (position == DataView.Count && DataView.IsLoading) {
                 return ViewTypeLoaderPlaceholder;
+            }
 
             var obj = GetEntry (position);
             if (obj is AllTimeEntriesView.DateGroup) {
@@ -52,15 +53,18 @@ namespace Toggl.Joey.UI.Adapters
             return ViewTypeContent;
         }
 
-        public override int ViewTypeCount {
+        public override int ViewTypeCount
+        {
             get { return base.ViewTypeCount + 2; }
         }
 
-        public int? ExpandedPosition {
+        public int? ExpandedPosition
+        {
             get { return expandedPos; }
             set {
-                if (expandedPos == value)
+                if (expandedPos == value) {
                     return;
+                }
                 expandedPos = value;
                 NotifyDataSetChanged ();
             }
@@ -117,7 +121,7 @@ namespace Toggl.Joey.UI.Adapters
                 var dateGroup = (AllTimeEntriesView.DateGroup)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
-                        Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
+                               Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
                     view.Tag = new HeaderListItemHolder (handler, view);
                 }
                 var holder = (HeaderListItemHolder)view.Tag;
@@ -126,7 +130,7 @@ namespace Toggl.Joey.UI.Adapters
                 var data = (TimeEntryData)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
-                        Resource.Layout.LogTimeEntryListExpandedItem, parent, false);
+                               Resource.Layout.LogTimeEntryListExpandedItem, parent, false);
                     view.Tag = new ExpandedListItemHolder (this, view);
                 }
                 var holder = (ExpandedListItemHolder)view.Tag;
@@ -168,8 +172,9 @@ namespace Toggl.Joey.UI.Adapters
 
             private void RebindDuration ()
             {
-                if (DataSource == null || Handle == IntPtr.Zero)
+                if (DataSource == null || Handle == IntPtr.Zero) {
                     return;
+                }
 
                 var models = DataSource.DataObjects.Select (data => new TimeEntryModel (data)).ToList ();
                 var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
@@ -243,8 +248,9 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnContinueButtonClicked (object sender, EventArgs e)
             {
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 if (DataSource.State == TimeEntryState.Running) {
                     adapter.OnStopTimeEntry (DataSource);
@@ -313,45 +319,51 @@ namespace Toggl.Joey.UI.Adapters
             private void HandleTimeEntryPropertyChanged (string prop)
             {
                 if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
-                    || prop == TimeEntryModel.PropertyState
-                    || prop == TimeEntryModel.PropertyStartTime
-                    || prop == TimeEntryModel.PropertyStopTime
-                    || prop == TimeEntryModel.PropertyDescription
-                    || prop == TimeEntryModel.PropertyIsBillable)
+                        || prop == TimeEntryModel.PropertyTask
+                        || prop == TimeEntryModel.PropertyState
+                        || prop == TimeEntryModel.PropertyStartTime
+                        || prop == TimeEntryModel.PropertyStopTime
+                        || prop == TimeEntryModel.PropertyDescription
+                        || prop == TimeEntryModel.PropertyIsBillable) {
                     Rebind ();
+                }
             }
 
             private void HandleProjectPropertyChanged (string prop)
             {
                 if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyColor
-                    || prop == ProjectModel.PropertyName)
+                        || prop == ProjectModel.PropertyColor
+                        || prop == ProjectModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == ProjectModel.PropertyName)
+                if (prop == ProjectModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleTaskPropertyChanged (string prop)
             {
-                if (prop == TaskModel.PropertyName)
+                if (prop == TaskModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 var ctx = ServiceContainer.Resolve<Context> ();
 
@@ -408,8 +420,9 @@ namespace Toggl.Joey.UI.Adapters
 
             private void RebindDuration ()
             {
-                if (DataSource == null || Handle == IntPtr.Zero)
+                if (DataSource == null || Handle == IntPtr.Zero) {
                     return;
+                }
 
                 var duration = DataSource.GetDuration ();
                 DurationTextView.Text = DataSource.GetFormattedDuration ();
@@ -423,8 +436,9 @@ namespace Toggl.Joey.UI.Adapters
 
             private void ShowStopButton ()
             {
-                if (DataSource == null || Handle == IntPtr.Zero)
+                if (DataSource == null || Handle == IntPtr.Zero) {
                     return;
+                }
 
                 if (DataSource.State == TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
@@ -436,8 +450,9 @@ namespace Toggl.Joey.UI.Adapters
             private void RebindTags ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 var showTags = tagsView != null && tagsView.HasNonDefault;
                 TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
@@ -540,43 +555,49 @@ namespace Toggl.Joey.UI.Adapters
             private void HandleTimeEntryPropertyChanged (string prop)
             {
                 if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
-                    || prop == TimeEntryModel.PropertyStartTime
-                    || prop == TimeEntryModel.PropertyStopTime
-                    || prop == TimeEntryModel.PropertyDescription)
+                        || prop == TimeEntryModel.PropertyTask
+                        || prop == TimeEntryModel.PropertyStartTime
+                        || prop == TimeEntryModel.PropertyStopTime
+                        || prop == TimeEntryModel.PropertyDescription) {
                     Rebind ();
+                }
             }
 
             private void HandleProjectPropertyChanged (string prop)
             {
                 if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyColor
-                    || prop == ProjectModel.PropertyName)
+                        || prop == ProjectModel.PropertyColor
+                        || prop == ProjectModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == ClientModel.PropertyName)
+                if (prop == ClientModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             private void HandleTaskPropertyChanged (string prop)
             {
-                if (prop == TaskModel.PropertyName)
+                if (prop == TaskModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 var ctx = ServiceContainer.Resolve<Context> ();
 
@@ -601,8 +622,8 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (DataSource.StopTime.HasValue) {
                     TimeTextView.Text = String.Format ("{0} - {1}",
-                        DataSource.StartTime.ToLocalTime ().ToDeviceTimeString (),
-                        DataSource.StopTime.Value.ToLocalTime ().ToDeviceTimeString ());
+                                                       DataSource.StartTime.ToLocalTime ().ToDeviceTimeString (),
+                                                       DataSource.StopTime.Value.ToLocalTime ().ToDeviceTimeString ());
                 } else {
                     TimeTextView.Text = DataSource.StartTime.ToLocalTime ().ToDeviceTimeString ();
                 }
@@ -704,8 +725,9 @@ namespace Toggl.Joey.UI.Adapters
             private void RebindTags ()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 var tagsViewState = tagsView.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
                 TagListView.Visibility = tagsViewState;

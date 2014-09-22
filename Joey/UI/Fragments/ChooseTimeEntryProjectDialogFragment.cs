@@ -30,7 +30,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId {
+        private Guid TimeEntryId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -66,10 +67,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             adapter = new ProjectsAdapter ();
             var dia = new AlertDialog.Builder (Activity)
-                .SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle)
-                    .SetAdapter (adapter, OnItemSelected)
-                .SetNegativeButton (Resource.String.ChooseTimeEntryProjectDialogCancel, OnCancelButtonClicked)
-                .Create ();
+            .SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle)
+            .SetAdapter (adapter, OnItemSelected)
+            .SetNegativeButton (Resource.String.ChooseTimeEntryProjectDialogCancel, OnCancelButtonClicked)
+            .Create ();
 
             dia.ListView.Divider = Activity.Resources.GetDrawable (Resource.Drawable.dividerhorizontalopaque);
             return dia;
@@ -107,7 +108,7 @@ namespace Toggl.Joey.UI.Fragments
                         var ws = new WorkspaceModel (data.WorkspaceId);
                         // Show create project dialog instead
                         new CreateProjectDialogFragment (model, ws, data.Color)
-                            .Show (FragmentManager, "new_project_dialog");
+                        .Show (FragmentManager, "new_project_dialog");
                     } else {
                         project = (ProjectModel)wrap.Data;
                         workspace = project.Workspace;

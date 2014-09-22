@@ -43,7 +43,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        protected TimeEntryModel TimeEntry {
+        protected TimeEntryModel TimeEntry
+        {
             get { return model; }
             set {
                 DiscardDescriptionChanges ();
@@ -65,7 +66,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        protected bool CanRebind {
+        protected bool CanRebind
+        {
             get { return canRebind || model == null; }
         }
 
@@ -94,7 +96,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public override bool UserVisibleHint {
+        public override bool UserVisibleHint
+        {
             get { return base.UserVisibleHint; }
             set {
                 if (!value) {
@@ -106,8 +109,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ResetTrackedObservables ()
         {
-            if (propertyTracker == null)
+            if (propertyTracker == null) {
                 return;
+            }
 
             propertyTracker.MarkAllStale ();
 
@@ -134,12 +138,12 @@ namespace Toggl.Joey.UI.Fragments
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyProject
-                || prop == TimeEntryModel.PropertyTask
-                || prop == TimeEntryModel.PropertyState
-                || prop == TimeEntryModel.PropertyStartTime
-                || prop == TimeEntryModel.PropertyStopTime
-                || prop == TimeEntryModel.PropertyDescription
-                || prop == TimeEntryModel.PropertyIsBillable) {
+                    || prop == TimeEntryModel.PropertyTask
+                    || prop == TimeEntryModel.PropertyState
+                    || prop == TimeEntryModel.PropertyStartTime
+                    || prop == TimeEntryModel.PropertyStopTime
+                    || prop == TimeEntryModel.PropertyDescription
+                    || prop == TimeEntryModel.PropertyIsBillable) {
                 Rebind ();
             } else if (prop == TimeEntryModel.PropertyId) {
                 ResetModel ();
@@ -149,29 +153,33 @@ namespace Toggl.Joey.UI.Fragments
         private void HandleProjectPropertyChanged (string prop)
         {
             if (prop == ProjectModel.PropertyClient
-                || prop == ProjectModel.PropertyName
-                || prop == ProjectModel.PropertyColor)
+                    || prop == ProjectModel.PropertyName
+                    || prop == ProjectModel.PropertyColor) {
                 Rebind ();
+            }
         }
 
         private void HandleTaskPropertyChanged (string prop)
         {
-            if (prop == TaskModel.PropertyName)
+            if (prop == TaskModel.PropertyName) {
                 Rebind ();
+            }
         }
 
         private void HandleClientPropertyChanged (string prop)
         {
-            if (prop == ClientModel.PropertyName)
+            if (prop == ClientModel.PropertyName) {
                 Rebind ();
+            }
         }
 
         protected virtual void Rebind ()
         {
             ResetTrackedObservables ();
 
-            if (TimeEntry == null || !canRebind)
+            if (TimeEntry == null || !canRebind) {
                 return;
+            }
 
             var startTime = TimeEntry.StartTime;
             var useTimer = TimeEntry.StartTime == DateTime.MinValue;
@@ -209,8 +217,8 @@ namespace Toggl.Joey.UI.Fragments
                 DescriptionEditText.SetSelection (DescriptionEditText.Text.Length);
             }
             DescriptionEditText.SetHint (useTimer
-                ? Resource.String.CurrentTimeEntryEditDescriptionHint
-                : Resource.String.CurrentTimeEntryEditDescriptionPastHint);
+                                         ? Resource.String.CurrentTimeEntryEditDescriptionHint
+                                         : Resource.String.CurrentTimeEntryEditDescriptionPastHint);
 
             if (TimeEntry.StopTime.HasValue) {
                 StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();
@@ -248,8 +256,9 @@ namespace Toggl.Joey.UI.Fragments
             List<String> tagList = new List<String> ();
             String t;
 
-            if (tagsView == null || !canRebind)
+            if (tagsView == null || !canRebind) {
                 return;
+            }
             if (tagsView.Count == 0) {
                 TagsEditText.Text = String.Empty;
                 return;
@@ -349,22 +358,25 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnDurationTextViewClick (object sender, EventArgs e)
         {
-            if (TimeEntry == null)
+            if (TimeEntry == null) {
                 return;
+            }
             new ChangeTimeEntryDurationDialogFragment (TimeEntry).Show (FragmentManager, "duration_dialog");
         }
 
         private void OnStartTimeEditTextClick (object sender, EventArgs e)
         {
-            if (TimeEntry == null)
+            if (TimeEntry == null) {
                 return;
+            }
             new ChangeTimeEntryStartTimeDialogFragment (TimeEntry).Show (FragmentManager, "time_dialog");
         }
 
         private void OnStopTimeEditTextClick (object sender, EventArgs e)
         {
-            if (TimeEntry == null || TimeEntry.State == TimeEntryState.Running)
+            if (TimeEntry == null || TimeEntry.State == TimeEntryState.Running) {
                 return;
+            }
             new ChangeTimeEntryStopTimeDialogFragment (TimeEntry).Show (FragmentManager, "time_dialog");
         }
 
@@ -373,8 +385,9 @@ namespace Toggl.Joey.UI.Fragments
             // This can be called when the fragment is being restored, so the previous value will be
             // set miraculously. So we need to make sure that this is indeed the user who is changing the
             // value by only acting when the OnStart has been called.
-            if (!canRebind)
+            if (!canRebind) {
                 return;
+            }
 
             // Mark description as changed
             descriptionChanging = TimeEntry != null && DescriptionEditText.Text != TimeEntry.Description;
@@ -388,8 +401,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnDescriptionFocusChange (object sender, View.FocusChangeEventArgs e)
         {
-            if (!e.HasFocus)
+            if (!e.HasFocus) {
                 CommitDescriptionChanges ();
+            }
         }
 
         private void OnDescriptionEditorAction (object sender, TextView.EditorActionEventArgs e)
@@ -402,24 +416,27 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnProjectEditTextClick (object sender, EventArgs e)
         {
-            if (TimeEntry == null)
+            if (TimeEntry == null) {
                 return;
+            }
 
             new ChooseTimeEntryProjectDialogFragment (TimeEntry).Show (FragmentManager, "projects_dialog");
         }
 
         private void OnTagsEditTextClick (object sender, EventArgs e)
         {
-            if (TimeEntry == null)
+            if (TimeEntry == null) {
                 return;
+            }
 
             new ChooseTimeEntryTagsDialogFragment (TimeEntry).Show (FragmentManager, "tags_dialog");
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)
         {
-            if (TimeEntry == null)
+            if (TimeEntry == null) {
                 return;
+            }
 
             var isBillable = !BillableCheckBox.Checked;
             if (TimeEntry.IsBillable != isBillable) {
@@ -430,8 +447,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnDeleteImageButtonClick (object sender, EventArgs e)
         {
-            if (TimeEntry == null)
+            if (TimeEntry == null) {
                 return;
+            }
 
             await TimeEntry.DeleteAsync ();
             ResetModel ();
@@ -441,16 +459,18 @@ namespace Toggl.Joey.UI.Fragments
 
         private void AutoCommitDescriptionChanges ()
         {
-            if (!autoCommitScheduled)
+            if (!autoCommitScheduled) {
                 return;
+            }
             autoCommitScheduled = false;
             CommitDescriptionChanges ();
         }
 
         private void ScheduleDescriptionChangeAutoCommit ()
         {
-            if (autoCommitScheduled)
+            if (autoCommitScheduled) {
                 return;
+            }
 
             autoCommitScheduled = true;
             handler.PostDelayed (AutoCommitDescriptionChanges, 1000);
@@ -458,8 +478,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void CancelDescriptionChangeAutoCommit ()
         {
-            if (!autoCommitScheduled)
+            if (!autoCommitScheduled) {
                 return;
+            }
 
             handler.RemoveCallbacks (AutoCommitDescriptionChanges);
             autoCommitScheduled = false;
@@ -486,8 +507,9 @@ namespace Toggl.Joey.UI.Fragments
         private async void SaveTimeEntry ()
         {
             var entry = TimeEntry;
-            if (entry == null)
+            if (entry == null) {
                 return;
+            }
 
             try {
                 await entry.SaveAsync ().ConfigureAwait (false);

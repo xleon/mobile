@@ -45,7 +45,7 @@ namespace Toggl.Ross.ViewControllers
             Add (new SeparatorView ().Apply (Style.Settings.Separator));
             Add (askProjectView = new LabelSwitchView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Settings.RowBackground).Apply (BindAskProjectView));
+            } .Apply (Style.Settings.RowBackground).Apply (BindAskProjectView));
             askProjectView.Label.Apply (Style.Settings.SettingLabel);
             askProjectView.Label.Text = "SettingsAskProject".Tr ();
             askProjectView.Switch.ValueChanged += OnAskProjectViewValueChanged;
@@ -54,12 +54,12 @@ namespace Toggl.Ross.ViewControllers
             Add (new UILabel () {
                 Text = "SettingsAskProjectDesc".Tr (),
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Settings.DescriptionLabel));
+            } .Apply (Style.Settings.DescriptionLabel));
 
             Add (new SeparatorView ().Apply (Style.Settings.Separator));
             Add (mobileTagView = new LabelSwitchView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Settings.RowBackground).Apply (BindMobileTagView));
+            } .Apply (Style.Settings.RowBackground).Apply (BindMobileTagView));
             mobileTagView.Label.Apply (Style.Settings.SettingLabel);
             mobileTagView.Label.Text = "SettingsMobileTag".Tr ();
             mobileTagView.Switch.ValueChanged += OnMobileTagViewValueChanged;
@@ -68,7 +68,7 @@ namespace Toggl.Ross.ViewControllers
             Add (new UILabel () {
                 Text = "SettingsMobileTagDesc".Tr (),
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.Settings.DescriptionLabel));
+            } .Apply (Style.Settings.DescriptionLabel));
 
             View.AddConstraints (MakeConstraints (View));
         }
@@ -140,7 +140,8 @@ namespace Toggl.Ross.ViewControllers
             Rebind ();
         }
 
-        private SettingsStore SettingsStore {
+        private SettingsStore SettingsStore
+        {
             get { return ServiceContainer.Resolve<SettingsStore> (); }
         }
 

@@ -84,7 +84,7 @@ namespace Toggl.Ross.ViewControllers
             private readonly HashSet<Guid> expandedProjects = new HashSet<Guid> ();
 
             public Source (ProjectSelectionViewController controller)
-                : base (controller.TableView, new ProjectAndTaskView ())
+            : base (controller.TableView, new ProjectAndTaskView ())
             {
                 this.controller = controller;
             }
@@ -121,10 +121,12 @@ namespace Toggl.Ross.ViewControllers
             public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
                 var row = GetRow (indexPath);
-                if (row is ProjectAndTaskView.Workspace)
+                if (row is ProjectAndTaskView.Workspace) {
                     return 42f;
-                if (row is TaskModel)
+                }
+                if (row is TaskModel) {
                     return 49f;
+                }
                 return EstimatedHeight (tableView, indexPath);
             }
 
@@ -219,8 +221,9 @@ namespace Toggl.Ross.ViewControllers
             {
                 foreach (var row in DataView.Data) {
                     var task = row as TaskData;
-                    if (task != null && !expandedProjects.Contains (task.ProjectId))
+                    if (task != null && !expandedProjects.Contains (task.ProjectId)) {
                         continue;
+                    }
 
                     yield return row;
                 }
@@ -370,15 +373,17 @@ namespace Toggl.Ross.ViewControllers
             private void HandleProjectPropertyChanged (string prop)
             {
                 if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyName
-                    || prop == ProjectModel.PropertyColor)
+                        || prop == ProjectModel.PropertyName
+                        || prop == ProjectModel.PropertyColor) {
                     Rebind ();
+                }
             }
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == ClientModel.PropertyName)
+                if (prop == ClientModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
@@ -487,8 +492,9 @@ namespace Toggl.Ross.ViewControllers
                 ResetTrackedObservables ();
 
                 var taskName = DataSource.Name;
-                if (String.IsNullOrWhiteSpace (taskName))
+                if (String.IsNullOrWhiteSpace (taskName)) {
                     taskName = "ProjectNoNameTask".Tr ();
+                }
                 nameLabel.Text = taskName;
             }
 
@@ -505,25 +511,30 @@ namespace Toggl.Ross.ViewControllers
 
             private void HandleTaskPropertyChanged (string prop)
             {
-                if (prop == TaskModel.PropertyName)
+                if (prop == TaskModel.PropertyName) {
                     Rebind ();
+                }
             }
 
-            public bool IsFirst {
+            public bool IsFirst
+            {
                 get { return isFirst; }
                 set {
-                    if (isFirst == value)
+                    if (isFirst == value) {
                         return;
+                    }
                     isFirst = value;
                     SetNeedsLayout ();
                 }
             }
 
-            public bool IsLast {
+            public bool IsLast
+            {
                 get { return isLast; }
                 set {
-                    if (isLast == value)
+                    if (isLast == value) {
                         return;
+                    }
                     isLast = value;
                     SetNeedsLayout ();
 
@@ -584,8 +595,9 @@ namespace Toggl.Ross.ViewControllers
 
             private void HandleClientPropertyChanged (string prop)
             {
-                if (prop == WorkspaceModel.PropertyName)
+                if (prop == WorkspaceModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()

@@ -52,25 +52,27 @@ namespace Toggl.Joey.UI.Views
 
         private void InvalidateGradient ()
         {
-            if (gradientColor == null)
+            if (gradientColor == null) {
                 return;
+            }
 
             var opaqueColor = gradientColor.Value;
             var transparentColor = new Color ((int)opaqueColor.R, opaqueColor.G, opaqueColor.B, 0);
 
             var gradient = new LinearGradient (
-                               Bounds.Left, Bounds.Top,
-                               Bounds.Right, Bounds.Top,
-                               transparentColor, opaqueColor,
-                               Shader.TileMode.Clamp);
+                Bounds.Left, Bounds.Top,
+                Bounds.Right, Bounds.Top,
+                transparentColor, opaqueColor,
+                Shader.TileMode.Clamp);
 
             paint.SetShader (gradient);
         }
 
         public override void Draw (Canvas canvas)
         {
-            if (gradientColor == null)
+            if (gradientColor == null) {
                 return;
+            }
 
             canvas.DrawRect (Bounds, paint);
         }
@@ -83,19 +85,23 @@ namespace Toggl.Joey.UI.Views
         {
         }
 
-        public override int Opacity {
+        public override int Opacity
+        {
             get { return (int)Format.Translucent; }
         }
 
-        public override int IntrinsicWidth {
+        public override int IntrinsicWidth
+        {
             get { return intrinsicWidth; }
         }
 
-        public override int IntrinsicHeight {
+        public override int IntrinsicHeight
+        {
             get { return 1; }
         }
 
-        public override bool IsStateful {
+        public override bool IsStateful
+        {
             get { return true; }
         }
 

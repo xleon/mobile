@@ -18,14 +18,14 @@ using Fragment = Android.Support.V4.App.Fragment;
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
-        Label = "@string/EntryName",
-        Exported = true,
-        #if DEBUG
-        // The actual entry-point is defined in manifest via activity-alias, this here is just to
-        // make adb launch the activity automatically when developing.
-        MainLauncher = true,
-        #endif
-        Theme = "@style/Theme.Toggl.App")]
+         Label = "@string/EntryName",
+         Exported = true,
+         #if DEBUG
+         // The actual entry-point is defined in manifest via activity-alias, this here is just to
+         // make adb launch the activity automatically when developing.
+         MainLauncher = true,
+         #endif
+         Theme = "@style/Theme.Toggl.App")]
     public class MainDrawerActivity : BaseActivity
     {
         private const string PageStackExtra = "com.toggl.timer.page_stack";
@@ -214,15 +214,15 @@ namespace Toggl.Joey.UI.Activities
             var old = FragmentManager.FindFragmentById (Resource.Id.ContentFrameLayout);
             if (old == null) {
                 FragmentManager.BeginTransaction ()
-                    .Add (Resource.Id.ContentFrameLayout, fragment)
-                    .Commit ();
+                .Add (Resource.Id.ContentFrameLayout, fragment)
+                .Commit ();
             } else {
                 // The detach/attach is a workaround for https://code.google.com/p/android/issues/detail?id=42601
                 FragmentManager.BeginTransaction ()
-                    .Detach (old)
-                    .Replace (Resource.Id.ContentFrameLayout, fragment)
-                    .Attach (fragment)
-                    .Commit ();
+                .Detach (old)
+                .Replace (Resource.Id.ContentFrameLayout, fragment)
+                .Attach (fragment)
+                .Commit ();
             }
         }
 
@@ -239,7 +239,7 @@ namespace Toggl.Joey.UI.Activities
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
                 OpenPage (DrawerListAdapter.SettingsPageId);
 
-            } else if (e.Id == DrawerListAdapter.FeedbackPageId){
+            } else if (e.Id == DrawerListAdapter.FeedbackPageId) {
                 OpenPage (DrawerListAdapter.FeedbackPageId);
             }
 
@@ -297,7 +297,8 @@ namespace Toggl.Joey.UI.Activities
             return DateUtils.GetRelativeTimeSpanString (lastSyncInMillis, NowInMillis, 0L);
         }
 
-        public TimerComponent Timer {
+        public TimerComponent Timer
+        {
             get { return barTimer; }
         }
     }

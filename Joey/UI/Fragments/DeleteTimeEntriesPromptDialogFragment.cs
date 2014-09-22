@@ -21,7 +21,7 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         public DeleteTimeEntriesPromptDialogFragment (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-            : base (javaRef, transfer)
+        : base (javaRef, transfer)
         {
         }
 
@@ -38,7 +38,8 @@ namespace Toggl.Joey.UI.Fragments
             Arguments = args;
         }
 
-        private IEnumerable<string> TimeEntryIds {
+        private IEnumerable<string> TimeEntryIds
+        {
             get {
                 var arr = Arguments != null ? Arguments.GetStringArrayList (TimeEntryIdsArgument) : null;
                 return arr ?? Enumerable.Empty<string> ();
@@ -55,10 +56,10 @@ namespace Toggl.Joey.UI.Fragments
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var ids = TimeEntryIds.Select (id => Guid.Parse (id)).ToList ();
             models = dataStore.Table<TimeEntryData> ()
-                .QueryAsync (r => r.DeletedAt == null && ids.Contains (r.Id))
-                .Result
-                .Select (data => new TimeEntryModel (data))
-                .ToList ();
+                     .QueryAsync (r => r.DeletedAt == null && ids.Contains (r.Id))
+                     .Result
+                     .Select (data => new TimeEntryModel (data))
+                     .ToList ();
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -69,12 +70,12 @@ namespace Toggl.Joey.UI.Fragments
                       );
 
             return new AlertDialog.Builder (Activity)
-                    .SetIcon (Resource.Drawable.IcDialogAlertHoloLight)
-                    .SetTitle (Resource.String.DeleteTimeEntriesDialogTitle)
-                    .SetMessage (msg)
-                    .SetPositiveButton (Resource.String.DeleteTimeEntriesDialogDeleteButton, OnDeleteButtonClicked)
-                    .SetNegativeButton (Resource.String.DeleteTimeEntriesDialogCancelButton, OnCancelButtonClicked)
-                    .Create ();
+                   .SetIcon (Resource.Drawable.IcDialogAlertHoloLight)
+                   .SetTitle (Resource.String.DeleteTimeEntriesDialogTitle)
+                   .SetMessage (msg)
+                   .SetPositiveButton (Resource.String.DeleteTimeEntriesDialogDeleteButton, OnDeleteButtonClicked)
+                   .SetNegativeButton (Resource.String.DeleteTimeEntriesDialogCancelButton, OnCancelButtonClicked)
+                   .Create ();
         }
 
         public override void OnStart ()

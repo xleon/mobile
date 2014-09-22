@@ -33,7 +33,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId {
+        private Guid TimeEntryId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -79,7 +80,7 @@ namespace Toggl.Joey.UI.Fragments
             var store = ServiceContainer.Resolve<IDataStore> ();
 
             var rows = await store.Table<TimeEntryData> ()
-                .QueryAsync (r => r.Id == TimeEntryId && r.DeletedAt == null);
+                       .QueryAsync (r => r.Id == TimeEntryId && r.DeletedAt == null);
             var data = rows.FirstOrDefault ();
 
             if (data != null) {
@@ -91,8 +92,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
 
             if (args.PropertyName == ActiveTimeEntryManager.PropertyDraft) {
                 ResetModel ();

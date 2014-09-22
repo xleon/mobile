@@ -24,7 +24,8 @@ namespace Toggl.Ross.Views
             backgroundView.Frame = new RectangleF (0, -480, Frame.Width, 480);
         }
 
-        public override UIColor BackgroundColor {
+        public override UIColor BackgroundColor
+        {
             get { return backgroundView.BackgroundColor; }
             set { backgroundView.BackgroundColor = value; }
         }

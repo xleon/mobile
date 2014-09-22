@@ -33,7 +33,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId {
+        private Guid TimeEntryId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -80,7 +81,7 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle state)
         {
             var view = LayoutInflater.From (Activity)
-                .Inflate (Resource.Layout.ChangeTimeEntryStartTimeDialogFragment, null);
+                       .Inflate (Resource.Layout.ChangeTimeEntryStartTimeDialogFragment, null);
             TabsRadioGroup = view.FindViewById<RadioGroup> (Resource.Id.TabsRadioGroup);
             TimeTabRadioButton = view.FindViewById<RadioButton> (Resource.Id.TimeTabRadioButton).SetFont (Font.Roboto);
             DateTabRadioButton = view.FindViewById<RadioButton> (Resource.Id.DateTabRadioButton).SetFont (Font.Roboto);
@@ -97,18 +98,19 @@ namespace Toggl.Joey.UI.Fragments
             Rebind ();
 
             var dia = new AlertDialog.Builder (Activity)
-                .SetTitle (DialogTitleId ())
-                .SetView (view)
-                .SetPositiveButton (Resource.String.ChangeTimeEntryStartTimeDialogOk, OnOkButtonClicked)
-                .Create ();
+            .SetTitle (DialogTitleId ())
+            .SetView (view)
+            .SetPositiveButton (Resource.String.ChangeTimeEntryStartTimeDialogOk, OnOkButtonClicked)
+            .Create ();
 
             return dia;
         }
 
         private void SetupViews ()
         {
-            if (viewsSetup || !modelLoaded || TimePicker == null)
+            if (viewsSetup || !modelLoaded || TimePicker == null) {
                 return;
+            }
 
             viewsSetup = true;
 
@@ -116,7 +118,7 @@ namespace Toggl.Joey.UI.Fragments
             var date = GetInitialDate ();
 
             TimePicker.SetIs24HourView (new Java.Lang.Boolean (
-                DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ())));
+                                            DateFormat.Is24HourFormat (ServiceContainer.Resolve<Context> ())));
             TimePicker.CurrentHour = new Java.Lang.Integer (time.Hour);
             TimePicker.CurrentMinute = new Java.Lang.Integer (time.Minute);
             TimePicker.TimeChanged += OnTimePickerTimeChanged;
@@ -131,8 +133,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void Rebind ()
         {
-            if (TabsRadioGroup == null)
+            if (TabsRadioGroup == null) {
                 return;
+            }
 
             if (TabsRadioGroup.CheckedRadioButtonId == TimeTabRadioButton.Id) {
                 TimeTabRadioButton.SetTextSize (ComplexUnitType.Dip, 18);
@@ -168,15 +171,17 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private DateTime DateTime {
+        private DateTime DateTime
+        {
             get {
                 return DateTime.SpecifyKind (DatePicker.DateTime
-                    .AddHours (TimePicker.CurrentHour.IntValue ())
-                    .AddMinutes (TimePicker.CurrentMinute.IntValue ()), DateTimeKind.Local);
+                                             .AddHours (TimePicker.CurrentHour.IntValue ())
+                                             .AddMinutes (TimePicker.CurrentMinute.IntValue ()), DateTimeKind.Local);
             }
         }
 
-        protected TimeEntryModel Model {
+        protected TimeEntryModel Model
+        {
             get { return model; }
         }
 

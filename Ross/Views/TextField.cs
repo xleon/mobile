@@ -26,11 +26,13 @@ namespace Toggl.Ross.Views
             return base.EditingRect (inset.InsetRect (forBounds));
         }
 
-        public UIEdgeInsets TextEdgeInsets {
+        public UIEdgeInsets TextEdgeInsets
+        {
             get { return inset; }
             set {
-                if (inset.Equals (value))
+                if (inset.Equals (value)) {
                     return;
+                }
                 inset = value;
                 SetNeedsLayout ();
             }

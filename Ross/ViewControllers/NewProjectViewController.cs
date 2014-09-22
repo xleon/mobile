@@ -72,12 +72,12 @@ namespace Toggl.Ross.ViewControllers
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder (),
-            }.Apply (Style.NewProject.NameField).Apply (BindNameField));
+            } .Apply (Style.NewProject.NameField).Apply (BindNameField));
             nameTextField.EditingChanged += OnNameFieldEditingChanged;
 
             view.Add (clientButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            }.Apply (Style.NewProject.ClientButton).Apply (BindClientButton));
+            } .Apply (Style.NewProject.ClientButton).Apply (BindClientButton));
             clientButton.TouchUpInside += OnClientButtonTouchUpInside;
 
             view.AddConstraints (VerticalLinearLayout (view));
@@ -87,7 +87,7 @@ namespace Toggl.Ross.ViewControllers
 
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "NewProjectAdd".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
-                .Apply (Style.NavLabelButton);
+            .Apply (Style.NavLabelButton);
         }
 
         private void OnNameFieldEditingChanged (object sender, EventArgs e)
@@ -113,8 +113,9 @@ namespace Toggl.Ross.ViewControllers
                 return;
             }
 
-            if (isSaving)
+            if (isSaving) {
                 return;
+            }
 
             isSaving = true;
             try {

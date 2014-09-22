@@ -18,7 +18,7 @@ namespace Toggl.Joey.Net
         }
 
         public SyncService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-            : base (javaRef, transfer)
+        : base (javaRef, transfer)
         {
         }
 
@@ -36,8 +36,9 @@ namespace Toggl.Joey.Net
 
         public override void OnStart (Intent intent, int startId)
         {
-            if (subscriptionSyncFinished != null)
+            if (subscriptionSyncFinished != null) {
                 return;
+            }
 
             ((AndroidApp)Application).InitializeComponents ();
 
@@ -69,8 +70,9 @@ namespace Toggl.Joey.Net
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
             // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero) {
                 return;
+            }
 
             if (subscriptionSyncFinished != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();

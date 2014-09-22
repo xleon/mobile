@@ -25,8 +25,9 @@ namespace Toggl.Ross.ViewControllers
 
         protected SyncStatusViewController (UIViewController viewController)
         {
-            if (viewController == null)
+            if (viewController == null) {
                 throw new ArgumentNullException ("viewController");
+            }
 
             contentViewController = viewController;
 
@@ -61,11 +62,13 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private bool StatusBarShown {
+        private bool StatusBarShown
+        {
             get { return showStatus; }
             set {
-                if (showStatus == value)
+                if (showStatus == value) {
                     return;
+                }
                 showStatus = value;
                 UIView.Animate (0.5f, LayoutStatusBar);
             }
@@ -138,7 +141,8 @@ namespace Toggl.Ross.ViewControllers
                 0, statusY, size.Width, StatusBarHeight);
         }
 
-        public override UINavigationItem NavigationItem {
+        public override UINavigationItem NavigationItem
+        {
             get { return contentViewController.NavigationItem; }
         }
 
@@ -225,11 +229,13 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public bool IsSyncing {
+            public bool IsSyncing
+            {
                 get { return isSyncing; }
                 set {
-                    if (isSyncing == value)
+                    if (isSyncing == value) {
                         return;
+                    }
                     isSyncing = value;
                     ResetState ();
                 }

@@ -21,31 +21,32 @@ namespace Toggl.Joey.UI.Adapters
         {
             listItems = new List<IListItem> () {
                 new HeaderListItem (Resource.String.SettingsGeneralHeader),
-                new CheckboxListItem (
-                    Resource.String.SettingsGeneralNotifTitle,
-                    Resource.String.SettingsGeneralNotifDesc,
-                    SettingsStore.PropertyIdleNotification,
-                    s => s.IdleNotification,
-                    (s, v) => s.IdleNotification = v
-                ),
-                new CheckboxListItem (
-                    Resource.String.SettingsGeneralAskProjectTitle,
-                    Resource.String.SettingsGeneralAskProjectDesc,
-                    SettingsStore.PropertyChooseProjectForNew,
-                    s => s.ChooseProjectForNew,
-                    (s, v) => s.ChooseProjectForNew = v
-                ),
-                new CheckboxListItem (
-                    Resource.String.SettingsGeneralMobileTagTitle,
-                    Resource.String.SettingsGeneralMobileTagDesc,
-                    SettingsStore.PropertyUseDefaultTag,
-                    s => s.UseDefaultTag,
-                    (s, v) => s.UseDefaultTag = v
-                ),
+                    new CheckboxListItem (
+                        Resource.String.SettingsGeneralNotifTitle,
+                        Resource.String.SettingsGeneralNotifDesc,
+                        SettingsStore.PropertyIdleNotification,
+                        s => s.IdleNotification,
+                        (s, v) => s.IdleNotification = v
+                    ),
+                    new CheckboxListItem (
+                        Resource.String.SettingsGeneralAskProjectTitle,
+                        Resource.String.SettingsGeneralAskProjectDesc,
+                        SettingsStore.PropertyChooseProjectForNew,
+                        s => s.ChooseProjectForNew,
+                        (s, v) => s.ChooseProjectForNew = v
+                    ),
+                    new CheckboxListItem (
+                        Resource.String.SettingsGeneralMobileTagTitle,
+                        Resource.String.SettingsGeneralMobileTagDesc,
+                        SettingsStore.PropertyUseDefaultTag,
+                        s => s.UseDefaultTag,
+                        (s, v) => s.UseDefaultTag = v
+                    ),
             };
         }
 
-        public override int ViewTypeCount {
+        public override int ViewTypeCount
+        {
             get { return 2; }
         }
 
@@ -78,7 +79,7 @@ namespace Toggl.Joey.UI.Adapters
             if (viewType == HeaderViewType) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.SettingsListHeaderItem, parent, false);
+                               Resource.Layout.SettingsListHeaderItem, parent, false);
                     view.Tag = new HeaderListItemHolder (view);
                 }
                 var holder = (HeaderListItemHolder)view.Tag;
@@ -86,7 +87,7 @@ namespace Toggl.Joey.UI.Adapters
             } else if (viewType == CheckboxViewType) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.SettingsListCheckboxItem, parent, false);
+                               Resource.Layout.SettingsListCheckboxItem, parent, false);
                     view.Tag = new CheckboxListItemHolder (view);
                 }
                 var holder = (CheckboxListItemHolder)view.Tag;
@@ -98,7 +99,8 @@ namespace Toggl.Joey.UI.Adapters
             return view;
         }
 
-        public override int Count {
+        public override int Count
+        {
             get { return listItems.Count; }
         }
 
@@ -126,11 +128,13 @@ namespace Toggl.Joey.UI.Adapters
                 this.headerResId = headerResId;
             }
 
-            public int ViewType {
+            public int ViewType
+            {
                 get { return HeaderViewType; }
             }
 
-            public int HeaderResId {
+            public int HeaderResId
+            {
                 get { return headerResId; }
             }
         }
@@ -152,23 +156,28 @@ namespace Toggl.Joey.UI.Adapters
                 this.valueSetter = valueSetter;
             }
 
-            public int ViewType {
+            public int ViewType
+            {
                 get { return CheckboxViewType; }
             }
 
-            public int TitleResId {
+            public int TitleResId
+            {
                 get { return titleResId; }
             }
 
-            public int DescriptionResId {
+            public int DescriptionResId
+            {
                 get { return descriptionResId; }
             }
 
-            public string SettingName {
+            public string SettingName
+            {
                 get { return settingName; }
             }
 
-            public bool IsChecked {
+            public bool IsChecked
+            {
                 get {
                     var store = ServiceContainer.Resolve<SettingsStore> ();
                     return valueGetter (store);
@@ -244,8 +253,9 @@ namespace Toggl.Joey.UI.Adapters
             private void DispatchSettingChanged (SettingChangedMessage msg)
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
+                if (Handle == IntPtr.Zero) {
                     return;
+                }
 
                 OnSettingChanged (msg);
             }
@@ -277,8 +287,9 @@ namespace Toggl.Joey.UI.Adapters
 
             protected override void OnSettingChanged (SettingChangedMessage msg)
             {
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 if (msg.Name == DataSource.SettingName) {
                     Rebind ();

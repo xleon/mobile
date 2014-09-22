@@ -19,18 +19,18 @@ namespace Toggl.Ross.Theme
             switch (hexValue.Length) {
             case 6:
                 return new UIColor (
-                    ((rgb & 0xFF0000) >> 16) / 255.0f,
-                    ((rgb & 0x00FF00) >> 8) / 255.0f,
-                    (rgb & 0x0000FF) / 255.0f,
-                    alpha
-                );
+                           ((rgb & 0xFF0000) >> 16) / 255.0f,
+                           ((rgb & 0x00FF00) >> 8) / 255.0f,
+                           (rgb & 0x0000FF) / 255.0f,
+                           alpha
+                       );
             case 3:
                 return new UIColor (
-                    (((rgb & 0xF00) >> 4) | ((rgb & 0xF00) >> 8)) / 255.0f,
-                    ((rgb & 0x0F0) | (rgb & 0x0F0) >> 4) / 255.0f,
-                    ((rgb & 0x00F << 4) | (rgb & 0x00F)) / 255.0f,
-                    alpha
-                );
+                           (((rgb & 0xF00) >> 4) | ((rgb & 0xF00) >> 8)) / 255.0f,
+                           ((rgb & 0x0F0) | (rgb & 0x0F0) >> 4) / 255.0f,
+                           ((rgb & 0x00F << 4) | (rgb & 0x00F)) / 255.0f,
+                           alpha
+                       );
             default:
                 throw new ArgumentException ("Invalid hex string.", "hexValue");
             }

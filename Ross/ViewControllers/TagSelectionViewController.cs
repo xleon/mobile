@@ -38,7 +38,7 @@ namespace Toggl.Ross.ViewControllers
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             modelTags = await dataStore.Table<TimeEntryTagData> ()
-                .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+                        .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
             SetupDataSource ();
         }
 
@@ -46,8 +46,9 @@ namespace Toggl.Ross.ViewControllers
         {
             var modelTagsReady = modelTags != null;
 
-            if (source != null || !modelTagsReady || !IsViewLoaded)
+            if (source != null || !modelTagsReady || !IsViewLoaded) {
                 return;
+            }
 
             // Attach source
             source = new Source (this, modelTags.Select (data => data.TagId));
@@ -64,7 +65,7 @@ namespace Toggl.Ross.ViewControllers
 
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "TagSet".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarSetClicked)
-                .Apply (Style.NavLabelButton);
+            .Apply (Style.NavLabelButton);
         }
 
         public override void ViewDidAppear (bool animated)
@@ -78,8 +79,9 @@ namespace Toggl.Ross.ViewControllers
 
         private async void OnNavigationBarSetClicked (object s, EventArgs e)
         {
-            if (isSaving)
+            if (isSaving) {
                 return;
+            }
 
             isSaving = true;
             try {
@@ -87,13 +89,13 @@ namespace Toggl.Ross.ViewControllers
 
                 // Delete unused tag relations:
                 var deleteTasks = modelTags
-                    .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
-                    .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
+                                  .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
+                                  .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
 
                 // Create new tag relations:
                 var createTasks = tags
-                    .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-                    .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) }.SaveAsync ());
+                                  .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
+                .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ());
 
                 await Task.WhenAll (deleteTasks.Concat (createTasks));
 
@@ -115,7 +117,7 @@ namespace Toggl.Ross.ViewControllers
             private readonly HashSet<Guid> selectedTags;
 
             public Source (TagSelectionViewController controller, IEnumerable<Guid> selectedTagIds)
-                : base (controller.TableView, new WorkspaceTagsView (controller.model.Workspace.Id))
+            : base (controller.TableView, new WorkspaceTagsView (controller.model.Workspace.Id))
             {
                 this.controller = controller;
                 this.selectedTags = new HashSet<Guid> (selectedTagIds);
@@ -161,7 +163,8 @@ namespace Toggl.Ross.ViewControllers
                 tableView.DeselectRow (indexPath, false);
             }
 
-            public IEnumerable<TagData> SelectedTags {
+            public IEnumerable<TagData> SelectedTags
+            {
                 get {
                     return DataView.Data.Where (data => selectedTags.Contains (data.Id));
                 }
@@ -211,16 +214,18 @@ namespace Toggl.Ross.ViewControllers
 
             private void HandleTagPropertyChanged (string prop)
             {
-                if (prop == TagModel.PropertyName)
+                if (prop == TagModel.PropertyName) {
                     Rebind ();
+                }
             }
 
             protected override void Rebind ()
             {
                 ResetTrackedObservables ();
 
-                if (DataSource == null)
+                if (DataSource == null) {
                     return;
+                }
 
                 if (String.IsNullOrWhiteSpace (DataSource.Name)) {
                     nameLabel.Text = "TagNoNameTag".Tr ();
@@ -229,7 +234,8 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public bool Checked {
+            public bool Checked
+            {
                 get { return Accessory == UITableViewCellAccessory.Checkmark; }
                 set {
                     Accessory = value ? UITableViewCellAccessory.Checkmark : UITableViewCellAccessory.None;
@@ -237,10 +243,12 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public Guid TagId {
+            public Guid TagId
+            {
                 get {
-                    if (DataSource != null)
+                    if (DataSource != null) {
                         return DataSource.Id;
+                    }
                     return Guid.Empty;
                 }
             }

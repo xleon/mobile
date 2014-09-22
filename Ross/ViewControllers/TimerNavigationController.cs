@@ -66,8 +66,9 @@ namespace Toggl.Ross.ViewControllers
 
         private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
-            if (isActing)
+            if (isActing) {
                 return;
+            }
             isActing = true;
 
             try {
@@ -75,8 +76,9 @@ namespace Toggl.Ross.ViewControllers
                     await currentTimeEntry.StopAsync ();
                 } else if (timeEntryManager != null) {
                     currentTimeEntry = (TimeEntryModel)timeEntryManager.Draft;
-                    if (currentTimeEntry == null)
+                    if (currentTimeEntry == null) {
                         return;
+                    }
 
                     await currentTimeEntry.StartAsync ();
 
@@ -94,8 +96,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void Rebind ()
         {
-            if (!isStarted)
+            if (!isStarted) {
                 return;
+            }
 
             ResetTrackedObservables ();
 
@@ -115,18 +118,19 @@ namespace Toggl.Ross.ViewControllers
                 var counter = rebindCounter;
                 DispatchQueue.MainQueue.DispatchAfter (
                     TimeSpan.FromMilliseconds (1000 - duration.Milliseconds),
-                    delegate {
-                        if (counter == rebindCounter) {
-                            Rebind ();
-                        }
-                    });
+                delegate {
+                    if (counter == rebindCounter) {
+                        Rebind ();
+                    }
+                });
             }
         }
 
         private void ResetTrackedObservables ()
         {
-            if (propertyTracker == null)
+            if (propertyTracker == null) {
                 return;
+            }
 
             propertyTracker.MarkAllStale ();
 
@@ -140,9 +144,10 @@ namespace Toggl.Ross.ViewControllers
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyState
-                || prop == TimeEntryModel.PropertyStartTime
-                || prop == TimeEntryModel.PropertyStopTime)
+                    || prop == TimeEntryModel.PropertyStartTime
+                    || prop == TimeEntryModel.PropertyStopTime) {
                 Rebind ();
+            }
         }
 
         private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
@@ -155,8 +160,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetModelToRunning ()
         {
-            if (timeEntryManager == null)
+            if (timeEntryManager == null) {
                 return;
+            }
 
             if (currentTimeEntry == null) {
                 currentTimeEntry = (TimeEntryModel)timeEntryManager.Running;

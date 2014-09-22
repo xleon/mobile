@@ -23,7 +23,8 @@ namespace Toggl.Ross.Views
             base.Dispose (disposing);
         }
 
-        protected PropertyChangeTracker Tracker {
+        protected PropertyChangeTracker Tracker
+        {
             get { return tracker; }
         }
 

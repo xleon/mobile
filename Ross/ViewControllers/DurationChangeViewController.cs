@@ -36,7 +36,7 @@ namespace Toggl.Ross.ViewControllers
             // Configure navigation item
             NavigationItem.TitleView = durationView = new DurationView () {
                 Hint = model != null ? model.GetDuration () : TimeSpan.Zero,
-            }.Apply (Style.DurationEdit.DurationView);
+            } .Apply (Style.DurationEdit.DurationView);
             durationView.DurationChanged += (s, e) => Rebind ();
             durationView.SizeToFit ();
 
@@ -73,8 +73,9 @@ namespace Toggl.Ross.ViewControllers
 
         private async void OnNavigationBarRightClicked (object sender, EventArgs args)
         {
-            if (isSaving)
+            if (isSaving) {
                 return;
+            }
 
             try {
                 isSaving = true;
@@ -142,15 +143,15 @@ namespace Toggl.Ross.ViewControllers
 
                 UIView.Animate (
                     TransitionDuration (transitionContext),
-                    delegate {
-                        toController.View.Alpha = 1;
-                    },
-                    delegate {
-                        if (!transitionContext.TransitionWasCancelled) {
-                            fromController.View.RemoveFromSuperview ();
-                        }
-                        transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
+                delegate {
+                    toController.View.Alpha = 1;
+                },
+                delegate {
+                    if (!transitionContext.TransitionWasCancelled) {
+                        fromController.View.RemoveFromSuperview ();
                     }
+                    transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
+                }
                 );
             }
 
@@ -174,15 +175,15 @@ namespace Toggl.Ross.ViewControllers
 
                 UIView.Animate (
                     TransitionDuration (transitionContext),
-                    delegate {
-                        fromController.View.Alpha = 0;
-                    },
-                    delegate {
-                        if (!transitionContext.TransitionWasCancelled) {
-                            fromController.View.RemoveFromSuperview ();
-                        }
-                        transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
+                delegate {
+                    fromController.View.Alpha = 0;
+                },
+                delegate {
+                    if (!transitionContext.TransitionWasCancelled) {
+                        fromController.View.RemoveFromSuperview ();
                     }
+                    transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
+                }
                 );
             }
 

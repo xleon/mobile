@@ -21,7 +21,7 @@ namespace Toggl.Joey.Net
         }
 
         public GcmService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-            : base (javaRef, transfer)
+        : base (javaRef, transfer)
         {
         }
 
@@ -33,8 +33,9 @@ namespace Toggl.Joey.Net
 
         private void UpdateWakelockIntent (Intent intent)
         {
-            if (intent == null)
+            if (intent == null) {
                 return;
+            }
             ClearWakelockIntent ();
             wakelockIntent = intent;
         }
@@ -70,8 +71,9 @@ namespace Toggl.Joey.Net
         {
             var syncManager = ServiceContainer.Resolve<ISyncManager> ();
             // Need to check IsRunning, as it will tell us if the sync actually has finished
-            if (checkRunning && syncManager.IsRunning)
+            if (checkRunning && syncManager.IsRunning) {
                 return;
+            }
 
             // See if we need to start the sync again
             if (needsResync) {
@@ -105,7 +107,7 @@ namespace Toggl.Joey.Net
 
                     var dataStore = ServiceContainer.Resolve<IDataStore> ();
                     var rows = await dataStore.Table<TimeEntryData> ()
-                        .QueryAsync (r => r.RemoteId == entryId);
+                               .QueryAsync (r => r.RemoteId == entryId);
                     var entry = rows.FirstOrDefault ();
 
                     // Make sure that we need to start sync

@@ -31,8 +31,9 @@ namespace Toggl.Joey.UI.Views
 
         private String imageUrl;
 
-        public String ImageUrl {
-            get{ return imageUrl; }
+        public String ImageUrl
+        {
+            get { return imageUrl; }
             set {
                 SetImage (value);
             }
@@ -47,7 +48,7 @@ namespace Toggl.Joey.UI.Views
             try {
                 var request = WebRequest.Create (url);
                 var resp = await request.GetResponseAsync ()
-                    .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
                 var stream = resp.GetResponseStream ();
 
                 bitmap = BitmapFactory.DecodeStream (stream);
@@ -112,8 +113,9 @@ namespace Toggl.Joey.UI.Views
 
         private async void SetImage (String imageUrl)
         {
-            if (this.imageUrl == imageUrl)
+            if (this.imageUrl == imageUrl) {
                 return;
+            }
             this.imageUrl = imageUrl;
 
             Bitmap bitmap = null;
@@ -122,8 +124,9 @@ namespace Toggl.Joey.UI.Views
             }
 
             // Protect against setting old image to the view
-            if (this.imageUrl != imageUrl)
+            if (this.imageUrl != imageUrl) {
                 return;
+            }
 
             if (bitmap != null) {
                 SetImageBitmap (bitmap);

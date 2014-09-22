@@ -39,8 +39,9 @@ namespace Toggl.Ross
             var componentCount = tintColor.CGColor.NumberOfComponents;
             if (componentCount == 2) {
                 float white;
-                if (tintColor.GetWhite (out white, out alpha))
+                if (tintColor.GetWhite (out white, out alpha)) {
                     effectColor = UIColor.FromWhiteAlpha (white, EffectColorAlpha);
+                }
             } else {
                 try {
                     float r, g, b;
@@ -89,7 +90,7 @@ namespace Toggl.Ross
                 };
 
                 UIGraphics.BeginImageContextWithOptions (image.Size, false, UIScreen.MainScreen.Scale);
-                var effectOutContext = UIGraphics.GetCurrentContext ().AsBitmapContext () as CGBitmapContext;               
+                var effectOutContext = UIGraphics.GetCurrentContext ().AsBitmapContext () as CGBitmapContext;
                 var effectOutBuffer = new vImageBuffer () {
                     Data = effectOutContext.Data,
                     Width = effectOutContext.Width,
@@ -100,8 +101,9 @@ namespace Toggl.Ross
                 if (hasBlur) {
                     var inputRadius = blurRadius * UIScreen.MainScreen.Scale;
                     uint radius = (uint)(Math.Floor (inputRadius * 3 * Math.Sqrt (2 * Math.PI) / 4 + 0.5));
-                    if ((radius % 2) != 1)
+                    if ((radius % 2) != 1) {
                         radius += 1;
+                    }
                     vImage.BoxConvolveARGB8888 (ref effectInBuffer, ref effectOutBuffer, IntPtr.Zero, 0, 0, radius, radius, Pixel8888.Zero, vImageFlags.EdgeExtend);
                     vImage.BoxConvolveARGB8888 (ref effectOutBuffer, ref effectInBuffer, IntPtr.Zero, 0, 0, radius, radius, Pixel8888.Zero, vImageFlags.EdgeExtend);
                     vImage.BoxConvolveARGB8888 (ref effectInBuffer, ref effectOutBuffer, IntPtr.Zero, 0, 0, radius, radius, Pixel8888.Zero, vImageFlags.EdgeExtend);
@@ -117,19 +119,23 @@ namespace Toggl.Ross
                     };
                     const int divisor = 256;
                     var saturationMatrix = new short [floatingPointSaturationMatrix.Length];
-                    for (int i = 0; i < saturationMatrix.Length; i++)
+                    for (int i = 0; i < saturationMatrix.Length; i++) {
                         saturationMatrix [i] = (short)Math.Round (floatingPointSaturationMatrix [i] * divisor);
+                    }
                     if (hasBlur) {
                         vImage.MatrixMultiplyARGB8888 (ref effectOutBuffer, ref effectInBuffer, saturationMatrix, divisor, null, null, vImageFlags.NoFlags);
                         effectImageBuffersAreSwapped = true;
-                    } else
+                    } else {
                         vImage.MatrixMultiplyARGB8888 (ref effectInBuffer, ref effectOutBuffer, saturationMatrix, divisor, null, null, vImageFlags.NoFlags);
+                    }
                 }
-                if (!effectImageBuffersAreSwapped)
+                if (!effectImageBuffersAreSwapped) {
                     effectImage = UIGraphics.GetImageFromCurrentImageContext ();
+                }
                 UIGraphics.EndImageContext ();
-                if (effectImageBuffersAreSwapped)
+                if (effectImageBuffersAreSwapped) {
                     effectImage = UIGraphics.GetImageFromCurrentImageContext ();
+                }
                 UIGraphics.EndImageContext ();
             }
 
@@ -142,8 +148,9 @@ namespace Toggl.Ross
             // Draw base image
             if (hasBlur) {
                 outputContext.SaveState ();
-                if (maskImage != null)
+                if (maskImage != null) {
                     outputContext.ClipToMask (imageRect, maskImage.CGImage);
+                }
                 outputContext.DrawImage (imageRect, effectImage.CGImage);
                 outputContext.RestoreState ();
             }

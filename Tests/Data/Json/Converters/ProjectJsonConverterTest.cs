@@ -208,7 +208,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     RemoteId = 1,
                     Name = "Test",
                     ModifiedAt = new
-                        DateTime (2014, 1, 2),
+                    DateTime (2014, 1, 2),
                 });
                 var clientData = await DataStore.PutAsync (new ClientData () {
                     RemoteId = 2,
@@ -258,7 +258,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     RemoteId = 1,
                     Name = "Test",
                     ModifiedAt = new
-                        DateTime (2014, 1, 2),
+                    DateTime (2014, 1, 2),
                 });
                 var clientData = await DataStore.PutAsync (new ClientData () {
                     RemoteId = 2,
@@ -296,7 +296,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     RemoteId = 1,
                     Name = "Test",
                     ModifiedAt = new
-                        DateTime (2014, 1, 2),
+                    DateTime (2014, 1, 2),
                 });
                 var clientData = await DataStore.PutAsync (new ClientData () {
                     RemoteId = 2,
@@ -335,7 +335,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     RemoteId = 1,
                     Name = "Test",
                     ModifiedAt = new
-                        DateTime (2014, 1, 2),
+                    DateTime (2014, 1, 2),
                 });
                 var clientData = await DataStore.PutAsync (new ClientData () {
                     RemoteId = 2,
@@ -375,7 +375,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                     RemoteId = 1,
                     Name = "Test",
                     ModifiedAt = new
-                        DateTime (2014, 1, 2),
+                    DateTime (2014, 1, 2),
                 });
                 var clientData = await DataStore.PutAsync (new ClientData () {
                     RemoteId = 2,

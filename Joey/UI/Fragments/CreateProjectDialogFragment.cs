@@ -44,7 +44,8 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId {
+        private Guid TimeEntryId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -54,7 +55,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private Guid WorkspaceId {
+        private Guid WorkspaceId
+        {
             get {
                 var id = Guid.Empty;
                 if (Arguments != null) {
@@ -64,7 +66,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private int ProjectColor {
+        private int ProjectColor
+        {
             get {
                 var color = 0;
                 if (Arguments != null) {
@@ -107,10 +110,10 @@ namespace Toggl.Joey.UI.Fragments
             nameEditText.TextChanged += OnNameEditTextTextChanged;
 
             return new AlertDialog.Builder (Activity)
-                    .SetTitle (Resource.String.CreateProjectDialogTitle)
-                    .SetView (nameEditText)
-                    .SetPositiveButton (Resource.String.CreateProjectDialogOk, OnPositiveButtonClicked)
-                    .Create ();
+                   .SetTitle (Resource.String.CreateProjectDialogTitle)
+                   .SetView (nameEditText)
+                   .SetPositiveButton (Resource.String.CreateProjectDialogOk, OnPositiveButtonClicked)
+                   .Create ();
         }
 
         public override void OnStart ()
@@ -127,16 +130,18 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            if (!modelsLoaded || isSaving)
+            if (!modelsLoaded || isSaving) {
                 return;
+            }
 
             isSaving = true;
             try {
                 var workspaceModel = workspace;
                 var timeEntryModel = timeEntry;
 
-                if (workspaceModel == null)
+                if (workspaceModel == null) {
                     return;
+                }
 
                 var project = new ProjectModel () {
                     Workspace = workspaceModel,

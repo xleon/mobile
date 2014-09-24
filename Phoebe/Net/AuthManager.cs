@@ -74,6 +74,10 @@ namespace Toggl.Phoebe.Net
                         ServiceContainer.Resolve<MessageBus> ().Send (
                             new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials));
                         return false;
+                    } else if (userJson.DefaultWorkspaceId == 0) {
+                        ServiceContainer.Resolve<MessageBus> ().Send (
+                            new AuthFailedMessage (this, AuthFailedMessage.Reason.NoDefaultWorkspace));
+                        return false;
                     }
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<Logger> ();

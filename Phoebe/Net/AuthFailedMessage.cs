@@ -6,6 +6,7 @@ namespace Toggl.Phoebe.Net
     {
         public enum Reason {
             InvalidCredentials,
+            NoDefaultWorkspace,
             NetworkError,
             SystemError
         }

@@ -11,7 +11,8 @@ namespace Toggl.Phoebe
             this.sender = sender;
         }
 
-        public object Sender {
+        public object Sender
+        {
             get { return sender; }
         }
     }

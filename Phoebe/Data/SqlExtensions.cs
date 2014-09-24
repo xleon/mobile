@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Data
     public static class SqlExtensions
     {
         public static long? GetRemoteId<T> (this IDataStoreContext ctx, Guid id)
-            where T : CommonData
+        where T : CommonData
         {
             var tbl = ctx.Connection.GetMapping<T> ().TableName;
             var q = String.Concat ("SELECT RemoteId FROM ", tbl, " WHERE Id=?");
@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Data
         }
 
         public static Guid GetLocalId<T> (this IDataStoreContext ctx, long remoteId)
-            where T : CommonData
+        where T : CommonData
         {
             var tbl = ctx.Connection.GetMapping<T> ().TableName;
             var q = String.Concat ("SELECT Id FROM ", tbl, " WHERE RemoteId=?");

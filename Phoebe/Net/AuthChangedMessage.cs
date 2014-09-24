@@ -8,7 +8,8 @@ namespace Toggl.Phoebe.Net
         {
         }
 
-        public AuthManager AuthManager {
+        public AuthManager AuthManager
+        {
             get { return (AuthManager)Sender; }
         }
     }

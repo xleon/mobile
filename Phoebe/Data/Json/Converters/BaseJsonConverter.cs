@@ -16,7 +16,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         protected static T GetByRemoteId<T> (IDataStoreContext ctx, long remoteId, Guid? localIdHint)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             var query = ctx.Connection.Table<T> ();
             if (localIdHint != null) {
@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         protected static long GetRemoteId<T> (IDataStoreContext ctx, Guid id)
-            where T : CommonData
+        where T : CommonData
         {
             var remoteId = ctx.GetRemoteId<T> (id);
             if (remoteId == null) {
@@ -41,10 +41,11 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         protected static long? GetRemoteId<T> (IDataStoreContext ctx, Guid? id)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
-            if (id == null)
+            if (id == null) {
                 return null;
+            }
             var remoteId = ctx.GetRemoteId<T> (id.Value);
             if (remoteId == null) {
                 // Check that the relation is actually non-existent, not just remoteId unset
@@ -57,30 +58,33 @@ namespace Toggl.Phoebe.Data.Json.Converters
         }
 
         protected static Guid GetLocalId<T> (IDataStoreContext ctx, long remoteId)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             if (remoteId == 0) {
                 throw new ArgumentException ("Remote Id cannot be zero.", "remoteId");
             }
             var id = ctx.GetLocalId<T> (remoteId);
-            if (id == Guid.Empty)
+            if (id == Guid.Empty) {
                 id = CreatePlaceholder<T> (ctx, remoteId);
+            }
             return id;
         }
 
         protected static Guid? GetLocalId<T> (IDataStoreContext ctx, long? remoteId)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
-            if (remoteId == null)
+            if (remoteId == null) {
                 return null;
+            }
             var id = ctx.GetLocalId<T> (remoteId.Value);
-            if (id == Guid.Empty)
+            if (id == Guid.Empty) {
                 id = CreatePlaceholder<T> (ctx, remoteId.Value);
+            }
             return id;
         }
 
         private static Guid CreatePlaceholder<T> (IDataStoreContext ctx, long remoteId)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             var data = ctx.Put (new T () {
                 RemoteId = remoteId,
@@ -91,14 +95,17 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         protected static bool ShouldOverwrite (CommonData data, CommonJson json)
         {
-            if (data == null)
+            if (data == null) {
                 return true;
+            }
 
-            if (!data.IsDirty || data.RemoteRejected)
+            if (!data.IsDirty || data.RemoteRejected) {
                 return true;
+            }
 
-            if (data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ())
+            if (data.ModifiedAt.ToUtc () < json.ModifiedAt.ToUtc ()) {
                 return true;
+            }
 
             return false;
         }

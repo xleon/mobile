@@ -12,29 +12,26 @@ namespace Toggl.Phoebe.Data.Models
     {
         private static readonly string Tag = String.Concat ("Model<", typeof(T).Name, ">");
 
-        private static string GetPropertyName<U> (Expression<Func<Model<T>, U>> expr)
-        {
+        private static string GetPropertyName<U> (Expression<Func<Model<T>, U>> expr) {
             return expr.ToPropertyName ();
         }
 
         protected static readonly string PropertyId = GetPropertyName (m => m.Id);
 
-        protected static void MarkDirty (T data)
-        {
+        protected static void MarkDirty (T data) {
             data.IsDirty = true;
             data.ModifiedAt = Time.UtcNow;
             data.RemoteRejected = false;
         }
 
-        protected static Guid? GetOptionalId (IModel model)
-        {
-            if (!ModelExists (model))
+        protected static Guid? GetOptionalId (IModel model) {
+            if (!ModelExists (model)) {
                 return null;
+            }
             return model.Id;
         }
 
-        protected static bool ModelExists (IModel model)
-        {
+        protected static bool ModelExists (IModel model) {
             return model != null && model.Id != Guid.Empty;
         }
 
@@ -43,20 +40,16 @@ namespace Toggl.Phoebe.Data.Models
         private bool isLoaded;
         private T data;
 
-        protected Model () : this (Guid.Empty, null)
-        {
+        protected Model () : this (Guid.Empty, null) {
         }
 
-        protected Model (Guid id) : this (id, null)
-        {
+        protected Model (Guid id) : this (id, null) {
         }
 
-        protected Model (T data) : this (Guid.Empty, data)
-        {
+        protected Model (T data) : this (Guid.Empty, data) {
         }
 
-        private Model (Guid id, T data)
-        {
+        private Model (Guid id, T data) {
             var isLoaded = true;
 
             if (data != null) {
@@ -84,8 +77,7 @@ namespace Toggl.Phoebe.Data.Models
             InitializeRelations ();
         }
 
-        private void OnDataChange (DataChangeMessage msg)
-        {
+        private void OnDataChange (DataChangeMessage msg) {
             if (data.Matches (msg.Data)) {
                 var updatedData = (T)msg.Data;
                 var isDeleted = msg.Action == DataAction.Delete
@@ -99,20 +91,19 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        protected virtual void InitializeRelations ()
-        {
+        protected virtual void InitializeRelations () {
         }
 
         protected abstract T Duplicate (T data);
 
-        public async Task LoadAsync ()
-        {
+        public async Task LoadAsync () {
             if (loadingTCS != null) {
                 await loadingTCS.Task;
                 return;
             }
-            if (isLoaded)
+            if (isLoaded) {
                 return;
+            }
 
             loadingTCS = new TaskCompletionSource<object> ();
             var dataCache = ServiceContainer.Resolve<DataCache> ();
@@ -130,14 +121,12 @@ namespace Toggl.Phoebe.Data.Models
             loadingTCS = null;
         }
 
-        public void Touch ()
-        {
+        public void Touch () {
             MutateData (delegate {
             });
         }
 
-        public async Task SaveAsync ()
-        {
+        public async Task SaveAsync () {
             OnBeforeSave ();
 
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
@@ -146,8 +135,7 @@ namespace Toggl.Phoebe.Data.Models
 
         protected abstract void OnBeforeSave ();
 
-        public async Task DeleteAsync ()
-        {
+        public async Task DeleteAsync () {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             if (data.RemoteId == null) {
@@ -165,10 +153,10 @@ namespace Toggl.Phoebe.Data.Models
             ResetIds ();
         }
 
-        protected async void EnsureLoaded ()
-        {
-            if (isLoaded || loadingTCS != null)
+        protected async void EnsureLoaded () {
+            if (isLoaded || loadingTCS != null) {
                 return;
+            }
 
             try {
                 await LoadAsync ().ConfigureAwait (false);
@@ -178,8 +166,7 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        protected void OnPropertyChanged (string propertyName)
-        {
+        protected void OnPropertyChanged (string propertyName) {
             var handler = PropertyChanged;
             if (handler != null) {
                 handler (this, new PropertyChangedEventArgs (propertyName));
@@ -192,14 +179,13 @@ namespace Toggl.Phoebe.Data.Models
             get { return data.Id; }
         }
 
-        protected virtual void DetectChangedProperties (T oldData, T newData)
-        {
-            if (oldData.Id != newData.Id)
+        protected virtual void DetectChangedProperties (T oldData, T newData) {
+            if (oldData.Id != newData.Id) {
                 OnPropertyChanged (PropertyId);
+            }
         }
 
-        private void ResetIds ()
-        {
+        private void ResetIds () {
             var newData = Duplicate (Data);
             newData.Id = Guid.Empty;
             newData.RemoteId = null;
@@ -207,8 +193,7 @@ namespace Toggl.Phoebe.Data.Models
             Data = newData;
         }
 
-        protected void MutateData (Action<T> mutator)
-        {
+        protected void MutateData (Action<T> mutator) {
             var newData = Duplicate (Data);
             mutator (newData);
             MarkDirty (newData);

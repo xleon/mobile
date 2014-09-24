@@ -38,8 +38,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         private List<string> GetTimeEntryTags (IDataStoreContext ctx, Guid id)
         {
-            if (id == Guid.Empty)
+            if (id == Guid.Empty) {
                 return new List<string> (0);
+            }
             return ctx.GetTimeEntryTagNames (id);
         }
 
@@ -134,8 +135,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var tagIds = new List<Guid> ();
             foreach (var tagName in json.Tags) {
                 // Prevent importing empty (invalid) tags:
-                if (String.IsNullOrWhiteSpace (tagName))
+                if (String.IsNullOrWhiteSpace (tagName)) {
                     continue;
+                }
 
                 var id = ctx.GetTagIdFromName (timeEntryData.WorkspaceId, tagName);
 
@@ -185,8 +187,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var data = GetByRemoteId<TimeEntryData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new TimeEntryMerger (mergeBase) : null;
-            if (merger != null && data != null)
+            if (merger != null && data != null) {
                 merger.Add (new TimeEntryData (data));
+            }
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

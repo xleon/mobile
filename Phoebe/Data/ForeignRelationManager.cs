@@ -40,10 +40,11 @@ namespace Toggl.Phoebe.Data
         }
 
         private async Task<T> QueryAsync<T> (Guid? id)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
-            if (id == null)
+            if (id == null) {
                 return null;
+            }
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var rows = await store.Table<T> ().QueryAsync (r => r.Id == id).ConfigureAwait (false);

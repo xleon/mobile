@@ -19,9 +19,9 @@ namespace Toggl.Phoebe
         public static bool IsNetworkFailure (this Exception ex)
         {
             return ex.TraverseTree ().Any (
-                exc => exc is System.Net.Http.HttpRequestException
-                || exc is System.Net.Sockets.SocketException
-                || exc is System.Net.WebException);
+                       exc => exc is System.Net.Http.HttpRequestException
+                       || exc is System.Net.Sockets.SocketException
+                       || exc is System.Net.WebException);
         }
     }
 }

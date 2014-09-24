@@ -43,8 +43,9 @@ namespace Toggl.Phoebe.Data.Views
         private void OnDataChange (DataChangeMessage msg)
         {
             var entry = msg.Data as TimeEntryData;
-            if (entry == null)
+            if (entry == null) {
                 return;
+            }
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             var isExcluded = msg.Action == DataAction.Delete
@@ -104,8 +105,9 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void Reload ()
         {
-            if (IsLoading)
+            if (IsLoading) {
                 return;
+            }
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -125,11 +127,11 @@ namespace Toggl.Phoebe.Data.Views
             // Group only items in the past 9 days
             queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
             var query = store.Table<TimeEntryData> ()
-                .OrderBy (r => r.StartTime, false)
-                .Where (r => r.DeletedAt == null
-                        && r.UserId == userId
-                        && r.State != TimeEntryState.New
-                        && r.StartTime >= queryStartDate);
+                        .OrderBy (r => r.StartTime, false)
+                        .Where (r => r.DeletedAt == null
+                                && r.UserId == userId
+                                && r.State != TimeEntryState.New
+                                && r.StartTime >= queryStartDate);
 
             // Get new data
             data = await FromQuery (query);
@@ -151,15 +153,18 @@ namespace Toggl.Phoebe.Data.Views
         {
         }
 
-        public IEnumerable<TimeEntryData> Data {
+        public IEnumerable<TimeEntryData> Data
+        {
             get { return data.Where ((g) => !g.IsEmpty).Select ((g) => g.First ()); }
         }
 
-        public long Count {
+        public long Count
+        {
             get { return data.Count ((g) => !g.IsEmpty); }
         }
 
-        public bool HasMore {
+        public bool HasMore
+        {
             get { return false; }
         }
 
@@ -264,7 +269,8 @@ namespace Toggl.Phoebe.Data.Views
                 return GetEnumerator ();
             }
 
-            public int Count {
+            public int Count
+            {
                 get { return data.Count; }
             }
         }
@@ -285,15 +291,18 @@ namespace Toggl.Phoebe.Data.Views
                 Add (entry);
             }
 
-            public DateTime RecentStartTime {
+            public DateTime RecentStartTime
+            {
                 get {
-                    if (items.Count < 1)
+                    if (items.Count < 1) {
                         return DateTime.MinValue;
+                    }
                     return items [0].StartTime;
                 }
             }
 
-            public bool IsEmpty {
+            public bool IsEmpty
+            {
                 get { return items.Count < 1; }
             }
 
@@ -301,9 +310,10 @@ namespace Toggl.Phoebe.Data.Views
             {
                 // Check data:
                 if (description != entry.Description
-                    || taskId != entry.TaskId
-                    || projectId != entry.ProjectId)
+                        || taskId != entry.TaskId
+                        || projectId != entry.ProjectId) {
                     return false;
+                }
 
                 return true;
             }

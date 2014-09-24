@@ -11,11 +11,13 @@ namespace Toggl.Phoebe.Net
             this.mode = mode;
         }
 
-        public ISyncManager SyncManager {
+        public ISyncManager SyncManager
+        {
             get { return (ISyncManager)Sender; }
         }
 
-        public SyncMode Mode {
+        public SyncMode Mode
+        {
             get { return mode; }
         }
     }

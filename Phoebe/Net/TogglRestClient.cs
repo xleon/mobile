@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Net
         }
 
         public async Task<T> Create<T> (T jsonObject)
-            where T : CommonJson
+        where T : CommonJson
         {
             var type = jsonObject.GetType ();
             if (type == typeof(ClientJson)) {
@@ -67,7 +67,7 @@ namespace Toggl.Phoebe.Net
         }
 
         public async Task<T> Get<T> (long id)
-            where T : CommonJson
+        where T : CommonJson
         {
             var type = typeof(T);
             if (type == typeof(ClientJson)) {
@@ -88,7 +88,7 @@ namespace Toggl.Phoebe.Net
         }
 
         public async Task<List<T>> List<T> ()
-            where T : CommonJson
+        where T : CommonJson
         {
             var type = typeof(T);
             if (type == typeof(ClientJson)) {
@@ -103,7 +103,7 @@ namespace Toggl.Phoebe.Net
         }
 
         public async Task<T> Update<T> (T jsonObject)
-            where T : CommonJson
+        where T : CommonJson
         {
             var type = jsonObject.GetType ();
             if (type == typeof(ClientJson)) {
@@ -130,7 +130,7 @@ namespace Toggl.Phoebe.Net
         }
 
         public async Task Delete<T> (T jsonObject)
-            where T : CommonJson
+        where T : CommonJson
         {
             var type = jsonObject.GetType ();
             if (type == typeof(ClientJson)) {
@@ -153,7 +153,7 @@ namespace Toggl.Phoebe.Net
         }
 
         public async Task Delete<T> (IEnumerable<T> jsonObjects)
-            where T : CommonJson
+        where T : CommonJson
         {
             var type = typeof(T);
             if (type == typeof(ClientJson)) {
@@ -213,8 +213,8 @@ namespace Toggl.Phoebe.Net
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token != null) {
                 req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
-                        string.Format ("{0}:api_token", authManager.Token))));
+                        Convert.ToBase64String (Encoding.ASCII.GetBytes (
+                                                    string.Format ("{0}:api_token", authManager.Token))));
             }
             return req;
         }
@@ -233,7 +233,7 @@ namespace Toggl.Phoebe.Net
 
                 var reqTimer = Stopwatch.StartNew ();
                 var httpResp = await httpClient.SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                               .ConfigureAwait (continueOnCapturedContext: false);
                 reqTimer.Stop ();
 
                 PrepareResponse (httpResp, reqTimer.Elapsed);
@@ -243,7 +243,7 @@ namespace Toggl.Phoebe.Net
         }
 
         private async Task<T> CreateObject<T> (Uri url, T jsonObject)
-            where T : CommonJson, new()
+        where T : CommonJson, new()
         {
             var json = StringifyJson (jsonObject);
             var httpReq = SetupRequest (new HttpRequestMessage () {
@@ -252,32 +252,32 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
 
         private async Task<T> GetObject<T> (Uri url)
-            where T : CommonJson, new()
+        where T : CommonJson, new()
         {
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
 
         private async Task<T> UpdateObject<T> (Uri url, T jsonObject)
-            where T : CommonJson, new()
+        where T : CommonJson, new()
         {
             var json = StringifyJson (jsonObject);
             var httpReq = SetupRequest (new HttpRequestMessage () {
@@ -286,16 +286,16 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
 
         private async Task<List<T>> ListObjects<T> (Uri url)
-            where T : CommonJson, new()
+        where T : CommonJson, new()
         {
             var httpReq = SetupRequest (new HttpRequestMessage () {
                 Method = HttpMethod.Get,
@@ -303,10 +303,10 @@ namespace Toggl.Phoebe.Net
             });
 
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
             return JsonConvert.DeserializeObject<List<T>> (respData) ?? new List<T> (0);
         }
 
@@ -317,7 +317,7 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
         }
 
         private Task DeleteObjects (Uri url)
@@ -406,7 +406,7 @@ namespace Toggl.Phoebe.Net
         public Task DeleteProjects (IEnumerable<ProjectJson> jsonObjects)
         {
             var url = new Uri (v8Url, String.Format ("projects/{0}",
-                          String.Join (",", jsonObjects.Select ((model) => model.Id.Value.ToString ()))));
+                               String.Join (",", jsonObjects.Select ((model) => model.Id.Value.ToString ()))));
             return DeleteObjects (url);
         }
 
@@ -459,7 +459,7 @@ namespace Toggl.Phoebe.Net
         public Task DeleteTasks (IEnumerable<TaskJson> jsonObjects)
         {
             var url = new Uri (v8Url, String.Format ("tasks/{0}",
-                          String.Join (",", jsonObjects.Select ((json) => json.Id.Value.ToString ()))));
+                               String.Join (",", jsonObjects.Select ((json) => json.Id.Value.ToString ()))));
             return DeleteObjects (url);
         }
 
@@ -491,9 +491,9 @@ namespace Toggl.Phoebe.Net
         public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end)
         {
             var url = new Uri (v8Url,
-                          String.Format ("time_entries?start_date={0}&end_date={1}",
-                              WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
-                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
+                               String.Format ("time_entries?start_date={0}&end_date={1}",
+                                              WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
+                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListObjects<TimeEntryJson> (url);
         }
@@ -501,9 +501,9 @@ namespace Toggl.Phoebe.Net
         public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
         {
             var url = new Uri (v8Url,
-                          String.Format ("time_entries?end_date={0}&num_of_days={1}",
-                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
-                              days));
+                               String.Format ("time_entries?end_date={0}&num_of_days={1}",
+                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
+                                              days));
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListObjects<TimeEntryJson> (url);
         }
@@ -588,10 +588,10 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false));
+                                      .ConfigureAwait (continueOnCapturedContext: false));
             var data = wrap ["data"] [0].ToObject<WorkspaceUserJson> ();
             return data;
         }
@@ -644,8 +644,9 @@ namespace Toggl.Phoebe.Net
         public Task<UserJson> GetUser (long id)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.Token == null || authManager.User.RemoteId != (long?)id)
+            if (authManager.Token == null || authManager.User.RemoteId != (long?)id) {
                 throw new NotSupportedException ("Can only update currently logged in user.");
+            }
 
             var url = new Uri (v8Url, "me");
             return GetObject<UserJson> (url);
@@ -660,13 +661,13 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             };
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                Convert.ToBase64String (Encoding.ASCII.GetBytes (
-                    string.Format ("{0}:{1}", username, password))));
+                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
+                                                string.Format ("{0}:{1}", username, password))));
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserJson>> (respData);
 
             return wrap.Data;
@@ -681,13 +682,13 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             };
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                Convert.ToBase64String (Encoding.ASCII.GetBytes (
-                    string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
+                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
+                                                string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserJson>> (respData);
 
             return wrap.Data;
@@ -696,8 +697,9 @@ namespace Toggl.Phoebe.Net
         public Task<UserJson> UpdateUser (UserJson jsonObject)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.User == null || authManager.User.RemoteId != jsonObject.Id)
+            if (authManager.User == null || authManager.User.RemoteId != jsonObject.Id) {
                 throw new NotSupportedException ("Can only update currently logged in user.");
+            }
 
             var url = new Uri (v8Url, "me");
             return UpdateObject (url, jsonObject);
@@ -709,8 +711,9 @@ namespace Toggl.Phoebe.Net
         {
             since = since.ToUtc ();
             var relUrl = "me?with_related_data=true";
-            if (since.HasValue)
+            if (since.HasValue) {
                 relUrl = String.Format ("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
+            }
             var url = new Uri (v8Url, relUrl);
 
             var httpReq = SetupRequest (new HttpRequestMessage () {
@@ -718,10 +721,10 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
             var json = JObject.Parse (respData);
 
             var user = json ["data"].ToObject<UserJson> ();
@@ -738,17 +741,19 @@ namespace Toggl.Phoebe.Net
         }
 
         private IEnumerable<T> GetChangesObjects<T> (JToken json)
-            where T : CommonJson, new()
+        where T : CommonJson, new()
         {
-            if (json == null)
+            if (json == null) {
                 return Enumerable.Empty<T> ();
+            }
             return json.ToObject<List<T>> ();
         }
 
         private IEnumerable<TimeEntryJson> GetChangesTimeEntryObjects (JToken json, UserJson user)
         {
-            if (json == null)
+            if (json == null) {
                 return Enumerable.Empty<TimeEntryJson> ();
+            }
             return json.ToObject<List<TimeEntryJson>> ().Select ((te) => {
                 te.UserId = user.Id.Value;
                 return te;

@@ -10,22 +10,22 @@ namespace Toggl.Phoebe.Net
         #region Generic CURD methods
 
         Task<T> Create<T> (T jsonObject)
-            where T : CommonJson;
+        where T : CommonJson;
 
         Task<T> Get<T> (long id)
-            where T : CommonJson;
+        where T : CommonJson;
 
         Task<List<T>> List<T> ()
-            where T : CommonJson;
+        where T : CommonJson;
 
         Task<T> Update<T> (T jsonObject)
-            where T : CommonJson;
+        where T : CommonJson;
 
         Task Delete<T> (T jsonObject)
-            where T : CommonJson;
+        where T : CommonJson;
 
         Task Delete<T> (IEnumerable<T> jsonObjects)
-            where T : CommonJson;
+        where T : CommonJson;
 
         #endregion
 

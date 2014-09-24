@@ -48,8 +48,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var data = GetByRemoteId<WorkspaceData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new WorkspaceMerger (mergeBase) : null;
-            if (merger != null && data != null)
+            if (merger != null && data != null) {
                 merger.Add (new WorkspaceData (data));
+            }
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

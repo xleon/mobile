@@ -2,8 +2,7 @@ using System;
 
 namespace Toggl.Phoebe
 {
-    public enum TrackingMode
-    {
+    public enum TrackingMode {
         Continue,
         StartNew
     }

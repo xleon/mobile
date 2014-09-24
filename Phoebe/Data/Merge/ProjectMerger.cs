@@ -21,11 +21,12 @@ namespace Toggl.Phoebe.Data.Merge
             data.UseTasksEstimate = GetValue (d => d.UseTasksEstimate);
 
             // Merge relations such that we wouldn't cause invalid final state.
-            // When the clientId or workspaceId (checkd in that order) have changed, we use the data object 
+            // When the clientId or workspaceId (checkd in that order) have changed, we use the data object
             // where a single field changed for each of those fields.
             var relationsMaster = GetData (d => d.ClientId);
-            if (relationsMaster == Base)
+            if (relationsMaster == Base) {
                 relationsMaster = GetData (d => d.WorkspaceId);
+            }
             data.WorkspaceId = relationsMaster.WorkspaceId;
             data.ClientId = relationsMaster.ClientId;
 

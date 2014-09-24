@@ -22,7 +22,8 @@ namespace Toggl.Phoebe.Data.Views
             Reload ();
         }
 
-        public Guid TimeEntryId {
+        public Guid TimeEntryId
+        {
             get { return timeEntryId; }
         }
 
@@ -35,8 +36,8 @@ namespace Toggl.Phoebe.Data.Views
             // Update tag names list
             tagNames.Clear ();
             tagNames.AddRange (tagsList
-                .Where (t => tagIds.Contains (t.Id))
-                .Select (t => t.Name));
+                               .Where (t => tagIds.Contains (t.Id))
+                               .Select (t => t.Name));
 
             // Notify listeners
             var handler = Updated;
@@ -119,8 +120,9 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void Reload ()
         {
-            if (IsLoading)
+            if (IsLoading) {
                 return;
+            }
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionDataChange != null) {
@@ -162,21 +164,25 @@ namespace Toggl.Phoebe.Data.Views
             });
         }
 
-        public IEnumerable<string> Data {
+        public IEnumerable<string> Data
+        {
             get { return tagNames; }
         }
 
-        public long Count {
+        public long Count
+        {
             get { return tagNames.Count; }
         }
 
-        public bool HasNonDefault {
+        public bool HasNonDefault
+        {
             get {
                 return tagNames.FirstOrDefault (t => t != TimeEntryModel.DefaultTag) != null;
             }
         }
 
-        public bool HasMore {
+        public bool HasMore
+        {
             get { return false; }
         }
 
@@ -184,7 +190,8 @@ namespace Toggl.Phoebe.Data.Views
 
         private static readonly WeakReference<WeakCache<TagData>> weakTagCache = new WeakReference<WeakCache<TagData>> (null);
 
-        private static WeakCache<TagData> TagCache {
+        private static WeakCache<TagData> TagCache
+        {
             get {
                 lock (weakTagCache) {
                     WeakCache<TagData> cache;
@@ -239,8 +246,8 @@ namespace Toggl.Phoebe.Data.Views
             {
                 lock (data) {
                     return data
-                        .Select (weak => (T)weak.Target)
-                        .FirstOrDefault (inst => inst != null && inst.Id == id);
+                           .Select (weak => (T)weak.Target)
+                           .FirstOrDefault (inst => inst != null && inst.Id == id);
                 }
             }
         }

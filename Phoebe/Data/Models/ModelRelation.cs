@@ -25,11 +25,13 @@ namespace Toggl.Phoebe.Data.Models
 
         public T Get (Guid? foreignKey)
         {
-            if (Required && foreignKey == null)
+            if (Required && foreignKey == null) {
                 throw new ArgumentNullException ("value");
+            }
 
-            if (ShouldLoad != null)
+            if (ShouldLoad != null) {
                 ShouldLoad ();
+            }
 
             if (model == null || model.Id != foreignKey) {
                 // Unregister event listener
@@ -49,11 +51,13 @@ namespace Toggl.Phoebe.Data.Models
 
         public void Set (T value)
         {
-            if (Required && value == null)
+            if (Required && value == null) {
                 throw new ArgumentNullException ("value");
+            }
 
-            if (ShouldLoad != null)
+            if (ShouldLoad != null) {
                 ShouldLoad ();
+            }
 
             // Unregister event listener
             if (model != null) {
@@ -82,11 +86,13 @@ namespace Toggl.Phoebe.Data.Models
 
         private void OnChanged ()
         {
-            if (Changed == null)
+            if (Changed == null) {
                 return;
+            }
 
-            if (Required && model == null)
+            if (Required && model == null) {
                 throw new InvalidOperationException ("Cannot update required foreign relation when model unset.");
+            }
             Changed (model);
         }
     }

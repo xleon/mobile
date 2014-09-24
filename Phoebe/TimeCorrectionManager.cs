@@ -37,8 +37,9 @@ namespace Toggl.Phoebe
 
         private void OnHttpResponse (TogglHttpResponseMessage msg)
         {
-            if (msg.ServerTime == null || msg.Latency == null)
+            if (msg.ServerTime == null || msg.Latency == null) {
                 return;
+            }
 
             var localTime = DateTime.UtcNow;
             var serverTime = msg.ServerTime.Value + TimeSpan.FromTicks (msg.Latency.Value.Ticks / 2);
@@ -78,10 +79,10 @@ namespace Toggl.Phoebe
             try {
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var rows = await dataStore.Table<TimeCorrectionData> ()
-                .OrderBy (r => r.MeasuredAt, asc: false)
-                .Take (SampleSize)
-                .QueryAsync ()
-                .ConfigureAwait (false);
+                           .OrderBy (r => r.MeasuredAt, asc: false)
+                           .Take (SampleSize)
+                           .QueryAsync ()
+                           .ConfigureAwait (false);
 
                 rows.Reverse ();
 
@@ -100,11 +101,13 @@ namespace Toggl.Phoebe
             }
         }
 
-        public TimeSpan Correction {
+        public TimeSpan Correction
+        {
             get {
                 lock (syncRoot) {
-                    if (lastCorrection.HasValue)
+                    if (lastCorrection.HasValue) {
                         return lastCorrection.Value;
+                    }
 
                     if (sample.Count < 1) {
                         lastCorrection = TimeSpan.Zero;

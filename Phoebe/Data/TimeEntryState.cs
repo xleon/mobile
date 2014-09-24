@@ -2,8 +2,7 @@
 
 namespace Toggl.Phoebe.Data
 {
-    public enum TimeEntryState
-    {
+    public enum TimeEntryState {
         New,
         Running,
         Finished

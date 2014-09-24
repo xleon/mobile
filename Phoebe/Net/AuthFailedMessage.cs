@@ -4,8 +4,7 @@ namespace Toggl.Phoebe.Net
 {
     public class AuthFailedMessage : Message
     {
-        public enum Reason
-        {
+        public enum Reason {
             InvalidCredentials,
             NetworkError,
             SystemError
@@ -20,11 +19,13 @@ namespace Toggl.Phoebe.Net
             this.exception = ex;
         }
 
-        public Reason FailureReason {
+        public Reason FailureReason
+        {
             get { return reason; }
         }
 
-        public Exception Exception {
+        public Exception Exception
+        {
             get { return exception; }
         }
     }

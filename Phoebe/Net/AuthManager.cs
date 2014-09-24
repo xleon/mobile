@@ -47,8 +47,9 @@ namespace Toggl.Phoebe.Net
 
         private async void ReloadUser ()
         {
-            if (User == null)
+            if (User == null) {
                 return;
+            }
             var store = ServiceContainer.Resolve<IDataStore> ();
             var rows = await store.Table<UserData> ().QueryAsync (r => r.Id == User.Id);
             User = rows.FirstOrDefault ();
@@ -56,10 +57,12 @@ namespace Toggl.Phoebe.Net
 
         private async Task<bool> Authenticate (Func<Task<UserJson>> getUser)
         {
-            if (IsAuthenticated)
+            if (IsAuthenticated) {
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
-            if (IsAuthenticating)
+            }
+            if (IsAuthenticating) {
                 throw new InvalidOperationException ("Another authentication is still in progress.");
+            }
 
             IsAuthenticating = true;
 
@@ -161,8 +164,9 @@ namespace Toggl.Phoebe.Net
 
         public void Forget ()
         {
-            if (!IsAuthenticated)
+            if (!IsAuthenticated) {
                 throw new InvalidOperationException ("Cannot forget credentials which don't exist.");
+            }
 
             var log = ServiceContainer.Resolve<Logger> ();
             log.Info (Tag, "Forgetting current user.");
@@ -189,11 +193,13 @@ namespace Toggl.Phoebe.Net
         private bool authenticating;
         public static readonly string PropertyIsAuthenticating = GetPropertyName ((m) => m.IsAuthenticating);
 
-        public bool IsAuthenticating {
+        public bool IsAuthenticating
+        {
             get { return authenticating; }
             private set {
-                if (authenticating == value)
+                if (authenticating == value) {
                     return;
+                }
 
                 ChangePropertyAndNotify (PropertyIsAuthenticating, delegate {
                     authenticating = value;
@@ -204,11 +210,13 @@ namespace Toggl.Phoebe.Net
         private bool authenticated;
         public static readonly string PropertyIsAuthenticated = GetPropertyName ((m) => m.IsAuthenticated);
 
-        public bool IsAuthenticated {
+        public bool IsAuthenticated
+        {
             get { return authenticated; }
             private set {
-                if (authenticated == value)
+                if (authenticated == value) {
                     return;
+                }
 
                 ChangePropertyAndNotify (PropertyIsAuthenticated, delegate {
                     authenticated = value;
@@ -219,11 +227,13 @@ namespace Toggl.Phoebe.Net
         private UserData userData;
         public static readonly string PropertyUser = GetPropertyName ((m) => m.User);
 
-        public UserData User {
+        public UserData User
+        {
             get { return userData; }
             private set {
-                if (userData == value)
+                if (userData == value) {
                     return;
+                }
 
                 ChangePropertyAndNotify (PropertyUser, delegate {
                     userData = value;
@@ -233,19 +243,22 @@ namespace Toggl.Phoebe.Net
 
         public Guid? GetUserId ()
         {
-            if (User == null)
+            if (User == null) {
                 return null;
+            }
             return User.Id;
         }
 
         private string token;
         public static readonly string PropertyToken = GetPropertyName ((m) => m.Token);
 
-        public string Token {
+        public string Token
+        {
             get { return token; }
             private set {
-                if (token == value)
+                if (token == value) {
                     return;
+                }
 
                 ChangePropertyAndNotify (PropertyToken, delegate {
                     token = value;

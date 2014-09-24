@@ -2,8 +2,7 @@
 
 namespace Toggl.Phoebe.Data
 {
-    public enum DataAction
-    {
+    public enum DataAction {
         Put,
         Delete
     }

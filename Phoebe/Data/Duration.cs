@@ -2,8 +2,7 @@
 
 namespace Toggl.Phoebe.Data
 {
-    public struct Duration
-    {
+    public struct Duration {
         private readonly int encoded;
         private readonly int digits;
 
@@ -50,19 +49,23 @@ namespace Toggl.Phoebe.Data
             return String.Format ("{0:00}:{1:00}", Hours, Minutes);
         }
 
-        public bool IsValid {
+        public bool IsValid
+        {
             get { return Minutes < 60 && Digits < 5; }
         }
 
-        public int Digits {
+        public int Digits
+        {
             get { return digits; }
         }
 
-        public int Hours {
+        public int Hours
+        {
             get { return encoded / 100; }
         }
 
-        public int Minutes {
+        public int Minutes
+        {
             get { return encoded % 100; }
         }
 
@@ -91,13 +94,13 @@ namespace Toggl.Phoebe.Data
             return new Duration (timespan.Hours, timespan.Minutes);
         }
 
-        public static Duration Zero {
+        public static Duration Zero
+        {
             get { return new Duration (); }
         }
     }
 
-    public enum DurationFormat
-    {
+    public enum DurationFormat {
         Classic,
         Improved,
         Decimal

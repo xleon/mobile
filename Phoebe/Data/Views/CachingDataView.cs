@@ -14,8 +14,9 @@ namespace Toggl.Phoebe.Data.Views
 
         public CachingDataView (IDataView<T> source)
         {
-            if (source == null)
+            if (source == null) {
                 throw new ArgumentNullException ("source");
+            }
 
             this.source = source;
             source.Updated += OnSourceUpdated;
@@ -26,7 +27,8 @@ namespace Toggl.Phoebe.Data.Views
             source.Updated -= OnSourceUpdated;
         }
 
-        public IDataView<T> Source {
+        public IDataView<T> Source
+        {
             get { return source; }
         }
 
@@ -57,7 +59,8 @@ namespace Toggl.Phoebe.Data.Views
             source.LoadMore ();
         }
 
-        public IEnumerable<T> Data {
+        public IEnumerable<T> Data
+        {
             get {
                 if (data == null) {
                     var e = source.Data;
@@ -70,7 +73,8 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public long Count {
+        public long Count
+        {
             get {
                 if (count == null) {
                     count = source.Count;
@@ -79,7 +83,8 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public bool HasMore {
+        public bool HasMore
+        {
             get {
                 if (hasMore == null) {
                     hasMore = source.HasMore;
@@ -88,7 +93,8 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public bool IsLoading {
+        public bool IsLoading
+        {
             get {
                 if (isLoading == null) {
                     isLoading = source.IsLoading;

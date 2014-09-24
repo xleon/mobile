@@ -13,12 +13,12 @@ namespace Toggl.Phoebe.Data.Json.Converters
         public WorkspaceUserJson Export (IDataStoreContext ctx, WorkspaceUserData data)
         {
             var userRows = ctx.Connection.Table<UserData> ()
-                .Take (1).Where (m => m.Id == data.UserId).ToList ();
+                           .Take (1).Where (m => m.Id == data.UserId).ToList ();
             if (userRows.Count == 0) {
                 throw new InvalidOperationException (String.Format (
-                    "Cannot export data with invalid local relation ({0}#{1}) to JSON.",
-                    typeof(UserData).Name, data.UserId
-                ));
+                        "Cannot export data with invalid local relation ({0}#{1}) to JSON.",
+                        typeof(UserData).Name, data.UserId
+                                                     ));
             }
             var user = userRows [0];
             if (user.RemoteId == null) {
@@ -74,8 +74,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var data = GetByRemoteId<WorkspaceUserData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new WorkspaceUserMerger (mergeBase) : null;
-            if (merger != null && data != null)
+            if (merger != null && data != null) {
                 merger.Add (new WorkspaceUserData (data));
+            }
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

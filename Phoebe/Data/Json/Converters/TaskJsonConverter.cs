@@ -46,8 +46,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var data = GetByRemoteId<TaskData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new TaskMerger (mergeBase) : null;
-            if (merger != null && data != null)
+            if (merger != null && data != null) {
                 merger.Add (new TaskData (data));
+            }
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

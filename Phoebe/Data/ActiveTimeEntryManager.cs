@@ -98,8 +98,9 @@ namespace Toggl.Phoebe.Data
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             var userId = authManager.GetUserId ();
-            if (currentUserId == userId)
+            if (currentUserId == userId) {
                 return;
+            }
 
             currentUserId = userId;
 
@@ -112,8 +113,9 @@ namespace Toggl.Phoebe.Data
 
         private async void LoadTimeEntries ()
         {
-            if (currentUserId == null)
+            if (currentUserId == null) {
                 return;
+            }
 
             var userId = currentUserId.Value;
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -121,13 +123,14 @@ namespace Toggl.Phoebe.Data
             // Load data:
             var draftTask = TimeEntryModel.GetDraftAsync ();
             var runningTask = store.Table<TimeEntryData> ()
-                .QueryAsync (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId);
+                              .QueryAsync (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId);
 
             await Task.WhenAll (draftTask, runningTask);
 
             // Check that the user hasn't changed in the mean time
-            if (userId != currentUserId)
+            if (userId != currentUserId) {
                 return;
+            }
 
             // Update data
             var draftModel = draftTask.Result;
@@ -150,8 +153,9 @@ namespace Toggl.Phoebe.Data
 
         private async void LoadNewDraft ()
         {
-            if (currentUserId == null)
+            if (currentUserId == null) {
                 return;
+            }
 
             var userId = currentUserId.Value;
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -160,8 +164,9 @@ namespace Toggl.Phoebe.Data
             var draftModel = await TimeEntryModel.GetDraftAsync ();
 
             // Check that the user hasn't changed in the mean time
-            if (userId != currentUserId)
+            if (userId != currentUserId) {
                 return;
+            }
 
             // Update data
             if (draftModel != null) {
@@ -177,8 +182,9 @@ namespace Toggl.Phoebe.Data
         private void OnDataChange (DataChangeMessage msg)
         {
             var data = msg.Data as TimeEntryData;
-            if (data == null)
+            if (data == null) {
                 return;
+            }
 
             var isExcluded = msg.Action == DataAction.Delete
                              || data.DeletedAt != null
@@ -244,17 +250,19 @@ namespace Toggl.Phoebe.Data
         {
             // During sync we don't want to enforce single timer as it would cause corrup data states most probably, so
             // we wait until the sync has finished.
-            if (syncRunning)
+            if (syncRunning) {
                 return;
+            }
 
-            if (runningEntries.Count <= 1)
+            if (runningEntries.Count <= 1) {
                 return;
+            }
 
             var runningEntry = runningEntries.OrderByDescending (e => e.ModifiedAt).First ();
             var tasks = runningEntries
-                .Where (e => e != runningEntry)
-                .Select (e => new TimeEntryModel (e).StopAsync ())
-                .ToList ();
+                        .Where (e => e != runningEntry)
+                        .Select (e => new TimeEntryModel (e).StopAsync ())
+                        .ToList ();
 
             // Remove time entries we just stopped:
             runningEntries.Clear ();
@@ -292,31 +300,37 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        public TimeEntryData Running {
+        public TimeEntryData Running
+        {
             get { return backingRunningEntry; }
             private set {
-                if (backingRunningEntry == value)
+                if (backingRunningEntry == value) {
                     return;
+                }
                 backingRunningEntry = value;
                 OnPropertyChanged (PropertyRunning);
             }
         }
 
-        public TimeEntryData Draft {
+        public TimeEntryData Draft
+        {
             get { return backingDraftEntry; }
             private set {
-                if (backingDraftEntry == value)
+                if (backingDraftEntry == value) {
                     return;
+                }
                 backingDraftEntry = value;
                 OnPropertyChanged (PropertyDraft);
             }
         }
 
-        public TimeEntryData Active {
+        public TimeEntryData Active
+        {
             get { return backingActiveEntry; }
             private set {
-                if (backingActiveEntry == value)
+                if (backingActiveEntry == value) {
                     return;
+                }
                 backingActiveEntry = value;
                 OnPropertyChanged (PropertyActive);
             }

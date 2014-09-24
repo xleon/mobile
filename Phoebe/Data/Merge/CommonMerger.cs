@@ -36,8 +36,9 @@ namespace Toggl.Phoebe.Data.Merge
         {
             var baseField = fieldSelector (baseData);
             foreach (var change in changes) {
-                if (!EqualityComparer<U>.Default.Equals (baseField, fieldSelector (change)))
+                if (!EqualityComparer<U>.Default.Equals (baseField, fieldSelector (change))) {
                     return change;
+                }
             }
 
             return baseData;
@@ -55,11 +56,13 @@ namespace Toggl.Phoebe.Data.Merge
             resultData = null;
         }
 
-        protected T Base {
+        protected T Base
+        {
             get { return baseData; }
         }
 
-        public T Result {
+        public T Result
+        {
             get {
                 if (resultData == null) {
                     if (changes.Count == 0) {

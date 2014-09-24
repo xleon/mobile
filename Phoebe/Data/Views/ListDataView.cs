@@ -23,19 +23,23 @@ namespace Toggl.Phoebe.Data.Views
         {
         }
 
-        public IEnumerable<T> Data {
+        public IEnumerable<T> Data
+        {
             get { return data; }
         }
 
-        public long Count {
+        public long Count
+        {
             get { return data.Count; }
         }
 
-        public bool HasMore {
+        public bool HasMore
+        {
             get { return false; }
         }
 
-        public bool IsLoading {
+        public bool IsLoading
+        {
             get { return false; }
         }
     }

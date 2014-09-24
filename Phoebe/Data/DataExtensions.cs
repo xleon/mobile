@@ -14,17 +14,20 @@ namespace Toggl.Phoebe.Data
         /// <param name="other">Other data object.</param>
         public static bool Matches (this CommonData data, object other)
         {
-            if (data == other)
+            if (data == other) {
                 return true;
-            if (data == null || other == null)
+            }
+            if (data == null || other == null) {
                 return false;
-            if (data.GetType () != other.GetType ())
+            }
+            if (data.GetType () != other.GetType ()) {
                 return false;
+            }
             return data.Id == ((CommonData)other).Id;
         }
 
         public static bool UpdateData<T> (this IList<T> list, T data)
-            where T : CommonData
+        where T : CommonData
         {
             var updateCount = 0;
 

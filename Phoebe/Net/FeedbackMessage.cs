@@ -18,8 +18,9 @@ namespace Toggl.Phoebe.Net
 
         public async Task<bool> Send ()
         {
-            if (String.IsNullOrWhiteSpace (Message))
+            if (String.IsNullOrWhiteSpace (Message)) {
                 return false;
+            }
 
             var json = new FeedbackJson () {
                 Subject = "-- Toggl Mobile Feedback",
@@ -42,8 +43,9 @@ namespace Toggl.Phoebe.Net
             try {
                 json.Message = sb.ToString ();
                 json.AttachmentData = await logStore.Compress ().ConfigureAwait (false);
-                if (json.AttachmentData != null)
+                if (json.AttachmentData != null) {
                     json.AttachmentName = "log.gz";
+                }
 
                 await client.CreateFeedback (json).ConfigureAwait (false);
             } catch (Exception ex) {
@@ -82,14 +84,14 @@ namespace Toggl.Phoebe.Net
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             var total = await dataStore.Table<TimeEntryData> ()
-                .CountAsync (r => r.UserId == userId)
-                .ConfigureAwait (false);
+                        .CountAsync (r => r.UserId == userId)
+                        .ConfigureAwait (false);
             var dirty = await dataStore.Table<TimeEntryData> ()
-                .CountAsync (r => r.UserId == userId && r.IsDirty == true && r.RemoteRejected == false)
-                .ConfigureAwait (false);
+                        .CountAsync (r => r.UserId == userId && r.IsDirty == true && r.RemoteRejected == false)
+                        .ConfigureAwait (false);
             var rejected = await dataStore.Table<TimeEntryData> ()
-                .CountAsync (r => r.UserId == userId && r.RemoteRejected == true)
-                .ConfigureAwait (false);
+                           .CountAsync (r => r.UserId == userId && r.RemoteRejected == true)
+                           .ConfigureAwait (false);
 
             sb.AppendLine ("Time entries:");
             sb.AppendFormat (" - {0} total", total);
@@ -101,8 +103,7 @@ namespace Toggl.Phoebe.Net
             sb.AppendLine ();
         }
 
-        public enum Mood
-        {
+        public enum Mood {
             Neutral,
             Positive,
             Negative,

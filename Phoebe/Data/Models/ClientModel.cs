@@ -44,20 +44,23 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (ClientData oldData, ClientData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.Name != newData.Name)
+            if (oldData.Name != newData.Name) {
                 OnPropertyChanged (PropertyName);
-            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+            }
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance) {
                 OnPropertyChanged (PropertyWorkspace);
+            }
         }
 
-        public string Name {
+        public string Name
+        {
             get {
                 EnsureLoaded ();
                 return Data.Name;
-            }
-            set {
-                if (Name == value)
+            } set {
+                if (Name == value) {
                     return;
+                }
 
                 MutateData (data => data.Name = value);
             }
@@ -77,15 +80,17 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         [ModelRelation]
-        public WorkspaceModel Workspace {
+        public WorkspaceModel Workspace
+        {
             get { return workspace.Get (Data.WorkspaceId); }
             set { workspace.Set (value); }
         }
 
         public static explicit operator ClientModel (ClientData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new ClientModel (data);
         }
 

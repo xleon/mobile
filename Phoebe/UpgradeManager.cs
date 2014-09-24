@@ -18,8 +18,9 @@ namespace Toggl.Phoebe
             var newVersion = platformInfo.AppVersion;
 
             // User hasn't upgraded, do nothing.
-            if (oldVersion == newVersion)
+            if (oldVersion == newVersion) {
                 return;
+            }
 
             log.Info (Tag, "App has been upgraded from '{0}' to '{1}'", oldVersion, newVersion);
 

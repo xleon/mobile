@@ -9,20 +9,23 @@ namespace Toggl.Phoebe.Net
         private readonly HttpStatusCode statusCode;
 
         public UnsuccessfulRequestException (HttpStatusCode statusCode, string reasonPhrase)
-            : base (String.Format ("{0} ({1})", (int)statusCode, reasonPhrase))
+        : base (String.Format ("{0} ({1})", (int)statusCode, reasonPhrase))
         {
             this.statusCode = statusCode;
         }
 
-        public HttpStatusCode StatusCode {
+        public HttpStatusCode StatusCode
+        {
             get { return statusCode; }
         }
 
-        public bool IsValidationError {
+        public bool IsValidationError
+        {
             get { return statusCode == HttpStatusCode.BadRequest; }
         }
 
-        public bool IsNonExistent {
+        public bool IsNonExistent
+        {
             get { return statusCode == HttpStatusCode.NotFound; }
         }
     }

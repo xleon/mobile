@@ -15,21 +15,24 @@ namespace Toggl.Phoebe.Net
             this.fatalError = fatalError;
         }
 
-        public ISyncManager SyncManager {
+        public ISyncManager SyncManager
+        {
             get { return (ISyncManager)Sender; }
         }
 
-        public SyncMode Mode {
+        public SyncMode Mode
+        {
             get { return mode; }
         }
 
-        public bool HadErrors {
+        public bool HadErrors
+        {
             get { return hadErrors; }
         }
 
-        public Exception FatalError {
+        public Exception FatalError
+        {
             get { return fatalError; }
         }
     }
 }
-    

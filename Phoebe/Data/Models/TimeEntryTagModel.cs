@@ -45,10 +45,12 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (TimeEntryTagData oldData, TimeEntryTagData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.TimeEntryId != newData.TimeEntryId || timeEntry.IsNewInstance)
+            if (oldData.TimeEntryId != newData.TimeEntryId || timeEntry.IsNewInstance) {
                 OnPropertyChanged (PropertyTimeEntry);
-            if (oldData.TagId != newData.TagId || tag.IsNewInstance)
+            }
+            if (oldData.TagId != newData.TagId || tag.IsNewInstance) {
                 OnPropertyChanged (PropertyTag);
+            }
         }
 
         private ForeignRelation<TimeEntryModel> timeEntry;
@@ -72,21 +74,24 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         [ModelRelation]
-        public TimeEntryModel TimeEntry {
+        public TimeEntryModel TimeEntry
+        {
             get { return timeEntry.Get (Data.TimeEntryId); }
             set { timeEntry.Set (value); }
         }
 
         [ModelRelation]
-        public TagModel Tag {
+        public TagModel Tag
+        {
             get { return tag.Get (Data.TagId); }
             set { tag.Set (value); }
         }
 
         public static explicit operator TimeEntryTagModel (TimeEntryTagData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new TimeEntryTagModel (data);
         }
 

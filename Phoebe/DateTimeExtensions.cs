@@ -8,8 +8,9 @@ namespace Toggl.Phoebe
 
         public static TimeSpan? ToUnix (this DateTime? val)
         {
-            if (val == null)
+            if (val == null) {
                 return null;
+            }
             return val.Value.ToUnix ();
         }
 
@@ -20,8 +21,9 @@ namespace Toggl.Phoebe
 
         public static DateTime? ToUtc (this DateTime? val)
         {
-            if (val == null)
+            if (val == null) {
                 return null;
+            }
             return val.Value.ToUtc ();
         }
 
@@ -36,8 +38,9 @@ namespace Toggl.Phoebe
 
         public static DateTime? Truncate (this DateTime? val, long percisionTicks)
         {
-            if (val == null)
+            if (val == null) {
                 return null;
+            }
             return val.Value.Truncate (percisionTicks);
         }
 

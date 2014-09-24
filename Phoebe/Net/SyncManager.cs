@@ -13,9 +13,9 @@ namespace Toggl.Phoebe.Net
     public class SyncManager : ISyncManager
     {
         private static readonly string Tag = "SyncManager";
-        #pragma warning disable 0414
+#pragma warning disable 0414
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        #pragma warning restore 0414
+#pragma warning restore 0414
         private Subscription<DataChangeMessage> subscriptionDataChange;
 
         public SyncManager ()
@@ -39,8 +39,9 @@ namespace Toggl.Phoebe.Net
 
         private void OnAuthChanged (AuthChangedMessage msg)
         {
-            if (msg.AuthManager.IsAuthenticated)
+            if (msg.AuthManager.IsAuthenticated) {
                 return;
+            }
 
             // Reset last run on logout
             LastRun = null;
@@ -48,10 +49,12 @@ namespace Toggl.Phoebe.Net
 
         public async void Run (SyncMode mode = SyncMode.Full)
         {
-            if (!ServiceContainer.Resolve<AuthManager> ().IsAuthenticated)
+            if (!ServiceContainer.Resolve<AuthManager> ().IsAuthenticated) {
                 return;
-            if (IsRunning)
+            }
+            if (IsRunning) {
                 return;
+            }
 
             var network = ServiceContainer.Resolve<INetworkPresence> ();
 
@@ -119,8 +122,9 @@ namespace Toggl.Phoebe.Net
             } catch (Exception e) {
                 if (e.IsNetworkFailure () || e is TaskCanceledException) {
                     log.Info (Tag, e, "Sync ({0}) failed.", mode);
-                    if (e.IsNetworkFailure ())
+                    if (e.IsNetworkFailure ()) {
                         ServiceContainer.Resolve<INetworkPresence> ().RegisterSyncWhenNetworkPresent ();
+                    }
                 } else {
                     log.Warning (Tag, e, "Sync ({0}) failed.", mode);
                 }
@@ -145,11 +149,11 @@ namespace Toggl.Phoebe.Net
             // Purge excess time entries. Do it 200 items at a time, to avoid allocating too much memory to the
             // models to be deleted. If there are more than 200 entries, they will be removed in the next purge.
             var timeEntryRows = await store.Table<TimeEntryData> ()
-                .Skip (1000).Take (200)
-                .OrderBy (r => r.StartTime, false)
-                .QueryAsync (r => (r.IsDirty != true && r.RemoteId != null)
-                                || (r.RemoteId == null && r.DeletedAt != null))
-                .ConfigureAwait (false);
+                                .Skip (1000).Take (200)
+                                .OrderBy (r => r.StartTime, false)
+                                .QueryAsync (r => (r.IsDirty != true && r.RemoteId != null)
+                                             || (r.RemoteId == null && r.DeletedAt != null))
+                                .ConfigureAwait (false);
 
             await Task.WhenAll (timeEntryRows.Select (store.DeleteAsync)).ConfigureAwait (false);
         }
@@ -177,7 +181,7 @@ namespace Toggl.Phoebe.Net
                     // Make sure that the user relation exists and is up to date
                     if (workspaceData != null) {
                         var workspaceUserRows = ctx.Connection.Table<WorkspaceUserData> ()
-                        .Where (r => r.WorkspaceId == workspaceData.Id && r.UserId == userData.Id && r.DeletedAt == null);
+                                                .Where (r => r.WorkspaceId == workspaceData.Id && r.UserId == userData.Id && r.DeletedAt == null);
 
                         var workspaceUserData = workspaceUserRows.FirstOrDefault ();
                         if (workspaceUserData == null) {
@@ -195,12 +199,14 @@ namespace Toggl.Phoebe.Net
                 }
             });
             await store.ExecuteInTransactionAsync (ctx => {
-                foreach (var json in changes.Tags)
+                foreach (var json in changes.Tags) {
                     json.Import (ctx);
+                }
             });
             await store.ExecuteInTransactionAsync (ctx => {
-                foreach (var json in changes.Clients)
+                foreach (var json in changes.Clients) {
                     json.Import (ctx);
+                }
             });
             await store.ExecuteInTransactionAsync (ctx => {
                 foreach (var json in changes.Projects) {
@@ -209,7 +215,7 @@ namespace Toggl.Phoebe.Net
                     // Make sure that the user relation exists
                     if (projectData != null) {
                         var projectUserRows = ctx.Connection.Table<ProjectUserData> ()
-                            .Where (r => r.ProjectId == projectData.Id && r.UserId == userData.Id && r.DeletedAt == null);
+                                              .Where (r => r.ProjectId == projectData.Id && r.UserId == userData.Id && r.DeletedAt == null);
 
                         var projectUserData = projectUserRows.FirstOrDefault ();
                         if (projectUserData == null) {
@@ -224,12 +230,14 @@ namespace Toggl.Phoebe.Net
                 }
             });
             await store.ExecuteInTransactionAsync (ctx => {
-                foreach (var json in changes.Tasks)
+                foreach (var json in changes.Tasks) {
                     json.Import (ctx);
+                }
             });
             await store.ExecuteInTransactionAsync (ctx => {
-                foreach (var json in changes.TimeEntries)
+                foreach (var json in changes.TimeEntries) {
                     json.Import (ctx);
+                }
             });
 
             return changes.Timestamp;
@@ -252,8 +260,9 @@ namespace Toggl.Phoebe.Net
                 tasks.Clear ();
 
                 var dirtyDataObjects = graph.EndNodes.ToList ();
-                if (dirtyDataObjects.Count == 0)
+                if (dirtyDataObjects.Count == 0) {
                     break;
+                }
 
                 foreach (var dataObject in dirtyDataObjects) {
                     if (dataObject.RemoteRejected) {
@@ -274,8 +283,9 @@ namespace Toggl.Phoebe.Net
                 }
 
                 // Nothing was pushed this round
-                if (tasks.Count < 1)
+                if (tasks.Count < 1) {
                     continue;
+                }
 
                 await Task.WhenAll (tasks.Select (p => p.Task)).ConfigureAwait (false);
 
@@ -304,18 +314,18 @@ namespace Toggl.Phoebe.Net
         private static async Task<IEnumerable<CommonData>> GetAllDirtyData ()
         {
             return Enumerable.Empty<CommonData> ()
-                .Concat (await GetDirtyData<WorkspaceData> ().ConfigureAwait (false))
-                .Concat (await GetDirtyData<WorkspaceUserData> ().ConfigureAwait (false))
-                .Concat (await GetDirtyData<TagData> ().ConfigureAwait (false))
-                .Concat (await GetDirtyData<ClientData> ().ConfigureAwait (false))
-                .Concat (await GetDirtyData<ProjectData> ().ConfigureAwait (false))
-                .Concat (await GetDirtyData<ProjectUserData> ().ConfigureAwait (false))
-                .Concat (await GetDirtyData<TaskData> ().ConfigureAwait (false))
-                .Concat (await GetDirtyData<TimeEntryData> ().ConfigureAwait (false));
+                   .Concat (await GetDirtyData<WorkspaceData> ().ConfigureAwait (false))
+                   .Concat (await GetDirtyData<WorkspaceUserData> ().ConfigureAwait (false))
+                   .Concat (await GetDirtyData<TagData> ().ConfigureAwait (false))
+                   .Concat (await GetDirtyData<ClientData> ().ConfigureAwait (false))
+                   .Concat (await GetDirtyData<ProjectData> ().ConfigureAwait (false))
+                   .Concat (await GetDirtyData<ProjectUserData> ().ConfigureAwait (false))
+                   .Concat (await GetDirtyData<TaskData> ().ConfigureAwait (false))
+                   .Concat (await GetDirtyData<TimeEntryData> ().ConfigureAwait (false));
         }
 
         private static Task<List<T>> GetDirtyData<T> ()
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             IDataQuery<T> query;
@@ -325,18 +335,18 @@ namespace Toggl.Phoebe.Net
                 // and without remote id) from returned models.
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 query = (IDataQuery<T>)store.Table<WorkspaceUserData> ()
-                    .Where (r => r.UserId != userId || r.RemoteId != null);
+                        .Where (r => r.UserId != userId || r.RemoteId != null);
             } else if (typeof(T) == typeof(ProjectUserData)) {
                 // Exclude intermediate models which we've created from assumptions (for current user
                 // and without remote id) from returned models.
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 query = (IDataQuery<T>)store.Table<ProjectUserData> ()
-                    .Where (r => r.UserId != userId || r.RemoteId != null);
+                        .Where (r => r.UserId != userId || r.RemoteId != null);
             } else if (typeof(T) == typeof(TimeEntryData)) {
                 // Only sync non-draft time entries for current user:
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 query = (IDataQuery<T>)store.Table<TimeEntryData> ()
-                    .Where (r => r.UserId == userId && r.State != TimeEntryState.New);
+                        .Where (r => r.UserId == userId && r.State != TimeEntryState.New);
             } else {
                 query = store.Table<T> ();
             }
@@ -375,19 +385,19 @@ namespace Toggl.Phoebe.Net
                     var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                     json = await client.Update (json).ConfigureAwait (false);
                     await store.ExecuteInTransactionAsync (ctx => json.Import (
-                        ctx,
-                        mergeBase: dataObject
-                    )).ConfigureAwait (false);
+                            ctx,
+                            mergeBase: dataObject
+                                                           )).ConfigureAwait (false);
                 } else {
                     log.Info (Tag, "Pushing {0} to server.", dataObject.ToIdString ());
 
                     var json = await store.ExecuteInTransactionAsync (ctx => dataObject.Export (ctx));
                     json = await client.Create (json).ConfigureAwait (false);
                     await store.ExecuteInTransactionAsync (ctx => json.Import (
-                        ctx,
-                        localIdHint: dataObject.Id,
-                        mergeBase: dataObject
-                    )).ConfigureAwait (false);
+                            ctx,
+                            localIdHint: dataObject.Id,
+                            mergeBase: dataObject
+                                                           )).ConfigureAwait (false);
                 }
             } catch (Exception ex) {
                 error = ex;
@@ -417,7 +427,8 @@ namespace Toggl.Phoebe.Net
 
         public bool IsRunning { get; private set; }
 
-        private DateTime? LastRun {
+        private DateTime? LastRun
+        {
             get { return ServiceContainer.Resolve<ISettingsStore> ().SyncLastRun; }
             set { ServiceContainer.Resolve<ISettingsStore> ().SyncLastRun = value; }
         }

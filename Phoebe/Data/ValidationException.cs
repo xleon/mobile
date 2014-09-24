@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace Toggl.Phoebe.Data
 {
-    
+
     [Serializable]
     public class ValidationException : Exception
     {

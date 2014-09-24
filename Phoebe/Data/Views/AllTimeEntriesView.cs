@@ -48,8 +48,9 @@ namespace Toggl.Phoebe.Data.Views
         private void OnDataChange (DataChangeMessage msg)
         {
             var entry = msg.Data as TimeEntryData;
-            if (entry == null)
+            if (entry == null) {
                 return;
+            }
 
             var isExcluded = entry.DeletedAt != null
                              || msg.Action == DataAction.Delete
@@ -172,8 +173,9 @@ namespace Toggl.Phoebe.Data.Views
 
         private void BeginUpdate ()
         {
-            if (updateMode != UpdateMode.Immediate)
+            if (updateMode != UpdateMode.Immediate) {
                 return;
+            }
             updateMode = UpdateMode.Batch;
         }
 
@@ -185,8 +187,9 @@ namespace Toggl.Phoebe.Data.Views
 
         public void Reload ()
         {
-            if (IsLoading)
+            if (IsLoading) {
                 return;
+            }
 
             startFrom = Time.UtcNow;
             dateGroups.Clear ();
@@ -215,8 +218,9 @@ namespace Toggl.Phoebe.Data.Views
 
         private async void Load (bool initialLoad)
         {
-            if (IsLoading || !HasMore)
+            if (IsLoading || !HasMore) {
                 return;
+            }
 
             IsLoading = true;
             var client = ServiceContainer.Resolve<ITogglClient> ();
@@ -243,7 +247,7 @@ namespace Toggl.Phoebe.Data.Views
 
                         BeginUpdate ();
                         var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
-                            jsonEntries.Select (json => json.Import (ctx)).ToList ());
+                                      jsonEntries.Select (json => json.Import (ctx)).ToList ());
 
                         // Add entries to list:
                         foreach (var entry in entries) {
@@ -274,13 +278,13 @@ namespace Toggl.Phoebe.Data.Views
                     var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
                     var baseQuery = store.Table<TimeEntryData> ()
-                        .OrderBy (r => r.StartTime, false)
-                        .Where (r => r.State != TimeEntryState.New
-                                    && r.DeletedAt == null
-                                    && r.UserId == userId);
+                                    .OrderBy (r => r.StartTime, false)
+                                    .Where (r => r.State != TimeEntryState.New
+                                            && r.DeletedAt == null
+                                            && r.UserId == userId);
                     var entries = await baseQuery
-                        .QueryAsync (r => r.StartTime <= endTime
-                                  && r.StartTime > startTime);
+                                  .QueryAsync (r => r.StartTime <= endTime
+                                               && r.StartTime > startTime);
 
                     BeginUpdate ();
                     foreach (var entry in entries) {
@@ -289,7 +293,7 @@ namespace Toggl.Phoebe.Data.Views
 
                     if (!initialLoad) {
                         var count = await baseQuery
-                            .CountAsync (r => r.StartTime <= startTime);
+                                    .CountAsync (r => r.StartTime <= startTime);
                         HasMore = count > 0;
                     }
                 }
@@ -302,11 +306,13 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public IEnumerable<DateGroup> DateGroups {
+        public IEnumerable<DateGroup> DateGroups
+        {
             get { return dateGroups; }
         }
 
-        public IEnumerable<object> Data {
+        public IEnumerable<object> Data
+        {
             get {
                 foreach (var grp in dateGroups) {
                     yield return grp;
@@ -317,7 +323,8 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public long Count {
+        public long Count
+        {
             get { return dateGroups.Count + dateGroups.Sum (g => g.DataObjects.Count); }
         }
 
@@ -335,11 +342,13 @@ namespace Toggl.Phoebe.Data.Views
                 this.date = date.Date;
             }
 
-            public DateTime Date {
+            public DateTime Date
+            {
                 get { return date; }
             }
 
-            public List<TimeEntryData> DataObjects {
+            public List<TimeEntryData> DataObjects
+            {
                 get { return dataObjects; }
             }
 
@@ -372,8 +381,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private enum UpdateMode
-        {
+        private enum UpdateMode {
             Immediate,
             Batch,
         }

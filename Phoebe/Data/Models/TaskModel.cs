@@ -48,52 +48,60 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (TaskData oldData, TaskData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.Name != newData.Name)
+            if (oldData.Name != newData.Name) {
                 OnPropertyChanged (PropertyName);
-            if (oldData.IsActive != newData.IsActive)
+            }
+            if (oldData.IsActive != newData.IsActive) {
                 OnPropertyChanged (PropertyIsActive);
-            if (oldData.Estimate != newData.Estimate)
+            }
+            if (oldData.Estimate != newData.Estimate) {
                 OnPropertyChanged (PropertyEstimate);
-            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+            }
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance) {
                 OnPropertyChanged (PropertyWorkspace);
-            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance)
+            }
+            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance) {
                 OnPropertyChanged (PropertyProject);
+            }
         }
 
-        public string Name {
+        public string Name
+        {
             get {
                 EnsureLoaded ();
                 return Data.Name;
-            }
-            set {
-                if (Name == value)
+            } set {
+                if (Name == value) {
                     return;
+                }
 
                 MutateData (data => data.Name = value);
             }
         }
 
-        public bool IsActive {
+        public bool IsActive
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsActive;
-            }
-            set {
-                if (IsActive == value)
+            } set {
+                if (IsActive == value) {
                     return;
+                }
 
                 MutateData (data => data.IsActive = value);
             }
         }
 
-        public long Estimate {
+        public long Estimate
+        {
             get {
                 EnsureLoaded ();
                 return Data.Estimate;
-            }
-            set {
-                if (Estimate == value)
+            } set {
+                if (Estimate == value) {
                     return;
+                }
 
                 MutateData (data => data.Estimate = value);
             }
@@ -120,21 +128,24 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         [ModelRelation]
-        public WorkspaceModel Workspace {
+        public WorkspaceModel Workspace
+        {
             get { return workspace.Get (Data.WorkspaceId); }
             set { workspace.Set (value); }
         }
 
         [ModelRelation]
-        public ProjectModel Project {
+        public ProjectModel Project
+        {
             get { return project.Get (Data.ProjectId); }
             set { project.Set (value); }
         }
 
         public static explicit operator TaskModel (TaskData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new TaskModel (data);
         }
 

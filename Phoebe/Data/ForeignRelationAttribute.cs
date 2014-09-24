@@ -7,7 +7,8 @@ namespace Toggl.Phoebe.Data
     {
         readonly Type dataType;
 
-        public Type DataType {
+        public Type DataType
+        {
             get { return dataType; }
         }
 

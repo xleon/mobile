@@ -6,8 +6,7 @@ namespace Toggl.Phoebe
 {
     public class Logger
     {
-        public enum Level
-        {
+        public enum Level {
             Debug,
             Info,
             Warning,
@@ -42,8 +41,9 @@ namespace Toggl.Phoebe
 
         private void LogToConsole (Level level, string tag, string message, Exception exc)
         {
-            if (level < consoleThreshold)
+            if (level < consoleThreshold) {
                 return;
+            }
 
             WriteConsole (level, tag, message, exc);
         }
@@ -95,281 +95,321 @@ namespace Toggl.Phoebe
 
         public void Debug (string tag, string message)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, message);
         }
 
         public void Debug (string tag, string message, object arg0)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, arg0));
         }
 
         public void Debug (string tag, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, arg0, arg1));
         }
 
         public void Debug (string tag, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, arg0, arg1, arg2));
         }
 
         public void Debug (string tag, string message, params object[] args)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, args));
         }
 
         public void Debug (string tag, Exception exc, string message)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, message, exc);
         }
 
         public void Debug (string tag, Exception exc, string message, object arg0)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, arg0), exc);
         }
 
         public void Debug (string tag, Exception exc, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, arg0, arg1), exc);
         }
 
         public void Debug (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Debug (string tag, Exception exc, string message, params object[] args)
         {
-            if (threshold > Level.Debug)
+            if (threshold > Level.Debug) {
                 return;
+            }
             Process (Level.Debug, tag, String.Format (message, args), exc);
         }
 
         public void Info (string tag, string message)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, message);
         }
 
         public void Info (string tag, string message, object arg0)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, arg0));
         }
 
         public void Info (string tag, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, arg0, arg1));
         }
 
         public void Info (string tag, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, arg0, arg1, arg2));
         }
 
         public void Info (string tag, string message, params object[] args)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, args));
         }
 
         public void Info (string tag, Exception exc, string message)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, message, exc);
         }
 
         public void Info (string tag, Exception exc, string message, object arg0)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, arg0), exc);
         }
 
         public void Info (string tag, Exception exc, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, arg0, arg1), exc);
         }
 
         public void Info (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Info (string tag, Exception exc, string message, params object[] args)
         {
-            if (threshold > Level.Info)
+            if (threshold > Level.Info) {
                 return;
+            }
             Process (Level.Info, tag, String.Format (message, args), exc);
         }
 
         public void Warning (string tag, string message)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, message);
         }
 
         public void Warning (string tag, string message, object arg0)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, arg0));
         }
 
         public void Warning (string tag, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, arg0, arg1));
         }
 
         public void Warning (string tag, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, arg0, arg1, arg2));
         }
 
         public void Warning (string tag, string message, params object[] args)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, args));
         }
 
         public void Warning (string tag, Exception exc, string message)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, message, exc);
         }
 
         public void Warning (string tag, Exception exc, string message, object arg0)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, arg0), exc);
         }
 
         public void Warning (string tag, Exception exc, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, arg0, arg1), exc);
         }
 
         public void Warning (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Warning (string tag, Exception exc, string message, params object[] args)
         {
-            if (threshold > Level.Warning)
+            if (threshold > Level.Warning) {
                 return;
+            }
             Process (Level.Warning, tag, String.Format (message, args), exc);
         }
 
         public void Error (string tag, string message)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, message);
         }
 
         public void Error (string tag, string message, object arg0)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, arg0));
         }
 
         public void Error (string tag, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, arg0, arg1));
         }
 
         public void Error (string tag, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, arg0, arg1, arg2));
         }
 
         public void Error (string tag, string message, params object[] args)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, args));
         }
 
         public void Error (string tag, Exception exc, string message)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, message, exc);
         }
 
         public void Error (string tag, Exception exc, string message, object arg0)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, arg0), exc);
         }
 
         public void Error (string tag, Exception exc, string message, object arg0, object arg1)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, arg0, arg1), exc);
         }
 
         public void Error (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Error (string tag, Exception exc, string message, params object[] args)
         {
-            if (threshold > Level.Error)
+            if (threshold > Level.Error) {
                 return;
+            }
             Process (Level.Error, tag, String.Format (message, args), exc);
         }
     }

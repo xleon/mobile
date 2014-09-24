@@ -35,8 +35,9 @@ namespace Toggl.Phoebe.Data.Views
         private void OnDataChange (DataChangeMessage msg)
         {
             var tagData = msg.Data as TagData;
-            if (tagData == null)
+            if (tagData == null) {
                 return;
+            }
 
             var isExcluded = msg.Action == DataAction.Delete
                              || tagData.DeletedAt.HasValue
@@ -70,11 +71,13 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public Guid WorkspaceId {
+        public Guid WorkspaceId
+        {
             get { return workspaceId; }
             set {
-                if (workspaceId == value)
+                if (workspaceId == value) {
                     return;
+                }
                 workspaceId = value;
                 Reload ();
             }
@@ -83,18 +86,19 @@ namespace Toggl.Phoebe.Data.Views
         private void Sort ()
         {
             dataObjects.Sort ((a, b) => String.Compare (
-                a.Name ?? String.Empty,
-                b.Name ?? String.Empty,
-                StringComparison.Ordinal
-            ));
+                                  a.Name ?? String.Empty,
+                                  b.Name ?? String.Empty,
+                                  StringComparison.Ordinal
+                              ));
         }
 
         public event EventHandler Updated;
 
         public async void Reload ()
         {
-            if (IsLoading || WorkspaceId == Guid.Empty)
+            if (IsLoading || WorkspaceId == Guid.Empty) {
                 return;
+            }
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -112,8 +116,8 @@ namespace Toggl.Phoebe.Data.Views
                 OnUpdated ();
 
                 var tags = await store.Table<TagData> ()
-                    .QueryAsync (r => r.DeletedAt == null
-                           && r.WorkspaceId == workspaceId);
+                           .QueryAsync (r => r.DeletedAt == null
+                                        && r.WorkspaceId == workspaceId);
                 dataObjects.AddRange (tags);
                 Sort ();
             } finally {
@@ -129,15 +133,18 @@ namespace Toggl.Phoebe.Data.Views
         {
         }
 
-        public IEnumerable<TagData> Data {
+        public IEnumerable<TagData> Data
+        {
             get { return dataObjects; }
         }
 
-        public long Count {
+        public long Count
+        {
             get { return dataObjects.Count; }
         }
 
-        public bool HasMore {
+        public bool HasMore
+        {
             get { return false; }
         }
 

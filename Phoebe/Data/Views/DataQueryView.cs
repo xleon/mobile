@@ -14,8 +14,7 @@ namespace Toggl.Phoebe.Data.Views
         private readonly int batchSize;
         private readonly List<T> data = new List<T> ();
 
-        public DataQueryView (IDataQuery<T> query, int batchSize)
-        {
+        public DataQueryView (IDataQuery<T> query, int batchSize) {
             this.query = query;
             this.batchSize = batchSize;
             Reload ();
@@ -23,10 +22,10 @@ namespace Toggl.Phoebe.Data.Views
 
         public event EventHandler Updated;
 
-        public async void Reload ()
-        {
-            if (IsLoading)
+        public async void Reload () {
+            if (IsLoading) {
                 return;
+            }
 
             data.Clear ();
             IsLoading = true;
@@ -47,10 +46,10 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public async void LoadMore ()
-        {
-            if (IsLoading)
+        public async void LoadMore () {
+            if (IsLoading) {
                 return;
+            }
 
             IsLoading = true;
             OnUpdated ();
@@ -70,8 +69,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private void OnUpdated ()
-        {
+        private void OnUpdated () {
             var handler = Updated;
             if (handler != null) {
                 handler (this, EventArgs.Empty);

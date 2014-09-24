@@ -92,7 +92,8 @@ namespace Toggl.Phoebe.Data.Utils
                 }
             }
 
-            public INotifyPropertyChanged Observable {
+            public INotifyPropertyChanged Observable
+            {
                 get { return observable; }
             }
 

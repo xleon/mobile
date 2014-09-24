@@ -13,11 +13,13 @@ namespace Toggl.Phoebe.Data
             this.action = action;
         }
 
-        public object Data {
+        public object Data
+        {
             get { return data; }
         }
 
-        public DataAction Action {
+        public DataAction Action
+        {
             get { return action; }
         }
     }

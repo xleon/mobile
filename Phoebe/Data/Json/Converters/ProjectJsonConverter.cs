@@ -59,8 +59,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var data = GetByRemoteId<ProjectData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new ProjectMerger (mergeBase) : null;
-            if (merger != null && data != null)
+            if (merger != null && data != null) {
                 merger.Add (new ProjectData (data));
+            }
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

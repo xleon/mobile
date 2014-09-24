@@ -32,10 +32,11 @@ namespace Toggl.Phoebe
         /// <typeparam name="TMessage">Type of the message to subscribe to.</typeparam>
         /// <returns>A subscription object, null if subscribing failed.</returns>
         public Subscription<TMessage> Subscribe<TMessage> (Action<TMessage> listener, bool threadSafe = false)
-            where TMessage : Message
+        where TMessage : Message
         {
-            if (listener == null)
+            if (listener == null) {
                 throw new ArgumentNullException ("listener");
+            }
 
             var subscription = new Subscription<TMessage> (listener, threadSafe);
 
@@ -56,7 +57,7 @@ namespace Toggl.Phoebe
         /// </summary>
         /// <param name="subscription">A subscription object from Subscribing to a message.</param>
         public void Unsubscribe<TMessage> (Subscription<TMessage> subscription)
-            where TMessage : Message
+        where TMessage : Message
         {
             lock (syncRoot) {
                 foreach (var listeners in registry.Values) {
@@ -71,10 +72,11 @@ namespace Toggl.Phoebe
         /// <param name="msg">Message.</param>
         /// <typeparam name="TMessage">Type of the message to send.</typeparam>
         public void Send<TMessage> (TMessage msg)
-            where TMessage : Message
+        where TMessage : Message
         {
-            if (msg == null)
+            if (msg == null) {
                 throw new ArgumentNullException ("msg");
+            }
 
             List<Subscription<TMessage>> sendMain = null;
             List<Subscription<TMessage>> sendHere = null;
@@ -146,8 +148,9 @@ namespace Toggl.Phoebe
         private void ScheduleProcessQueue ()
         {
             lock (syncRoot) {
-                if (isScheduled)
+                if (isScheduled) {
                     return;
+                }
 
                 isScheduled = true;
             }
@@ -166,8 +169,9 @@ namespace Toggl.Phoebe
         private void ProcessQueue ()
         {
             // Make sure we don't start processing the remainder of the queue when a subscriber generates new messages
-            if (isProcessing)
+            if (isProcessing) {
                 return;
+            }
 
             isProcessing = true;
             try {

@@ -58,50 +58,61 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (ProjectData oldData, ProjectData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.Name != newData.Name)
+            if (oldData.Name != newData.Name) {
                 OnPropertyChanged (PropertyName);
-            if (oldData.Color != newData.Color)
+            }
+            if (oldData.Color != newData.Color) {
                 OnPropertyChanged (PropertyColor);
-            if (oldData.IsActive != newData.IsActive)
+            }
+            if (oldData.IsActive != newData.IsActive) {
                 OnPropertyChanged (PropertyIsActive);
-            if (oldData.IsBillable != newData.IsBillable)
+            }
+            if (oldData.IsBillable != newData.IsBillable) {
                 OnPropertyChanged (PropertyIsBillable);
-            if (oldData.IsPrivate != newData.IsPrivate)
+            }
+            if (oldData.IsPrivate != newData.IsPrivate) {
                 OnPropertyChanged (PropertyIsPrivate);
-            if (oldData.IsTemplate != newData.IsTemplate)
+            }
+            if (oldData.IsTemplate != newData.IsTemplate) {
                 OnPropertyChanged (PropertyIsTemplate);
-            if (oldData.UseTasksEstimate != newData.UseTasksEstimate)
+            }
+            if (oldData.UseTasksEstimate != newData.UseTasksEstimate) {
                 OnPropertyChanged (PropertyUseTasksEstimate);
-            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+            }
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance) {
                 OnPropertyChanged (PropertyWorkspace);
-            if (oldData.ClientId != newData.ClientId || client.IsNewInstance)
+            }
+            if (oldData.ClientId != newData.ClientId || client.IsNewInstance) {
                 OnPropertyChanged (PropertyClient);
+            }
         }
 
-        public string Name {
+        public string Name
+        {
             get {
                 EnsureLoaded ();
                 return Data.Name;
-            }
-            set {
-                if (Name == value)
+            } set {
+                if (Name == value) {
                     return;
+                }
 
                 MutateData (data => data.Name = value);
             }
         }
 
-        public int Color {
+        public int Color
+        {
             get {
                 EnsureLoaded ();
                 return Data.Color;
-            }
-            set {
+            } set {
                 // Make sure the value is in valid range:
                 value = value % HexColors.Length;
 
-                if (Color == value)
+                if (Color == value) {
                     return;
+                }
 
                 MutateData (data => data.Color = value);
             }
@@ -112,66 +123,71 @@ namespace Toggl.Phoebe.Data.Models
             return HexColors [Color % HexColors.Length];
         }
 
-        public bool IsActive {
+        public bool IsActive
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsActive;
-            }
-            set {
-                if (IsActive == value)
+            } set {
+                if (IsActive == value) {
                     return;
+                }
 
                 MutateData (data => data.IsActive = value);
             }
         }
 
-        public bool IsBillable {
+        public bool IsBillable
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsBillable;
-            }
-            set {
-                if (IsBillable == value)
+            } set {
+                if (IsBillable == value) {
                     return;
+                }
 
                 MutateData (data => data.IsBillable = value);
             }
         }
 
-        public bool IsPrivate {
+        public bool IsPrivate
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsPrivate;
-            }
-            set {
-                if (IsPrivate == value)
+            } set {
+                if (IsPrivate == value) {
                     return;
+                }
 
                 MutateData (data => data.IsPrivate = value);
             }
         }
 
-        public bool IsTemplate {
+        public bool IsTemplate
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsTemplate;
-            }
-            set {
-                if (IsTemplate == value)
+            } set {
+                if (IsTemplate == value) {
                     return;
+                }
 
                 MutateData (data => data.IsTemplate = value);
             }
         }
 
-        public bool UseTasksEstimate { 
+        public bool UseTasksEstimate
+        {
             get {
                 EnsureLoaded ();
                 return Data.UseTasksEstimate;
-            }
-            set {
-                if (UseTasksEstimate == value)
+            } set {
+                if (UseTasksEstimate == value) {
                     return;
+                }
 
                 MutateData (data => data.UseTasksEstimate = value);
             }
@@ -199,21 +215,24 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         [ModelRelation]
-        public WorkspaceModel Workspace {
+        public WorkspaceModel Workspace
+        {
             get { return workspace.Get (Data.WorkspaceId); }
             set { workspace.Set (value); }
         }
 
         [ModelRelation (Required = false)]
-        public ClientModel Client {
+        public ClientModel Client
+        {
             get { return client.Get (Data.ClientId); }
             set { client.Set (value); }
         }
 
         public static explicit operator ProjectModel (ProjectData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new ProjectModel (data);
         }
 

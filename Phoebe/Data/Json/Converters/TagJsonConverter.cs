@@ -28,7 +28,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             if (data == null) {
                 // Fallback to name lookup for unsynced tags:
                 var rows = ctx.Connection.Table<TagData> ().Take (1)
-                    .Where (r => r.WorkspaceId == workspaceId && r.Name == json.Name && r.RemoteId == null);
+                           .Where (r => r.WorkspaceId == workspaceId && r.Name == json.Name && r.RemoteId == null);
                 data = rows.FirstOrDefault ();
             }
 
@@ -50,8 +50,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var data = GetByRemoteId<TagData> (ctx, json.Id.Value, localIdHint);
 
             var merger = mergeBase != null ? new TagMerger (mergeBase) : null;
-            if (merger != null && data != null)
+            if (merger != null && data != null) {
                 merger.Add (new TagData (data));
+            }
 
             if (json.DeletedAt.HasValue) {
                 if (data != null) {

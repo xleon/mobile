@@ -21,8 +21,9 @@ namespace Toggl.Phoebe
         {
             #if NotifyPropertyChanging
             var propertyChanging = PropertyChanging;
-            if (propertyChanging != null)
+            if (propertyChanging != null) {
                 propertyChanging (this, new PropertyChangingEventArgs (GetPropertyName (expr)));
+            }
             #endif
         }
 
@@ -36,7 +37,7 @@ namespace Toggl.Phoebe
         /// // ...
         /// private string description;
         /// public static readonly string PropertyDescription = GetPropertyName ((m) => m.Description);
-        /// 
+        ///
         /// public string Description {
         ///     get { return description; }
         ///     set {
@@ -59,8 +60,9 @@ namespace Toggl.Phoebe
         protected virtual void OnPropertyChanged (string property)
         {
             var propertyChanged = PropertyChanged;
-            if (propertyChanged != null)
+            if (propertyChanged != null) {
                 propertyChanged (this, new PropertyChangedEventArgs (property));
+            }
         }
     }
 }

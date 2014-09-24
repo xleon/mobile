@@ -26,9 +26,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
         private static string MakeMessage (Type type, Guid id)
         {
             return String.Format (
-                "Cannot export data with local-only relation ({0}#{1}) to JSON.",
-                type.Name, id
-            );
+                       "Cannot export data with local-only relation ({0}#{1}) to JSON.",
+                       type.Name, id
+                   );
         }
     }
 }

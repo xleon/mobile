@@ -54,200 +54,227 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (UserData oldData, UserData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.Name != newData.Name)
+            if (oldData.Name != newData.Name) {
                 OnPropertyChanged (PropertyName);
-            if (oldData.Email != newData.Email)
+            }
+            if (oldData.Email != newData.Email) {
                 OnPropertyChanged (PropertyEmail);
-            if (oldData.StartOfWeek != newData.StartOfWeek)
+            }
+            if (oldData.StartOfWeek != newData.StartOfWeek) {
                 OnPropertyChanged (PropertyStartOfWeek);
-            if (oldData.DateFormat != newData.DateFormat)
+            }
+            if (oldData.DateFormat != newData.DateFormat) {
                 OnPropertyChanged (PropertyDateFormat);
-            if (oldData.TimeFormat != newData.TimeFormat)
+            }
+            if (oldData.TimeFormat != newData.TimeFormat) {
                 OnPropertyChanged (PropertyTimeFormat);
-            if (oldData.ImageUrl != newData.ImageUrl)
+            }
+            if (oldData.ImageUrl != newData.ImageUrl) {
                 OnPropertyChanged (PropertyImageUrl);
-            if (oldData.Locale != newData.Locale)
+            }
+            if (oldData.Locale != newData.Locale) {
                 OnPropertyChanged (PropertyLocale);
-            if (oldData.Timezone != newData.Timezone)
+            }
+            if (oldData.Timezone != newData.Timezone) {
                 OnPropertyChanged (PropertyTimezone);
-            if (oldData.SendProductEmails != newData.SendProductEmails)
+            }
+            if (oldData.SendProductEmails != newData.SendProductEmails) {
                 OnPropertyChanged (PropertySendProductEmails);
-            if (oldData.SendTimerNotifications != newData.SendTimerNotifications)
+            }
+            if (oldData.SendTimerNotifications != newData.SendTimerNotifications) {
                 OnPropertyChanged (PropertySendTimerNotifications);
-            if (oldData.SendWeeklyReport != newData.SendWeeklyReport)
+            }
+            if (oldData.SendWeeklyReport != newData.SendWeeklyReport) {
                 OnPropertyChanged (PropertySendWeeklyReport);
-            if (oldData.TrackingMode != newData.TrackingMode)
+            }
+            if (oldData.TrackingMode != newData.TrackingMode) {
                 OnPropertyChanged (PropertyTrackingMode);
-            if (oldData.DefaultWorkspaceId != newData.DefaultWorkspaceId || defaultWorkspace.IsNewInstance)
+            }
+            if (oldData.DefaultWorkspaceId != newData.DefaultWorkspaceId || defaultWorkspace.IsNewInstance) {
                 OnPropertyChanged (PropertyDefaultWorkspace);
-            if (oldData.DurationFormat != newData.DurationFormat)
+            }
+            if (oldData.DurationFormat != newData.DurationFormat) {
                 OnPropertyChanged (PropertyDurationFormat);
+            }
         }
 
-        public string Name {
+        public string Name
+        {
             get {
                 EnsureLoaded ();
                 return Data.Name;
-            }
-            set {
-                if (Name == value)
+            } set {
+                if (Name == value) {
                     return;
+                }
 
                 MutateData (data => data.Name = value);
             }
         }
 
-        public string Email {
+        public string Email
+        {
             get {
                 EnsureLoaded ();
                 return Data.Email;
-            }
-            set {
-                if (Email == value)
+            } set {
+                if (Email == value) {
                     return;
+                }
 
                 MutateData (data => data.Email = value);
             }
         }
 
-        public DayOfWeek StartOfWeek {
+        public DayOfWeek StartOfWeek
+        {
             get {
                 EnsureLoaded ();
                 return Data.StartOfWeek;
-            }
-            set {
-                if (StartOfWeek == value)
+            } set {
+                if (StartOfWeek == value) {
                     return;
+                }
 
                 MutateData (data => data.StartOfWeek = value);
             }
         }
 
-        public string DateFormat {
+        public string DateFormat
+        {
             get {
                 EnsureLoaded ();
                 return Data.DateFormat;
-            }
-            set {
-                if (DateFormat == value)
+            } set {
+                if (DateFormat == value) {
                     return;
+                }
 
                 MutateData (data => data.DateFormat = value);
             }
         }
 
-        public string TimeFormat {
+        public string TimeFormat
+        {
             get {
                 EnsureLoaded ();
                 return Data.TimeFormat;
-            }
-            set {
-                if (TimeFormat == value)
+            } set {
+                if (TimeFormat == value) {
                     return;
+                }
 
                 MutateData (data => data.TimeFormat = value);
             }
         }
 
-        public string ImageUrl {
+        public string ImageUrl
+        {
             get {
                 EnsureLoaded ();
                 return Data.ImageUrl;
-            }
-            set {
-                if (ImageUrl == value)
+            } set {
+                if (ImageUrl == value) {
                     return;
+                }
 
                 MutateData (data => data.ImageUrl = value);
             }
         }
 
-        public string Locale {
+        public string Locale
+        {
             get {
                 EnsureLoaded ();
                 return Data.Locale;
-            }
-            set {
-                if (Locale == value)
+            } set {
+                if (Locale == value) {
                     return;
+                }
 
                 MutateData (data => data.Locale = value);
             }
         }
 
-        public string Timezone {
+        public string Timezone
+        {
             get {
                 EnsureLoaded ();
                 return Data.Timezone;
-            }
-            set {
-                if (Timezone == value)
+            } set {
+                if (Timezone == value) {
                     return;
+                }
 
                 MutateData (data => data.Timezone = value);
             }
         }
 
-        public bool SendProductEmails {
+        public bool SendProductEmails
+        {
             get {
                 EnsureLoaded ();
                 return Data.SendProductEmails;
-            }
-            set {
-                if (SendProductEmails == value)
+            } set {
+                if (SendProductEmails == value) {
                     return;
+                }
 
                 MutateData (data => data.SendProductEmails = value);
             }
         }
 
-        public bool SendTimerNotifications {
+        public bool SendTimerNotifications
+        {
             get {
                 EnsureLoaded ();
                 return Data.SendTimerNotifications;
-            }
-            set {
-                if (SendTimerNotifications == value)
+            } set {
+                if (SendTimerNotifications == value) {
                     return;
+                }
 
                 MutateData (data => data.SendTimerNotifications = value);
             }
         }
 
-        public bool SendWeeklyReport {
+        public bool SendWeeklyReport
+        {
             get {
                 EnsureLoaded ();
                 return Data.SendWeeklyReport;
-            }
-            set {
-                if (SendWeeklyReport == value)
+            } set {
+                if (SendWeeklyReport == value) {
                     return;
+                }
 
                 MutateData (data => data.SendWeeklyReport = value);
             }
         }
 
-        public TrackingMode TrackingMode {
+        public TrackingMode TrackingMode
+        {
             get {
                 EnsureLoaded ();
                 return Data.TrackingMode;
-            }
-            set {
-                if (TrackingMode == value)
+            } set {
+                if (TrackingMode == value) {
                     return;
+                }
 
                 MutateData (data => data.TrackingMode = value);
             }
         }
 
-        public DurationFormat DurationFormat {
+        public DurationFormat DurationFormat
+        {
             get {
                 EnsureLoaded ();
                 return Data.DurationFormat;
-            }
-            set {
-                if (DurationFormat == value)
+            } set {
+                if (DurationFormat == value) {
                     return;
+                }
 
                 MutateData (data => data.DurationFormat = value);
             }
@@ -267,15 +294,17 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         [ModelRelation]
-        public WorkspaceModel DefaultWorkspace {
+        public WorkspaceModel DefaultWorkspace
+        {
             get { return defaultWorkspace.Get (Data.DefaultWorkspaceId); }
             set { defaultWorkspace.Set (value); }
         }
 
         public static explicit operator UserModel (UserData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new UserModel (data);
         }
 

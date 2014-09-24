@@ -13,9 +13,9 @@ namespace Toggl.Phoebe.Data
     {
         private readonly Scheduler scheduler = new Scheduler ();
         private readonly Context ctx;
-        #pragma warning disable 0414
+#pragma warning disable 0414
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        #pragma warning restore 0414
+#pragma warning restore 0414
 
         public SqliteDataStore (string dbPath)
         {
@@ -38,8 +38,8 @@ namespace Toggl.Phoebe.Data
         {
             var dataType = typeof(Toggl.Phoebe.Data.DataObjects.TimeEntryData);
             return from t in dataType.Assembly.GetTypes ()
-                            where t.Namespace == dataType.Namespace && !t.IsAbstract
-                            select t;
+                   where t.Namespace == dataType.Namespace && !t.IsAbstract
+                   select t;
         }
 
         private async void CreateTables ()
@@ -68,8 +68,9 @@ namespace Toggl.Phoebe.Data
 
         private void OnAuthChanged (AuthChangedMessage msg)
         {
-            if (msg.AuthManager.IsAuthenticated)
+            if (msg.AuthManager.IsAuthenticated) {
                 return;
+            }
 
             // Wipe database on logout
             WipeTables ();
@@ -94,7 +95,7 @@ namespace Toggl.Phoebe.Data
         }
 
         public Task<T> PutAsync<T> (T obj)
-            where T : new()
+        where T : new()
         {
             obj = Clone (obj);
             return scheduler.Enqueue (delegate {
@@ -140,8 +141,9 @@ namespace Toggl.Phoebe.Data
         public string GetTableName (Type mappingType)
         {
             var mapping = ctx.Connection.GetMapping (mappingType);
-            if (mapping == null)
+            if (mapping == null) {
                 return null;
+            }
             return mapping.TableName;
         }
 
@@ -187,19 +189,16 @@ namespace Toggl.Phoebe.Data
             private readonly SqliteDataStore store;
             private readonly TableQuery<T> query;
 
-            public QueryBuilder (SqliteDataStore store, TableQuery<T> query)
-            {
+            public QueryBuilder (SqliteDataStore store, TableQuery<T> query) {
                 this.store = store;
                 this.query = query;
             }
 
-            public IDataQuery<T> Where (Expression<Func<T, bool>> predicate)
-            {
+            public IDataQuery<T> Where (Expression<Func<T, bool>> predicate) {
                 return new QueryBuilder<T> (store, query.Where (predicate));
             }
 
-            public IDataQuery<T> OrderBy<U> (Expression<Func<T, U>> orderExpr, bool asc = true)
-            {
+            public IDataQuery<T> OrderBy<U> (Expression<Func<T, U>> orderExpr, bool asc = true) {
                 if (asc) {
                     return new QueryBuilder<T> (store, query.OrderBy (orderExpr));
                 } else {
@@ -207,33 +206,27 @@ namespace Toggl.Phoebe.Data
                 }
             }
 
-            public IDataQuery<T> Take (int n)
-            {
+            public IDataQuery<T> Take (int n) {
                 return new QueryBuilder<T> (store, query.Take (n));
             }
 
-            public IDataQuery<T> Skip (int n)
-            {
+            public IDataQuery<T> Skip (int n) {
                 return new QueryBuilder<T> (store, query.Skip (n));
             }
 
-            public Task<int> CountAsync ()
-            {
+            public Task<int> CountAsync () {
                 return store.scheduler.Enqueue (() => query.Count ());
             }
 
-            public Task<int> CountAsync (Expression<Func<T, bool>> predicate)
-            {
+            public Task<int> CountAsync (Expression<Func<T, bool>> predicate) {
                 return new QueryBuilder<T> (store, query.Where (predicate)).CountAsync ();
             }
 
-            public Task<List<T>> QueryAsync ()
-            {
+            public Task<List<T>> QueryAsync () {
                 return store.scheduler.Enqueue (() => query.ToList ());
             }
 
-            public Task<List<T>> QueryAsync (Expression<Func<T, bool>> predicate)
-            {
+            public Task<List<T>> QueryAsync (Expression<Func<T, bool>> predicate) {
                 return new QueryBuilder<T> (store, query.Where (predicate)).QueryAsync ();
             }
         }
@@ -251,7 +244,7 @@ namespace Toggl.Phoebe.Data
             }
 
             public T Put<T> (T obj)
-                where T : new()
+            where T : new()
             {
                 conn.InsertOrReplace (obj);
 
@@ -274,7 +267,8 @@ namespace Toggl.Phoebe.Data
                 return success;
             }
 
-            public SQLiteConnection Connection {
+            public SQLiteConnection Connection
+            {
                 get { return conn; }
             }
 
@@ -303,8 +297,9 @@ namespace Toggl.Phoebe.Data
             private async void EnsureProcessing ()
             {
                 lock (syncRoot) {
-                    if (isWorking)
+                    if (isWorking) {
                         return;
+                    }
                     isWorking = true;
                 }
 

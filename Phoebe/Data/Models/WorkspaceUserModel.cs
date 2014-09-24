@@ -47,37 +47,43 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (WorkspaceUserData oldData, WorkspaceUserData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.IsAdmin != newData.IsAdmin)
+            if (oldData.IsAdmin != newData.IsAdmin) {
                 OnPropertyChanged (PropertyIsAdmin);
-            if (oldData.IsActive != newData.IsActive)
+            }
+            if (oldData.IsActive != newData.IsActive) {
                 OnPropertyChanged (PropertyIsActive);
-            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance)
+            }
+            if (oldData.WorkspaceId != newData.WorkspaceId || workspace.IsNewInstance) {
                 OnPropertyChanged (PropertyWorkspace);
-            if (oldData.UserId != newData.UserId || user.IsNewInstance)
+            }
+            if (oldData.UserId != newData.UserId || user.IsNewInstance) {
                 OnPropertyChanged (PropertyUser);
+            }
         }
 
-        public bool IsAdmin {
+        public bool IsAdmin
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsAdmin;
-            }
-            set {
-                if (IsAdmin == value)
+            } set {
+                if (IsAdmin == value) {
                     return;
+                }
 
                 MutateData (data => data.IsAdmin = value);
             }
         }
 
-        public bool IsActive {
+        public bool IsActive
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsActive;
-            }
-            set {
-                if (IsActive == value)
+            } set {
+                if (IsActive == value) {
                     return;
+                }
 
                 MutateData (data => data.IsActive = value);
             }
@@ -104,21 +110,24 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         [ModelRelation]
-        public WorkspaceModel Workspace {
+        public WorkspaceModel Workspace
+        {
             get { return workspace.Get (Data.WorkspaceId); }
             set { workspace.Set (value); }
         }
 
         [ModelRelation]
-        public UserModel User {
+        public UserModel User
+        {
             get { return user.Get (Data.UserId); }
             set { user.Set (value); }
         }
 
         public static explicit operator WorkspaceUserModel (WorkspaceUserData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new WorkspaceUserModel (data);
         }
 

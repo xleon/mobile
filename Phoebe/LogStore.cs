@@ -70,8 +70,9 @@ namespace Toggl.Phoebe
         private void EnsureProcessing ()
         {
             lock (syncRoot) {
-                if (isProcessing)
+                if (isProcessing) {
                     return;
+                }
 
                 isProcessing = true;
             }
@@ -118,8 +119,9 @@ namespace Toggl.Phoebe
             if (logFile.Exists && logFile.Length >= FileTrimThresholdSize) {
                 var tmpFile = new FileInfo (Path.Combine (logDir, FileTempName));
                 try {
-                    if (tmpFile.Exists)
+                    if (tmpFile.Exists) {
                         tmpFile.Delete ();
+                    }
                     File.Move (logFile.FullName, tmpFile.FullName);
                     logFile.Refresh ();
                     tmpFile.Refresh ();

@@ -41,8 +41,9 @@ namespace Toggl.Phoebe.Data
 
         public void Add (CommonData dataObject, CommonData parent = null)
         {
-            if (parent != null)
+            if (parent != null) {
                 Add (parent);
+            }
 
             var node = GetOrCreateNode (dataObject);
 
@@ -57,8 +58,9 @@ namespace Toggl.Phoebe.Data
         public IEnumerable<CommonData> Remove (CommonData dataObject)
         {
             var node = GetNode (dataObject);
-            if (node == null)
+            if (node == null) {
                 return Enumerable.Empty<CommonData> ();
+            }
 
             var removedNodes = new List<Node> ();
             Remove (node, removedNodes);
@@ -67,8 +69,9 @@ namespace Toggl.Phoebe.Data
 
         private void Remove (Node node, List<Node> deleted)
         {
-            if (node == null)
+            if (node == null) {
                 return;
+            }
 
             // Remove children
             foreach (var child in node.Children.ToList ()) {
@@ -84,26 +87,30 @@ namespace Toggl.Phoebe.Data
             deleted.Add (node);
         }
 
-        public int NodeCount {
+        public int NodeCount
+        {
             get { return nodes.Count; }
         }
 
-        public IEnumerable<CommonData> Nodes {
+        public IEnumerable<CommonData> Nodes
+        {
             get { return nodes.Select (n => n.Data); }
         }
 
-        public IEnumerable<CommonData> EndNodes {
+        public IEnumerable<CommonData> EndNodes
+        {
             get {
                 return nodes.Where (n => n.Children.Count == 0)
-                    .Select (n => n.Data);
+                       .Select (n => n.Data);
             }
         }
 
         public IEnumerable<CommonData> RemoveBranch (CommonData dataObject)
         {
             var node = GetNode (dataObject);
-            if (node == null)
+            if (node == null) {
                 return Enumerable.Empty<CommonData> ();
+            }
 
             var removedNodes = new List<Node> ();
 
@@ -147,7 +154,7 @@ namespace Toggl.Phoebe.Data
             while (parentStack.Count > 0) {
                 parent = parentStack.Pop ();
                 objects = objectsStack.Pop ()
-                    .Where ((m) => m != null && (m.IsDirty || m.RemoteId == null || m.DeletedAt != null));
+                          .Where ((m) => m != null && (m.IsDirty || m.RemoteId == null || m.DeletedAt != null));
 
                 foreach (var dataObject in objects) {
                     parentStack.Push (dataObject);
@@ -164,8 +171,9 @@ namespace Toggl.Phoebe.Data
             var dataObjects = new List<CommonData> ();
 
             foreach (var relation in data.GetRelations ()) {
-                if (relation.Id == null)
+                if (relation.Id == null) {
                     continue;
+                }
 
                 // Query data in a synchronous manner to guarantee exclusive access to cache (without locking)
                 // and give other code chance to have intermediate queries.

@@ -10,13 +10,15 @@ namespace Toggl.Phoebe
 
         internal Subscription (Action<T> listener, bool threadSafe)
         {
-            if (listener == null)
+            if (listener == null) {
                 throw new ArgumentNullException ("listener");
+            }
             this.listener = listener;
             this.threadSafe = threadSafe;
         }
 
-        public Action<T> Listener {
+        public Action<T> Listener
+        {
             get { return listener; }
         }
 
@@ -25,7 +27,8 @@ namespace Toggl.Phoebe
         /// or if it should be scheduled on the main thread.
         /// </summary>
         /// <value><c>true</c> if this instance is thread safe; otherwise, <c>false</c>.</value>
-        public bool IsThreadSafe {
+        public bool IsThreadSafe
+        {
             get { return threadSafe; }
         }
     }

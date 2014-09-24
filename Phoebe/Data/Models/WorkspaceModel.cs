@@ -46,138 +46,156 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (WorkspaceData oldData, WorkspaceData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.Name != newData.Name)
+            if (oldData.Name != newData.Name) {
                 OnPropertyChanged (PropertyName);
-            if (oldData.IsPremium != newData.IsPremium)
+            }
+            if (oldData.IsPremium != newData.IsPremium) {
                 OnPropertyChanged (PropertyIsPremium);
-            if (oldData.DefaultRate != newData.DefaultRate)
+            }
+            if (oldData.DefaultRate != newData.DefaultRate) {
                 OnPropertyChanged (PropertyDefaultRate);
-            if (oldData.DefaultCurrency != newData.DefaultCurrency)
+            }
+            if (oldData.DefaultCurrency != newData.DefaultCurrency) {
                 OnPropertyChanged (PropertyDefaultCurrency);
-            if (oldData.ProjectCreationPrivileges != newData.ProjectCreationPrivileges)
+            }
+            if (oldData.ProjectCreationPrivileges != newData.ProjectCreationPrivileges) {
                 OnPropertyChanged (PropertyProjectCreationPrivileges);
-            if (oldData.BillableRatesVisibility != newData.BillableRatesVisibility)
+            }
+            if (oldData.BillableRatesVisibility != newData.BillableRatesVisibility) {
                 OnPropertyChanged (PropertyBillableRatesVisibility);
-            if (oldData.RoundingMode != newData.RoundingMode)
+            }
+            if (oldData.RoundingMode != newData.RoundingMode) {
                 OnPropertyChanged (PropertyRoundingMode);
-            if (oldData.RoundingPercision != newData.RoundingPercision)
+            }
+            if (oldData.RoundingPercision != newData.RoundingPercision) {
                 OnPropertyChanged (PropertyRoundingPercision);
-            if (oldData.LogoUrl != newData.LogoUrl)
+            }
+            if (oldData.LogoUrl != newData.LogoUrl) {
                 OnPropertyChanged (PropertyLogoUrl);
+            }
         }
 
-        public string Name {
+        public string Name
+        {
             get {
                 EnsureLoaded ();
                 return Data.Name;
-            }
-            set {
-                if (Name == value)
+            } set {
+                if (Name == value) {
                     return;
+                }
 
                 MutateData (data => data.Name = value);
             }
         }
 
-        public bool IsPremium {
+        public bool IsPremium
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsPremium;
-            }
-            set {
-                if (IsPremium == value)
+            } set {
+                if (IsPremium == value) {
                     return;
+                }
 
                 MutateData (data => data.IsPremium = value);
             }
         }
 
-        public decimal? DefaultRate {
+        public decimal? DefaultRate
+        {
             get {
                 EnsureLoaded ();
                 return Data.DefaultRate;
-            }
-            set {
-                if (DefaultRate == value)
+            } set {
+                if (DefaultRate == value) {
                     return;
+                }
 
                 MutateData (data => data.DefaultRate = value);
             }
         }
 
-        public string DefaultCurrency {
+        public string DefaultCurrency
+        {
             get {
                 EnsureLoaded ();
                 return Data.DefaultCurrency;
-            }
-            set {
-                if (DefaultCurrency == value)
+            } set {
+                if (DefaultCurrency == value) {
                     return;
+                }
 
                 MutateData (data => data.DefaultCurrency = value);
             }
         }
 
-        public AccessLevel ProjectCreationPrivileges {
+        public AccessLevel ProjectCreationPrivileges
+        {
             get {
                 EnsureLoaded ();
                 return Data.ProjectCreationPrivileges;
-            }
-            set {
-                if (ProjectCreationPrivileges == value)
+            } set {
+                if (ProjectCreationPrivileges == value) {
                     return;
+                }
 
                 MutateData (data => data.ProjectCreationPrivileges = value);
             }
         }
 
-        public AccessLevel BillableRatesVisibility {
+        public AccessLevel BillableRatesVisibility
+        {
             get {
                 EnsureLoaded ();
                 return Data.BillableRatesVisibility;
-            }
-            set {
-                if (BillableRatesVisibility == value)
+            } set {
+                if (BillableRatesVisibility == value) {
                     return;
+                }
 
                 MutateData (data => data.BillableRatesVisibility = value);
             }
         }
 
-        public RoundingMode RoundingMode {
+        public RoundingMode RoundingMode
+        {
             get {
                 EnsureLoaded ();
                 return Data.RoundingMode;
-            }
-            set {
-                if (RoundingMode == value)
+            } set {
+                if (RoundingMode == value) {
                     return;
+                }
 
                 MutateData (data => data.RoundingMode = value);
             }
         }
 
-        public int RoundingPercision {
+        public int RoundingPercision
+        {
             get {
                 EnsureLoaded ();
                 return Data.RoundingPercision;
-            }
-            set {
-                if (RoundingPercision == value)
+            } set {
+                if (RoundingPercision == value) {
                     return;
+                }
 
                 MutateData (data => data.RoundingPercision = value);
             }
         }
 
-        public string LogoUrl {
+        public string LogoUrl
+        {
             get {
                 EnsureLoaded ();
                 return Data.LogoUrl;
-            }
-            set {
-                if (LogoUrl == value)
+            } set {
+                if (LogoUrl == value) {
                     return;
+                }
 
                 MutateData (data => data.LogoUrl = value);
             }
@@ -185,8 +203,9 @@ namespace Toggl.Phoebe.Data.Models
 
         public static explicit operator WorkspaceModel (WorkspaceData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new WorkspaceModel (data);
         }
 

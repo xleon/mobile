@@ -47,37 +47,43 @@ namespace Toggl.Phoebe.Data.Models
         protected override void DetectChangedProperties (ProjectUserData oldData, ProjectUserData newData)
         {
             base.DetectChangedProperties (oldData, newData);
-            if (oldData.IsManager != newData.IsManager)
+            if (oldData.IsManager != newData.IsManager) {
                 OnPropertyChanged (PropertyIsManager);
-            if (oldData.HourlyRate != newData.HourlyRate)
+            }
+            if (oldData.HourlyRate != newData.HourlyRate) {
                 OnPropertyChanged (PropertyHourlyRate);
-            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance)
+            }
+            if (oldData.ProjectId != newData.ProjectId || project.IsNewInstance) {
                 OnPropertyChanged (PropertyProject);
-            if (oldData.UserId != newData.UserId || user.IsNewInstance)
+            }
+            if (oldData.UserId != newData.UserId || user.IsNewInstance) {
                 OnPropertyChanged (PropertyUser);
+            }
         }
 
-        public bool IsManager {
+        public bool IsManager
+        {
             get {
                 EnsureLoaded ();
                 return Data.IsManager;
-            }
-            set {
-                if (IsManager == value)
+            } set {
+                if (IsManager == value) {
                     return;
+                }
 
                 MutateData (data => data.IsManager = value);
             }
         }
 
-        public int HourlyRate {
+        public int HourlyRate
+        {
             get {
                 EnsureLoaded ();
                 return Data.HourlyRate;
-            }
-            set {
-                if (HourlyRate == value)
+            } set {
+                if (HourlyRate == value) {
                     return;
+                }
 
                 MutateData (data => data.HourlyRate = value);
             }
@@ -104,21 +110,24 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         [ModelRelation]
-        public ProjectModel Project {
+        public ProjectModel Project
+        {
             get { return project.Get (Data.ProjectId); }
             set { project.Set (value); }
         }
 
         [ModelRelation]
-        public UserModel User {
+        public UserModel User
+        {
             get { return user.Get (Data.UserId); }
             set { user.Set (value); }
         }
 
         public static explicit operator ProjectUserModel (ProjectUserData data)
         {
-            if (data == null)
+            if (data == null) {
                 return null;
+            }
             return new ProjectUserModel (data);
         }
 

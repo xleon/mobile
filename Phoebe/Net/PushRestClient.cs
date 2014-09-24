@@ -37,14 +37,14 @@ namespace Toggl.Phoebe.Net
             switch (service) {
             case PushService.GCM:
                 return new JObject (
-                    new JProperty ("pushservicetype", "gcm"),
-                    new JProperty ("regid", regid)
-                ).ToString ();
+                           new JProperty ("pushservicetype", "gcm"),
+                           new JProperty ("regid", regid)
+                       ).ToString ();
             case PushService.APNS:
                 return new JObject (
-                    new JProperty ("pushservicetype", "apns"),
-                    new JProperty ("devtoken", regid)
-                ).ToString ();
+                           new JProperty ("pushservicetype", "apns"),
+                           new JProperty ("devtoken", regid)
+                       ).ToString ();
             default:
                 throw new ArgumentException ("Unknown service", "service");
             }
@@ -53,8 +53,8 @@ namespace Toggl.Phoebe.Net
         private void AddAuthToken (string authToken, HttpRequestMessage req)
         {
             req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
-                    string.Format ("{0}:api_token", authToken))));
+                    Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                                                string.Format ("{0}:api_token", authToken))));
         }
 
         public async Task Register (string authToken, PushService service, string regid)

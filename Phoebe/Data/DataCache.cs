@@ -55,8 +55,9 @@ namespace Toggl.Phoebe.Data
         private void OnDataChange (DataChangeMessage msg)
         {
             var data = msg.Data as CommonData;
-            if (data == null)
+            if (data == null) {
                 return;
+            }
 
             lock (syncRoot) {
                 if (msg.Action == DataAction.Delete) {
@@ -75,7 +76,7 @@ namespace Toggl.Phoebe.Data
         }
 
         public async Task<T> GetAsync<T> (Guid id)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             return (T)await GetAsync (typeof(T), id).ConfigureAwait (false);
         }
@@ -131,7 +132,7 @@ namespace Toggl.Phoebe.Data
         }
 
         public bool TryGetCached<T> (Guid id, out T data)
-            where T : CommonData, new()
+        where T : CommonData, new()
         {
             CommonData commonData;
             if (TryGetCached (typeof(T), id, out commonData)) {
@@ -148,12 +149,14 @@ namespace Toggl.Phoebe.Data
 
             lock (syncRoot) {
                 var entry = registry.FirstOrDefault (e => e.DataType == type && e.Id == id);
-                if (entry == null)
+                if (entry == null) {
                     return false;
+                }
 
                 // Check that the data has not been collected already or is not in the process of loading
-                if (!entry.Data.TryGetTarget (out data))
+                if (!entry.Data.TryGetTarget (out data)) {
                     return false;
+                }
 
                 entry.Touch ();
                 return true;
@@ -193,20 +196,17 @@ namespace Toggl.Phoebe.Data
         {
             private TaskCompletionSource<CommonData> loadTCS;
 
-            public Entry (Type dataType, Guid id)
-            {
+            public Entry (Type dataType, Guid id) {
                 DataType = dataType;
                 Id = id;
                 Data = new WeakReference<CommonData> (null);
             }
 
-            public void Touch ()
-            {
+            public void Touch () {
                 AccessTime = Time.UtcNow;
             }
 
-            public Task<CommonData> LoadAsync ()
-            {
+            public Task<CommonData> LoadAsync () {
                 if (loadTCS != null) {
                     return loadTCS.Task;
                 }
@@ -219,17 +219,16 @@ namespace Toggl.Phoebe.Data
                 return tcs.Task;
             }
 
-            private async void StartLoad ()
-            {
+            private async void StartLoad () {
                 var tcs = loadTCS;
                 CommonData data = null;
 
                 try {
                     var dataStore = ServiceContainer.Resolve<IDataStore> ();
                     var rows = await dataStore.Table<T> ()
-                        .Take (1)
-                        .QueryAsync (r => r.Id == Id)
-                        .ConfigureAwait (false);
+                               .Take (1)
+                               .QueryAsync (r => r.Id == Id)
+                               .ConfigureAwait (false);
 
                     data = rows.FirstOrDefault ();
                     if (data != null) {

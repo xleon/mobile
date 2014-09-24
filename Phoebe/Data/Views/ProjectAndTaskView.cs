@@ -280,8 +280,9 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void Reload ()
         {
-            if (IsLoading)
+            if (IsLoading) {
                 return;
+            }
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var shouldSubscribe = subscriptionDataChange != null;
@@ -304,12 +305,12 @@ namespace Toggl.Phoebe.Data.Views
                 OnUpdated ();
 
                 var workspacesTask = store.Table<WorkspaceData> ()
-                    .QueryAsync (r => r.DeletedAt == null);
+                                     .QueryAsync (r => r.DeletedAt == null);
                 var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
                 var tasksTask = store.Table<TaskData> ()
-                    .QueryAsync (r => r.DeletedAt == null && r.IsActive == true);
+                                .QueryAsync (r => r.DeletedAt == null && r.IsActive == true);
                 var clientsTask = store.Table<ClientData> ()
-                    .QueryAsync (r => r.DeletedAt == null);
+                                  .QueryAsync (r => r.DeletedAt == null);
 
                 await Task.WhenAll (workspacesTask, projectsTask, tasksTask, clientsTask);
 
@@ -401,17 +402,18 @@ namespace Toggl.Phoebe.Data.Views
         private static void SortTasks (List<TaskData> data)
         {
             data.Sort ((a, b) => String.Compare (
-                a.Name ?? String.Empty,
-                b.Name ?? String.Empty,
-                StringComparison.Ordinal
-            ));
+                           a.Name ?? String.Empty,
+                           b.Name ?? String.Empty,
+                           StringComparison.Ordinal
+                       ));
         }
 
         public void LoadMore ()
         {
         }
 
-        public IEnumerable<object> Data {
+        public IEnumerable<object> Data
+        {
             get {
                 var includeWorkspaces = workspaceWrappers.Count > 1;
 
@@ -431,15 +433,18 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public IEnumerable<Workspace> Workspaces {
+        public IEnumerable<Workspace> Workspaces
+        {
             get { return workspaceWrappers; }
         }
 
-        public long Count {
+        public long Count
+        {
             get { return Data.LongCount (); }
         }
 
-        public bool HasMore {
+        public bool HasMore
+        {
             get { return false; }
         }
 
@@ -460,18 +465,22 @@ namespace Toggl.Phoebe.Data.Views
                 }));
             }
 
-            public WorkspaceData Data {
+            public WorkspaceData Data
+            {
                 get { return dataObject; }
                 set {
-                    if (value == null)
+                    if (value == null) {
                         throw new ArgumentNullException ("value");
-                    if (dataObject.Id != value.Id)
+                    }
+                    if (dataObject.Id != value.Id) {
                         throw new ArgumentException ("Cannot change Id of the workspace.", "value");
+                    }
                     dataObject = value;
                 }
             }
 
-            public List<Project> Projects {
+            public List<Project> Projects
+            {
                 get { return projects; }
             }
         }
@@ -494,30 +503,37 @@ namespace Toggl.Phoebe.Data.Views
                 workspaceId = workspaceData.Id;
             }
 
-            public bool IsNoProject {
+            public bool IsNoProject
+            {
                 get { return dataObject == null; }
             }
 
-            public bool IsNewProject {
+            public bool IsNewProject
+            {
                 get { return dataObject != null && dataObject.Id == Guid.Empty; }
             }
 
-            public Guid WorkspaceId {
+            public Guid WorkspaceId
+            {
                 get { return dataObject != null ? dataObject.WorkspaceId : workspaceId; }
             }
 
-            public ProjectData Data {
+            public ProjectData Data
+            {
                 get { return dataObject; }
                 set {
-                    if (value == null)
+                    if (value == null) {
                         throw new ArgumentNullException ("value");
-                    if (dataObject.Id != value.Id)
+                    }
+                    if (dataObject.Id != value.Id) {
                         throw new ArgumentException ("Cannot change Id of the project.", "value");
+                    }
                     dataObject = value;
                 }
             }
 
-            public List<TaskData> Tasks {
+            public List<TaskData> Tasks
+            {
                 get { return tasks; }
             }
         }

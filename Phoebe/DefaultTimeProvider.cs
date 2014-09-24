@@ -5,19 +5,23 @@ namespace Toggl.Phoebe
 {
     public class DefaultTimeProvider : ITimeProvider
     {
-        private static TimeSpan Correction {
+        private static TimeSpan Correction
+        {
             get { return ServiceContainer.Resolve<TimeCorrectionManager> ().Correction; }
         }
 
-        public DateTime Now {
+        public DateTime Now
+        {
             get { return DateTime.Now + Correction; }
         }
 
-        public DateTime UtcNow {
+        public DateTime UtcNow
+        {
             get { return DateTime.UtcNow + Correction; }
         }
 
-        public string TimeZoneId {
+        public string TimeZoneId
+        {
             get {
                 TimeZoneInfo tz;
                 try {

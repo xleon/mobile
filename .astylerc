@@ -5,3 +5,4 @@
 --convert-tabs
 --lineend=linux
 --keep-one-line-blocks
+--pad-first-paren-out

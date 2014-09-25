@@ -100,7 +100,7 @@ namespace Toggl.Ross
 
                 if (hasBlur) {
                     var inputRadius = blurRadius * UIScreen.MainScreen.Scale;
-                    uint radius = (uint)(Math.Floor (inputRadius * 3 * Math.Sqrt (2 * Math.PI) / 4 + 0.5));
+                    uint radius = (uint) (Math.Floor (inputRadius * 3 * Math.Sqrt (2 * Math.PI) / 4 + 0.5));
                     if ((radius % 2) != 1) {
                         radius += 1;
                     }

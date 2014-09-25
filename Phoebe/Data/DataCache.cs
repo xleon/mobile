@@ -78,7 +78,7 @@ namespace Toggl.Phoebe.Data
         public async Task<T> GetAsync<T> (Guid id)
         where T : CommonData, new()
         {
-            return (T)await GetAsync (typeof(T), id).ConfigureAwait (false);
+            return (T)await GetAsync (typeof (T), id).ConfigureAwait (false);
         }
 
         public void Trim ()
@@ -123,7 +123,7 @@ namespace Toggl.Phoebe.Data
                     Trim ();
 
                     // Add the new entry
-                    entry = (IEntry)Activator.CreateInstance (typeof(Entry<>).MakeGenericType (type), type, id);
+                    entry = (IEntry)Activator.CreateInstance (typeof (Entry<>).MakeGenericType (type), type, id);
                     registry.Add (entry);
                 }
 
@@ -135,7 +135,7 @@ namespace Toggl.Phoebe.Data
         where T : CommonData, new()
         {
             CommonData commonData;
-            if (TryGetCached (typeof(T), id, out commonData)) {
+            if (TryGetCached (typeof (T), id, out commonData)) {
                 data = (T)commonData;
                 return true;
             }

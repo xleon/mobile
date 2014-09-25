@@ -574,7 +574,7 @@ namespace Toggl.Ross.ViewControllers
         {
             UIView prev = null;
 
-            var subviews = container.Subviews.Where (v => !v.Hidden && !(v == datePicker && DatePickerHidden)).ToList ();
+            var subviews = container.Subviews.Where (v => !v.Hidden && ! (v == datePicker && DatePickerHidden)).ToList ();
             foreach (var v in subviews) {
                 var isLast = subviews [subviews.Count - 1] == v;
 

@@ -156,7 +156,7 @@ namespace Toggl.Ross.ViewControllers
                 if (view is UILabel) {
                     topMargin = 7f;
                     horizMargin = 15f;
-                } else if (view is SeparatorView && !(prev is LabelSwitchView)) {
+                } else if (view is SeparatorView && ! (prev is LabelSwitchView)) {
                     topMargin = 20f;
                     horizMargin = 0f;
                 }

@@ -77,7 +77,7 @@ namespace Toggl.Joey
         {
             public override void OnReceive (Context context, Intent intent)
             {
-                var serviceIntent = new Intent (context, typeof(StopRunningTimeEntryService));
+                var serviceIntent = new Intent (context, typeof (StopRunningTimeEntryService));
                 StartWakefulService (context, serviceIntent);
             }
         }

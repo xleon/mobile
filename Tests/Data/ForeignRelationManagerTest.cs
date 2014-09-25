@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Tests.Data
             // Create test data object:
             var inst = Activator.CreateInstance (dataType);
             foreach (var prop in relationProps) {
-                Assert.IsTrue (prop.PropertyType == typeof(Guid) || prop.PropertyType == typeof(Guid?), "Relations should be defined with Guid data type only.");
+                Assert.IsTrue (prop.PropertyType == typeof (Guid) || prop.PropertyType == typeof (Guid?), "Relations should be defined with Guid data type only.");
                 prop.SetValue (inst, Guid.NewGuid ());
             }
 
@@ -37,10 +37,10 @@ namespace Toggl.Phoebe.Tests.Data
 
                 Guid? relationId;
                 if (relation.Required) {
-                    Assert.AreEqual (typeof(Guid), prop.PropertyType, "Required property type should be of type Guid");
+                    Assert.AreEqual (typeof (Guid), prop.PropertyType, "Required property type should be of type Guid");
                     relationId = (Guid)prop.GetValue (inst);
                 } else {
-                    Assert.AreEqual (typeof(Guid?), prop.PropertyType, "Optional property type should be of type Guid?");
+                    Assert.AreEqual (typeof (Guid?), prop.PropertyType, "Optional property type should be of type Guid?");
                     relationId = (Guid?)prop.GetValue (inst);
                 }
 
@@ -84,9 +84,9 @@ namespace Toggl.Phoebe.Tests.Data
         public static IEnumerable<Type> DataObjectTypes
         {
             get {
-                var dataType = typeof(WorkspaceData);
+                var dataType = typeof (WorkspaceData);
                 return from t in dataType.Assembly.GetTypes ()
-                       where t.Namespace == dataType.Namespace && !t.IsAbstract && typeof(CommonData).IsAssignableFrom (t)
+                       where t.Namespace == dataType.Namespace && !t.IsAbstract && typeof (CommonData).IsAssignableFrom (t)
                        select t;
             }
         }

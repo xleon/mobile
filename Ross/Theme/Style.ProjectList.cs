@@ -67,7 +67,7 @@ namespace Toggl.Ross.Theme
                 var ctx = UIGraphics.GetCurrentContext ();
 
                 ctx.SetFillColorWithColor (circleColor.CGColor);
-                ctx.AddArc (imageSize / 2f, imageSize / 2f, circleDiameter / 2f, 0, (float)(2 * Math.PI), true);
+                ctx.AddArc (imageSize / 2f, imageSize / 2f, circleDiameter / 2f, 0, (float) (2 * Math.PI), true);
                 ctx.FillPath ();
 
                 var image = UIGraphics.GetImageFromCurrentImageContext ();

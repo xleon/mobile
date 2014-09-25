@@ -81,7 +81,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.Attach ();
 
-                controller.TableView.RegisterClassForCellReuse (typeof(ClientCell), ClientCellId);
+                controller.TableView.RegisterClassForCellReuse (typeof (ClientCell), ClientCellId);
                 controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
             }
 

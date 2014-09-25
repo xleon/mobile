@@ -37,16 +37,16 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public bool IsBillable { get; set; }
 
-        [ForeignRelation (typeof(UserData))]
+        [ForeignRelation (typeof (UserData))]
         public Guid UserId { get; set; }
 
-        [ForeignRelation (typeof(WorkspaceData))]
+        [ForeignRelation (typeof (WorkspaceData))]
         public Guid WorkspaceId { get; set; }
 
-        [ForeignRelation (typeof(ProjectData))]
+        [ForeignRelation (typeof (ProjectData))]
         public Guid? ProjectId { get; set; }
 
-        [ForeignRelation (typeof(TaskData))]
+        [ForeignRelation (typeof (TaskData))]
         public Guid? TaskId { get; set; }
     }
 }

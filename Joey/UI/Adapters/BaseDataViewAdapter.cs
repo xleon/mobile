@@ -56,7 +56,7 @@ namespace Toggl.Joey.UI.Adapters
         public virtual T GetEntry (int position)
         {
             if (dataView.IsLoading && position == dataView.Count) {
-                return default(T);
+                return default (T);
             }
             return dataView.Data.ElementAt (position);
         }

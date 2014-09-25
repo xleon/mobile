@@ -16,10 +16,10 @@ namespace Toggl.Phoebe.Data.DataObjects
             TagId = other.TagId;
         }
 
-        [ForeignRelation (typeof(TimeEntryData))]
+        [ForeignRelation (typeof (TimeEntryData))]
         public Guid TimeEntryId { get; set; }
 
-        [ForeignRelation (typeof(TagData))]
+        [ForeignRelation (typeof (TagData))]
         public Guid TagId { get; set; }
     }
 }

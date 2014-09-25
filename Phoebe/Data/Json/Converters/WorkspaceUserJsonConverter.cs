@@ -17,12 +17,12 @@ namespace Toggl.Phoebe.Data.Json.Converters
             if (userRows.Count == 0) {
                 throw new InvalidOperationException (String.Format (
                         "Cannot export data with invalid local relation ({0}#{1}) to JSON.",
-                        typeof(UserData).Name, data.UserId
+                        typeof (UserData).Name, data.UserId
                                                      ));
             }
             var user = userRows [0];
             if (user.RemoteId == null) {
-                throw new RelationRemoteIdMissingException (typeof(UserData), data.UserId);
+                throw new RelationRemoteIdMissingException (typeof (UserData), data.UserId);
             }
 
             var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);

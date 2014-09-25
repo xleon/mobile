@@ -80,7 +80,7 @@ namespace Toggl.Joey.UI.Activities
                 // faking that we're still authenticating
                 IsAuthenticating = true;
 
-                var intent = new Intent (this, typeof(MainDrawerActivity));
+                var intent = new Intent (this, typeof (MainDrawerActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);
                 StartActivity (intent);
                 Finish ();
@@ -481,10 +481,10 @@ namespace Toggl.Joey.UI.Activities
                     }
 
                     // Workaround for Android linker bug which forgets to register JNI types
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GoogleAuthException", typeof(GoogleAuthException));
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GooglePlayServicesAvailabilityException", typeof(GooglePlayServicesAvailabilityException));
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableAuthException", typeof(UserRecoverableAuthException));
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableNotifiedException", typeof(UserRecoverableNotifiedException));
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GoogleAuthException", typeof (GoogleAuthException));
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GooglePlayServicesAvailabilityException", typeof (GooglePlayServicesAvailabilityException));
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableAuthException", typeof (UserRecoverableAuthException));
+                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableNotifiedException", typeof (UserRecoverableNotifiedException));
 
                     String token = null;
                     try {

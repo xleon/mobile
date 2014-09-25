@@ -37,7 +37,7 @@ namespace Toggl.Joey.Net
 
         private void SetSyncWhenNetworkPresent (bool enable)
         {
-            var receiver = new ComponentName (context, Java.Lang.Class.FromType (typeof(SyncOnNetworkPresentChangeReceiver)));
+            var receiver = new ComponentName (context, Java.Lang.Class.FromType (typeof (SyncOnNetworkPresentChangeReceiver)));
             var setting = context.PackageManager.GetComponentEnabledSetting (receiver);
 
             if (enable) {

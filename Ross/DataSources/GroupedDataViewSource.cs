@@ -151,8 +151,8 @@ namespace Toggl.Ross.DataSources
                     for (var rowIdx = 0; rowIdx < rowsMaxCount; rowIdx++) {
                         var hasOldRow = rowIdx < oldRows.Count;
                         var hasNewRow = rowIdx < newRows.Count;
-                        var oldRow = hasOldRow ? oldRows [rowIdx] : default(TRow);
-                        var newRow = hasNewRow ? newRows [rowIdx] : default(TRow);
+                        var oldRow = hasOldRow ? oldRows [rowIdx] : default (TRow);
+                        var newRow = hasNewRow ? newRows [rowIdx] : default (TRow);
 
                         if (RowsMatch (oldRow, newRow)) {
                             continue;

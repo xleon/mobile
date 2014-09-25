@@ -91,7 +91,7 @@ namespace Toggl.Joey.UI.Fragments
                 WorkspaceModel workspace = null;
 
                 if (m is TaskData) {
-                    task = (TaskModel)(TaskData)m;
+                    task = (TaskModel) (TaskData)m;
                     if (task.Project != null) {
                         await task.Project.LoadAsync ();
                         project = task.Project;

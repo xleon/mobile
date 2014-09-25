@@ -53,15 +53,15 @@ namespace Toggl.Phoebe.Data
         public static Guid GetTagIdFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
         {
             var con = ctx.Connection;
-            var tagTbl = con.GetMapping (typeof(TagData)).TableName;
+            var tagTbl = con.GetMapping (typeof (TagData)).TableName;
             var q = String.Concat ("SELECT Id AS Value FROM ", tagTbl, " WHERE WorkspaceId=? AND Name=?");
             return con.ExecuteScalar<Guid> (q, workspaceId, name);
         }
 
         public static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
-            var projectTbl = ds.GetTableName (typeof(ProjectData));
-            var projectUserTbl = ds.GetTableName (typeof(ProjectUserData));
+            var projectTbl = ds.GetTableName (typeof (ProjectData));
+            var projectUserTbl = ds.GetTableName (typeof (ProjectUserData));
             var q = String.Concat (
                         "SELECT p.* FROM ", projectTbl, " AS p ",
                         "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
@@ -72,8 +72,8 @@ namespace Toggl.Phoebe.Data
 
         public static Task<long> CountUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
-            var projectTbl = ds.GetTableName (typeof(ProjectData));
-            var projectUserTbl = ds.GetTableName (typeof(ProjectUserData));
+            var projectTbl = ds.GetTableName (typeof (ProjectData));
+            var projectUserTbl = ds.GetTableName (typeof (ProjectUserData));
             var q = String.Concat (
                         "SELECT COUNT(*) FROM ", projectTbl, " AS p ",
                         "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
@@ -84,8 +84,8 @@ namespace Toggl.Phoebe.Data
 
         public static Task<List<TagData>> GetTimeEntryTags (this IDataStore ds, Guid timeEntryId)
         {
-            var tagTbl = ds.GetTableName (typeof(TagData));
-            var timeEntryTagTbl = ds.GetTableName (typeof(TimeEntryTagData));
+            var tagTbl = ds.GetTableName (typeof (TagData));
+            var timeEntryTagTbl = ds.GetTableName (typeof (TimeEntryTagData));
             var q = String.Concat (
                         "SELECT t.* FROM ", tagTbl, " AS t ",
                         "INNER JOIN ", timeEntryTagTbl, " AS tet ON tet.TagId = t.Id ",
@@ -101,7 +101,7 @@ namespace Toggl.Phoebe.Data
                     var con = ctx.Connection;
                     var tbl = con.GetMapping (type).TableName;
 
-                    if (type.IsSubclassOf (typeof(CommonData))) {
+                    if (type.IsSubclassOf (typeof (CommonData))) {
                         var q = String.Concat (
                                     "UPDATE ", tbl, " SET ModifiedAt = ? ",
                                     "WHERE RemoteId IS NOT NULL AND DeletedAt IS NULL ",

@@ -11,23 +11,23 @@ namespace Toggl.Phoebe.Data.Json.Converters
                                          Guid? localIdHint = null, CommonData mergeBase = null)
         {
             var type = json.GetType ();
-            if (type == typeof(ClientJson)) {
+            if (type == typeof (ClientJson)) {
                 return Import ((ClientJson)json, ctx, localIdHint, (ClientData)mergeBase);
-            } else if (type == typeof(ProjectJson)) {
+            } else if (type == typeof (ProjectJson)) {
                 return Import ((ProjectJson)json, ctx, localIdHint, (ProjectData)mergeBase);
-            } else if (type == typeof(ProjectUserJson)) {
+            } else if (type == typeof (ProjectUserJson)) {
                 return Import ((ProjectUserJson)json, ctx, localIdHint, (ProjectUserData)mergeBase);
-            } else if (type == typeof(TagJson)) {
+            } else if (type == typeof (TagJson)) {
                 return Import ((TagJson)json, ctx, localIdHint, (TagData)mergeBase);
-            } else if (type == typeof(TaskJson)) {
+            } else if (type == typeof (TaskJson)) {
                 return Import ((TaskJson)json, ctx, localIdHint, (TaskData)mergeBase);
-            } else if (type == typeof(TimeEntryJson)) {
+            } else if (type == typeof (TimeEntryJson)) {
                 return Import ((TimeEntryJson)json, ctx, localIdHint, (TimeEntryData)mergeBase);
-            } else if (type == typeof(UserJson)) {
+            } else if (type == typeof (UserJson)) {
                 return Import ((UserJson)json, ctx, localIdHint, (UserData)mergeBase);
-            } else if (type == typeof(WorkspaceJson)) {
+            } else if (type == typeof (WorkspaceJson)) {
                 return Import ((WorkspaceJson)json, ctx, localIdHint, (WorkspaceData)mergeBase);
-            } else if (type == typeof(WorkspaceUserJson)) {
+            } else if (type == typeof (WorkspaceUserJson)) {
                 return Import ((WorkspaceUserJson)json, ctx, localIdHint, (WorkspaceUserData)mergeBase);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
@@ -36,23 +36,23 @@ namespace Toggl.Phoebe.Data.Json.Converters
         public static CommonJson Export (this CommonData data, IDataStoreContext ctx)
         {
             var type = data.GetType ();
-            if (type == typeof(ClientData)) {
+            if (type == typeof (ClientData)) {
                 return Export ((ClientData)data, ctx);
-            } else if (type == typeof(ProjectData)) {
+            } else if (type == typeof (ProjectData)) {
                 return Export ((ProjectData)data, ctx);
-            } else if (type == typeof(ProjectUserData)) {
+            } else if (type == typeof (ProjectUserData)) {
                 return Export ((ProjectUserData)data, ctx);
-            } else if (type == typeof(TagData)) {
+            } else if (type == typeof (TagData)) {
                 return Export ((TagData)data, ctx);
-            } else if (type == typeof(TaskData)) {
+            } else if (type == typeof (TaskData)) {
                 return Export ((TaskData)data, ctx);
-            } else if (type == typeof(TimeEntryData)) {
+            } else if (type == typeof (TimeEntryData)) {
                 return Export ((TimeEntryData)data, ctx);
-            } else if (type == typeof(UserData)) {
+            } else if (type == typeof (UserData)) {
                 return Export ((UserData)data, ctx);
-            } else if (type == typeof(WorkspaceData)) {
+            } else if (type == typeof (WorkspaceData)) {
                 return Export ((WorkspaceData)data, ctx);
-            } else if (type == typeof(WorkspaceUserData)) {
+            } else if (type == typeof (WorkspaceUserData)) {
                 return Export ((WorkspaceUserData)data, ctx);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));

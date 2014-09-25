@@ -93,9 +93,9 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.Attach ();
 
-                controller.TableView.RegisterClassForCellReuse (typeof(WorkspaceHeaderCell), WorkspaceHeaderId);
-                controller.TableView.RegisterClassForCellReuse (typeof(ProjectCell), ProjectCellId);
-                controller.TableView.RegisterClassForCellReuse (typeof(TaskCell), TaskCellId);
+                controller.TableView.RegisterClassForCellReuse (typeof (WorkspaceHeaderCell), WorkspaceHeaderId);
+                controller.TableView.RegisterClassForCellReuse (typeof (ProjectCell), ProjectCellId);
+                controller.TableView.RegisterClassForCellReuse (typeof (TaskCell), TaskCellId);
                 controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
             }
 
@@ -163,8 +163,8 @@ namespace Toggl.Ross.ViewControllers
                     cell.Bind ((TaskModel)taskData);
 
                     var rows = GetCachedRows (GetSection (indexPath.Section));
-                    cell.IsFirst = indexPath.Row < 1 || !(rows [indexPath.Row - 1] is TaskModel);
-                    cell.IsLast = indexPath.Row >= rows.Count || !(rows [indexPath.Row + 1] is TaskModel);
+                    cell.IsFirst = indexPath.Row < 1 || ! (rows [indexPath.Row - 1] is TaskModel);
+                    cell.IsLast = indexPath.Row >= rows.Count || ! (rows [indexPath.Row + 1] is TaskModel);
                     return cell;
                 }
 
@@ -347,7 +347,7 @@ namespace Toggl.Ross.ViewControllers
                 var attrs = new UIStringAttributes () {
                     Font = view.Font,
                 };
-                var rect = ((NSString)(view.Text ?? String.Empty)).GetBoundingRect (
+                var rect = ((NSString) (view.Text ?? String.Empty)).GetBoundingRect (
                                new SizeF (Single.MaxValue, Single.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);

@@ -104,7 +104,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OpenTimeEntryEdit (TimeEntryModel model)
         {
-            var i = new Intent (Activity, typeof(EditTimeEntryActivity));
+            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
             i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
             StartActivity (i);
         }

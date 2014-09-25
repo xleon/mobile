@@ -330,19 +330,19 @@ namespace Toggl.Phoebe.Net
             var store = ServiceContainer.Resolve<IDataStore> ();
             IDataQuery<T> query;
 
-            if (typeof(T) == typeof(WorkspaceUserData)) {
+            if (typeof (T) == typeof (WorkspaceUserData)) {
                 // Exclude intermediate models which we've created from assumptions (for current user
                 // and without remote id) from returned models.
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 query = (IDataQuery<T>)store.Table<WorkspaceUserData> ()
                         .Where (r => r.UserId != userId || r.RemoteId != null);
-            } else if (typeof(T) == typeof(ProjectUserData)) {
+            } else if (typeof (T) == typeof (ProjectUserData)) {
                 // Exclude intermediate models which we've created from assumptions (for current user
                 // and without remote id) from returned models.
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 query = (IDataQuery<T>)store.Table<ProjectUserData> ()
                         .Where (r => r.UserId != userId || r.RemoteId != null);
-            } else if (typeof(T) == typeof(TimeEntryData)) {
+            } else if (typeof (T) == typeof (TimeEntryData)) {
                 // Only sync non-draft time entries for current user:
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 query = (IDataQuery<T>)store.Table<TimeEntryData> ()

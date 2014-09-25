@@ -35,7 +35,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         {
             var remoteId = ctx.GetRemoteId<T> (id);
             if (remoteId == null) {
-                throw new RelationRemoteIdMissingException (typeof(T), id);
+                throw new RelationRemoteIdMissingException (typeof (T), id);
             }
             return remoteId.Value;
         }
@@ -51,7 +51,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 // Check that the relation is actually non-existent, not just remoteId unset
                 var hasRelation = ctx.Connection.Table<T> ().Count (r => r.Id == id) > 0;
                 if (hasRelation) {
-                    throw new RelationRemoteIdMissingException (typeof(T), id.Value);
+                    throw new RelationRemoteIdMissingException (typeof (T), id.Value);
                 }
             }
             return remoteId;

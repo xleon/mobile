@@ -22,10 +22,10 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public int HourlyRate { get; set; }
 
-        [ForeignRelation (typeof(ProjectData))]
+        [ForeignRelation (typeof (ProjectData))]
         public Guid ProjectId { get; set; }
 
-        [ForeignRelation (typeof(UserData))]
+        [ForeignRelation (typeof (UserData))]
         public Guid UserId { get; set; }
     }
 }

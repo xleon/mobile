@@ -104,8 +104,8 @@ namespace Toggl.Ross.ViewControllers
                 this.controller = controller;
                 this.dataView = dataView;
 
-                controller.TableView.RegisterClassForCellReuse (typeof(TimeEntryCell), EntryCellId);
-                controller.TableView.RegisterClassForHeaderFooterViewReuse (typeof(SectionHeaderView), SectionHeaderId);
+                controller.TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
+                controller.TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
             }
 
             protected override IEnumerable<string> GetSections ()
@@ -337,7 +337,7 @@ namespace Toggl.Ross.ViewControllers
                 var attrs = new UIStringAttributes () {
                     Font = view.Font,
                 };
-                var rect = ((NSString)(view.Text ?? String.Empty)).GetBoundingRect (
+                var rect = ((NSString) (view.Text ?? String.Empty)).GetBoundingRect (
                                new SizeF (Single.MaxValue, Single.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);

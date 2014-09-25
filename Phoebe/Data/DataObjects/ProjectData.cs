@@ -37,10 +37,10 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public bool UseTasksEstimate { get; set; }
 
-        [ForeignRelation (typeof(WorkspaceData))]
+        [ForeignRelation (typeof (WorkspaceData))]
         public Guid WorkspaceId { get; set; }
 
-        [ForeignRelation (typeof(ClientData))]
+        [ForeignRelation (typeof (ClientData))]
         public Guid? ClientId { get; set; }
     }
 }

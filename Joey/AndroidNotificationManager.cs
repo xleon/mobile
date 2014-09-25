@@ -217,12 +217,12 @@ namespace Toggl.Joey
         {
             var res = ctx.Resources;
 
-            var openIntent = new Intent (ctx, typeof(MainDrawerActivity));
+            var openIntent = new Intent (ctx, typeof (MainDrawerActivity));
             openIntent.SetAction (Intent.ActionMain);
             openIntent.AddCategory (Intent.CategoryLauncher);
             var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
 
-            var stopIntent = new Intent (ctx, typeof(StopRunningTimeEntryService.Receiver));
+            var stopIntent = new Intent (ctx, typeof (StopRunningTimeEntryService.Receiver));
             var pendingStopIntent = PendingIntent.GetBroadcast (ctx, 0, stopIntent, PendingIntentFlags.UpdateCurrent);
 
             return new NotificationCompat.Builder (ctx)
@@ -239,7 +239,7 @@ namespace Toggl.Joey
         {
             var res = ctx.Resources;
 
-            var openIntent = new Intent (ctx, typeof(MainDrawerActivity));
+            var openIntent = new Intent (ctx, typeof (MainDrawerActivity));
             openIntent.SetAction (Intent.ActionMain);
             openIntent.AddCategory (Intent.CategoryLauncher);
             var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);

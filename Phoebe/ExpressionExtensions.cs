@@ -42,7 +42,7 @@ namespace Toggl.Phoebe
             var prop = member.Member as PropertyInfo;
             if (prop == null
                     || prop.DeclaringType == null
-                    || !prop.DeclaringType.IsAssignableFrom (typeof(K))
+                    || !prop.DeclaringType.IsAssignableFrom (typeof (K))
                     || prop.GetGetMethod (true).IsStatic) {
                 throw new ArgumentException ("Expression should be in the format of: (o) => o.PropertyName", "expr");
             }

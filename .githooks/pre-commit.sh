@@ -40,7 +40,7 @@ fi
 
 # Test that modified C# files are correctly formatted
 hasFormatErrors=0
-for sourceFile in $(git diff --cached --name-only --diff-filter=ACM | grep \.cs); do
+for sourceFile in $(git diff --cached --name-only --diff-filter=ACM | grep \.cs$); do
 	astyle --options=.astylerc --quiet --suffix=.ugly $sourceFile
 
 	# Restore original files

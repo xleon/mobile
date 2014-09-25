@@ -220,14 +220,10 @@ namespace Toggl.Ross.ViewControllers
 
             try {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
-                var success = await authManager.Signup (emailTextField.Text, passwordTextField.Text);
+                var authRes = await authManager.Signup (emailTextField.Text, passwordTextField.Text);
 
-                if (!success) {
-                    new UIAlertView (
-                        "SignupFailedTitle".Tr (),
-                        "SignupFailedMessage".Tr (),
-                        null,
-                        "SignupFailedOk".Tr ()).Show ();
+                if (authRes != AuthResult.Success) {
+                    AuthErrorAlert.Show(this, emailTextField.Text, authRes, AuthErrorAlert.Mode.Signup);
                 }
             } finally {
                 IsAuthenticating = false;
@@ -244,16 +240,14 @@ namespace Toggl.Ross.ViewControllers
                         var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
 
                         var authManager = ServiceContainer.Resolve<AuthManager> ();
-                        var success = await authManager.SignupWithGoogle (token);
+                        var authRes = await authManager.SignupWithGoogle (token);
 
                         // No need to keep the users Google account access around anymore
                         Google.Plus.SignIn.SharedInstance.Disconnect ();
 
-                        if (!success) {
-                            new UIAlertView (
-                                "SignupFailedTitle".Tr (),
-                                "SignupFailedMessage".Tr (),
-                                null, "SignupFailedOk".Tr (), null).Show ();
+                        if (authRes != AuthResult.Success) {
+                            var email = Google.Plus.SignIn.SharedInstance.Authentication.UserEmail;
+                            AuthErrorAlert.Show(this, email, authRes, AuthErrorAlert.Mode.Signup, googleAuth: true);
                         }
                     } else {
                         new UIAlertView (

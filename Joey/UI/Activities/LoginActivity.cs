@@ -254,9 +254,9 @@ namespace Toggl.Joey.UI.Activities
         {
             IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            bool success;
+            AuthResult authRes;
             try {
-                success = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
+                authRes = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
             } catch (InvalidOperationException ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Info (LogTag, ex, "Failed to authenticate user with password.");
@@ -265,11 +265,13 @@ namespace Toggl.Joey.UI.Activities
                 IsAuthenticating = false;
             }
 
-            if (!success) {
-                PasswordEditText.Text = String.Empty;
+            if (authRes != AuthResult.Success) {
+                if (authRes == AuthResult.InvalidCredentials) {
+                    PasswordEditText.Text = String.Empty;
+                }
                 PasswordEditText.RequestFocus ();
 
-                new InvalidCredentialsDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                ShowAuthError (EmailEditText.Text, authRes, Mode.Login);
             } else {
                 // Start the initial sync for the user
                 ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
@@ -282,9 +284,9 @@ namespace Toggl.Joey.UI.Activities
         {
             IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            bool success;
+            AuthResult authRes;
             try {
-                success = await authManager.Signup (EmailEditText.Text, PasswordEditText.Text);
+                authRes = await authManager.Signup (EmailEditText.Text, PasswordEditText.Text);
             } catch (InvalidOperationException ex) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Info (LogTag, ex, "Failed to signup user with password.");
@@ -293,10 +295,10 @@ namespace Toggl.Joey.UI.Activities
                 IsAuthenticating = false;
             }
 
-            if (!success) {
+            if (authRes != AuthResult.Success) {
                 EmailEditText.RequestFocus ();
 
-                new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                ShowAuthError (EmailEditText.Text, authRes, Mode.Signup);
             } else {
                 // Start the initial sync for the user
                 ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
@@ -386,6 +388,38 @@ namespace Toggl.Joey.UI.Activities
         private enum Mode {
             Login,
             Signup
+        }
+
+        private void ShowAuthError (string email, AuthResult res, Mode mode, bool googleAuth=false)
+        {
+            DialogFragment dia = null;
+
+            switch (res) {
+            case AuthResult.InvalidCredentials:
+                if (mode == Mode.Login && !googleAuth) {
+                    dia = new InvalidCredentialsDialogFragment ();
+                } else if (mode == Mode.Signup && !googleAuth) {
+                    dia = new SignupFailedDialogFragment ();
+                } else if (mode == Mode.Login && googleAuth) {
+                    dia = new NoAccountDialogFragment ();
+                } else if (mode == Mode.Signup && googleAuth) {
+                    dia = new SignupFailedDialogFragment ();
+                }
+                break;
+            case AuthResult.NoDefaultWorkspace:
+                dia = new NoWorkspaceDialogFragment (email);
+                break;
+            case AuthResult.NetworkError:
+                dia = new NetworkErrorDialogFragment ();
+                break;
+            default:
+                dia = new SystemErrorDialogFragment ();
+                break;
+            }
+
+            if (dia != null) {
+                dia.Show (FragmentManager, "auth_result_dialog");
+            }
         }
 
         public class GoogleAuthFragment : Fragment
@@ -511,19 +545,17 @@ namespace Toggl.Joey.UI.Activities
                         activity = Activity as LoginActivity;
                         if (activity != null && activity.CurrentMode == Mode.Signup) {
                             // Signup with Google
-                            var success = await authManager.SignupWithGoogle (token);
-                            if (!success) {
+                            var authRes = await authManager.SignupWithGoogle (token);
+                            if (authRes != AuthResult.Success) {
                                 GoogleAuthUtil.InvalidateToken (ctx, token);
-
-                                new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                                activity.ShowAuthError (Email, authRes, Mode.Signup, googleAuth: true);
                             }
                         } else {
                             // Authenticate client
-                            var success = await authManager.AuthenticateWithGoogle (token);
-                            if (!success) {
+                            var authRes = await authManager.AuthenticateWithGoogle (token);
+                            if (authRes != AuthResult.Success) {
                                 GoogleAuthUtil.InvalidateToken (ctx, token);
-
-                                new NoAccountDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
+                                activity.ShowAuthError (Email, authRes, Mode.Login, googleAuth: true);
                             }
                         }
                     } catch (InvalidOperationException ex) {
@@ -588,12 +620,10 @@ namespace Toggl.Joey.UI.Activities
             {
                 var email = accountsAdapter.GetItem (args.Which);
                 GoogleAuthFragment.Start (FragmentManager, email);
-                Dismiss ();
             }
 
             private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
             {
-                Dismiss ();
             }
 
             private ArrayAdapter<string> MakeAccountsAdapter ()
@@ -622,7 +652,6 @@ namespace Toggl.Joey.UI.Activities
 
             private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
             {
-                Dismiss ();
             }
         }
 
@@ -639,7 +668,6 @@ namespace Toggl.Joey.UI.Activities
 
             private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
             {
-                Dismiss ();
             }
         }
 
@@ -656,7 +684,89 @@ namespace Toggl.Joey.UI.Activities
 
             private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
             {
-                Dismiss ();
+            }
+        }
+
+        public class NetworkErrorDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                       .SetTitle (Resource.String.LoginNetworkErrorDialogTitle)
+                       .SetMessage (Resource.String.LoginNetworkErrorDialogText)
+                       .SetPositiveButton (Resource.String.LoginNetworkErrorDialogOk, OnOkButtonClicked)
+                       .Create ();
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+            }
+        }
+
+        public class SystemErrorDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                       .SetTitle (Resource.String.LoginSystemErrorDialogTitle)
+                       .SetMessage (Resource.String.LoginSystemErrorDialogText)
+                       .SetPositiveButton (Resource.String.LoginSystemErrorDialogOk, OnOkButtonClicked)
+                       .Create ();
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+            }
+        }
+
+        public class NoWorkspaceDialogFragment : DialogFragment
+        {
+            private const string EmailKey = "com.toggl.timer.email";
+
+            public NoWorkspaceDialogFragment ()
+            {
+            }
+
+            public NoWorkspaceDialogFragment (string email)
+            {
+                var args = new Bundle();
+                args.PutString (EmailKey, email);
+
+                Arguments = args;
+            }
+
+            private string Email
+            {
+                get {
+                    if (Arguments == null) {
+                        return String.Empty;
+                    }
+                    return Arguments.GetString (EmailKey);
+                }
+            }
+
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                       .SetTitle (Resource.String.LoginNoWorkspaceDialogTitle)
+                       .SetMessage (Resource.String.LoginNoWorkspaceDialogText)
+                       .SetPositiveButton (Resource.String.LoginNoWorkspaceDialogOk, OnOkButtonClicked)
+                       .SetNegativeButton (Resource.String.LoginNoWorkspaceDialogCancel, OnCancelButtonClicked)
+                       .Create ();
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                var intent = new Intent (Intent.ActionSend);
+                intent.SetType("message/rfc822");
+                intent.PutExtra (Intent.ExtraEmail, new[] { Resources.GetString (Resource.String.LoginNoWorkspaceDialogEmail) });
+                intent.PutExtra (Intent.ExtraSubject, Resources.GetString (Resource.String.LoginNoWorkspaceDialogSubject));
+                intent.PutExtra (Intent.ExtraText, String.Format (Resources.GetString (Resource.String.LoginNoWorkspaceDialogBody), Email));
+                StartActivity (Intent.CreateChooser (intent, (string)null));
+            }
+
+            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
+            {
             }
         }
     }

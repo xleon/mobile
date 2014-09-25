@@ -4,25 +4,18 @@ namespace Toggl.Phoebe.Net
 {
     public class AuthFailedMessage : Message
     {
-        public enum Reason {
-            InvalidCredentials,
-            NoDefaultWorkspace,
-            NetworkError,
-            SystemError
-        }
-
-        private readonly Reason reason;
+        private readonly AuthResult result;
         private readonly Exception exception;
 
-        public AuthFailedMessage (AuthManager manager, Reason reason, Exception ex = null) : base (manager)
+        public AuthFailedMessage (AuthManager manager, AuthResult result, Exception ex = null) : base (manager)
         {
-            this.reason = reason;
+            this.result = result;
             this.exception = ex;
         }
 
-        public Reason FailureReason
+        public AuthResult Result
         {
-            get { return reason; }
+            get { return result; }
         }
 
         public Exception Exception

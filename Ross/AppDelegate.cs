@@ -118,7 +118,7 @@ namespace Toggl.Ross
             get {
                 if (appVersion == null) {
                     appVersion = NSBundle.MainBundle.InfoDictionary.ObjectForKey (
-                                     new NSString ("CFBundleVersion")).ToString ();
+                                     new NSString ("CFBundleShortVersionString")).ToString ();
                 }
                 return appVersion;
             }

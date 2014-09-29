@@ -14,25 +14,25 @@ namespace Toggl.Phoebe.Data
             var type = relation.Type;
             var id = relation.Id;
 
-            if (type == typeof(ClientData)) {
+            if (type == typeof (ClientData)) {
                 return await QueryAsync<ClientData> (id).ConfigureAwait (false);
-            } else if (type == typeof(ProjectData)) {
+            } else if (type == typeof (ProjectData)) {
                 return await QueryAsync<ProjectData> (id).ConfigureAwait (false);
-            } else if (type == typeof(ProjectUserData)) {
+            } else if (type == typeof (ProjectUserData)) {
                 return await QueryAsync<ProjectUserData> (id).ConfigureAwait (false);
-            } else if (type == typeof(TagData)) {
+            } else if (type == typeof (TagData)) {
                 return await QueryAsync<TagData> (id).ConfigureAwait (false);
-            } else if (type == typeof(TaskData)) {
+            } else if (type == typeof (TaskData)) {
                 return await QueryAsync<TaskData> (id).ConfigureAwait (false);
-            } else if (type == typeof(TimeEntryData)) {
+            } else if (type == typeof (TimeEntryData)) {
                 return await QueryAsync<TimeEntryData> (id).ConfigureAwait (false);
-            } else if (type == typeof(TimeEntryTagData)) {
+            } else if (type == typeof (TimeEntryTagData)) {
                 return await QueryAsync<TimeEntryTagData> (id).ConfigureAwait (false);
-            } else if (type == typeof(UserData)) {
+            } else if (type == typeof (UserData)) {
                 return await QueryAsync<UserData> (id).ConfigureAwait (false);
-            } else if (type == typeof(WorkspaceData)) {
+            } else if (type == typeof (WorkspaceData)) {
                 return await QueryAsync<WorkspaceData> (id).ConfigureAwait (false);
-            } else if (type == typeof(WorkspaceUserData)) {
+            } else if (type == typeof (WorkspaceUserData)) {
                 return await QueryAsync<WorkspaceUserData> (id).ConfigureAwait (false);
             }
 
@@ -54,25 +54,25 @@ namespace Toggl.Phoebe.Data
         public IEnumerable<ForeignRelation> GetRelations (CommonData dataObject)
         {
             var type = dataObject.GetType ();
-            if (type == typeof(ClientData)) {
+            if (type == typeof (ClientData)) {
                 return GetClientRelations ((ClientData)dataObject);
-            } else if (type == typeof(ProjectData)) {
+            } else if (type == typeof (ProjectData)) {
                 return GetProjectRelations ((ProjectData)dataObject);
-            } else if (type == typeof(ProjectUserData)) {
+            } else if (type == typeof (ProjectUserData)) {
                 return GetProjectUserRelations ((ProjectUserData)dataObject);
-            } else if (type == typeof(TagData)) {
+            } else if (type == typeof (TagData)) {
                 return GetTagRelations ((TagData)dataObject);
-            } else if (type == typeof(TaskData)) {
+            } else if (type == typeof (TaskData)) {
                 return GetTaskRelations ((TaskData)dataObject);
-            } else if (type == typeof(TimeEntryData)) {
+            } else if (type == typeof (TimeEntryData)) {
                 return GetTimeEntryRelations ((TimeEntryData)dataObject);
-            } else if (type == typeof(TimeEntryTagData)) {
+            } else if (type == typeof (TimeEntryTagData)) {
                 return GetTimeEntryTagRelations ((TimeEntryTagData)dataObject);
-            } else if (type == typeof(UserData)) {
+            } else if (type == typeof (UserData)) {
                 return GetUserRelations ((UserData)dataObject);
-            } else if (type == typeof(WorkspaceData)) {
+            } else if (type == typeof (WorkspaceData)) {
                 return GetWorkspaceRelations ((WorkspaceData)dataObject);
-            } else if (type == typeof(WorkspaceUserData)) {
+            } else if (type == typeof (WorkspaceUserData)) {
                 return GetWorkspaceUserRelations ((WorkspaceUserData)dataObject);
             }
             throw new InvalidOperationException (String.Format ("Unable to determine relations for type {0}", type));
@@ -82,7 +82,7 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "WorkspaceId",
-                Type = typeof(WorkspaceData),
+                Type = typeof (WorkspaceData),
                 Required = true,
                 Id = data.WorkspaceId,
             };
@@ -92,13 +92,13 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "WorkspaceId",
-                Type = typeof(WorkspaceData),
+                Type = typeof (WorkspaceData),
                 Required = true,
                 Id = data.WorkspaceId,
             };
             yield return new ForeignRelation () {
                 Name = "ClientId",
-                Type = typeof(ClientData),
+                Type = typeof (ClientData),
                 Required = false,
                 Id = data.ClientId,
             };
@@ -108,13 +108,13 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "ProjectId",
-                Type = typeof(ProjectData),
+                Type = typeof (ProjectData),
                 Required = true,
                 Id = data.ProjectId,
             };
             yield return new ForeignRelation () {
                 Name = "UserId",
-                Type = typeof(UserData),
+                Type = typeof (UserData),
                 Required = true,
                 Id = data.UserId,
             };
@@ -124,7 +124,7 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "WorkspaceId",
-                Type = typeof(WorkspaceData),
+                Type = typeof (WorkspaceData),
                 Required = true,
                 Id = data.WorkspaceId,
             };
@@ -134,13 +134,13 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "WorkspaceId",
-                Type = typeof(WorkspaceData),
+                Type = typeof (WorkspaceData),
                 Required = true,
                 Id = data.WorkspaceId,
             };
             yield return new ForeignRelation () {
                 Name = "ProjectId",
-                Type = typeof(ProjectData),
+                Type = typeof (ProjectData),
                 Required = true,
                 Id = data.ProjectId,
             };
@@ -150,25 +150,25 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "UserId",
-                Type = typeof(UserData),
+                Type = typeof (UserData),
                 Required = true,
                 Id = data.UserId,
             };
             yield return new ForeignRelation () {
                 Name = "WorkspaceId",
-                Type = typeof(WorkspaceData),
+                Type = typeof (WorkspaceData),
                 Required = true,
                 Id = data.WorkspaceId,
             };
             yield return new ForeignRelation () {
                 Name = "ProjectId",
-                Type = typeof(ProjectData),
+                Type = typeof (ProjectData),
                 Required = false,
                 Id = data.ProjectId,
             };
             yield return new ForeignRelation () {
                 Name = "TaskId",
-                Type = typeof(TaskData),
+                Type = typeof (TaskData),
                 Required = false,
                 Id = data.TaskId,
             };
@@ -178,13 +178,13 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "TimeEntryId",
-                Type = typeof(TimeEntryData),
+                Type = typeof (TimeEntryData),
                 Required = true,
                 Id = data.TimeEntryId,
             };
             yield return new ForeignRelation () {
                 Name = "TagId",
-                Type = typeof(TagData),
+                Type = typeof (TagData),
                 Required = true,
                 Id = data.TagId,
             };
@@ -194,7 +194,7 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "DefaultWorkspaceId",
-                Type = typeof(WorkspaceData),
+                Type = typeof (WorkspaceData),
                 Required = true,
                 Id = data.DefaultWorkspaceId,
             };
@@ -209,13 +209,13 @@ namespace Toggl.Phoebe.Data
         {
             yield return new ForeignRelation () {
                 Name = "WorkspaceId",
-                Type = typeof(WorkspaceData),
+                Type = typeof (WorkspaceData),
                 Required = true,
                 Id = data.WorkspaceId,
             };
             yield return new ForeignRelation () {
                 Name = "UserId",
-                Type = typeof(UserData),
+                Type = typeof (UserData),
                 Required = true,
                 Id = data.UserId,
             };

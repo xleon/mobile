@@ -25,10 +25,10 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public long Estimate { get; set; }
 
-        [ForeignRelation (typeof(WorkspaceData))]
+        [ForeignRelation (typeof (WorkspaceData))]
         public Guid WorkspaceId { get; set; }
 
-        [ForeignRelation (typeof(ProjectData))]
+        [ForeignRelation (typeof (ProjectData))]
         public Guid ProjectId { get; set; }
     }
 }

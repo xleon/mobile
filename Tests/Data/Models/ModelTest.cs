@@ -33,7 +33,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void VerifyPropertyNames ()
         {
             const string fieldPrefix = "Property";
-            var type = typeof(T);
+            var type = typeof (T);
             var fields = type.GetFields (BindingFlags.Static | BindingFlags.Public)
                          .Where (t => t.Name.StartsWith (fieldPrefix, StringComparison.Ordinal))
                          .ToList ();
@@ -63,10 +63,10 @@ namespace Toggl.Phoebe.Tests.Data.Models
         [Test]
         public void VerifyConstructors ()
         {
-            var type = typeof(T);
+            var type = typeof (T);
 
             Assert.IsNotNull (type.GetConstructor (new Type[] { }), "Default constructor not found.");
-            Assert.IsNotNull (type.GetConstructor (new[] { typeof(Guid) }), "Lazy load constructor not found.");
+            Assert.IsNotNull (type.GetConstructor (new[] { typeof (Guid) }), "Lazy load constructor not found.");
 
             var dataProp = type.GetProperty ("Data");
             Assert.IsNotNull (type.GetConstructor (new[] { dataProp.PropertyType }), "Wrapping constructor not found.");
@@ -75,7 +75,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         [Test]
         public void PropertyChangeEvents ()
         {
-            var type = typeof(T);
+            var type = typeof (T);
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
                              .Where (prop => prop.CanWrite)
@@ -97,10 +97,10 @@ namespace Toggl.Phoebe.Tests.Data.Models
         [Test]
         public void ForeignRelations ()
         {
-            var type = typeof(T);
+            var type = typeof (T);
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
-                             .Where (prop => prop.PropertyType.GetInterfaces ().Contains (typeof(IModel)))
+                             .Where (prop => prop.PropertyType.GetInterfaces ().Contains (typeof (IModel)))
                              .Where (prop => !ExemptProperties.Contains (prop.Name));
 
             foreach (var prop in properties) {
@@ -156,7 +156,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void TestLazyLoad ()
         {
             RunAsync (async delegate {
-                var type = typeof(T);
+                var type = typeof (T);
                 var isLoadedField = type.BaseType.GetField ("isLoaded",
                                     BindingFlags.NonPublic | BindingFlags.Instance);
                 var loadingTCSField = type.BaseType.GetField ("loadingTCS",
@@ -199,7 +199,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         [Test]
         public void TestOptionalRelationNullId ()
         {
-            var type = typeof(T);
+            var type = typeof (T);
             var dataProp = type.GetProperty ("Data");
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
@@ -248,7 +248,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void TestLoading ()
         {
             RunAsync (async delegate {
-                var type = typeof(T);
+                var type = typeof (T);
 
                 // Test load new
                 var inst = (T)Activator.CreateInstance (type);
@@ -272,11 +272,11 @@ namespace Toggl.Phoebe.Tests.Data.Models
         [Test]
         public virtual void TestTouching ()
         {
-            var type = typeof(T);
+            var type = typeof (T);
 
             // Create dummy element (with default values) to load:
             var data = CreateDataInstance ();
-            var inst = (T)Activator.CreateInstance (typeof(T), data);
+            var inst = (T)Activator.CreateInstance (typeof (T), data);
 
             // Touch instance
             type.GetMethod ("Touch").Invoke (inst, new object[0]);
@@ -290,7 +290,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         [Test]
         public virtual void TestSaving ()
         {
-            var type = typeof(T);
+            var type = typeof (T);
             var validData = new Dictionary<PropertyInfo, Func<object>> ();
 
             var properties = type.GetProperties (BindingFlags.Instance | BindingFlags.Public)
@@ -305,7 +305,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         protected void TestSaving (Dictionary<PropertyInfo, Func<object>> validData)
         {
             RunAsync (async delegate {
-                var type = typeof(T);
+                var type = typeof (T);
 
                 T inst;
                 Task saveTask;
@@ -350,11 +350,11 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void TestDeletingLocal ()
         {
             RunAsync (async delegate {
-                var type = typeof(T);
+                var type = typeof (T);
 
                 // Create dummy element (with default values) to load:
                 var data = await PutData (CreateDataInstance ());
-                var inst = (T)Activator.CreateInstance (typeof(T), data);
+                var inst = (T)Activator.CreateInstance (typeof (T), data);
 
                 // Delete via model
                 var deleteTask = (Task)type.GetMethod ("DeleteAsync").Invoke (inst, new object[0]);
@@ -374,13 +374,13 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void TestDeletingRemote ()
         {
             RunAsync (async delegate {
-                var type = typeof(T);
+                var type = typeof (T);
 
                 // Create dummy element (with default values) to load:
                 var data = CreateDataInstance ();
                 data.RemoteId = 1;
                 data = await PutData (data);
-                var inst = (T)Activator.CreateInstance (typeof(T), data);
+                var inst = (T)Activator.CreateInstance (typeof (T), data);
 
                 // Delete via model
                 var deleteTask = (Task)type.GetMethod ("DeleteAsync").Invoke (inst, new object[0]);
@@ -406,7 +406,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
 
         private CommonData CreateDataInstance ()
         {
-            var type = typeof(T);
+            var type = typeof (T);
             var dataProp = type.GetProperty ("Data");
             var dataType = dataProp.PropertyType;
 
@@ -439,29 +439,29 @@ namespace Toggl.Phoebe.Tests.Data.Models
         {
             var val = prop.GetValue (obj);
 
-            if (prop.PropertyType == typeof(string)) {
+            if (prop.PropertyType == typeof (string)) {
                 val = ((string)val ?? String.Empty) + "Test";
-            } else if (prop.PropertyType == typeof(int)) {
+            } else if (prop.PropertyType == typeof (int)) {
                 val = (int)val + 1;
-            } else if (prop.PropertyType == typeof(int?)) {
+            } else if (prop.PropertyType == typeof (int?)) {
                 val = ((int?)val ?? 0) + 1;
-            } else if (prop.PropertyType == typeof(long)) {
+            } else if (prop.PropertyType == typeof (long)) {
                 val = (long)val + 1;
-            } else if (prop.PropertyType == typeof(long?)) {
+            } else if (prop.PropertyType == typeof (long?)) {
                 val = ((long?)val ?? 0) + 1;
-            } else if (prop.PropertyType == typeof(decimal)) {
+            } else if (prop.PropertyType == typeof (decimal)) {
                 val = (decimal)val + 1;
-            } else if (prop.PropertyType == typeof(decimal?)) {
+            } else if (prop.PropertyType == typeof (decimal?)) {
                 val = ((decimal?)val ?? 0) + 1;
-            } else if (prop.PropertyType == typeof(bool)) {
-                val = !(bool)val;
-            } else if (prop.PropertyType == typeof(DateTime)) {
+            } else if (prop.PropertyType == typeof (bool)) {
+                val = ! (bool)val;
+            } else if (prop.PropertyType == typeof (DateTime)) {
                 if ((DateTime)val == DateTime.MinValue) {
                     val = Time.UtcNow;
                 } else {
                     val = (DateTime)val + TimeSpan.FromMinutes (1);
                 }
-            } else if (prop.PropertyType == typeof(DateTime?)) {
+            } else if (prop.PropertyType == typeof (DateTime?)) {
                 if (val == null || (DateTime?)val == DateTime.MinValue) {
                     val = (DateTime?)Time.UtcNow;
                 } else {
@@ -469,7 +469,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 }
             } else if (prop.PropertyType.IsEnum) {
                 val = (int)val + 1;
-            } else if (prop.PropertyType.GetInterfaces ().Contains (typeof(IModel))) {
+            } else if (prop.PropertyType.GetInterfaces ().Contains (typeof (IModel))) {
                 val = Activator.CreateInstance (prop.PropertyType, Guid.NewGuid ());
             } else {
                 throw new InvalidOperationException (String.Format ("Don't know how to handle testing of {0} type.", prop.PropertyType));

@@ -32,9 +32,9 @@ namespace Toggl.Joey.UI.Activities
 
             ActionBar.SetDisplayOptions (
                 ActionBarDisplayOptions.ShowCustom,
-                (ActionBarDisplayOptions)((int)ActionBarDisplayOptions.ShowCustom
-                                          | (int)ActionBarDisplayOptions.ShowHome
-                                          | (int)ActionBarDisplayOptions.ShowTitle));
+                (ActionBarDisplayOptions) ((int)ActionBarDisplayOptions.ShowCustom
+                                           | (int)ActionBarDisplayOptions.ShowHome
+                                           | (int)ActionBarDisplayOptions.ShowTitle));
             ActionBar.CustomView = actionBarView;
 
             SetContentView (Resource.Layout.EditTimeEntryActivity);

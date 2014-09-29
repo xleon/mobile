@@ -62,7 +62,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             // Encode the duration
             var encoded = (long)duration.TotalSeconds;
             if (data.State == TimeEntryState.Running) {
-                encoded = (long)(encoded - now.ToUnix ().TotalSeconds);
+                encoded = (long) (encoded - now.ToUnix ().TotalSeconds);
             }
             return encoded;
         }

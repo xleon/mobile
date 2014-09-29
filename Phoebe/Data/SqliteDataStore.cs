@@ -36,7 +36,7 @@ namespace Toggl.Phoebe.Data
 
         internal static IEnumerable<Type> DiscoverDataObjectTypes ()
         {
-            var dataType = typeof(Toggl.Phoebe.Data.DataObjects.TimeEntryData);
+            var dataType = typeof (Toggl.Phoebe.Data.DataObjects.TimeEntryData);
             return from t in dataType.Assembly.GetTypes ()
                    where t.Namespace == dataType.Namespace && !t.IsAbstract
                    select t;

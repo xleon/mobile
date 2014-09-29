@@ -42,9 +42,9 @@ namespace Toggl.Phoebe
 
             lock (syncRoot) {
                 List<WeakReference> subscriptions;
-                if (!registry.TryGetValue (typeof(TMessage), out subscriptions)) {
+                if (!registry.TryGetValue (typeof (TMessage), out subscriptions)) {
                     subscriptions = new List<WeakReference> ();
-                    registry [typeof(TMessage)] = subscriptions;
+                    registry [typeof (TMessage)] = subscriptions;
                 }
                 subscriptions.Add (new WeakReference (subscription));
             }
@@ -86,7 +86,7 @@ namespace Toggl.Phoebe
             // Process message:
             lock (syncRoot) {
                 List<WeakReference> subscriptions;
-                if (registry.TryGetValue (typeof(TMessage), out subscriptions)) {
+                if (registry.TryGetValue (typeof (TMessage), out subscriptions)) {
                     foreach (var weak in subscriptions) {
                         var subscription = weak.Target as Subscription<TMessage>;
                         if (subscription != null) {

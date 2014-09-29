@@ -119,7 +119,7 @@ namespace Toggl.Ross.Views
                 // Apply delta limits
                 switch (panLock) {
                 case PanLock.Left:
-                    panDeltaX = -(leftWidth + SnapDistance);
+                    panDeltaX = - (leftWidth + SnapDistance);
                     break;
                 case PanLock.Right:
                     panDeltaX = rightWidth + SnapDistance;

@@ -116,7 +116,7 @@ namespace Toggl.Ross.ViewControllers
                     SetViewControllers (new [] { activeController }, ViewControllers.Length > 0);
                 }
             } else {
-                if (ViewControllers.Length < 1 || !(ViewControllers [0] is WelcomeViewController)) {
+                if (ViewControllers.Length < 1 || ! (ViewControllers [0] is WelcomeViewController)) {
                     SetViewControllers (new [] { new WelcomeViewController () }, ViewControllers.Length > 0);
                 }
             }

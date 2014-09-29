@@ -86,7 +86,7 @@ namespace Toggl.Phoebe.Data
 
         public static bool operator != (Duration left, Duration right)
         {
-            return !(left == right);
+            return ! (left == right);
         }
 
         public static implicit operator Duration (TimeSpan timespan)

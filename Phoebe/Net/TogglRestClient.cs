@@ -43,24 +43,24 @@ namespace Toggl.Phoebe.Net
         where T : CommonJson
         {
             var type = jsonObject.GetType ();
-            if (type == typeof(ClientJson)) {
-                return (T)(object)await CreateClient ((ClientJson)(object)jsonObject);
-            } else if (type == typeof(ProjectJson)) {
-                return (T)(object)await CreateProject ((ProjectJson)(object)jsonObject);
-            } else if (type == typeof(TaskJson)) {
-                return (T)(object)await CreateTask ((TaskJson)(object)jsonObject);
-            } else if (type == typeof(TimeEntryJson)) {
-                return (T)(object)await CreateTimeEntry ((TimeEntryJson)(object)jsonObject);
-            } else if (type == typeof(WorkspaceJson)) {
-                return (T)(object)await CreateWorkspace ((WorkspaceJson)(object)jsonObject);
-            } else if (type == typeof(UserJson)) {
-                return (T)(object)await CreateUser ((UserJson)(object)jsonObject);
-            } else if (type == typeof(TagJson)) {
-                return (T)(object)await CreateTag ((TagJson)(object)jsonObject);
-            } else if (type == typeof(WorkspaceUserJson)) {
-                return (T)(object)await CreateWorkspaceUser ((WorkspaceUserJson)(object)jsonObject);
-            } else if (type == typeof(ProjectUserJson)) {
-                return (T)(object)await CreateProjectUser ((ProjectUserJson)(object)jsonObject);
+            if (type == typeof (ClientJson)) {
+                return (T) (object)await CreateClient ((ClientJson) (object)jsonObject);
+            } else if (type == typeof (ProjectJson)) {
+                return (T) (object)await CreateProject ((ProjectJson) (object)jsonObject);
+            } else if (type == typeof (TaskJson)) {
+                return (T) (object)await CreateTask ((TaskJson) (object)jsonObject);
+            } else if (type == typeof (TimeEntryJson)) {
+                return (T) (object)await CreateTimeEntry ((TimeEntryJson) (object)jsonObject);
+            } else if (type == typeof (WorkspaceJson)) {
+                return (T) (object)await CreateWorkspace ((WorkspaceJson) (object)jsonObject);
+            } else if (type == typeof (UserJson)) {
+                return (T) (object)await CreateUser ((UserJson) (object)jsonObject);
+            } else if (type == typeof (TagJson)) {
+                return (T) (object)await CreateTag ((TagJson) (object)jsonObject);
+            } else if (type == typeof (WorkspaceUserJson)) {
+                return (T) (object)await CreateWorkspaceUser ((WorkspaceUserJson) (object)jsonObject);
+            } else if (type == typeof (ProjectUserJson)) {
+                return (T) (object)await CreateProjectUser ((ProjectUserJson) (object)jsonObject);
             } else {
                 throw new NotSupportedException (String.Format ("Creating of {0} is not supported.", type));
             }
@@ -69,19 +69,19 @@ namespace Toggl.Phoebe.Net
         public async Task<T> Get<T> (long id)
         where T : CommonJson
         {
-            var type = typeof(T);
-            if (type == typeof(ClientJson)) {
-                return (T)(object)await GetClient (id);
-            } else if (type == typeof(ProjectJson)) {
-                return (T)(object)await GetProject (id);
-            } else if (type == typeof(TaskJson)) {
-                return (T)(object)await GetTask (id);
-            } else if (type == typeof(TimeEntryJson)) {
-                return (T)(object)await GetTimeEntry (id);
-            } else if (type == typeof(WorkspaceJson)) {
-                return (T)(object)await GetWorkspace (id);
-            } else if (type == typeof(UserJson)) {
-                return (T)(object)await GetUser (id);
+            var type = typeof (T);
+            if (type == typeof (ClientJson)) {
+                return (T) (object)await GetClient (id);
+            } else if (type == typeof (ProjectJson)) {
+                return (T) (object)await GetProject (id);
+            } else if (type == typeof (TaskJson)) {
+                return (T) (object)await GetTask (id);
+            } else if (type == typeof (TimeEntryJson)) {
+                return (T) (object)await GetTimeEntry (id);
+            } else if (type == typeof (WorkspaceJson)) {
+                return (T) (object)await GetWorkspace (id);
+            } else if (type == typeof (UserJson)) {
+                return (T) (object)await GetUser (id);
             } else {
                 throw new NotSupportedException (String.Format ("Fetching of {0} is not supported.", type));
             }
@@ -90,13 +90,13 @@ namespace Toggl.Phoebe.Net
         public async Task<List<T>> List<T> ()
         where T : CommonJson
         {
-            var type = typeof(T);
-            if (type == typeof(ClientJson)) {
-                return (List<T>)(object)await ListClients ();
-            } else if (type == typeof(TimeEntryJson)) {
-                return (List<T>)(object)await ListTimeEntries ();
-            } else if (type == typeof(WorkspaceJson)) {
-                return (List<T>)(object)await ListWorkspaces ();
+            var type = typeof (T);
+            if (type == typeof (ClientJson)) {
+                return (List<T>) (object)await ListClients ();
+            } else if (type == typeof (TimeEntryJson)) {
+                return (List<T>) (object)await ListTimeEntries ();
+            } else if (type == typeof (WorkspaceJson)) {
+                return (List<T>) (object)await ListWorkspaces ();
             } else {
                 throw new NotSupportedException (String.Format ("Listing of {0} is not supported.", type));
             }
@@ -106,24 +106,24 @@ namespace Toggl.Phoebe.Net
         where T : CommonJson
         {
             var type = jsonObject.GetType ();
-            if (type == typeof(ClientJson)) {
-                return (T)(object)await UpdateClient ((ClientJson)(object)jsonObject);
-            } else if (type == typeof(ProjectJson)) {
-                return (T)(object)await UpdateProject ((ProjectJson)(object)jsonObject);
-            } else if (type == typeof(TaskJson)) {
-                return (T)(object)await UpdateTask ((TaskJson)(object)jsonObject);
-            } else if (type == typeof(TimeEntryJson)) {
-                return (T)(object)await UpdateTimeEntry ((TimeEntryJson)(object)jsonObject);
-            } else if (type == typeof(WorkspaceJson)) {
-                return (T)(object)await UpdateWorkspace ((WorkspaceJson)(object)jsonObject);
-            } else if (type == typeof(UserJson)) {
-                return (T)(object)await UpdateUser ((UserJson)(object)jsonObject);
-            } else if (type == typeof(TagJson)) {
-                return (T)(object)await UpdateTag ((TagJson)(object)jsonObject);
-            } else if (type == typeof(WorkspaceUserJson)) {
-                return (T)(object)await UpdateWorkspaceUser ((WorkspaceUserJson)(object)jsonObject);
-            } else if (type == typeof(ProjectUserJson)) {
-                return (T)(object)await UpdateProjectUser ((ProjectUserJson)(object)jsonObject);
+            if (type == typeof (ClientJson)) {
+                return (T) (object)await UpdateClient ((ClientJson) (object)jsonObject);
+            } else if (type == typeof (ProjectJson)) {
+                return (T) (object)await UpdateProject ((ProjectJson) (object)jsonObject);
+            } else if (type == typeof (TaskJson)) {
+                return (T) (object)await UpdateTask ((TaskJson) (object)jsonObject);
+            } else if (type == typeof (TimeEntryJson)) {
+                return (T) (object)await UpdateTimeEntry ((TimeEntryJson) (object)jsonObject);
+            } else if (type == typeof (WorkspaceJson)) {
+                return (T) (object)await UpdateWorkspace ((WorkspaceJson) (object)jsonObject);
+            } else if (type == typeof (UserJson)) {
+                return (T) (object)await UpdateUser ((UserJson) (object)jsonObject);
+            } else if (type == typeof (TagJson)) {
+                return (T) (object)await UpdateTag ((TagJson) (object)jsonObject);
+            } else if (type == typeof (WorkspaceUserJson)) {
+                return (T) (object)await UpdateWorkspaceUser ((WorkspaceUserJson) (object)jsonObject);
+            } else if (type == typeof (ProjectUserJson)) {
+                return (T) (object)await UpdateProjectUser ((ProjectUserJson) (object)jsonObject);
             } else {
                 throw new NotSupportedException (String.Format ("Updating of {0} is not supported.", type));
             }
@@ -133,20 +133,20 @@ namespace Toggl.Phoebe.Net
         where T : CommonJson
         {
             var type = jsonObject.GetType ();
-            if (type == typeof(ClientJson)) {
-                await DeleteClient ((ClientJson)(object)jsonObject);
-            } else if (type == typeof(ProjectJson)) {
-                await DeleteProject ((ProjectJson)(object)jsonObject);
-            } else if (type == typeof(TaskJson)) {
-                await DeleteTask ((TaskJson)(object)jsonObject);
-            } else if (type == typeof(TimeEntryJson)) {
-                await DeleteTimeEntry ((TimeEntryJson)(object)jsonObject);
-            } else if (type == typeof(TagJson)) {
-                await DeleteTag ((TagJson)(object)jsonObject);
-            } else if (type == typeof(WorkspaceUserJson)) {
-                await DeleteWorkspaceUser ((WorkspaceUserJson)(object)jsonObject);
-            } else if (type == typeof(ProjectUserJson)) {
-                await DeleteProjectUser ((ProjectUserJson)(object)jsonObject);
+            if (type == typeof (ClientJson)) {
+                await DeleteClient ((ClientJson) (object)jsonObject);
+            } else if (type == typeof (ProjectJson)) {
+                await DeleteProject ((ProjectJson) (object)jsonObject);
+            } else if (type == typeof (TaskJson)) {
+                await DeleteTask ((TaskJson) (object)jsonObject);
+            } else if (type == typeof (TimeEntryJson)) {
+                await DeleteTimeEntry ((TimeEntryJson) (object)jsonObject);
+            } else if (type == typeof (TagJson)) {
+                await DeleteTag ((TagJson) (object)jsonObject);
+            } else if (type == typeof (WorkspaceUserJson)) {
+                await DeleteWorkspaceUser ((WorkspaceUserJson) (object)jsonObject);
+            } else if (type == typeof (ProjectUserJson)) {
+                await DeleteProjectUser ((ProjectUserJson) (object)jsonObject);
             } else {
                 throw new NotSupportedException (String.Format ("Deleting of {0} is not supported.", type));
             }
@@ -155,16 +155,16 @@ namespace Toggl.Phoebe.Net
         public async Task Delete<T> (IEnumerable<T> jsonObjects)
         where T : CommonJson
         {
-            var type = typeof(T);
-            if (type == typeof(ClientJson)) {
+            var type = typeof (T);
+            if (type == typeof (ClientJson)) {
                 await Task.WhenAll (jsonObjects.Select ((object json) => DeleteClient ((ClientJson)json)));
-            } else if (type == typeof(ProjectJson)) {
+            } else if (type == typeof (ProjectJson)) {
                 await DeleteProjects (jsonObjects as IEnumerable<ProjectJson>);
-            } else if (type == typeof(TaskJson)) {
+            } else if (type == typeof (TaskJson)) {
                 await DeleteTasks (jsonObjects as IEnumerable<TaskJson>);
-            } else if (type == typeof(TimeEntryJson)) {
+            } else if (type == typeof (TimeEntryJson)) {
                 await Task.WhenAll (jsonObjects.Select ((object json) => DeleteTimeEntry ((TimeEntryJson)json)));
-            } else if (type == typeof(CommonJson)) {
+            } else if (type == typeof (CommonJson)) {
                 // Cannot use LINQ due to AOT failure when using lambdas that use generic method calls inside them.
                 var tasks = new List<Task> ();
                 foreach (var json in jsonObjects) {
@@ -181,23 +181,23 @@ namespace Toggl.Phoebe.Net
             var type = jsonObject.GetType ();
 
             string dataKey;
-            if (type == typeof(TimeEntryJson)) {
+            if (type == typeof (TimeEntryJson)) {
                 dataKey = "time_entry";
-            } else if (type == typeof(ProjectJson)) {
+            } else if (type == typeof (ProjectJson)) {
                 dataKey = "project";
-            } else if (type == typeof(ClientJson)) {
+            } else if (type == typeof (ClientJson)) {
                 dataKey = "client";
-            } else if (type == typeof(TaskJson)) {
+            } else if (type == typeof (TaskJson)) {
                 dataKey = "task";
-            } else if (type == typeof(WorkspaceJson)) {
+            } else if (type == typeof (WorkspaceJson)) {
                 dataKey = "workspace";
-            } else if (type == typeof(UserJson)) {
+            } else if (type == typeof (UserJson)) {
                 dataKey = "user";
-            } else if (type == typeof(TagJson)) {
+            } else if (type == typeof (TagJson)) {
                 dataKey = "tag";
-            } else if (type == typeof(WorkspaceUserJson)) {
+            } else if (type == typeof (WorkspaceUserJson)) {
                 dataKey = "workspace_user";
-            } else if (type == typeof(ProjectUserJson)) {
+            } else if (type == typeof (ProjectUserJson)) {
                 dataKey = "project_user";
             } else {
                 throw new ArgumentException (String.Format ("Don't know how to handle JSON object of type {0}.", type), "jsonObject");
@@ -712,7 +712,7 @@ namespace Toggl.Phoebe.Net
             since = since.ToUtc ();
             var relUrl = "me?with_related_data=true";
             if (since.HasValue) {
-                relUrl = String.Format ("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
+                relUrl = String.Format ("{0}&since={1}", relUrl, (long) (since.Value - UnixStart).TotalSeconds);
             }
             var url = new Uri (v8Url, relUrl);
 

@@ -10,7 +10,7 @@ namespace Toggl.Phoebe.Data.Models
     public abstract class Model<T> : IModel
         where T : CommonData, new()
     {
-        private static readonly string Tag = String.Concat ("Model<", typeof(T).Name, ">");
+        private static readonly string Tag = String.Concat ("Model<", typeof (T).Name, ">");
 
         private static string GetPropertyName<U> (Expression<Func<Model<T>, U>> expr) {
             return expr.ToPropertyName ();

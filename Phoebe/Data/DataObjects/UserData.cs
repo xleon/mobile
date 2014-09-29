@@ -54,7 +54,7 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public DurationFormat DurationFormat { get; set; }
 
-        [ForeignRelation (typeof(WorkspaceData))]
+        [ForeignRelation (typeof (WorkspaceData))]
         public Guid DefaultWorkspaceId { get; set; }
     }
 }

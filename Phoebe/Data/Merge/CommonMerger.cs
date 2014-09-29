@@ -19,7 +19,7 @@ namespace Toggl.Phoebe.Data.Merge
 
         protected virtual T Merge ()
         {
-            var data = (T)Activator.CreateInstance (typeof(T), baseData);
+            var data = (T)Activator.CreateInstance (typeof (T), baseData);
             var latestData = changes [0];
 
             // Merge common data

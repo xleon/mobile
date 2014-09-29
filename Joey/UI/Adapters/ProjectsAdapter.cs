@@ -127,7 +127,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override bool IsEnabled (int position)
         {
-            return !(GetEntry (position) is ProjectAndTaskView.Workspace);
+            return ! (GetEntry (position) is ProjectAndTaskView.Workspace);
         }
 
         #region View holders

@@ -24,7 +24,7 @@ namespace Toggl.Joey.UI.Utils
                 root.ViewAttachedToWindow -= OnRootAttachedToWindow;
                 root.ViewDetachedFromWindow -= OnRootDetachedFromWindow;
 
-                DataSource = default(T);
+                DataSource = default (T);
             }
 
             base.Dispose (disposing);

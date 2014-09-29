@@ -27,7 +27,7 @@ namespace Toggl.Ross.Data
 
         protected Guid? GetGuid (string key)
         {
-            var val = (string)(NSString)NSUserDefaults.StandardUserDefaults [key];
+            var val = (string) (NSString)NSUserDefaults.StandardUserDefaults [key];
             if (String.IsNullOrEmpty (val)) {
                 return null;
             }
@@ -46,7 +46,7 @@ namespace Toggl.Ross.Data
 
         protected string GetString (string key)
         {
-            return (string)(NSString)NSUserDefaults.StandardUserDefaults [key];
+            return (string) (NSString)NSUserDefaults.StandardUserDefaults [key];
         }
 
         protected void SetString (string key, string value)
@@ -65,7 +65,7 @@ namespace Toggl.Ross.Data
             if (raw == null) {
                 return null;
             }
-            return (int)(NSNumber)raw;
+            return (int) (NSNumber)raw;
         }
 
         protected void SetInt (string key, int? value)
@@ -84,7 +84,7 @@ namespace Toggl.Ross.Data
             if (raw == null) {
                 return null;
             }
-            return DateTime.FromBinary ((long)(NSNumber)raw);
+            return DateTime.FromBinary ((long) (NSNumber)raw);
         }
 
         protected void SetDateTime (string key, DateTime? value)

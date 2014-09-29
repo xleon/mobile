@@ -172,11 +172,11 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnMenuButtonTouchUpInside (object sender, EventArgs e)
         {
-            if (sender == recentButton && !(controller is RecentViewController)) {
+            if (sender == recentButton && ! (controller is RecentViewController)) {
                 ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "recent";
                 var navController = controller.NavigationController;
                 navController.SetViewControllers (new[] { new RecentViewController () }, true);
-            } else if (sender == logButton && !(controller is LogViewController)) {
+            } else if (sender == logButton && ! (controller is LogViewController)) {
                 ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
                 var navController = controller.NavigationController;
                 navController.SetViewControllers (new[] { new LogViewController () }, true);

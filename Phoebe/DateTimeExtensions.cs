@@ -46,7 +46,7 @@ namespace Toggl.Phoebe
 
         public static DateTime Truncate (this DateTime val, long percisionTicks)
         {
-            return val.AddTicks (-(val.Ticks % percisionTicks));
+            return val.AddTicks (- (val.Ticks % percisionTicks));
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Toggl.Joey.Net
         private void StartSyncService ()
         {
             var ctx = ServiceContainer.Resolve<Context> ();
-            var intent = new Intent (ctx, typeof(SyncService));
+            var intent = new Intent (ctx, typeof (SyncService));
             ctx.StartService (intent);
         }
 

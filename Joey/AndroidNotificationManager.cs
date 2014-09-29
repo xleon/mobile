@@ -12,7 +12,6 @@ using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using NotificationCompat = Android.Support.V4.App.NotificationCompat;
-using Google.Analytics.Tracking;
 
 namespace Toggl.Joey
 {

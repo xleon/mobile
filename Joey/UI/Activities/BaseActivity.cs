@@ -1,9 +1,9 @@
 ﻿using System;
 using Android.Content;
+using Android.Gms.Analytics;
 using Android.OS;
 using Android.Views;
 using Bugsnag;
-using Google.Analytics.Tracking;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -111,7 +111,10 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnStart ();
 
-            ServiceContainer.Resolve<EasyTracker> ().ActivityStart (this);
+            // Make sure the tracker is initialized
+            ServiceContainer.Resolve<Tracker> ();
+
+            GoogleAnalytics.GetInstance (this).ReportActivityStart (this);
         }
 
         protected sealed override void OnResume ()
@@ -147,7 +150,7 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnStop ();
 
-            ServiceContainer.Resolve<EasyTracker> ().ActivityStop (this);
+            GoogleAnalytics.GetInstance (this).ReportActivityStop (this);
         }
 
         protected override void OnDestroy ()

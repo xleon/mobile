@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Android.Accounts;
 using Android.App;
@@ -513,16 +514,14 @@ namespace Toggl.Joey.UI.Activities
                             // Signup with Google
                             var success = await authManager.SignupWithGoogle (token);
                             if (!success) {
-                                GoogleAuthUtil.InvalidateToken (ctx, token);
-
+                                ClearGoogleToken (ctx, token);
                                 new SignupFailedDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
                             }
                         } else {
                             // Authenticate client
                             var success = await authManager.AuthenticateWithGoogle (token);
                             if (!success) {
-                                GoogleAuthUtil.InvalidateToken (ctx, token);
-
+                                ClearGoogleToken (ctx, token);
                                 new NoAccountDialogFragment ().Show (FragmentManager, "invalid_credentials_dialog");
                             }
                         }
@@ -545,6 +544,19 @@ namespace Toggl.Joey.UI.Activities
                 if (activity != null) {
                     activity.StartAuthActivity ();
                 }
+            }
+
+            private void ClearGoogleToken (Context ctx, string token)
+            {
+                var log = ServiceContainer.Resolve<Logger> ();
+
+                ThreadPool.QueueUserWorkItem (delegate {
+                    try {
+                        GoogleAuthUtil.ClearToken (ctx, token);
+                    } catch (Exception ex) {
+                        log.Warning (LogTag, ex, "Failed to authenticate user with Google login.");
+                    }
+                });
             }
 
             private string Email

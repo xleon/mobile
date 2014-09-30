@@ -50,26 +50,23 @@
       <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http" />
-    <Reference Include="GooglePlayServicesLib">
-      <HintPath>..\Components\googleplayservices-19.0.0\lib\android\GooglePlayServicesLib.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v4">
-      <HintPath>..\Components\googleplayservices-19.0.0\lib\android\Xamarin.Android.Support.v4.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.AppCompat">
-      <HintPath>..\Components\googleplayservices-19.0.0\lib\android\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
-      <HintPath>..\Components\googleplayservices-19.0.0\lib\android\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
-    </Reference>
-    <Reference Include="GoogleAnalytics.Android">
-      <HintPath>..\Components\googleanalytics-3.0.3.4\lib\android\GoogleAnalytics.Android.dll</HintPath>
-    </Reference>
     <Reference Include="Bugsnag">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoAndroid10\Bugsnag.dll</HintPath>
     </Reference>
     <Reference Include="Bugsnag.Android">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoAndroid10\Bugsnag.Android.dll</HintPath>
+    </Reference>
+    <Reference Include="GooglePlayServicesLib">
+      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\GooglePlayServicesLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v4">
+      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\Xamarin.Android.Support.v4.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.AppCompat">
+      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
+      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -453,7 +450,6 @@
     <AndroidResource Include="Resources\layout\RecentTimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\ProjectListNoProjectItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListNewProjectItem.axml" />
-    <AndroidResource Include="Resources\values\analytics.xml" />
     <AndroidResource Include="Resources\layout\DoneActionBarView.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcActionDone.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcActionDone.png" />
@@ -533,6 +529,7 @@
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
+    <AndroidResource Include="Resources\xml\Analytics.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />
@@ -561,6 +558,7 @@
     <Folder Include="Assets\fonts\" />
     <Folder Include="Resources\anim\" />
     <Folder Include="UI\Text\" />
+    <Folder Include="Resources\xml\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />
@@ -569,11 +567,7 @@
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="googleplayservices">
-      <Version>19.0.0</Version>
-      <Visible>False</Visible>
-    </XamarinComponentReference>
-    <XamarinComponentReference Include="googleanalytics">
-      <Version>3.0.3.4</Version>
+      <Version>19.0.0.2</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>

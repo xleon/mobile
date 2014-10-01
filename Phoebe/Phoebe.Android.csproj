@@ -63,12 +63,13 @@
     <Compile Include="Data\Json\ReportRowJson.cs" />
     <Compile Include="Data\Json\Converters\ReportJsonConverter.cs" />
     <Compile Include="Data\DataObjects\ReportData.cs" />
-    <Compile Include="Data\Views\SummaryReportView.cs" />
+    <Compile Include="Data\Reports\SummaryReportView.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />
     <Folder Include="Contrib\SQLite\" />
     <Folder Include="Contrib\XPlatUtils\" />
+    <Folder Include="Data\Reports\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

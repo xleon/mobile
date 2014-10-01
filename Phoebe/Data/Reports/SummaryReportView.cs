@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
@@ -6,7 +7,7 @@ using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.Views
+namespace Toggl.Phoebe.Data.Reports
 {
     public class SummaryReportView
     {

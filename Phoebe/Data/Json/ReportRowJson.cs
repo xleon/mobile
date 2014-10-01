@@ -15,4 +15,8 @@ namespace Toggl.Phoebe.Data.Json
         [JsonProperty ("billable_time")]
         public long BillableTime { get; set; }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e09ae4f... working on donut chart

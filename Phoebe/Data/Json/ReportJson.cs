@@ -21,4 +21,8 @@ namespace Toggl.Phoebe.Data.Json
         [JsonProperty ("projects")]
         public List<ReportProjectJson> Projects { get; set; }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e09ae4f... working on donut chart

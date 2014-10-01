@@ -6,6 +6,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using System.Diagnostics;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -34,7 +35,11 @@ namespace Toggl.Phoebe.Data.Reports
                 await Initialize ();
             }
             startDate = ResolveStartDate (backDate);
+<<<<<<< HEAD
             endDate = ResolveEndDate (startDate);
+=======
+            endDate = ResolveEndDate ( startDate);
+>>>>>>> working on donut chart
 
             await FetchData ();
             IsLoading = false;
@@ -58,6 +63,12 @@ namespace Toggl.Phoebe.Data.Reports
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, "Failed to fetch reports.");
+            } finally {
+                if (dataObject == null)                 // TODO: needs better approach!
+                    dataObject = new ReportData () {    // create dummy object to avoid crash
+                    Activity = new List<ReportActivity> (),
+                    Projects = new List<ReportProject> ()
+                };
             }
         }
 
@@ -170,7 +181,11 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
+<<<<<<< HEAD
         private DateTime ResolveEndDate (DateTime start)
+=======
+        private DateTime ResolveEndDate ( DateTime start)
+>>>>>>> working on donut chart
         {
             if (Period == ZoomLevel.Week) {
                 return start.AddDays (6);
@@ -192,6 +207,7 @@ namespace Toggl.Phoebe.Data.Reports
                 d.Project = item.Project;
                 d.TotalTime = item.TotalTime;
                 d.Color = await store.ExecuteInTransactionAsync (ctx => ctx.GetProjectColorFromName (user.DefaultWorkspaceId, item.Project));
+                Debug.WriteLine (d.Color);
                 withColors.Add (d);
             }
             dataObject.Projects = withColors;

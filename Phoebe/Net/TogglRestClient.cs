@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
 using XPlatUtils;
 
@@ -18,10 +19,12 @@ namespace Toggl.Phoebe.Net
     {
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri v8Url;
+        private readonly Uri reportsv2Url;
 
-        public TogglRestClient (Uri url)
+        public TogglRestClient (Uri url, Uri reportsApiUrl)
         {
             v8Url = new Uri (url, "v8/");
+            reportsv2Url = new Uri (reportsApiUrl, "v2/");
         }
 
         private HttpClient MakeHttpClient ()
@@ -774,6 +777,60 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             await SendAsync (httpReq).ConfigureAwait (continueOnCapturedContext: false);
+        }
+
+        public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId)
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            var start = startDate.ToString ("yyyy-MM-dd");
+            var end = endDate.ToString ("yyyy-MM-dd");
+            var relUrl = "summary?period=thisWeek&grouping=projects&subgrouping=time_entries&&billable=both" +
+                         "&order_field=duration&order_desc=true&user_agent=toggl_mobile&bars_count=31&subgrouping_ids=true";
+            relUrl = String.Format ("{0}&since={1}&until={2}&user_ids={3}&workspace_id={4}", relUrl, start, end, user.RemoteId, workspaceId);
+            var url = new Uri (reportsv2Url, relUrl);
+
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Get,
+                RequestUri = url,
+            });
+
+            var httpResp = await SendAsync (httpReq)
+                .ConfigureAwait (continueOnCapturedContext: false);
+
+            var respData = await httpResp.Content.ReadAsStringAsync ()
+                .ConfigureAwait (continueOnCapturedContext: false);
+
+            var json = JObject.Parse (respData);
+
+            var RowList = new List<ReportRowJson> ();
+            foreach (var row in json["activity"]["rows"]) {
+                RowList.Add (new ReportRowJson () {
+                    StartTime = UnixStart.AddTicks (ToLong (row [0]) * TimeSpan.TicksPerMillisecond),
+                    TotalTime = ToLong (row [1]),
+                    BillableTime = ToLong (row [2])
+                });
+            }
+            var ProjectList = new List<ReportProjectJson> ();
+            foreach (var row in json["data"]) {
+                ProjectList.Add (new ReportProjectJson () {
+                    Project = (string)row ["title"] ["project"],
+                    TotalTime = (long)row ["time"]
+                });
+            }
+
+            return new ReportJson () {
+                TotalGrand = ToLong (json ["total_grand"]),
+                TotalBillable = ToLong (json ["total_billable"]),
+                Activity = RowList,
+                Projects = ProjectList,
+            };
+        }
+
+        private long ToLong (JToken s)
+        {
+            long l;
+            long.TryParse ((string)s, out l);
+            return l;
         }
 
         private class Wrapper<T>

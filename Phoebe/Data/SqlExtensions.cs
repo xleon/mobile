@@ -58,6 +58,14 @@ namespace Toggl.Phoebe.Data
             return con.ExecuteScalar<Guid> (q, workspaceId, name);
         }
 
+        public static int GetProjectColorFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
+        {
+            var con = ctx.Connection;
+            var tagTbl = con.GetMapping (typeof(ProjectData)).TableName;
+            var q = String.Concat ("SELECT Color AS Value FROM ", tagTbl, " WHERE WorkspaceId=? AND Name=?");
+            return con.ExecuteScalar<int> (q, workspaceId, name);
+        }
+
         public static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
             var projectTbl = ds.GetTableName (typeof (ProjectData));

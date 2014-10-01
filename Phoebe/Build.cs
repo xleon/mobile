@@ -8,6 +8,7 @@ namespace Toggl.Phoebe
         #region Phoebe build config
 
         public static readonly Uri ApiUrl = new Uri ("https://toggl.com/api/");
+        public static readonly Uri ReportsApiUrl = new Uri ("https://toggl.com/reports/api/");
         public static readonly Uri PrivacyPolicyUrl = new Uri ("https://toggl.com/privacy");
         public static readonly Uri TermsOfServiceUrl = new Uri ("https://toggl.com/terms");
 
@@ -36,3 +37,4 @@ namespace Toggl.Phoebe
         #endregion
     }
 }
+#region Phoebe build config

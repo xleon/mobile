@@ -37,4 +37,3 @@ namespace Toggl.Phoebe
         #endregion
     }
 }
-#region Phoebe build config

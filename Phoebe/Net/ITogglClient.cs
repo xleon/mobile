@@ -53,6 +53,5 @@ namespace Toggl.Phoebe.Net
 
         Task CreateFeedback (FeedbackJson jsonObject);
 
-        Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId);
     }
 }

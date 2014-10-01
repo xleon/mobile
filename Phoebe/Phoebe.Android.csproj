@@ -64,6 +64,8 @@
     <Compile Include="Data\Json\Converters\ReportJsonConverter.cs" />
     <Compile Include="Data\DataObjects\ReportData.cs" />
     <Compile Include="Data\Reports\SummaryReportView.cs" />
+    <Compile Include="Net\IReportsClient.cs" />
+    <Compile Include="Net\ReportsRestClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

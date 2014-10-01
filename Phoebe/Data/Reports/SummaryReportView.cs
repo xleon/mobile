@@ -50,7 +50,7 @@ namespace Toggl.Phoebe.Data.Reports
         private async Task FetchData ()
         {
             try {
-                var client = ServiceContainer.Resolve<ITogglClient> ();
+                var client = ServiceContainer.Resolve<IReportsClient> ();
                 var json = await client.GetReports (startDate, endDate, (long)workspaceId);
                 dataObject = json.Import ();
                 await AddProjectColors ();

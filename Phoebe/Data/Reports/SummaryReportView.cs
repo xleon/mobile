@@ -24,15 +24,16 @@ namespace Toggl.Phoebe.Data.Reports
 
         public async Task Load (int backDate)
         {
-            if (IsLoading)
+            if (IsLoading) {
                 return;
+            }
 
             IsLoading = true;
             if (workspaceId == null) {
                 await Initialize ();
             }
             startDate = ResolveStartDate (backDate);
-            endDate = ResolveEndDate (backDate, startDate);
+            endDate = ResolveEndDate (startDate);
 
             await FetchData ();
             IsLoading = false;
@@ -61,31 +62,36 @@ namespace Toggl.Phoebe.Data.Reports
 
         public bool IsLoading { get; private set; }
 
-        public int ActivityCount {
+        public int ActivityCount
+        {
             get {
                 return dataObject.Activity.Count;
             }
         }
 
-        public List<ReportActivity> Activity {
+        public List<ReportActivity> Activity
+        {
             get {
                 return dataObject.Activity;
             }
         }
 
-        public List<ReportProject> Projects {
+        public List<ReportProject> Projects
+        {
             get {
                 return dataObject.Projects;
             }
         }
 
-        public string TotalBillale {
+        public string TotalBillale
+        {
             get {
                 return FormatMilliseconds (dataObject.TotalBillable);
             }
         }
 
-        public string TotalGrand {
+        public string TotalGrand
+        {
             get {
                 return FormatMilliseconds (dataObject.TotalGrand);
             }
@@ -117,6 +123,16 @@ namespace Toggl.Phoebe.Data.Reports
             return labels;
         }
 
+        public string FormattedStartDate (int backDate)
+        {
+            return  ResolveStartDate (backDate).ToShortDateString();
+        }
+
+        public string FormattedEndDate (int backDate)
+        {
+            return ResolveEndDate (ResolveStartDate ( backDate)).ToShortDateString();
+        }
+
         private int GetMaxTotal ()
         {
             long max = 0;
@@ -145,7 +161,7 @@ namespace Toggl.Phoebe.Data.Reports
                 var diff = (int)date.DayOfWeek - (int)startOfWeek;
                 return date.AddDays (diff);
             } else if (Period == ZoomLevel.Month) {
-                current.AddMonths (-backDate);
+                current = current.AddMonths (-backDate);
                 return new DateTime (current.Year, current.Month, 1);
 
             } else {
@@ -153,7 +169,7 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private DateTime ResolveEndDate (int backDate, DateTime start)
+        private DateTime ResolveEndDate (DateTime start)
         {
             if (Period == ZoomLevel.Week) {
                 return start.AddDays (6);

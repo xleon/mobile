@@ -43,8 +43,8 @@ namespace Toggl.Phoebe.Net
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token != null) {
                 req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
-                        string.Format ("{0}:api_token", authManager.Token))));
+                        Convert.ToBase64String (Encoding.ASCII.GetBytes (
+                                                    string.Format ("{0}:api_token", authManager.Token))));
             }
             return req;
         }
@@ -55,7 +55,7 @@ namespace Toggl.Phoebe.Net
 
                 var reqTimer = Stopwatch.StartNew ();
                 var httpResp = await httpClient.SendAsync (httpReq)
-                    .ConfigureAwait (continueOnCapturedContext: false);
+                               .ConfigureAwait (continueOnCapturedContext: false);
                 reqTimer.Stop ();
 
                 PrepareResponse (httpResp, reqTimer.Elapsed);
@@ -88,10 +88,10 @@ namespace Toggl.Phoebe.Net
             });
 
             var httpResp = await SendAsync (httpReq)
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (continueOnCapturedContext: false);
 
             var json = JObject.Parse (respData);
 

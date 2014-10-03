@@ -61,7 +61,7 @@ namespace Toggl.Phoebe.Data
         public static int GetProjectColorFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
         {
             var con = ctx.Connection;
-            var tagTbl = con.GetMapping (typeof(ProjectData)).TableName;
+            var tagTbl = con.GetMapping (typeof (ProjectData)).TableName;
             var q = String.Concat ("SELECT Color AS Value FROM ", tagTbl, " WHERE WorkspaceId=? AND Name=?");
             return con.ExecuteScalar<int> (q, workspaceId, name);
         }

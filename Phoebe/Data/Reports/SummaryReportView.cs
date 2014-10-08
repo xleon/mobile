@@ -107,7 +107,7 @@ namespace Toggl.Phoebe.Data.Reports
             return labels;
         }
 
-        private string FormatMilliseconds (long ms)
+        public string FormatMilliseconds (long ms)
         {
             var timeSpan = TimeSpan.FromMilliseconds (ms);
             decimal totalHours = Math.Floor ((decimal)timeSpan.TotalHours);

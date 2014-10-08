@@ -1,15 +1,15 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using Toggl.Phoebe.Data.Utils;
-using System.Runtime.CompilerServices;
 
 namespace Toggl.Phoebe.Tests
 {
     public class PropertyChangeTrackerTest : Test
     {
         [Test]
-        public void Test()
+        public void TestNotify()
         {
             TestTracker (null, true);
         }

@@ -46,11 +46,10 @@ namespace Toggl.Ross.Views
                 ForegroundColor = Color.Gray,
             };
 
-            var titleBounds = title.GetBoundingRect (
-                                  new SizeF (Single.PositiveInfinity, Single.PositiveInfinity),
-                                  NSStringDrawingOptions.UsesFontLeading | NSStringDrawingOptions.UsesDeviceMetrics,
-                                  titleAttrs,
-                                  null);
+            var titleBounds = new RectangleF (
+                new PointF (0, 0),
+                title.GetSizeUsingAttributes (titleAttrs)
+            );
 
             var image = Image.TagBackground;
             var imageBounds = new RectangleF (

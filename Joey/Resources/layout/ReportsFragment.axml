@@ -11,5 +11,7 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/ReportsProjectList" />
+        android:id="@+id/ReportsProjectList"
+        android:divider="@drawable/DividerHorizontalOpaque"
+        android:dividerHeight="1px" />
 </LinearLayout>

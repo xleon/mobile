@@ -12,9 +12,9 @@ namespace Toggl.Joey.UI.Views
         private List<PieSlice> slices = new List<PieSlice> ();
         private Paint paint = new Paint ();
         private Path path = new Path ();
-
         private int indexSelected = -1;
-        private int thickness = 75;
+        private int thickness = 65;
+        private bool isLoading = true;
         private IOnSliceClickedListener listener;
 
         public PieChart (Context context, IAttributeSet attrs) : base (context, attrs)
@@ -27,57 +27,70 @@ namespace Toggl.Joey.UI.Views
 
         public override void Draw (Canvas canvas)
         {
+            if (IsLoading)
+                return;
             canvas.DrawColor (Color.Transparent);
             paint.Reset ();
             paint.AntiAlias = true;
             path.Reset ();
 
-            int totalValue = 0;
+            long totalValue = 0;
             float currentAngle = 270;
             float currentSweep;
-            float padding = 0;
             float centerX = Width / 2;
             float centerY = Height / 2;
             float radius;
+            long selectedValue = 0;
+            int slicePadding = 10;
 
             if (centerX < centerY) {
                 radius = centerX;
             } else {
                 radius = centerY;
             }
-            radius -= padding;
             float innerRadius = radius - thickness;
 
             foreach (PieSlice slice in slices) {
-                totalValue += (int)slice.Value;
+                totalValue += slice.Value;
             }
-
             int count = 0;
             foreach (PieSlice slice in slices) {
                 var slicePath = new Path ();
-
                 paint.Color = slice.Color;
-                currentSweep = (slice.Value / totalValue) * (360);
+                if (indexSelected != count && listener != null && indexSelected != -1) {
+                    paint.Alpha = 100;
+                }
+                currentSweep = ((float)slice.Value / (float)totalValue) * (360);
                 slicePath.ArcTo (
                     new RectF (
-                        centerX - radius,
-                        centerY - radius,
-                        centerX + radius,
-                        centerY + radius
+                        centerX - radius + slicePadding,
+                        centerY - radius + slicePadding,
+                        centerX + radius - slicePadding,
+                        centerY + radius - slicePadding
                     ),
-                    currentAngle + padding,
-                    currentSweep - padding
+                    currentAngle,
+                    currentSweep
                 );
                 slicePath.ArcTo (
                     new RectF (
-                        centerX - innerRadius,
-                        centerY - innerRadius,
-                        centerX + innerRadius,
-                        centerY + innerRadius
+                        centerX - innerRadius + slicePadding,
+                        centerY - innerRadius + slicePadding,
+                        centerX + innerRadius - slicePadding,
+                        centerY + innerRadius - slicePadding
                     ),
-                    (currentAngle + padding) + (currentSweep - padding),
-                    -(currentSweep - padding)
+                    currentAngle + currentSweep,
+                    -(currentSweep)
                 );
+
+                if (indexSelected == count && listener != null) {
+                    var sliceSector = currentAngle + (currentSweep / 2) - 270;
+                    var angleToRadian = sliceSector / (180 / Math.PI);
+                    var dx = (float)Math.Sin (angleToRadian) * slicePadding;
+                    var dy = (float)Math.Cos (angleToRadian) * slicePadding * -1;
+                    slicePath.Offset (dx, dy);
+                    selectedValue = slice.Value;
+                }
+
                 slicePath.Close ();
 
                 slice.Path = slicePath;
@@ -88,80 +101,42 @@ namespace Toggl.Joey.UI.Views
                     (int)(centerY + radius)
                 );
                 canvas.DrawPath (slicePath, paint);
-
-                int selectedPadding = 3;
-
-                if (indexSelected == count && listener != null) {
-                    path.Reset ();
-                    paint.Color = slice.Color;
-                    paint.Color = Color.ParseColor ("#33B5E5");
-                    paint.Alpha = 100;
-
-                    if (slices.Count > 1) {
-                        path.ArcTo (
-                            new RectF (
-                                centerX - radius - (selectedPadding * 2),
-                                centerY - radius - (selectedPadding * 2),
-                                centerX + radius + (padding * 2),
-                                centerY + radius + (padding * 2)
-                            ),
-                            currentAngle,
-                            currentSweep + padding
-                        );
-                        path.ArcTo (
-                            new RectF (
-                                centerX - innerRadius + (selectedPadding * 2),
-                                centerY - innerRadius + (selectedPadding * 2),
-                                centerX + innerRadius - (selectedPadding * 2),
-                                centerY + innerRadius - (selectedPadding * 2)
-                            ),
-                            currentAngle + currentSweep + selectedPadding,
-                            -(currentSweep + selectedPadding)
-                        );
-                        path.Close ();
-                    } else {
-                        path.AddCircle (centerX, centerY, radius + selectedPadding, Path.Direction.Cw);
-                    }
-
-                    canvas.DrawPath (path, paint);
-                    paint.Alpha = 255;
-                }
-
                 currentAngle = currentAngle + currentSweep;
-
                 count++;
             }
+
+            Paint text = new Paint ();
+            text.Color = Color.Black;
+            text.TextAlign = Paint.Align.Center;
+            text.TextSize = 30;
+            canvas.DrawText(FormatMilliseconds(selectedValue > 0 ? selectedValue : totalValue), centerX, centerY, text);
         }
 
-        public bool OnTouchEvent(MotionEvent ev) {
-            Console.WriteLine ("touched");
-
+        public override bool OnTouchEvent(MotionEvent ev)
+        {
             Point point = new Point();
-            point.X = (int)ev.GetX();
+            point.X = (int) ev.GetX();
             point.Y = (int) ev.GetY();
-
+            indexSelected = -1;
             int count = 0;
             foreach (PieSlice slice in slices){
                 Region r = new Region();
                 r.SetPath(slice.Path, slice.Region);
-                if (r.Contains(point.X, point.Y) && ev.Action == MotionEventActions.Down) {
+                if (r.Contains(point.X, point.Y) && ev.Action == MotionEventActions.Up) {
                     indexSelected = count;
-                } else if (ev.Action == MotionEventActions.Up){
-                    if (r.Contains(point.X, point.Y) && listener != null) {
-                        if (indexSelected > -1){
-                            listener.OnClick(indexSelected);
-                        }
-                        indexSelected = -1;
-                    }
                 }
                 count++;
             }
-
-            if (ev.Action == MotionEventActions.Down || ev.Action == MotionEventActions.Up){
+            if (ev.Action == MotionEventActions.Up){
                 PostInvalidate ();
             }
 
             return true;
+        }
+        private string FormatMilliseconds(long ms)
+        {
+            var timeSpan =  TimeSpan.FromMilliseconds (ms);
+            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor(timeSpan.TotalHours).ToString("00"), timeSpan);
         }
 
         public List<PieSlice> Slices {
@@ -170,6 +145,18 @@ namespace Toggl.Joey.UI.Views
             }
             set {
                 slices = value;
+                PostInvalidate ();
+            }
+        }
+
+        public bool IsLoading{
+            get {
+                return isLoading;
+            }
+            set {
+                if (isLoading == value)
+                    return;
+                isLoading = value;
                 PostInvalidate ();
             }
         }
@@ -218,35 +205,15 @@ namespace Toggl.Joey.UI.Views
 
     public class PieSlice
     {
-        private float value;
-        private String title;
-        private Path path;
-        private Region region;
+        public string Title { get; set; }
 
-        public string Title {
-            get;
-            set;
-        }
+        public Color Color { get; set; }
 
-        public Color Color {
-            get;
-            set;
-        }
+        public long Value { get; set; }
 
-        public float Value {
-            get;
-            set;
-        }
+        public Path Path { get; set; }
 
-        public Path Path {
-            get;
-            set;
-        }
-
-        public Region Region {
-            get;
-            set;
-        }
+        public Region Region { get; set; }
     }
 }
 

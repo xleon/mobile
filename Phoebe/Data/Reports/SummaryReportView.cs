@@ -35,11 +35,11 @@ namespace Toggl.Phoebe.Data.Reports
                 await Initialize ();
             }
             startDate = ResolveStartDate (backDate);
-<<<<<<< HEAD
+            <<<<<<< HEAD
             endDate = ResolveEndDate (startDate);
-=======
-            endDate = ResolveEndDate ( startDate);
->>>>>>> working on donut chart
+            =======
+                endDate = ResolveEndDate ( startDate);
+            >>>>>>> working on donut chart
 
             await FetchData ();
             IsLoading = false;
@@ -181,15 +181,16 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-<<<<<<< HEAD
+        <<<<<<< HEAD
         private DateTime ResolveEndDate (DateTime start)
-=======
-        private DateTime ResolveEndDate ( DateTime start)
->>>>>>> working on donut chart
-        {
-            if (Period == ZoomLevel.Week) {
+        =======
+            private DateTime ResolveEndDate ( DateTime start)
+        >>>>>>> working on donut chart {
+            if (Period == ZoomLevel.Week)
+            {
                 return start.AddDays (6);
-            } else if (Period == ZoomLevel.Month) {
+            } else if (Period == ZoomLevel.Month)
+            {
                 return start.AddMonths (1).AddDays (-1);
             } else {
                 return start.AddYears (1).AddDays (-1);

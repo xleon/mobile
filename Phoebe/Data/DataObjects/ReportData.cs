@@ -1,17 +1,17 @@
 ﻿using System;
 <<<<<<< HEAD
 =======
-using SQLite;
+    using SQLite;
 >>>>>>> e09ae4f... working on donut chart
 using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Data.DataObjects
 {
-<<<<<<< HEAD
-=======
-    [Table ("ReportsModel")]
->>>>>>> e09ae4f... working on donut chart
-    public class ReportData : CommonData
+    <<<<<<< HEAD
+    =======
+        [Table ("ReportsModel")]
+        >>>>>>> e09ae4f... working on donut chart
+        public class ReportData : CommonData
     {
         public ReportData ()
         {
@@ -19,38 +19,38 @@ namespace Toggl.Phoebe.Data.DataObjects
 
         public ReportData (ReportData other) : base (other)
         {
-<<<<<<< HEAD
+            <<<<<<< HEAD
             TotalGrand = other.TotalGrand;
             TotalBillable = other.TotalBillable;
-=======
-            StartDate = other.StartDate;
+            =======
+                StartDate = other.StartDate;
             TotalGrand = other.TotalGrand;
             TotalBillable = other.TotalBillable;
             ZoomLevel = other.ZoomLevel;
->>>>>>> e09ae4f... working on donut chart
+            >>>>>>> e09ae4f... working on donut chart
             Activity = other.Activity;
             Projects = other.Projects;
         }
 
-<<<<<<< HEAD
-=======
-        public DateTime StartDate { get; set; }
+        <<<<<<< HEAD
+        =======
+            public DateTime StartDate { get; set; }
 
->>>>>>> e09ae4f... working on donut chart
-        public long TotalGrand { get; set; }
+            >>>>>>> e09ae4f... working on donut chart
+            public long TotalGrand { get; set; }
 
-        public long TotalBillable { get; set; }
+            public long TotalBillable { get; set; }
 
-<<<<<<< HEAD
-=======
-        public ZoomLevel ZoomLevel { get; set; }
+            <<<<<<< HEAD
+            =======
+                public ZoomLevel ZoomLevel { get; set; }
 
->>>>>>> e09ae4f... working on donut chart
-        public List<ReportActivity> Activity;
+                >>>>>>> e09ae4f... working on donut chart
+                public List<ReportActivity> Activity;
 
         public List<ReportProject> Projects;
     }
-<<<<<<< HEAD
+    <<<<<<< HEAD
 }
 =======
 }

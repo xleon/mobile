@@ -15,7 +15,7 @@ namespace Toggl.Phoebe.Data.Json
         [JsonProperty ("billable_time")]
         public long BillableTime { get; set; }
     }
-<<<<<<< HEAD
+    <<<<<<< HEAD
 }
 =======
 }

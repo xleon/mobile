@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data.Json
         [JsonProperty ("projects")]
         public List<ReportProjectJson> Projects { get; set; }
     }
-<<<<<<< HEAD
+    <<<<<<< HEAD
 }
 =======
 }

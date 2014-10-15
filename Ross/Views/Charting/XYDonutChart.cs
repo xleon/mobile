@@ -6,7 +6,6 @@ using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
 using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -62,11 +61,11 @@ namespace Toggl.Ross.Views.Charting
 
         private bool _showPercentage;
 
-        public bool ShowPercentage
-        {
+        public bool ShowPercentage {
             get {
                 return _showPercentage;
-            } set {
+            }
+            set {
                 _showPercentage = value;
 
                 var sliceLayers = _pieView.Layer.Sublayers ?? new CALayer[0];
@@ -82,11 +81,11 @@ namespace Toggl.Ross.Views.Charting
 
         private PointF _pieCenter;
 
-        public PointF PieCenter
-        {
+        public PointF PieCenter {
             get {
                 return _pieCenter;
-            } set {
+            }
+            set {
                 _pieView.Center = value;
                 _pieCenter = new PointF (_pieView.Frame.Width / 2, _pieView.Frame.Height / 2);
             }
@@ -94,11 +93,11 @@ namespace Toggl.Ross.Views.Charting
 
         private float _pieRadius;
 
-        public float PieRadius
-        {
+        public float PieRadius {
             get {
                 return _pieRadius;
-            } set {
+            }
+            set {
                 _pieRadius = value;
                 // TODO: check better way
                 /*
@@ -111,11 +110,11 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        public UIColor PieBackgroundColor
-        {
+        public UIColor PieBackgroundColor {
             get {
                 return _pieView.BackgroundColor;
-            } set {
+            }
+            set {
                 _pieView.BackgroundColor = value;
             }
         }
@@ -327,7 +326,7 @@ namespace Toggl.Ross.Views.Charting
                 if (DataSource.ColorForSliceAtIndex (this, index) != null) {
                     color = DataSource.ColorForSliceAtIndex (this, index);
                 } else {
-                    color = UIColor.FromHSBA ((float) (index / 8f % 20.0f / 20.0 + 0.02f), (float) ((index % 8 + 3) / 10.0), (float) (91 / 100.0), 1);
+                    color = UIColor.FromHSBA ((float)(index / 8f % 20.0f / 20.0 + 0.02f), (float)((index % 8 + 3) / 10.0), (float)(91 / 100.0), 1);
                 }
 
                 layer.ChangeToColor (color);

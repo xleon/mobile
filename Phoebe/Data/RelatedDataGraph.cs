@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Toggl.Phoebe.Data.DataObjects;
-using XPlatUtils;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data
 {

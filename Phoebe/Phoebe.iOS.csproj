@@ -53,7 +53,6 @@
     <Compile Include="Net\**\*.cs" />
     <Compile Include="Properties\**\*.cs" />
     <Compile Include="Threading\**\*.cs" />
-    <Compile Include="Data\Views\SummaryReportView.cs" />
     <Compile Include="Data\ReportTypes.cs" />
     <Compile Include="Data\DataObjects\ReportData.cs" />
     <Compile Include="Data\Json\ReportJson.cs" />

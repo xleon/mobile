@@ -4,18 +4,23 @@ using Android.Content;
 using Android.Views;
 using Android.Graphics;
 using Android.Util;
+using Android.Widget;
 
 namespace Toggl.Joey.UI.Views
 {
+    public delegate void SliceClickedEventHandler (int position);
+
     public class PieChart : View
     {
         private List<PieSlice> slices = new List<PieSlice> ();
         private Paint paint = new Paint ();
         private Path path = new Path ();
-        private int indexSelected = -1;
         private int thickness = 65;
         private bool isLoading = true;
+        private int indexSelected = -1;
         private IOnSliceClickedListener listener;
+
+        public event SliceClickedEventHandler SliceClicked;
 
         public PieChart (Context context, IAttributeSet attrs) : base (context, attrs)
         {
@@ -129,8 +134,8 @@ namespace Toggl.Joey.UI.Views
             }
             if (ev.Action == MotionEventActions.Up){
                 PostInvalidate ();
+                OnSliceSelected ();
             }
-
             return true;
         }
         private string FormatMilliseconds(long ms)
@@ -138,7 +143,13 @@ namespace Toggl.Joey.UI.Views
             var timeSpan =  TimeSpan.FromMilliseconds (ms);
             return String.Format ("{0}:{1:mm\\:ss}", Math.Floor(timeSpan.TotalHours).ToString("00"), timeSpan);
         }
-
+        protected virtual void OnSliceSelected()
+        {
+            var sliceClicked = SliceClicked;
+            if (sliceClicked != null) {
+                sliceClicked (indexSelected);
+            }
+        }
         public List<PieSlice> Slices {
             get {
                 return slices;
@@ -199,9 +210,14 @@ namespace Toggl.Joey.UI.Views
         {
             void OnClick (int index);
         }
+
+        public void SelectSlice(int position)
+        {
+            Console.WriteLine ("Selecting slice: {0}", position);
+            indexSelected = position;
+            PostInvalidate ();
+        }
     }
-
-
 
     public class PieSlice
     {

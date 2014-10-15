@@ -94,7 +94,7 @@ namespace Toggl.Phoebe.Net
                            .ConfigureAwait (continueOnCapturedContext: false);
 
             var json = JObject.Parse (respData);
-            Console.WriteLine(json.ToString ());
+//            Console.WriteLine(json.ToString ());
             var RowList = new List<ReportRowJson> ();
             foreach (var row in json["activity"]["rows"]) {
                 RowList.Add (new ReportRowJson () {

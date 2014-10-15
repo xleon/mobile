@@ -9,9 +9,12 @@
         android:layout_height="200dp"
         android:id="@+id/PieChart" />
     <ListView
+        android:id="@id/android:list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/ReportsProjectList"
-        android:divider="@drawable/DividerHorizontalOpaque"
-        android:dividerHeight="1px" />
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:drawSelectorOnTop="false"
+        android:paddingLeft="-2dp"
+        android:divider="@drawable/DividerHorizontalLight"
+        android:dividerHeight="1dp" />
 </LinearLayout>

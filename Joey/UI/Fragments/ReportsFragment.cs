@@ -12,18 +12,16 @@ using Toggl.Phoebe.Net;
 using Android.Graphics;
 using ListFragment = Android.Support.V4.App.ListFragment;
 using Android.Widget;
-using Toggl.Joey.UI.Adapters;
 using System.Collections.Generic;
 using Toggl.Joey.UI.Utils;
 using Android.Graphics.Drawables;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ReportsFragment : Fragment
+    public class ReportsFragment : ListFragment
     {
         private PieChart pieChart;
         private SummaryReportView summaryReport;
-        private ListView projectsList;
 
         public static readonly string[] HexColors = {
             "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
@@ -34,20 +32,53 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
-
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
-            projectsList = view.FindViewById<ListView> (Resource.Id.ReportsProjectList);
-
-            pieChart.SetOnSliceClickedListener(new SliceListener());
+            var d = new SliceListener ();
+            pieChart.SetOnSliceClickedListener(d);
+            pieChart.SliceClicked += new SliceClickedEventHandler (OnSliceSelect); 
 
             LoadPieChart ();
-
             return view;
         }
+
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        {
+            base.OnViewCreated (view, savedInstanceState);
+            ListView.SetClipToPadding (false);
+        }
+
+        public override void OnListItemClick (ListView l, View v, int position, long id)
+        {
+            Console.WriteLine ("list item clicked!");
+            pieChart.SelectSlice (position);
+            var adapter = ListView.Adapter as ProjectListAdapter;
+            adapter.SetFocus (position);
+            if (adapter == null) {
+                return;
+            }
+
+            var model = adapter.GetItem (position);
+            if (model == null) {
+                return;
+            }
+        }
+
+        private void OnSliceSelect(int position){
+            var adapter = ListView.Adapter as ProjectListAdapter;
+            adapter.SetFocus (position);
+
+        }
+        private void EnsureAdapter ()
+        {
+            // check, if adapter exists, if it does, dont overwrite.
+            var adapter = new ProjectListAdapter (summaryReport.Projects);
+            ListAdapter = adapter;
+        }
+
         private async void LoadPieChart() {
             await LoadData();
+            EnsureAdapter ();
             GeneratePieChart ();
-            GenerateProjectsList ();
         }
 
         private void GeneratePieChart()
@@ -63,6 +94,7 @@ namespace Toggl.Joey.UI.Fragments
             }
             pieChart.IsLoading = false;
         }
+
         private async Task LoadData ()
         {
             summaryReport = new SummaryReportView ();
@@ -73,18 +105,9 @@ namespace Toggl.Joey.UI.Fragments
 
         public class SliceListener : PieChart.IOnSliceClickedListener
         {
-            public void OnClick (int index) {}
-        }
-
-        public void GenerateProjectsList()
-        {
-            var adapter = new ProjectListAdapter (summaryReport.Projects);
-            projectsList.Adapter = adapter;
-        }
-
-        private void OnItemClick (object sender, EventArgs e)
-        {
-            Console.WriteLine ("clicked");
+            public void OnClick (int index) {
+                Console.WriteLine ("slice clicked");
+            }
         }
     }
 
@@ -94,6 +117,7 @@ namespace Toggl.Joey.UI.Fragments
         private View ColorSquare;
         private TextView ProjectName;
         private TextView ProjectDuration;
+        private int focus = -1;
 
         public static readonly string[] HexColors = {
             "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
@@ -110,7 +134,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             return null;
         }
-      
+
         public override long GetItemId (int position)
         {
             return position;
@@ -125,21 +149,26 @@ namespace Toggl.Joey.UI.Fragments
 
             ProjectName.Text = dataView [position].Project;
             ProjectDuration.Text = FormatMilliseconds(dataView [position].TotalTime);
+            var SquarDrawable = new GradientDrawable ();
+            SquarDrawable.SetCornerRadius (5);
+            SquarDrawable.SetColor (Color.ParseColor (HexColors [dataView [position].Color % HexColors.Length]));
 
-            var shape = ColorSquare.Background as GradientDrawable;
-            if (shape != null) {
-                shape.SetColor (Color.ParseColor (HexColors [dataView [position].Color % HexColors.Length]));
+            if (focus == position) {
+                SquarDrawable.SetShape (ShapeType.Oval);
+            } else if (focus != -1 && focus != position) {
+                SquarDrawable.SetShape (ShapeType.Rectangle);
+                SquarDrawable.SetAlpha (150);
+                ProjectName.SetTextColor (Color.LightGray);
+                ProjectDuration.SetTextColor (Color.LightGray);
             }
-            view.Click += OnItemClick;
+            ColorSquare.SetBackgroundDrawable (SquarDrawable);
             return view;
         }
 
-        private void OnItemClick (object sender, EventArgs e)
+        public void SetFocus(int selected)
         {
-            var shape = ColorSquare.Background as GradientDrawable;
-            if (shape != null) {
-                shape.SetShape (ShapeType.Oval);
-            }
+            focus = selected;
+            NotifyDataSetChanged ();
         }
 
         public override int Count {

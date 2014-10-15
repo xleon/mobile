@@ -8,7 +8,6 @@
         android:id="@+id/ColorSquare"
         android:layout_width="15dp"
         android:layout_height="15dp"
-        android:background="@drawable/ProjectListSquare"
         android:layout_marginLeft="3dp"
         android:layout_marginTop="2dp" />
     <TextView
@@ -27,5 +26,5 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_marginRight="10dp"
-        android:textColor="@color/dark_gray" />
+        android:textColor="@color/light_gray" />
 </RelativeLayout>

@@ -1,5 +1,4 @@
-﻿using System;
-using MonoTouch.UIKit;
+﻿using MonoTouch.UIKit;
 
 namespace Toggl.Ross.Theme
 {
@@ -15,5 +14,6 @@ namespace Toggl.Ross.Theme
         public static readonly UIColor Red = UIColor.FromRGB (0xFB, 0x20, 0x25);
         public static readonly UIColor DarkRed = UIColor.FromRGB (0xD7, 0x00, 0x08);
         public static readonly UIColor White = UIColor.White;
+        public static readonly UIColor DonutInactiveGray = UIColor.FromRGB (0xDB, 0xDB, 0xDB);
     }
 }

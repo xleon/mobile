@@ -19,6 +19,8 @@ namespace Toggl.Phoebe.Data
     public struct ReportProject {
         public string Project { get; set; }
 
+        public string FormattedTime { get; set; }
+
         public long TotalTime { get; set; }
 
         public int Color { get; set; }

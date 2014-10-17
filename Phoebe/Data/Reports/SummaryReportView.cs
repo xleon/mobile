@@ -50,6 +50,7 @@ namespace Toggl.Phoebe.Data.Reports
                 var json = await client.GetReports (startDate, endDate, (long)workspaceId);
                 dataObject = json.Import ();
                 await AddProjectColors ();
+                AddFormattedTime();
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, "Failed to fetch reports.");
@@ -107,6 +108,31 @@ namespace Toggl.Phoebe.Data.Reports
             var timeSpan = TimeSpan.FromMilliseconds (ms);
             decimal totalHours = Math.Floor ((decimal)timeSpan.TotalHours);
             return String.Format ("{0} h {1} min", (int)totalHours, timeSpan.Minutes);
+
+        }
+
+        public string FormatByUserSettings (long ms)
+        {
+            TimeSpan duration = TimeSpan.FromMilliseconds (ms);
+            string formattedString = duration.ToString (@"h\:mm\:ss");
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            if (user == null) {
+                return formattedString;
+            }
+
+            if (user.DurationFormat == DurationFormat.Classic) {
+                if (duration.TotalMinutes < 1) {
+                    formattedString = duration.ToString (@"s\ \s\e\c");
+                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
+                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
+                } else {
+                    formattedString = duration.ToString (@"hh\:mm\:ss");
+                }
+            } else if (user.DurationFormat == DurationFormat.Decimal) {
+                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+            }
+            return formattedString;
         }
 
         public List<string> ChartTimeLabels ()
@@ -117,16 +143,6 @@ namespace Toggl.Phoebe.Data.Reports
                 labels.Add (String.Format ("{0} h", max / 4 * i));
             }
             return labels;
-        }
-
-        public string FormattedStartDate (int backDate)
-        {
-            return  ResolveStartDate (backDate).ToShortDateString();
-        }
-
-        public string FormattedEndDate (int backDate)
-        {
-            return ResolveEndDate (ResolveStartDate ( backDate)).ToShortDateString();
         }
 
         private int GetMaxTotal ()
@@ -149,7 +165,7 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private DateTime ResolveStartDate (int backDate)
+        public DateTime ResolveStartDate (int backDate)
         {
             var current = DateTime.Today;
             if (Period == ZoomLevel.Week) {
@@ -165,7 +181,7 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private DateTime ResolveEndDate (DateTime start)
+        public DateTime ResolveEndDate (DateTime start)
         {
             if (Period == ZoomLevel.Week) {
                 return start.AddDays (6);
@@ -190,6 +206,39 @@ namespace Toggl.Phoebe.Data.Reports
                 withColors.Add (d);
             }
             dataObject.Projects = withColors;
+        }
+
+        private void AddFormattedTime ()
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            var withFormattedTime = new List<ReportProject> ();
+
+            foreach (var item in dataObject.Projects) {
+                var d = new ReportProject ();
+                d.Project = item.Project;
+                d.TotalTime = item.TotalTime;
+                d.Color = item.Color;
+
+                TimeSpan duration = TimeSpan.FromMilliseconds ( item.TotalTime);
+                string formattedString = duration.ToString (@"h\:mm\:ss");
+
+                if ( user!= null) {
+                    if ( user.DurationFormat == DurationFormat.Classic) {
+                        if (duration.TotalMinutes < 1) {
+                            formattedString = duration.ToString (@"s\ \s\e\c");
+                        } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
+                            formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
+                        } else {
+                            formattedString = duration.ToString (@"hh\:mm\:ss");
+                        }
+                    } else if (user.DurationFormat == DurationFormat.Decimal) {
+                        formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+                    }
+                }
+                d.FormattedTime = formattedString;
+                withFormattedTime.Add (d);
+            }
+            dataObject.Projects = withFormattedTime;
         }
     }
 }

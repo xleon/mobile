@@ -1,6 +1,5 @@
 ﻿using System;
 using MonoTouch.UIKit;
-using Toggl.Ross.Views;
 
 namespace Toggl.Ross.Theme
 {
@@ -36,6 +35,43 @@ namespace Toggl.Ross.Theme
                 v.SetTitle (String.Empty, UIControlState.Normal);
                 v.SetImage ( UIImage.FromFile ( "btn-arrow-right.png"), UIControlState.Normal);
             }
+
+            public static void ProjectCellTitleLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 14f);
+                v.TextColor = Color.DarkGray;
+                v.TextAlignment = UITextAlignment.Left;
+            }
+
+            public static void ProjectCellTimeLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 14f);
+                v.TextColor = Color.Black;
+                v.TextAlignment = UITextAlignment.Right;
+            }
+
+            public static void DonutTimeLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 18f);
+                v.TextColor = Color.DarkGray;
+                v.TextAlignment = UITextAlignment.Center;
+            }
+
+            public static void DonutMoneyLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 14f);
+                v.TextColor = Color.DarkGray;
+                v.TextAlignment = UITextAlignment.Center;
+            }
+
+            public static void NoProjectTitle (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Bold", 15f);
+                v.TextColor = Color.DarkGray;
+                v.TextAlignment = UITextAlignment.Center;
+            }
+
+
         }
     }
 }

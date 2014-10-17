@@ -96,8 +96,8 @@ namespace Toggl.Ross.ViewControllers
                 (weekButton = new UIButton ()),
                 (yearButton = new UIButton ()),
             };
-            dayButton.SetTitle ("ReportsMenuDay".Tr (), UIControlState.Normal);
-            weekButton.SetTitle ("ReportsMenuWeek".Tr (), UIControlState.Normal);
+            dayButton.SetTitle ("ReportsMenuWeek".Tr (), UIControlState.Normal);
+            weekButton.SetTitle ("ReportsMenuMonth".Tr (), UIControlState.Normal);
             yearButton.SetTitle ("ReportsMenuYear".Tr (), UIControlState.Normal);
 
             foreach (var menuButton in menuButtons) {
@@ -305,7 +305,7 @@ namespace Toggl.Ross.ViewControllers
 
                 SelectorButton = new UIButton();
                 SelectorButton = new UIButton ().Apply (Style.ReportsView.SelectorButton);
-                SelectorButton.SetTitle ("ReportsTitleDaily".Tr (), UIControlState.Normal); // dummy text stuff
+                SelectorButton.SetTitle ("ReportsTitleWeekly".Tr (), UIControlState.Normal); // dummy text stuff
                 SelectorButton.SizeToFit();
                 SelectorButton.Frame = new RectangleF ( Frame.X, (Frame.Height - SelectorButton.Frame.Height)/2 - 1, Frame.Width, SelectorButton.Frame.Height);
                 Add ( SelectorButton);
@@ -323,10 +323,10 @@ namespace Toggl.Ross.ViewControllers
             {
                 switch (_level) {
                 case ZoomLevel.Week:
-                    SelectorButton.SetTitle ("ReportsTitleDaily".Tr (), UIControlState.Normal);
+                    SelectorButton.SetTitle ("ReportsTitleWeekly".Tr (), UIControlState.Normal);
                     break;
                 case ZoomLevel.Month:
-                    SelectorButton.SetTitle ("ReportsTitleWeekly".Tr (), UIControlState.Normal);
+                    SelectorButton.SetTitle ("ReportsTitleMonthly".Tr (), UIControlState.Normal);
                     break;
                 case ZoomLevel.Year:
                     SelectorButton.SetTitle ("ReportsTitleYearly".Tr (), UIControlState.Normal);

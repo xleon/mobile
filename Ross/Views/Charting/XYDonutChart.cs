@@ -6,6 +6,7 @@ using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
 using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
+using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -437,7 +438,8 @@ namespace Toggl.Ross.Views.Charting
             CALayer parentLayer = _pieView.Layer;
             var pieLayers = parentLayer.Sublayers;
 
-            foreach (SliceLayer layer in pieLayers) {
+            for (int i = 0; i < pieLayers.Length; i++) {
+                var layer = (SliceLayer)pieLayers [i];
                 var currentStartAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("startAngle"));
                 var interpolatedStartAngle = currentStartAngle.DoubleValue;
 
@@ -460,6 +462,7 @@ namespace Toggl.Ross.Views.Charting
                     var textLayer = (CATextLayer)layer.Sublayers [0];
                     textLayer.Hidden = true;
                     layer.RemoveFromSuperLayer ();
+                    pieLayers [i] = null;
                 }
                 CATransaction.DisableActions = false;
             }
@@ -609,6 +612,7 @@ namespace Toggl.Ross.Views.Charting
 
         public SliceLayer (IntPtr ptr) : base (ptr)
         {
+            Debug.WriteLine ("ptr!");
         }
 
         [Export ("initWithLayer:")]

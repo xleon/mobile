@@ -73,12 +73,16 @@ namespace Toggl.Ross.ViewControllers
 
             menuController.Attach (this);
 
-            dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - 50 - 64, UIScreen.MainScreen.Bounds.Width, 50));
+            float navBarHeight = 64;
+            float selectorHeight = 50;
+
+            dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
             dateSelectorView.LeftArrowPressed += (sender, e) => TimeSpaceIndex++;
             dateSelectorView.RightArrowPressed += (sender, e) => TimeSpaceIndex--;
             Add (dateSelectorView);
 
-            pieChart = new PieChart (new RectangleF (0, 0, UIScreen.MainScreen.Bounds.Width, 420));
+            float padding = 24;
+            pieChart = new PieChart (new RectangleF ( padding, 0, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
             Add (pieChart);
 
             ChangeReportState ();
@@ -101,22 +105,68 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);
-
-            if (dataSource != null) {
-                // reportViewProvider.Updated += OnTagsUpdated;
-            }
-            //RebindTags ();
         }
 
         private async void ChangeReportState ()
         {
             dataSource.Period = _zoomLevel;
-            dateSelectorView.DateContent = dataSource.FormattedStartDate (_timeSpaceIndex) + " " + dataSource.FormattedEndDate (_timeSpaceIndex);
+            dateSelectorView.DateContent = FormattedIntervalDate (_timeSpaceIndex);
 
             Debug.WriteLine (_timeSpaceIndex);
 
             await dataSource.Load (_timeSpaceIndex);
             pieChart.ReportView = dataSource;
+        }
+
+        private string FormattedIntervalDate (int backDate)
+        {
+            string result = "";
+
+            if (backDate == 0) {
+                switch (ZoomLevel) {
+                case ZoomLevel.Week:
+                    result = "ThisWeekSelector".Tr ();
+                    break;
+                case ZoomLevel.Month:
+                    result = "ThisMonthSelector".Tr ();
+                    break;
+                case ZoomLevel.Year:
+                    result = "ThisYearSelector".Tr ();
+                    break;
+                }
+            } else if (backDate == 1) {
+                switch (ZoomLevel) {
+                case ZoomLevel.Week:
+                    result = "LastWeekSelector".Tr ();
+                    break;
+                case ZoomLevel.Month:
+                    result = "LastMonthSelector".Tr ();
+                    break;
+                case ZoomLevel.Year:
+                    result = "LastYearSelector".Tr ();
+                    break;
+                }
+            } else {
+                var startDate = dataSource.ResolveStartDate (_timeSpaceIndex);
+                var endDate = dataSource.ResolveEndDate (startDate);
+
+                switch (ZoomLevel) {
+                case ZoomLevel.Week:
+                    if (startDate.Month == endDate.Month) {
+                        result = startDate.ToString ("StartWeekInterval".Tr ()) + " - " + endDate.ToString ("EndWeekInterval".Tr ());
+                    } else {
+                        result = startDate.Day + "th " + startDate.ToString ("MMM") + " - " + endDate.Day + "th " + startDate.ToString ("MMM");
+                    }
+                    break;
+                case ZoomLevel.Month:
+                    result = startDate.ToString ("MonthInterval".Tr ());
+                    break;
+                case ZoomLevel.Year:
+                    result = startDate.ToString ("YearInterval".Tr ());
+                    break;
+                }
+            }
+            return result;
         }
     }
 }

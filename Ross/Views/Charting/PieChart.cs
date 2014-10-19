@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using MonoTouch.CoreAnimation;
+using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
-using MonoTouch.CoreGraphics;
-using MonoTouch.CoreAnimation;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -18,6 +18,10 @@ namespace Toggl.Ross.Views.Charting
 
         public EventHandler AnimationStarted { get; set; }
 
+        public EventHandler GoForwardInterval { get; set; }
+
+        public EventHandler GoBackInterval { get; set; }
+
         private SummaryReportView _reportView;
 
         public SummaryReportView ReportView
@@ -25,8 +29,13 @@ namespace Toggl.Ross.Views.Charting
             get {
                 return _reportView;
             } set {
-                _reportView = value; // TODO check better organization
-                _reportView.Projects.Sort ((x, y) => string.Compare (x.Project, y.Project, StringComparison.Ordinal));
+                _reportView = value;
+
+                if (_reportView.Projects == null) {
+                    return;
+                }
+
+                _reportView.Projects.Sort ((x, y) => string.Compare (x.Project, y.Project, StringComparison.Ordinal)); // TODO check better organization
 
                 var delayNoData = (_reportView.Projects.Count == 0) ? 0.5 : 0;
                 var delayData = (_reportView.Projects.Count == 0) ? 0 : 0.5;
@@ -35,8 +44,7 @@ namespace Toggl.Ross.Views.Charting
                 () => {
                     noProjectTextLabel.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
                     noProjectTitleLabel.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
-                },  () => {}
-                               );
+                },  () => {});
 
                 UIView.Animate (0.5, delayData, UIViewAnimationOptions.TransitionNone,
                 () => {
@@ -45,8 +53,7 @@ namespace Toggl.Ross.Views.Charting
                     totalTimeLabel.Alpha = (_reportView.Projects.Count == 0) ? 0 : 1;
                 },  () => {
                     grayCircle.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
-                }
-                               );
+                });
 
                 _reportView.Projects.Sort ((x, y) => string.Compare (x.Project, y.Project, StringComparison.Ordinal));
 
@@ -111,6 +118,7 @@ namespace Toggl.Ross.Views.Charting
                 UserInteractionEnabled = true,
                 SelectedSliceStroke = 0,
                 ShowPercentage = false,
+                StartPieAngle = Math.PI * 3/2,
                 ShowLabel = false,
                 AnimationSpeed = 1.0f,
                 SelectedSliceOffsetRadius = 8f
@@ -151,6 +159,48 @@ namespace Toggl.Ross.Views.Charting
             totalTimeLabel.Alpha = 0;
             moneyLabel.Alpha = 0;
             projectTableView.Alpha = 0;
+
+            float dx = 0;
+            float dy = 0;
+            float border = 12;
+
+            animator = new UIDynamicAnimator (this);
+            //animator.Delegate =
+            snapRect = new RectangleF (0, 0, frame.Width, diameter + padding);
+            snapPoint = new PointF (snapRect.GetMidX (), snapRect.GetMidY ());
+            panGesture = new UIPanGestureRecognizer ((pg) => {
+                if ((pg.State == UIGestureRecognizerState.Began || pg.State == UIGestureRecognizerState.Changed) && (pg.NumberOfTouches == 1)) {
+                    if (snap != null) {
+                        animator.RemoveBehavior (snap);
+                    }
+                    var p0 = pg.LocationInView (this);
+                    if (dx == 0) {
+                        dx = p0.X - donutChart.Center.X;
+                    }
+                    if (dy == 0) {
+                        dy = p0.Y - donutChart.Center.Y;
+                    }
+                    var p1 = new PointF (p0.X - dx, donutChart.Center.Y);
+                    if ( p1.X - pieRadius < -pieRadius || p1.X + pieRadius > frame.Width + pieRadius ) {
+                        return;
+                    }
+                    donutChart.Center = p1;
+                } else if (pg.State == UIGestureRecognizerState.Ended) {
+                    if ( donutChart.Center.X - pieRadius < border &&
+                            GoBackInterval != null ) {
+                        GoBackInterval.Invoke ( this, new EventArgs());
+                    } else if ( donutChart.Center.X + pieRadius > frame.Width - border &&
+                                donutChart.Center.X + pieRadius < frame.Width + border &&
+                                GoForwardInterval != null ) {
+                        GoForwardInterval.Invoke ( this, new EventArgs());
+                    }
+                    dx = 0;
+                    dy = 0;
+                    SnapImageIntoPlace ( donutChart.Center);
+                }
+            });
+
+            donutChart.AddGestureRecognizer (panGesture);
         }
 
         XYDonutChart donutChart;
@@ -160,6 +210,12 @@ namespace Toggl.Ross.Views.Charting
         UILabel noProjectTitleLabel;
         UILabel noProjectTextLabel;
         UIView grayCircle;
+
+        UIPanGestureRecognizer panGesture;
+        UIDynamicAnimator animator;
+        UIAttachmentBehavior snap;
+        RectangleF snapRect;
+        PointF snapPoint;
 
 
         public void SetSelectedProject (int index)
@@ -186,6 +242,19 @@ namespace Toggl.Ross.Views.Charting
             return shapeLayer;
         }
 
+        private void SnapImageIntoPlace (PointF touchPoint)
+        {
+            if (snapRect.Contains (touchPoint)) {
+                if (snap != null) {
+                    animator.RemoveBehavior (snap);
+                }
+
+                //snap = new UISnapBehavior (
+                snap = new UIAttachmentBehavior ( donutChart, snapPoint);
+                animator.AddBehavior (snap);
+            }
+        }
+
         #region Pie Datasource
 
         public int NumberOfSlicesInPieChart (XYDonutChart pieChart)
@@ -210,6 +279,25 @@ namespace Toggl.Ross.Views.Charting
         }
 
         #endregion
+
+        internal class AnimatorDelegate : UIDynamicAnimatorDelegate
+        {
+            SummaryReportView owner;
+
+            public AnimatorDelegate ( SummaryReportView _owner)
+            {
+                owner = _owner;
+            }
+
+            public override void WillResume (UIDynamicAnimator animator)
+            {
+
+            }
+
+            public override void DidPause (UIDynamicAnimator animator)
+            {
+            }
+        }
 
         internal class ProjectListSource : UITableViewSource
         {

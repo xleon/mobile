@@ -24,7 +24,7 @@
     <MtouchDebug>true</MtouchDebug>
     <MtouchI18n>
     </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
+    <MtouchArch>i386</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
@@ -38,7 +38,7 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchI18n>
     </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
+    <MtouchArch>i386</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
@@ -59,8 +59,7 @@
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <MtouchUseSGen>true</MtouchUseSGen>
-    <MtouchUseRefCounting>true</MtouchUseRefCounting>
+    <MtouchProfiling>true</MtouchProfiling>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <Optimize>true</Optimize>

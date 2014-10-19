@@ -461,8 +461,8 @@ namespace Toggl.Ross.Views.Charting
                     layer.ZPosition = 0;
                     var textLayer = (CATextLayer)layer.Sublayers [0];
                     textLayer.Hidden = true;
-                    layer.RemoveFromSuperLayer ();
-                    pieLayers [i] = null;
+                    //layer.RemoveFromSuperLayer ();
+                    //pieLayers [i] = null;
                 }
                 CATransaction.DisableActions = false;
             }

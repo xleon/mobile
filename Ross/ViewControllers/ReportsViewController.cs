@@ -75,14 +75,16 @@ namespace Toggl.Ross.ViewControllers
 
             float navBarHeight = 64;
             float selectorHeight = 50;
+            float padding = 24;
 
             dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
             dateSelectorView.LeftArrowPressed += (sender, e) => TimeSpaceIndex++;
             dateSelectorView.RightArrowPressed += (sender, e) => TimeSpaceIndex--;
             Add (dateSelectorView);
 
-            float padding = 24;
             pieChart = new PieChart (new RectangleF ( padding, 0, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
+            pieChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
+            pieChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
             Add (pieChart);
 
             ChangeReportState ();

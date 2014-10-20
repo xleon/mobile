@@ -114,42 +114,45 @@ namespace Toggl.Joey.UI.Views
             text.Color = Color.Black;
             text.TextAlign = Paint.Align.Center;
             text.TextSize = 30;
-            canvas.DrawText(FormatMilliseconds(selectedValue > 0 ? selectedValue : totalValue), centerX, centerY, text);
+            canvas.DrawText (FormatMilliseconds (selectedValue > 0 ? selectedValue : totalValue), centerX, centerY, text);
         }
 
-        public override bool OnTouchEvent(MotionEvent ev)
+        public override bool OnTouchEvent (MotionEvent ev)
         {
-            Point point = new Point();
-            point.X = (int) ev.GetX();
-            point.Y = (int) ev.GetY();
+            Point point = new Point ();
+            point.X = (int)ev.GetX ();
+            point.Y = (int)ev.GetY ();
             indexSelected = -1;
             int count = 0;
-            foreach (PieSlice slice in slices){
-                Region r = new Region();
-                r.SetPath(slice.Path, slice.Region);
-                if (r.Contains(point.X, point.Y) && ev.Action == MotionEventActions.Up) {
+            foreach (PieSlice slice in slices) {
+                Region r = new Region ();
+                r.SetPath (slice.Path, slice.Region);
+                if (r.Contains (point.X, point.Y) && ev.Action == MotionEventActions.Up) {
                     indexSelected = count;
                 }
                 count++;
             }
-            if (ev.Action == MotionEventActions.Up){
+            if (ev.Action == MotionEventActions.Up) {
                 PostInvalidate ();
                 OnSliceSelected ();
             }
             return true;
         }
-        private string FormatMilliseconds(long ms)
+
+        private string FormatMilliseconds (long ms)
         {
-            var timeSpan =  TimeSpan.FromMilliseconds (ms);
-            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor(timeSpan.TotalHours).ToString("00"), timeSpan);
+            var timeSpan = TimeSpan.FromMilliseconds (ms);
+            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor (timeSpan.TotalHours).ToString ("00"), timeSpan);
         }
-        protected virtual void OnSliceSelected()
+
+        protected virtual void OnSliceSelected ()
         {
             var sliceClicked = SliceClicked;
             if (sliceClicked != null) {
                 sliceClicked (indexSelected);
             }
         }
+
         public List<PieSlice> Slices {
             get {
                 return slices;
@@ -160,7 +163,7 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public bool IsLoading{
+        public bool IsLoading {
             get {
                 return isLoading;
             }
@@ -211,7 +214,7 @@ namespace Toggl.Joey.UI.Views
             void OnClick (int index);
         }
 
-        public void SelectSlice(int position)
+        public void SelectSlice (int position)
         {
             Console.WriteLine ("Selecting slice: {0}", position);
             indexSelected = position;

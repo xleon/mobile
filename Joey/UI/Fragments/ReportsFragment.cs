@@ -20,6 +20,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ReportsFragment : ListFragment
     {
+        private BarChart barChart;
         private PieChart pieChart;
         private SummaryReportView summaryReport;
 
@@ -32,10 +33,14 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
+
+            barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
+
+
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
-            var d = new SliceListener ();
-            pieChart.SetOnSliceClickedListener(d);
-            pieChart.SliceClicked += new SliceClickedEventHandler (OnSliceSelect); 
+            var listener = new SliceListener ();
+            pieChart.SetOnSliceClickedListener (listener);
+            pieChart.SliceClicked += OnSliceSelect; 
 
             LoadPieChart ();
             return view;
@@ -49,7 +54,6 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
-            Console.WriteLine ("list item clicked!");
             pieChart.SelectSlice (position);
             var adapter = ListView.Adapter as ProjectListAdapter;
             adapter.SetFocus (position);
@@ -63,11 +67,12 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void OnSliceSelect(int position){
+        private void OnSliceSelect (int position)
+        {
             var adapter = ListView.Adapter as ProjectListAdapter;
             adapter.SetFocus (position);
-
         }
+
         private void EnsureAdapter ()
         {
             // check, if adapter exists, if it does, dont overwrite.
@@ -75,21 +80,37 @@ namespace Toggl.Joey.UI.Fragments
             ListAdapter = adapter;
         }
 
-        private async void LoadPieChart() {
-            await LoadData();
+        private async void LoadPieChart ()
+        {
+            await LoadData ();
             EnsureAdapter ();
             GeneratePieChart ();
+            GenerateBarChart ();
         }
 
-        private void GeneratePieChart()
+        private void GenerateBarChart ()
+        {
+            foreach (var p in summaryReport.Activity) {
+                var d = new BarItem ();
+                d.Value = (float)p.TotalTime;
+                d.Name = p.StartTime.ToShortTimeString ();
+                d.Color = Color.ParseColor ("#00AEFF");
+                barChart.AddBar (d);
+            }
+            barChart.CeilingValue = summaryReport.GetCeilingSeconds ();
+            barChart.SetBarTitles (summaryReport.ChartRowLabels ());
+            barChart.SetLineTitles (summaryReport.ChartTimeLabels ());
+            barChart.Refresh ();
+        }
+
+        private void GeneratePieChart ()
         {
             pieChart.IsLoading = true;
 
-            foreach(var project in summaryReport.Projects)
-            {
+            foreach (var project in summaryReport.Projects) {
                 var slice = new PieSlice ();
                 slice.Value = project.TotalTime;
-                slice.Color = Color.ParseColor( HexColors [project.Color % HexColors.Length]); 
+                slice.Color = Color.ParseColor (HexColors [project.Color % HexColors.Length]); 
                 pieChart.AddSlice (slice);
             }
             pieChart.IsLoading = false;
@@ -98,14 +119,15 @@ namespace Toggl.Joey.UI.Fragments
         private async Task LoadData ()
         {
             summaryReport = new SummaryReportView ();
-            summaryReport.Period = ZoomLevel.Month;
-            await summaryReport.Load (0);
+            summaryReport.Period = ZoomLevel.Week;
+            await summaryReport.Load (1);
             var user = ServiceContainer.Resolve<AuthManager> ().User;
         }
 
         public class SliceListener : PieChart.IOnSliceClickedListener
         {
-            public void OnClick (int index) {
+            public void OnClick (int index)
+            {
                 Console.WriteLine ("slice clicked");
             }
         }
@@ -145,27 +167,27 @@ namespace Toggl.Joey.UI.Fragments
             var view = LayoutInflater.FromContext (parent.Context).Inflate (Resource.Layout.ReportsProjectListItem, parent, false);
             ProjectName = view.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
             ColorSquare = view.FindViewById<View> (Resource.Id.ColorSquare);
-            ProjectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont(Font.Roboto);
+            ProjectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
 
             ProjectName.Text = dataView [position].Project;
-            ProjectDuration.Text = FormatMilliseconds(dataView [position].TotalTime);
-            var SquarDrawable = new GradientDrawable ();
-            SquarDrawable.SetCornerRadius (5);
-            SquarDrawable.SetColor (Color.ParseColor (HexColors [dataView [position].Color % HexColors.Length]));
+            ProjectDuration.Text = FormatMilliseconds (dataView [position].TotalTime);
+            var SquareDrawable = new GradientDrawable ();
+            SquareDrawable.SetCornerRadius (5);
+            SquareDrawable.SetColor (Color.ParseColor (HexColors [dataView [position].Color % HexColors.Length]));
 
             if (focus == position) {
-                SquarDrawable.SetShape (ShapeType.Oval);
+                SquareDrawable.SetShape (ShapeType.Oval);
             } else if (focus != -1 && focus != position) {
-                SquarDrawable.SetShape (ShapeType.Rectangle);
-                SquarDrawable.SetAlpha (150);
+                SquareDrawable.SetShape (ShapeType.Rectangle);
+                SquareDrawable.SetAlpha (150);
                 ProjectName.SetTextColor (Color.LightGray);
                 ProjectDuration.SetTextColor (Color.LightGray);
             }
-            ColorSquare.SetBackgroundDrawable (SquarDrawable);
+            ColorSquare.SetBackgroundDrawable (SquareDrawable);
             return view;
         }
 
-        public void SetFocus(int selected)
+        public void SetFocus (int selected)
         {
             focus = selected;
             NotifyDataSetChanged ();
@@ -177,10 +199,10 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private string FormatMilliseconds(long ms)
+        private string FormatMilliseconds (long ms)
         {
-            var timeSpan =  TimeSpan.FromMilliseconds (ms);
-            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor(timeSpan.TotalHours).ToString("00"), timeSpan);
+            var timeSpan = TimeSpan.FromMilliseconds (ms);
+            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor (timeSpan.TotalHours).ToString ("00"), timeSpan);
         }
     }
 }

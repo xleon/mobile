@@ -62,36 +62,31 @@ namespace Toggl.Phoebe.Data.Reports
 
         public bool IsLoading { get; private set; }
 
-        public int ActivityCount
-        {
+        public int ActivityCount {
             get {
                 return dataObject.Activity.Count;
             }
         }
 
-        public List<ReportActivity> Activity
-        {
+        public List<ReportActivity> Activity {
             get {
                 return dataObject.Activity;
             }
         }
 
-        public List<ReportProject> Projects
-        {
+        public List<ReportProject> Projects {
             get {
                 return dataObject.Projects;
             }
         }
 
-        public string TotalBillale
-        {
+        public string TotalBillale {
             get {
                 return FormatMilliseconds (dataObject.TotalBillable);
             }
         }
 
-        public string TotalGrand
-        {
+        public string TotalGrand {
             get {
                 return FormatMilliseconds (dataObject.TotalGrand);
             }
@@ -118,19 +113,19 @@ namespace Toggl.Phoebe.Data.Reports
             var max = GetMaxTotal ();
             List<string> labels = new List<string> ();
             for (int i = 1; i <= 4; i++) {
-                labels.Add (String.Format ("{0} h", max / 4 * i));
+                labels.Add (String.Format ("{0} h", (max - 2) / 4 * i));
             }
             return labels;
         }
 
         public string FormattedStartDate (int backDate)
         {
-            return  ResolveStartDate (backDate).ToShortDateString();
+            return  ResolveStartDate (backDate).ToShortDateString ();
         }
 
         public string FormattedEndDate (int backDate)
         {
-            return ResolveEndDate (ResolveStartDate ( backDate)).ToShortDateString();
+            return ResolveEndDate (ResolveStartDate (backDate)).ToShortDateString ();
         }
 
         private int GetMaxTotal ()
@@ -139,7 +134,13 @@ namespace Toggl.Phoebe.Data.Reports
             foreach (var s in dataObject.Activity) {
                 max = max < s.TotalTime ? s.TotalTime : max;
             }
-            return (int)Math.Ceiling ((double)TimeSpan.FromSeconds (max).Hours / 4D) * 4;
+            var timeOnLastLine = (int)Math.Ceiling ((double)TimeSpan.FromSeconds (max).Hours / 4D) * 4;
+            return timeOnLastLine + (timeOnLastLine / 4);
+        }
+
+        public double GetCeilingSeconds ()
+        {
+            return TimeSpan.FromHours (GetMaxTotal ()).TotalSeconds;
         }
 
         private string LabelForDate (DateTime date)

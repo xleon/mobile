@@ -131,6 +131,7 @@
     <Compile Include="UI\Fragments\ReportsFragment.cs" />
     <Compile Include="UI\Views\PieChart.cs" />
     <Compile Include="UI\Views\ReportsChartView.cs" />
+    <Compile Include="UI\Views\BarChart.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -535,6 +536,7 @@
     <AndroidResource Include="Resources\xml\Analytics.xml" />
     <AndroidResource Include="Resources\layout\ReportsFragment.axml" />
     <AndroidResource Include="Resources\layout\ReportsProjectListItem.axml" />
+    <AndroidResource Include="Resources\drawable\popup_black.9.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

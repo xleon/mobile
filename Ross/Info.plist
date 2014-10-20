@@ -21,7 +21,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>Toggl Timer</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.toggl.timer</string>
+	<string>com.toggl.timerdev</string>
 	<key>CFBundleShortVersionString</key>
 	<string>7.0.19</string>
 	<key>CFBundleVersion</key>

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
 using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -308,10 +309,10 @@ namespace Toggl.Ross.Views.Charting
                     } else if (diff < 0) {
                         while (diff < 0) {
                             onelayer.RemoveFromSuperLayer ();
-                            parentLayer.AddSublayer (onelayer);
+                            parentLayer.AddSublayer (onelayer); // TODO: check removing this code with the new Xamarin compiler
                             diff++;
                             onelayer = (SliceLayer)sliceLayers [index];
-                            if (onelayer.Value == values [index] || diff == 0) {
+                            if ( onelayer.Value == values [index] || diff == 0) {
                                 layer = onelayer;
                                 layersToRemove.Remove (layer);
                                 break;
@@ -344,12 +345,21 @@ namespace Toggl.Ross.Views.Charting
 
             CATransaction.DisableActions = true;
 
-            foreach (var layer in layersToRemove) {
-                layer.CreateArcAnimationForKey ("startAngle", layer.StartAngle, Math.PI * 2 + StartPieAngle, _animationDelegate);
-                layer.CreateArcAnimationForKey ("endAngle", layer.EndAngle, Math.PI * 2 + StartPieAngle, _animationDelegate);
-            }
+            var layers = (parentLayer.Sublayers ?? new CALayer[0]).ToList ();
+            layers.Sort ((x, y) => ((SliceLayer)x).StartAngle.CompareTo ( ((SliceLayer)y).StartAngle));
 
+            for (int i = 0; i < layers.Count; i++) {
+                var layer = (SliceLayer)layers [i];
+                var index = containsLayer (layersToRemove, layer);
+                if ( index != -1) {
+                    var angle = (i > 0) ? ((SliceLayer)layers [i -1]).EndAngle : StartPieAngle;
+                    layer.CreateArcAnimationForKey ("startAngle", layer.StartAngle, angle, _animationDelegate);
+                    layer.CreateArcAnimationForKey ("endAngle", layer.EndAngle, angle, _animationDelegate);
+                    layersToRemove.RemoveAt (index);
+                }
+            }
             layersToRemove.Clear ();
+            layers.Clear ();
 
             foreach (var layer in sliceLayers) {
                 layer.ZPosition = defaultSliceZOrder;
@@ -430,6 +440,19 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
+        private int containsLayer ( List<SliceLayer> list, SliceLayer layer)
+        {
+            int result = -1;
+            for (int i = 0; i < list.Count; i++) {
+                var item = list [i];
+                if (layer.StartAngle.CompareTo ( item.StartAngle) == 0 &&
+                        layer.EndAngle.CompareTo ( item.EndAngle) == 0) {
+                    result = i;
+                }
+            }
+            return result;
+        }
+
         #region Animation Delegate + Run Loop Timer
 
         [Export ("updateTimerFired:")]
@@ -438,8 +461,7 @@ namespace Toggl.Ross.Views.Charting
             CALayer parentLayer = _pieView.Layer;
             var pieLayers = parentLayer.Sublayers;
 
-            for (int i = 0; i < pieLayers.Length; i++) {
-                var layer = (SliceLayer)pieLayers [i];
+            foreach (SliceLayer layer in pieLayers) {
                 var currentStartAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("startAngle"));
                 var interpolatedStartAngle = currentStartAngle.DoubleValue;
 
@@ -461,8 +483,7 @@ namespace Toggl.Ross.Views.Charting
                     layer.ZPosition = 0;
                     var textLayer = (CATextLayer)layer.Sublayers [0];
                     textLayer.Hidden = true;
-                    //layer.RemoveFromSuperLayer ();
-                    //pieLayers [i] = null;
+                    layer.RemoveFromSuperLayer ();
                 }
                 CATransaction.DisableActions = false;
             }

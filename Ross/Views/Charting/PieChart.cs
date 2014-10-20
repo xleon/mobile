@@ -107,9 +107,12 @@ namespace Toggl.Ross.Views.Charting
 
             ProjectList = new List<ReportProject> ();
 
+            dragHelperView = new UIView (new RectangleF (0, 0, frame.Width, diameter + padding));
+            Add (dragHelperView);
+
             grayCircle = new UIView (new RectangleF (0, 0, frame.Width, diameter + padding));
             grayCircle.Layer.AddSublayer ( CGPathCreateArc ( grayCircle.Center, pieRadius, 0, Math.PI * 2, lineStroke));
-            Add (grayCircle);
+            dragHelperView.Add (grayCircle);
 
             donutChart = new XYDonutChart (new RectangleF (0, 0, frame.Width, diameter + padding)) {
                 DataSource = this,
@@ -123,7 +126,7 @@ namespace Toggl.Ross.Views.Charting
                 AnimationSpeed = 1.0f,
                 SelectedSliceOffsetRadius = 8f
             };
-            Add (donutChart);
+            dragHelperView.Add (donutChart);
             donutChart.DidSelectSliceAtIndex += (sender, e) => projectTableView.SelectRow (NSIndexPath.FromRowSection (e.Index, 0), true, UITableViewScrollPosition.Top);
             donutChart.DidDeselectSliceAtIndex += (sender, e) => projectTableView.DeselectRow (NSIndexPath.FromRowSection (e.Index, 0), true);
 
@@ -175,32 +178,31 @@ namespace Toggl.Ross.Views.Charting
                     }
                     var p0 = pg.LocationInView (this);
                     if (dx == 0) {
-                        dx = p0.X - donutChart.Center.X;
+                        dx = p0.X - dragHelperView.Center.X;
                     }
                     if (dy == 0) {
-                        dy = p0.Y - donutChart.Center.Y;
+                        dy = p0.Y - dragHelperView.Center.Y;
                     }
-                    var p1 = new PointF (p0.X - dx, donutChart.Center.Y);
+                    var p1 = new PointF (p0.X - dx, dragHelperView.Center.Y);
                     if ( p1.X - pieRadius < -pieRadius || p1.X + pieRadius > frame.Width + pieRadius ) {
                         return;
                     }
-                    donutChart.Center = p1;
+                    dragHelperView.Center = p1;
                 } else if (pg.State == UIGestureRecognizerState.Ended) {
-                    if ( donutChart.Center.X - pieRadius < border &&
+                    if ( dragHelperView.Center.X - pieRadius < border &&
                             GoBackInterval != null ) {
                         GoBackInterval.Invoke ( this, new EventArgs());
-                    } else if ( donutChart.Center.X + pieRadius > frame.Width - border &&
-                                donutChart.Center.X + pieRadius < frame.Width + border &&
+                    } else if ( dragHelperView.Center.X + pieRadius > frame.Width - border &&
                                 GoForwardInterval != null ) {
                         GoForwardInterval.Invoke ( this, new EventArgs());
                     }
                     dx = 0;
                     dy = 0;
-                    SnapImageIntoPlace ( donutChart.Center);
+                    SnapImageIntoPlace ( dragHelperView.Center);
                 }
             });
 
-            donutChart.AddGestureRecognizer (panGesture);
+            dragHelperView.AddGestureRecognizer (panGesture);
         }
 
         XYDonutChart donutChart;
@@ -210,12 +212,14 @@ namespace Toggl.Ross.Views.Charting
         UILabel noProjectTitleLabel;
         UILabel noProjectTextLabel;
         UIView grayCircle;
+        UIView dragHelperView;
 
         UIPanGestureRecognizer panGesture;
         UIDynamicAnimator animator;
-        UIAttachmentBehavior snap;
+        UISnapBehavior snap;
         RectangleF snapRect;
         PointF snapPoint;
+
 
 
         public void SetSelectedProject (int index)
@@ -248,9 +252,7 @@ namespace Toggl.Ross.Views.Charting
                 if (snap != null) {
                     animator.RemoveBehavior (snap);
                 }
-
-                //snap = new UISnapBehavior (
-                snap = new UIAttachmentBehavior ( donutChart, snapPoint);
+                snap = new UISnapBehavior ( dragHelperView, snapPoint);
                 animator.AddBehavior (snap);
             }
         }

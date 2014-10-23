@@ -7,6 +7,7 @@ using MonoTouch.CoreAnimation;
 
 namespace Toggl.Ross.Views.Charting
 {
+
     public class ChartSurface : UIView
     {
         public UIColor[] Colors;

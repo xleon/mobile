@@ -71,6 +71,20 @@ namespace Toggl.Ross.Theme
                 v.TextAlignment = UITextAlignment.Center;
             }
 
+            public static void BarCharLabelTitle (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Medium", 13f);
+                v.TextColor = Color.DarkGray;
+                v.TextAlignment = UITextAlignment.Left;
+            }
+
+            public static void BarCharLabelValue (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue", 12f);
+                v.TextColor = Color.DarkGray;
+                v.TextAlignment = UITextAlignment.Right;
+            }
+
 
         }
     }

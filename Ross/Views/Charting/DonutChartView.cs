@@ -12,7 +12,7 @@ using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.Views.Charting
 {
-    public class PieChart : UIView, IReportChart, IXYDonutChartDataSource
+    public class DonutChartView : UIView, IReportChart, IXYDonutChartDataSource
     {
         public EventHandler AnimationEnded { get; set; }
 
@@ -98,7 +98,7 @@ namespace Toggl.Ross.Views.Charting
 
         public List<ReportProject> ProjectList;
 
-        public PieChart (RectangleF frame) : base (frame)
+        public DonutChartView (RectangleF frame) : base (frame)
         {
             const float pieRadius = 80.0f;
             const float lineStroke = 40f;
@@ -220,8 +220,6 @@ namespace Toggl.Ross.Views.Charting
         RectangleF snapRect;
         PointF snapPoint;
 
-
-
         public void SetSelectedProject (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
@@ -303,9 +301,9 @@ namespace Toggl.Ross.Views.Charting
 
         internal class ProjectListSource : UITableViewSource
         {
-            private readonly PieChart _owner;
+            private readonly DonutChartView _owner;
 
-            public ProjectListSource (PieChart pieChart)
+            public ProjectListSource (DonutChartView pieChart)
             {
                 _owner = pieChart;
             }

@@ -1,13 +1,12 @@
-﻿using System.Diagnostics;
-using System.Drawing;
+﻿using System.Drawing;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using XPlatUtils;
 using Toggl.Ross.Theme;
-using Toggl.Ross.Views;
 using Toggl.Ross.Views.Charting;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -40,7 +39,8 @@ namespace Toggl.Ross.ViewControllers
         private SummaryReportView dataSource;
         private ReportsMenuController menuController;
         private DateSelectorView dateSelectorView;
-        private PieChart pieChart;
+        private DonutChartView pieChart;
+        private BarChartView barChart;
 
 
         public ReportsViewController ()
@@ -82,10 +82,15 @@ namespace Toggl.Ross.ViewControllers
             dateSelectorView.RightArrowPressed += (sender, e) => TimeSpaceIndex--;
             Add (dateSelectorView);
 
-            pieChart = new PieChart (new RectangleF ( padding, 0, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
+            pieChart = new DonutChartView (new RectangleF ( padding, 0, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
             pieChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
             pieChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
-            Add (pieChart);
+            //Add (pieChart);
+
+            barChart = new BarChartView ( new RectangleF ( padding, padding, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - 2 * selectorHeight));
+            barChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
+            barChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
+            Add (barChart);
 
             ChangeReportState ();
         }
@@ -114,10 +119,10 @@ namespace Toggl.Ross.ViewControllers
             dataSource.Period = _zoomLevel;
             dateSelectorView.DateContent = FormattedIntervalDate (_timeSpaceIndex);
 
-            Debug.WriteLine (_timeSpaceIndex);
-
             await dataSource.Load (_timeSpaceIndex);
-            pieChart.ReportView = dataSource;
+
+            pieChart.ReportView =
+                barChart.ReportView = dataSource;
         }
 
         private string FormattedIntervalDate (int backDate)

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using MonoTouch.CoreAnimation;
@@ -11,6 +10,13 @@ using MonoTouch.UIKit;
 
 namespace Toggl.Ross.Views.Charting
 {
+    public interface IAnimationDelegate
+    {
+        void AnimationDidStart (CABasicAnimation anim);
+
+        void AnimationDidStop (CABasicAnimation anim, bool finished);
+    }
+
     public interface IXYDonutChartDataSource
     {
         int NumberOfSlicesInPieChart (XYDonutChart pieChart);
@@ -22,7 +28,7 @@ namespace Toggl.Ross.Views.Charting
         string TextForSliceAtIndex (XYDonutChart pieChart, int index);
     }
 
-    public class XYDonutChart : UIView
+    public class XYDonutChart : UIView, IAnimationDelegate
     {
         #region Event handlers
 
@@ -101,14 +107,6 @@ namespace Toggl.Ross.Views.Charting
                 return _pieRadius;
             } set {
                 _pieRadius = value;
-                // TODO: check better way
-                /*
-                var origin = new PointF (_pieView.Frame.X, _pieView.Frame.Y);
-                var frame = new RectangleF (origin.X + _pieCenter.X - _pieRadius, origin.X + _pieCenter.Y - _pieRadius, _pieRadius * 2, _pieRadius * 2);
-                _pieCenter = new PointF (frame.Width / 2, frame.Height / 2);
-                _pieView.Frame = frame;
-                _pieView.Layer.CornerRadius = _pieRadius;
-                */
             }
         }
 
@@ -593,9 +591,9 @@ namespace Toggl.Ross.Views.Charting
 
     sealed class AnimationDelegate : CAAnimationDelegate
     {
-        private readonly XYDonutChart _owner;
+        private readonly IAnimationDelegate _owner;
 
-        public AnimationDelegate (XYDonutChart owner)
+        public AnimationDelegate (IAnimationDelegate owner)
         {
             _owner = owner;
         }
@@ -633,7 +631,6 @@ namespace Toggl.Ross.Views.Charting
 
         public SliceLayer (IntPtr ptr) : base (ptr)
         {
-            Debug.WriteLine ("ptr!");
         }
 
         [Export ("initWithLayer:")]

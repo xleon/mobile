@@ -1,9 +1,7 @@
 ﻿using System;
-using MonoTouch.UIKit;
 using System.Drawing;
-using Toggl.Phoebe.Data;
+using MonoTouch.UIKit;
 using Toggl.Ross.Theme;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views
 {

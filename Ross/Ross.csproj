@@ -186,6 +186,8 @@
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
     <None Include="packages.config" />
+    <None Include="Views\Charting\SingleBar.cs" />
+    <None Include="Views\Charting\ChartSurface.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
@@ -302,14 +304,13 @@
     <Compile Include="Theme\Style.ReportsView.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
-    <Compile Include="Views\Charting\ChartSurface.cs" />
-    <Compile Include="Views\Charting\SingleBar.cs" />
     <Compile Include="Views\Charting\IReportChart.cs" />
     <Compile Include="Views\DateSelectorView.cs" />
-    <Compile Include="Views\Charting\BarChart.cs" />
-    <Compile Include="Views\Charting\PieChart.cs" />
     <Compile Include="Views\ProjectReportCell.cs" />
     <Compile Include="Views\Charting\XYDonutChart.cs" />
+    <Compile Include="Views\Charting\BarChartView.cs" />
+    <Compile Include="Views\Charting\DonutChartView.cs" />
+    <Compile Include="Views\Charting\BarChart.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />

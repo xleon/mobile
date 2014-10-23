@@ -145,7 +145,7 @@ namespace Toggl.Phoebe.Data.Reports
             return labels;
         }
 
-        private int GetMaxTotal ()
+        public int GetMaxTotal ()
         {
             long max = 0;
             foreach (var s in dataObject.Activity) {

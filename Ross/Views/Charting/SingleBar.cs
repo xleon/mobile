@@ -11,10 +11,8 @@ namespace Toggl.Ross.Views.Charting
         float YPos = 20;
         const float topY = 30;
         const float graphHeight = 180;
-        const float barHeight = 30;
+        float barHeight = 30;
         const float dateSpace = 30;
-
-        readonly ChartSurface surface;
 
         readonly UIStringAttributes dateAttrs = new UIStringAttributes {
             ForegroundColor = UIColor.FromRGB (0x87, 0x87, 0x87),
@@ -47,43 +45,43 @@ namespace Toggl.Ross.Views.Charting
 
         const float minimalTimeValue = 2;
 
-        public SingleBar ( ChartSurface chartSurface, string date, float money, float time, string symbol, float x, float y)
+        public SingleBar ( string timeLabel, float timeValue, float moneyValue, string symbol, float x, float y, float height)
         {
             Xpos = x;
             YPos = y;
-            surface = chartSurface;
+            barHeight = height;
 
-            if (time == 0) {
-                time = minimalTimeValue;
+            if (timeValue == 0) {
+                timeValue = minimalTimeValue;
             }
 
-            dateTextData = new TextDrawingData (date, Xpos, YPos + 8);
-            timeBarData = new RectDrawingData (Xpos + dateSpace, YPos, time, barHeight, 2);
-            moneyBarData = new RectDrawingData (Xpos + dateSpace, YPos, money, barHeight, 1);
-            symbolTextData = new TextDrawingData (symbol, timeBarData.Width + money / 2, YPos + 9);
-            timeTextData = new TextDrawingData (time.ToString (), timeBarData.Width , YPos + 18);
+            dateTextData = new TextDrawingData (timeLabel, Xpos, YPos + 8);
+            timeBarData = new RectDrawingData (Xpos + dateSpace, YPos, timeValue, barHeight, 2);
+            moneyBarData = new RectDrawingData (Xpos + dateSpace, YPos, moneyValue, barHeight, 1);
+            symbolTextData = new TextDrawingData (symbol, timeBarData.Width + moneyValue / 2, YPos + 9);
+            timeTextData = new TextDrawingData (timeValue.ToString (), timeBarData.Width , YPos + 18);
 
             // create
             surface.DrawText (dateTextData, dateAttrs);
             timeBar = surface.DrawBarOnLayer (timeBarData);
             moneyBar = surface.DrawBarOnLayer (moneyBarData);
-            symbolText = surface.DrawTextOnLayer (symbolTextData, symbolAttrs);
-            timeText = surface.DrawTextOnLayer (timeTextData, timeAttrs);
+            symbolText = createTextLayer (symbolTextData, symbolAttrs);
+            timeText = createTextLayer (timeTextData, timeAttrs);
 
             // paint
             paintChart ();
         }
 
-        public void ReloadData ( string date, float money, float time, string symbol)
+        public void ReloadData ( string date, float money, float timeValue, string symbol)
         {
-            if (time == 0) {
-                time = minimalTimeValue;
+            if (timeValue == 0) {
+                timeValue = minimalTimeValue;
             }
             dateTextData = new TextDrawingData (date, Xpos, YPos + 8);
-            timeBarData = new RectDrawingData ( Xpos + dateSpace, YPos, time, barHeight, 2);
+            timeBarData = new RectDrawingData ( Xpos + dateSpace, YPos, timeValue, barHeight, 2);
             moneyBarData = new RectDrawingData (Xpos + dateSpace, YPos, money, barHeight, 1);
             symbolTextData = new TextDrawingData (symbol, timeBarData.Width + money / 2, YPos + 9);
-            timeTextData = new TextDrawingData (time.ToString (), timeBarData.Width , YPos + 18);
+            timeTextData = new TextDrawingData (timeValue.ToString (), timeBarData.Width , YPos + 18);
 
             // paint
             paintChart ();
@@ -140,5 +138,28 @@ namespace Toggl.Ross.Views.Charting
             timeText.Position = new PointF (timeBarData.X + timeBarData.Width + 20, timeTextData.Y);
         }
 
+        public void CreateAnimation ( float timeValue, float moneyValue)
+        {
+
+        }
+
+        CAShapeLayer createBarLayer ( RectangleF frame, UIColor color )
+        {
+
+        }
+
+        CATextLayer createTextLayer (TextDrawingData data, UIStringAttributes attrs)
+        {
+            var textLayer = new CATextLayer () {
+                ContentsScale = UIScreen.MainScreen.Scale,
+                //AnchorPoint = new PointF( 0.0f, 0.0f),
+                ForegroundColor = attrs.ForegroundColor.CGColor,
+                String = data.Text,
+                FontSize = attrs.Font.PointSize,
+                Frame = new RectangleF ( data.X, data.Y, 30, 15)
+            };
+            textLayer.SetFont ( attrs.Font.Name);
+            return textLayer;
+        }
     }
 }

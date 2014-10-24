@@ -5,6 +5,7 @@ using Toggl.Phoebe.Data.Reports;
 using System.Collections.Generic;
 using Toggl.Phoebe.Data;
 using Toggl.Ross.Theme;
+using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -30,10 +31,8 @@ namespace Toggl.Ross.Views.Charting
                 if (_reportView.Activity == null) {
                     return;
                 }
-
                 totalTimeLabel.Text = _reportView.TotalGrand;
                 moneyLabel.Text = _reportView.TotalBillale;
-
                 ActivityList = _reportView.Activity;
                 barChart.ReloadData ();
             }
@@ -139,7 +138,8 @@ namespace Toggl.Ross.Views.Charting
 
         public float ValueForBarAtIndex (BarChart barChart, int index)
         {
-            return (ActivityList [index].TotalTime == 0) ? 0 : (float) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.GetMaxTotal ()).TotalMilliseconds);
+            Debug.WriteLine ( _reportView.FormatMilliseconds (  ActivityList[index].TotalTime * 1000) + " " + _reportView.FormatMilliseconds ((long)TimeSpan.FromHours (_reportView.GetMaxTotal ()).TotalMilliseconds));
+            return (ActivityList [index].TotalTime == 0) ? 0 : (float) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.GetMaxTotal ()).TotalSeconds);
         }
 
         public string TextForBarAtIndex (BarChart barChart, int index)

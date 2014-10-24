@@ -5,6 +5,8 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using System.Globalization;
+using System.Diagnostics;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -139,8 +141,8 @@ namespace Toggl.Phoebe.Data.Reports
         {
             var max = GetMaxTotal ();
             List<string> labels = new List<string> ();
-            for (int i = 1; i <= 4; i++) {
-                labels.Add (String.Format ("{0} h", max / 4 * i));
+            for (int i = 1; i <= 5; i++) {
+                labels.Add (String.Format ("{0} h", max / 5 * i));
             }
             return labels;
         }
@@ -150,46 +152,52 @@ namespace Toggl.Phoebe.Data.Reports
             long max = 0;
             foreach (var s in dataObject.Activity) {
                 max = max < s.TotalTime ? s.TotalTime : max;
+                Debug.WriteLine (TimeSpan.FromSeconds ( max).Hours);
             }
-            return (int)Math.Ceiling ((double)TimeSpan.FromSeconds (max).Hours / 4D) * 4;
+            return (int)Math.Ceiling ( max/3600/ (double)5) * 5;
         }
 
         private string LabelForDate (DateTime date)
         {
             if (Period == ZoomLevel.Week) {
                 return String.Format ("{0:ddd}", date);
-            } else if (Period == ZoomLevel.Month) {
-                return String.Format ("{0:ddd dd}", date);
-            } else {
-                return String.Format ("{0:MMM}", date);
             }
+
+            if (Period == ZoomLevel.Month) {
+                return String.Format ("{0:ddd dd}", date);
+            }
+
+            return String.Format ("{0:MMM}", date);
         }
 
         public DateTime ResolveStartDate (int backDate)
         {
             var current = DateTime.Today;
+
             if (Period == ZoomLevel.Week) {
-                var date = DateTime.Today.AddDays (-backDate * 7);
-                var diff = (int)date.DayOfWeek - (int)startOfWeek;
-                return date.AddDays (diff);
-            } else if (Period == ZoomLevel.Month) {
+                var date = current.StartOfWeek (startOfWeek).AddDays (-backDate * 7);
+                return date;
+            }
+
+            if (Period == ZoomLevel.Month) {
                 current = current.AddMonths (-backDate);
                 return new DateTime (current.Year, current.Month, 1);
-
-            } else {
-                return new DateTime (current.Year - backDate, 1, 1);
             }
+
+            return new DateTime (current.Year - backDate, 1, 1);
         }
 
         public DateTime ResolveEndDate (DateTime start)
         {
             if (Period == ZoomLevel.Week) {
                 return start.AddDays (6);
-            } else if (Period == ZoomLevel.Month) {
-                return start.AddMonths (1).AddDays (-1);
-            } else {
-                return start.AddYears (1).AddDays (-1);
             }
+
+            if (Period == ZoomLevel.Month) {
+                return start.AddMonths (1).AddDays (-1);
+            }
+
+            return start.AddYears (1).AddDays (-1);
         }
 
         private async Task AddProjectColors ()

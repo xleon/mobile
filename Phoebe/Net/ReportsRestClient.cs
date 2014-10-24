@@ -77,8 +77,7 @@ namespace Toggl.Phoebe.Net
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             var start = startDate.ToString ("yyyy-MM-dd");
             var end = endDate.ToString ("yyyy-MM-dd");
-            var relUrl = "summary?period=thisWeek&grouping=projects&subgrouping=time_entries&&billable=both" +
-                         "&order_field=duration&order_desc=true&user_agent=toggl_mobile&bars_count=31&subgrouping_ids=true";
+            var relUrl = "summary?billable=both&order_field=duration&order_desc=true&user_agent=toggl_mobile&subgrouping_ids=true&bars_count=31";
             relUrl = String.Format ("{0}&since={1}&until={2}&user_ids={3}&workspace_id={4}", relUrl, start, end, user.RemoteId, workspaceId);
             var url = new Uri (reportsv2Url, relUrl);
 
@@ -86,6 +85,8 @@ namespace Toggl.Phoebe.Net
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
+
+            Debug.WriteLine (url);
 
             var httpResp = await SendAsync (httpReq)
                            .ConfigureAwait (continueOnCapturedContext: false);

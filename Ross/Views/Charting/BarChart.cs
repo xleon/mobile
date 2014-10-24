@@ -18,7 +18,7 @@ namespace Toggl.Ross.Views.Charting
 
         string TextForBarAtIndex (BarChart barChart, int index);
 
-        string TimeIntervalsAtIndex (int index);
+        string TimeIntervalAtIndex (int index);
     }
 
     public class BarChart : UIView, IAnimationDelegate
@@ -46,7 +46,7 @@ namespace Toggl.Ross.Views.Charting
         const int defaultSliceZOrder = 100;
         const float xAxisMargin = 35;
         const float yAxisMargin = 20;
-        CATextLayer[] xAxisText = new CATextLayer[4];
+        CATextLayer[] xAxisText = new CATextLayer[5];
         const float topBarMargin = 10;
         List<CABasicAnimation> _animations;
         AnimationDelegate _animationDelegate;
@@ -74,14 +74,14 @@ namespace Toggl.Ross.Views.Charting
             using (var context = UIGraphics.GetCurrentContext ()) {
 
                 UIBezierPath mainAxis = new UIBezierPath();
-                mainAxis.MoveTo (new PointF (xAxisMargin, 0));
-                mainAxis.AddLineTo (new PointF ( xAxisMargin, rect.Height));
+                mainAxis.MoveTo (new PointF (xAxisMargin + 1.0f, 0));
+                mainAxis.AddLineTo (new PointF ( xAxisMargin + 1.0f, rect.Height));
                 UIColor.FromRGB ( 203, 203, 203).SetStroke();
                 mainAxis.LineWidth = 4.0f;
                 mainAxis.Stroke ();
 
                 float sepInterval = Convert.ToSingle ( Math.Floor ( (rect.Width - xAxisMargin)/ 5));
-                for (int i = 1; i < 5; i++) {
+                for (int i = 1; i < 6; i++) {
                     UIBezierPath separatorAxis = new UIBezierPath();
                     separatorAxis.MoveTo (new PointF (xAxisMargin + sepInterval * i, 0));
                     separatorAxis.AddLineTo (new PointF ( xAxisMargin + sepInterval * i, rect.Height - yAxisMargin));
@@ -100,7 +100,7 @@ namespace Toggl.Ross.Views.Charting
                     }
 
                     textLayer.FontSize = LabelFont.PointSize;
-                    textLayer.AnchorPoint = new PointF ( 0.5f, 0.0f);
+                    textLayer.AnchorPoint = new PointF ( 1f, 0.0f);
                     textLayer.AlignmentMode = CATextLayer.AlignmentCenter;
                     textLayer.BackgroundColor = UIColor.Clear.CGColor;
                     textLayer.ForegroundColor = LabelColor.CGColor;
@@ -137,7 +137,7 @@ namespace Toggl.Ross.Views.Charting
             int barsCount = DataSource.NumberOfBarsOnChart (this);
 
             for (int i = 0; i < xAxisText.Length; i++) {
-                xAxisText [i].String = DataSource.TimeIntervalsAtIndex (i);
+                xAxisText [i].String = DataSource.TimeIntervalAtIndex (i);
             }
 
             var values = new float[barsCount];
@@ -162,8 +162,6 @@ namespace Toggl.Ross.Views.Charting
                     oneLayer = (BarLayer)barLayers [i];
                     oneLayer.HeightValue = barHeight - padding;
                 }
-
-                //oneLayer.CreateBarAnimationForKey ("timeValue", oneLayer.TimeValue, values [i], null);
                 oneLayer.TimeValue = values [i];
                 oneLayer.Position = new PointF ( 0, initialY + i * barHeight);
 
@@ -181,7 +179,7 @@ namespace Toggl.Ross.Views.Charting
                 SizeF size = nsString.GetSizeUsingAttributes (new UIStringAttributes () { Font = LabelFont });
                 var textLayer = oneLayer.DateTextLayer;
                 textLayer.String = labelText;
-                textLayer.FontSize = (barsCount > 12) ? 10.0f : 12.0f;
+                textLayer.FontSize = (barsCount > 12) ? 9.0f : 12.0f;
                 textLayer.Bounds = new RectangleF (0, 0, size.Width, size.Height);
                 textLayer.Position = new PointF ( (xAxisMargin - size.Width)/2, oneLayer.Bounds.Height/2);
                 CATransaction.DisableActions = false;
@@ -209,20 +207,24 @@ namespace Toggl.Ross.Views.Charting
                 ZPosition = 0,
                 BorderColor = UIColor.White.CGColor,
                 AnchorPoint = new PointF ( 0.0f, 0.5f),
-                Frame = new RectangleF ( 0, 0, Frame.Width, barHeight),
+                Frame = new RectangleF ( 0, 0, Frame.Width, barHeight)
             };
 
             var mainBar = new CALayer ();
-            mainBar.Frame = new RectangleF ( xAxisMargin, 0, Frame.Width - xAxisMargin, barHeight);
+            mainBar.AnchorPoint = new PointF (0.0f, 0.0f);
+            mainBar.Bounds = new RectangleF ( 0, 0, Frame.Width - xAxisMargin, barHeight);
+            mainBar.Position = new PointF ( xAxisMargin, 0);
             mainBar.BackgroundColor = UIColor.Red.CGColor;
+
             barLayer.AddSublayer (mainBar);
             barLayer.MainBar = mainBar;
 
             var secondaryBar = new CALayer ();
             secondaryBar.Frame = new RectangleF ( xAxisMargin, 0, Frame.Width - xAxisMargin, barHeight);
-            secondaryBar.ContentsScale = 0;
-            barLayer.AddSublayer (secondaryBar);
-            barLayer.SecondaryBar = secondaryBar;
+            secondaryBar.AnchorPoint = new PointF (0.0f, 0.5f);
+            secondaryBar.BackgroundColor = UIColor.Yellow.CGColor;
+            //barLayer.AddSublayer (secondaryBar);
+            //barLayer.SecondaryBar = secondaryBar;
 
             var textLayer = new CATextLayer ();
             textLayer.ContentsScale = UIScreen.MainScreen.Scale;
@@ -346,10 +348,10 @@ namespace Toggl.Ross.Views.Charting
             }
 
             set {
-                if (MainBar != null) {
-                    MainBar.AffineTransform = new CGAffineTransform ();
-                    MainBar.AffineTransform.Scale (value, 1.0f);
-                    Debug.WriteLine (value);
+                if (MainBar != null ) {
+                    var xScale = (value > 0) ? value : 0.005f;
+                    MainBar.AffineTransform = CGAffineTransform.MakeScale ( xScale, 1.0f);
+                    //MainBar.Opacity = (value > 0) ? 1 : 0;
                 }
             }
         }
@@ -383,37 +385,15 @@ namespace Toggl.Ross.Views.Charting
 
         public CATextLayer DateTextLayer;
 
-        private CALayer nullBar;
+        public CALayer EmptyBar;
 
         public BarLayer ()
         {
-            /*
-            nullBar = new CALayer ();
-            CGPath path = new CGPath ();
-            path.AddRect (new RectangleF (0, 0, 2, heightValue));
-            */
         }
 
         public BarLayer (IntPtr ptr) : base (ptr)
         {
         }
-
-        /*
-        [Export ("actionForKey:")]
-        public override NSObject ActionForKey (string eventKey)
-        {
-            switch (eventKey.ToString ()) {
-            case "timeValue":
-                return true;
-            case "moneyValue":
-                return true;
-            case "heightValue":
-                return true;
-            default:
-                return base.ActionForKey (eventKey);
-            }
-        }
-        */
 
         [Export ("needsDisplayForKey:")]
         static bool NeedsDisplayForKey (NSString key)

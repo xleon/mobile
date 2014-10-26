@@ -40,8 +40,6 @@ namespace Toggl.Ross.Views.Charting
 
         UIColor[] colors = {
             UIColor.FromRGB (0xBB, 0xBB, 0xBB),
-            UIColor.FromRGB (0x03, 0xA9, 0xF3),
-            UIColor.FromRGB (0x81, 0xD3, 0xF9),
             UIColor.Red
         };
 
@@ -65,6 +63,7 @@ namespace Toggl.Ross.Views.Charting
             titleTimeLabel.Text = "ReportsTotalLabel".Tr ();
             titleTimeLabel.Apply (Style.ReportsView.BarCharLabelTitle );
             Add (titleTimeLabel);
+
             totalTimeLabel = new UILabel (new RectangleF (frame.Width - 120, 0, 120, 20));
             totalTimeLabel.Apply (Style.ReportsView.BarCharLabelValue);
             Add (totalTimeLabel);
@@ -81,6 +80,7 @@ namespace Toggl.Ross.Views.Charting
                 DataSource = this
             };
             Add (barChart);
+            barChart.ReloadData ();
         }
 
         public List<ReportActivity> ActivityList;
@@ -97,38 +97,11 @@ namespace Toggl.Ross.Views.Charting
         RectangleF snapRect;
         PointF snapPoint;
 
-        void drawChartSurface ()
-        {
-            const float barHeight = 33;
-            const float topY = 15;
-            const float marginX = 15;
-            const float graphHeight = barHeight * 7 + 10;
-            const float graphWidth = 190;
-
-            /*
-            chartSurface.DrawText (new TextDrawingData ("Total", marginX, topY), topLabelAttrs);
-            chartSurface.DrawText (new TextDrawingData ("Billable", marginX, topY + 20), topLabelAttrs);
-            chartSurface.DrawText (new TextDrawingData (_reportView.TotalGrand, 100, topY), topLabelAttrs);
-            chartSurface.DrawText (new TextDrawingData (_reportView.TotalBillale, 118, topY + 20), topLabelAttrs);
-            chartSurface.DrawLine (new DoubleDrawingData (marginX + 30, topY + 50, marginX + 30, topY + 63 + graphHeight, 0), 4f);
-
-            for (int i = 1; i < _reportView.ChartTimeLabels ().Count; i++) {
-                var x = marginX + 30 + graphWidth / 4 * i;
-                chartSurface.DrawLine (new DoubleDrawingData (x, topY + 50, x, topY + 55 + graphHeight, 0), 0.5f);
-                chartSurface.DrawText (new TextDrawingData (_reportView.ChartTimeLabels () [i - 1], x - 5, topY + 55 + graphHeight), hoursAttrs);
-            }
-
-            for (int i = 0; i < _reportView.Activity.Count; i++) {
-                var bar = new SingleBar (chartSurface, "Date", _reportView.Activity [i].BillableTime, _reportView.Activity [i].TotalTime, "€", marginX, topY + 60 + 33 * i);
-            }
-            */
-        }
-
         #region IBarChartDataSource implementation
 
         public string TimeIntervalAtIndex (int index)
         {
-            return _reportView.ChartTimeLabels () [index];
+            return _reportView.ChartTimeLabels [index];
         }
 
         public int NumberOfBarsOnChart (BarChart barChart)
@@ -138,13 +111,17 @@ namespace Toggl.Ross.Views.Charting
 
         public float ValueForBarAtIndex (BarChart barChart, int index)
         {
-            Debug.WriteLine ( _reportView.FormatMilliseconds (  ActivityList[index].TotalTime * 1000) + " " + _reportView.FormatMilliseconds ((long)TimeSpan.FromHours (_reportView.GetMaxTotal ()).TotalMilliseconds));
-            return (ActivityList [index].TotalTime == 0) ? 0 : (float) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.GetMaxTotal ()).TotalSeconds);
+            return (ActivityList [index].TotalTime == 0) ? 0 : (float) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
+        }
+
+        public float ValueForSecondaryBarAtIndex (BarChart barChart, int index)
+        {
+            return (ActivityList [index].BillableTime == 0) ? 0 : (float) (ActivityList [index].BillableTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
         }
 
         public string TextForBarAtIndex (BarChart barChart, int index)
         {
-            return _reportView.ChartRowLabels() [index];
+            return _reportView.ChartRowLabels [index];
         }
 
         #endregion

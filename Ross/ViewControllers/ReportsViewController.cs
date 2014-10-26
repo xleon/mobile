@@ -7,6 +7,7 @@ using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views.Charting;
 using Toggl.Ross.Views;
+using System.Diagnostics;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -41,6 +42,10 @@ namespace Toggl.Ross.ViewControllers
         private DateSelectorView dateSelectorView;
         private DonutChartView pieChart;
         private BarChartView barChart;
+        private bool _viewMoveOn;
+        const float padding  = 24;
+        const float navBarHeight = 64;
+        const float selectorHeight = 50;
 
 
         public ReportsViewController ()
@@ -73,24 +78,26 @@ namespace Toggl.Ross.ViewControllers
 
             menuController.Attach (this);
 
-            float navBarHeight = 64;
-            float selectorHeight = 50;
-            float padding = 24;
-
             dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
             dateSelectorView.LeftArrowPressed += (sender, e) => TimeSpaceIndex++;
             dateSelectorView.RightArrowPressed += (sender, e) => TimeSpaceIndex--;
-            Add (dateSelectorView);
 
-            pieChart = new DonutChartView (new RectangleF ( padding, 0, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
-            pieChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
-            pieChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
-            //Add (pieChart);
-
-            barChart = new BarChartView ( new RectangleF ( padding, padding, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - 2 * selectorHeight));
+            barChart = new BarChartView ( new RectangleF ( padding, padding/2, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - 2 * selectorHeight));
             barChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
             barChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
+
+            pieChart = new DonutChartView (new RectangleF ( padding, barChart.Bounds.Height + padding, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
+            pieChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
+            pieChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
+
             Add (barChart);
+            Add (pieChart);
+            Add (dateSelectorView);
+
+            var upGesture = new UISwipeGestureRecognizer (ChangeView) { Direction = UISwipeGestureRecognizerDirection.Up };
+            var downGesture = new UISwipeGestureRecognizer (ChangeView) { Direction = UISwipeGestureRecognizerDirection.Down };
+            View.AddGestureRecognizer (upGesture);
+            View.AddGestureRecognizer (downGesture);
 
             ChangeReportState ();
         }
@@ -109,9 +116,33 @@ namespace Toggl.Ross.ViewControllers
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
-        public override void ViewWillAppear (bool animated)
+        private void ChangeView ( UISwipeGestureRecognizer recognizer)
         {
-            base.ViewWillAppear (animated);
+            if (_viewMoveOn) {
+                return;
+            }
+
+            if (recognizer.Direction == UISwipeGestureRecognizerDirection.Up) {
+                UIView.Animate (0.5, 0, UIViewAnimationOptions.CurveEaseInOut,
+                () => {
+                    _viewMoveOn = true;
+                    barChart.Frame = new RectangleF ( barChart.Frame.X, - barChart.Frame.Height, barChart.Frame.Width, barChart.Frame.Height);
+                    pieChart.Frame = new RectangleF ( pieChart.Frame.X, padding, pieChart.Frame.Width, pieChart.Frame.Height);
+                },() => {
+                    Debug.WriteLine ( "animation end");
+                    _viewMoveOn = false;
+                });
+            } else {
+                UIView.Animate (0.5, 0, UIViewAnimationOptions.CurveEaseInOut,
+                () => {
+                    _viewMoveOn = true;
+                    barChart.Frame = new RectangleF ( barChart.Frame.X, padding/2, barChart.Frame.Width, barChart.Frame.Height);
+                    pieChart.Frame = new RectangleF ( pieChart.Frame.X, barChart.Bounds.Height + padding, pieChart.Frame.Width, pieChart.Frame.Height);
+                },() => {
+                    Debug.WriteLine ( "animation end");
+                    _viewMoveOn = false;
+                });
+            }
         }
 
         private async void ChangeReportState ()

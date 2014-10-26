@@ -53,6 +53,24 @@ namespace Toggl.Phoebe.Data.Reports
                 dataObject = json.Import ();
                 await AddProjectColors ();
                 AddFormattedTime();
+
+                long max = 0;
+                foreach (var s in dataObject.Activity) {
+                    max = max < s.TotalTime ? s.TotalTime : max;
+                }
+
+                _maxTotal = (int)Math.Ceiling ( max/3600/ (double)5) * 5;
+
+                _chartRowLabels = new List<string> ();
+                foreach (var row in dataObject.Activity) {
+                    _chartRowLabels.Add (LabelForDate (row.StartTime));
+                }
+
+                _chartTimeLabels = new List<string> ();
+                for (int i = 1; i <= 5; i++) {
+                    _chartTimeLabels.Add (String.Format ("{0} h", _maxTotal / 5 * i));
+                }
+
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, "Failed to fetch reports.");
@@ -96,13 +114,31 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        public List<string> ChartRowLabels ()
+        private List<string> _chartRowLabels;
+
+        public List<string> ChartRowLabels
         {
-            List<string> labels = new List<string> ();
-            foreach (var row in dataObject.Activity) {
-                labels.Add (LabelForDate (row.StartTime));
+            get {
+                return _chartRowLabels;
             }
-            return labels;
+        }
+
+        private List<string> _chartTimeLabels;
+
+        public List<string> ChartTimeLabels
+        {
+            get {
+                return _chartTimeLabels;
+            }
+        }
+
+        private int _maxTotal;
+
+        public int MaxTotal
+        {
+            get {
+                return _maxTotal;
+            }
         }
 
         public string FormatMilliseconds (long ms)
@@ -110,64 +146,6 @@ namespace Toggl.Phoebe.Data.Reports
             var timeSpan = TimeSpan.FromMilliseconds (ms);
             decimal totalHours = Math.Floor ((decimal)timeSpan.TotalHours);
             return String.Format ("{0} h {1} min", (int)totalHours, timeSpan.Minutes);
-
-        }
-
-        public string FormatByUserSettings (long ms)
-        {
-            TimeSpan duration = TimeSpan.FromMilliseconds (ms);
-            string formattedString = duration.ToString (@"h\:mm\:ss");
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-
-            if (user == null) {
-                return formattedString;
-            }
-
-            if (user.DurationFormat == DurationFormat.Classic) {
-                if (duration.TotalMinutes < 1) {
-                    formattedString = duration.ToString (@"s\ \s\e\c");
-                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
-                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
-                } else {
-                    formattedString = duration.ToString (@"hh\:mm\:ss");
-                }
-            } else if (user.DurationFormat == DurationFormat.Decimal) {
-                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
-            }
-            return formattedString;
-        }
-
-        public List<string> ChartTimeLabels ()
-        {
-            var max = GetMaxTotal ();
-            List<string> labels = new List<string> ();
-            for (int i = 1; i <= 5; i++) {
-                labels.Add (String.Format ("{0} h", max / 5 * i));
-            }
-            return labels;
-        }
-
-        public int GetMaxTotal ()
-        {
-            long max = 0;
-            foreach (var s in dataObject.Activity) {
-                max = max < s.TotalTime ? s.TotalTime : max;
-                Debug.WriteLine (TimeSpan.FromSeconds ( max).Hours);
-            }
-            return (int)Math.Ceiling ( max/3600/ (double)5) * 5;
-        }
-
-        private string LabelForDate (DateTime date)
-        {
-            if (Period == ZoomLevel.Week) {
-                return String.Format ("{0:ddd}", date);
-            }
-
-            if (Period == ZoomLevel.Month) {
-                return String.Format ("{0:ddd dd}", date);
-            }
-
-            return String.Format ("{0:MMM}", date);
         }
 
         public DateTime ResolveStartDate (int backDate)
@@ -198,6 +176,43 @@ namespace Toggl.Phoebe.Data.Reports
             }
 
             return start.AddYears (1).AddDays (-1);
+        }
+
+        public string FormatByUserSettings (long ms)
+        {
+            TimeSpan duration = TimeSpan.FromMilliseconds (ms);
+            string formattedString = duration.ToString (@"h\:mm\:ss");
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            if (user == null) {
+                return formattedString;
+            }
+
+            if (user.DurationFormat == DurationFormat.Classic) {
+                if (duration.TotalMinutes < 1) {
+                    formattedString = duration.ToString (@"s\ \s\e\c");
+                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
+                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
+                } else {
+                    formattedString = duration.ToString (@"hh\:mm\:ss");
+                }
+            } else if (user.DurationFormat == DurationFormat.Decimal) {
+                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+            }
+            return formattedString;
+        }
+
+        private string LabelForDate (DateTime date)
+        {
+            if (Period == ZoomLevel.Week) {
+                return String.Format ("{0:ddd}", date);
+            }
+
+            if (Period == ZoomLevel.Month) {
+                return String.Format ("{0:ddd dd}", date);
+            }
+
+            return String.Format ("{0:MMM}", date);
         }
 
         private async Task AddProjectColors ()

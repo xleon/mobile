@@ -6,6 +6,7 @@ using MonoTouch.Foundation;
 using MonoTouch.CoreGraphics;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -15,6 +16,8 @@ namespace Toggl.Ross.Views.Charting
         int NumberOfBarsOnChart (BarChart barChart);
 
         float ValueForBarAtIndex (BarChart barChart, int index);
+
+        float ValueForSecondaryBarAtIndex ( BarChart barChart, int index);
 
         string TextForBarAtIndex (BarChart barChart, int index);
 
@@ -33,12 +36,15 @@ namespace Toggl.Ross.Views.Charting
 
         public IBarChartDataSource DataSource { get; set; }
 
-
         public float AnimationSpeed { get; set; }
 
         public UIFont LabelFont { get; set; }
 
         public UIColor LabelColor { get; set; }
+
+        public UIColor MainBarColor { get; set; }
+
+        public UIColor SecondaryBarColor { get; set; }
 
         int _selectedSliceIndex;
         UIView _barChartView;
@@ -62,6 +68,8 @@ namespace Toggl.Ross.Views.Charting
             _animationDelegate = new AnimationDelegate (this);
             LabelFont = UIFont.SystemFontOfSize (12.0f);
             LabelColor = UIColor.LightGray;
+            MainBarColor = Color.TimeBarColor;
+            SecondaryBarColor = Color.MoneyBarColor;
 
             AnimationSpeed = 0.5f;
             BackgroundColor = UIColor.White;
@@ -124,25 +132,10 @@ namespace Toggl.Ross.Views.Charting
             CALayer parentLayer = _barChartView.Layer;
             var barLayers = parentLayer.Sublayers ?? new CALayer[0];
 
-            /*
-            _selectedSliceIndex = -1;
-            for (int i = 0; i < sliceLayers.Length; i++) {
-                var layer = (SliceLayer)sliceLayers [i];
-                if (layer.IsSelected) {
-                    SetSliceDeselectedAtIndex (i);
-                }
-            }
-            */
-
             int barsCount = DataSource.NumberOfBarsOnChart (this);
 
             for (int i = 0; i < xAxisText.Length; i++) {
                 xAxisText [i].String = DataSource.TimeIntervalAtIndex (i);
-            }
-
-            var values = new float[barsCount];
-            for (int index = 0; index < barsCount; index++) {
-                values [index] = DataSource.ValueForBarAtIndex (this, index);
             }
 
             CATransaction.Begin ();
@@ -162,7 +155,8 @@ namespace Toggl.Ross.Views.Charting
                     oneLayer = (BarLayer)barLayers [i];
                     oneLayer.HeightValue = barHeight - padding;
                 }
-                oneLayer.TimeValue = values [i];
+                oneLayer.TimeValue = DataSource.ValueForBarAtIndex (this, i);
+                oneLayer.MoneyValue = DataSource.ValueForSecondaryBarAtIndex (this, i);
                 oneLayer.Position = new PointF ( 0, initialY + i * barHeight);
 
                 string labelText;
@@ -196,11 +190,6 @@ namespace Toggl.Ross.Views.Charting
             CATransaction.Commit ();
         }
 
-        private void updateLabelForLayer (BarLayer barLayer, string text)
-        {
-
-        }
-
         private BarLayer createBarLayer ( float barHeight)
         {
             var barLayer = new BarLayer () {
@@ -214,17 +203,28 @@ namespace Toggl.Ross.Views.Charting
             mainBar.AnchorPoint = new PointF (0.0f, 0.0f);
             mainBar.Bounds = new RectangleF ( 0, 0, Frame.Width - xAxisMargin, barHeight);
             mainBar.Position = new PointF ( xAxisMargin, 0);
-            mainBar.BackgroundColor = UIColor.Red.CGColor;
+            mainBar.AffineTransform = CGAffineTransform.MakeScale ( 0.05f, 1.0f);
+            mainBar.BackgroundColor = MainBarColor.CGColor;
 
             barLayer.AddSublayer (mainBar);
             barLayer.MainBar = mainBar;
 
             var secondaryBar = new CALayer ();
-            secondaryBar.Frame = new RectangleF ( xAxisMargin, 0, Frame.Width - xAxisMargin, barHeight);
-            secondaryBar.AnchorPoint = new PointF (0.0f, 0.5f);
-            secondaryBar.BackgroundColor = UIColor.Yellow.CGColor;
-            //barLayer.AddSublayer (secondaryBar);
-            //barLayer.SecondaryBar = secondaryBar;
+            secondaryBar.AnchorPoint = new PointF (0.0f, 0.0f);
+            secondaryBar.Bounds = new RectangleF ( 0, 0, Frame.Width - xAxisMargin, barHeight);
+            secondaryBar.Position = new PointF ( xAxisMargin, 0);
+            secondaryBar.BackgroundColor = SecondaryBarColor.CGColor;
+            barLayer.AddSublayer (secondaryBar);
+            barLayer.SecondaryBar = secondaryBar;
+
+            var emptyBar = new CALayer ();
+            emptyBar.AnchorPoint = new PointF (0.0f, 0.0f);
+            emptyBar.Bounds = new RectangleF ( 0, 0, 2.0f, barHeight);
+            emptyBar.Position = new PointF ( xAxisMargin, 0);
+            emptyBar.BackgroundColor = UIColor.Gray.CGColor;
+            barLayer.AddSublayer (emptyBar);
+            barLayer.EmptyBar = emptyBar;
+
 
             var textLayer = new CATextLayer ();
             textLayer.ContentsScale = UIScreen.MainScreen.Scale;
@@ -351,13 +351,25 @@ namespace Toggl.Ross.Views.Charting
                 if (MainBar != null ) {
                     var xScale = (value > 0) ? value : 0.005f;
                     MainBar.AffineTransform = CGAffineTransform.MakeScale ( xScale, 1.0f);
-                    //MainBar.Opacity = (value > 0) ? 1 : 0;
+                    EmptyBar.Opacity = (value > 0) ? 0.0f : 1.0f;
                 }
             }
         }
 
         [Export ("moneyValue")]
-        public float MoneyValue { get; set; }
+        public float MoneyValue
+        {
+            get {
+                return 0.0f;
+            }
+
+            set {
+                if (SecondaryBar != null ) {
+                    var xScale = (value > 0) ? value : 0.005f;
+                    SecondaryBar.AffineTransform = CGAffineTransform.MakeScale ( xScale, 1.0f);
+                }
+            }
+        }
 
         [Export ("heightValue")]
         public float HeightValue
@@ -369,6 +381,8 @@ namespace Toggl.Ross.Views.Charting
                     float barHeight = value;
                     Frame = new RectangleF ( Frame.X, Frame.Y, Frame.Width, barHeight);
                     MainBar.Frame = new RectangleF (MainBar.Frame.X, MainBar.Frame.Y, MainBar.Frame.Width, barHeight);
+                    SecondaryBar.Frame = new RectangleF (SecondaryBar.Frame.X, SecondaryBar.Frame.Y, SecondaryBar.Frame.Width, barHeight);
+                    EmptyBar.Frame = new RectangleF (EmptyBar.Frame.X, EmptyBar.Frame.Y, EmptyBar.Frame.Width, barHeight);
                 }
             }
         }

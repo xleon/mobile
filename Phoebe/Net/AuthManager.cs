@@ -55,7 +55,7 @@ namespace Toggl.Phoebe.Net
             User = rows.FirstOrDefault ();
         }
 
-        private async Task<bool> Authenticate (Func<Task<UserJson>> getUser)
+        private async Task<AuthResult> Authenticate (Func<Task<UserJson>> getUser)
         {
             if (IsAuthenticated) {
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
@@ -72,10 +72,21 @@ namespace Toggl.Phoebe.Net
                     userJson = await getUser ();
                     if (userJson == null) {
                         ServiceContainer.Resolve<MessageBus> ().Send (
-                            new AuthFailedMessage (this, AuthFailedMessage.Reason.InvalidCredentials));
-                        return false;
+                            new AuthFailedMessage (this, AuthResult.InvalidCredentials));
+                        return AuthResult.InvalidCredentials;
+                    } else if (userJson.DefaultWorkspaceId == 0) {
+                        ServiceContainer.Resolve<MessageBus> ().Send (
+                            new AuthFailedMessage (this, AuthResult.NoDefaultWorkspace));
+                        return AuthResult.NoDefaultWorkspace;
                     }
                 } catch (Exception ex) {
+                    var reqEx = ex as UnsuccessfulRequestException;
+                    if (reqEx != null && reqEx.IsForbidden) {
+                        ServiceContainer.Resolve<MessageBus> ().Send (
+                            new AuthFailedMessage (this, AuthResult.InvalidCredentials));
+                        return AuthResult.InvalidCredentials;
+                    }
+
                     var log = ServiceContainer.Resolve<Logger> ();
                     if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
                         log.Info (Tag, ex, "Failed authenticate user.");
@@ -84,8 +95,8 @@ namespace Toggl.Phoebe.Net
                     }
 
                     ServiceContainer.Resolve<MessageBus> ().Send (
-                        new AuthFailedMessage (this, AuthFailedMessage.Reason.NetworkError, ex));
-                    return false;
+                        new AuthFailedMessage (this, AuthResult.NetworkError, ex));
+                    return AuthResult.NetworkError;
                 }
 
                 // Import the user into our database:
@@ -98,8 +109,8 @@ namespace Toggl.Phoebe.Net
                     log.Error (Tag, ex, "Failed to import authenticated user.");
 
                     ServiceContainer.Resolve<MessageBus> ().Send (
-                        new AuthFailedMessage (this, AuthFailedMessage.Reason.SystemError, ex));
-                    return false;
+                        new AuthFailedMessage (this, AuthResult.SystemError, ex));
+                    return AuthResult.SystemError;
                 }
 
                 var credStore = ServiceContainer.Resolve<ISettingsStore> ();
@@ -116,10 +127,10 @@ namespace Toggl.Phoebe.Net
                 IsAuthenticating = false;
             }
 
-            return true;
+            return AuthResult.Success;
         }
 
-        public Task<bool> Authenticate (string username, string password)
+        public Task<AuthResult> Authenticate (string username, string password)
         {
             var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
@@ -128,7 +139,7 @@ namespace Toggl.Phoebe.Net
             return Authenticate (() => client.GetUser (username, password));
         }
 
-        public Task<bool> AuthenticateWithGoogle (string accessToken)
+        public Task<AuthResult> AuthenticateWithGoogle (string accessToken)
         {
             var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
@@ -137,7 +148,7 @@ namespace Toggl.Phoebe.Net
             return Authenticate (() => client.GetUser (accessToken));
         }
 
-        public Task<bool> Signup (string email, string password)
+        public Task<AuthResult> Signup (string email, string password)
         {
             var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
@@ -150,7 +161,7 @@ namespace Toggl.Phoebe.Net
             }));
         }
 
-        public Task<bool> SignupWithGoogle (string accessToken)
+        public Task<AuthResult> SignupWithGoogle (string accessToken)
         {
             var log = ServiceContainer.Resolve<Logger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();

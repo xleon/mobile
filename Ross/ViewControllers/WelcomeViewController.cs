@@ -7,6 +7,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -149,11 +150,12 @@ namespace Toggl.Ross.ViewControllers
                         IsAuthenticating = true;
                         var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
                         var authManager = ServiceContainer.Resolve<AuthManager> ();
-                        var success = await authManager.AuthenticateWithGoogle (token);
+                        var authRes = await authManager.AuthenticateWithGoogle (token);
                         // No need to keep the users Google account access around anymore
                         Google.Plus.SignIn.SharedInstance.Disconnect ();
-                        if (!success) {
-                            new UIAlertView ("WelcomeLoginErrorTitle".Tr (), "WelcomeLoginErrorMessage".Tr (), null, "WelcomeLoginErrorOk".Tr (), null).Show ();
+                        if (authRes != AuthResult.Success) {
+                            var email = Google.Plus.SignIn.SharedInstance.Authentication.UserEmail;
+                            AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Login, googleAuth: true);
                         } else {
                             // Start the initial sync for the user
                             ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);

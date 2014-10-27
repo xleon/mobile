@@ -28,5 +28,10 @@ namespace Toggl.Phoebe.Net
         {
             get { return statusCode == HttpStatusCode.NotFound; }
         }
+
+        public bool IsForbidden
+        {
+            get { return statusCode == HttpStatusCode.Forbidden; }
+        }
     }
 }

@@ -145,14 +145,10 @@ namespace Toggl.Ross.ViewControllers
 
             try {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
-                var success = await authManager.Authenticate (emailTextField.Text, passwordTextField.Text);
+                var authRes = await authManager.Authenticate (emailTextField.Text, passwordTextField.Text);
 
-                if (!success) {
-                    new UIAlertView (
-                        "LoginFailedTitle".Tr (),
-                        "LoginFailedMessage".Tr (),
-                        null,
-                        "LoginFailedOk".Tr ()).Show ();
+                if (authRes != AuthResult.Success) {
+                    AuthErrorAlert.Show (this, emailTextField.Text, authRes, AuthErrorAlert.Mode.Login);
                 } else {
                     // Start the initial sync for the user
                     ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);

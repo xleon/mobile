@@ -164,10 +164,13 @@ namespace Toggl.Joey.UI.Views
                         );
                         CanvasPaint.Color = Color.ParseColor ("#00AEFF");
                         CanvasPaint.TextSize = 20;
+                        var bounds = new Rect ();
+                        var barTitle = FormatSeconds (p.Value); 
+                        CanvasPaint.GetTextBounds (barTitle, 0, barTitle.Length, bounds);
                         canvas.DrawText (
-                            FormatSeconds (p.Value),
-                            timeColumn + (int)((usableWidth * (p.Value / CeilingValue))),
-                            (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
+                            barTitle,
+                            timeColumn + 10  + (int)((usableWidth * (p.Value / CeilingValue))),
+                            (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding + barHeight / 2 + bounds.Height() / 2 ),
                             CanvasPaint
                         );
                     }

@@ -42,7 +42,7 @@ namespace Toggl.Joey.UI.Fragments
             pieChart.SetOnSliceClickedListener (listener);
             pieChart.SliceClicked += OnSliceSelect; 
 
-            LoadPieChart ();
+            LoadElements ();
             return view;
         }
 
@@ -80,10 +80,11 @@ namespace Toggl.Joey.UI.Fragments
             ListAdapter = adapter;
         }
 
-        private async void LoadPieChart ()
+        private async void LoadElements ()
         {
             await LoadData ();
             EnsureAdapter ();
+            ListViewHeight (ListView);
             GeneratePieChart ();
             GenerateBarChart ();
         }
@@ -128,9 +129,31 @@ namespace Toggl.Joey.UI.Fragments
         {
             public void OnClick (int index)
             {
-                Console.WriteLine ("slice clicked");
             }
         }
+
+        public void ListViewHeight(ListView listView) {
+            ListAdapter = listView.Adapter;
+            if (ListAdapter == null)
+                return;
+
+            int desiredWidth = ViewGroup.MeasureSpec.MakeMeasureSpec (listView.Width, MeasureSpecMode.Unspecified);
+            int totalHeight = 0;
+            View view = null;
+
+            for (int i = 0; i < ListAdapter.Count; i++) {
+                view = ListAdapter.GetView(i, view, listView);
+
+                view.Measure(desiredWidth, 0);
+
+                totalHeight += view.MeasuredHeight;
+            }
+            ViewGroup.LayoutParams parameters = listView.LayoutParameters;
+            parameters.Height = totalHeight + (listView.DividerHeight * (ListAdapter.Count - 1));
+            listView.LayoutParameters = parameters;
+            listView.RequestLayout();
+        }
+
     }
 
     public class ProjectListAdapter : BaseAdapter

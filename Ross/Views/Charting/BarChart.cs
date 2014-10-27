@@ -1,11 +1,9 @@
 ﻿using System;
-using MonoTouch.UIKit;
 using System.Drawing;
 using MonoTouch.CoreAnimation;
-using MonoTouch.Foundation;
 using MonoTouch.CoreGraphics;
-using System.Collections.Generic;
-using System.Diagnostics;
+using MonoTouch.Foundation;
+using MonoTouch.UIKit;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.Views.Charting
@@ -26,14 +24,6 @@ namespace Toggl.Ross.Views.Charting
 
     public class BarChart : UIView, IAnimationDelegate
     {
-        public event EventHandler<SelectedSliceEventArgs> WillSelectBarAtIndex;
-
-        public event EventHandler<SelectedSliceEventArgs> DidSelectBarAtIndex;
-
-        public event EventHandler<SelectedSliceEventArgs> WillDeselectBarAtIndex;
-
-        public event EventHandler<SelectedSliceEventArgs> DidDeselectBarAtIndex;
-
         public IBarChartDataSource DataSource { get; set; }
 
         public float AnimationSpeed { get; set; }
@@ -46,34 +36,28 @@ namespace Toggl.Ross.Views.Charting
 
         public UIColor SecondaryBarColor { get; set; }
 
-        int _selectedSliceIndex;
-        UIView _barChartView;
-        NSTimer _animationTimer;
-        const int defaultSliceZOrder = 100;
-        const float xAxisMargin = 35;
-        const float yAxisMargin = 20;
-        CATextLayer[] xAxisText = new CATextLayer[5];
-        const float topBarMargin = 10;
-        List<CABasicAnimation> _animations;
-        AnimationDelegate _animationDelegate;
-
-
         public BarChart (RectangleF frame) : base (frame)
         {
             _barChartView = new UIView ( new RectangleF ( 0, 0, frame.Width, frame.Height));
             AddSubview (_barChartView);
 
-            _selectedSliceIndex = -1;
-            _animations = new List<CABasicAnimation> ();
-            _animationDelegate = new AnimationDelegate (this);
             LabelFont = UIFont.SystemFontOfSize (12.0f);
             LabelColor = UIColor.LightGray;
             MainBarColor = Color.TimeBarColor;
             SecondaryBarColor = Color.MoneyBarColor;
-
             AnimationSpeed = 0.5f;
             BackgroundColor = UIColor.White;
         }
+
+        UIView _barChartView;
+        CATextLayer[] xAxisText = new CATextLayer[5];
+
+        const float minBarScale = 0.005f;
+        const int defaultSliceZOrder = 100;
+        const float xAxisMargin = 35;
+        const float yAxisMargin = 20;
+        const float topBarMargin = 10;
+
 
         public override void Draw (RectangleF rect)
         {
@@ -175,7 +159,7 @@ namespace Toggl.Ross.Views.Charting
                 textLayer.String = labelText;
                 textLayer.FontSize = (barsCount > 12) ? 9.0f : 12.0f;
                 textLayer.Bounds = new RectangleF (0, 0, size.Width, size.Height);
-                textLayer.Position = new PointF ( (xAxisMargin - size.Width)/2, oneLayer.Bounds.Height/2);
+                textLayer.Position = new PointF ( 0.0f, oneLayer.Bounds.Height/2);
                 CATransaction.DisableActions = false;
             }
 
@@ -203,9 +187,8 @@ namespace Toggl.Ross.Views.Charting
             mainBar.AnchorPoint = new PointF (0.0f, 0.0f);
             mainBar.Bounds = new RectangleF ( 0, 0, Frame.Width - xAxisMargin, barHeight);
             mainBar.Position = new PointF ( xAxisMargin, 0);
-            mainBar.AffineTransform = CGAffineTransform.MakeScale ( 0.05f, 1.0f);
             mainBar.BackgroundColor = MainBarColor.CGColor;
-
+            mainBar.SetValueForKeyPath ( new NSNumber ( minBarScale), new NSString ( "transform.scale.x"));
             barLayer.AddSublayer (mainBar);
             barLayer.MainBar = mainBar;
 
@@ -214,6 +197,7 @@ namespace Toggl.Ross.Views.Charting
             secondaryBar.Bounds = new RectangleF ( 0, 0, Frame.Width - xAxisMargin, barHeight);
             secondaryBar.Position = new PointF ( xAxisMargin, 0);
             secondaryBar.BackgroundColor = SecondaryBarColor.CGColor;
+            secondaryBar.SetValueForKeyPath ( new NSNumber ( minBarScale), new NSString ( "transform.scale.x"));
             barLayer.AddSublayer (secondaryBar);
             barLayer.SecondaryBar = secondaryBar;
 
@@ -224,7 +208,6 @@ namespace Toggl.Ross.Views.Charting
             emptyBar.BackgroundColor = UIColor.Gray.CGColor;
             barLayer.AddSublayer (emptyBar);
             barLayer.EmptyBar = emptyBar;
-
 
             var textLayer = new CATextLayer ();
             textLayer.ContentsScale = UIScreen.MainScreen.Scale;
@@ -237,7 +220,6 @@ namespace Toggl.Ross.Views.Charting
 
             textLayer.FontSize = LabelFont.PointSize;
             textLayer.AnchorPoint = new PointF ( 0.0f, 0.5f);
-            textLayer.Position = new PointF ( 100, textLayer.Position.Y);
             textLayer.AlignmentMode = CATextLayer.AlignmentLeft;
             textLayer.BackgroundColor = UIColor.Clear.CGColor;
             textLayer.ForegroundColor = LabelColor.CGColor;
@@ -245,7 +227,7 @@ namespace Toggl.Ross.Views.Charting
             SizeF size = ((NSString)"0").StringSize (LabelFont);
 
             CATransaction.DisableActions = true;
-            textLayer.Frame = new RectangleF (new PointF (0, 0), size);
+            textLayer.Bounds = new RectangleF (new PointF (0, 0), size);
             textLayer.Position = mainBar.Position;
             CATransaction.DisableActions = false;
             barLayer.AddSublayer (textLayer);
@@ -349,8 +331,8 @@ namespace Toggl.Ross.Views.Charting
 
             set {
                 if (MainBar != null ) {
-                    var xScale = (value > 0) ? value : 0.005f;
-                    MainBar.AffineTransform = CGAffineTransform.MakeScale ( xScale, 1.0f);
+                    var xScale = (value > minBarScale) ? value : minBarScale;
+                    CreateBarAnimationForKeyPath (MainBar, "transform.scale.x", xScale, null);
                     EmptyBar.Opacity = (value > 0) ? 0.0f : 1.0f;
                 }
             }
@@ -365,8 +347,8 @@ namespace Toggl.Ross.Views.Charting
 
             set {
                 if (SecondaryBar != null ) {
-                    var xScale = (value > 0) ? value : 0.005f;
-                    SecondaryBar.AffineTransform = CGAffineTransform.MakeScale ( xScale, 1.0f);
+                    var xScale = (value > minBarScale) ? value : minBarScale;
+                    CreateBarAnimationForKeyPath (SecondaryBar, "transform.scale.x", xScale, null);
                 }
             }
         }
@@ -379,10 +361,10 @@ namespace Toggl.Ross.Views.Charting
             } set {
                 if (value > 0 && MainBar != null) {
                     float barHeight = value;
-                    Frame = new RectangleF ( Frame.X, Frame.Y, Frame.Width, barHeight);
-                    MainBar.Frame = new RectangleF (MainBar.Frame.X, MainBar.Frame.Y, MainBar.Frame.Width, barHeight);
-                    SecondaryBar.Frame = new RectangleF (SecondaryBar.Frame.X, SecondaryBar.Frame.Y, SecondaryBar.Frame.Width, barHeight);
-                    EmptyBar.Frame = new RectangleF (EmptyBar.Frame.X, EmptyBar.Frame.Y, EmptyBar.Frame.Width, barHeight);
+                    Bounds = new RectangleF ( 0.0f, 0.0f, Bounds.Width, barHeight);
+                    MainBar.Bounds = new RectangleF ( 0.0f, 0.0f, MainBar.Bounds.Width, barHeight);
+                    SecondaryBar.Bounds = new RectangleF (0.0f, 0.0f, SecondaryBar.Bounds.Width, barHeight);
+                    EmptyBar.Bounds = new RectangleF ( 0.0f, 0.0f, EmptyBar.Bounds.Width, barHeight);
                 }
             }
         }
@@ -400,6 +382,8 @@ namespace Toggl.Ross.Views.Charting
         public CATextLayer DateTextLayer;
 
         public CALayer EmptyBar;
+
+        private float minBarScale = 0.005f;
 
         public BarLayer ()
         {
@@ -424,23 +408,23 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        public void CreateBarAnimationForKey (string key, double fromValue, double toValue, CAAnimationDelegate @delegate)
+        public void CreateBarAnimationForKeyPath ( CALayer layer, string key, float toValue, CAAnimationDelegate @delegate)
         {
-            var _fromValue = new NSNumber (fromValue);
+            var _fromValue =  layer.ValueForKeyPath ( new NSString ( key));
             var _toValue = new NSNumber (toValue);
             var _key = new NSString (key);
 
             var barAnimation = CABasicAnimation.FromKeyPath (key);
             var currentValue = _fromValue;
-            if (PresentationLayer != null) {
-                currentValue = (NSNumber)PresentationLayer.ValueForKey (_key);
+            if (layer.PresentationLayer != null) {
+                currentValue = layer.PresentationLayer.ValueForKeyPath (_key);
             }
             barAnimation.From = currentValue;
             barAnimation.To = _toValue;
             barAnimation.Delegate = @delegate;
             barAnimation.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.Default);
-            AddAnimation (barAnimation, key);
-            SetValueForKey (_toValue, _key);
+            layer.AddAnimation (barAnimation, key);
+            layer.SetValueForKeyPath (_toValue, _key);
         }
     }
 }

@@ -1,0 +1,2 @@
+- ready to check design issues related colors, fonts, user interaction
+- test stability

@@ -5,8 +5,6 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using System.Globalization;
-using System.Diagnostics;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -176,30 +174,6 @@ namespace Toggl.Phoebe.Data.Reports
             }
 
             return start.AddYears (1).AddDays (-1);
-        }
-
-        public string FormatByUserSettings (long ms)
-        {
-            TimeSpan duration = TimeSpan.FromMilliseconds (ms);
-            string formattedString = duration.ToString (@"h\:mm\:ss");
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-
-            if (user == null) {
-                return formattedString;
-            }
-
-            if (user.DurationFormat == DurationFormat.Classic) {
-                if (duration.TotalMinutes < 1) {
-                    formattedString = duration.ToString (@"s\ \s\e\c");
-                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
-                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
-                } else {
-                    formattedString = duration.ToString (@"hh\:mm\:ss");
-                }
-            } else if (user.DurationFormat == DurationFormat.Decimal) {
-                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
-            }
-            return formattedString;
         }
 
         private string LabelForDate (DateTime date)

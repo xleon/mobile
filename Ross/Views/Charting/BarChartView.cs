@@ -1,11 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using MonoTouch.UIKit;
-using Toggl.Phoebe.Data.Reports;
-using System.Collections.Generic;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -31,6 +30,21 @@ namespace Toggl.Ross.Views.Charting
                 if (_reportView.Activity == null) {
                     return;
                 }
+
+                var delayNoData = (_reportView.Projects.Count == 0) ? 0.5 : 0;
+                var delayData = (_reportView.Projects.Count == 0) ? 0 : 0.5;
+
+                UIView.Animate (0.3, delayNoData, UIViewAnimationOptions.TransitionNone,
+                () => {
+                    noProjectTextLabel.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
+                    noProjectTitleLabel.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
+                },  null);
+
+                UIView.Animate (0.5, delayData, UIViewAnimationOptions.TransitionNone,
+                () => {
+                    barChart.Alpha = (_reportView.Projects.Count == 0) ? 0.5f : 1;
+                },  null);
+
                 totalTimeLabel.Text = _reportView.TotalGrand;
                 moneyLabel.Text = _reportView.TotalBillale;
                 ActivityList = _reportView.Activity;
@@ -80,7 +94,21 @@ namespace Toggl.Ross.Views.Charting
                 DataSource = this
             };
             Add (barChart);
-            barChart.ReloadData ();
+
+            noProjectTitleLabel = new UILabel ( new RectangleF ( 0, 0, frame.Width/2, 20));
+            noProjectTitleLabel.Center = new PointF (barChart.Center.X, barChart.Center.Y - 20);
+            noProjectTitleLabel.Apply (Style.ReportsView.NoProjectTitle);
+            noProjectTitleLabel.Text = "NoDataTitle".Tr ();
+            noProjectTitleLabel.Alpha = 0.0f;
+            Add (noProjectTitleLabel);
+
+            noProjectTextLabel = new UILabel ( new RectangleF ( 0, 0, frame.Width/2, 35));
+            noProjectTextLabel.Center = new PointF (barChart.Center.X, barChart.Center.Y + 5 );
+            noProjectTextLabel.Apply (Style.ReportsView.DonutMoneyLabel);
+            noProjectTextLabel.Lines = 2;
+            noProjectTextLabel.Text = "NoDataText".Tr ();
+            noProjectTextLabel.Alpha = 0.0f;
+            Add (noProjectTextLabel);
         }
 
         public List<ReportActivity> ActivityList;
@@ -89,6 +117,8 @@ namespace Toggl.Ross.Views.Charting
         UILabel titleMoneyLabel;
         UILabel totalTimeLabel;
         UILabel moneyLabel;
+        UILabel noProjectTitleLabel;
+        UILabel noProjectTextLabel;
         UIView dragHelperView;
 
         UIPanGestureRecognizer panGesture;
@@ -111,11 +141,17 @@ namespace Toggl.Ross.Views.Charting
 
         public float ValueForBarAtIndex (BarChart barChart, int index)
         {
+            if (_reportView.MaxTotal == 0) {
+                return 0;
+            }
             return (ActivityList [index].TotalTime == 0) ? 0 : (float) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
         }
 
         public float ValueForSecondaryBarAtIndex (BarChart barChart, int index)
         {
+            if (_reportView.MaxTotal == 0) {
+                return 0;
+            }
             return (ActivityList [index].BillableTime == 0) ? 0 : (float) (ActivityList [index].BillableTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
         }
 

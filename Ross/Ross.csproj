@@ -60,6 +60,7 @@
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchProfiling>true</MtouchProfiling>
+    <BuildIpa>true</BuildIpa>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <Optimize>true</Optimize>
@@ -186,8 +187,8 @@
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
     <None Include="packages.config" />
-    <None Include="Views\Charting\SingleBar.cs" />
     <None Include="Views\Charting\ChartSurface.cs" />
+    <None Include="RELEASE-NOTES.txt" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />

@@ -43,10 +43,10 @@ namespace Toggl.Ross.ViewControllers
         private DonutChartView pieChart;
         private BarChartView barChart;
         private bool _viewMoveOn;
+
         const float padding  = 24;
         const float navBarHeight = 64;
         const float selectorHeight = 50;
-
 
         public ReportsViewController ()
         {
@@ -66,7 +66,6 @@ namespace Toggl.Ross.ViewControllers
                     menuController = null;
                 }
             }
-
             base.Dispose (disposing);
         }
 
@@ -89,6 +88,7 @@ namespace Toggl.Ross.ViewControllers
             pieChart = new DonutChartView (new RectangleF ( padding, barChart.Bounds.Height + padding, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
             pieChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
             pieChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
+            pieChart.ChangeView += (sender, e) => ChangeView ((UISwipeGestureRecognizer)sender);
 
             Add (barChart);
             Add (pieChart);
@@ -129,7 +129,6 @@ namespace Toggl.Ross.ViewControllers
                     barChart.Frame = new RectangleF ( barChart.Frame.X, - barChart.Frame.Height, barChart.Frame.Width, barChart.Frame.Height);
                     pieChart.Frame = new RectangleF ( pieChart.Frame.X, padding, pieChart.Frame.Width, pieChart.Frame.Height);
                 },() => {
-                    Debug.WriteLine ( "animation end");
                     _viewMoveOn = false;
                 });
             } else {
@@ -139,7 +138,6 @@ namespace Toggl.Ross.ViewControllers
                     barChart.Frame = new RectangleF ( barChart.Frame.X, padding/2, barChart.Frame.Width, barChart.Frame.Height);
                     pieChart.Frame = new RectangleF ( pieChart.Frame.X, barChart.Bounds.Height + padding, pieChart.Frame.Width, pieChart.Frame.Height);
                 },() => {
-                    Debug.WriteLine ( "animation end");
                     _viewMoveOn = false;
                 });
             }

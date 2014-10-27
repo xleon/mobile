@@ -22,6 +22,8 @@ namespace Toggl.Ross.Views.Charting
 
         public EventHandler GoBackInterval { get; set; }
 
+        public EventHandler ChangeView { get; set; }
+
         private SummaryReportView _reportView;
 
         public SummaryReportView ReportView
@@ -167,14 +169,12 @@ namespace Toggl.Ross.Views.Charting
             float dy = 0;
             float border = 12;
 
-            animator = new UIDynamicAnimator (this);
-            //animator.Delegate =
             snapRect = new RectangleF (0, 0, frame.Width, diameter + padding);
             snapPoint = new PointF (snapRect.GetMidX (), snapRect.GetMidY ());
             panGesture = new UIPanGestureRecognizer ((pg) => {
                 if ((pg.State == UIGestureRecognizerState.Began || pg.State == UIGestureRecognizerState.Changed) && (pg.NumberOfTouches == 1)) {
-                    if (snap != null) {
-                        animator.RemoveBehavior (snap);
+                    if (_viewMoveOn) {
+                        return;
                     }
                     var p0 = pg.LocationInView (this);
                     if (dx == 0) {
@@ -201,8 +201,16 @@ namespace Toggl.Ross.Views.Charting
                     SnapImageIntoPlace ( dragHelperView.Center);
                 }
             });
-
             dragHelperView.AddGestureRecognizer (panGesture);
+
+            var upGesture = new UISwipeGestureRecognizer ( gr => {
+                if ( ChangeView != null) {
+                    ChangeView.Invoke ( gr, new EventArgs());
+                }
+            });
+            upGesture.ShouldRecognizeSimultaneously += (gestureRecognizer, otherGestureRecognizer) => true;
+            upGesture.Direction = UISwipeGestureRecognizerDirection.Down;
+            dragHelperView.AddGestureRecognizer (upGesture);
         }
 
         XYDonutChart donutChart;
@@ -215,10 +223,9 @@ namespace Toggl.Ross.Views.Charting
         UIView dragHelperView;
 
         UIPanGestureRecognizer panGesture;
-        UIDynamicAnimator animator;
-        UISnapBehavior snap;
         RectangleF snapRect;
         PointF snapPoint;
+        bool _viewMoveOn;
 
         public void SetSelectedProject (int index)
         {
@@ -246,12 +253,19 @@ namespace Toggl.Ross.Views.Charting
 
         private void SnapImageIntoPlace (PointF touchPoint)
         {
+            const float springDampingRatio = 0.4f;
+            const float initialSpringVelocity = 1.0f;
+
             if (snapRect.Contains (touchPoint)) {
-                if (snap != null) {
-                    animator.RemoveBehavior (snap);
+                if ( _viewMoveOn ) {
+                    return;
                 }
-                snap = new UISnapBehavior ( dragHelperView, snapPoint);
-                animator.AddBehavior (snap);
+                UIView.AnimateNotify (0.5f, 0.0f, springDampingRatio, initialSpringVelocity, UIViewAnimationOptions.CurveEaseIn,
+                () => {
+                    _viewMoveOn = true;
+                    dragHelperView.Center = snapPoint;
+                },
+                finished => { _viewMoveOn = !finished; });
             }
         }
 
@@ -279,25 +293,6 @@ namespace Toggl.Ross.Views.Charting
         }
 
         #endregion
-
-        internal class AnimatorDelegate : UIDynamicAnimatorDelegate
-        {
-            SummaryReportView owner;
-
-            public AnimatorDelegate ( SummaryReportView _owner)
-            {
-                owner = _owner;
-            }
-
-            public override void WillResume (UIDynamicAnimator animator)
-            {
-
-            }
-
-            public override void DidPause (UIDynamicAnimator animator)
-            {
-            }
-        }
 
         internal class ProjectListSource : UITableViewSource
         {

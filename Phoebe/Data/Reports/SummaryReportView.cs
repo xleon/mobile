@@ -105,7 +105,7 @@ namespace Toggl.Phoebe.Data.Reports
         {
             var timeSpan = TimeSpan.FromMilliseconds (ms);
             decimal totalHours = Math.Floor ((decimal)timeSpan.TotalHours);
-            return String.Format ("{0} h {1} min", (int)totalHours, timeSpan.Minutes);
+            return String.Format ("{0}h {1}min", (int)totalHours, timeSpan.Minutes);
         }
 
         public List<string> ChartTimeLabels ()

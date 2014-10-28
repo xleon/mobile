@@ -21,7 +21,7 @@
                 android:layout_height="40dp"
                 style="?android:attr/borderlessButtonStyle" />
             <TextView
-                android:id="@+id/DateTextView"
+                android:id="@+id/TimePeriodLabel"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:text="Sep 20th - Sep 27th"
@@ -39,6 +39,38 @@
                 android:layout_width="wrap_content"
                 android:scaleType="fitEnd"
                 style="?android:attr/borderlessButtonStyle" />
+        </LinearLayout>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:paddingTop="12dp">
+            <TextView
+                android:id="@+id/TotalLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="35dp"
+                android:textSize="13dp"
+                android:text="Total " />
+            <TextView
+                android:id="@+id/TotalValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13dp"
+                android:text="0h 0min" />
+            <TextView
+                android:id="@+id/BillableLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:textSize="13dp"
+                android:text="Billable " />
+            <TextView
+                android:id="@+id/BillableValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13dp"
+                android:text="0h 0min" />
         </LinearLayout>
         <toggl.joey.ui.views.BarChart
             android:layout_width="match_parent"

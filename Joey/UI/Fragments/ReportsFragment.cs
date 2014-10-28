@@ -22,6 +22,9 @@ namespace Toggl.Joey.UI.Fragments
     {
         private BarChart barChart;
         private PieChart pieChart;
+        private TextView timePeriod;
+        private TextView totalValue;
+        private TextView billableValue;
         private SummaryReportView summaryReport;
 
         public static readonly string[] HexColors = {
@@ -35,6 +38,11 @@ namespace Toggl.Joey.UI.Fragments
             var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
 
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
+
+            timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
+
+            totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
+            billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
 
 
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
@@ -83,6 +91,9 @@ namespace Toggl.Joey.UI.Fragments
         private async void LoadElements ()
         {
             await LoadData ();
+            timePeriod.Text = summaryReport.FormattedStartDate (1);
+            totalValue.Text = summaryReport.TotalGrand;
+            billableValue.Text = summaryReport.TotalBillale;
             EnsureAdapter ();
             ListViewHeight (ListView);
             GeneratePieChart ();
@@ -132,7 +143,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public void ListViewHeight(ListView listView) {
+        public void ListViewHeight (ListView listView)
+        {
             ListAdapter = listView.Adapter;
             if (ListAdapter == null)
                 return;
@@ -142,16 +154,16 @@ namespace Toggl.Joey.UI.Fragments
             View view = null;
 
             for (int i = 0; i < ListAdapter.Count; i++) {
-                view = ListAdapter.GetView(i, view, listView);
+                view = ListAdapter.GetView (i, view, listView);
 
-                view.Measure(desiredWidth, 0);
+                view.Measure (desiredWidth, 0);
 
                 totalHeight += view.MeasuredHeight;
             }
             ViewGroup.LayoutParams parameters = listView.LayoutParameters;
             parameters.Height = totalHeight + (listView.DividerHeight * (ListAdapter.Count - 1));
             listView.LayoutParameters = parameters;
-            listView.RequestLayout();
+            listView.RequestLayout ();
         }
 
     }

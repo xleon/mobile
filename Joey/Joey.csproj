@@ -537,8 +537,14 @@
     <AndroidResource Include="Resources\layout\ReportsFragment.axml" />
     <AndroidResource Include="Resources\layout\ReportsProjectListItem.axml" />
     <AndroidResource Include="Resources\drawable\popup_black.9.png" />
-    <AndroidResource Include="Resources\drawable\IcKeyLeft.png" />
-    <AndroidResource Include="Resources\drawable\IcKeyRight.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyRight.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcKeyRight.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcKeyRight.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcKeyRight.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

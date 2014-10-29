@@ -70,29 +70,36 @@ namespace Toggl.Joey.UI.Views
                 if (indexSelected != count && listener != null && indexSelected != -1) {
                     paint.Alpha = 100;
                 }
-                currentSweep = ((float)slice.Value / (float)totalValue) * (360);
-                slicePath.ArcTo (
-                    new RectF (
-                        centerX - radius + slicePadding,
-                        centerY - radius + slicePadding,
-                        centerX + radius - slicePadding,
-                        centerY + radius - slicePadding
-                    ),
-                    currentAngle,
-                    currentSweep
-                );
-                slicePath.ArcTo (
-                    new RectF (
-                        centerX - innerRadius + slicePadding,
-                        centerY - innerRadius + slicePadding,
-                        centerX + innerRadius - slicePadding,
-                        centerY + innerRadius - slicePadding
-                    ),
-                    currentAngle + currentSweep,
-                    -(currentSweep)
-                );
 
-                if (indexSelected == count && listener != null) {
+                currentSweep = ((float)slice.Value / (float)totalValue) * (360);
+
+                if ((int)currentSweep == 360) {
+                    slicePath.AddCircle (centerX, centerY, radius, Path.Direction.Cw);
+                    slicePath.AddCircle (centerX, centerY, innerRadius, Path.Direction.Ccw);
+                } else {
+                    slicePath.ArcTo (
+                        new RectF (
+                            centerX - radius + slicePadding,
+                            centerY - radius + slicePadding,
+                            centerX + radius - slicePadding,
+                            centerY + radius - slicePadding
+                        ),
+                        currentAngle,
+                        currentSweep
+                    );
+                    slicePath.ArcTo (
+                        new RectF (
+                            centerX - innerRadius + slicePadding,
+                            centerY - innerRadius + slicePadding,
+                            centerX + innerRadius - slicePadding,
+                            centerY + innerRadius - slicePadding
+                        ),
+                        currentAngle + currentSweep,
+                        -(currentSweep)
+                    );
+                }
+
+                if (indexSelected == count && listener != null && (int)currentSweep != 360) {
                     var sliceSector = currentAngle + (currentSweep / 2) - 270;
                     var angleToRadian = sliceSector / (180 / Math.PI);
                     var dx = (float)Math.Sin (angleToRadian) * slicePadding;

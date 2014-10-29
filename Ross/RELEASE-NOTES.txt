@@ -1,2 +1,3 @@
-- ready to check design issues related colors, fonts, user interaction
-- test stability
+- initial error fixed
+- release to check user interaction
+

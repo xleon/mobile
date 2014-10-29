@@ -393,6 +393,27 @@ namespace Toggl.Ross.Views.Charting
         {
         }
 
+        [Export ("initWithLayer:")]
+        public BarLayer (CALayer other)
+        {
+            var _other = (BarLayer) other;
+            if (_other != null) {
+                MainBar = new CALayer (_other.MainBar);
+                SecondaryBar = new CALayer (_other.SecondaryBar);
+                DateTextLayer = new CATextLayer ();
+                EmptyBar = new CALayer (_other.EmptyBar);
+
+                AddSublayer (MainBar);
+                AddSublayer (SecondaryBar);
+                AddSublayer (EmptyBar);
+                AddSublayer (DateTextLayer);
+
+                MoneyValue = _other.MoneyValue;
+                HeightValue = _other.HeightValue;
+                TimeValue = _other.TimeValue;
+            }
+        }
+
         [Export ("needsDisplayForKey:")]
         static bool NeedsDisplayForKey (NSString key)
         {

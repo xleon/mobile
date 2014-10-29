@@ -1,13 +1,13 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using XPlatUtils;
 using Toggl.Ross.Theme;
-using Toggl.Ross.Views.Charting;
 using Toggl.Ross.Views;
-using System.Diagnostics;
+using Toggl.Ross.Views.Charting;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -127,7 +127,7 @@ namespace Toggl.Ross.ViewControllers
                 () => {
                     _viewMoveOn = true;
                     barChart.Frame = new RectangleF ( barChart.Frame.X, - barChart.Frame.Height, barChart.Frame.Width, barChart.Frame.Height);
-                    pieChart.Frame = new RectangleF ( pieChart.Frame.X, padding, pieChart.Frame.Width, pieChart.Frame.Height);
+                    pieChart.Frame = new RectangleF ( pieChart.Frame.X, padding/2, pieChart.Frame.Width, pieChart.Frame.Height);
                 },() => {
                     _viewMoveOn = false;
                 });

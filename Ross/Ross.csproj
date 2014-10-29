@@ -26,6 +26,8 @@
     </MtouchI18n>
     <MtouchArch>i386</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchProfiling>true</MtouchProfiling>
+    <MtouchUseSGen>true</MtouchUseSGen>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <Optimize>true</Optimize>
@@ -61,6 +63,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchProfiling>true</MtouchProfiling>
     <BuildIpa>true</BuildIpa>
+    <MtouchUseSGen>true</MtouchUseSGen>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <Optimize>true</Optimize>
@@ -95,7 +99,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchUseLlvm>true</MtouchUseLlvm>
     <MtouchUseSGen>true</MtouchUseSGen>
-    <MtouchUseRefCounting>true</MtouchUseRefCounting>
     <CustomCommands>
       <CustomCommands>
         <Command type="AfterBuild" command="upload_dsym_bugsnag.sh ${ProjectDir} ${TargetDir}" workingdir="${ProjectDir}" />

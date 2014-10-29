@@ -7,6 +7,7 @@ using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
 using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
+using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -633,16 +634,17 @@ namespace Toggl.Ross.Views.Charting
         {
         }
 
+        // http://iosapi.xamarin.com/?link=T%3aMonoTouch.CoreAnimation.CALayer
         [Export ("initWithLayer:")]
         public SliceLayer (CALayer other)
         {
-            var sliceLayer = other as SliceLayer;
-
-            if (sliceLayer != null) {
-                StartAngle = sliceLayer.StartAngle;
-                EndAngle = sliceLayer.EndAngle;
+            var _other = (SliceLayer) other;
+            if (_other != null) {
+                StartAngle = _other.StartAngle;
+                EndAngle = _other.EndAngle;
             }
         }
+
 
         [Export ("needsDisplayForKey:")]
         static bool NeedsDisplayForKey (NSString key)

@@ -154,12 +154,12 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private DateTime ResolveStartDate (int backDate)
+        public DateTime ResolveStartDate (int backDate)
         {
             var current = DateTime.Today;
             if (Period == ZoomLevel.Week) {
                 var date = DateTime.Today.AddDays (-backDate * 7);
-                var diff = (int)date.DayOfWeek - (int)startOfWeek;
+                var diff = (int)startOfWeek - (int)date.DayOfWeek;
                 return date.AddDays (diff);
             } else if (Period == ZoomLevel.Month) {
                 current = current.AddMonths (-backDate);
@@ -170,7 +170,7 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private DateTime ResolveEndDate (DateTime start)
+        public DateTime ResolveEndDate (DateTime start)
         {
             if (Period == ZoomLevel.Week) {
                 return start.AddDays (6);

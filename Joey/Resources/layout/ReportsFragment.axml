@@ -24,7 +24,6 @@
                 android:id="@+id/TimePeriodLabel"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:text="Sep 20th - Sep 27th"
                 android:gravity="center"
                 android:layout_weight="2"
                 android:layout_alignParentTop="true"
@@ -51,7 +50,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="35dp"
                 android:textSize="13dp"
-                android:text="Total " />
+                android:text="Total "
+                android:textColor="@color/light_gray" />
             <TextView
                 android:id="@+id/TotalValue"
                 android:layout_width="wrap_content"
@@ -64,7 +64,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:textSize="13dp"
-                android:text="Billable " />
+                android:text="Billable "
+                android:textColor="@color/light_gray" />
             <TextView
                 android:id="@+id/BillableValue"
                 android:layout_width="wrap_content"

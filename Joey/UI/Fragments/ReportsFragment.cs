@@ -25,7 +25,10 @@ namespace Toggl.Joey.UI.Fragments
         private TextView timePeriod;
         private TextView totalValue;
         private TextView billableValue;
+        private ImageButton previousPeriod;
+        private ImageButton nextPeriod;
         private SummaryReportView summaryReport;
+        private int backDate;
 
         public static readonly string[] HexColors = {
             "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
@@ -40,10 +43,14 @@ namespace Toggl.Joey.UI.Fragments
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
 
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
-
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
 
+            previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
+            nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
+
+            previousPeriod.Click += (sender, e) => NavigatePeriod (1);
+            nextPeriod.Click += (sender, e) => NavigatePeriod (-1);
 
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
             var listener = new SliceListener ();
@@ -52,6 +59,16 @@ namespace Toggl.Joey.UI.Fragments
 
             LoadElements ();
             return view;
+        }
+
+        private void NavigatePeriod (int direction)
+        {
+            if (backDate == 0 && direction < 0) {
+                backDate = 0;
+            } else {
+                backDate = backDate + direction;
+            }
+            LoadElements ();
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)
@@ -83,7 +100,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureAdapter ()
         {
-            // check, if adapter exists, if it does, dont overwrite.
             var adapter = new ProjectListAdapter (summaryReport.Projects);
             ListAdapter = adapter;
         }
@@ -91,7 +107,7 @@ namespace Toggl.Joey.UI.Fragments
         private async void LoadElements ()
         {
             await LoadData ();
-            timePeriod.Text = summaryReport.FormattedStartDate (1);
+            timePeriod.Text = FormattedDateSelector ();
             totalValue.Text = summaryReport.TotalGrand;
             billableValue.Text = summaryReport.TotalBillale;
             EnsureAdapter ();
@@ -102,6 +118,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void GenerateBarChart ()
         {
+            barChart.Reset ();
             foreach (var p in summaryReport.Activity) {
                 var d = new BarItem ();
                 d.Value = (float)p.TotalTime;
@@ -117,6 +134,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void GeneratePieChart ()
         {
+            pieChart.Reset ();
             pieChart.IsLoading = true;
 
             foreach (var project in summaryReport.Projects) {
@@ -132,7 +150,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             summaryReport = new SummaryReportView ();
             summaryReport.Period = ZoomLevel.Week;
-            await summaryReport.Load (1);
+            await summaryReport.Load (backDate);
             var user = ServiceContainer.Resolve<AuthManager> ().User;
         }
 
@@ -164,6 +182,34 @@ namespace Toggl.Joey.UI.Fragments
             parameters.Height = totalHeight + (listView.DividerHeight * (ListAdapter.Count - 1));
             listView.LayoutParameters = parameters;
             listView.RequestLayout ();
+        }
+
+        private string FormattedDateSelector ()
+        {
+            if (backDate == 0) {
+                if (summaryReport.Period == ZoomLevel.Week) {
+                    return Resources.GetString (Resource.String.ReportsThisWeek);
+                } else if (summaryReport.Period == ZoomLevel.Month) {
+                    return Resources.GetString (Resource.String.ReportsThisMonth);
+                } else {
+                    return Resources.GetString (Resource.String.ReportsThisYear);
+                }
+            } else if (backDate == 1) {
+                if (summaryReport.Period == ZoomLevel.Week) {
+                    return Resources.GetString (Resource.String.ReportsLastWeek);
+                } else if (summaryReport.Period == ZoomLevel.Month) {
+                    return Resources.GetString (Resource.String.ReportsLastMonth);
+                } else {
+                    return Resources.GetString (Resource.String.ReportsLastYear);
+                }
+            } else {
+                var startDate = summaryReport.ResolveStartDate (backDate);
+                var endDate = summaryReport.ResolveEndDate (startDate);
+                if (summaryReport.Period == ZoomLevel.Week) {
+                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
+                }
+            }
+            return "";
         }
 
     }

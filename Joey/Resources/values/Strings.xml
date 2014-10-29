@@ -136,4 +136,10 @@
     <string name="FeedbackThankYouTitle">Thank you</string>
     <string name="FeedbackThankYouOK">OK</string>
     <string name="FeedbackSendFailedText">Could not send to server. Please try again.</string>
+    <string name="ReportsThisWeek">This Week</string>
+    <string name="ReportsThisMonth">This Month</string>
+    <string name="ReportsThisYear">This Year</string>
+    <string name="ReportsLastWeek">Last Week</string>
+    <string name="ReportsLastMonth">Last Month</string>
+    <string name="ReportsLastYear">Last Year</string>
 </resources>

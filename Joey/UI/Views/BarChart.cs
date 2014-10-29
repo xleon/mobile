@@ -35,6 +35,13 @@ namespace Toggl.Joey.UI.Views
         {
         }
 
+        public void Reset ()
+        {
+            Bars.Clear ();
+            BarTitles.Clear ();
+            LineTitles.Clear ();
+        }
+
         public void AddBar (BarItem point)
         {
             Bars.Add (point);
@@ -169,8 +176,8 @@ namespace Toggl.Joey.UI.Views
                         CanvasPaint.GetTextBounds (barTitle, 0, barTitle.Length, bounds);
                         canvas.DrawText (
                             barTitle,
-                            timeColumn + 10  + (int)((usableWidth * (p.Value / CeilingValue))),
-                            (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding + barHeight / 2 + bounds.Height() / 2 ),
+                            timeColumn + 10 + (int)((usableWidth * (p.Value / CeilingValue))),
+                            (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding + barHeight / 2 + bounds.Height () / 2),
                             CanvasPaint
                         );
                     }

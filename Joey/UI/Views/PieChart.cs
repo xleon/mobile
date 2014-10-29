@@ -30,6 +30,11 @@ namespace Toggl.Joey.UI.Views
         {
         }
 
+        public void Reset ()
+        {
+            slices.Clear ();
+        }
+
         public override void Draw (Canvas canvas)
         {
             if (IsLoading)
@@ -216,7 +221,6 @@ namespace Toggl.Joey.UI.Views
 
         public void SelectSlice (int position)
         {
-            Console.WriteLine ("Selecting slice: {0}", position);
             indexSelected = position;
             PostInvalidate ();
         }

@@ -9,6 +9,8 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
+using System.Linq;
+using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -37,8 +39,6 @@ namespace Toggl.Ross.Views.Charting
                     return;
                 }
 
-                _reportView.Projects.Sort ((x, y) => string.Compare (x.Project, y.Project, StringComparison.Ordinal)); // TODO check better organization
-
                 var delayNoData = (_reportView.Projects.Count == 0) ? 0.5 : 0;
                 var delayData = (_reportView.Projects.Count == 0) ? 0 : 0.5;
 
@@ -57,40 +57,21 @@ namespace Toggl.Ross.Views.Charting
                     grayCircle.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
                 });
 
-                _reportView.Projects.Sort ((x, y) => string.Compare (x.Project, y.Project, StringComparison.Ordinal));
-
+                //_reportView.Projects.Sort ((x, y) => string.Compare (x.Project, y.Project, StringComparison.Ordinal));
+                _reportView.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( y.TotalTime));
                 if (_reportView.Projects.Count == 0) {
-
                     grayCircle.Alpha = 1;
-                    ProjectList.Clear ();
-                    donutChart.ReloadData ();
-
-                } else if (_reportView.Projects.Count >= ProjectList.Count) {
-
-                    for (int i = 0; i < ProjectList.Count; i++) {
-                        ProjectList [i] = _reportView.Projects [i];
-                    }
-                    donutChart.ReloadData ();
-
-                    for (int i = ProjectList.Count; i < _reportView.Projects.Count; i++) {
-                        ProjectList.Add (_reportView.Projects [i]);
-                    }
-                    donutChart.ReloadData ();
-
-                } else if (_reportView.Projects.Count < ProjectList.Count) {
-
-                    for (int i = 0; i < _reportView.Projects.Count; i++) {
-                        ProjectList [i] = _reportView.Projects [i];
-                    }
-                    donutChart.ReloadData ();
-
-                    for (int i = _reportView.Projects.Count; i < ProjectList.Count; i++) {
-                        ProjectList.RemoveAt (i);
-                    }
-                    donutChart.ReloadData ();
                 }
 
-                donutChart.UserInteractionEnabled = (ProjectList.Count > 1);
+
+                const float maxAngle = 3.0f / 360f; // angle in degrees
+                var totalValue = Convert.ToSingle ( _reportView.Projects.Sum (p => p.TotalTime));
+                DonutProjectList = _reportView.Projects.Where (p => Convert.ToSingle ( p.TotalTime) / totalValue > maxAngle).ToList ();
+                TableProjectList = new List<ReportProject> (_reportView.Projects);
+
+
+                donutChart.UserInteractionEnabled = (DonutProjectList.Count > 1);
+                donutChart.ReloadData ();
                 projectTableView.ReloadData ();
 
                 totalTimeLabel.Text = _reportView.TotalGrand;
@@ -98,7 +79,8 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        public List<ReportProject> ProjectList;
+        public List<ReportProject> TableProjectList;
+        public List<ReportProject> DonutProjectList;
 
         public DonutChartView (RectangleF frame) : base (frame)
         {
@@ -107,14 +89,12 @@ namespace Toggl.Ross.Views.Charting
             const float padding = 24f;
             const float diameter = pieRadius * 2 + lineStroke;
 
-            ProjectList = new List<ReportProject> ();
-
-            dragHelperView = new UIView (new RectangleF (0, 0, frame.Width, diameter + padding));
-            Add (dragHelperView);
+            TableProjectList = new List<ReportProject> ();
+            DonutProjectList = new List<ReportProject> ();
 
             grayCircle = new UIView (new RectangleF (0, 0, frame.Width, diameter + padding));
             grayCircle.Layer.AddSublayer ( CGPathCreateArc ( grayCircle.Center, pieRadius, 0, Math.PI * 2, lineStroke));
-            dragHelperView.Add (grayCircle);
+            Add (grayCircle);
 
             donutChart = new XYDonutChart (new RectangleF (0, 0, frame.Width, diameter + padding)) {
                 DataSource = this,
@@ -128,7 +108,7 @@ namespace Toggl.Ross.Views.Charting
                 AnimationSpeed = 1.0f,
                 SelectedSliceOffsetRadius = 8f
             };
-            dragHelperView.Add (donutChart);
+            Add (donutChart);
             donutChart.DidSelectSliceAtIndex += (sender, e) => projectTableView.SelectRow (NSIndexPath.FromRowSection (e.Index, 0), true, UITableViewScrollPosition.Top);
             donutChart.DidDeselectSliceAtIndex += (sender, e) => projectTableView.DeselectRow (NSIndexPath.FromRowSection (e.Index, 0), true);
 
@@ -164,53 +144,6 @@ namespace Toggl.Ross.Views.Charting
             totalTimeLabel.Alpha = 0;
             moneyLabel.Alpha = 0;
             projectTableView.Alpha = 0;
-
-            float dx = 0;
-            float dy = 0;
-            float border = 12;
-
-            snapRect = new RectangleF (0, 0, frame.Width, diameter + padding);
-            snapPoint = new PointF (snapRect.GetMidX (), snapRect.GetMidY ());
-            panGesture = new UIPanGestureRecognizer ((pg) => {
-                if ((pg.State == UIGestureRecognizerState.Began || pg.State == UIGestureRecognizerState.Changed) && (pg.NumberOfTouches == 1)) {
-                    if (_viewMoveOn) {
-                        return;
-                    }
-                    var p0 = pg.LocationInView (this);
-                    if (dx == 0) {
-                        dx = p0.X - dragHelperView.Center.X;
-                    }
-                    if (dy == 0) {
-                        dy = p0.Y - dragHelperView.Center.Y;
-                    }
-                    var p1 = new PointF (p0.X - dx, dragHelperView.Center.Y);
-                    if ( p1.X - pieRadius < -pieRadius || p1.X + pieRadius > frame.Width + pieRadius ) {
-                        return;
-                    }
-                    dragHelperView.Center = p1;
-                } else if (pg.State == UIGestureRecognizerState.Ended) {
-                    if ( dragHelperView.Center.X - pieRadius < border &&
-                            GoBackInterval != null ) {
-                        GoBackInterval.Invoke ( this, new EventArgs());
-                    } else if ( dragHelperView.Center.X + pieRadius > frame.Width - border &&
-                                GoForwardInterval != null ) {
-                        GoForwardInterval.Invoke ( this, new EventArgs());
-                    }
-                    dx = 0;
-                    dy = 0;
-                    SnapImageIntoPlace ( dragHelperView.Center);
-                }
-            });
-            dragHelperView.AddGestureRecognizer (panGesture);
-
-            var upGesture = new UISwipeGestureRecognizer ( gr => {
-                if ( ChangeView != null) {
-                    ChangeView.Invoke ( gr, new EventArgs());
-                }
-            });
-            upGesture.ShouldRecognizeSimultaneously += (gestureRecognizer, otherGestureRecognizer) => true;
-            upGesture.Direction = UISwipeGestureRecognizerDirection.Down;
-            dragHelperView.AddGestureRecognizer (upGesture);
         }
 
         XYDonutChart donutChart;
@@ -220,25 +153,25 @@ namespace Toggl.Ross.Views.Charting
         UILabel noProjectTitleLabel;
         UILabel noProjectTextLabel;
         UIView grayCircle;
-        UIView dragHelperView;
-
-        UIPanGestureRecognizer panGesture;
-        RectangleF snapRect;
-        PointF snapPoint;
-        bool _viewMoveOn;
 
         public void SetSelectedProject (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
-                donutChart.SetSliceSelectedAtIndex (index);
+                //donutChart.SetSliceSelectedAtIndex (index);
             }
         }
 
         public void SetDeselectedProject (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
-                donutChart.SetSliceDeselectedAtIndex (index);
+                //donutChart.SetSliceDeselectedAtIndex (index);
             }
+        }
+
+        protected override void Dispose (bool disposing)
+        {
+            base.Dispose (disposing);
+            donutChart.Dispose ();
         }
 
         private CAShapeLayer CGPathCreateArc (PointF center, float radius, double startAngle, double endAngle, float lineStroke)
@@ -251,39 +184,21 @@ namespace Toggl.Ross.Views.Charting
             return shapeLayer;
         }
 
-        private void SnapImageIntoPlace (PointF touchPoint)
-        {
-            const float springDampingRatio = 0.4f;
-            const float initialSpringVelocity = 1.0f;
-
-            if (snapRect.Contains (touchPoint)) {
-                if ( _viewMoveOn ) {
-                    return;
-                }
-                UIView.AnimateNotify (0.5f, 0.0f, springDampingRatio, initialSpringVelocity, UIViewAnimationOptions.CurveEaseIn,
-                () => {
-                    _viewMoveOn = true;
-                    dragHelperView.Center = snapPoint;
-                },
-                finished => { _viewMoveOn = !finished; });
-            }
-        }
-
         #region Pie Datasource
 
         public int NumberOfSlicesInPieChart (XYDonutChart pieChart)
         {
-            return ProjectList.Count;
+            return DonutProjectList.Count;
         }
 
         public float ValueForSliceAtIndex (XYDonutChart pieChart, int index)
         {
-            return ProjectList [index].TotalTime;
+            return DonutProjectList [index].TotalTime;
         }
 
         public UIColor ColorForSliceAtIndex (XYDonutChart pieChart, int index)
         {
-            var hex = ProjectModel.HexColors [ProjectList [index].Color % ProjectModel.HexColors.Length];
+            var hex = ProjectModel.HexColors [DonutProjectList [index].Color % ProjectModel.HexColors.Length];
             return UIColor.Clear.FromHex (hex);
         }
 
@@ -306,13 +221,13 @@ namespace Toggl.Ross.Views.Charting
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
                 var cell = (ProjectReportCell)tableView.DequeueReusableCell (ProjectReportCell.ProjectReportCellId);
-                cell.Data = _owner.ProjectList [indexPath.Row];
+                cell.Data = _owner.TableProjectList [indexPath.Row];
                 return cell;
             }
 
             public override int RowsInSection (UITableView tableview, int section)
             {
-                return _owner.ProjectList.Count;
+                return _owner.TableProjectList.Count;
             }
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)

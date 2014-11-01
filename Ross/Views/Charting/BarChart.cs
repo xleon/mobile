@@ -53,7 +53,7 @@ namespace Toggl.Ross.Views.Charting
         CATextLayer[] xAxisText = new CATextLayer[5];
 
         const float minBarScale = 0.005f;
-        const int defaultSliceZOrder = 100;
+        const int defaultOrder = 100;
         const float xAxisMargin = 35;
         const float yAxisMargin = 20;
         const float topBarMargin = 10;
@@ -155,7 +155,7 @@ namespace Toggl.Ross.Views.Charting
                 CATransaction.DisableActions = true;
                 var nsString = new NSString ( labelText);
                 SizeF size = nsString.GetSizeUsingAttributes (new UIStringAttributes () { Font = LabelFont });
-                var textLayer = oneLayer.DateTextLayer;
+                var textLayer = (CATextLayer)oneLayer.Sublayers [3];
                 textLayer.String = labelText;
                 textLayer.FontSize = (barsCount > 12) ? 9.0f : 12.0f;
                 textLayer.Bounds = new RectangleF (0, 0, size.Width, size.Height);
@@ -190,7 +190,6 @@ namespace Toggl.Ross.Views.Charting
             mainBar.BackgroundColor = MainBarColor.CGColor;
             mainBar.SetValueForKeyPath ( new NSNumber ( minBarScale), new NSString ( "transform.scale.x"));
             barLayer.AddSublayer (mainBar);
-            barLayer.MainBar = mainBar;
 
             var secondaryBar = new CALayer ();
             secondaryBar.AnchorPoint = new PointF (0.0f, 0.0f);
@@ -199,7 +198,6 @@ namespace Toggl.Ross.Views.Charting
             secondaryBar.BackgroundColor = SecondaryBarColor.CGColor;
             secondaryBar.SetValueForKeyPath ( new NSNumber ( minBarScale), new NSString ( "transform.scale.x"));
             barLayer.AddSublayer (secondaryBar);
-            barLayer.SecondaryBar = secondaryBar;
 
             var emptyBar = new CALayer ();
             emptyBar.AnchorPoint = new PointF (0.0f, 0.0f);
@@ -207,7 +205,6 @@ namespace Toggl.Ross.Views.Charting
             emptyBar.Position = new PointF ( xAxisMargin, 0);
             emptyBar.BackgroundColor = UIColor.Gray.CGColor;
             barLayer.AddSublayer (emptyBar);
-            barLayer.EmptyBar = emptyBar;
 
             var textLayer = new CATextLayer ();
             textLayer.ContentsScale = UIScreen.MainScreen.Scale;
@@ -231,7 +228,6 @@ namespace Toggl.Ross.Views.Charting
             textLayer.Position = mainBar.Position;
             CATransaction.DisableActions = false;
             barLayer.AddSublayer (textLayer);
-            barLayer.DateTextLayer = textLayer;
 
             return barLayer;
         }
@@ -245,62 +241,14 @@ namespace Toggl.Ross.Views.Charting
 
         public override void TouchesMoved (NSSet touches, UIEvent evt)
         {
-            /*
-            var touch = (UITouch)touches.AnyObject;
-            PointF point = touch.LocationInView (_pieView);
-            getCurrentSelectedOnTouch (point);
-            */
         }
 
         public override void TouchesEnded (NSSet touches, UIEvent evt)
         {
-            /*
-            var touch = (UITouch)touches.AnyObject;
-            PointF point = touch.LocationInView (_pieView);
-            var selectedIndex = getCurrentSelectedOnTouch (point);
-            notifyDelegateOfSelectionChangeFrom (_selectedSliceIndex, selectedIndex);
-            TouchesCancelled (touches, evt);
-            */
         }
 
         public override void TouchesCancelled (NSSet touches, UIEvent evt)
         {
-            /*
-            CALayer parentLayer = _pieView.Layer;
-            var pieLayers = parentLayer.Sublayers;
-            foreach (SliceLayer item in pieLayers) {
-                item.ZPosition = 0;
-                item.LineWidth = 0.0f;
-            }
-            */
-        }
-
-        private int getCurrentSelectedOnTouch (PointF point)
-        {
-            int selectedIndex = -1;
-            /*
-            CGAffineTransform transform = CGAffineTransform.MakeIdentity ();
-
-            CALayer parentLayer = _pieView.Layer;
-            var pieLayers = parentLayer.Sublayers ?? new CALayer[0];
-            int idx = 0;
-
-            foreach (SliceLayer item in pieLayers) {
-                CGPath path = item.Path;
-                if (path.ContainsPoint (transform, point, false)) {
-                    item.LineWidth = SelectedSliceStroke;
-                    item.StrokeColor = UIColor.White.CGColor;
-                    item.LineJoin = CAShapeLayer.JoinBevel;
-                    item.ZPosition = float.MaxValue;
-                    selectedIndex = idx;
-                } else {
-                    item.ZPosition = defaultSliceZOrder;
-                    item.LineWidth = 0.0f;
-                }
-                idx++;
-            }
-            */
-            return selectedIndex;
         }
 
         #endregion
@@ -320,8 +268,13 @@ namespace Toggl.Ross.Views.Charting
         #endregion
     }
 
-    public class BarLayer : CALayer
+    class BarLayer : CALayer
     {
+        public const int MainBarIndex = 0;
+        public const int SecondaryBarIndex = 1;
+        public const int EmptyBarIndex = 2;
+        public const int DateTextIndex = 3;
+
         [Export ("timeValue")]
         public float TimeValue
         {
@@ -330,10 +283,11 @@ namespace Toggl.Ross.Views.Charting
             }
 
             set {
-                if (MainBar != null ) {
+                var mainBar = Sublayers [0];
+                if (mainBar != null ) {
                     var xScale = (value > minBarScale) ? value : minBarScale;
-                    CreateBarAnimationForKeyPath (MainBar, "transform.scale.x", xScale, null);
-                    EmptyBar.Opacity = (value > 0) ? 0.0f : 1.0f;
+                    CreateBarAnimationForKeyPath (mainBar, "transform.scale.x", xScale, null);
+                    Sublayers [2].Opacity = (value > 0) ? 0.0f : 1.0f;
                 }
             }
         }
@@ -346,9 +300,10 @@ namespace Toggl.Ross.Views.Charting
             }
 
             set {
-                if (SecondaryBar != null ) {
+                var secondaryBar = Sublayers [1];
+                if (secondaryBar != null ) {
                     var xScale = (value > minBarScale) ? value : minBarScale;
-                    CreateBarAnimationForKeyPath (SecondaryBar, "transform.scale.x", xScale, null);
+                    CreateBarAnimationForKeyPath (secondaryBar, "transform.scale.x", xScale, null);
                 }
             }
         }
@@ -357,14 +312,17 @@ namespace Toggl.Ross.Views.Charting
         public float HeightValue
         {
             get {
-                return MainBar != null ? MainBar.Bounds.Height : 0;
+                return Sublayers [0] != null ? Sublayers [0].Bounds.Height : 0;
             } set {
-                if (value > 0 && MainBar != null) {
+                var mainBar = Sublayers [0];
+                var secondaryBar = Sublayers [1];
+                var emptyBar = Sublayers [2];
+                if (value > 0 && mainBar != null) {
                     float barHeight = value;
                     Bounds = new RectangleF ( 0.0f, 0.0f, Bounds.Width, barHeight);
-                    MainBar.Bounds = new RectangleF ( 0.0f, 0.0f, MainBar.Bounds.Width, barHeight);
-                    SecondaryBar.Bounds = new RectangleF (0.0f, 0.0f, SecondaryBar.Bounds.Width, barHeight);
-                    EmptyBar.Bounds = new RectangleF ( 0.0f, 0.0f, EmptyBar.Bounds.Width, barHeight);
+                    mainBar.Bounds = new RectangleF ( 0.0f, 0.0f, mainBar.Bounds.Width, barHeight);
+                    secondaryBar.Bounds = new RectangleF (0.0f, 0.0f, secondaryBar.Bounds.Width, barHeight);
+                    emptyBar.Bounds = new RectangleF ( 0.0f, 0.0f, emptyBar.Bounds.Width, barHeight);
                 }
             }
         }
@@ -373,17 +331,7 @@ namespace Toggl.Ross.Views.Charting
 
         public string Text { get; set; }
 
-        public CALayer MainBar;
-
-        public CALayer SecondaryBar;
-
-        public CATextLayer TextLayer;
-
-        public CATextLayer DateTextLayer;
-
-        public CALayer EmptyBar;
-
-        private float minBarScale = 0.005f;
+        const float minBarScale = 0.005f;
 
         public BarLayer ()
         {
@@ -393,11 +341,20 @@ namespace Toggl.Ross.Views.Charting
         {
         }
 
+
         [Export ("initWithLayer:")]
-        public BarLayer (CALayer other)
+        public BarLayer (CALayer other) : base (other)
         {
+
+        }
+
+        public override void Clone (CALayer other)
+        {
+            base.Clone (other);
+
             var _other = (BarLayer) other;
             if (_other != null) {
+                /*
                 MainBar = new CALayer (_other.MainBar);
                 SecondaryBar = new CALayer (_other.SecondaryBar);
                 DateTextLayer = new CATextLayer ();
@@ -407,12 +364,16 @@ namespace Toggl.Ross.Views.Charting
                 AddSublayer (SecondaryBar);
                 AddSublayer (EmptyBar);
                 AddSublayer (DateTextLayer);
-
+                //DateTextLayer = _other.DateTextLayer;
+                //MainBar = _other.MainBar;
+                //DateTextLayer = _other.DateTextLayer;
+                */
                 MoneyValue = _other.MoneyValue;
                 HeightValue = _other.HeightValue;
                 TimeValue = _other.TimeValue;
             }
         }
+
 
         [Export ("needsDisplayForKey:")]
         static bool NeedsDisplayForKey (NSString key)

@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
 using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -100,15 +99,10 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        private float _pieRadius;
-
         public float PieRadius
         {
-            get {
-                return _pieRadius;
-            } set {
-                _pieRadius = value;
-            }
+            get;
+            set;
         }
 
         public UIColor PieBackgroundColor
@@ -157,6 +151,24 @@ namespace Toggl.Ross.Views.Charting
             ShowPercentage = true;
         }
 
+        protected override void Dispose (bool disposing)
+        {
+            layerPool.Clear ();
+            base.Dispose (disposing);
+            CALayer parentLayer = _pieView.Layer;
+            var pieLayers = parentLayer.Sublayers ?? new CALayer[0];
+            foreach (SliceLayer layer in pieLayers) {
+                var shapeLayer = (CAShapeLayer)layer.Sublayers [0];
+                layerPool.Remove (layer);
+                shapeLayer.FillColor = PieBackgroundColor.CGColor;
+                shapeLayer.Path.Dispose ();
+                layer.Delegate = null;
+                layer.ZPosition = 0;
+                layer.Sublayers [1].Hidden = true;
+                layer.RemoveFromSuperLayer ();
+            }
+        }
+
         #region Touch Handing (Selection Notification)
 
         public override void TouchesBegan (NSSet touches, UIEvent evt)
@@ -184,9 +196,13 @@ namespace Toggl.Ross.Views.Charting
         {
             CALayer parentLayer = _pieView.Layer;
             var pieLayers = parentLayer.Sublayers;
+            if (pieLayers == null) {
+                return;
+            }
             foreach (SliceLayer item in pieLayers) {
+                var shapeLayer = (CAShapeLayer)item.Sublayers [0];
                 item.ZPosition = 0;
-                item.LineWidth = 0.0f;
+                shapeLayer.LineWidth = 0.0f;
             }
         }
 
@@ -200,16 +216,17 @@ namespace Toggl.Ross.Views.Charting
             int idx = 0;
 
             foreach (SliceLayer item in pieLayers) {
-                CGPath path = item.Path;
+                var shapeLayer = (CAShapeLayer)item.Sublayers [0];
+                CGPath path = shapeLayer.Path;
                 if (path.ContainsPoint (transform, point, false)) {
-                    item.LineWidth = SelectedSliceStroke;
-                    item.StrokeColor = UIColor.White.CGColor;
-                    item.LineJoin = CAShapeLayer.JoinBevel;
+                    shapeLayer.LineWidth = SelectedSliceStroke;
+                    shapeLayer.StrokeColor = UIColor.White.CGColor;
+                    shapeLayer.LineJoin = CAShapeLayer.JoinBevel;
                     item.ZPosition = float.MaxValue;
                     selectedIndex = idx;
                 } else {
                     item.ZPosition = defaultSliceZOrder;
-                    item.LineWidth = 0.0f;
+                    shapeLayer.LineWidth = 0.0f;
                 }
                 idx++;
             }
@@ -217,6 +234,8 @@ namespace Toggl.Ross.Views.Charting
         }
 
         #endregion
+
+        private List<SliceLayer> layerPool = new List<SliceLayer>();
 
         public void ReloadData ()
         {
@@ -249,7 +268,7 @@ namespace Toggl.Ross.Views.Charting
             var angles = new double[sliceCount];
             for (int index = 0; index < sliceCount; index++) {
                 double div;
-                if (sum == 0) {
+                if ( equals (sum,0.0f)) {
                     div = 0;
                 } else {
                     div = values [index] / sum;
@@ -257,8 +276,8 @@ namespace Toggl.Ross.Views.Charting
                 angles [index] = Math.PI * 2 * div;
             }
 
-            CATransaction.Begin ();
-            CATransaction.AnimationDuration = Convert.ToDouble (AnimationSpeed);
+            //CATransaction.Begin ();
+            //CATransaction.AnimationDuration = Convert.ToDouble (AnimationSpeed);
 
             _pieView.UserInteractionEnabled = false;
 
@@ -278,7 +297,7 @@ namespace Toggl.Ross.Views.Charting
                     layer.CreateArcAnimationForKey ("startAngle", StartPieAngle, StartPieAngle, _animationDelegate);
                     layer.CreateArcAnimationForKey ("endAngle", StartPieAngle, StartPieAngle, _animationDelegate);
                 }
-                CATransaction.Commit ();
+                //CATransaction.Commit ();
                 return;
             }
 
@@ -298,7 +317,7 @@ namespace Toggl.Ross.Views.Charting
                     diff--;
                 } else {
                     var onelayer = (SliceLayer)sliceLayers [index];
-                    if (diff == 0 || onelayer.Value == values [index]) {
+                    if (diff == 0 || equals ( onelayer.Value, values [index])) {
                         layer = onelayer;
                         layersToRemove.Remove (layer);
                     } else if (diff > 0) {
@@ -311,7 +330,7 @@ namespace Toggl.Ross.Views.Charting
                             parentLayer.AddSublayer (onelayer); // TODO: check removing this code with the new Xamarin compiler
                             diff++;
                             onelayer = (SliceLayer)sliceLayers [index];
-                            if ( onelayer.Value == values [index] || diff == 0) {
+                            if ( equals ( onelayer.Value,values [index]) || diff == 0) {
                                 layer = onelayer;
                                 layersToRemove.Remove (layer);
                                 break;
@@ -343,22 +362,17 @@ namespace Toggl.Ross.Views.Charting
             }
 
             CATransaction.DisableActions = true;
-
-            var layers = (parentLayer.Sublayers ?? new CALayer[0]).ToList ();
-            layers.Sort ((x, y) => ((SliceLayer)x).StartAngle.CompareTo ( ((SliceLayer)y).StartAngle));
-
-            for (int i = 0; i < layers.Count; i++) {
-                var layer = (SliceLayer)layers [i];
-                var index = containsLayer (layersToRemove, layer);
-                if ( index != -1) {
-                    var angle = (i > 0) ? ((SliceLayer)layers [i -1]).EndAngle : StartPieAngle;
-                    layer.CreateArcAnimationForKey ("startAngle", layer.StartAngle, angle, _animationDelegate);
-                    layer.CreateArcAnimationForKey ("endAngle", layer.EndAngle, angle, _animationDelegate);
-                    layersToRemove.RemoveAt (index);
-                }
+            foreach (var layer in layersToRemove) {
+                var shapeLayer = (CAShapeLayer)layer.Sublayers [0];
+                layerPool.Remove (layer);
+                shapeLayer.FillColor = PieBackgroundColor.CGColor;
+                shapeLayer.Path.Dispose ();
+                layer.Delegate = null;
+                layer.ZPosition = 0;
+                layer.Sublayers [1].Hidden = true;
+                layer.RemoveFromSuperLayer ();
             }
             layersToRemove.Clear ();
-            layers.Clear ();
 
             foreach (var layer in sliceLayers) {
                 layer.ZPosition = defaultSliceZOrder;
@@ -366,7 +380,7 @@ namespace Toggl.Ross.Views.Charting
 
             _pieView.UserInteractionEnabled = true;
             CATransaction.DisableActions = false;
-            CATransaction.Commit ();
+            //CATransaction.Commit ();
         }
 
         public void SetSliceSelectedAtIndex (int index)
@@ -452,39 +466,35 @@ namespace Toggl.Ross.Views.Charting
             return result;
         }
 
+        private bool equals ( float a, float b)
+        {
+            return (Math.Abs (a - b) < float.Epsilon);
+        }
+
         #region Animation Delegate + Run Loop Timer
 
         [Export ("updateTimerFired:")]
         private void UpdateTimerFired (NSTimer timer)
         {
-            CALayer parentLayer = _pieView.Layer;
-            var pieLayers = parentLayer.Sublayers;
-
-            foreach (SliceLayer layer in pieLayers) {
-                var currentStartAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("startAngle"));
-                var interpolatedStartAngle = currentStartAngle.DoubleValue;
-
-                var currentEndAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("endAngle"));
-                double interpolatedEndAngle = currentEndAngle.DoubleValue;
-
-                CGPath path = CGPathCreateArc (_pieCenter, _pieRadius, interpolatedStartAngle, interpolatedEndAngle);
-                layer.Path = path;
-
-                CATransaction.DisableActions = true;
-                CALayer labelLayer = layer.Sublayers [0];
-                double interpolatedMidAngle = (interpolatedEndAngle + interpolatedStartAngle) / 2;
-                labelLayer.Position = new PointF (_pieCenter.X + (LabelRadius * Convert.ToSingle (Math.Cos (interpolatedMidAngle))), _pieCenter.Y + (LabelRadius * Convert.ToSingle (Math.Sin (interpolatedMidAngle))));
-
-                // remove layer after animation
-                if (interpolatedStartAngle == interpolatedEndAngle) {
-                    layer.FillColor = PieBackgroundColor.CGColor;
-                    layer.Delegate = null;
-                    layer.ZPosition = 0;
-                    var textLayer = (CATextLayer)layer.Sublayers [0];
-                    textLayer.Hidden = true;
-                    layer.RemoveFromSuperLayer ();
+            if (_pieView.Layer.Sublayers == null) {
+                return;
+            }
+            foreach (var layer in _pieView.Layer.Sublayers) {
+                if (layer.PresentationLayer != null) {
+                    var shapeLayer = (CAShapeLayer)layer.Sublayers [0];
+                    var currentStartAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("startAngle"));
+                    var interpolatedStartAngle = currentStartAngle.DoubleValue;
+                    var currentEndAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("endAngle"));
+                    double interpolatedEndAngle = currentEndAngle.DoubleValue;
+                    var path = CGPathCreateArc (_pieCenter, PieRadius, interpolatedStartAngle, interpolatedEndAngle);
+                    shapeLayer.Path = path;
+                    path.Dispose ();
+                    CALayer labelLayer = layer.Sublayers [1];
+                    double interpolatedMidAngle = (interpolatedEndAngle + interpolatedStartAngle) / 2;
+                    CATransaction.DisableActions = true;
+                    labelLayer.Position = new PointF (_pieCenter.X + (LabelRadius * Convert.ToSingle (Math.Cos (interpolatedMidAngle))), _pieCenter.Y + (LabelRadius * Convert.ToSingle (Math.Sin (interpolatedMidAngle))));
+                    CATransaction.DisableActions = false;
                 }
-                CATransaction.DisableActions = false;
             }
         }
 
@@ -492,7 +502,7 @@ namespace Toggl.Ross.Views.Charting
         {
             if (_animationTimer == null) {
                 const double timeInterval = 1.0f / 60.0f;
-                _animationTimer = NSTimer.CreateTimer (timeInterval, this, new Selector ("updateTimerFired:"), null, true);
+                _animationTimer = NSTimer.CreateTimer (timeInterval, this, new Selector ("updateTimerFired:"),null, true);
                 NSRunLoop.Main.AddTimer (_animationTimer, NSRunLoopMode.Common);
             }
             _animations.Add (anim);
@@ -518,6 +528,7 @@ namespace Toggl.Ross.Views.Charting
             if (IsDonut) {
                 path.AddArc (center.X, center.Y, radius, Convert.ToSingle (startAngle), Convert.ToSingle (endAngle), false);
                 resultPath = path.CopyByStrokingPath (DonutLineStroke, CGLineCap.Butt, CGLineJoin.Miter, 10);
+                path.Dispose ();
             } else {
                 path.MoveToPoint (center.X, center.Y);
                 path.AddArc (center.X, center.Y, radius, Convert.ToSingle (startAngle), Convert.ToSingle (endAngle), false);
@@ -530,8 +541,10 @@ namespace Toggl.Ross.Views.Charting
         private SliceLayer createSliceLayer ()
         {
             var pieLayer = new SliceLayer ();
-            pieLayer.ZPosition = 0;
-            pieLayer.StrokeColor = null;
+            var arcLayer = new CAShapeLayer ();
+            arcLayer.ZPosition = 0;
+            arcLayer.StrokeColor = null;
+            pieLayer.AddSublayer (arcLayer);
 
             var textLayer = new CATextLayer ();
             textLayer.ContentsScale = UIScreen.MainScreen.Scale;
@@ -562,6 +575,7 @@ namespace Toggl.Ross.Views.Charting
             textLayer.Position = new PointF (_pieCenter.X + (LabelRadius * Convert.ToSingle (Math.Cos (0))), _pieCenter.Y + (LabelRadius * Convert.ToSingle (Math.Sin (0))));
             CATransaction.DisableActions = false;
             pieLayer.AddSublayer (textLayer);
+            layerPool.Add (pieLayer); // TODO: remove pool!
             return pieLayer;
         }
 
@@ -569,7 +583,7 @@ namespace Toggl.Ross.Views.Charting
 
         private void updateLabelForLayer (SliceLayer sliceLayer, float value)
         {
-            var textLayer = (CATextLayer)sliceLayer.Sublayers [0];
+            var textLayer = (CATextLayer)sliceLayer.Sublayers [1];
             textLayer.Hidden = !ShowLabel;
             if (!ShowLabel) {
                 return;
@@ -610,7 +624,7 @@ namespace Toggl.Ross.Views.Charting
         }
     }
 
-    sealed class SliceLayer : CAShapeLayer
+    class SliceLayer : CALayer
     {
         [Export ("startAngle")]
         public double StartAngle { get; set; }
@@ -634,17 +648,24 @@ namespace Toggl.Ross.Views.Charting
         {
         }
 
-        // http://iosapi.xamarin.com/?link=T%3aMonoTouch.CoreAnimation.CALayer
         [Export ("initWithLayer:")]
-        public SliceLayer (CALayer other)
+        public SliceLayer (CALayer other) : base (other)
         {
-            var _other = (SliceLayer) other;
-            if (_other != null) {
-                StartAngle = _other.StartAngle;
-                EndAngle = _other.EndAngle;
-            }
         }
 
+        public override void Clone (CALayer other)
+        {
+            base.Clone ( other);
+            var sliceLayer = other as SliceLayer;
+            if (sliceLayer != null) {
+                StartAngle = sliceLayer.StartAngle;
+                EndAngle = sliceLayer.EndAngle;
+                Value = sliceLayer.Value;
+                Percentage = sliceLayer.Percentage;
+                IsSelected = sliceLayer.IsSelected;
+                Text = sliceLayer.Text;
+            }
+        }
 
         [Export ("needsDisplayForKey:")]
         static bool NeedsDisplayForKey (NSString key)
@@ -681,7 +702,7 @@ namespace Toggl.Ross.Views.Charting
             if (PresentationLayer != null) {
                 currentAngle = (NSNumber)PresentationLayer.ValueForKey (_key);
             }
-
+            arcAnimation.Duration = 1.0f;
             arcAnimation.From = currentAngle;
             arcAnimation.To = _toValue;
             arcAnimation.Delegate = @delegate;
@@ -703,22 +724,19 @@ namespace Toggl.Ross.Views.Charting
 
         public void ChangeToColor (UIColor color)
         {
+            var shapeLayer = (CAShapeLayer)Sublayers [0];
             var colorAnim = CABasicAnimation.FromKeyPath ("fillColor");
-            colorAnim.From = NSObject.FromObject (FillColor);
+            colorAnim.From = NSObject.FromObject (shapeLayer.FillColor);
             colorAnim.To = NSObject.FromObject (color.CGColor);
             colorAnim.Duration = 1.0f;
             colorAnim.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.Default);
-            AddAnimation (colorAnim, "fillColor");
-            FillColor = color.CGColor;
+            shapeLayer.AddAnimation (colorAnim, "fillColor");
+            shapeLayer.FillColor = color.CGColor;
         }
     }
 
-    public class SelectedSliceEventArgs : EventArgs
+    public sealed class SelectedSliceEventArgs : EventArgs
     {
         public int Index { get; set; }
     }
-
-
-
 }
-

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Drawing;
 using MonoTouch.UIKit;
-using Toggl.Ross.Theme;
 using Toggl.Phoebe.Data;
-using MonoTouch.CoreGraphics;
+using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -43,6 +42,7 @@ namespace Toggl.Ross.ViewControllers
         {
             if (window != null) {
                 window.OnHitTest -= OnTogglWindowHit;
+                switcherView.SelectorButton.TouchUpInside -= OnNavigationButtonTouched;
             }
             window = null;
         }

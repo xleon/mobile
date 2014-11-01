@@ -151,16 +151,16 @@ namespace Toggl.Phoebe.Data.Reports
             var current = DateTime.Today;
 
             if (Period == ZoomLevel.Week) {
-                var date = current.StartOfWeek (startOfWeek).AddDays (-backDate * 7);
+                var date = current.StartOfWeek (startOfWeek).AddDays (backDate * 7);
                 return date;
             }
 
             if (Period == ZoomLevel.Month) {
-                current = current.AddMonths (-backDate);
+                current = current.AddMonths (backDate);
                 return new DateTime (current.Year, current.Month, 1);
             }
 
-            return new DateTime (current.Year - backDate, 1, 1);
+            return new DateTime (current.Year + backDate, 1, 1);
         }
 
         public DateTime ResolveEndDate (DateTime start)

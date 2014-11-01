@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Drawing;
+﻿using System.Drawing;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
@@ -7,7 +6,8 @@ using Toggl.Phoebe.Data.Reports;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Ross.Views.Charting;
+using System.Diagnostics;
+using System;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -20,8 +20,15 @@ namespace Toggl.Ross.ViewControllers
             get {
                 return _zoomLevel;
             } set {
+                if (_zoomLevel == value) {
+                    return;
+                }
                 _zoomLevel = value;
-                TimeSpaceIndex = 0;
+
+                centerView.ZoomLevel =
+                    leftView.ZoomLevel =
+                        rightView.ZoomLevel = _zoomLevel;
+                ChangeReportState ();
             }
         }
 
@@ -33,40 +40,54 @@ namespace Toggl.Ross.ViewControllers
                 return _timeSpaceIndex;
             } set {
                 _timeSpaceIndex = value;
-                ChangeReportState ();
             }
         }
 
-        private SummaryReportView dataSource;
         private ReportsMenuController menuController;
         private DateSelectorView dateSelectorView;
-        private DonutChartView pieChart;
-        private BarChartView barChart;
+        private ReportsView centerView;
+        private ReportsView rightView;
+        private ReportsView leftView;
+        private SummaryReportView dataSource;
         private bool _viewMoveOn;
+        private UIPanGestureRecognizer panGesture;
+        private ChartPosition _position;
+        private PointF _centerPos;
 
         const float padding  = 24;
         const float navBarHeight = 64;
         const float selectorHeight = 50;
 
+
         public ReportsViewController ()
         {
             EdgesForExtendedLayout = UIRectEdge.None;
             menuController = new ReportsMenuController ();
-
             dataSource = new SummaryReportView ();
+
             _zoomLevel = ZoomLevel.Week;
             _timeSpaceIndex = 0;
+            _position = ChartPosition.Top;
         }
 
-        protected override void Dispose (bool disposing)
+        public override void ViewWillDisappear (bool animated)
         {
-            if (disposing) {
-                if (menuController != null) {
-                    menuController.Detach ();
-                    menuController = null;
-                }
+            leftView.Hidden = true;
+            rightView.Hidden = true;
+            base.ViewWillDisappear (animated);
+        }
+
+        public override void ViewDidDisappear (bool animated)
+        {
+            base.ViewDidDisappear (animated);
+            if (menuController != null) {
+                menuController.Detach ();
+                menuController = null;
             }
-            base.Dispose (disposing);
+            DisposeReportViewAt (Side.Center);
+            DisposeReportViewAt (Side.Left);
+            DisposeReportViewAt (Side.Right);
+            panGesture.Dispose ();
         }
 
         public override void ViewDidLoad ()
@@ -78,27 +99,26 @@ namespace Toggl.Ross.ViewControllers
             menuController.Attach (this);
 
             dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
-            dateSelectorView.LeftArrowPressed += (sender, e) => TimeSpaceIndex++;
-            dateSelectorView.RightArrowPressed += (sender, e) => TimeSpaceIndex--;
+            dateSelectorView.LeftArrowPressed += (sender, e) => {
+                leftView.ReloadData();
+                ChangeToViewAt (Side.Left);
+            };
+            dateSelectorView.RightArrowPressed += (sender, e) => {
+                rightView.ReloadData();
+                ChangeToViewAt (Side.Right);
+            };
 
-            barChart = new BarChartView ( new RectangleF ( padding, padding/2, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - 2 * selectorHeight));
-            barChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
-            barChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
-
-            pieChart = new DonutChartView (new RectangleF ( padding, barChart.Bounds.Height + padding, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y - padding));
-            pieChart.GoForwardInterval += (sender, e) => TimeSpaceIndex--;
-            pieChart.GoBackInterval += (sender, e) => TimeSpaceIndex++;
-            pieChart.ChangeView += (sender, e) => ChangeView ((UISwipeGestureRecognizer)sender);
-
-            Add (barChart);
-            Add (pieChart);
+            centerView = createReportViewAt();
+            leftView = createReportViewAt ( Side.Left);
+            rightView = createReportViewAt ( Side.Right);
+            Add (centerView);
+            Add (leftView);
+            Add (rightView);
             Add (dateSelectorView);
+            _centerPos = centerView.Center;
 
-            var upGesture = new UISwipeGestureRecognizer (ChangeView) { Direction = UISwipeGestureRecognizerDirection.Up };
-            var downGesture = new UISwipeGestureRecognizer (ChangeView) { Direction = UISwipeGestureRecognizerDirection.Down };
-            View.AddGestureRecognizer (upGesture);
-            View.AddGestureRecognizer (downGesture);
-
+            panGesture = createPanGesture ();
+            centerView.AddGestureRecognizer (panGesture);
             ChangeReportState ();
         }
 
@@ -116,42 +136,189 @@ namespace Toggl.Ross.ViewControllers
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
-        private void ChangeView ( UISwipeGestureRecognizer recognizer)
+        private void ChangeToViewAt ( Side side)
         {
             if (_viewMoveOn) {
                 return;
             }
 
-            if (recognizer.Direction == UISwipeGestureRecognizerDirection.Up) {
-                UIView.Animate (0.5, 0, UIViewAnimationOptions.CurveEaseInOut,
+            centerView.RemoveGestureRecognizer ( panGesture);
+
+            if (side == Side.Right) {
+                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
                 () => {
                     _viewMoveOn = true;
-                    barChart.Frame = new RectangleF ( barChart.Frame.X, - barChart.Frame.Height, barChart.Frame.Width, barChart.Frame.Height);
-                    pieChart.Frame = new RectangleF ( pieChart.Frame.X, padding/2, pieChart.Frame.Width, pieChart.Frame.Height);
+                    rightView.Center = new PointF ( UIScreen.MainScreen.Bounds.Width/2, rightView.Center.Y);
+                    centerView.Center = new PointF ( -UIScreen.MainScreen.Bounds.Width/2, centerView.Center.Y);
                 },() => {
                     _viewMoveOn = false;
+                    DisposeReportViewAt ( Side.Left);
+                    leftView = centerView;
+                    centerView = rightView;
+                    _timeSpaceIndex ++;
+                    rightView = createReportViewAt ( Side.Right);
+                    centerView.AddGestureRecognizer ( panGesture);
+                    dateSelectorView.DateContent = FormattedIntervalDate ( centerView.TimeSpaceIndex);
+
                 });
             } else {
-                UIView.Animate (0.5, 0, UIViewAnimationOptions.CurveEaseInOut,
+                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
                 () => {
                     _viewMoveOn = true;
-                    barChart.Frame = new RectangleF ( barChart.Frame.X, padding/2, barChart.Frame.Width, barChart.Frame.Height);
-                    pieChart.Frame = new RectangleF ( pieChart.Frame.X, barChart.Bounds.Height + padding, pieChart.Frame.Width, pieChart.Frame.Height);
+                    leftView.Center = new PointF ( UIScreen.MainScreen.Bounds.Width/2, leftView.Center.Y);
+                    centerView.Center = new PointF ( UIScreen.MainScreen.Bounds.Width * 1.5f, centerView.Center.Y);
                 },() => {
                     _viewMoveOn = false;
+                    DisposeReportViewAt ( Side.Right);
+                    rightView = centerView;
+                    centerView = leftView;
+                    _timeSpaceIndex --;
+                    leftView = createReportViewAt ( Side.Left);
+                    centerView.AddGestureRecognizer ( panGesture);
+                    dateSelectorView.DateContent = FormattedIntervalDate ( centerView.TimeSpaceIndex);
                 });
             }
         }
 
-        private async void ChangeReportState ()
+        private void changeChart ( ChartPosition position)
+        {
+            if (_viewMoveOn) {
+                return;
+            }
+
+            if ( position == ChartPosition.Top) {
+                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
+                () => {
+                    _viewMoveOn = true;
+                    centerView.Center = _centerPos;
+                },() => {
+                    _viewMoveOn = false;
+                    leftView.Center = new PointF ( leftView.Center.X, _centerPos.Y);
+                    rightView.Center = new PointF ( rightView.Center.X, _centerPos.Y);
+                    _position = position;
+                });
+            } else {
+                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
+                () => {
+                    _viewMoveOn = true;
+                    centerView.Center = new PointF ( centerView.Center.X, _centerPos.Y - centerView.BarChartHeight);
+                },() => {
+                    _viewMoveOn = false;
+                    leftView.Center = new PointF ( leftView.Center.X, _centerPos.Y - centerView.BarChartHeight);
+                    rightView.Center = new PointF ( rightView.Center.X, _centerPos.Y - centerView.BarChartHeight);
+                    _position = position;
+                });
+            }
+        }
+
+        private void ChangeReportState ()
         {
             dataSource.Period = _zoomLevel;
             dateSelectorView.DateContent = FormattedIntervalDate (_timeSpaceIndex);
+            centerView.ReloadData ();
+        }
 
-            await dataSource.Load (_timeSpaceIndex);
+        private ReportsView createReportViewAt ( Side side = Side.Center)
+        {
+            var xOffset = UIScreen.MainScreen.Bounds.Width * (int)side;
+            var result = new ReportsView ( new RectangleF ( xOffset + padding, padding / 2, UIScreen.MainScreen.Bounds.Width - padding * 2, dateSelectorView.Frame.Y));
+            if (_position == ChartPosition.Down) {
+                result.Center = new PointF (result.Center.X, result.Center.Y - result.BarChartHeight);
+            }
+            result.TimeSpaceIndex = _timeSpaceIndex + (int)side;
+            result.ZoomLevel = _zoomLevel;
 
-            pieChart.ReportView =
-                barChart.ReportView = dataSource;
+            View.Add (result);
+            dateSelectorView.RemoveFromSuperview ();
+            View.Add (dateSelectorView);
+            return result;
+        }
+
+        private void DisposeReportViewAt ( Side side)
+        {
+            ReportsView view;
+
+            if (side == Side.Left) {
+                view = leftView;
+            } else if (side == Side.Right) {
+                view = rightView;
+            } else {
+                view = centerView;
+            }
+
+            view.RemoveGestureRecognizer (panGesture);
+            view.RemoveFromSuperview ();
+            view.Dispose ();
+        }
+
+        private void snapViewToPoint ( PointF point)
+        {
+            UIView.Animate (0.5, 0, UIViewAnimationOptions.CurveEaseInOut,
+            () => {
+                _viewMoveOn = true;
+                centerView.Center = point;
+                leftView.Center = new PointF ( centerView.Center.X - UIScreen.MainScreen.Bounds.Width, centerView.Center.Y);
+                rightView.Center = new PointF ( centerView.Center.X + UIScreen.MainScreen.Bounds.Width, centerView.Center.Y);
+            },() => {
+                _viewMoveOn = false;
+            });
+        }
+
+        private UIPanGestureRecognizer createPanGesture()
+        {
+            UIPanGestureRecognizer result;
+            float dx = 0;
+            float dy = 0;
+            const float navX = 70;
+            const float loadX = 40;
+            bool movingOnX = false;
+
+            result = new UIPanGestureRecognizer (pg => {
+                if ((pg.State == UIGestureRecognizerState.Began || pg.State == UIGestureRecognizerState.Changed) && (pg.NumberOfTouches == 1)) {
+
+                    if (_viewMoveOn) { return; }
+                    var p0 = pg.LocationInView (View);
+                    if (dx == 0) {
+                        dx = p0.X - centerView.Center.X;
+                        movingOnX = Math.Abs ( pg.VelocityInView ( View).X) < Math.Abs ( pg.VelocityInView ( View).Y);
+                    }
+                    if (dy == 0) {
+                        dy = p0.Y - centerView.Center.Y;
+                    }
+
+                    var currentY = (_position == ChartPosition.Top) ? _centerPos.Y : _centerPos.Y - centerView.BarChartHeight;
+                    PointF p1 = (movingOnX) ? new PointF ( _centerPos.X, p0.Y - dy) : new PointF (p0.X - dx, currentY);
+                    centerView.Center = p1;
+                    leftView.Center = new PointF ( p1.X - _centerPos.X * 2, p1.Y);
+                    rightView.Center = new PointF ( p1.X + _centerPos.X * 2, p1.Y);
+
+                    // reload or not!
+                    if ( centerView.Center.X <= _centerPos.X - loadX ) {
+                        rightView.ReloadData();
+                    } else if ( centerView.Center.X >= _centerPos.X + loadX  ) {
+                        leftView.ReloadData();
+                    }
+
+                } else if (pg.State == UIGestureRecognizerState.Ended) {
+                    if ( centerView.Center.X <= _centerPos.X - navX) {
+                        ChangeToViewAt ( Side.Right);
+                    } else if ( centerView.Center.X >= _centerPos.X + navX) {
+                        ChangeToViewAt ( Side.Left);
+                    } else if ( _position == ChartPosition.Top && centerView.Center.Y <= _centerPos.Y - navX) {
+                        changeChart ( ChartPosition.Down);
+                    } else if ( _position == ChartPosition.Down && centerView.Center.Y >= _centerPos.Y - centerView.BarChartHeight + navX) {
+                        changeChart ( ChartPosition.Top);
+                    } else {
+                        var currentY = (_position == ChartPosition.Top) ? _centerPos.Y : _centerPos.Y - centerView.BarChartHeight;
+                        snapViewToPoint (new PointF ( _centerPos.X, currentY));
+                    }
+                    dx = 0;
+                    dy = 0;
+                    movingOnX = false;
+                }
+            });
+
+            return result;
         }
 
         private string FormattedIntervalDate (int backDate)
@@ -170,7 +337,7 @@ namespace Toggl.Ross.ViewControllers
                     result = "ThisYearSelector".Tr ();
                     break;
                 }
-            } else if (backDate == 1) {
+            } else if (backDate == -1) {
                 switch (ZoomLevel) {
                 case ZoomLevel.Week:
                     result = "LastWeekSelector".Tr ();
@@ -203,6 +370,17 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
             return result;
+        }
+
+        enum Side {
+            Center = 0,
+            Left = -1,
+            Right = 1
+        }
+
+        enum ChartPosition {
+            Top,
+            Down
         }
     }
 }

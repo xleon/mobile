@@ -52,11 +52,6 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        UIColor[] colors = {
-            UIColor.FromRGB (0xBB, 0xBB, 0xBB),
-            UIColor.Red
-        };
-
         readonly UIStringAttributes hoursAttrs = new UIStringAttributes {
             ForegroundColor = UIColor.FromRGB (0xBB, 0xBB, 0xBB),
             BackgroundColor = UIColor.Clear,
@@ -126,6 +121,12 @@ namespace Toggl.Ross.Views.Charting
         UISnapBehavior snap;
         RectangleF snapRect;
         PointF snapPoint;
+
+        protected override void Dispose (bool disposing)
+        {
+            base.Dispose (disposing);
+            barChart.Dispose ();
+        }
 
         #region IBarChartDataSource implementation
 

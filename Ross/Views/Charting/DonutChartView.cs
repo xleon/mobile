@@ -57,18 +57,15 @@ namespace Toggl.Ross.Views.Charting
                     grayCircle.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
                 });
 
-                //_reportView.Projects.Sort ((x, y) => string.Compare (x.Project, y.Project, StringComparison.Ordinal));
-                _reportView.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( y.TotalTime));
+                _reportView.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( x.TotalTime));
                 if (_reportView.Projects.Count == 0) {
                     grayCircle.Alpha = 1;
                 }
-
 
                 const float maxAngle = 3.0f / 360f; // angle in degrees
                 var totalValue = Convert.ToSingle ( _reportView.Projects.Sum (p => p.TotalTime));
                 DonutProjectList = _reportView.Projects.Where (p => Convert.ToSingle ( p.TotalTime) / totalValue > maxAngle).ToList ();
                 TableProjectList = new List<ReportProject> (_reportView.Projects);
-
 
                 donutChart.UserInteractionEnabled = (DonutProjectList.Count > 1);
                 donutChart.ReloadData ();
@@ -109,8 +106,22 @@ namespace Toggl.Ross.Views.Charting
                 SelectedSliceOffsetRadius = 8f
             };
             Add (donutChart);
-            donutChart.DidSelectSliceAtIndex += (sender, e) => projectTableView.SelectRow (NSIndexPath.FromRowSection (e.Index, 0), true, UITableViewScrollPosition.Top);
-            donutChart.DidDeselectSliceAtIndex += (sender, e) => projectTableView.DeselectRow (NSIndexPath.FromRowSection (e.Index, 0), true);
+
+            donutChart.DidSelectSliceAtIndex += (sender, e) => {
+                var selectedProject = DonutProjectList [e.Index];
+                var idx = TableProjectList.FindIndex (p => areEquals ( p, selectedProject));
+                projectTableView.SelectRow (NSIndexPath.FromRowSection (idx, 0), true, UITableViewScrollPosition.Top);
+            };
+            donutChart.DidDeselectSliceAtIndex += (sender, e) => {
+                var selectedProject = DonutProjectList [e.Index];
+                var idx = TableProjectList.FindIndex (p => areEquals ( p, selectedProject));
+                projectTableView.DeselectRow (NSIndexPath.FromRowSection (idx, 0), true);
+            };
+            donutChart.DidDeselectAllSlices += (sender, e) => {
+                for (int i = 0; i < TableProjectList.Count; i++) {
+                    projectTableView.DeselectRow ( NSIndexPath.FromRowSection ( 0, i), true);
+                }
+            };
 
             projectTableView = new UITableView (new RectangleF (0, donutChart.Frame.Height, frame.Width, frame.Height - donutChart.Frame.Height));
             projectTableView.RegisterClassForCellReuse (typeof (ProjectReportCell), ProjectReportCell.ProjectReportCellId);
@@ -157,14 +168,25 @@ namespace Toggl.Ross.Views.Charting
         public void SetSelectedProject (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
-                //donutChart.SetSliceSelectedAtIndex (index);
+                var selectedProject = TableProjectList [index];
+                var idx = DonutProjectList.FindIndex (p => areEquals ( p, selectedProject));
+                if (idx != -1) {
+                    donutChart.SetSliceSelectedAtIndex (idx);
+                } else {
+                    donutChart.DeselectAllSlices ();
+                }
             }
         }
 
         public void SetDeselectedProject (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
-                //donutChart.SetSliceDeselectedAtIndex (index);
+                var selectedProject = TableProjectList [index];
+                var idx = DonutProjectList.FindIndex (p => string.Compare (p.Project, selectedProject.Project, StringComparison.Ordinal) == 0 &&
+                                                      p.TotalTime == selectedProject.TotalTime);
+                if ( idx != -1) {
+                    donutChart.SetSliceDeselectedAtIndex (idx);
+                }
             }
         }
 
@@ -182,6 +204,11 @@ namespace Toggl.Ross.Views.Charting
             shapeLayer.Path = path.CopyByStrokingPath (lineStroke, CGLineCap.Butt, CGLineJoin.Miter, 10);
             shapeLayer.FillColor = Color.DonutInactiveGray.CGColor;
             return shapeLayer;
+        }
+
+        private bool areEquals ( ReportProject a, ReportProject b)
+        {
+            return false || a.TotalTime == b.TotalTime && string.Compare (a.Project, b.Project, StringComparison.Ordinal) == 0 && a.Color == b.Color;
         }
 
         #region Pie Datasource

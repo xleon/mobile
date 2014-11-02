@@ -38,15 +38,15 @@ namespace Toggl.Ross.Theme
 
             public static void ProjectCellTitleLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 14f);
-                v.TextColor = Color.DarkGray;
+                v.Font = UIFont.FromName ("HelveticaNeue", 14f);
+                v.TextColor = Color.Black;
                 v.TextAlignment = UITextAlignment.Left;
             }
 
             public static void ProjectCellTimeLabel (UILabel v)
             {
                 v.Font = UIFont.FromName ("HelveticaNeue-Thin", 14f);
-                v.TextColor = Color.Black;
+                v.TextColor = Color.DarkGray;
                 v.TextAlignment = UITextAlignment.Right;
             }
 

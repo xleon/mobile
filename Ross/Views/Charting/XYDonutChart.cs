@@ -40,6 +40,8 @@ namespace Toggl.Ross.Views.Charting
 
         public event EventHandler<SelectedSliceEventArgs> DidDeselectSliceAtIndex;
 
+        public event EventHandler<SelectedSliceEventArgs> DidDeselectAllSlices;
+
         #endregion
 
         #region Properties
@@ -199,11 +201,6 @@ namespace Toggl.Ross.Views.Charting
             if (pieLayers == null) {
                 return;
             }
-            foreach (SliceLayer item in pieLayers) {
-                var shapeLayer = (CAShapeLayer)item.Sublayers [0];
-                item.ZPosition = 0;
-                shapeLayer.LineWidth = 0.0f;
-            }
         }
 
         private int getCurrentSelectedOnTouch (PointF point)
@@ -251,6 +248,7 @@ namespace Toggl.Ross.Views.Charting
                 var layer = (SliceLayer)sliceLayers [i];
                 if (layer.IsSelected) {
                     SetSliceDeselectedAtIndex (i);
+                    layer.Opacity = 1;
                 }
             }
 
@@ -398,6 +396,10 @@ namespace Toggl.Ross.Views.Charting
                 layer.IsSelected = true;
                 _selectedSliceIndex = index;
             }
+
+            foreach (var item in layerPool) {
+                item.Opacity = (item.IsSelected) ? 1.0f : 0.5f;
+            }
         }
 
         public void SetSliceDeselectedAtIndex (int index)
@@ -411,6 +413,14 @@ namespace Toggl.Ross.Views.Charting
                 layer.MoveToPosition (new PointF (0, 0));
                 layer.IsSelected = false;
                 _selectedSliceIndex = -1;
+            }
+        }
+
+        public void DeselectAllSlices()
+        {
+            for (int i = 0; i < layerPool.Count; i++) {
+                SetSliceDeselectedAtIndex (i);
+                layerPool[i].Opacity = 1;
             }
         }
 
@@ -449,6 +459,15 @@ namespace Toggl.Ross.Views.Charting
                         if (newSelection != -1 && DidSelectSliceAtIndex != null)
                             DidSelectSliceAtIndex.Invoke (this, new SelectedSliceEventArgs () { Index = newSelection });
                     }
+                }
+            }
+
+            if (newSelection == -1 || newSelection == previousSelection) {
+                if ( DidDeselectAllSlices != null) {
+                    DidDeselectAllSlices.Invoke (this, new SelectedSliceEventArgs ());
+                }
+                foreach (var item in layerPool) {
+                    item.Opacity = 1.0f;
                 }
             }
         }

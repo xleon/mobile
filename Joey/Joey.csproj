@@ -132,6 +132,8 @@
     <Compile Include="UI\Views\PieChart.cs" />
     <Compile Include="UI\Views\ReportsChartView.cs" />
     <Compile Include="UI\Views\BarChart.cs" />
+    <Compile Include="UI\Views\Bar.cs" />
+    <Compile Include="UI\Views\BarChartView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

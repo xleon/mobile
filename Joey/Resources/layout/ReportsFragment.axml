@@ -75,9 +75,8 @@
         </LinearLayout>
         <toggl.joey.ui.views.BarChart
             android:layout_width="match_parent"
-            android:layout_height="400dp"
-            android:id="@+id/BarChart"
-            android:layout_marginRight="30dp" />
+            android:layout_height="wrap_content"
+            android:id="@+id/BarChart" />
         <toggl.joey.ui.views.PieChart
             android:layout_width="match_parent"
             android:layout_height="200dp"

@@ -15,6 +15,7 @@ using Android.Widget;
 using System.Collections.Generic;
 using Toggl.Joey.UI.Utils;
 using Android.Graphics.Drawables;
+using Android.Content;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -28,6 +29,7 @@ namespace Toggl.Joey.UI.Fragments
         private ImageButton previousPeriod;
         private ImageButton nextPeriod;
         private SummaryReportView summaryReport;
+        private Bar TestBar;
         private int backDate;
 
         public static readonly string[] HexColors = {
@@ -42,6 +44,10 @@ namespace Toggl.Joey.UI.Fragments
 
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
 
+//            TestBar = view.FindViewById<Bar> (Resource.Id.TestBar);
+//            TestBar.Click += (sender, e) => TestBar.StartAnimate ();
+//            TestBar.Value = 500;
+//
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
@@ -122,6 +128,8 @@ namespace Toggl.Joey.UI.Fragments
             foreach (var p in summaryReport.Activity) {
                 var d = new BarItem ();
                 d.Value = (float)p.TotalTime;
+                Console.WriteLine ("act billable: {0}, totalTime: {1}", p.BillableTime, p.TotalTime);
+                d.Billable = (float)p.BillableTime;
                 d.Name = p.StartTime.ToShortTimeString ();
                 d.Color = Color.ParseColor ("#00AEFF");
                 barChart.AddBar (d);
@@ -144,6 +152,7 @@ namespace Toggl.Joey.UI.Fragments
                 pieChart.AddSlice (slice);
             }
             pieChart.IsLoading = false;
+            pieChart.StartDrawAnimation ();
         }
 
         private async Task LoadData ()

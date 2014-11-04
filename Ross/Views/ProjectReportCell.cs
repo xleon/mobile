@@ -23,10 +23,16 @@ namespace Toggl.Ross.Views
 
                 var hex = ProjectModel.HexColors [ _data.Color % ProjectModel.HexColors.Length];
                 circleView.BackgroundColor = UIColor.Clear.FromHex ( hex);
-                projectTitleLabel.Text = _data.Project;
-                timeLabel.Text = _data.FormattedTime;
+                projectTitleLabel.Text = String.IsNullOrEmpty ( _data.Project) ? "ReportsCellNoProject".Tr() : _data.Project;
+                timeLabel.Text = _data.FormattedTotalTime;
                 projectTitleLabel.SetNeedsDisplay ();
             }
+        }
+
+        public bool NormalSelectionMode
+        {
+            get;
+            set;
         }
 
         UILabel projectTitleLabel;
@@ -47,6 +53,7 @@ namespace Toggl.Ross.Views
 
             circleView = new UIView ();
             ContentView.Add (circleView);
+            NormalSelectionMode = false;
         }
 
         public override void LayoutSubviews ()
@@ -56,18 +63,23 @@ namespace Toggl.Ross.Views
             var contentFrame = ContentView.Frame;
 
             projectTitleLabel.Frame = new RectangleF ( radius + radius * 0.5f, (contentFrame.Height - 20)/2, 250, 20);
-            timeLabel.Frame = new RectangleF ( contentFrame.Width - 100, (contentFrame.Height - 20)/2, 100, 20);
+            timeLabel.Frame = new RectangleF ( contentFrame.Width - 104, (contentFrame.Height - 20)/2, 100, 20);
             circleView.Frame = new RectangleF (0, (contentFrame.Height - radius) / 2, radius, radius);
-            //circleView.Layer.CornerRadius = 5;
         }
 
         public override void SetSelected (bool selected, bool animated)
         {
-            Debug.WriteLine (selected);
             base.SetSelected (selected, animated);
-            projectTitleLabel.Alpha = (selected) ? 1f : 0.3f;
-            timeLabel.Alpha = (selected) ? 1f : 0.3f;
             circleView.Layer.CornerRadius = (selected) ? circleView.Frame.Width/2 : 5;
+            if (NormalSelectionMode) {
+                projectTitleLabel.Alpha = (selected) ? 1f : 0.4f;
+                timeLabel.Alpha = (selected) ? 1f : 0.4f;
+                circleView.Alpha = (selected) ? 1f : 0.4f;
+            } else {
+                projectTitleLabel.Alpha = 1.0f;
+                timeLabel.Alpha = 1.0f;
+                circleView.Alpha = 1.0f;
+            }
             SetNeedsDisplay ();
         }
 

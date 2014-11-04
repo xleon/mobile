@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreGraphics;

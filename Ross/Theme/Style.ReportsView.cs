@@ -39,7 +39,7 @@ namespace Toggl.Ross.Theme
             public static void ProjectCellTitleLabel (UILabel v)
             {
                 v.Font = UIFont.FromName ("HelveticaNeue", 14f);
-                v.TextColor = Color.Black;
+                v.TextColor = Color.ChartTopLabel;
                 v.TextAlignment = UITextAlignment.Left;
             }
 
@@ -74,14 +74,14 @@ namespace Toggl.Ross.Theme
             public static void BarCharLabelTitle (UILabel v)
             {
                 v.Font = UIFont.FromName ("HelveticaNeue-Medium", 13f);
-                v.TextColor = Color.DarkGray;
+                v.TextColor = Color.ChartTopLabel;
                 v.TextAlignment = UITextAlignment.Left;
             }
 
             public static void BarCharLabelValue (UILabel v)
             {
                 v.Font = UIFont.FromName ("HelveticaNeue", 12f);
-                v.TextColor = Color.DarkGray;
+                v.TextColor = Color.ChartTopLabel;
                 v.TextAlignment = UITextAlignment.Right;
             }
 

@@ -2,14 +2,12 @@
 using System.Drawing;
 using MonoTouch.UIKit;
 using Toggl.Ross.Theme;
+using MonoTouch.CoreGraphics;
 
 namespace Toggl.Ross.Views
 {
     public class DateSelectorView : UIView
     {
-        const float minHeight = 40;
-        const float minWidth = 300;
-
         public string DateContent
         {
             set {
@@ -23,8 +21,11 @@ namespace Toggl.Ross.Views
         private UILabel dateLabel;
         private UIButton leftArrow;
         private UIButton rightArrow;
-        private float padding = 30;
-        private float arrowWidth = 40;
+
+        const float padding = 30;
+        const float arrowWidth = 40;
+        const float minHeight = 40;
+        const float minWidth = 300;
 
         public DateSelectorView ( RectangleF frame)
         {
@@ -56,8 +57,6 @@ namespace Toggl.Ross.Views
                 }
             };
             Add (rightArrow);
-
-            setFormattedPeriod ();
         }
 
         public override void LayoutSubviews ()
@@ -67,12 +66,14 @@ namespace Toggl.Ross.Views
             dateLabel.Frame = new RectangleF ( padding, 0, Frame.Width - padding * 2, Frame.Height);
             leftArrow.Frame = new RectangleF ( padding, 0, arrowWidth, Frame.Height);
             rightArrow.Frame = new RectangleF (Frame.Width - arrowWidth - padding, 0, arrowWidth, Frame.Height);
-
         }
 
-        private void setFormattedPeriod()
+        public override void Draw (RectangleF rect)
         {
-
+            using (CGContext g = UIGraphics.GetCurrentContext()) {
+                Color.TimeBarBoderColor.SetColor ();
+                g.FillRect (new RectangleF (0.0f, 0.0f, rect.Width, 1.0f / ContentScaleFactor));
+            }
         }
     }
 }

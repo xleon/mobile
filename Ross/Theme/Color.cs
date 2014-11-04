@@ -16,6 +16,8 @@ namespace Toggl.Ross.Theme
         public static readonly UIColor White = UIColor.White;
         public static readonly UIColor DonutInactiveGray = UIColor.FromRGB (0xDB, 0xDB, 0xDB);
         public static readonly UIColor TimeBarColor = UIColor.FromRGB (0x81, 0xD3, 0xF9);
+        public static readonly UIColor TimeBarBoderColor = UIColor.FromRGB (0xe6, 0xe6, 0xe6);
         public static readonly UIColor MoneyBarColor = UIColor.FromRGB (0x03, 0xA9, 0xF3);
+        public static readonly UIColor ChartTopLabel = UIColor.FromRGB ( 0x5c, 0x5c, 0x5c);
     }
 }

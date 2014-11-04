@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Data.Json
 {
@@ -9,5 +10,35 @@ namespace Toggl.Phoebe.Data.Json
 
         [JsonProperty ("total_time")]
         public long TotalTime { get; set; }
+
+        [JsonProperty ("client")]
+        public string Client { get; set; }
+
+        [JsonProperty ("color")]
+        public int Color { get; set; }
+
+        [JsonProperty ("items")]
+        public List<ReportTimeEntryJson> Items { get; set; }
+    }
+
+    public class ReportTimeEntryJson
+    {
+        [JsonProperty ("ids")]
+        public List<string> Ids { get; set; }
+
+        [JsonProperty ("time_entry")]
+        public string Title { get; set; }
+
+        [JsonProperty ("time")]
+        public long Time { get; set; }
+
+        [JsonProperty ("cur")]
+        public string Currency { get; set; }
+
+        [JsonProperty ("sum")]
+        public float Sum { get; set; }
+
+        [JsonProperty ("rate")]
+        public float Rate { get; set; }
     }
 }

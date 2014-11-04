@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
@@ -6,8 +7,7 @@ using Toggl.Phoebe.Data.Reports;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using System.Diagnostics;
-using System;
+using MonoTouch.CoreGraphics;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -48,6 +48,7 @@ namespace Toggl.Ross.ViewControllers
         private ReportsView centerView;
         private ReportsView rightView;
         private ReportsView leftView;
+        private TopBorder topBorder;
         private SummaryReportView dataSource;
         private bool _viewMoveOn;
         private UIPanGestureRecognizer panGesture;
@@ -98,6 +99,7 @@ namespace Toggl.Ross.ViewControllers
 
             menuController.Attach (this);
 
+            topBorder = new TopBorder (new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, 2.0f));
             dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
             dateSelectorView.LeftArrowPressed += (sender, e) => {
                 leftView.ReloadData();
@@ -108,13 +110,14 @@ namespace Toggl.Ross.ViewControllers
                 ChangeToViewAt (Side.Right);
             };
 
-            centerView = createReportViewAt();
+            centerView = createReportViewAt ();
             leftView = createReportViewAt ( Side.Left);
             rightView = createReportViewAt ( Side.Right);
             Add (centerView);
             Add (leftView);
             Add (rightView);
             Add (dateSelectorView);
+            Add (topBorder); // TODO: Try to draw
             _centerPos = centerView.Center;
 
             panGesture = createPanGesture ();
@@ -231,6 +234,9 @@ namespace Toggl.Ross.ViewControllers
             View.Add (result);
             dateSelectorView.RemoveFromSuperview ();
             View.Add (dateSelectorView);
+            topBorder.RemoveFromSuperview ();
+            View.Add (topBorder);
+
             return result;
         }
 
@@ -288,6 +294,11 @@ namespace Toggl.Ross.ViewControllers
 
                     var currentY = (_position == ChartPosition.Top) ? _centerPos.Y : _centerPos.Y - centerView.BarChartHeight;
                     PointF p1 = (movingOnX) ? new PointF ( _centerPos.X, p0.Y - dy) : new PointF (p0.X - dx, currentY);
+
+                    if ( p1.Y > _centerPos.Y || p1.Y < _centerPos.Y - centerView.BarChartHeight) {
+                        return;
+                    }
+
                     centerView.Center = p1;
                     leftView.Center = new PointF ( p1.X - _centerPos.X * 2, p1.Y);
                     rightView.Center = new PointF ( p1.X + _centerPos.X * 2, p1.Y);
@@ -381,6 +392,22 @@ namespace Toggl.Ross.ViewControllers
         enum ChartPosition {
             Top,
             Down
+        }
+
+        internal class TopBorder : UIView
+        {
+            public TopBorder ( RectangleF frame) : base ( frame)
+            {
+                BackgroundColor = UIColor.Clear;
+            }
+
+            public override void Draw (RectangleF rect)
+            {
+                using (CGContext g = UIGraphics.GetCurrentContext()) {
+                    Color.TimeBarBoderColor.SetColor ();
+                    g.FillRect (new RectangleF (0.0f, 0.0f, rect.Width, 1.0f / ContentScaleFactor));
+                }
+            }
         }
     }
 }

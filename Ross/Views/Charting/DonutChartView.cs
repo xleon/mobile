@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
@@ -9,8 +10,6 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
-using System.Linq;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -76,6 +75,27 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
+        private bool _normalSelectionMode;
+        public bool NormalSelectionMode
+        {
+            get {
+                return _normalSelectionMode;
+            } set {
+                if (_normalSelectionMode == value) {
+                    return;
+                }
+                _normalSelectionMode = value;
+
+                for ( var i = 0; i < projectTableView.NumberOfRowsInSection (0); i++) {
+                    var cell = (ProjectReportCell)projectTableView.CellAt (NSIndexPath.FromRowSection (i, 0));
+                    if (cell != null) {
+                        cell.NormalSelectionMode = value;
+                        cell.SetSelected (cell.Selected, false);
+                    }
+                }
+            }
+        }
+
         public List<ReportProject> TableProjectList;
         public List<ReportProject> DonutProjectList;
 
@@ -108,9 +128,12 @@ namespace Toggl.Ross.Views.Charting
             Add (donutChart);
 
             donutChart.DidSelectSliceAtIndex += (sender, e) => {
+                NormalSelectionMode = true;
                 var selectedProject = DonutProjectList [e.Index];
                 var idx = TableProjectList.FindIndex (p => areEquals ( p, selectedProject));
                 projectTableView.SelectRow (NSIndexPath.FromRowSection (idx, 0), true, UITableViewScrollPosition.Top);
+                totalTimeLabel.Text = selectedProject.FormattedTotalTime;
+                moneyLabel.Alpha = 0.0f;
             };
             donutChart.DidDeselectSliceAtIndex += (sender, e) => {
                 var selectedProject = DonutProjectList [e.Index];
@@ -118,15 +141,22 @@ namespace Toggl.Ross.Views.Charting
                 projectTableView.DeselectRow (NSIndexPath.FromRowSection (idx, 0), true);
             };
             donutChart.DidDeselectAllSlices += (sender, e) => {
+                NormalSelectionMode = false;
                 for (int i = 0; i < TableProjectList.Count; i++) {
                     projectTableView.DeselectRow ( NSIndexPath.FromRowSection ( 0, i), true);
                 }
+                totalTimeLabel.Text = _reportView.TotalGrand;
+                moneyLabel.Alpha = 1.0f;
             };
 
-            projectTableView = new UITableView (new RectangleF (0, donutChart.Frame.Height, frame.Width, frame.Height - donutChart.Frame.Height));
+            projectTableView = new UITableView (new RectangleF (0, donutChart.Frame.Height, frame.Width, frame.Height - donutChart.Frame.Height - 20));
             projectTableView.RegisterClassForCellReuse (typeof (ProjectReportCell), ProjectReportCell.ProjectReportCellId);
             projectTableView.Source = new ProjectListSource (this);
             projectTableView.RowHeight = lineStroke;
+            projectTableView.TableFooterView = new UIView ();
+            var insets = projectTableView.ScrollIndicatorInsets;
+            insets.Right -= 3.0f;
+            projectTableView.ScrollIndicatorInsets = insets;
             Add (projectTableView);
 
             totalTimeLabel = new UILabel (new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20));
@@ -175,6 +205,9 @@ namespace Toggl.Ross.Views.Charting
                 } else {
                     donutChart.DeselectAllSlices ();
                 }
+                totalTimeLabel.Text = selectedProject.FormattedTotalTime;
+                moneyLabel.Alpha = 0.0f;
+                NormalSelectionMode = true;
             }
         }
 
@@ -249,6 +282,7 @@ namespace Toggl.Ross.Views.Charting
             {
                 var cell = (ProjectReportCell)tableView.DequeueReusableCell (ProjectReportCell.ProjectReportCellId);
                 cell.Data = _owner.TableProjectList [indexPath.Row];
+                cell.NormalSelectionMode = _owner.NormalSelectionMode;
                 return cell;
             }
 

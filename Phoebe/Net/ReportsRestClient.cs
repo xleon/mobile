@@ -104,12 +104,27 @@ namespace Toggl.Phoebe.Net
                     BillableTime = ToLong (row [2])
                 });
             }
+
             var ProjectList = new List<ReportProjectJson> ();
             foreach (var row in json["data"]) {
-                ProjectList.Add (new ReportProjectJson () {
-                    Project = (string)row ["title"] ["project"],
-                    TotalTime = (long)row ["time"]
-                });
+                var newProject = new ReportProjectJson () {
+                    Project = (string)row ["title"]["project"],
+                    Client = (string)row ["title"] ["client"],
+                    TotalTime = (long)row ["time"],
+                };
+                var timeEntries = new List<ReportTimeEntryJson> ();
+                foreach (var item in row["items"]) {
+                    var timeEntry = new ReportTimeEntryJson() {
+                        Title = (string)item["title"]["time_entry"],
+                        Time = (long)item["time"],
+                        Currency = (string)item["cur"],
+                        Sum = (float)item["sum"],
+                        Rate = (float)item["rate"]
+                    };
+                    timeEntries.Add (timeEntry);
+                }
+                newProject.Items = timeEntries;
+                ProjectList.Add (newProject);
             }
 
             return new ReportJson () {

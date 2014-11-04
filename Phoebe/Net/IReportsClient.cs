@@ -6,7 +6,6 @@ namespace Toggl.Phoebe.Net
 {
     public interface IReportsClient
     {
-
         Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId);
     }
 }

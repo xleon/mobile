@@ -41,7 +41,7 @@ namespace Toggl.Ross.Views.Charting
             _barChartView = new UIView ( new RectangleF ( 0, 0, frame.Width, frame.Height));
             AddSubview (_barChartView);
 
-            LabelFont = UIFont.SystemFontOfSize (12.0f);
+            LabelFont = UIFont.SystemFontOfSize (10.0f);
             LabelColor = UIColor.LightGray;
             MainBarColor = Color.TimeBarColor;
             SecondaryBarColor = Color.MoneyBarColor;
@@ -65,12 +65,9 @@ namespace Toggl.Ross.Views.Charting
 
             using (var context = UIGraphics.GetCurrentContext ()) {
 
-                UIBezierPath mainAxis = new UIBezierPath();
-                mainAxis.MoveTo (new PointF (xAxisMargin + 1.0f, 0));
-                mainAxis.AddLineTo (new PointF ( xAxisMargin + 1.0f, rect.Height));
-                UIColor.FromRGB ( 203, 203, 203).SetStroke();
-                mainAxis.LineWidth = 4.0f;
-                mainAxis.Stroke ();
+                UIBezierPath mainAxis = UIBezierPath.FromRoundedRect ( new RectangleF (xAxisMargin, 0.0f, 2.0f, rect.Height), 2.0f);
+                UIColor.FromRGB ( 203, 203, 203).SetFill();
+                mainAxis.Fill();
 
                 float sepInterval = Convert.ToSingle ( Math.Floor ( (rect.Width - xAxisMargin)/ 5));
                 for (int i = 1; i < 6; i++) {
@@ -79,7 +76,7 @@ namespace Toggl.Ross.Views.Charting
                     separatorAxis.AddLineTo (new PointF ( xAxisMargin + sepInterval * i, rect.Height - yAxisMargin));
                     UIColor.FromRGB ( 203, 203, 203).SetStroke();
                     separatorAxis.LineWidth = 1.0f;
-                    separatorAxis.SetLineDash ( new [] {2.0f,2.0f}, 1);
+                    separatorAxis.SetLineDash ( new [] {1.0f,1.0f}, 1);
                     separatorAxis.Stroke ();
 
                     var textLayer = new CATextLayer ();
@@ -92,12 +89,12 @@ namespace Toggl.Ross.Views.Charting
                     }
 
                     textLayer.FontSize = LabelFont.PointSize;
-                    textLayer.AnchorPoint = new PointF ( 1f, 0.0f);
+                    textLayer.AnchorPoint = new PointF ( 0.5f, 0.0f);
                     textLayer.AlignmentMode = CATextLayer.AlignmentCenter;
                     textLayer.BackgroundColor = UIColor.Clear.CGColor;
                     textLayer.ForegroundColor = LabelColor.CGColor;
 
-                    SizeF size = ((NSString)"00 h").StringSize (LabelFont);
+                    SizeF size = ((NSString)"0000 h").StringSize (LabelFont);
                     textLayer.String = "00 h";
                     textLayer.Bounds = new RectangleF (0, 0, size.Width, size.Height);
                     textLayer.Position = new PointF ( xAxisMargin + sepInterval * i, rect.Height - yAxisMargin + 5.0f);
@@ -275,35 +272,50 @@ namespace Toggl.Ross.Views.Charting
         public const int EmptyBarIndex = 2;
         public const int DateTextIndex = 3;
 
+        private float _timeValue;
+
         [Export ("timeValue")]
         public float TimeValue
         {
             get {
-                return 0.0f;
+                return _timeValue;
             }
 
             set {
+                if (_timeValue.CompareTo (value) == 0) {
+                    return;
+                }
+                _timeValue = value;
                 var mainBar = Sublayers [0];
                 if (mainBar != null ) {
-                    var xScale = (value > minBarScale) ? value : minBarScale;
+                    var xScale = (_timeValue > minBarScale) ? _timeValue : minBarScale;
                     CreateBarAnimationForKeyPath (mainBar, "transform.scale.x", xScale, null);
-                    Sublayers [2].Opacity = (value > 0) ? 0.0f : 1.0f;
                 }
+                Sublayers [EmptyBarIndex].Opacity = (_timeValue > 0) ? 0.0f : 1.0f;
             }
         }
+
+        private float _moneyValue;
 
         [Export ("moneyValue")]
         public float MoneyValue
         {
             get {
-                return 0.0f;
+                return _moneyValue;
             }
 
             set {
-                var secondaryBar = Sublayers [1];
+                if (_moneyValue.CompareTo (value) == 0) {
+                    return;
+                }
+                _moneyValue = value;
+                var secondaryBar = Sublayers [SecondaryBarIndex];
                 if (secondaryBar != null ) {
-                    var xScale = (value > minBarScale) ? value : minBarScale;
+                    var xScale = (_moneyValue > minBarScale) ? _moneyValue : minBarScale;
                     CreateBarAnimationForKeyPath (secondaryBar, "transform.scale.x", xScale, null);
+                }
+                if ( _moneyValue > _timeValue && _moneyValue > 0) { // TODO: weird case where _moneyValue > _timeValue!
+                    Sublayers [EmptyBarIndex].Opacity = (value > 0) ? 0.0f : 1.0f;
                 }
             }
         }
@@ -316,7 +328,7 @@ namespace Toggl.Ross.Views.Charting
             } set {
                 var mainBar = Sublayers [0];
                 var secondaryBar = Sublayers [1];
-                var emptyBar = Sublayers [2];
+                var emptyBar = Sublayers [EmptyBarIndex];
                 if (value > 0 && mainBar != null) {
                     float barHeight = value;
                     Bounds = new RectangleF ( 0.0f, 0.0f, Bounds.Width, barHeight);
@@ -354,23 +366,13 @@ namespace Toggl.Ross.Views.Charting
 
             var _other = (BarLayer) other;
             if (_other != null) {
-                /*
-                MainBar = new CALayer (_other.MainBar);
-                SecondaryBar = new CALayer (_other.SecondaryBar);
-                DateTextLayer = new CATextLayer ();
-                EmptyBar = new CALayer (_other.EmptyBar);
-
-                AddSublayer (MainBar);
-                AddSublayer (SecondaryBar);
-                AddSublayer (EmptyBar);
-                AddSublayer (DateTextLayer);
-                //DateTextLayer = _other.DateTextLayer;
-                //MainBar = _other.MainBar;
-                //DateTextLayer = _other.DateTextLayer;
-                */
                 MoneyValue = _other.MoneyValue;
                 HeightValue = _other.HeightValue;
                 TimeValue = _other.TimeValue;
+                var emptyBar = Sublayers [EmptyBarIndex];
+                if (emptyBar != null) {
+                    emptyBar.Opacity = 0.0f;
+                }
             }
         }
 

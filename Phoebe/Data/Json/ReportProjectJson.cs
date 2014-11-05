@@ -35,10 +35,10 @@ namespace Toggl.Phoebe.Data.Json
         [JsonProperty ("cur")]
         public string Currency { get; set; }
 
-        [JsonProperty ("sum")]
+        [JsonProperty ("sum", Required = Required.AllowNull)]
         public float Sum { get; set; }
 
-        [JsonProperty ("rate")]
+        [JsonProperty ("rate", Required = Required.AllowNull)]
         public float Rate { get; set; }
     }
 }

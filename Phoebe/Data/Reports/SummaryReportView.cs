@@ -5,8 +5,6 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using System.Diagnostics;
-using System.Linq;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -47,47 +45,50 @@ namespace Toggl.Phoebe.Data.Reports
 
         private async Task FetchData ()
         {
+            dataObject = createEmtyReport ();
             try {
-                var store = ServiceContainer.Resolve<IDataStore> ();
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
+                _isError = false;
                 var client = ServiceContainer.Resolve<IReportsClient> ();
-
                 var json = await client.GetReports (startDate, endDate, (long)workspaceId);
                 dataObject = json.Import ();
-
-                for (int i = 0; i < dataObject.Projects.Count; i++) {
-                    var project = dataObject.Projects[i];
-                    project.Color = await store.ExecuteInTransactionAsync (ctx => ctx.GetProjectColorFromName (user.DefaultWorkspaceId, project.Project));
-                    project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
-                    project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
-                    dataObject.Projects[i] = project;
-                }
-
-                Debug.WriteLine ( "Real : " + dataObject.TotalBillable);
-                Debug.WriteLine ( "Mine : " + dataObject.Projects.Sum ( p => p.BillableTime));
-
-                long max = 0;
-                foreach (var s in dataObject.Activity) {
-                    max = max < s.TotalTime ? s.TotalTime : max;
-                }
-
-                _maxTotal = (int)Math.Ceiling ( max/3600/ (double)5) * 5;
-
-                _chartRowLabels = new List<string> ();
-                foreach (var row in dataObject.Activity) {
-                    _chartRowLabels.Add (LabelForDate (row.StartTime));
-                }
-
-                _chartTimeLabels = new List<string> ();
-                for (int i = 1; i <= 5; i++) {
-                    _chartTimeLabels.Add (String.Format ("{0} h", _maxTotal / 5 * i));
-                }
-
             } catch (Exception exc) {
+                _isError = true;
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, "Failed to fetch reports.");
+            } finally {
+                calculateReportData ();
             }
         }
+
+        private void calculateReportData()
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            for (int i = 0; i < dataObject.Projects.Count; i++) {
+                var project = dataObject.Projects[i];
+                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
+                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
+                dataObject.Projects[i] = project;
+            }
+
+            long max = 0;
+            foreach (var s in dataObject.Activity) {
+                max = max < s.TotalTime ? s.TotalTime : max;
+            }
+
+            _maxTotal = (int)Math.Ceiling ( max/3600/ (double)5) * 5;
+
+            _chartRowLabels = new List<string> ();
+            foreach (var row in dataObject.Activity) {
+                _chartRowLabels.Add (LabelForDate (row.StartTime));
+            }
+
+            _chartTimeLabels = new List<string> ();
+            for (int i = 1; i <= 5; i++) {
+                _chartTimeLabels.Add (String.Format ("{0} h", _maxTotal / 5 * i));
+            }
+        }
+
 
         public bool IsLoading { get; private set; }
 
@@ -150,6 +151,15 @@ namespace Toggl.Phoebe.Data.Reports
         {
             get {
                 return _maxTotal;
+            }
+        }
+
+        private bool _isError;
+
+        public bool IsError
+        {
+            get {
+                return _isError;
             }
         }
 
@@ -222,6 +232,41 @@ namespace Toggl.Phoebe.Data.Reports
                 }
             }
             return formattedString;
+        }
+
+        private ReportData createEmtyReport()
+        {
+            var activityList = new List<ReportActivity> ();
+
+            int total;
+            if (Period == ZoomLevel.Week) {
+                total = 7;
+            } else if (Period == ZoomLevel.Month) {
+                total = 30;
+            } else {
+                total = 12;
+            }
+
+            for (int i = 0; i < total; i++) {
+                var activiy = new ReportActivity ();
+                activiy.BillableTime = 0;
+                activiy.TotalTime = 0;
+                if (Period == ZoomLevel.Week) {
+                    activiy.StartTime = startDate.AddDays (Convert.ToDouble (i));
+                } else if (Period == ZoomLevel.Month) {
+                    activiy.StartTime = startDate.AddDays (Convert.ToDouble (i));
+                } else {
+                    activiy.StartTime = startDate.AddMonths (i);
+                }
+                activityList.Add (activiy);
+            }
+
+            return new ReportData () {
+                Projects = new List<ReportProject>(),
+                Activity = activityList,
+                TotalBillable = 0,
+                TotalGrand = 0
+            };
         }
     }
 }

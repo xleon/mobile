@@ -10,6 +10,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
+using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -38,16 +39,21 @@ namespace Toggl.Ross.Views.Charting
                     return;
                 }
 
-                var delayNoData = (_reportView.Projects.Count == 0) ? 0.5 : 0;
-                var delayData = (_reportView.Projects.Count == 0) ? 0 : 0.5;
+                var delayNoData = (_reportView.Projects.Count == 0) ? 0.6 : 0;
+                var delayData = (_reportView.Projects.Count == 0) ? 0 : 0.6;
 
-                UIView.Animate (0.5, delayNoData, UIViewAnimationOptions.TransitionNone,
+                if (_reportView.Projects.Count == 0) {
+                    noProjectTitleLabel.Text = (_reportView.IsError) ? "DataErrorTitle".Tr () : "NoDataTitle".Tr ();
+                    noProjectTextLabel.Text = (_reportView.IsError) ? "DataErrorText".Tr () : "NoDataText".Tr ();
+                }
+
+                UIView.Animate (0.4, delayNoData, UIViewAnimationOptions.TransitionNone,
                 () => {
                     noProjectTextLabel.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
                     noProjectTitleLabel.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
                 },  () => {});
 
-                UIView.Animate (0.5, delayData, UIViewAnimationOptions.TransitionNone,
+                UIView.Animate (0.4, delayData, UIViewAnimationOptions.TransitionNone,
                 () => {
                     moneyLabel.Alpha = (_reportView.Projects.Count == 0) ? 0 : 1;;
                     projectTableView.Alpha = (_reportView.Projects.Count == 0) ? 0 : 1;
@@ -172,19 +178,19 @@ namespace Toggl.Ross.Views.Charting
             noProjectTitleLabel = new UILabel ( new RectangleF ( 0, 0, donutChart.PieRadius * 2, 20));
             noProjectTitleLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 20);
             noProjectTitleLabel.Apply (Style.ReportsView.NoProjectTitle);
-            noProjectTitleLabel.Text = "NoDataTitle".Tr ();
+            noProjectTitleLabel.Text = "ReportsLoadingTitle".Tr ();
             Add (noProjectTitleLabel);
 
             noProjectTextLabel = new UILabel ( new RectangleF ( 0, 0, donutChart.PieRadius * 2, 35));
             noProjectTextLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + 5 );
             noProjectTextLabel.Apply (Style.ReportsView.DonutMoneyLabel);
             noProjectTextLabel.Lines = 2;
-            noProjectTextLabel.Text = "NoDataText".Tr ();
+            noProjectTextLabel.Text = "ReportsLoadingText".Tr ();
             Add (noProjectTextLabel);
 
-            totalTimeLabel.Alpha = 0;
-            moneyLabel.Alpha = 0;
             projectTableView.Alpha = 0;
+            moneyLabel.Alpha = 0;
+            totalTimeLabel.Alpha = 0;
         }
 
         XYDonutChart donutChart;

@@ -44,6 +44,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 var p = new ReportProject () {
                     Project = item.Project,
                     TotalTime = item.TotalTime,
+                    Color = item.Color,
                     BillableTime = item.Items.Where ( t => t.Sum > 0).Sum ( t => t.Time)
                 };
                 p.Items = new List<ReportTimeEntry> ();

@@ -734,7 +734,7 @@ namespace Toggl.Ross.Views.Charting
             var posAnim = CABasicAnimation.FromKeyPath ("position");
             posAnim.From = NSValue.FromPointF (Position);
             posAnim.To = NSValue.FromPointF (newPos);
-            posAnim.Duration = 0.4f;
+            posAnim.Duration = ( newPos.IsEmpty ) ? 0.2f : 0.4f;
             posAnim.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.Default);
             AddAnimation (posAnim, "position");
             Position = newPos;

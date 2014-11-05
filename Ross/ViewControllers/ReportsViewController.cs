@@ -103,11 +103,12 @@ namespace Toggl.Ross.ViewControllers
             dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
             dateSelectorView.LeftArrowPressed += (sender, e) => {
                 leftView.ReloadData();
-                ChangeToViewAt (Side.Left);
+                changeToViewAt (Side.Left);
             };
             dateSelectorView.RightArrowPressed += (sender, e) => {
+                if ( _timeSpaceIndex >= 1) { return; }
                 rightView.ReloadData();
-                ChangeToViewAt (Side.Right);
+                changeToViewAt (Side.Right);
             };
 
             centerView = createReportViewAt ();
@@ -117,7 +118,7 @@ namespace Toggl.Ross.ViewControllers
             Add (leftView);
             Add (rightView);
             Add (dateSelectorView);
-            Add (topBorder); // TODO: Try to draw
+            Add (topBorder);
             _centerPos = centerView.Center;
 
             panGesture = createPanGesture ();
@@ -139,11 +140,9 @@ namespace Toggl.Ross.ViewControllers
             tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
         }
 
-        private void ChangeToViewAt ( Side side)
+        private void changeToViewAt ( Side side)
         {
-            if (_viewMoveOn) {
-                return;
-            }
+            if (_viewMoveOn) {  return; }
 
             centerView.RemoveGestureRecognizer ( panGesture);
 
@@ -283,6 +282,7 @@ namespace Toggl.Ross.ViewControllers
                 if ((pg.State == UIGestureRecognizerState.Began || pg.State == UIGestureRecognizerState.Changed) && (pg.NumberOfTouches == 1)) {
 
                     if (_viewMoveOn) { return; }
+
                     var p0 = pg.LocationInView (View);
                     if (dx == 0) {
                         dx = p0.X - centerView.Center.X;
@@ -295,9 +295,9 @@ namespace Toggl.Ross.ViewControllers
                     var currentY = (_position == ChartPosition.Top) ? _centerPos.Y : _centerPos.Y - centerView.BarChartHeight;
                     PointF p1 = (movingOnX) ? new PointF ( _centerPos.X, p0.Y - dy) : new PointF (p0.X - dx, currentY);
 
-                    if ( p1.Y > _centerPos.Y || p1.Y < _centerPos.Y - centerView.BarChartHeight) {
-                        return;
-                    }
+                    if ( p1.Y > _centerPos.Y || p1.Y < _centerPos.Y - centerView.BarChartHeight) { return; }
+
+                    if ( p1.X < _centerPos.X && _timeSpaceIndex == 1) { return; }
 
                     centerView.Center = p1;
                     leftView.Center = new PointF ( p1.X - _centerPos.X * 2, p1.Y);
@@ -312,9 +312,10 @@ namespace Toggl.Ross.ViewControllers
 
                 } else if (pg.State == UIGestureRecognizerState.Ended) {
                     if ( centerView.Center.X <= _centerPos.X - navX) {
-                        ChangeToViewAt ( Side.Right);
+                        if ( _timeSpaceIndex >= 1) { return; }
+                        changeToViewAt ( Side.Right);
                     } else if ( centerView.Center.X >= _centerPos.X + navX) {
-                        ChangeToViewAt ( Side.Left);
+                        changeToViewAt ( Side.Left);
                     } else if ( _position == ChartPosition.Top && centerView.Center.Y <= _centerPos.Y - navX) {
                         changeChart ( ChartPosition.Down);
                     } else if ( _position == ChartPosition.Down && centerView.Center.Y >= _centerPos.Y - centerView.BarChartHeight + navX) {

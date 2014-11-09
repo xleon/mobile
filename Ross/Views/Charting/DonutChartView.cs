@@ -139,6 +139,7 @@ namespace Toggl.Ross.Views.Charting
                 var idx = TableProjectList.FindIndex (p => areEquals ( p, selectedProject));
                 projectTableView.SelectRow (NSIndexPath.FromRowSection (idx, 0), true, UITableViewScrollPosition.Top);
                 totalTimeLabel.Text = selectedProject.FormattedTotalTime;
+                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
                 moneyLabel.Alpha = 0.0f;
             };
             donutChart.DidDeselectSliceAtIndex += (sender, e) => {
@@ -146,14 +147,7 @@ namespace Toggl.Ross.Views.Charting
                 var idx = TableProjectList.FindIndex (p => areEquals ( p, selectedProject));
                 projectTableView.DeselectRow (NSIndexPath.FromRowSection (idx, 0), true);
             };
-            donutChart.DidDeselectAllSlices += (sender, e) => {
-                NormalSelectionMode = false;
-                for (int i = 0; i < TableProjectList.Count; i++) {
-                    projectTableView.DeselectRow ( NSIndexPath.FromRowSection ( 0, i), true);
-                }
-                totalTimeLabel.Text = _reportView.TotalGrand;
-                moneyLabel.Alpha = 1.0f;
-            };
+            donutChart.DidDeselectAllSlices += (sender, e) => DeselectAllProjects ();
 
             projectTableView = new UITableView (new RectangleF (0, donutChart.Frame.Height, frame.Width, frame.Height - donutChart.Frame.Height - 20));
             projectTableView.RegisterClassForCellReuse (typeof (ProjectReportCell), ProjectReportCell.ProjectReportCellId);
@@ -201,7 +195,7 @@ namespace Toggl.Ross.Views.Charting
         UILabel noProjectTextLabel;
         UIView grayCircle;
 
-        public void SetSelectedProject (int index)
+        public void SelectProjectAt (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
                 var selectedProject = TableProjectList [index];
@@ -211,13 +205,14 @@ namespace Toggl.Ross.Views.Charting
                 } else {
                     donutChart.DeselectAllSlices ();
                 }
+                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
                 totalTimeLabel.Text = selectedProject.FormattedTotalTime;
                 moneyLabel.Alpha = 0.0f;
                 NormalSelectionMode = true;
             }
         }
 
-        public void SetDeselectedProject (int index)
+        public void DeselectProjectAt (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
                 var selectedProject = TableProjectList [index];
@@ -227,6 +222,18 @@ namespace Toggl.Ross.Views.Charting
                     donutChart.SetSliceDeselectedAtIndex (idx);
                 }
             }
+        }
+
+        public void DeselectAllProjects()
+        {
+            donutChart.DeselectAllSlices ();
+            NormalSelectionMode = false;
+            for (int i = 0; i < TableProjectList.Count; i++) {
+                projectTableView.DeselectRow ( NSIndexPath.FromRowSection ( 0, i), true);
+            }
+            totalTimeLabel.Text = _reportView.TotalGrand;
+            totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
+            moneyLabel.Alpha = 1.0f;
         }
 
         protected override void Dispose (bool disposing)
@@ -278,6 +285,7 @@ namespace Toggl.Ross.Views.Charting
         internal class ProjectListSource : UITableViewSource
         {
             private readonly DonutChartView _owner;
+            private int _lastSelectedIndex = -1;
 
             public ProjectListSource (DonutChartView pieChart)
             {
@@ -299,12 +307,18 @@ namespace Toggl.Ross.Views.Charting
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                _owner.SetSelectedProject (indexPath.Row);
+                if (indexPath.Row != _lastSelectedIndex) {
+                    _owner.SelectProjectAt (indexPath.Row);
+                    _lastSelectedIndex = indexPath.Row;
+                } else {
+                    _owner.DeselectAllProjects ();
+                    _lastSelectedIndex = -1;
+                }
             }
 
             public override void RowDeselected (UITableView tableView, NSIndexPath indexPath)
             {
-                _owner.SetDeselectedProject (indexPath.Row);
+                _owner.DeselectProjectAt (indexPath.Row);
             }
         }
     }

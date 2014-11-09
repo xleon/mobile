@@ -27,6 +27,8 @@ namespace Toggl.Ross.Views.Charting
             } set {
                 _reportView = value;
 
+                return;
+
                 if (_reportView.Activity == null) {
                     return;
                 }

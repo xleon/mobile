@@ -32,17 +32,6 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private int _timeSpaceIndex;
-
-        public int TimeSpaceIndex
-        {
-            get {
-                return _timeSpaceIndex;
-            } set {
-                _timeSpaceIndex = value;
-            }
-        }
-
         private ReportsMenuController menuController;
         private DateSelectorView dateSelectorView;
         private ReportsView centerView;
@@ -54,6 +43,7 @@ namespace Toggl.Ross.ViewControllers
         private UIPanGestureRecognizer panGesture;
         private ChartPosition _position;
         private PointF _centerPos;
+        private int _timeSpaceIndex;
 
         const float padding  = 24;
         const float navBarHeight = 64;
@@ -75,6 +65,7 @@ namespace Toggl.Ross.ViewControllers
         {
             leftView.Hidden = true;
             rightView.Hidden = true;
+            NavigationController.InteractivePopGestureRecognizer.Enabled = true;
             base.ViewWillDisappear (animated);
         }
 
@@ -114,6 +105,7 @@ namespace Toggl.Ross.ViewControllers
             centerView = createReportViewAt ();
             leftView = createReportViewAt ( Side.Left);
             rightView = createReportViewAt ( Side.Right);
+
             Add (centerView);
             Add (leftView);
             Add (rightView);
@@ -124,6 +116,7 @@ namespace Toggl.Ross.ViewControllers
             panGesture = createPanGesture ();
             centerView.AddGestureRecognizer (panGesture);
             ChangeReportState ();
+            NavigationController.InteractivePopGestureRecognizer.Enabled = false;
         }
 
         public override void LoadView ()
@@ -189,7 +182,7 @@ namespace Toggl.Ross.ViewControllers
             }
 
             if ( position == ChartPosition.Top) {
-                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
+                UIView.Animate (0.2, 0, UIViewAnimationOptions.CurveEaseOut,
                 () => {
                     _viewMoveOn = true;
                     centerView.Center = _centerPos;
@@ -200,7 +193,7 @@ namespace Toggl.Ross.ViewControllers
                     _position = position;
                 });
             } else {
-                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
+                UIView.Animate (0.2, 0, UIViewAnimationOptions.CurveEaseOut,
                 () => {
                     _viewMoveOn = true;
                     centerView.Center = new PointF ( centerView.Center.X, _centerPos.Y - centerView.BarChartHeight);
@@ -304,11 +297,13 @@ namespace Toggl.Ross.ViewControllers
                     rightView.Center = new PointF ( p1.X + _centerPos.X * 2, p1.Y);
 
                     // reload or not!
+                    /*
                     if ( centerView.Center.X <= _centerPos.X - loadX ) {
                         rightView.ReloadData();
                     } else if ( centerView.Center.X >= _centerPos.X + loadX  ) {
                         leftView.ReloadData();
                     }
+                    */
 
                 } else if (pg.State == UIGestureRecognizerState.Ended) {
                     if ( centerView.Center.X <= _centerPos.X - navX) {

@@ -35,6 +35,13 @@ namespace Toggl.Phoebe.Data.Reports
             IsLoading = false;
         }
 
+        public void CancelLoad()
+        {
+            if (IsLoading) {
+
+            }
+        }
+
         private async Task Initialize ()
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -91,6 +98,7 @@ namespace Toggl.Phoebe.Data.Reports
 
 
         public bool IsLoading { get; private set; }
+
 
         public int ActivityCount
         {

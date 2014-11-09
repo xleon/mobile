@@ -111,7 +111,7 @@ namespace Toggl.Phoebe.Net
                     Project = (string)row ["title"]["project"],
                     Client = (string)row ["title"] ["client"],
                     TotalTime = (long)row ["time"],
-                    Color = Convert.ToInt32 ( row ["title"]["color"].ToObject<int?>()), // TODO: tricky solution?
+                    Color = row ["title"]["color"].ToObject<int?>(), // TODO: tricky solution?
                 };
                 var timeEntries = new List<ReportTimeEntryJson> ();
                 foreach (var item in row["items"]) {

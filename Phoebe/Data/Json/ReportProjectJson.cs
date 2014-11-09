@@ -15,7 +15,7 @@ namespace Toggl.Phoebe.Data.Json
         public string Client { get; set; }
 
         [JsonProperty ("color")]
-        public int Color { get; set; }
+        public int? Color { get; set; }
 
         [JsonProperty ("items")]
         public List<ReportTimeEntryJson> Items { get; set; }

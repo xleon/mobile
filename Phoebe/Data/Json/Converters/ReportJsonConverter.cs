@@ -3,6 +3,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using System;
 using System.Linq;
 using System.Diagnostics;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.Json.Converters
 {
@@ -44,7 +45,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 var p = new ReportProject () {
                     Project = item.Project,
                     TotalTime = item.TotalTime,
-                    Color = item.Color,
+                    Color = item.Color ?? ProjectModel.HexColors.Length - 1,
                     BillableTime = item.Items.Where ( t => t.Sum > 0).Sum ( t => t.Time)
                 };
                 p.Items = new List<ReportTimeEntry> ();

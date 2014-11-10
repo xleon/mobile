@@ -18,7 +18,6 @@ namespace Toggl.Joey.UI.Views
         private Paint paint = new Paint ();
         private Path path = new Path ();
         private int thickness = 65;
-        private bool isLoading = true;
         private int indexSelected = -1;
         const float angleCorrection = 270;
         const int slicePadding = 20;
@@ -43,11 +42,48 @@ namespace Toggl.Joey.UI.Views
             indexSelected = -1;
         }
 
+        public void Refresh ()
+        {
+            StartSliceSlideAnimation ();
+        }
+
+        private string FormatMilliseconds (long ms)
+        {
+            var timeSpan = TimeSpan.FromMilliseconds (ms);
+            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor (timeSpan.TotalHours).ToString ("00"), timeSpan);
+        }
+
+        protected virtual void OnSliceSelected ()
+        {
+            var sliceClicked = SliceClicked;
+            if (sliceClicked != null) {
+                sliceClicked (indexSelected);
+            }
+        }
+
+        public void AddSlice (PieSlice slice)
+        {
+            slices.Add (slice);
+        }
+
+        public void SetOnSliceClickedListener (IOnSliceClickedListener listener)
+        {
+            this.listener = listener;
+        }
+
+        public interface IOnSliceClickedListener
+        {
+            void OnClick (int index);
+        }
+
+        public void SelectSlice (int position)
+        {
+            indexSelected = position;
+            StartSliceSlideAnimation ();
+        }
+
         public override void Draw (Canvas canvas)
         {
-            if (IsLoading)
-                return;
-
             long totalValue = 0;
             long selectedSliceValue = 0;
             float currentAngle = 0;
@@ -75,6 +111,8 @@ namespace Toggl.Joey.UI.Views
             basePaint.Color = Color.ParseColor ("#EDEDED");
             canvas.DrawPath (basePath, basePaint);
 
+            Console.WriteLine ("basepainting");
+
             if (slices.Count == 0) {
                 Paint emptyText = new Paint ();
                 emptyText.Color = emptyStateColor;
@@ -94,9 +132,13 @@ namespace Toggl.Joey.UI.Views
                 emptyStateText.Draw (canvas);
                 return;
             }
-            int count = 0;
 
+            int count = 0;
+            Console.WriteLine ("slices.count: {0}", slices.Count);
             foreach (PieSlice slice in slices) {
+
+                Console.WriteLine ("making slices.");
+
                 var slicePath = new Path ();
                 paint.Color = slice.Color;
                 if (indexSelected != count && listener != null && indexSelected != -1) {
@@ -109,6 +151,7 @@ namespace Toggl.Joey.UI.Views
                     slicePath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
                     slicePath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
                 } else {
+                    Console.WriteLine ("single slice. Value; {0}", slice.Value);
                     slicePath.ArcTo (
                         new RectF (
                             centerX - radius + slicePadding,
@@ -150,6 +193,8 @@ namespace Toggl.Joey.UI.Views
                     (int)(centerY + radius)
                 );
                 canvas.DrawPath (slicePath, paint);
+                Console.WriteLine ("path drawn");
+
                 currentAngle += currentSweep;
                 count++;
             }
@@ -192,87 +237,7 @@ namespace Toggl.Joey.UI.Views
             return true;
         }
 
-        private string FormatMilliseconds (long ms)
-        {
-            var timeSpan = TimeSpan.FromMilliseconds (ms);
-            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor (timeSpan.TotalHours).ToString ("00"), timeSpan);
-        }
 
-        protected virtual void OnSliceSelected ()
-        {
-            var sliceClicked = SliceClicked;
-            if (sliceClicked != null) {
-                sliceClicked (indexSelected);
-            }
-        }
-
-        public List<PieSlice> Slices {
-            get {
-                return slices;
-            }
-            set {
-                slices = value;
-                PostInvalidate ();
-            }
-        }
-
-        public bool IsLoading {
-            get {
-                return isLoading;
-            }
-            set {
-                if (isLoading == value)
-                    return;
-                isLoading = value;
-                PostInvalidate ();
-            }
-        }
-
-        public PieSlice GetSlice (int index)
-        {
-            return slices [index];
-        }
-
-        public void AddSlice (PieSlice slice)
-        {
-            this.slices.Add (slice);
-            PostInvalidate ();
-        }
-
-        public void SetOnSliceClickedListener (IOnSliceClickedListener listener)
-        {
-            this.listener = listener;
-        }
-
-        public int Thickness {
-            get {
-                return thickness;
-            }
-            set {
-                thickness = value;
-                PostInvalidate ();
-            }
-        }
-
-        public void RemoveSlices ()
-        {
-            for (int i = slices.Count - 1; i >= 0; i--) {
-                slices.Remove (slices [i]);
-            }
-            PostInvalidate ();
-        }
-
-        public interface IOnSliceClickedListener
-        {
-            void OnClick (int index);
-        }
-
-        public void SelectSlice (int position)
-        {
-            indexSelected = position;
-            StartSliceSlideAnimation ();
-//            PostInvalidate ();
-        }
 
         public void StartDrawAnimation ()
         {
@@ -297,6 +262,7 @@ namespace Toggl.Joey.UI.Views
             set {
                 slideAnimationProgress = value;
                 PostInvalidate ();
+                Console.WriteLine ("step");
             }
         }
 

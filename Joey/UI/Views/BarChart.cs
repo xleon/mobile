@@ -16,9 +16,6 @@ namespace Toggl.Joey.UI.Views
         private List<String> LineTitles = new List<String> ();
         private Paint CanvasPaint = new Paint ();
         private Path CanvasPath = new Path ();
-        //private OnBarClickedListener listener;
-        private Bitmap FullImage;
-        private Boolean shouldUpdate = false;
         private Boolean append = false;
         private int count = 7;
         private int barPadding = 5;
@@ -54,7 +51,6 @@ namespace Toggl.Joey.UI.Views
 
         public void Refresh ()
         {
-            shouldUpdate = true;
             StartAnimate ();
         }
 

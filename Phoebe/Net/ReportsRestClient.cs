@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
 using XPlatUtils;
+using System.Threading;
 
 namespace Toggl.Phoebe.Net
 {
@@ -49,12 +50,12 @@ namespace Toggl.Phoebe.Net
             return req;
         }
 
-        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq)
+        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq, CancellationToken token)
         {
             using (var httpClient = MakeHttpClient ()) {
 
                 var reqTimer = Stopwatch.StartNew ();
-                var httpResp = await httpClient.SendAsync (httpReq)
+                var httpResp = await httpClient.SendAsync (httpReq, token)
                                .ConfigureAwait (continueOnCapturedContext: false);
                 reqTimer.Stop ();
 
@@ -72,7 +73,7 @@ namespace Toggl.Phoebe.Net
             }
         }
 
-        public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId)
+        public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId, CancellationToken token)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             var start = startDate.ToString ("yyyy-MM-dd");
@@ -88,7 +89,7 @@ namespace Toggl.Phoebe.Net
 
             Debug.WriteLine (url);
 
-            var httpResp = await SendAsync (httpReq)
+            var httpResp = await SendAsync (httpReq, token)
                            .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()

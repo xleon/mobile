@@ -5,6 +5,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using System.Threading;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -16,6 +17,7 @@ namespace Toggl.Phoebe.Data.Reports
         private ReportData dataObject;
         private DayOfWeek startOfWeek;
         private long? workspaceId;
+        private CancellationTokenSource cts;
         public ZoomLevel Period;
 
         public async Task Load (int backDate)
@@ -37,8 +39,8 @@ namespace Toggl.Phoebe.Data.Reports
 
         public void CancelLoad()
         {
-            if (IsLoading) {
-
+            if (IsLoading && cts != null) {
+                cts.Cancel ();
             }
         }
 
@@ -52,18 +54,21 @@ namespace Toggl.Phoebe.Data.Reports
 
         private async Task FetchData ()
         {
-            dataObject = createEmtyReport ();
+            dataObject = createEmptyReport ();
+            cts = new CancellationTokenSource();
             try {
                 _isError = false;
                 var client = ServiceContainer.Resolve<IReportsClient> ();
-                var json = await client.GetReports (startDate, endDate, (long)workspaceId);
+                var json = await client.GetReports (startDate, endDate, (long)workspaceId, cts.Token);
                 dataObject = json.Import ();
             } catch (Exception exc) {
-                _isError = true;
+                _isError = !cts.IsCancellationRequested;
+                var msg = (cts.IsCancellationRequested) ? "Cancelation requested by user" : "Failed to fetch reports.";
                 var log = ServiceContainer.Resolve<Logger> ();
-                log.Error (Tag, exc, "Failed to fetch reports.");
+                log.Error (Tag, exc, msg);
             } finally {
                 calculateReportData ();
+                cts.Dispose ();
             }
         }
 
@@ -242,7 +247,7 @@ namespace Toggl.Phoebe.Data.Reports
             return formattedString;
         }
 
-        private ReportData createEmtyReport()
+        private ReportData createEmptyReport()
         {
             var activityList = new List<ReportActivity> ();
 

@@ -86,6 +86,7 @@
     <Compile Include="Data\Merge\UserMergerTest.cs" />
     <Compile Include="Data\Merge\WorkspaceMergerTest.cs" />
     <Compile Include="Data\Merge\WorkspaceUserMergerTest.cs" />
+    <Compile Include="PropertyChangeTrackerTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -19,6 +19,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <MtouchDebug>true</MtouchDebug>
+    <MtouchProfiling>true</MtouchProfiling>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -53,6 +55,11 @@
     <Compile Include="Net\**\*.cs" />
     <Compile Include="Properties\**\*.cs" />
     <Compile Include="Threading\**\*.cs" />
+    <Compile Include="Data\ReportTypes.cs" />
+    <Compile Include="Data\DataObjects\ReportData.cs" />
+    <Compile Include="Data\Json\ReportJson.cs" />
+    <Compile Include="Data\Json\ReportRowJson.cs" />
+    <Compile Include="Data\Json\ReportProjectJson.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

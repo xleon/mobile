@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
 using XPlatUtils;
+using System.Threading;
 
 namespace Toggl.Phoebe.Net
 {
@@ -49,12 +50,12 @@ namespace Toggl.Phoebe.Net
             return req;
         }
 
-        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq)
+        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq, CancellationToken token)
         {
             using (var httpClient = MakeHttpClient ()) {
 
                 var reqTimer = Stopwatch.StartNew ();
-                var httpResp = await httpClient.SendAsync (httpReq)
+                var httpResp = await httpClient.SendAsync (httpReq, token)
                                .ConfigureAwait (continueOnCapturedContext: false);
                 reqTimer.Stop ();
 
@@ -72,13 +73,12 @@ namespace Toggl.Phoebe.Net
             }
         }
 
-        public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId)
+        public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId, CancellationToken token)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             var start = startDate.ToString ("yyyy-MM-dd");
             var end = endDate.ToString ("yyyy-MM-dd");
-            var relUrl = "summary?period=thisWeek&grouping=projects&subgrouping=time_entries&&billable=both" +
-                         "&order_field=duration&order_desc=true&user_agent=toggl_mobile&bars_count=31&subgrouping_ids=true";
+            var relUrl = "summary?billable=both&order_field=duration&order_desc=true&user_agent=toggl_mobile&subgrouping_ids=true&bars_count=31";
             relUrl = String.Format ("{0}&since={1}&until={2}&user_ids={3}&workspace_id={4}", relUrl, start, end, user.RemoteId, workspaceId);
             var url = new Uri (reportsv2Url, relUrl);
 
@@ -87,7 +87,9 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
 
-            var httpResp = await SendAsync (httpReq)
+            Debug.WriteLine (url);
+
+            var httpResp = await SendAsync (httpReq, token)
                            .ConfigureAwait (continueOnCapturedContext: false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
@@ -103,12 +105,28 @@ namespace Toggl.Phoebe.Net
                     BillableTime = ToLong (row [2])
                 });
             }
+
             var ProjectList = new List<ReportProjectJson> ();
             foreach (var row in json["data"]) {
-                ProjectList.Add (new ReportProjectJson () {
-                    Project = (string)row ["title"] ["project"],
-                    TotalTime = (long)row ["time"]
-                });
+                var newProject = new ReportProjectJson () {
+                    Project = (string)row ["title"]["project"],
+                    Client = (string)row ["title"] ["client"],
+                    TotalTime = (long)row ["time"],
+                    Color = row ["title"]["color"].ToObject<int?>(), // TODO: tricky solution?
+                };
+                var timeEntries = new List<ReportTimeEntryJson> ();
+                foreach (var item in row["items"]) {
+                    var timeEntry = new ReportTimeEntryJson() {
+                        Title = (string)item["title"]["time_entry"],
+                        Time = (long)item["time"],
+                        Currency = (string)item["cur"],
+                        //Sum = (float)item["sum"], // TODO: check how to read null values
+                        //Rate = (float)item["rate"]
+                    };
+                    timeEntries.Add (timeEntry);
+                }
+                newProject.Items = timeEntries;
+                ProjectList.Add (newProject);
             }
 
             return new ReportJson () {

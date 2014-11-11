@@ -1,31 +1,27 @@
 ﻿using System;
 using System.Drawing;
 using MonoTouch.UIKit;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
-using Toggl.Ross.Data;
+using Toggl.Phoebe.Data;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class NavigationMenuController
+    public class ReportsMenuController
     {
-        private UIViewController controller;
+        private ReportsViewController controller;
         private UIView containerView;
         private UIView menuView;
-        private UIButton logButton;
-        private UIButton recentButton;
-        private UIButton reportsButton;
-        private UIButton settingsButton;
-        private UIButton feedbackButton;
-        private UIButton signOutButton;
+        private UIButton dayButton;
+        private UIButton weekButton;
+        private UIButton yearButton;
         private UIButton[] menuButtons;
         private UIView[] separators;
         private bool menuShown;
         private bool isAnimating;
         private TogglWindow window;
+        private ZoomSelectorView switcherView;
 
-        public void Attach (UIViewController controller)
+        public void Attach (ReportsViewController controller)
         {
             this.controller = controller;
 
@@ -33,15 +29,20 @@ namespace Toggl.Ross.ViewControllers
 
             window.OnHitTest += OnTogglWindowHit;
 
-            controller.NavigationItem.LeftBarButtonItem = new UIBarButtonItem (
-                Image.IconNav.ImageWithRenderingMode (UIImageRenderingMode.AlwaysOriginal),
-                UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
+            switcherView = new ZoomSelectorView () {
+                IsMenuDisplayed = false,
+                Level = controller.ZoomLevel
+            };
+
+            switcherView.SelectorButton.TouchUpInside += OnNavigationButtonTouched;
+            controller.NavigationItem.TitleView = switcherView;
         }
 
         public void Detach ()
         {
             if (window != null) {
                 window.OnHitTest -= OnTogglWindowHit;
+                switcherView.SelectorButton.TouchUpInside -= OnNavigationButtonTouched;
             }
             window = null;
         }
@@ -91,23 +92,18 @@ namespace Toggl.Ross.ViewControllers
             menuView = new UIView ().Apply (Style.NavMenu.Background);
 
             menuButtons = new[] {
-                // (recentButton = new UIButton ()),
-                (logButton = new UIButton ()),
-                (reportsButton = new UIButton ()),
-                (settingsButton = new UIButton ()),
-                (feedbackButton = new UIButton ()),
-                (signOutButton = new UIButton ()),
+                (dayButton = new UIButton ()),
+                (weekButton = new UIButton ()),
+                (yearButton = new UIButton ()),
             };
-            // recentButton.SetTitle ("NavMenuRecent".Tr (), UIControlState.Normal);
-            logButton.SetTitle ("NavMenuLog".Tr (), UIControlState.Normal);
-            reportsButton.SetTitle ("NavMenuReports".Tr (), UIControlState.Normal);
-            settingsButton.SetTitle ("NavMenuSettings".Tr (), UIControlState.Normal);
-            feedbackButton.SetTitle ("NavMenuFeedback".Tr (), UIControlState.Normal);
-            signOutButton.SetTitle ("NavMenuSignOut".Tr (), UIControlState.Normal);
+            dayButton.SetTitle ("ReportsMenuWeek".Tr (), UIControlState.Normal);
+            weekButton.SetTitle ("ReportsMenuMonth".Tr (), UIControlState.Normal);
+            yearButton.SetTitle ("ReportsMenuYear".Tr (), UIControlState.Normal);
 
             foreach (var menuButton in menuButtons) {
-                var isActive = (menuButton == recentButton && controller is RecentViewController)
-                               || (menuButton == logButton && controller is LogViewController);
+                var isActive = (menuButton == dayButton && controller.ZoomLevel == ZoomLevel.Week)
+                               || (menuButton == weekButton && controller.ZoomLevel == ZoomLevel.Month)
+                               || (menuButton == yearButton && controller.ZoomLevel == ZoomLevel.Year);
 
                 if (isActive) {
                     menuButton.Apply (Style.NavMenu.HighlightedItem);
@@ -175,26 +171,14 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnMenuButtonTouchUpInside (object sender, EventArgs e)
         {
-            if (sender == recentButton && ! (controller is RecentViewController)) {
-                ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "recent";
-                var navController = controller.NavigationController;
-                navController.SetViewControllers (new[] { new RecentViewController () }, true);
-            } else if (sender == logButton && ! (controller is LogViewController)) {
-                ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
-                var navController = controller.NavigationController;
-                navController.SetViewControllers (new[] { new LogViewController () }, true);
-            } else if (sender == reportsButton ) {
-                var navController = controller.NavigationController;
-                navController.PushViewController (new ReportsViewController (), true);
-            } else if (sender == settingsButton) {
-                var navController = controller.NavigationController;
-                navController.PushViewController (new SettingsViewController (), true);
-            } else if (sender == feedbackButton) {
-                var navController = controller.NavigationController;
-                navController.PushViewController (new FeedbackViewController (), true);
-            } else if (sender == signOutButton) {
-                ServiceContainer.Resolve<AuthManager> ().Forget ();
+            if (sender == dayButton) {
+                controller.ZoomLevel = ZoomLevel.Week;
+            } else if (sender == weekButton) {
+                controller.ZoomLevel = ZoomLevel.Month;
+            } else if (sender == yearButton) {
+                controller.ZoomLevel = ZoomLevel.Year;
             }
+            switcherView.Level = controller.ZoomLevel;
 
             ToggleMenu ();
         }
@@ -217,6 +201,18 @@ namespace Toggl.Ross.ViewControllers
             }
 
             isAnimating = true;
+
+            foreach (var menuButton in menuButtons) {
+                var isActive = (menuButton == dayButton && controller.ZoomLevel == ZoomLevel.Week)
+                               || (menuButton == weekButton && controller.ZoomLevel == ZoomLevel.Month)
+                               || (menuButton == yearButton && controller.ZoomLevel == ZoomLevel.Year);
+
+                if (isActive) {
+                    menuButton.Apply (Style.NavMenu.HighlightedItem);
+                } else {
+                    menuButton.Apply (Style.NavMenu.NormalItem);
+                }
+            }
 
             if (menuShown) {
                 UIView.Animate (
@@ -263,6 +259,85 @@ namespace Toggl.Ross.ViewControllers
 
             menuShown = !menuShown;
             containerView.UserInteractionEnabled = menuShown;
+            switcherView.IsMenuDisplayed = menuShown;
+        }
+
+
+        internal class ZoomSelectorView : UIView
+        {
+            private ZoomLevel _level;
+            public ZoomLevel Level
+            {
+                get {
+                    return _level;
+                } set {
+                    if (_level == value) {
+                        return;
+                    }
+                    _level = value;
+                    ChangeCurrentState ();
+                }
+            }
+
+            private bool _isMenuDisplayed;
+            public bool IsMenuDisplayed
+            {
+                get {
+                    return _isMenuDisplayed;
+                } set {
+                    if (_isMenuDisplayed == value) {
+                        return;
+                    }
+                    _isMenuDisplayed = value;
+                    ChangeArrowState ();
+                }
+            }
+
+            public UIButton SelectorButton;
+
+            private readonly UIImage arrowDownImage;
+            private readonly UIImage arrowUpImage;
+            private readonly UIImageView arrowView;
+
+            public ZoomSelectorView ()
+            {
+                Frame = new RectangleF ( 0,0, 100, 44);
+
+                SelectorButton = new UIButton();
+                SelectorButton = new UIButton ().Apply (Style.ReportsView.SelectorButton);
+                SelectorButton.SetTitle ("ReportsTitleWeekly".Tr (), UIControlState.Normal); // dummy text stuff
+                SelectorButton.SizeToFit();
+                SelectorButton.Frame = new RectangleF ( Frame.X, (Frame.Height - SelectorButton.Frame.Height)/2 - 1, Frame.Width, SelectorButton.Frame.Height);
+                Add ( SelectorButton);
+
+                arrowUpImage = UIImage.FromFile ( "btn-arrow-up.png");
+                arrowDownImage = UIImage.FromFile ( "btn-arrow-down.png");
+
+                arrowView = new UIImageView ( arrowDownImage);
+                arrowView.SizeToFit();
+                arrowView.Frame = new RectangleF ( (Frame.Width - arrowView.Frame.Width)/2, SelectorButton.Frame.Height, arrowView.Frame.Width, arrowView.Frame.Height);
+                Add ( arrowView);
+            }
+
+            private void ChangeCurrentState()
+            {
+                switch (_level) {
+                case ZoomLevel.Week:
+                    SelectorButton.SetTitle ("ReportsTitleWeekly".Tr (), UIControlState.Normal);
+                    break;
+                case ZoomLevel.Month:
+                    SelectorButton.SetTitle ("ReportsTitleMonthly".Tr (), UIControlState.Normal);
+                    break;
+                case ZoomLevel.Year:
+                    SelectorButton.SetTitle ("ReportsTitleYearly".Tr (), UIControlState.Normal);
+                    break;
+                }
+            }
+
+            private void ChangeArrowState()
+            {
+                arrowView.Image = _isMenuDisplayed ? arrowUpImage : arrowDownImage;
+            }
         }
     }
 }

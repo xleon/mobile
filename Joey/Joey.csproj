@@ -29,7 +29,6 @@
     <AndroidLinkMode>None</AndroidLinkMode>
     <ConsolePause>false</ConsolePause>
     <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
-    <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -131,10 +130,7 @@
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="UI\Fragments\ReportsFragment.cs" />
     <Compile Include="UI\Views\PieChart.cs" />
-    <Compile Include="UI\Views\ReportsChartView.cs" />
     <Compile Include="UI\Views\BarChart.cs" />
-    <Compile Include="UI\Views\Bar.cs" />
-    <Compile Include="UI\Views\BarChartView.cs" />
     <Compile Include="UI\Fragments\ReportsPagerFragment.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -540,7 +536,6 @@
     <AndroidResource Include="Resources\xml\Analytics.xml" />
     <AndroidResource Include="Resources\layout\ReportsFragment.axml" />
     <AndroidResource Include="Resources\layout\ReportsProjectListItem.axml" />
-    <AndroidResource Include="Resources\drawable\popup_black.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyLeft.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyRight.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcKeyRight.png" />

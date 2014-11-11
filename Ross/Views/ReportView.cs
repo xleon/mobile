@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Toggl.Ross.Views
 {
-    public sealed class ReportView : UIView
+    public sealed class ReportView : UIScrollView
     {
         public ZoomLevel ZoomLevel
         {
@@ -21,51 +21,62 @@ namespace Toggl.Ross.Views
             set;
         }
 
-        public float BarChartHeight
-        {
-            get { return barChart.Frame.Height + padding; }
-        }
-
-        public bool Clean
+        public bool IsClean
         {
             get;
             set;
         }
 
+        private ChartPosition _position;
+
+        public ChartPosition Position
+        {
+            get {
+                return _position;
+            } set {
+                _position = value;
+                var posY = ( _position == ChartPosition.Top) ? 0 : -pageHeight;
+                SetContentOffset (new PointF (_containerView.Center.X, posY), false);
+            }
+        }
+
         public ReportView ( RectangleF frame) : base ( frame)
         {
             Frame = new RectangleF (frame.X, frame.Y, frame.Width, frame.Height * 2);
+
             BackgroundColor = UIColor.White;
-            barChart = new BarChartView ( new RectangleF ( padding, padding, UIScreen.MainScreen.Bounds.Width - padding * 2, frame.Height - 2 * selectorHeight));
-            pieChart = new DonutChartView (new RectangleF ( 0.0f, barChart.Bounds.Height + padding, frame.Width, frame.Height));
-            dragHelper = new UIView (frame);
-            dragHelper.Add (barChart);
-            dragHelper.Add (pieChart);
-            Clean = true;
+            Debug.WriteLine (frame.Height);
+            barChart = new BarChartView ( new RectangleF ( padding/2, padding/2, frame.Width - padding, frame.Height - padding - selectorHeight ));
+            pieChart = new DonutChartView (new RectangleF (padding/2, barChart.Bounds.Height + padding, frame.Width - padding, frame.Height - selectorHeight));
+
+            ContentSize = new SizeF ( Frame.Width, (frame.Height - padding) * 2 - padding/2);
+            pageHeight = barChart.Bounds.Height;
+
+            _containerView = new UIView (frame);
+            _containerView.Add (barChart);
+            _containerView.Add (pieChart);
+            AddSubview (_containerView);
+
+            IsClean = true;
+            PagingEnabled = true;
+            Bounces = false;
+            ShowsVerticalScrollIndicator = false;
         }
 
-        private UIView dragHelper;
+        private UIView _containerView;
         private DonutChartView pieChart;
         private BarChartView barChart;
         private SummaryReportView dataSource;
         private bool _loading;
-        private bool _viewMoveOn;
+        private float pageHeight = 460;
 
-        const float padding = 12;
+        const float padding = 24;
         const float navBarHeight = 64;
-        const float selectorHeight = 50;
-
-        public override void LayoutSubviews ()
-        {
-            base.LayoutSubviews ();
-            barChart.Frame = new RectangleF ( padding, padding, UIScreen.MainScreen.Bounds.Width - padding * 2, Frame.Height - 2 * selectorHeight);
-            pieChart.Frame = new RectangleF ( padding, barChart.Bounds.Height + padding, UIScreen.MainScreen.Bounds.Width - padding * 2, Frame.Height);
-        }
+        const float selectorHeight = 60;
 
         public async void LoadData()
         {
-            if ( Clean) {
-
+            if ( IsClean) {
                 _loading = true;
                 dataSource = new SummaryReportView ();
                 dataSource.Period = ZoomLevel;
@@ -75,7 +86,7 @@ namespace Toggl.Ross.Views
                 if (dataSource.Activity != null) {
                     barChart.ReportView = dataSource;
                     pieChart.ReportView  = dataSource;
-                    Clean = false;
+                    IsClean = false;
                 }
             }
         }
@@ -85,7 +96,7 @@ namespace Toggl.Ross.Views
             Debug.WriteLine ("Stop Reload Data");
             if (_loading) {
                 dataSource.CancelLoad ();
-                Clean = true;
+                IsClean = true;
                 _loading = false;
             }
         }
@@ -97,88 +108,14 @@ namespace Toggl.Ross.Views
             base.Dispose (disposing);
         }
 
-        /*
-        private void changeChart ( ChartPosition position)
-        {
-            if (_viewMoveOn) {
-                return;
-            }
-
-            if ( position == ChartPosition.Top) {
-                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
-                    () => {
-                        _viewMoveOn = true;
-                        centerView.Center = _centerPos;
-                    },() => {
-                        _viewMoveOn = false;
-                        leftView.Center = new PointF ( leftView.Center.X, _centerPos.Y);
-                        rightView.Center = new PointF ( rightView.Center.X, _centerPos.Y);
-                        _position = position;
-                    });
-            } else {
-                UIView.Animate (0.4, 0, UIViewAnimationOptions.CurveEaseOut,
-                    () => {
-                        _viewMoveOn = true;
-                        centerView.Center = new PointF ( centerView.Center.X, _centerPos.Y - centerView.BarChartHeight);
-                    },() => {
-                        _viewMoveOn = false;
-                        leftView.Center = new PointF ( leftView.Center.X, _centerPos.Y - centerView.BarChartHeight);
-                        rightView.Center = new PointF ( rightView.Center.X, _centerPos.Y - centerView.BarChartHeight);
-                        _position = position;
-                    });
-            }
+        public enum ChartPosition {
+            Top = 0,
+            Down = 1
         }
 
-        private UIPanGestureRecognizer createPanGesture()
+        public override bool GestureRecognizerShouldBegin (UIGestureRecognizer gestureRecognizer)
         {
-            UIPanGestureRecognizer result;
-            float dx = 0;
-            float dy = 0;
-            const float navX = 70;
-            const float loadX = 40;
-            bool movingOnX = false;
-
-            result = new UIPanGestureRecognizer (pg => {
-                if ((pg.State == UIGestureRecognizerState.Began || pg.State == UIGestureRecognizerState.Changed) && (pg.NumberOfTouches == 1)) {
-
-                    if (_viewMoveOn) { return; }
-
-                    var p0 = pg.LocationInView (View);
-                    if (dx == 0) {
-                        dx = p0.X - centerView.Center.X;
-                        movingOnX = Math.Abs ( pg.VelocityInView ( View).X) < Math.Abs ( pg.VelocityInView ( View).Y);
-                    }
-                    if (dy == 0) {
-                        dy = p0.Y - centerView.Center.Y;
-                    }
-
-                    var currentY = (_position == ChartPosition.Top) ? _centerPos.Y : _centerPos.Y - centerView.BarChartHeight;
-                    PointF p1 = (movingOnX) ? new PointF ( _centerPos.X, p0.Y - dy) : new PointF (p0.X - dx, currentY);
-
-                    if ( p1.Y > _centerPos.Y || p1.Y < _centerPos.Y - centerView.BarChartHeight) { return; }
-
-                    if ( p1.X < _centerPos.X && _timeSpaceIndex == 1) { return; }
-
-                    centerView.Center = p1;
-
-                } else if (pg.State == UIGestureRecognizerState.Ended) {
-                    if ( _position == ChartPosition.Top && centerView.Center.Y <= _centerPos.Y - navX) {
-                        changeChart ( ChartPosition.Down);
-                    } else if ( _position == ChartPosition.Down && centerView.Center.Y >= _centerPos.Y - centerView.BarChartHeight + navX) {
-                        changeChart ( ChartPosition.Top);
-                    } else {
-                        var currentY = (_position == ChartPosition.Top) ? _centerPos.Y : _centerPos.Y - centerView.BarChartHeight;
-                        snapViewToPoint (new PointF ( _centerPos.X, currentY));
-                    }
-                    dx = 0;
-                    dy = 0;
-                    movingOnX = false;
-                }
-            });
-
-
-            return result;
+            return base.GestureRecognizerShouldBegin (gestureRecognizer);
         }
-         */
     }
 }

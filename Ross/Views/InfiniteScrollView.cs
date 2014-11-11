@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using MonoTouch.UIKit;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views
 {
@@ -49,7 +48,7 @@ namespace Toggl.Ross.Views
         private int tmpOffset;
         private int prevPageIndex = 5000;
 
-        private void recenterIfNeeded()
+        private void RecenterIfNeeded()
         {
             PointF currentOffset = ContentOffset;
             float contentWidth = ContentSize.Width;
@@ -67,16 +66,21 @@ namespace Toggl.Ross.Views
             }
         }
 
+        public override bool GestureRecognizerShouldBegin (UIGestureRecognizer gestureRecognizer)
+        {
+            return false;
+        }
+
         public override void LayoutSubviews ()
         {
             base.LayoutSubviews ();
-            recenterIfNeeded ();
+            RecenterIfNeeded ();
 
             // tile content in visible bounds
             RectangleF visibleBounds = ConvertRectToView (Bounds, _containerView);
             float minimumVisibleX = CGRectGetMinX ( visibleBounds);
             float maximumVisibleX = CGRectGetMaxX ( visibleBounds);
-            tileViews ( minimumVisibleX, maximumVisibleX);
+            TileViews ( minimumVisibleX, maximumVisibleX);
 
             if (prevPageIndex != PageIndex) {
                 prevPageIndex = PageIndex;
@@ -95,7 +99,7 @@ namespace Toggl.Ross.Views
             }
         }
 
-        private ReportView insertView()
+        private ReportView InsertView()
         {
             ReportView view;
             if (cachedViews.Count == 0) {
@@ -109,9 +113,9 @@ namespace Toggl.Ross.Views
             return view;
         }
 
-        private float placeNewViewOnRight ( float rightEdge)
+        private float PlaceNewViewOnRight ( float rightEdge)
         {
-            ReportView view = insertView ();
+            ReportView view = InsertView ();
             visibleViews.Add (view); // add rightmost label at the end of the array
 
             RectangleF labelFrame = view.Frame;
@@ -122,9 +126,9 @@ namespace Toggl.Ross.Views
             return CGRectGetMaxX ( labelFrame);
         }
 
-        private float placeNewViewOnLeft ( float leftEdge)
+        private float PlaceNewViewOnLeft ( float leftEdge)
         {
-            ReportView view = insertView ();
+            ReportView view = InsertView ();
             visibleViews.Insert ( 0, view); // add leftmost label at the beginning of the array
 
             RectangleF labelFrame = view.Frame;
@@ -135,34 +139,34 @@ namespace Toggl.Ross.Views
             return CGRectGetMinX ( labelFrame);
         }
 
-        private void tileViews ( float minX, float maxX)
+        private void TileViews ( float minX, float maxX)
         {
             // the upcoming tiling logic depends on there already being at least one label in the visibleLabels array, so
             // to kick off the tiling we need to make sure there's at least one label
             if (visibleViews.Count == 0) {
                 tmpOffset = Convert.ToInt32 (ContentOffset.X / PageWidth);
-                placeNewViewOnRight (minX);
+                PlaceNewViewOnRight (minX);
             }
 
             // add views that are missing on right side
             ReportView lastView = visibleViews [visibleViews.Count - 1];
             float rightEdge = CGRectGetMaxX ( lastView.Frame);
             while ( rightEdge < maxX) {
-                rightEdge = placeNewViewOnRight (rightEdge);
+                rightEdge = PlaceNewViewOnRight (rightEdge);
             }
 
             // add views that are missing on left side
             ReportView firstView = visibleViews [0];
             float leftEdge = CGRectGetMinX ( firstView.Frame);
             while ( leftEdge > minX) {
-                leftEdge = placeNewViewOnLeft (leftEdge);
+                leftEdge = PlaceNewViewOnLeft (leftEdge);
             }
 
             // remove views that have fallen off right edge
             lastView = visibleViews.Last();
             while (lastView.Frame.X > maxX) {
                 lastView.RemoveFromSuperview ();
-                if (lastView.Clean) {
+                if (lastView.IsClean) {
                     cachedViews.Add (lastView);
                     lastView.StopReloadData ();
                 }
@@ -174,7 +178,7 @@ namespace Toggl.Ross.Views
             firstView = visibleViews.First();
             while ( CGRectGetMaxX ( firstView.Frame) < minX) {
                 firstView.RemoveFromSuperview ();
-                if (firstView.Clean) {
+                if (firstView.IsClean) {
                     cachedViews.Add (firstView);
                     firstView.StopReloadData ();
                 }
@@ -197,9 +201,11 @@ namespace Toggl.Ross.Views
 
     internal class InfiniteScrollDelegate : UIScrollViewDelegate
     {
-        public override void DecelerationStarted (UIScrollView scrollView)
+        public override void DecelerationEnded (UIScrollView scrollView)
         {
+            var infiniteScroll = (InfiniteScrollView)scrollView;
+
         }
+
     }
 }
-

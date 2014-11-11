@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using System.Threading;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -54,7 +54,7 @@ namespace Toggl.Phoebe.Data.Reports
 
         private async Task FetchData ()
         {
-            dataObject = createEmptyReport ();
+            dataObject = CreateEmptyReport ();
             cts = new CancellationTokenSource();
             try {
                 _isError = false;
@@ -67,12 +67,12 @@ namespace Toggl.Phoebe.Data.Reports
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, msg);
             } finally {
-                calculateReportData ();
+                CalculateReportData ();
                 cts.Dispose ();
             }
         }
 
-        private void calculateReportData()
+        private void CalculateReportData()
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
@@ -247,7 +247,7 @@ namespace Toggl.Phoebe.Data.Reports
             return formattedString;
         }
 
-        private ReportData createEmptyReport()
+        private ReportData CreateEmptyReport()
         {
             var activityList = new List<ReportActivity> ();
 

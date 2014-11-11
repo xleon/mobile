@@ -68,7 +68,13 @@ namespace Toggl.Ross.Views
 
         public override bool GestureRecognizerShouldBegin (UIGestureRecognizer gestureRecognizer)
         {
-            return false;
+            if (!VisibleReport.Dragging) {
+                VisibleReport.ScrollEnabled = false;
+                foreach (var item in visibleViews) {
+                    item.Position = VisibleReport.Position;
+                }
+            }
+            return !VisibleReport.Dragging;
         }
 
         public override void LayoutSubviews ()
@@ -109,6 +115,9 @@ namespace Toggl.Ross.Views
                 cachedViews.RemoveAt (0);
             }
             view.Frame = new RectangleF (0, 0, PageWidth, Frame.Height);
+            if ( visibleViews.Count > 0) {
+                view.Position = VisibleReport.Position;
+            }
             _containerView.Add (view);
             return view;
         }
@@ -167,7 +176,7 @@ namespace Toggl.Ross.Views
             while (lastView.Frame.X > maxX) {
                 lastView.RemoveFromSuperview ();
                 if (lastView.IsClean) {
-                    cachedViews.Add (lastView);
+                    //cachedViews.Add (lastView);
                     lastView.StopReloadData ();
                 }
                 visibleViews.Remove (lastView);
@@ -179,7 +188,7 @@ namespace Toggl.Ross.Views
             while ( CGRectGetMaxX ( firstView.Frame) < minX) {
                 firstView.RemoveFromSuperview ();
                 if (firstView.IsClean) {
-                    cachedViews.Add (firstView);
+                    //cachedViews.Add (firstView);
                     firstView.StopReloadData ();
                 }
                 visibleViews.Remove (firstView);
@@ -204,7 +213,7 @@ namespace Toggl.Ross.Views
         public override void DecelerationEnded (UIScrollView scrollView)
         {
             var infiniteScroll = (InfiniteScrollView)scrollView;
-
+            infiniteScroll.VisibleReport.ScrollEnabled = true;
         }
 
     }

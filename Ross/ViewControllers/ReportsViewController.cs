@@ -23,13 +23,14 @@ namespace Toggl.Ross.ViewControllers
                 if (_zoomLevel == value) {
                     return;
                 }
+                if (_zoomLevel == value) {
+                    return;
+                }
                 _zoomLevel = value;
-
-                /*
-                centerView.ZoomLevel =
-                    leftView.ZoomLevel =
-                        rightView.ZoomLevel = _zoomLevel;
-                */
+                // temporal solution
+                scrollView.VisibleReport.ZoomLevel = _zoomLevel;
+                scrollView.VisibleReport.IsClean = true;
+                scrollView.VisibleReport.LoadData ();
                 ChangeReportState ();
             }
         }
@@ -38,7 +39,7 @@ namespace Toggl.Ross.ViewControllers
         private DateSelectorView dateSelectorView;
         private TopBorder topBorder;
         private SummaryReportView dataSource;
-        InfiniteScrollView scrollView;
+        private InfiniteScrollView scrollView;
         private int _timeSpaceIndex;
 
         const float padding  = 24;

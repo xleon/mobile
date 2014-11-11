@@ -6,6 +6,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using System.Net.Http;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -61,11 +62,19 @@ namespace Toggl.Phoebe.Data.Reports
                 var client = ServiceContainer.Resolve<IReportsClient> ();
                 var json = await client.GetReports (startDate, endDate, (long)workspaceId, cts.Token);
                 dataObject = json.Import ();
-            } catch (Exception exc) {
-                _isError = !cts.IsCancellationRequested;
-                var msg = (cts.IsCancellationRequested) ? "Cancelation requested by user" : "Failed to fetch reports.";
+            } catch (HttpRequestException exc) {
+                _isError = true;
+                var msg = "Failed to fetch reports.";
                 var log = ServiceContainer.Resolve<Logger> ();
                 log.Error (Tag, exc, msg);
+            } catch ( TaskCanceledException exc) {
+                var msg = "Cancelation requested by user";
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Info (Tag, exc, msg);
+            } catch ( Exception exc) {
+                _isError = true;
+                var log = ServiceContainer.Resolve<Logger> ();
+                log.Error (Tag, exc, exc.Message);
             } finally {
                 CalculateReportData ();
                 cts.Dispose ();

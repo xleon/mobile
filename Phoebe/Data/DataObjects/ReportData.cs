@@ -2,13 +2,13 @@
 
 namespace Toggl.Phoebe.Data.DataObjects
 {
-    public class ReportData : CommonData
+    public class ReportData
     {
         public ReportData ()
         {
         }
 
-        public ReportData (ReportData other) : base (other)
+        public ReportData (ReportData other)
         {
             TotalGrand = other.TotalGrand;
             TotalBillable = other.TotalBillable;

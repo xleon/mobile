@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using Toggl.Phoebe.Data.DataObjects;
-using System;
 using System.Linq;
-using System.Diagnostics;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.Json.Converters
@@ -14,8 +12,6 @@ namespace Toggl.Phoebe.Data.Json.Converters
         public ReportJson Export (ReportData data)
         {
             return new ReportJson () {
-                Id = data.RemoteId,
-                ModifiedAt = data.ModifiedAt.ToUtc (),
                 TotalGrand = data.TotalGrand,
                 TotalBillable = data.TotalBillable,
             };
@@ -23,13 +19,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         private static ReportData ImportJson (ReportData data, ReportJson json)
         {
-            data.ModifiedAt = json.ModifiedAt.ToUtc ();
-            data.TotalGrand = json.TotalGrand;
             data.TotalBillable = json.TotalBillable;
             data.Activity = MakeActivityList (json.Activity);
             data.Projects = MakeProjectList (json.Projects);
-
-            ImportCommonJson (data, json);
             return data;
         }
 

@@ -27,6 +27,9 @@ namespace Toggl.Joey.UI.Views
         private bool animating;
         private Bitmap baseBitmap;
         private Color lineColor = Color.ParseColor ("#CCCCCC");
+        private Color notBillableBarColor = Color.ParseColor ("#80D6FF");
+        private Color billableBarColor = Color.ParseColor ("#00AEFF");
+        private Color emptyBarColor = Color.ParseColor ("#666666");
         public double CeilingValue;
 
 
@@ -170,7 +173,7 @@ namespace Toggl.Joey.UI.Views
                         timeColumn + 8,
                         (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                     );
-                    CanvasPaint.Color = Color.ParseColor ("#666666");
+                    CanvasPaint.Color = emptyBarColor;
 
                     canvas.DrawRect (rectangle, CanvasPaint);
 
@@ -194,9 +197,9 @@ namespace Toggl.Joey.UI.Views
                                 (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                             );
 
-                            CanvasPaint.Color = Color.ParseColor ("#80D6FF");// light blue
+                            CanvasPaint.Color = notBillableBarColor;
                             canvas.DrawRect (notBillableRectangle, CanvasPaint);
-                            CanvasPaint.Color = Color.ParseColor ("#00AEFF");//dark blue
+                            CanvasPaint.Color = billableBarColor;
                             canvas.DrawRect (rectangle, CanvasPaint);
                         } else {
                             rectangle.Set (
@@ -205,7 +208,7 @@ namespace Toggl.Joey.UI.Views
                                 timeColumn + (int)(loadAnimation * totalWidth),
                                 (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                             );
-                            CanvasPaint.Color = Color.ParseColor ("#00AEFF");//dark blue
+                            CanvasPaint.Color = billableBarColor;
                             canvas.DrawRect (rectangle, CanvasPaint);
                         }
                     } else {
@@ -216,7 +219,7 @@ namespace Toggl.Joey.UI.Views
                             timeColumn + (int)(loadAnimation * totalWidth),
                             (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                         );
-                        CanvasPaint.Color = Color.ParseColor ("#00AEFF");
+                        CanvasPaint.Color = billableBarColor;
                         canvas.DrawRect (rectangle, CanvasPaint);
                     }
 
@@ -233,7 +236,7 @@ namespace Toggl.Joey.UI.Views
                         );
                     }
                 }
-                CanvasPaint.Color = Color.ParseColor ("#666666");
+                CanvasPaint.Color = emptyBarColor;
                 CanvasPaint.TextSize = 20;
                 canvas.DrawText (
                     BarTitles [count],

@@ -126,7 +126,6 @@ namespace Toggl.Joey.UI.Fragments
                 bar.Value = (float)row.TotalTime;
                 bar.Billable = (float)row.BillableTime;
                 bar.Name = row.StartTime.ToShortTimeString ();
-                bar.Color = Color.ParseColor ("#00AEFF");
                 barChart.AddBar (bar);
             }
             barChart.CeilingValue = summaryReport.GetCeilingSeconds ();
@@ -157,7 +156,6 @@ namespace Toggl.Joey.UI.Fragments
             await summaryReport.Load (backDate);
         }
 
-
         public string FormattedDateSelector ()
         {
             if (backDate == 0) {
@@ -181,9 +179,10 @@ namespace Toggl.Joey.UI.Fragments
                 var endDate = summaryReport.ResolveEndDate (startDate);
                 if (summaryReport.Period == ZoomLevel.Week) {
                     return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
+                } else {
+                    return "";
                 }
             }
-            return "";
         }
 
         public class SliceListener : PieChart.IOnSliceClickedListener

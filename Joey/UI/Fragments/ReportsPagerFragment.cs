@@ -16,24 +16,20 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ReportsPagerFragment : Fragment
     {
-        private static readonly int PagesCount = 50;
+        private static readonly int PagesCount = 2000;
         private ViewPager viewPager;
-        private int currentBackDate;
-        private ZoomLevel period;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsPagerFragment, container, false);
             viewPager = view.FindViewById<ViewPager> (Resource.Id.ReportsViewPager);
             viewPager.PageScrolled += OnViewPagerPageScrolled;
-            viewPager.PageSelected += OnViewPagerPageSelected;
 
             return view;
         }
 
         public override void OnDestroyView ()
         {
-            viewPager.PageSelected -= OnViewPagerPageSelected;
             viewPager.PageScrolled -= OnViewPagerPageScrolled;
             base.OnDestroyView ();
         }
@@ -41,11 +37,9 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnActivityCreated (Bundle savedInstanceState)
         {
             base.OnActivityCreated (savedInstanceState);
-            viewPager.Adapter = new MainPagerAdapter (Activity, ChildFragmentManager);
-            viewPager.CurrentItem = (int)MainPagerAdapter.Current;
+            viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
+            viewPager.CurrentItem = PagesCount/2;
         }
-
-
 
         private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
         {
@@ -65,25 +59,14 @@ namespace Toggl.Joey.UI.Fragments
                 var frag = (ReportsFragment)adapter.GetItem (idx);
                 frag.UserVisibleHint = true;
             }
-
-        }
-
-        private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
-        {
         }
 
         private class MainPagerAdapter : FragmentPagerAdapter
         {
-            private Context ctx;
-            public const int Previous = -1;
-            public const int Current = 25;
-            public const int Next = 1;
-            public int currentBackDate;
+            public int Current = PagesCount/2;
 
-            public MainPagerAdapter (Context ctx, FragmentManager fm) : base (fm)
+            public MainPagerAdapter (FragmentManager fm) : base (fm)
             {
-                this.ctx = ctx;
-                currentBackDate = 0;
             }
 
             public override int Count {
@@ -92,7 +75,7 @@ namespace Toggl.Joey.UI.Fragments
 
             public override Fragment GetItem (int position)
             {
-                return new ReportsFragment (25 - position);
+                return new ReportsFragment (PagesCount/2 - position);
             }
         }
     }

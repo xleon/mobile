@@ -18,9 +18,6 @@ namespace Toggl.Joey.UI.Fragments
     {
         private static readonly int PagesCount = 50;
         private ViewPager viewPager;
-        private ImageButton previousPeriod;
-        private ImageButton nextPeriod;
-        private TextView timePeriod;
         private int currentBackDate;
         private ZoomLevel period;
 
@@ -31,24 +28,8 @@ namespace Toggl.Joey.UI.Fragments
             viewPager.PageScrolled += OnViewPagerPageScrolled;
             viewPager.PageSelected += OnViewPagerPageSelected;
 
-            timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
-            previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
-            nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
-
-//            previousPeriod.Click += (sender, e) => viewPager.Scro
-//            nextPeriod.Click += (sender, e) => NavigatePeriod (-1);
             return view;
         }
-
-//        private void NavigatePeriod (int direction)
-//        {
-//            if (backDate == 0 && direction < 0) {
-//                backDate = 0;
-//            } else {
-//                backDate = backDate + direction;
-//            }
-//            LoadElements ();
-//        }
 
         public override void OnDestroyView ()
         {
@@ -56,6 +37,7 @@ namespace Toggl.Joey.UI.Fragments
             viewPager.PageScrolled -= OnViewPagerPageScrolled;
             base.OnDestroyView ();
         }
+
         public override void OnActivityCreated (Bundle savedInstanceState)
         {
             base.OnActivityCreated (savedInstanceState);
@@ -64,33 +46,6 @@ namespace Toggl.Joey.UI.Fragments
         }
 
 
-        public string FormattedDateSelector ()
-        {
-            if (currentBackDate == 0) {
-                if (period == ZoomLevel.Week) {
-                    return Resources.GetString (Resource.String.ReportsThisWeek);
-                } else if (period == ZoomLevel.Month) {
-                    return Resources.GetString (Resource.String.ReportsThisMonth);
-                } else {
-                    return Resources.GetString (Resource.String.ReportsThisYear);
-                }
-            } else if (currentBackDate == 1) {
-                if (period == ZoomLevel.Week) {
-                    return Resources.GetString (Resource.String.ReportsLastWeek);
-                } else if (period == ZoomLevel.Month) {
-                    return Resources.GetString (Resource.String.ReportsLastMonth);
-                } else {
-                    return Resources.GetString (Resource.String.ReportsLastYear);
-                }
-            } else {
-                var startDate = SummaryReportView.ResolveStartDate (currentBackDate);
-                var endDate = SummaryReportView.ResolveEndDate (startDate);
-                if (period == ZoomLevel.Week) {
-                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
-                }
-            }
-            return "";
-        }
 
         private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
         {
@@ -109,8 +64,6 @@ namespace Toggl.Joey.UI.Fragments
             if (adapter != null) {
                 var frag = (ReportsFragment)adapter.GetItem (idx);
                 frag.UserVisibleHint = true;
-                currentBackDate = 25 - idx;
-                timePeriod.Text = FormattedDateSelector();
             }
 
         }
@@ -133,8 +86,7 @@ namespace Toggl.Joey.UI.Fragments
                 currentBackDate = 0;
             }
 
-            public override int Count
-            {
+            public override int Count {
                 get { return PagesCount; }
             }
 

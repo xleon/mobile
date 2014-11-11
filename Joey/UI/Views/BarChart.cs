@@ -23,10 +23,11 @@ namespace Toggl.Joey.UI.Views
         private int bottomPadding = 30;
         private int timeColumn = 70;
         private int topPadding = 10;
-        public double CeilingValue;
         private int animationProgress;
+        private bool animating;
         private Bitmap baseBitmap;
         private Color lineColor = Color.ParseColor ("#CCCCCC");
+        public double CeilingValue;
 
 
         public BarChart (Context context, IAttributeSet attrs) : base (context, attrs)
@@ -87,7 +88,7 @@ namespace Toggl.Joey.UI.Views
         private string FormatSeconds (double seconds)
         {
             var t = TimeSpan.FromSeconds (seconds);
-            return String.Format ("{0:hh\\:mm}", t);
+            return String.Format ("{0}:{1:mm}", (int)t.TotalHours, t);
         }
 
         private Bitmap BaseBitmap ()
@@ -154,7 +155,7 @@ namespace Toggl.Joey.UI.Views
 
             float bottomPadding = 40;
             float usableWidth = Width - timeColumn;
-
+            float loadAnimation = animating ? (float)(animationProgress / 100F) : 1;
             CanvasPath.Reset ();
 
             var rectangle = new Rect ();
@@ -179,8 +180,7 @@ namespace Toggl.Joey.UI.Views
                         float totalWidth = (float)(usableWidth * (p.Value / CeilingValue));
                         float billableWidth = (float)(usableWidth * (p.Billable / CeilingValue));
                         float notBillableWidth = (float)(usableWidth * (notBillable / CeilingValue));
-//                        Console.WriteLine ("animationProgress: {0}, billable: {1}", (float)(animationProgress / 100F) * totalWidth, billableWidth);
-                        if (((float)(animationProgress / 100F) * totalWidth) > billableWidth) {
+                        if ((loadAnimation * totalWidth) > billableWidth) {
                             rectangle.Set (
                                 timeColumn,
                                 (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
@@ -190,7 +190,7 @@ namespace Toggl.Joey.UI.Views
                             notBillableRectangle.Set (
                                 timeColumn,
                                 (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
-                                timeColumn + (int)(notBillableWidth * ((float)animationProgress / 100F) + billableWidth),
+                                timeColumn + (int)(notBillableWidth * loadAnimation + billableWidth),
                                 (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                             );
 
@@ -202,7 +202,7 @@ namespace Toggl.Joey.UI.Views
                             rectangle.Set (
                                 timeColumn,
                                 (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
-                                timeColumn + (int)(((float)animationProgress / 100F) * totalWidth),
+                                timeColumn + (int)(loadAnimation * totalWidth),
                                 (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                             );
                             CanvasPaint.Color = Color.ParseColor ("#00AEFF");//dark blue
@@ -213,7 +213,7 @@ namespace Toggl.Joey.UI.Views
                         rectangle.Set (
                             timeColumn,
                             (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
-                            timeColumn + (int)(((float)animationProgress / 100F) * totalWidth),
+                            timeColumn + (int)(loadAnimation * totalWidth),
                             (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                         );
                         CanvasPaint.Color = Color.ParseColor ("#00AEFF");
@@ -265,6 +265,7 @@ namespace Toggl.Joey.UI.Views
 
         public void StartAnimate ()
         {
+            animating = true;
             var animator = ValueAnimator.OfInt (1, 100);
             animator.SetDuration (750);
             animator.Update += (sender, e) => AnimationProgress = (int)e.Animation.AnimatedValue;
@@ -277,6 +278,8 @@ namespace Toggl.Joey.UI.Views
             }
             set {
                 animationProgress = value;
+                if (value == 100)
+                    animating = false;
                 PostInvalidate ();
             }
         }

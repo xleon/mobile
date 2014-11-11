@@ -25,6 +25,7 @@ namespace Toggl.Joey.UI.Views
         private int animationProgress;
         private float slideAnimationProgress;
         private Color emptyStateColor = Color.ParseColor ("#808080");
+        private bool loadAnimate;
 
         public event SliceClickedEventHandler SliceClicked;
 
@@ -44,7 +45,7 @@ namespace Toggl.Joey.UI.Views
 
         public void Refresh ()
         {
-            StartSliceSlideAnimation ();
+            StartDrawAnimation ();
         }
 
         private string FormatMilliseconds (long ms)
@@ -92,7 +93,7 @@ namespace Toggl.Joey.UI.Views
             float centerY = Height / 2;
             float radius = centerX < centerY ? centerX : centerY;
             float innerRadius = radius - thickness;
-            float loadAnimation = (float)animationProgress / 360F;
+            float loadAnimation = loadAnimate ? (float)animationProgress / 360F : 1F;
             float sliceSlideOutAnimation = slideAnimationProgress / (float)slicePadding;
 
             foreach (PieSlice slice in slices) {
@@ -104,14 +105,14 @@ namespace Toggl.Joey.UI.Views
             paint.AntiAlias = true;
             path.Reset ();
 
-            var basePath = new Path ();
-            basePath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
-            basePath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
-            var basePaint = new Paint ();
-            basePaint.Color = Color.ParseColor ("#EDEDED");
-            canvas.DrawPath (basePath, basePaint);
-
-            Console.WriteLine ("basepainting");
+            if (loadAnimate || slices.Count == 0) {
+                var basePath = new Path ();
+                basePath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
+                basePath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
+                var basePaint = new Paint ();
+                basePaint.Color = Color.ParseColor ("#EDEDED");
+                canvas.DrawPath (basePath, basePaint);
+            }
 
             if (slices.Count == 0) {
                 Paint emptyText = new Paint ();
@@ -134,10 +135,7 @@ namespace Toggl.Joey.UI.Views
             }
 
             int count = 0;
-            Console.WriteLine ("slices.count: {0}", slices.Count);
             foreach (PieSlice slice in slices) {
-
-                Console.WriteLine ("making slices.");
 
                 var slicePath = new Path ();
                 paint.Color = slice.Color;
@@ -151,7 +149,6 @@ namespace Toggl.Joey.UI.Views
                     slicePath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
                     slicePath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
                 } else {
-                    Console.WriteLine ("single slice. Value; {0}", slice.Value);
                     slicePath.ArcTo (
                         new RectF (
                             centerX - radius + slicePadding,
@@ -193,7 +190,6 @@ namespace Toggl.Joey.UI.Views
                     (int)(centerY + radius)
                 );
                 canvas.DrawPath (slicePath, paint);
-                Console.WriteLine ("path drawn");
 
                 currentAngle += currentSweep;
                 count++;
@@ -241,6 +237,7 @@ namespace Toggl.Joey.UI.Views
 
         public void StartDrawAnimation ()
         {
+            loadAnimate = true;
             var animator = ValueAnimator.OfInt (1, 360);
             animator.SetDuration (750);
             animator.Update += (sender, e) => AnimationProgress = (int)e.Animation.AnimatedValue;
@@ -262,7 +259,6 @@ namespace Toggl.Joey.UI.Views
             set {
                 slideAnimationProgress = value;
                 PostInvalidate ();
-                Console.WriteLine ("step");
             }
         }
 
@@ -272,6 +268,8 @@ namespace Toggl.Joey.UI.Views
             }
             set {
                 animationProgress = value;
+                if (animationProgress == 360)
+                    loadAnimate = false;
                 PostInvalidate ();
             }
         }

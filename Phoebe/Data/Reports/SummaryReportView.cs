@@ -113,7 +113,7 @@ namespace Toggl.Phoebe.Data.Reports
             var max = GetMaxTotal ();
             List<string> labels = new List<string> ();
             for (int i = 1; i <= 4; i++) {
-                labels.Add (String.Format ("{0} h", (max - 2) / 4 * i));
+                labels.Add (String.Format ("{0} h", (max + (max % 4)) / 4 * i));
             }
             return labels;
         }
@@ -134,7 +134,7 @@ namespace Toggl.Phoebe.Data.Reports
             foreach (var s in dataObject.Activity) {
                 max = max < s.TotalTime ? s.TotalTime : max;
             }
-            var timeOnLastLine = (int)Math.Ceiling ((double)TimeSpan.FromSeconds (max).Hours / 4D) * 4;
+            var timeOnLastLine = (int)Math.Ceiling ((double)TimeSpan.FromSeconds (max).TotalHours / 4D) * 4;
             return timeOnLastLine + (timeOnLastLine / 4);
         }
 

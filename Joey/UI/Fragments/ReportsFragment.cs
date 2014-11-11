@@ -25,9 +25,12 @@ namespace Toggl.Joey.UI.Fragments
         private PieChart pieChart;
         private TextView totalValue;
         private TextView billableValue;
+        private ImageButton previousPeriod;
+        private ImageButton nextPeriod;
+        private TextView timePeriod;
 
         private SummaryReportView summaryReport;
-        private readonly int backDate;
+        private int backDate;
 
         public static readonly string[] HexColors = {
             "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
@@ -35,7 +38,7 @@ namespace Toggl.Joey.UI.Fragments
             "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
         };
 
-        public ReportsFragment(int period)
+        public ReportsFragment (int period)
         {
             backDate = period;
         }
@@ -49,6 +52,13 @@ namespace Toggl.Joey.UI.Fragments
 
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
+
+            timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
+            previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
+            nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
+
+            previousPeriod.Click += (sender, e) => NavigatePeriod (1);
+            nextPeriod.Click += (sender, e) => NavigatePeriod (-1);
 
             LoadElements ();
             return view;
@@ -75,6 +85,16 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        private void NavigatePeriod (int direction)
+        {
+            if (backDate == 0 && direction < 0) {
+                backDate = 0;
+            } else {
+                backDate = backDate + direction;
+            }
+            LoadElements ();
+        }
+
         private void OnSliceSelect (int position)
         {
             var adapter = ListView.Adapter as ProjectListAdapter;
@@ -92,6 +112,7 @@ namespace Toggl.Joey.UI.Fragments
             await LoadData ();
             totalValue.Text = summaryReport.TotalGrand;
             billableValue.Text = summaryReport.TotalBillale;
+            timePeriod.Text = FormattedDateSelector ();
             EnsureAdapter ();
             GeneratePieChart ();
             GenerateBarChart ();
@@ -134,6 +155,35 @@ namespace Toggl.Joey.UI.Fragments
             summaryReport = new SummaryReportView ();
             summaryReport.Period = ZoomLevel.Week;
             await summaryReport.Load (backDate);
+        }
+
+
+        public string FormattedDateSelector ()
+        {
+            if (backDate == 0) {
+                if (summaryReport.Period == ZoomLevel.Week) {
+                    return Resources.GetString (Resource.String.ReportsThisWeek);
+                } else if (summaryReport.Period == ZoomLevel.Month) {
+                    return Resources.GetString (Resource.String.ReportsThisMonth);
+                } else {
+                    return Resources.GetString (Resource.String.ReportsThisYear);
+                }
+            } else if (backDate == 1) {
+                if (summaryReport.Period == ZoomLevel.Week) {
+                    return Resources.GetString (Resource.String.ReportsLastWeek);
+                } else if (summaryReport.Period == ZoomLevel.Month) {
+                    return Resources.GetString (Resource.String.ReportsLastMonth);
+                } else {
+                    return Resources.GetString (Resource.String.ReportsLastYear);
+                }
+            } else {
+                var startDate = summaryReport.ResolveStartDate (backDate);
+                var endDate = summaryReport.ResolveEndDate (startDate);
+                if (summaryReport.Period == ZoomLevel.Week) {
+                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
+                }
+            }
+            return "";
         }
 
         public class SliceListener : PieChart.IOnSliceClickedListener

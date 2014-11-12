@@ -23,15 +23,8 @@ namespace Toggl.Ross.ViewControllers
                 if (_zoomLevel == value) {
                     return;
                 }
-                if (_zoomLevel == value) {
-                    return;
-                }
                 _zoomLevel = value;
-                // temporal solution
-                scrollView.VisibleReport.ZoomLevel = _zoomLevel;
-                scrollView.VisibleReport.IsClean = true;
-                scrollView.VisibleReport.LoadData ();
-                ChangeReportState ();
+                scrollView.RefreshVisibleReportView ();
             }
         }
 
@@ -91,7 +84,7 @@ namespace Toggl.Ross.ViewControllers
             scrollView = new InfiniteScrollView (new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, dateSelectorView.Frame.Y));
             scrollView.OnChangeReport += (sender, e) => {
                 _timeSpaceIndex = scrollView.PageIndex;
-                var reportView = scrollView.VisibleReport;
+                var reportView = scrollView.VisibleReportView;
                 reportView.ZoomLevel = ZoomLevel;
                 reportView.TimeSpaceIndex = _timeSpaceIndex;
                 reportView.LoadData();

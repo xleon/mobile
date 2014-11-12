@@ -62,6 +62,7 @@ namespace Toggl.Ross.Views
         public ReportView ( RectangleF frame)
         {
             Frame = new RectangleF (frame.X, frame.Y, frame.Width, frame.Height * 2);
+            ClipsToBounds = true;
 
             BackgroundColor = UIColor.White;
             barChart = new BarChartView ( new RectangleF ( padding/2, padding/2, frame.Width - padding, frame.Height - padding - selectorHeight ));
@@ -79,7 +80,6 @@ namespace Toggl.Ross.Views
             panGesture = CreatePanGesture ();
             _containerView.AddGestureRecognizer (panGesture);
             _position = ChartPosition.Top;
-            panGesture.ShouldRecognizeSimultaneously += ( gesture1, gesture2) => true;
         }
 
         UIPanGestureRecognizer panGesture;

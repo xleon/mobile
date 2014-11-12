@@ -19,7 +19,7 @@ namespace Toggl.Ross.Views
             }
         }
 
-        public ReportView VisibleReport
+        public ReportView VisibleReportView
         {
             get {
                 var pos = ConvertPointToView ( ContentOffset, _containerView).X;
@@ -68,13 +68,13 @@ namespace Toggl.Ross.Views
 
         public override bool GestureRecognizerShouldBegin (UIGestureRecognizer gestureRecognizer)
         {
-            if (!VisibleReport.Dragging) {
-                VisibleReport.ScrollEnabled = false;
+            if (!VisibleReportView.Dragging) {
+                VisibleReportView.ScrollEnabled = false;
                 foreach (var item in visibleViews) {
-                    item.Position = VisibleReport.Position;
+                    item.Position = VisibleReportView.Position;
                 }
             }
-            return !VisibleReport.Dragging;
+            return !VisibleReportView.Dragging;
         }
 
         public override void LayoutSubviews ()
@@ -96,13 +96,44 @@ namespace Toggl.Ross.Views
             }
         }
 
-        public void SetPageIndex ( int pageIndex, bool animated)
+        public void SetPageIndex ( int offSet, bool animated)
         {
             var currentCOffset = ContentOffset;
             if (currentCOffset.X % PageWidth == 0) {
-                currentCOffset.X += PageWidth * pageIndex;
+                currentCOffset.X += PageWidth * offSet;
                 SetContentOffset (currentCOffset, animated);
             }
+        }
+
+        public void RefreshVisibleReportView()
+        {
+            if (Dragging) {
+                return;
+            }
+
+            var currentView = visibleViews.Find (v => v.Frame.X.CompareTo ( ContentOffset.X) == 0);
+            var newReportView = InsertView ();
+            var offSetY = ContentSize.Height;
+            var frame = currentView.Frame;
+            frame.Y += offSetY;
+            newReportView.Frame = frame;
+
+            UIView.Animate (0.5, 0, UIViewAnimationOptions.CurveEaseOut,
+            () => {
+                newReportView.Center = new PointF ( currentView.Center.X, currentView.Center.Y );
+                currentView.Center = new PointF ( currentView.Center.X, currentView.Center.Y - offSetY );
+            },() => {
+                var index = visibleViews.IndexOf (currentView);
+                visibleViews[index] = newReportView;
+                currentView.RemoveFromSuperview ();
+                if (currentView.IsClean) {
+                    currentView.StopReloadData ();
+                }
+                if (OnChangeReport != null) {
+                    OnChangeReport.Invoke (this, new EventArgs ());
+                }
+            });
+
         }
 
         private ReportView InsertView()
@@ -116,7 +147,7 @@ namespace Toggl.Ross.Views
             }
             view.Frame = new RectangleF (0, 0, PageWidth, Frame.Height);
             if ( visibleViews.Count > 0) {
-                view.Position = VisibleReport.Position;
+                view.Position = VisibleReportView.Position;
             }
             _containerView.Add (view);
             return view;
@@ -213,7 +244,7 @@ namespace Toggl.Ross.Views
         public override void DecelerationEnded (UIScrollView scrollView)
         {
             var infiniteScroll = (InfiniteScrollView)scrollView;
-            infiniteScroll.VisibleReport.ScrollEnabled = true;
+            infiniteScroll.VisibleReportView.ScrollEnabled = true;
         }
 
     }

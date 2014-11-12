@@ -10,7 +10,6 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {

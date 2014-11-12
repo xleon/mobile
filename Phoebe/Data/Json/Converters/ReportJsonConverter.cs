@@ -19,6 +19,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         private static ReportData ImportJson (ReportData data, ReportJson json)
         {
+            data.TotalGrand = json.TotalGrand;
             data.TotalBillable = json.TotalBillable;
             data.Activity = MakeActivityList (json.Activity);
             data.Projects = MakeProjectList (json.Projects);

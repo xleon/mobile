@@ -17,15 +17,19 @@ namespace Toggl.Joey.UI.Views
         private List<PieSlice> slices = new List<PieSlice> ();
         private Paint paint = new Paint ();
         private Path path = new Path ();
+        private Paint basePaint = new Paint ();
+        private Paint emptyText = new Paint ();
+        private Paint chartCenterText = new Paint ();
         private int thickness = 65;
         private int indexSelected = -1;
-        const float angleCorrection = 270;
-        const int slicePadding = 20;
+        private const float angleCorrection = 270;
+        private const int slicePadding = 20;
         private IOnSliceClickedListener listener;
         private int animationProgress;
         private float slideAnimationProgress;
         private Color emptyStateColor = Color.ParseColor ("#808080");
         private bool loadAnimate;
+
 
         public event SliceClickedEventHandler SliceClicked;
 
@@ -109,13 +113,11 @@ namespace Toggl.Joey.UI.Views
                 var basePath = new Path ();
                 basePath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
                 basePath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
-                var basePaint = new Paint ();
                 basePaint.Color = Color.ParseColor ("#EDEDED");
                 canvas.DrawPath (basePath, basePaint);
             }
 
             if (slices.Count == 0) {
-                Paint emptyText = new Paint ();
                 emptyText.Color = emptyStateColor;
                 emptyText.TextAlign = Paint.Align.Center;
                 emptyText.AntiAlias = true;
@@ -196,12 +198,11 @@ namespace Toggl.Joey.UI.Views
             }
 
 
-            Paint text = new Paint ();
-            text.Color = Color.Black;
-            text.TextAlign = Paint.Align.Center;
-            text.AntiAlias = true;
-            text.TextSize = 30;
-            canvas.DrawText (FormatMilliseconds (selectedSliceValue > 0 ? selectedSliceValue : totalValue), centerX, centerY, text);
+            chartCenterText.Color = Color.Black;
+            chartCenterText.TextAlign = Paint.Align.Center;
+            chartCenterText.AntiAlias = true;
+            chartCenterText.TextSize = 30;
+            canvas.DrawText (FormatMilliseconds (selectedSliceValue > 0 ? selectedSliceValue : totalValue), centerX, centerY, chartCenterText);
         }
 
         public override bool OnTouchEvent (MotionEvent ev)

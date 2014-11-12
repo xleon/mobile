@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -28,15 +26,8 @@ namespace Toggl.Joey.UI.Fragments
         private ImageButton previousPeriod;
         private ImageButton nextPeriod;
         private TextView timePeriod;
-
         private SummaryReportView summaryReport;
         private int backDate;
-
-        public static readonly string[] HexColors = {
-            "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
-            "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
-            "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
-        };
 
         public ReportsFragment (int period)
         {
@@ -143,7 +134,7 @@ namespace Toggl.Joey.UI.Fragments
             foreach (var project in summaryReport.Projects) {
                 var slice = new PieSlice ();
                 slice.Value = project.TotalTime;
-                slice.Color = Color.ParseColor (HexColors [project.Color % HexColors.Length]); 
+                slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
                 pieChart.AddSlice (slice);
             }
             pieChart.Refresh ();
@@ -196,16 +187,10 @@ namespace Toggl.Joey.UI.Fragments
     public class ProjectListAdapter : BaseAdapter
     {
         List<ReportProject> dataView;
-        private View ColorSquare;
-        private TextView ProjectName;
-        private TextView ProjectDuration;
+        private View colorSquare;
+        private TextView projectName;
+        private TextView projectDuration;
         private int focus = -1;
-
-        public static readonly string[] HexColors = {
-            "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
-            "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
-            "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
-        };
 
         public ProjectListAdapter (List<ReportProject> dataView)
         {
@@ -225,25 +210,25 @@ namespace Toggl.Joey.UI.Fragments
         public override View GetView (int position, View convertView, ViewGroup parent)
         {
             var view = LayoutInflater.FromContext (parent.Context).Inflate (Resource.Layout.ReportsProjectListItem, parent, false);
-            ProjectName = view.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
-            ColorSquare = view.FindViewById<View> (Resource.Id.ColorSquare);
-            ProjectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
+            projectName = view.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
+            colorSquare = view.FindViewById<View> (Resource.Id.ColorSquare);
+            projectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
 
-            ProjectName.Text = dataView [position].Project;
-            ProjectDuration.Text = FormatMilliseconds (dataView [position].TotalTime);
+            projectName.Text = dataView [position].Project;
+            projectDuration.Text = FormatMilliseconds (dataView [position].TotalTime);
             var SquareDrawable = new GradientDrawable ();
             SquareDrawable.SetCornerRadius (5);
-            SquareDrawable.SetColor (Color.ParseColor (HexColors [dataView [position].Color % HexColors.Length]));
+            SquareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [dataView [position].Color % ProjectModel.HexColors.Length]));
 
             if (focus == position) {
                 SquareDrawable.SetShape (ShapeType.Oval);
             } else if (focus != -1 && focus != position) {
                 SquareDrawable.SetShape (ShapeType.Rectangle);
                 SquareDrawable.SetAlpha (150);
-                ProjectName.SetTextColor (Color.LightGray);
-                ProjectDuration.SetTextColor (Color.LightGray);
+                projectName.SetTextColor (Color.LightGray);
+                projectDuration.SetTextColor (Color.LightGray);
             }
-            ColorSquare.SetBackgroundDrawable (SquareDrawable);
+            colorSquare.SetBackgroundDrawable (SquareDrawable);
             return view;
         }
 

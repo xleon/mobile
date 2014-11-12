@@ -43,8 +43,8 @@ namespace Toggl.Phoebe.Net
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token != null) {
                 req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                        Convert.ToBase64String (Encoding.ASCII.GetBytes (
-                                                    string.Format ("{0}:api_token", authManager.Token))));
+                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
+                        string.Format ("{0}:api_token", authManager.Token))));
             }
             return req;
         }
@@ -94,7 +94,7 @@ namespace Toggl.Phoebe.Net
                            .ConfigureAwait (continueOnCapturedContext: false);
 
             var json = JObject.Parse (respData);
-//            Console.WriteLine(json.ToString ());
+
             var RowList = new List<ReportRowJson> ();
             foreach (var row in json["activity"]["rows"]) {
                 RowList.Add (new ReportRowJson () {

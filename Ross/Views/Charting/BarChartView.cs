@@ -148,6 +148,12 @@ namespace Toggl.Ross.Views.Charting
             return _reportView.ChartRowLabels [index];
         }
 
+        public string TimeForBarAtIndex (int index)
+        {
+            TimeSpan duration = TimeSpan.FromSeconds ( ActivityList [index].TotalTime);
+            return String.Format ("{0:0.00}", duration.TotalHours);
+        }
+
         #endregion
     }
 }

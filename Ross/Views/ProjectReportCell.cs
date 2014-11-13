@@ -5,7 +5,6 @@ using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views
 {
@@ -70,24 +69,19 @@ namespace Toggl.Ross.Views
         public override void SetSelected (bool selected, bool animated)
         {
             base.SetSelected (selected, animated);
-            circleView.Layer.CornerRadius = (selected) ? circleView.Frame.Width/2 : 5;
+
             if (NormalSelectionMode) {
                 projectTitleLabel.Alpha = (selected) ? 1f : 0.4f;
                 timeLabel.Alpha = (selected) ? 1f : 0.4f;
                 circleView.Alpha = (selected) ? 1f : 0.4f;
+                circleView.Layer.CornerRadius = (selected) ? circleView.Frame.Width/2 : 5;
             } else {
                 projectTitleLabel.Alpha = 1.0f;
                 timeLabel.Alpha = 1.0f;
                 circleView.Alpha = 1.0f;
+                circleView.Layer.CornerRadius = 5;
             }
             SetNeedsDisplay ();
-        }
-
-        private string FormatMilliseconds (long ms)
-        {
-            var timeSpan = TimeSpan.FromMilliseconds (ms);
-            decimal totalHours = Math.Floor ((decimal)timeSpan.TotalHours);
-            return String.Format ("{0} h {1} min", (int)totalHours, timeSpan.Minutes);
         }
     }
 }

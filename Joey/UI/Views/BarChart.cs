@@ -58,32 +58,32 @@ namespace Toggl.Joey.UI.Views
         }
 
 
-        public List<string> BarTitles {
+        public List<string> BarTitles
+        {
             get {
                 return barTitles;
-            }
-            set {
+            } set {
                 barTitles = value;
                 PostInvalidate ();
             }
         }
 
-        public List<string> LineTitles {
+        public List<string> LineTitles
+        {
             get {
                 return lineTitles;
-            }
-            set {
+            } set {
                 lineTitles = value;
                 PostInvalidate ();
             }
         }
 
 
-        public bool Append {
+        public bool Append
+        {
             get {
                 return append;
-            }
-            set {
+            } set {
                 append = value;
             }
         }
@@ -144,7 +144,7 @@ namespace Toggl.Joey.UI.Views
                 timeColumn + 4,
                 Height,
                 canvasPaint
-            
+
             );
             return tempBitmap;
         }
@@ -152,14 +152,15 @@ namespace Toggl.Joey.UI.Views
 
         public override void Draw (Canvas canvas)
         {
-            if (baseBitmap == null)
+            if (baseBitmap == null) {
                 baseBitmap = BaseBitmap ();
+            }
             canvas.DrawBitmap (baseBitmap, 0, 0, canvasPaint);
 
             float bottomPadding = 40;
             float usableWidth = Width - timeColumn;
             float ceilingSeconds = (float)CeilingValue * 3600F;
-            float loadAnimation = animating ? (float)(animationProgress / 100F) : 1;
+            float loadAnimation = animating ? (float) (animationProgress / 100F) : 1;
             canvasPath.Reset ();
 
             var rectangle = new Rect ();
@@ -170,9 +171,9 @@ namespace Toggl.Joey.UI.Views
                 if ((int)p.Value == 0) {
                     rectangle.Set (
                         timeColumn,
-                        (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
+                        (int) ((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
                         timeColumn + 8,
-                        (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
+                        (int) ((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                     );
                     canvasPaint.Color = emptyBarColor;
 
@@ -181,21 +182,21 @@ namespace Toggl.Joey.UI.Views
                 } else {
                     if (p.Billable < p.Value) {
                         float notBillable = p.Value - p.Billable;
-                        float totalWidth = (float)(usableWidth * (p.Value / ceilingSeconds));
-                        float billableWidth = (float)(usableWidth * (p.Billable / ceilingSeconds));
-                        float notBillableWidth = (float)(usableWidth * (notBillable / ceilingSeconds));
+                        float totalWidth = (float) (usableWidth * (p.Value / ceilingSeconds));
+                        float billableWidth = (float) (usableWidth * (p.Billable / ceilingSeconds));
+                        float notBillableWidth = (float) (usableWidth * (notBillable / ceilingSeconds));
                         if ((loadAnimation * totalWidth) > billableWidth) {
                             rectangle.Set (
                                 timeColumn,
-                                (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
-                                timeColumn + (int)(billableWidth),
-                                (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
+                                (int) ((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
+                                timeColumn + (int) (billableWidth),
+                                (int) ((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                             );
                             notBillableRectangle.Set (
                                 timeColumn,
-                                (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
-                                timeColumn + (int)(notBillableWidth * loadAnimation + billableWidth),
-                                (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
+                                (int) ((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
+                                timeColumn + (int) (notBillableWidth * loadAnimation + billableWidth),
+                                (int) ((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                             );
 
                             canvasPaint.Color = notBillableBarColor;
@@ -205,20 +206,20 @@ namespace Toggl.Joey.UI.Views
                         } else {
                             rectangle.Set (
                                 timeColumn,
-                                (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
-                                timeColumn + (int)(loadAnimation * totalWidth),
-                                (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
+                                (int) ((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
+                                timeColumn + (int) (loadAnimation * totalWidth),
+                                (int) ((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                             );
                             canvasPaint.Color = billableBarColor;
                             canvas.DrawRect (rectangle, canvasPaint);
                         }
                     } else {
-                        float totalWidth = (float)(usableWidth * (p.Value / ceilingSeconds));
+                        float totalWidth = (float) (usableWidth * (p.Value / ceilingSeconds));
                         rectangle.Set (
                             timeColumn,
-                            (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
-                            timeColumn + (int)(loadAnimation * totalWidth),
-                            (int)((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
+                            (int) ((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
+                            timeColumn + (int) (loadAnimation * totalWidth),
+                            (int) ((barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding)
                         );
                         canvasPaint.Color = billableBarColor;
                         canvas.DrawRect (rectangle, canvasPaint);
@@ -227,12 +228,12 @@ namespace Toggl.Joey.UI.Views
                     if (animationProgress == 100) {
                         canvasPaint.TextSize = 20;
                         var bounds = new Rect ();
-                        var barTitle = FormatSeconds (p.Value); 
+                        var barTitle = FormatSeconds (p.Value);
                         canvasPaint.GetTextBounds (barTitle, 0, barTitle.Length, bounds);
                         canvas.DrawText (
                             barTitle,
-                            timeColumn + 10 + (int)((usableWidth * (p.Value / ceilingSeconds))),
-                            (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding + barHeight / 2 + bounds.Height () / 2),
+                            timeColumn + 10 + (int) ((usableWidth * (p.Value / ceilingSeconds))),
+                            (int) ((barPadding * 2) * count + barPadding + barHeight * count + topPadding + barHeight / 2 + bounds.Height () / 2),
                             canvasPaint
                         );
                     }
@@ -242,7 +243,7 @@ namespace Toggl.Joey.UI.Views
                 canvas.DrawText (
                     barTitles [count],
                     0,
-                    (int)((barPadding * 2) * count + barPadding + barHeight * count) + barHeight / 2 + barPadding + topPadding,
+                    (int) ((barPadding * 2) * count + barPadding + barHeight * count) + barHeight / 2 + barPadding + topPadding,
                     canvasPaint
                 );
                 count++;
@@ -276,14 +277,15 @@ namespace Toggl.Joey.UI.Views
             animator.Start ();
         }
 
-        public int AnimationProgress {
+        public int AnimationProgress
+        {
             get {
                 return animationProgress;
-            }
-            set {
+            } set {
                 animationProgress = value;
-                if (value == 100)
+                if (value == 100) {
                     animating = false;
+                }
                 PostInvalidate ();
             }
         }

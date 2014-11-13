@@ -141,7 +141,7 @@ namespace Toggl.Joey.UI.Views
                 var slicePath = new Path ();
                 paint.Color = slice.Color;
                 if (indexSelected != count && listener != null && indexSelected != -1) {
-                    paint.Alpha = (int)(255 - sliceSlideOutAnimation * 127F);
+                    paint.Alpha = (int) (255 - sliceSlideOutAnimation * 127F);
                 }
 
                 currentSweep = ((float)slice.Value / (float)totalValue) * (360);
@@ -168,7 +168,7 @@ namespace Toggl.Joey.UI.Views
                             centerY + innerRadius - slicePadding
                         ),
                         loadAnimation * (currentAngle + currentSweep) + angleCorrection,
-                        loadAnimation * -(currentSweep)
+                        loadAnimation * - (currentSweep)
                     );
                 }
 
@@ -185,10 +185,10 @@ namespace Toggl.Joey.UI.Views
 
                 slice.Path = slicePath;
                 slice.Region = new Region (
-                    (int)(centerX - radius),
-                    (int)(centerY - radius),
-                    (int)(centerX + radius),
-                    (int)(centerY + radius)
+                    (int) (centerX - radius),
+                    (int) (centerY - radius),
+                    (int) (centerX + radius),
+                    (int) (centerY + radius)
                 );
                 canvas.DrawPath (slicePath, paint);
 
@@ -252,24 +252,25 @@ namespace Toggl.Joey.UI.Views
             animator.Start ();
         }
 
-        public float SlideAnimationProgress {
+        public float SlideAnimationProgress
+        {
             get {
                 return slideAnimationProgress;
-            }
-            set {
+            } set {
                 slideAnimationProgress = value;
                 PostInvalidate ();
             }
         }
 
-        public int AnimationProgress {
+        public int AnimationProgress
+        {
             get {
                 return animationProgress;
-            }
-            set {
+            } set {
                 animationProgress = value;
-                if (animationProgress == 360)
+                if (animationProgress == 360) {
                     loadAnimate = false;
+                }
                 PostInvalidate ();
             }
         }

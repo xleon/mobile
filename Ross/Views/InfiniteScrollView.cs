@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using MonoTouch.UIKit;
+using MonoTouch.CoreGraphics;
 
 namespace Toggl.Ross.Views
 {
@@ -112,28 +113,38 @@ namespace Toggl.Ross.Views
             }
 
             var currentView = visibleViews.Find (v => v.Frame.X.CompareTo ( ContentOffset.X) == 0);
+            var center = currentView.Center;
+
             var newReportView = InsertView ();
             var offSetY = ContentSize.Height;
             var frame = currentView.Frame;
             frame.Y += offSetY;
             newReportView.Frame = frame;
 
-            UIView.Animate (0.5, 0, UIViewAnimationOptions.CurveEaseOut,
+            UIView.Animate (0.6, 0.4, UIViewAnimationOptions.CurveEaseIn, () => { currentView.Alpha = 0.25f; }, null);
+
+            UIView.Animate (0.7, 0.5, UIViewAnimationOptions.CurveEaseIn,
             () => {
-                newReportView.Center = new PointF ( currentView.Center.X, currentView.Center.Y );
-                currentView.Center = new PointF ( currentView.Center.X, currentView.Center.Y - offSetY );
+                currentView.Transform = CGAffineTransform.MakeScale ( 0.75f, 0.75f);
+                currentView.Center = new PointF ( center.X, center.Y + 105);
+            }, null);
+
+            UIView.Animate (0.7, 0.6, UIViewAnimationOptions.CurveEaseInOut,
+            () => {
+                newReportView.Center = center;
             },() => {
-                var index = visibleViews.IndexOf (currentView);
-                visibleViews[index] = newReportView;
-                currentView.RemoveFromSuperview ();
-                if (currentView.IsClean) {
-                    currentView.StopReloadData ();
+                foreach (var item in visibleViews) {
+                    if (item.IsClean) {
+                        item.StopReloadData ();
+                    }
+                    item.RemoveFromSuperview();
                 }
+                visibleViews.Clear();
+                visibleViews.Add ( newReportView);
                 if (OnChangeReport != null) {
                     OnChangeReport.Invoke (this, new EventArgs ());
                 }
             });
-
         }
 
         private ReportView InsertView()

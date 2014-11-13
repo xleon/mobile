@@ -59,7 +59,8 @@ namespace Toggl.Joey.UI.Adapters
             authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 
-        public override int ViewTypeCount {
+        public override int ViewTypeCount
+        {
             get { return 2; }
         }
 
@@ -79,7 +80,7 @@ namespace Toggl.Joey.UI.Adapters
             if (GetItemViewType (position) == ViewTypeDrawerHeader) {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.MainDrawerListHeader, parent, false);
+                               Resource.Layout.MainDrawerListHeader, parent, false);
                     view.Tag = new HeaderViewHolder (view);
                 }
 
@@ -88,7 +89,7 @@ namespace Toggl.Joey.UI.Adapters
             } else {
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                        Resource.Layout.MainDrawerListItem, parent, false);
+                               Resource.Layout.MainDrawerListItem, parent, false);
                     view.Tag = new DrawerItemViewHolder (view);
                 }
 
@@ -99,7 +100,8 @@ namespace Toggl.Joey.UI.Adapters
             return view;
         }
 
-        public override int Count {
+        public override int Count
+        {
             get { return rowItems.Count + 1; } // + 1 is for header
         }
 
@@ -171,7 +173,7 @@ namespace Toggl.Joey.UI.Adapters
             private void HandleUserPropertyChanged (string prop)
             {
                 if (prop == UserModel.PropertyName
-                    || prop == UserModel.PropertyImageUrl) {
+                        || prop == UserModel.PropertyImageUrl) {
                     Rebind ();
                 }
             }

@@ -130,7 +130,7 @@ namespace Toggl.Joey.UI.Fragments
             pieChart.Reset ();
             var listener = new SliceListener ();
             pieChart.SetOnSliceClickedListener (listener);
-            pieChart.SliceClicked += OnSliceSelect; 
+            pieChart.SliceClicked += OnSliceSelect;
             foreach (var project in summaryReport.Projects) {
                 var slice = new PieSlice ();
                 slice.Value = project.TotalTime;
@@ -238,7 +238,8 @@ namespace Toggl.Joey.UI.Fragments
             NotifyDataSetChanged ();
         }
 
-        public override int Count {
+        public override int Count
+        {
             get {
                 return dataView.Count;
             }

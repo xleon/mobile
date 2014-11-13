@@ -69,7 +69,8 @@ namespace Toggl.Joey.UI.Fragments
             {
             }
 
-            public override int Count {
+            public override int Count
+            {
                 get { return PagesCount; }
             }
 

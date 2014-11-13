@@ -20,6 +20,8 @@ namespace Toggl.Ross.Views.Charting
         string TextForBarAtIndex (BarChart barChart, int index);
 
         string TimeIntervalAtIndex (int index);
+
+        string TimeForBarAtIndex (int index);
     }
 
     public class BarChart : UIView, IAnimationDelegate
@@ -51,7 +53,6 @@ namespace Toggl.Ross.Views.Charting
 
         UIView _barChartView;
         CATextLayer[] xAxisText = new CATextLayer[5];
-        float maxBarSize = 400;
 
         const float minBarScale = 0.005f;
         const int defaultOrder = 100;
@@ -142,13 +143,19 @@ namespace Toggl.Ross.Views.Charting
                 oneLayer.MoneyValue = DataSource.ValueForSecondaryBarAtIndex (this, i);
                 oneLayer.Position = new PointF ( 0, initialY + i * barHeight);
 
+                var timeTextLayer = (CATextLayer)oneLayer.Sublayers [BarLayer.TimeTextIndex];
+                timeTextLayer.String = DataSource.TimeForBarAtIndex (i);
+                timeTextLayer.Hidden = (string.Compare (timeTextLayer.String, "0.00", StringComparison.Ordinal) == 0);
+
                 string labelText;
                 if (barsCount > 12) {
                     labelText = (i % 3 == 0) ? DataSource.TextForBarAtIndex (this, i) : "";
-                    LabelFont = LabelFont.WithSize (10.0f);
+                    LabelFont = LabelFont.WithSize (9.0f);
+                    timeTextLayer.Opacity = 0.0f;
                 } else {
                     labelText = DataSource.TextForBarAtIndex (this, i);
-                    LabelFont = LabelFont.WithSize (12.0f);
+                    LabelFont = LabelFont.WithSize (10.0f);
+                    timeTextLayer.Opacity = (string.Compare (timeTextLayer.String, "0.00", StringComparison.Ordinal) == 0) ? 0.0f : 1.0f;
                 }
 
                 CATransaction.DisableActions = true;
@@ -156,9 +163,11 @@ namespace Toggl.Ross.Views.Charting
                 SizeF size = nsString.GetSizeUsingAttributes (new UIStringAttributes () { Font = LabelFont });
                 var textLayer = (CATextLayer)oneLayer.Sublayers [3];
                 textLayer.String = labelText;
-                textLayer.FontSize = (barsCount > 12) ? 9.0f : 12.0f;
+                textLayer.FontSize = (barsCount > 12) ? 9.0f : 10.0f;
                 textLayer.Bounds = new RectangleF (0, 0, size.Width, size.Height);
                 textLayer.Position = new PointF ( 0.0f, oneLayer.Bounds.Height/2);
+                timeTextLayer.Position = new PointF ( timeTextLayer.Position.X, oneLayer.Bounds.Height/2);
+                timeTextLayer.FontSize = textLayer.FontSize;
                 CATransaction.DisableActions = false;
             }
 
@@ -205,28 +214,41 @@ namespace Toggl.Ross.Views.Charting
             emptyBar.BackgroundColor = UIColor.Gray.CGColor;
             barLayer.AddSublayer (emptyBar);
 
-            var textLayer = new CATextLayer ();
-            textLayer.ContentsScale = UIScreen.MainScreen.Scale;
             CGFont font = CGFont.CreateWithFontName (LabelFont.Name);
+            SizeF size = ((NSString)"00.00:00").StringSize (LabelFont);
+
+            var textLayer = new CATextLayer () {
+                ContentsScale = UIScreen.MainScreen.Scale,
+                FontSize = 10.0f,
+                AnchorPoint = new PointF (0.0f, 0.5f),
+                AlignmentMode = CATextLayer.AlignmentLeft,
+                BackgroundColor = UIColor.Clear.CGColor,
+                ForegroundColor = LabelColor.CGColor
+            };
+            barLayer.AddSublayer (textLayer);
+
+            var timeTextLayer = new CATextLayer () {
+                ContentsScale = UIScreen.MainScreen.Scale,
+                FontSize = 10.0f,
+                AnchorPoint = new PointF (0.0f, 0.5f),
+                AlignmentMode = CATextLayer.AlignmentLeft,
+                BackgroundColor = UIColor.Clear.CGColor,
+                ForegroundColor = SecondaryBarColor.CGColor
+            };
+            barLayer.AddSublayer (timeTextLayer);
 
             if (font != null) {
                 textLayer.SetFont (font);
+                timeTextLayer.SetFont (font);
                 font.Dispose ();
             }
-
-            textLayer.FontSize = LabelFont.PointSize;
-            textLayer.AnchorPoint = new PointF ( 0.0f, 0.5f);
-            textLayer.AlignmentMode = CATextLayer.AlignmentLeft;
-            textLayer.BackgroundColor = UIColor.Clear.CGColor;
-            textLayer.ForegroundColor = LabelColor.CGColor;
-
-            SizeF size = ((NSString)"0").StringSize (LabelFont);
 
             CATransaction.DisableActions = true;
             textLayer.Bounds = new RectangleF (new PointF (0, 0), size);
             textLayer.Position = mainBar.Position;
+            timeTextLayer.Bounds = new RectangleF (new PointF (0, 0), size);
+            timeTextLayer.Position = new PointF ( mainBar.Position.X + 5.0f, mainBar.Position.Y);
             CATransaction.DisableActions = false;
-            barLayer.AddSublayer (textLayer);
 
             return barLayer;
         }
@@ -273,6 +295,7 @@ namespace Toggl.Ross.Views.Charting
         public const int SecondaryBarIndex = 1;
         public const int EmptyBarIndex = 2;
         public const int DateTextIndex = 3;
+        public const int TimeTextIndex = 4;
 
         private float _timeValue;
 
@@ -292,6 +315,7 @@ namespace Toggl.Ross.Views.Charting
                 if (mainBar != null ) {
                     var xScale = (_timeValue > minBarScale) ? _timeValue : minBarScale;
                     CreateBarAnimationForKeyPath (mainBar, "transform.scale.x", xScale, null);
+                    CreateBarAnimationForKeyPath (Sublayers [TimeTextIndex], "position.x", mainBar.Bounds.Width * xScale + 5.0f + mainBar.Position.X, null);
                 }
                 Sublayers [EmptyBarIndex].Opacity = (_timeValue > 0) ? 0.0f : 1.0f;
             }
@@ -377,7 +401,6 @@ namespace Toggl.Ross.Views.Charting
                 }
             }
         }
-
 
         [Export ("needsDisplayForKey:")]
         static bool NeedsDisplayForKey (NSString key)

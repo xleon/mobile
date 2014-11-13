@@ -119,9 +119,9 @@ namespace Toggl.Joey.UI.Fragments
                 bar.Name = row.StartTime.ToShortTimeString ();
                 barChart.AddBar (bar);
             }
-            barChart.CeilingValue = summaryReport.GetCeilingSeconds ();
-            barChart.SetBarTitles (summaryReport.ChartRowLabels ());
-            barChart.SetLineTitles (summaryReport.ChartTimeLabels ());
+            barChart.CeilingValue = summaryReport.MaxTotal;
+            barChart.BarTitles = summaryReport.ChartRowLabels;
+            barChart.LineTitles = summaryReport.ChartTimeLabels;
             barChart.Refresh ();
         }
 

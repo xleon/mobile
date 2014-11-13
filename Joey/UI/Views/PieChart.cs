@@ -4,7 +4,6 @@ using Android.Content;
 using Android.Views;
 using Android.Graphics;
 using Android.Util;
-using Android.Widget;
 using Android.Animation;
 using Android.Text;
 

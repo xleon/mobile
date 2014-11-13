@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
 using XPlatUtils;
-using System.Threading;
 
 namespace Toggl.Phoebe.Net
 {
@@ -22,7 +22,6 @@ namespace Toggl.Phoebe.Net
         {
             reportsv2Url = new Uri (reportsApiUrl, "v2/");
         }
-
 
         private HttpClient MakeHttpClient ()
         {
@@ -58,9 +57,7 @@ namespace Toggl.Phoebe.Net
                 var httpResp = await httpClient.SendAsync (httpReq, token)
                                .ConfigureAwait (continueOnCapturedContext: false);
                 reqTimer.Stop ();
-
-                PrepareResponse (httpResp, reqTimer.Elapsed);
-
+                //TODO: ask taavi about: PrepareResponse (httpResp, reqTimer.Elapsed);
                 return httpResp;
             }
         }
@@ -86,8 +83,6 @@ namespace Toggl.Phoebe.Net
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
-
-            Debug.WriteLine (url);
 
             var httpResp = await SendAsync (httpReq, token)
                            .ConfigureAwait (continueOnCapturedContext: false);

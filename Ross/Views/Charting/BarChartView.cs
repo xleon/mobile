@@ -60,18 +60,6 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        readonly UIStringAttributes hoursAttrs = new UIStringAttributes {
-            ForegroundColor = UIColor.FromRGB (0xBB, 0xBB, 0xBB),
-            BackgroundColor = UIColor.Clear,
-            Font = UIFont.FromName ("HelveticaNeue", 9f)
-        };
-
-        readonly UIStringAttributes topLabelAttrs = new UIStringAttributes {
-            ForegroundColor = UIColor.FromRGB (0x87, 0x87, 0x87),
-            BackgroundColor = UIColor.Clear,
-            Font = UIFont.FromName ("HelveticaNeue", 12f)
-        };
-
         public BarChartView (RectangleF frame) : base (frame)
         {
             ActivityList = new List<ReportActivity> ();
@@ -120,13 +108,6 @@ namespace Toggl.Ross.Views.Charting
         UILabel moneyLabel;
         UILabel noProjectTitleLabel;
         UILabel noProjectTextLabel;
-        UIView dragHelperView;
-
-        UIPanGestureRecognizer panGesture;
-        UIDynamicAnimator animator;
-        UISnapBehavior snap;
-        RectangleF snapRect;
-        PointF snapPoint;
 
         protected override void Dispose (bool disposing)
         {

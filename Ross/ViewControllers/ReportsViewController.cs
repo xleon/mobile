@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Drawing;
 using GoogleAnalytics.iOS;
+using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using MonoTouch.CoreGraphics;
-using System.Diagnostics;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -24,13 +23,14 @@ namespace Toggl.Ross.ViewControllers
                 if (_zoomLevel == value) {
                     return;
                 }
+                if (_zoomLevel == value) {
+                    return;
+                }
                 _zoomLevel = value;
-
-                /*
-                centerView.ZoomLevel =
-                    leftView.ZoomLevel =
-                        rightView.ZoomLevel = _zoomLevel;
-                */
+                // temporal solution
+                scrollView.VisibleReport.ZoomLevel = _zoomLevel;
+                scrollView.VisibleReport.IsClean = true;
+                scrollView.VisibleReport.LoadData ();
                 ChangeReportState ();
             }
         }
@@ -39,7 +39,7 @@ namespace Toggl.Ross.ViewControllers
         private DateSelectorView dateSelectorView;
         private TopBorder topBorder;
         private SummaryReportView dataSource;
-        InfiniteScrollView scrollView;
+        private InfiniteScrollView scrollView;
         private int _timeSpaceIndex;
 
         const float padding  = 24;
@@ -82,9 +82,7 @@ namespace Toggl.Ross.ViewControllers
             topBorder = new TopBorder (new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, 2.0f));
 
             dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
-            dateSelectorView.LeftArrowPressed += (sender, e) => {
-                scrollView.SetPageIndex ( -1, true);
-            };
+            dateSelectorView.LeftArrowPressed += (sender, e) => scrollView.SetPageIndex (-1, true);
             dateSelectorView.RightArrowPressed += (sender, e) => {
                 if ( _timeSpaceIndex >= 1) { return; }
                 scrollView.SetPageIndex ( 1, true);
@@ -126,8 +124,6 @@ namespace Toggl.Ross.ViewControllers
         {
             dataSource.Period = _zoomLevel;
             dateSelectorView.DateContent = FormattedIntervalDate (_timeSpaceIndex);
-            //centerView.ReloadData ();
-            Debug.WriteLine ("create!");
         }
 
         private string FormattedIntervalDate (int backDate)

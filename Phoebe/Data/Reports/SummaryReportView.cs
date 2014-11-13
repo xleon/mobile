@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using System.Threading;
 
 namespace Toggl.Phoebe.Data.Reports
 {
@@ -54,25 +54,29 @@ namespace Toggl.Phoebe.Data.Reports
 
         private async Task FetchData ()
         {
-            dataObject = createEmptyReport ();
+            dataObject = CreateEmptyReport ();
             cts = new CancellationTokenSource();
             try {
                 _isError = false;
                 var client = ServiceContainer.Resolve<IReportsClient> ();
                 var json = await client.GetReports (startDate, endDate, (long)workspaceId, cts.Token);
                 dataObject = json.Import ();
-            } catch (Exception exc) {
-                _isError = !cts.IsCancellationRequested;
-                var msg = (cts.IsCancellationRequested) ? "Cancelation requested by user" : "Failed to fetch reports.";
+            } catch ( Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
-                log.Error (Tag, exc, msg);
+                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
+                    var msg = (cts.IsCancellationRequested) ? "Fetch reports cancelation requested by user" : "Failed to fetch reports. Network failure.";
+                    log.Info (Tag, exc, msg);
+                } else {
+                    log.Warning (Tag, exc, "Failed to fetch reports.");
+                    _isError = true;
+                }
             } finally {
-                calculateReportData ();
+                CalculateReportData ();
                 cts.Dispose ();
             }
         }
 
-        private void calculateReportData()
+        private void CalculateReportData()
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
@@ -247,7 +251,7 @@ namespace Toggl.Phoebe.Data.Reports
             return formattedString;
         }
 
-        private ReportData createEmptyReport()
+        private ReportData CreateEmptyReport()
         {
             var activityList = new List<ReportActivity> ();
 

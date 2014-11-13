@@ -11,7 +11,7 @@ namespace Toggl.Joey.UI.Views
 {
     public class BarChart : View
     {
-        public double CeilingValue;
+        public int CeilingValue;
         private List<BarItem> bars = new List<BarItem> ();
         private List<String> barTitles = new List<String> ();
         private List<String> lineTitles = new List<String> ();
@@ -57,26 +57,27 @@ namespace Toggl.Joey.UI.Views
             StartAnimate ();
         }
 
-        public void SetBarTitles (List<String> titles)
-        {
-            barTitles = titles;
+
+        public List<string> BarTitles {
+            get {
+                return barTitles;
+            }
+            set {
+                barTitles = value;
+                PostInvalidate ();
+            }
         }
 
-        public void SetLineTitles (List<String> titles)
-        {
-            lineTitles = titles;
+        public List<string> LineTitles {
+            get {
+                return lineTitles;
+            }
+            set {
+                lineTitles = value;
+                PostInvalidate ();
+            }
         }
 
-        public void SetBars (List<BarItem> points)
-        {
-            bars = points;
-            PostInvalidate ();
-        }
-
-        public List<BarItem> GetBars ()
-        {
-            return bars;
-        }
 
         public bool Append {
             get {
@@ -157,6 +158,7 @@ namespace Toggl.Joey.UI.Views
 
             float bottomPadding = 40;
             float usableWidth = Width - timeColumn;
+            float ceilingSeconds = (float)CeilingValue * 3600F;
             float loadAnimation = animating ? (float)(animationProgress / 100F) : 1;
             canvasPath.Reset ();
 
@@ -179,9 +181,9 @@ namespace Toggl.Joey.UI.Views
                 } else {
                     if (p.Billable < p.Value) {
                         float notBillable = p.Value - p.Billable;
-                        float totalWidth = (float)(usableWidth * (p.Value / CeilingValue));
-                        float billableWidth = (float)(usableWidth * (p.Billable / CeilingValue));
-                        float notBillableWidth = (float)(usableWidth * (notBillable / CeilingValue));
+                        float totalWidth = (float)(usableWidth * (p.Value / ceilingSeconds));
+                        float billableWidth = (float)(usableWidth * (p.Billable / ceilingSeconds));
+                        float notBillableWidth = (float)(usableWidth * (notBillable / ceilingSeconds));
                         if ((loadAnimation * totalWidth) > billableWidth) {
                             rectangle.Set (
                                 timeColumn,
@@ -211,7 +213,7 @@ namespace Toggl.Joey.UI.Views
                             canvas.DrawRect (rectangle, canvasPaint);
                         }
                     } else {
-                        float totalWidth = (float)(usableWidth * (p.Value / CeilingValue));
+                        float totalWidth = (float)(usableWidth * (p.Value / ceilingSeconds));
                         rectangle.Set (
                             timeColumn,
                             (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding),
@@ -229,7 +231,7 @@ namespace Toggl.Joey.UI.Views
                         canvasPaint.GetTextBounds (barTitle, 0, barTitle.Length, bounds);
                         canvas.DrawText (
                             barTitle,
-                            timeColumn + 10 + (int)((usableWidth * (p.Value / CeilingValue))),
+                            timeColumn + 10 + (int)((usableWidth * (p.Value / ceilingSeconds))),
                             (int)((barPadding * 2) * count + barPadding + barHeight * count + topPadding + barHeight / 2 + bounds.Height () / 2),
                             canvasPaint
                         );

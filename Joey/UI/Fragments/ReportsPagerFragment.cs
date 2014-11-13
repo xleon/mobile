@@ -38,7 +38,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnActivityCreated (savedInstanceState);
             viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
-            viewPager.CurrentItem = PagesCount/2;
+            viewPager.CurrentItem = PagesCount / 2;
         }
 
         private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
@@ -63,7 +63,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private class MainPagerAdapter : FragmentPagerAdapter
         {
-            public int Current = PagesCount/2;
+            public int Current = PagesCount / 2;
 
             public MainPagerAdapter (FragmentManager fm) : base (fm)
             {
@@ -75,7 +75,7 @@ namespace Toggl.Joey.UI.Fragments
 
             public override Fragment GetItem (int position)
             {
-                return new ReportsFragment (PagesCount/2 - position);
+                return new ReportsFragment (position - PagesCount / 2);
             }
         }
     }

@@ -135,7 +135,7 @@ namespace Toggl.Ross.Views.Charting
             donutChart.DidSelectSliceAtIndex += (sender, e) => {
                 NormalSelectionMode = true;
                 var selectedProject = DonutProjectList [e.Index];
-                var idx = TableProjectList.FindIndex (p => areEquals ( p, selectedProject));
+                var idx = TableProjectList.FindIndex (p => AreEquals ( p, selectedProject));
                 projectTableView.SelectRow (NSIndexPath.FromRowSection (idx, 0), true, UITableViewScrollPosition.Top);
                 totalTimeLabel.Text = selectedProject.FormattedTotalTime;
                 totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
@@ -143,12 +143,12 @@ namespace Toggl.Ross.Views.Charting
             };
             donutChart.DidDeselectSliceAtIndex += (sender, e) => {
                 var selectedProject = DonutProjectList [e.Index];
-                var idx = TableProjectList.FindIndex (p => areEquals ( p, selectedProject));
+                var idx = TableProjectList.FindIndex (p => AreEquals ( p, selectedProject));
                 projectTableView.DeselectRow (NSIndexPath.FromRowSection (idx, 0), true);
             };
             donutChart.DidDeselectAllSlices += (sender, e) => DeselectAllProjects ();
 
-            projectTableView = new UITableView (new RectangleF (0, donutChart.Frame.Height, frame.Width, frame.Height - donutChart.Frame.Height - 20));
+            projectTableView = new UITableView (new RectangleF (0, donutChart.Frame.Height, frame.Width, frame.Height - donutChart.Frame.Height));
             projectTableView.RegisterClassForCellReuse (typeof (ProjectReportCell), ProjectReportCell.ProjectReportCellId);
             projectTableView.Source = new ProjectListSource (this);
             projectTableView.RowHeight = lineStroke;
@@ -157,6 +157,7 @@ namespace Toggl.Ross.Views.Charting
             insets.Right -= 3.0f;
             projectTableView.ScrollIndicatorInsets = insets;
             Add (projectTableView);
+            DrawBottomBoders (projectTableView);
 
             totalTimeLabel = new UILabel (new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20));
             totalTimeLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
@@ -198,7 +199,7 @@ namespace Toggl.Ross.Views.Charting
         {
             if ( donutChart.UserInteractionEnabled) {
                 var selectedProject = TableProjectList [index];
-                var idx = DonutProjectList.FindIndex (p => areEquals ( p, selectedProject));
+                var idx = DonutProjectList.FindIndex (p => AreEquals ( p, selectedProject));
                 if (idx != -1) {
                     donutChart.SetSliceSelectedAtIndex (idx);
                 } else {
@@ -251,9 +252,33 @@ namespace Toggl.Ross.Views.Charting
             return shapeLayer;
         }
 
-        private bool areEquals ( ReportProject a, ReportProject b)
+        private bool AreEquals ( ReportProject a, ReportProject b)
         {
             return false || a.TotalTime == b.TotalTime && string.Compare (a.Project, b.Project, StringComparison.Ordinal) == 0 && a.Color == b.Color;
+        }
+
+        private void DrawBottomBoders ( UIView view)
+        {
+            var mask = new CAGradientLayer ();
+            mask.Frame = new RectangleF (0, 0, view.Frame.Width, 10);
+            mask.Colors = new [] { UIColor.White.CGColor, UIColor.Clear.CGColor };
+
+            var topBoder = new UIView ( new RectangleF ( view.Frame.X, view.Frame.Y, view.Frame.Width, 10));
+            topBoder.BackgroundColor = UIColor.White;
+            topBoder.UserInteractionEnabled = false;
+            topBoder.Layer.Mask = mask;
+
+            var maskInverted = new CAGradientLayer ();
+            maskInverted.Frame = new RectangleF (0, 0, view.Frame.Width, 20);
+            maskInverted.Colors = new [] { UIColor.Clear.CGColor, UIColor.White.CGColor};
+
+            var bottomBoder = new UIView ( new RectangleF ( view.Frame.X, view.Frame.Y + view.Frame.Height - 20, view.Frame.Width, 20));
+            bottomBoder.BackgroundColor = UIColor.White;
+            bottomBoder.UserInteractionEnabled = false;
+            bottomBoder.Layer.Mask = maskInverted;
+
+            Add (topBoder);
+            Add (bottomBoder);
         }
 
         #region Pie Datasource

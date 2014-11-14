@@ -137,6 +137,7 @@ namespace Toggl.Ross.Views.Charting
                 var selectedProject = DonutProjectList [e.Index];
                 var idx = TableProjectList.FindIndex (p => AreEquals ( p, selectedProject));
                 projectTableView.SelectRow (NSIndexPath.FromRowSection (idx, 0), true, UITableViewScrollPosition.Top);
+                ((ProjectListSource)projectTableView.Source).LastSelectedIndex = idx;
                 totalTimeLabel.Text = selectedProject.FormattedTotalTime;
                 totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
                 moneyLabel.Alpha = 0.0f;
@@ -198,6 +199,7 @@ namespace Toggl.Ross.Views.Charting
         public void SelectProjectAt (int index)
         {
             if ( donutChart.UserInteractionEnabled) {
+                NormalSelectionMode = true;
                 var selectedProject = TableProjectList [index];
                 var idx = DonutProjectList.FindIndex (p => AreEquals ( p, selectedProject));
                 if (idx != -1) {
@@ -208,7 +210,6 @@ namespace Toggl.Ross.Views.Charting
                 totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
                 totalTimeLabel.Text = selectedProject.FormattedTotalTime;
                 moneyLabel.Alpha = 0.0f;
-                NormalSelectionMode = true;
             }
         }
 
@@ -234,6 +235,7 @@ namespace Toggl.Ross.Views.Charting
             totalTimeLabel.Text = _reportView.TotalGrand;
             totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
             moneyLabel.Alpha = 1.0f;
+            ((ProjectListSource)projectTableView.Source).LastSelectedIndex = -1;
         }
 
         protected override void Dispose (bool disposing)
@@ -309,11 +311,17 @@ namespace Toggl.Ross.Views.Charting
         internal class ProjectListSource : UITableViewSource
         {
             private readonly DonutChartView _owner;
-            private int _lastSelectedIndex = -1;
+
+            public int LastSelectedIndex
+            {
+                get;
+                set;
+            }
 
             public ProjectListSource (DonutChartView pieChart)
             {
                 _owner = pieChart;
+                LastSelectedIndex = -1;
             }
 
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
@@ -331,12 +339,11 @@ namespace Toggl.Ross.Views.Charting
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                if (indexPath.Row != _lastSelectedIndex) {
+                if (indexPath.Row != LastSelectedIndex) {
                     _owner.SelectProjectAt (indexPath.Row);
-                    _lastSelectedIndex = indexPath.Row;
+                    LastSelectedIndex = indexPath.Row;
                 } else {
                     _owner.DeselectAllProjects ();
-                    _lastSelectedIndex = -1;
                 }
             }
 

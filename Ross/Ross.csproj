@@ -92,7 +92,8 @@
     <ConsolePause>false</ConsolePause>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <BuildIpa>true</BuildIpa>
-    <CodesignKey>iPhone Distribution: Angel Anton Yebra (XE5J683Z33)</CodesignKey>
+    <CodesignProvision>Automatic:AdHoc</CodesignProvision>
+    <CodesignKey>iPhone Distribution</CodesignKey>
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
@@ -104,8 +105,6 @@
         <Command type="AfterBuild" command="upload_dsym_bugsnag.sh ${ProjectDir} ${TargetDir}" workingdir="${ProjectDir}" />
       </CustomCommands>
     </CustomCommands>
-    <IpaPackageName>
-    </IpaPackageName>
     <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">

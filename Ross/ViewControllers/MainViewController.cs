@@ -49,6 +49,13 @@ namespace Toggl.Ross.ViewControllers
             ResetRootViewController ();
         }
 
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            Application.MarkLaunched ();
+        }
+
         public override void ViewWillDisappear (bool animated)
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();

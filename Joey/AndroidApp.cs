@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Android.App;
 using Android.Content;
 using Android.Net;
@@ -24,7 +25,8 @@ namespace Toggl.Joey
                Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo
     {
-        bool componentsInitialized = false;
+        private bool componentsInitialized = false;
+        private Stopwatch startTimeMeasure = Stopwatch.StartNew();
 
         public AndroidApp () : base ()
         {
@@ -82,6 +84,16 @@ namespace Toggl.Joey
             ServiceContainer.Resolve<SyncMonitor> ();
             ServiceContainer.Resolve<GcmRegistrationManager> ();
             ServiceContainer.Resolve<AndroidNotificationManager> ();
+        }
+
+        public void MarkLaunched()
+        {
+            if (!startTimeMeasure.IsRunning) {
+                return;
+            }
+
+            startTimeMeasure.Stop ();
+            ServiceContainer.Resolve<ITracker> ().SendTiming (TimedEvent.AppInit, startTimeMeasure.Elapsed);
         }
 
         public override void OnTrimMemory (TrimMemory level)

@@ -127,6 +127,7 @@ namespace Toggl.Joey.UI.Activities
                     app.InitializeComponents ();
                 }, 5000);
             }
+            app.MarkLaunched ();
         }
 
         protected override void OnPause ()

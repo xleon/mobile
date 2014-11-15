@@ -53,6 +53,7 @@
     <Compile Include="Net\**\*.cs" />
     <Compile Include="Properties\**\*.cs" />
     <Compile Include="Threading\**\*.cs" />
+    <Compile Include="Analytics\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

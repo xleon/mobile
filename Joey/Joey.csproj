@@ -128,6 +128,7 @@
     <Compile Include="UI\Views\LogTimeEntryItem.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
+    <Compile Include="Analytics\Tracker.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -559,6 +560,7 @@
     <Folder Include="Resources\anim\" />
     <Folder Include="UI\Text\" />
     <Folder Include="Resources\xml\" />
+    <Folder Include="Analytics\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

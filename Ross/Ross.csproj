@@ -290,6 +290,7 @@
     <Compile Include="Views\TagChipCache.cs" />
     <Compile Include="ViewControllers\NewClientViewController.cs" />
     <Compile Include="Views\AuthErrorAlert.cs" />
+    <Compile Include="Analytics\Tracker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />
@@ -311,6 +312,7 @@
     <Folder Include="DataSources\" />
     <Folder Include="Views\" />
     <Folder Include="Net\" />
+    <Folder Include="Analytics\" />
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />

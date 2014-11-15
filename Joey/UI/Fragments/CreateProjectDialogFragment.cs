@@ -1,12 +1,14 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Text;
 using Android.Widget;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using System.Threading.Tasks;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -121,6 +123,8 @@ namespace Toggl.Joey.UI.Fragments
             base.OnStart ();
             positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
             SyncButton ();
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
         private void OnNameEditTextTextChanged (object sender, TextChangedEventArgs e)

@@ -530,7 +530,6 @@
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\xml\Analytics.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />
@@ -559,7 +558,6 @@
     <Folder Include="Assets\fonts\" />
     <Folder Include="Resources\anim\" />
     <Folder Include="UI\Text\" />
-    <Folder Include="Resources\xml\" />
     <Folder Include="Analytics\" />
   </ItemGroup>
   <ItemGroup>

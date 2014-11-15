@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Widget;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -171,6 +172,8 @@ namespace Toggl.Joey.UI.Fragments
 
             hasStarted = true;
             SelectInitialTags ();
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";
         }
 
         private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)

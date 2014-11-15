@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using Android.App;
 using Android.Content;
-using Android.Gms.Analytics;
 using Android.Net;
 using Bugsnag;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.Analytics;
 using Toggl.Joey.Data;
 using Toggl.Joey.Net;
 
@@ -60,16 +61,7 @@ namespace Toggl.Joey
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };
             });
-            ServiceContainer.Register<Tracker> (delegate {
-                var ga = GoogleAnalytics.GetInstance (this);
-                #if DEBUG
-                ga.SetDryRun (true);
-                #endif
-
-                var tracker = ga.NewTracker (Resource.Xml.Analytics);
-                tracker.Set ("&tid", Build.GoogleAnalyticsId);
-                return tracker;
-            });
+            ServiceContainer.Register<ITracker> (() => new Tracker (this));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
         }
 

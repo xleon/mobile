@@ -14,9 +14,6 @@ namespace Toggl.Phoebe.Analytics
 
         public BaseTracker ()
         {
-            PlanDimensionIndex = 1;
-            ExperimentDimensionIndex = 2;
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
@@ -49,9 +46,6 @@ namespace Toggl.Phoebe.Analytics
             }
         }
 
-        public int ExperimentDimensionIndex { get; set; }
-        public int PlanDimensionIndex { get; set; }
-
         public void SendTiming (TimedEvent timedEvent, TimeSpan duration, string label = null)
         {
             string category;
@@ -79,7 +73,7 @@ namespace Toggl.Phoebe.Analytics
 
         public string RunningExperiment
         {
-            set { SetCustomDimension (ExperimentDimensionIndex, value); }
+            set { SetCustomDimension (Build.GoogleAnalyticsExperimentIndex, value); }
         }
 
         private Plan UserPlan
@@ -106,7 +100,7 @@ namespace Toggl.Phoebe.Analytics
                 }
 
                 userPlan = value;
-                SetCustomDimension (PlanDimensionIndex, planName);
+                SetCustomDimension (Build.GoogleAnalyticsPlanIndex, planName);
             }
         }
 

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Drawing;
-using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -41,9 +41,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Client Selection View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
         }
 
         private void OnNavigationBarAddClicked (object sender, EventArgs e)

@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using Bugsnag;
-using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Ross.Analytics;
 using Toggl.Ross.Data;
 using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
@@ -47,10 +48,7 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<IBugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
 
-            #if DEBUG
-            GAI.SharedInstance.DryRun = true;
-            #endif
-            ServiceContainer.Resolve<IGAITracker> ();
+            ServiceContainer.Resolve<ITracker> ();
 
             return true;
         }
@@ -92,8 +90,7 @@ namespace Toggl.Ross
                     #endif
                 };
             });
-            ServiceContainer.Register<IGAITracker> (
-                () => GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId));
+            ServiceContainer.Register<ITracker> (() => new Tracker());
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();

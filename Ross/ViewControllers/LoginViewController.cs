@@ -1,8 +1,8 @@
 ﻿using System;
 using Cirrious.FluentLayouts.Touch;
-using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -112,9 +112,7 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidAppear (animated);
             emailTextField.BecomeFirstResponder ();
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Login View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Login";
         }
 
         private bool HandleShouldReturn (UITextField textField)

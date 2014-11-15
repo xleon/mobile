@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
-using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -170,9 +170,7 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidAppear (animated);
             nameTextField.BecomeFirstResponder ();
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "New Project View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Toggl.Ross.Analytics
             tracker = GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId);
         }
 
-        public override void StartNewSession ()
+        protected override void StartNewSession ()
         {
             var builder = GAIDictionaryBuilder.CreateAppView ();
             builder.Set ("start", GAIConstants.SessionControl);

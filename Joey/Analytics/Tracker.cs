@@ -25,7 +25,7 @@ namespace Toggl.Joey.Analytics
             tracker.EnableExceptionReporting (false);
         }
 
-        public override void StartNewSession ()
+        protected override void StartNewSession ()
         {
             var builder = new HitBuilders.ScreenViewBuilder ();
             builder.SetNewSession ();

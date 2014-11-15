@@ -55,7 +55,7 @@ namespace Toggl.Phoebe.Net
             User = rows.FirstOrDefault ();
         }
 
-        private async Task<AuthResult> Authenticate (Func<Task<UserJson>> getUser)
+        private async Task<AuthResult> Authenticate (Func<Task<UserJson>> getUser, AuthChangeReason reason)
         {
             if (IsAuthenticated) {
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
@@ -122,7 +122,7 @@ namespace Toggl.Phoebe.Net
                 IsAuthenticated = true;
 
                 ServiceContainer.Resolve<MessageBus> ().Send (
-                    new AuthChangedMessage (this));
+                    new AuthChangedMessage (this, reason));
             } finally {
                 IsAuthenticating = false;
             }
@@ -136,7 +136,7 @@ namespace Toggl.Phoebe.Net
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with email ({0}).", username);
-            return Authenticate (() => client.GetUser (username, password));
+            return Authenticate (() => client.GetUser (username, password), AuthChangeReason.Login);
         }
 
         public Task<AuthResult> AuthenticateWithGoogle (string accessToken)
@@ -145,7 +145,7 @@ namespace Toggl.Phoebe.Net
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with Google access token.");
-            return Authenticate (() => client.GetUser (accessToken));
+            return Authenticate (() => client.GetUser (accessToken), AuthChangeReason.Login);
         }
 
         public Task<AuthResult> Signup (string email, string password)
@@ -158,7 +158,7 @@ namespace Toggl.Phoebe.Net
                 Email = email,
                 Password = password,
                 Timezone = Time.TimeZoneId,
-            }));
+            }), AuthChangeReason.Signup);
         }
 
         public Task<AuthResult> SignupWithGoogle (string accessToken)
@@ -170,7 +170,7 @@ namespace Toggl.Phoebe.Net
             return Authenticate (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
-            }));
+            }), AuthChangeReason.Signup);
         }
 
         public void Forget ()
@@ -191,7 +191,7 @@ namespace Toggl.Phoebe.Net
             User = null;
 
             ServiceContainer.Resolve<MessageBus> ().Send (
-                new AuthChangedMessage (this));
+                new AuthChangedMessage (this, AuthChangeReason.Logout));
         }
 
         private void OnDataChange (DataChangeMessage msg)

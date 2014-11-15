@@ -1,13 +1,43 @@
 ﻿using System;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Analytics
 {
-    public abstract class BaseTracker : ITracker
+    public abstract class BaseTracker : ITracker, IDisposable
     {
+        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
+
         public BaseTracker ()
         {
             PlanDimensionIndex = 1;
             ExperimentDimensionIndex = 2;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
+        }
+
+        ~BaseTracker ()
+        {
+            Dispose (false);
+        }
+
+        public void Dispose()
+        {
+            Dispose (true);
+            GC.SuppressFinalize (this);
+        }
+
+        protected virtual void Dispose (bool disposing)
+        {
+            if (disposing) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+
+                if (subscriptionAuthChanged != null) {
+                    bus.Unsubscribe (subscriptionAuthChanged);
+                    subscriptionAuthChanged = null;
+                }
+            }
         }
 
         public int ExperimentDimensionIndex { get; set; }
@@ -65,11 +95,18 @@ namespace Toggl.Phoebe.Analytics
             }
         }
 
-        public abstract void StartNewSession ();
-
         public abstract string CurrentScreen { set; }
 
+        protected abstract void StartNewSession ();
         protected abstract void SendTiming (long elapsedMilliseconds, string category, string variable, string label);
         protected abstract void SetCustomDimension (int idx, string value);
+
+        private void OnAuthChanged (AuthChangedMessage msg)
+        {
+            // Start a new session whenever the user changes, exception being signup where the user just created an account
+            if (msg.Reason != AuthChangeReason.Signup) {
+                StartNewSession ();
+            }
+        }
     }
 }

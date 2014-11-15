@@ -138,9 +138,6 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\portable-net45+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="GoogleAnalytics.iOS">
-      <HintPath>..\Components\googleanalytics-3.0.3.4\lib\ios\GoogleAnalytics.iOS.dll</HintPath>
-    </Reference>
     <Reference Include="Bugsnag">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoTouch10\Bugsnag.dll</HintPath>
     </Reference>
@@ -149,6 +146,9 @@
     </Reference>
     <Reference Include="Google.Plus">
       <HintPath>..\Components\googleplusandplayios-1.7.0\lib\ios\Google.Plus.dll</HintPath>
+    </Reference>
+    <Reference Include="GoogleAnalytics.iOS">
+      <HintPath>..\Components\googleanalytics-3.0.7\lib\ios\GoogleAnalytics.iOS.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -332,12 +332,12 @@
     <ITunesArtwork Include="iTunesArtwork%402x" />
   </ItemGroup>
   <ItemGroup>
-    <XamarinComponentReference Include="googleanalytics">
-      <Version>3.0.3.4</Version>
-      <Visible>False</Visible>
-    </XamarinComponentReference>
     <XamarinComponentReference Include="googleplusandplayios">
       <Version>1.7.0</Version>
+      <Visible>False</Visible>
+    </XamarinComponentReference>
+    <XamarinComponentReference Include="googleanalytics">
+      <Version>3.0.7</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>

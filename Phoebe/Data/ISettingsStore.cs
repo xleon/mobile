@@ -13,5 +13,7 @@ namespace Toggl.Phoebe.Data
         bool UseDefaultTag { get; set; }
 
         string LastAppVersion { get; set; }
+
+        string ExperimentId { get; set; }
     }
 }

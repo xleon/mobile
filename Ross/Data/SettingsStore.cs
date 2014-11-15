@@ -14,6 +14,7 @@ namespace Toggl.Ross.Data
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
+        private const string PhoebeExperimentIdKey = "phoebeExperimentId";
         private const string RossInstallIdKey = "rossInstallId";
         private const string RossPreferredStartViewKey = "rossPreferredStartView";
         private const string RossChooseProjectForNewKey = "rossChooseProjectForNew";
@@ -165,6 +166,17 @@ namespace Toggl.Ross.Data
         {
             get { return GetString (PhoebeLastAppVersionKey); }
             set { SetString (PhoebeLastAppVersionKey, value); }
+        }
+
+        public static readonly string PropertyExperimentId = GetPropertyName (s => s.ExperimentId);
+
+        public string ExperimentId
+        {
+            get { return GetString (PhoebeExperimentIdKey); }
+            set {
+                SetString (PhoebeExperimentIdKey, value);
+                OnSettingChanged (PropertyExperimentId);
+            }
         }
 
         public static readonly string PropertyPreferredStartView = GetPropertyName (s => s.PreferredStartView);

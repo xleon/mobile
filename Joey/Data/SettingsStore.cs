@@ -19,6 +19,7 @@ namespace Toggl.Joey.Data
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
+        private const string PhoebeExperimentIdKey = "phoebeExperimentId";
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
@@ -178,6 +179,17 @@ namespace Toggl.Joey.Data
             set {
                 SetDateTime (PhoebeSyncLastRunKey, value);
                 OnSettingChanged (PropertySyncLastRun);
+            }
+        }
+
+        public static readonly string PropertyExperimentId = GetPropertyName (s => s.ExperimentId);
+
+        public string ExperimentId
+        {
+            get { return GetString (PhoebeExperimentIdKey); }
+            set {
+                SetString (PhoebeExperimentIdKey, value);
+                OnSettingChanged (PropertyExperimentId);
             }
         }
 

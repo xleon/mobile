@@ -129,6 +129,7 @@
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="Analytics\Tracker.cs" />
+    <Compile Include="Analytics\Experiments.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

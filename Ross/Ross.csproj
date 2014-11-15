@@ -291,6 +291,7 @@
     <Compile Include="ViewControllers\NewClientViewController.cs" />
     <Compile Include="Views\AuthErrorAlert.cs" />
     <Compile Include="Analytics\Tracker.cs" />
+    <Compile Include="Analytics\Experiments.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />

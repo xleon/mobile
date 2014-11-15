@@ -54,6 +54,9 @@ namespace Toggl.Joey
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
+            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
+                typeof (Toggl.Phoebe.Analytics.Experiments),
+                typeof (Toggl.Joey.Analytics.Experiments)));
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();

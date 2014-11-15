@@ -78,6 +78,9 @@ namespace Toggl.Ross
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> ();
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
+            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
+                typeof (Toggl.Phoebe.Analytics.Experiments),
+                typeof (Toggl.Ross.Analytics.Experiments)));
             ServiceContainer.Register<IBugsnagClient> (delegate {
                 return new BugsnagClient (Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,

@@ -10,6 +10,7 @@ namespace Toggl.Phoebe.Analytics
     {
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+        private Subscription<ExperimentChangedMessage> subscriptionExperimentChanged;
         private Plan userPlan;
 
         public BaseTracker ()
@@ -17,6 +18,10 @@ namespace Toggl.Phoebe.Analytics
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            subscriptionExperimentChanged = bus.Subscribe<ExperimentChangedMessage> (OnExperimentChanged);
+
+            var experiment = ServiceContainer.Resolve<ExperimentManager> ().CurrentExperiment;
+            CurrentExperiment = experiment != null ? experiment.Id : null;
         }
 
         ~BaseTracker ()
@@ -42,6 +47,10 @@ namespace Toggl.Phoebe.Analytics
                 if (subscriptionSyncFinished != null) {
                     bus.Unsubscribe (subscriptionSyncFinished);
                     subscriptionSyncFinished = null;
+                }
+                if (subscriptionExperimentChanged != null) {
+                    bus.Unsubscribe (subscriptionExperimentChanged);
+                    subscriptionExperimentChanged = null;
                 }
             }
         }
@@ -71,7 +80,7 @@ namespace Toggl.Phoebe.Analytics
             SendTiming ((long)duration.TotalMilliseconds, category, variable, label);
         }
 
-        public string RunningExperiment
+        private string CurrentExperiment
         {
             set { SetCustomDimension (Build.GoogleAnalyticsExperimentIndex, value); }
         }
@@ -126,6 +135,12 @@ namespace Toggl.Phoebe.Analytics
             var numPremium = await store.Table<WorkspaceData> ().CountAsync (r => r.IsPremium);
 
             UserPlan = numPremium > 0 ? Plan.Pro : Plan.Free;
+        }
+
+        private void OnExperimentChanged (ExperimentChangedMessage msg)
+        {
+            var experiment = msg.CurrentExperiment;
+            CurrentExperiment = experiment != null ? experiment.Id : null;
         }
 
         private enum Plan {

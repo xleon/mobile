@@ -87,6 +87,7 @@
     <Compile Include="Data\Merge\WorkspaceMergerTest.cs" />
     <Compile Include="Data\Merge\WorkspaceUserMergerTest.cs" />
     <Compile Include="PropertyChangeTrackerTest.cs" />
+    <Compile Include="Analytics\ExperimentManagerTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -106,5 +107,6 @@
     <Folder Include="Data\Json\" />
     <Folder Include="Data\Json\Converters\" />
     <Folder Include="Data\Merge\" />
+    <Folder Include="Analytics\" />
   </ItemGroup>
 </Project>

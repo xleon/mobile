@@ -1,4 +1,5 @@
 using System;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
 
@@ -16,6 +17,7 @@ namespace Toggl.Phoebe
 
             var oldVersion = settingsStore.LastAppVersion;
             var newVersion = platformInfo.AppVersion;
+            var isFreshInstall = oldVersion == null;
 
             // User hasn't upgraded, do nothing.
             if (oldVersion == newVersion) {
@@ -25,6 +27,7 @@ namespace Toggl.Phoebe
             log.Info (Tag, "App has been upgraded from '{0}' to '{1}'", oldVersion, newVersion);
 
             UpgradeAlaways ();
+            ChooseExperiment (isFreshInstall);
 
             settingsStore.LastAppVersion = newVersion;
         }
@@ -39,6 +42,12 @@ namespace Toggl.Phoebe
 
             // Reset sync last run
             settingsStore.SyncLastRun = null;
+        }
+
+        private void ChooseExperiment (bool isFreshInstall)
+        {
+            var experimentManager = ServiceContainer.Resolve<ExperimentManager> ();
+            experimentManager.NextExperiment (isFreshInstall);
         }
     }
 }

@@ -4,7 +4,9 @@ using Cirrious.FluentLayouts.Touch;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
+using XPlatUtils;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
@@ -30,6 +32,13 @@ namespace Toggl.Ross.ViewControllers
         public FeedbackViewController ()
         {
             Title = "FeedbackTitle".Tr ();
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Feedback";
         }
 
         public override void LoadView ()

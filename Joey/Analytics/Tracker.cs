@@ -28,7 +28,10 @@ namespace Toggl.Joey.Analytics
         protected override void StartNewSession ()
         {
             var builder = new HitBuilders.ScreenViewBuilder ();
-            builder.SetNewSession ();
+
+            // XXX: Workaround wrong signature for setNetSession in the component bindings:
+            HitBuilderWorkaround.SetNewSession (builder);
+
             SendHit (builder);
         }
 
@@ -58,11 +61,46 @@ namespace Toggl.Joey.Analytics
         {
             // Inject custom dimensions, if any have been set:
             foreach (var kvp in customDimensions) {
-                builder.SetCustomDimension (kvp.Key, kvp.Value);
+                // XXX: Workaround wrong signature for setCustomDimension in the component bindings:
+                HitBuilderWorkaround.SetCustomDimension (builder, kvp.Key, kvp.Value);
             }
             customDimensions.Clear ();
 
             tracker.Send (builder.Build ());
+        }
+
+        [Obsolete]
+        private static class HitBuilderWorkaround
+        {
+            private static IntPtr HitBuilderClassHandle;
+            private static IntPtr HitBuilderSetNewSessionId;
+            private static IntPtr HitBuilderSetCustomDimensionId;
+
+            private static IntPtr HitBuilderClassRef
+            {
+                get { return Android.Runtime.JNIEnv.FindClass ("com/google/android/gms/analytics/HitBuilders$HitBuilder", ref HitBuilderClassHandle); }
+            }
+
+            public static void SetNewSession (HitBuilders.HitBuilder builder)
+            {
+                if (HitBuilderSetNewSessionId == IntPtr.Zero) {
+                    HitBuilderSetNewSessionId = Android.Runtime.JNIEnv.GetMethodID (HitBuilderClassRef, "setNewSession", "()Lcom/google/android/gms/analytics/HitBuilders$HitBuilder;");
+                }
+                Android.Runtime.JNIEnv.CallObjectMethod (builder.Handle, HitBuilderSetNewSessionId);
+            }
+
+            public static void SetCustomDimension (HitBuilders.HitBuilder builder, int index, string dimension)
+            {
+                if (HitBuilderSetCustomDimensionId == IntPtr.Zero) {
+                    HitBuilderSetCustomDimensionId = Android.Runtime.JNIEnv.GetMethodID (HitBuilderClassRef, "setCustomDimension", "(ILjava/lang/String;)Lcom/google/android/gms/analytics/HitBuilders$HitBuilder;");
+                }
+                IntPtr dimensionPtr = Android.Runtime.JNIEnv.NewString (dimension);
+                Android.Runtime.JNIEnv.CallObjectMethod (builder.Handle, HitBuilderSetCustomDimensionId, new Android.Runtime.JValue[] {
+                    new Android.Runtime.JValue (index),
+                    new Android.Runtime.JValue (dimensionPtr)
+                });
+                Android.Runtime.JNIEnv.DeleteLocalRef (dimensionPtr);
+            }
         }
     }
 }

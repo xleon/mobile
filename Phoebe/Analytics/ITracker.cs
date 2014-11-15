@@ -6,7 +6,6 @@ namespace Toggl.Phoebe.Analytics
     {
         string CurrentScreen { set; }
         string RunningExperiment { set; }
-        PlanType UserPlan { set; }
         void SendTiming (TimedEvent timedEvent, TimeSpan duration, string label=null);
     }
 }

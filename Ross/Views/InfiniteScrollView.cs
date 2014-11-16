@@ -114,10 +114,10 @@ namespace Toggl.Ross.Views
 
             var currentView = visibleViews.Find (v => v.Frame.X.CompareTo ( ContentOffset.X) == 0);
             var center = currentView.Center;
-
             var newReportView = InsertView ();
             var offSetY = ContentSize.Height;
             var frame = currentView.Frame;
+
             frame.Y += offSetY;
             newReportView.Frame = frame;
 
@@ -151,12 +151,13 @@ namespace Toggl.Ross.Views
         {
             ReportView view;
             if (cachedViews.Count == 0) {
-                view = new ReportView (new RectangleF (0, 0, PageWidth, Frame.Height));
+                view = new ReportView ();
             } else {
                 view = cachedViews[0];
                 cachedViews.RemoveAt (0);
             }
-            view.Frame = new RectangleF (0, 0, PageWidth, Frame.Height);
+            view.Frame = new RectangleF (0, 0, PageWidth, Bounds.Height);
+
             if ( visibleViews.Count > 0) {
                 view.Position = VisibleReportView.Position;
             }
@@ -169,12 +170,10 @@ namespace Toggl.Ross.Views
             ReportView view = InsertView ();
             visibleViews.Add (view); // add rightmost label at the end of the array
 
-            RectangleF labelFrame = view.Frame;
-            labelFrame.X = rightEdge;
-            labelFrame.Y = _containerView.Bounds.Height - labelFrame.Height;
-            view.Frame = labelFrame;
-
-            return CGRectGetMaxX ( labelFrame);
+            RectangleF viewFrame = view.Frame;
+            viewFrame.X = rightEdge;
+            view.Frame = viewFrame;
+            return CGRectGetMaxX ( viewFrame);
         }
 
         private float PlaceNewViewOnLeft ( float leftEdge)
@@ -182,12 +181,10 @@ namespace Toggl.Ross.Views
             ReportView view = InsertView ();
             visibleViews.Insert ( 0, view); // add leftmost label at the beginning of the array
 
-            RectangleF labelFrame = view.Frame;
-            labelFrame.X = leftEdge - labelFrame.Width;
-            labelFrame.Y = _containerView.Bounds.Height - labelFrame.Height;
-            view.Frame = labelFrame;
-
-            return CGRectGetMinX ( labelFrame);
+            RectangleF viewFrame = view.Frame;
+            viewFrame.X = leftEdge - viewFrame.Width;
+            view.Frame = viewFrame;
+            return CGRectGetMinX ( viewFrame);
         }
 
         private void TileViews ( float minX, float maxX)

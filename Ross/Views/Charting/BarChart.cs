@@ -38,10 +38,10 @@ namespace Toggl.Ross.Views.Charting
 
         public UIColor SecondaryBarColor { get; set; }
 
-        public BarChart (RectangleF frame) : base (frame)
+        public BarChart ()
         {
-            _barChartView = new UIView ( new RectangleF ( 0, 0, frame.Width, frame.Height));
-            AddSubview (_barChartView);
+            _barChartView = new UIView ();
+            Add (_barChartView);
 
             LabelFont = UIFont.SystemFontOfSize (10.0f);
             LabelColor = UIColor.LightGray;
@@ -61,6 +61,11 @@ namespace Toggl.Ross.Views.Charting
         const float topBarMargin = 10;
         const float xTextMargin = 35;
 
+        public override void LayoutSubviews ()
+        {
+            base.LayoutSubviews ();
+            _barChartView.Frame = Bounds;
+        }
 
         public override void Draw (RectangleF rect)
         {
@@ -74,7 +79,7 @@ namespace Toggl.Ross.Views.Charting
 
                 float sepInterval = Convert.ToSingle ( Math.Floor ((rect.Width - xAxisMargin - xTextMargin)/ 5));
                 for (int i = 1; i < 6; i++) {
-                    UIBezierPath separatorAxis = new UIBezierPath();
+                    var separatorAxis = new UIBezierPath();
                     separatorAxis.MoveTo (new PointF (xAxisMargin + sepInterval * i, 0));
                     separatorAxis.AddLineTo (new PointF ( xAxisMargin + sepInterval * i, rect.Height - yAxisMargin));
                     UIColor.FromRGB ( 203, 203, 203).SetStroke();
@@ -115,7 +120,6 @@ namespace Toggl.Ross.Views.Charting
 
             CALayer parentLayer = _barChartView.Layer;
             var barLayers = parentLayer.Sublayers ?? new CALayer[0];
-
             int barsCount = DataSource.NumberOfBarsOnChart (this);
 
             for (int i = 0; i < xAxisText.Length; i++) {
@@ -126,7 +130,7 @@ namespace Toggl.Ross.Views.Charting
             CATransaction.AnimationDuration = Convert.ToDouble (AnimationSpeed);
             _barChartView.UserInteractionEnabled = false;
 
-            float barHeight = (Frame.Height - topBarMargin - yAxisMargin) / Convert.ToSingle (barsCount);
+            float barHeight = (Bounds.Height - topBarMargin - yAxisMargin) / Convert.ToSingle (barsCount);
             const float padding = 1.0f;
             float initialY = barHeight / 2 + topBarMargin;
 
@@ -188,12 +192,12 @@ namespace Toggl.Ross.Views.Charting
                 ZPosition = 0,
                 BorderColor = UIColor.White.CGColor,
                 AnchorPoint = new PointF ( 0.0f, 0.5f),
-                Frame = new RectangleF ( 0, 0, Frame.Width, barHeight)
+                Frame = new RectangleF ( 0, 0, Bounds.Width, barHeight)
             };
 
             var mainBar = new CALayer ();
             mainBar.AnchorPoint = new PointF (0.0f, 0.0f);
-            mainBar.Bounds = new RectangleF ( 0, 0, Frame.Width - xAxisMargin - xTextMargin, barHeight);
+            mainBar.Bounds = new RectangleF ( 0, 0, Bounds.Width - xAxisMargin - xTextMargin, barHeight);
             mainBar.Position = new PointF ( xAxisMargin, 0);
             mainBar.BackgroundColor = MainBarColor.CGColor;
             mainBar.SetValueForKeyPath ( new NSNumber ( minBarScale), new NSString ( "transform.scale.x"));
@@ -201,7 +205,7 @@ namespace Toggl.Ross.Views.Charting
 
             var secondaryBar = new CALayer ();
             secondaryBar.AnchorPoint = new PointF (0.0f, 0.0f);
-            secondaryBar.Bounds = new RectangleF ( 0, 0, Frame.Width - xAxisMargin - xTextMargin, barHeight);
+            secondaryBar.Bounds = new RectangleF ( 0, 0, Bounds.Width - xAxisMargin - xTextMargin, barHeight);
             secondaryBar.Position = new PointF ( xAxisMargin, 0);
             secondaryBar.BackgroundColor = SecondaryBarColor.CGColor;
             secondaryBar.SetValueForKeyPath ( new NSNumber ( minBarScale), new NSString ( "transform.scale.x"));

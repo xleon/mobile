@@ -6,6 +6,7 @@ using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
 using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
+using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -124,12 +125,15 @@ namespace Toggl.Ross.Views.Charting
         List<CABasicAnimation> _animations;
         AnimationDelegate _animationDelegate;
 
-
         public XYDonutChart (RectangleF frame) : base (frame)
         {
-            _pieView = new UIView (frame);
+        }
+
+        public XYDonutChart ()
+        {
+            _pieView = new UIView ();
             PieBackgroundColor = UIColor.Clear;
-            AddSubview (_pieView);
+            Add (_pieView);
 
             _selectedSliceIndex = -1;
             _animations = new List<CABasicAnimation> ();
@@ -138,18 +142,23 @@ namespace Toggl.Ross.Views.Charting
             AnimationSpeed = 0.5f;
             StartPieAngle = Math.PI * 3;
             SelectedSliceStroke = 2.0f;
-
-            PieRadius = Math.Min (frame.Width / 2, frame.Height / 2) - 10;
-            PieCenter = new PointF (frame.Width / 2, frame.Height / 2);
-            LabelFont = UIFont.BoldSystemFontOfSize (Math.Max (PieRadius / 10, 5));
             LabelColor = UIColor.White;
-            LabelRadius = PieRadius / 2;
-            SelectedSliceOffsetRadius = Math.Max (10, PieRadius / 10);
-            DonutLineStroke = PieRadius / 4;
-
             IsDonut = true;
             ShowLabel = true;
             ShowPercentage = true;
+
+            PieRadius = Math.Min (Bounds.Width / 2, Bounds.Height / 2) - 10;
+            LabelFont = UIFont.BoldSystemFontOfSize (Math.Max (PieRadius / 10, 5));
+            PieCenter = new PointF (Bounds.Width / 2, Bounds.Height / 2);
+            LabelRadius = PieRadius / 2;
+            DonutLineStroke = PieRadius / 4;
+        }
+
+        public override void LayoutSubviews ()
+        {
+            base.LayoutSubviews ();
+            _pieView.Frame = Bounds;
+            PieCenter = new PointF (Bounds.Width / 2, Bounds.Height / 2);
         }
 
         protected override void Dispose (bool disposing)

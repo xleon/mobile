@@ -81,7 +81,7 @@ namespace Toggl.Ross.ViewControllers
                 scrollView.SetPageIndex ( 1, true);
             };
 
-            scrollView = new InfiniteScrollView (new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, dateSelectorView.Frame.Y));
+            scrollView = new InfiniteScrollView (new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, dateSelectorView.Frame.Y ));
             scrollView.OnChangeReport += (sender, e) => {
                 _timeSpaceIndex = scrollView.PageIndex;
                 var reportView = scrollView.VisibleReportView;
@@ -92,6 +92,7 @@ namespace Toggl.Ross.ViewControllers
             };
 
             Add (scrollView);
+            //Add (new ReportView ( new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, dateSelectorView.Frame.Y * 2)));
             Add (dateSelectorView);
             Add (topBorder);
 

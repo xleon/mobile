@@ -35,8 +35,8 @@ namespace Toggl.Ross.Views
             } set {
                 if (_position == value) { return; }
                 _position = value;
-                var posY = ( _position == ChartPosition.Top) ? topY : downY;
-                _containerView.Center = new PointF (_containerView.Center.X, posY);
+                //var posY = ( _position == ChartPosition.Top) ? topY : downY;
+                //_containerView.Center = new PointF (_containerView.Center.X, posY);
             }
         }
 
@@ -59,24 +59,30 @@ namespace Toggl.Ross.Views
             }
         }
 
-        public ReportView ( RectangleF frame)
+        public ReportView ()
         {
-            Frame = new RectangleF (frame.X, frame.Y, frame.Width, frame.Height * 2);
+            InitView();
+        }
+
+        public ReportView ( RectangleF frame) : base ( frame)
+        {
+            InitView();
+        }
+
+        private void InitView()
+        {
             ClipsToBounds = true;
-
             BackgroundColor = UIColor.White;
-            barChart = new BarChartView ( new RectangleF ( padding/2, padding/2, frame.Width - padding, frame.Height - padding - selectorHeight ));
-            pieChart = new DonutChartView (new RectangleF (padding/2, barChart.Bounds.Height + padding, frame.Width - padding, frame.Height));
 
-            _containerView = new UIView (Frame);
+            barChart = new BarChartView ();
+            pieChart = new DonutChartView ();
+
+            _containerView = new UIView ();
             _containerView.Add (barChart);
             _containerView.Add (pieChart);
             AddSubview (_containerView);
 
             IsClean = true;
-            topY = _containerView.Center.Y;
-            downY = _containerView.Center.Y - pieChart.Frame.Y;
-
             panGesture = CreatePanGesture ();
             _containerView.AddGestureRecognizer (panGesture);
             _position = ChartPosition.Top;
@@ -94,6 +100,19 @@ namespace Toggl.Ross.Views
         const float padding = 30;
         const float navBarHeight = 64;
         const float selectorHeight = 60;
+
+        public override void LayoutSubviews ()
+        {
+            base.LayoutSubviews ();
+
+            _containerView.Bounds = new RectangleF ( 0, 0, Bounds.Width, Bounds.Height * 2);
+            barChart.Frame = new RectangleF ( padding/2, padding/2, Bounds.Width - padding, Bounds.Height - padding - selectorHeight );
+            pieChart.Frame = new RectangleF (padding/2, barChart.Bounds.Height + padding, Bounds.Width - padding, Bounds.Height);
+            topY = _containerView.Bounds.Height/2;
+            downY = _containerView.Bounds.Height/2 - (barChart.Bounds.Height + padding);
+            var posY = ( _position == ChartPosition.Top) ? topY : downY;
+            _containerView.Center = new PointF ( Bounds.Width/2, posY);
+        }
 
         public async void LoadData()
         {

@@ -96,7 +96,7 @@ namespace Toggl.Joey
             }
 
             startTimeMeasure.Stop ();
-            ServiceContainer.Resolve<ITracker> ().SendTiming (TimedEvent.AppInit, startTimeMeasure.Elapsed);
+            ServiceContainer.Resolve<ITracker> ().SendAppInitTime (startTimeMeasure.Elapsed);
         }
 
         public override void OnTrimMemory (TrimMemory level)

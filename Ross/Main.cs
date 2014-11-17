@@ -23,7 +23,7 @@ namespace Toggl.Ross
             }
 
             startTimeMeasure.Stop ();
-            ServiceContainer.Resolve<ITracker> ().SendTiming (TimedEvent.AppInit, startTimeMeasure.Elapsed);
+            ServiceContainer.Resolve<ITracker> ().SendAppInitTime (startTimeMeasure.Elapsed);
         }
     }
 }

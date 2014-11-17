@@ -55,29 +55,9 @@ namespace Toggl.Phoebe.Analytics
             }
         }
 
-        public void SendTiming (TimedEvent timedEvent, TimeSpan duration, string label = null)
+        public void SendAppInitTime (TimeSpan duration)
         {
-            string category;
-            string variable;
-
-            switch (timedEvent) {
-            case TimedEvent.AppInit:
-                category = "App";
-                variable = "Init";
-                break;
-            case TimedEvent.AppScreenDisplay:
-                category = "App";
-                variable = "ScreenDisplay";
-                break;
-            case TimedEvent.SyncDuration:
-                category = "Sync";
-                variable = "Duration";
-                break;
-            default:
-                throw new ArgumentException ("Unsupported value.", "timedEvent");
-            }
-
-            SendTiming ((long)duration.TotalMilliseconds, category, variable, label);
+            SendTiming ((long)duration.TotalMilliseconds, "App", "Init", null);
         }
 
         private string CurrentExperiment

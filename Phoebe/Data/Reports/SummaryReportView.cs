@@ -190,7 +190,6 @@ namespace Toggl.Phoebe.Data.Reports
         public DateTime ResolveStartDate (int backDate)
         {
             var current = DateTime.Today;
-
             if (Period == ZoomLevel.Week) {
                 var date = current.StartOfWeek (startOfWeek).AddDays (backDate * 7);
                 return date;

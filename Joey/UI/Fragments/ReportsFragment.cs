@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Android.Animation;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
+using Android.Support.V4.View;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
@@ -23,20 +25,24 @@ namespace Toggl.Joey.UI.Fragments
         private PieChart pieChart;
         private TextView totalValue;
         private TextView billableValue;
-        private ImageButton previousPeriod;
-        private ImageButton nextPeriod;
-        private TextView timePeriod;
         private SummaryReportView summaryReport;
         private int backDate;
+        private ZoomLevel zoomLevel;
+        private GestureDetectorCompat gestureDetect;
+        private ReportsScrollView mainView;
 
-        public ReportsFragment (int period)
+        public ReportsFragment (int period, ZoomLevel level)
         {
             backDate = period;
+            zoomLevel = level;
+            summaryReport = new SummaryReportView ();
+            summaryReport.Period = ZoomLevel.Week;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
+            mainView = view.FindViewById<ReportsScrollView> (Resource.Id.ReportsScrollView);
 
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
@@ -44,15 +50,13 @@ namespace Toggl.Joey.UI.Fragments
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
 
-            timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
-            previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
-            nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
-
-            previousPeriod.Click += (sender, e) => NavigatePeriod (1);
-            nextPeriod.Click += (sender, e) => NavigatePeriod (-1);
-
             LoadElements ();
+
             return view;
+        }
+
+        public override void OnCreate(Bundle state){
+            base.OnCreate (state);
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)
@@ -76,20 +80,11 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void NavigatePeriod (int direction)
-        {
-            if (backDate == 0 && direction < 0) {
-                backDate = 0;
-            } else {
-                backDate = backDate + direction;
-            }
-            LoadElements ();
-        }
-
         private void OnSliceSelect (int position)
         {
             var adapter = ListView.Adapter as ProjectListAdapter;
             adapter.SetFocus (position);
+            ListView.SmoothScrollToPositionFromTop (position, 0);
         }
 
         private void EnsureAdapter ()
@@ -103,10 +98,27 @@ namespace Toggl.Joey.UI.Fragments
             await LoadData ();
             totalValue.Text = summaryReport.TotalGrand;
             billableValue.Text = summaryReport.TotalBillale;
-            timePeriod.Text = FormattedDateSelector ();
             EnsureAdapter ();
             GeneratePieChart ();
             GenerateBarChart ();
+            StretchUpperView ();
+            StretchListView ();
+            mainView.barChartSnapPos = 0;
+            mainView.InnerList = ListView;
+            mainView.InnerPieChart = pieChart;
+        }
+        private void StretchUpperView(){
+            var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
+            lp.BottomMargin = mainView.Height - barChart.Bottom - (int)pieChart.Height/3;
+            mainView.pieChartSnapPos = barChart.Bottom + lp.BottomMargin;
+            barChart.RequestLayout ();
+        }
+        private void StretchListView(){
+            var listViewHeight = mainView.Height - pieChart.Height;
+            var layoutParams = ListView.LayoutParameters;
+            layoutParams.Height = listViewHeight;
+            ListView.LayoutParameters = layoutParams;
+            ListView.RequestLayout();
         }
 
         private void GenerateBarChart ()
@@ -142,38 +154,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private async Task LoadData ()
         {
-            summaryReport = new SummaryReportView ();
-            summaryReport.Period = ZoomLevel.Week;
             await summaryReport.Load (backDate);
-        }
-
-        public string FormattedDateSelector ()
-        {
-            if (backDate == 0) {
-                if (summaryReport.Period == ZoomLevel.Week) {
-                    return Resources.GetString (Resource.String.ReportsThisWeek);
-                } else if (summaryReport.Period == ZoomLevel.Month) {
-                    return Resources.GetString (Resource.String.ReportsThisMonth);
-                } else {
-                    return Resources.GetString (Resource.String.ReportsThisYear);
-                }
-            } else if (backDate == 1) {
-                if (summaryReport.Period == ZoomLevel.Week) {
-                    return Resources.GetString (Resource.String.ReportsLastWeek);
-                } else if (summaryReport.Period == ZoomLevel.Month) {
-                    return Resources.GetString (Resource.String.ReportsLastMonth);
-                } else {
-                    return Resources.GetString (Resource.String.ReportsLastYear);
-                }
-            } else {
-                var startDate = summaryReport.ResolveStartDate (backDate);
-                var endDate = summaryReport.ResolveEndDate (startDate);
-                if (summaryReport.Period == ZoomLevel.Week) {
-                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
-                } else {
-                    return "";
-                }
-            }
         }
 
         public class SliceListener : PieChart.IOnSliceClickedListener

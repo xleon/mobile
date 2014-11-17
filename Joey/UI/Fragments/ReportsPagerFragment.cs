@@ -11,6 +11,7 @@ using ViewPager = Android.Support.V4.View.ViewPager;
 using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
+using System.Collections.Generic;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -18,12 +19,22 @@ namespace Toggl.Joey.UI.Fragments
     {
         private static readonly int PagesCount = 2000;
         private ViewPager viewPager;
+        private ImageButton previousPeriod;
+        private ImageButton nextPeriod;
+        private TextView timePeriod;
+        private int backDate;
+        public ZoomLevel zoomLevel = ZoomLevel.Week;
+        private List<string> dates = new List<string>();
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsPagerFragment, container, false);
             viewPager = view.FindViewById<ViewPager> (Resource.Id.ReportsViewPager);
             viewPager.PageScrolled += OnViewPagerPageScrolled;
+
+            timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
+            previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
+            nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
 
             return view;
         }
@@ -39,6 +50,12 @@ namespace Toggl.Joey.UI.Fragments
             base.OnActivityCreated (savedInstanceState);
             viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
             viewPager.CurrentItem = PagesCount / 2;
+            Initialize ();
+        }
+
+        public void Initialize ()
+        {
+            timePeriod.Text = FormattedDateSelector (viewPager.CurrentItem - PagesCount / 2);
         }
 
         private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
@@ -59,11 +76,42 @@ namespace Toggl.Joey.UI.Fragments
                 var frag = (ReportsFragment)adapter.GetItem (idx);
                 frag.UserVisibleHint = true;
             }
+            timePeriod.Text = FormattedDateSelector (viewPager.CurrentItem - PagesCount / 2);
+        }
+
+        public string FormattedDateSelector (int currentBackDate)
+        {
+            if (currentBackDate == 0) {
+                if (zoomLevel == ZoomLevel.Week) {
+                    return Resources.GetString (Resource.String.ReportsThisWeek);
+                } else if (zoomLevel == ZoomLevel.Month) {
+                    return Resources.GetString (Resource.String.ReportsThisMonth);
+                } else {
+                    return Resources.GetString (Resource.String.ReportsThisYear);
+                }
+            } else if (currentBackDate == -1) {
+                if (zoomLevel == ZoomLevel.Week) {
+                    return Resources.GetString (Resource.String.ReportsLastWeek);
+                } else if (zoomLevel == ZoomLevel.Month) {
+                    return Resources.GetString (Resource.String.ReportsLastMonth);
+                } else {
+                    return Resources.GetString (Resource.String.ReportsLastYear);
+                }
+            } else {
+//                var startDate = summaryReport.ResolveStartDate (backDate);
+//                var endDate = summaryReport.ResolveEndDate (startDate);
+                if (zoomLevel == ZoomLevel.Week) {
+//                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
+                } else {
+                }
+                return "1";
+            }
         }
 
         private class MainPagerAdapter : FragmentPagerAdapter
         {
             public int Current = PagesCount / 2;
+            private ZoomLevel zoomLevel = ZoomLevel.Week;
 
             public MainPagerAdapter (FragmentManager fm) : base (fm)
             {
@@ -75,7 +123,7 @@ namespace Toggl.Joey.UI.Fragments
 
             public override Fragment GetItem (int position)
             {
-                return new ReportsFragment (position - PagesCount / 2);
+                return new ReportsFragment (position - PagesCount / 2, zoomLevel);
             }
         }
     }

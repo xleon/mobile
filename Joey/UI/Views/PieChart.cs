@@ -219,7 +219,7 @@ namespace Toggl.Joey.UI.Views
                 }
                 count++;
             }
-            if (clickedSlice == -1 && ev.Action == MotionEventActions.Up) {
+            if (clickedSlice == indexSelected && ev.Action == MotionEventActions.Up) {
                 indexSelected = -1;
             } else if (clickedSlice == indexSelected) {
                 return true;

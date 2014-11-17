@@ -21,17 +21,17 @@ namespace Toggl.Phoebe.Data.Reports
 
         public async Task Load (int backDate)
         {
-            if (IsLoading) {
+            if (_isLoading) {
                 return;
             }
+            _isLoading = true;
 
-            IsLoading = true;
             if (workspaceId == null) {
                 await Initialize ();
             }
+
             startDate = ResolveStartDate (backDate);
             endDate = ResolveEndDate (startDate);
-
             await FetchData ();
             IsLoading = false;
         }
@@ -55,6 +55,7 @@ namespace Toggl.Phoebe.Data.Reports
         private async Task FetchData ()
         {
             dataObject = CreateEmptyReport ();
+
             try {
                 _isError = false;
                 var json = await reportClient.GetReports (startDate, endDate, (long)workspaceId);
@@ -71,6 +72,14 @@ namespace Toggl.Phoebe.Data.Reports
             } finally {
                 CalculateReportData ();
             }
+        }
+
+        private async Task Initialize ()
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            workspaceId = await store.ExecuteInTransactionAsync (ctx => ctx.GetRemoteId<WorkspaceData> (user.DefaultWorkspaceId));
+            startOfWeek = user.StartOfWeek;
         }
 
         private void CalculateReportData()
@@ -102,8 +111,14 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
+        private bool _isLoading;
 
-        public bool IsLoading { get; private set; }
+        public bool IsLoading
+        {
+            get {
+                return _isLoading;
+            }
+        }
 
 
         public int ActivityCount

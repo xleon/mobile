@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using MonoTouch.Foundation;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
 
@@ -157,6 +158,7 @@ namespace Toggl.Ross.Data
             set {
                 SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
                 OnSettingChanged (PropertyUseDefaultTag);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.DefaultMobileTag);
             }
         }
 
@@ -198,6 +200,7 @@ namespace Toggl.Ross.Data
             set {
                 SetInt (RossChooseProjectForNewKey, value ? 1 : 0);
                 OnSettingChanged (PropertyChooseProjectForNew);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.AskForProject);
             }
         }
 

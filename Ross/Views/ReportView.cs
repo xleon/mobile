@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Threading.Tasks;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
@@ -120,6 +121,8 @@ namespace Toggl.Ross.Views
                 _loading = true;
                 dataSource = new SummaryReportView ();
                 dataSource.Period = ZoomLevel;
+                await Task.Delay (500);
+                if (!_loading) { return; }
                 await dataSource.Load (TimeSpaceIndex);
                 _loading = false;
 
@@ -166,7 +169,7 @@ namespace Toggl.Ross.Views
                     var p0 = pg.LocationInView (this);
                     var currentY = (_position == ChartPosition.Top) ? topY : downY;
 
-                    if (dy == 0) {
+                    if (dy.CompareTo (0) == 0) {
                         dy = p0.Y - currentY;
                     }
 

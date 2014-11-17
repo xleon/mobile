@@ -20,11 +20,18 @@ namespace Toggl.Ross.Views
             }
         }
 
+        private ReportView _visibleReportView;
+
         public ReportView VisibleReportView
         {
             get {
                 var pos = ConvertPointToView ( ContentOffset, _containerView).X;
-                return visibleViews.Count > 0 ? visibleViews.First (v => Math.Abs (pos - v.Frame.X) <= PageWidth / 2) : null;
+                foreach (var view in visibleViews)
+                    if ( Math.Abs (pos - view.Frame.X) <= PageWidth / 2) {
+                        _visibleReportView = view;
+                    }
+
+                return _visibleReportView;
             }
         }
 
@@ -195,6 +202,7 @@ namespace Toggl.Ross.Views
             if (visibleViews.Count == 0) {
                 tmpOffset = Convert.ToInt32 (ContentOffset.X / PageWidth);
                 PlaceNewViewOnRight (minX);
+                _visibleReportView = visibleViews [0];
             }
 
             // add views that are missing on right side

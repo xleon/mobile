@@ -10,14 +10,6 @@ namespace Toggl.Ross.Views.Charting
 {
     public class BarChartView : UIView, IReportChart, IBarChartDataSource
     {
-        public EventHandler GoForwardInterval { get; set; }
-
-        public EventHandler GoBackInterval { get; set; }
-
-        public EventHandler AnimationStarted { get; set; }
-
-        public EventHandler AnimationEnded { get; set; }
-
         private SummaryReportView _reportView;
 
         public SummaryReportView ReportView

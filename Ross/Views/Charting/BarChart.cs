@@ -261,7 +261,6 @@ namespace Toggl.Ross.Views.Charting
 
         public override void TouchesBegan (NSSet touches, UIEvent evt)
         {
-            TouchesMoved (touches, evt);
         }
 
         public override void TouchesMoved (NSSet touches, UIEvent evt)

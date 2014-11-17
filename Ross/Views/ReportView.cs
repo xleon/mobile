@@ -35,8 +35,8 @@ namespace Toggl.Ross.Views
             } set {
                 if (_position == value) { return; }
                 _position = value;
-                //var posY = ( _position == ChartPosition.Top) ? topY : downY;
-                //_containerView.Center = new PointF (_containerView.Center.X, posY);
+                var posY = ( _position == ChartPosition.Top) ? topY : downY;
+                _containerView.Center = new PointF (_containerView.Center.X, posY);
             }
         }
 

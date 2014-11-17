@@ -72,16 +72,15 @@ namespace Toggl.Ross.ViewControllers
             View.BackgroundColor = UIColor.White;
             menuController.Attach (this);
 
-            topBorder = new TopBorder (new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, 2.0f));
-
-            dateSelectorView = new DateSelectorView (new RectangleF (0, UIScreen.MainScreen.Bounds.Height - selectorHeight - navBarHeight, UIScreen.MainScreen.Bounds.Width, selectorHeight));
+            topBorder = new TopBorder ();
+            dateSelectorView = new DateSelectorView ();
             dateSelectorView.LeftArrowPressed += (sender, e) => scrollView.SetPageIndex (-1, true);
             dateSelectorView.RightArrowPressed += (sender, e) => {
                 if ( _timeSpaceIndex >= 1) { return; }
                 scrollView.SetPageIndex ( 1, true);
             };
 
-            scrollView = new InfiniteScrollView (new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, dateSelectorView.Frame.Y ));
+            scrollView = new InfiniteScrollView ();
             scrollView.OnChangeReport += (sender, e) => {
                 _timeSpaceIndex = scrollView.PageIndex;
                 var reportView = scrollView.VisibleReportView;
@@ -92,12 +91,19 @@ namespace Toggl.Ross.ViewControllers
             };
 
             Add (scrollView);
-            //Add (new ReportView ( new RectangleF (0.0f, 0.0f, UIScreen.MainScreen.Bounds.Width, dateSelectorView.Frame.Y * 2)));
             Add (dateSelectorView);
             Add (topBorder);
 
             ChangeReportState ();
             NavigationController.InteractivePopGestureRecognizer.Enabled = false;
+        }
+
+        public override void ViewDidLayoutSubviews ()
+        {
+            base.ViewDidLayoutSubviews ();
+            topBorder.Frame = new RectangleF (0.0f, 0.0f, View.Bounds.Width, 2.0f);
+            dateSelectorView.Frame = new RectangleF (0, View.Bounds.Height - selectorHeight, View.Bounds.Width, selectorHeight);
+            scrollView.Frame = new RectangleF (0.0f, 0.0f, View.Bounds.Width, View.Bounds.Height - selectorHeight);
         }
 
         public override void LoadView ()
@@ -173,7 +179,7 @@ namespace Toggl.Ross.ViewControllers
 
         internal class TopBorder : UIView
         {
-            public TopBorder ( RectangleF frame) : base ( frame)
+            public TopBorder ()
             {
                 BackgroundColor = UIColor.Clear;
             }

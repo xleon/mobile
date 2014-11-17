@@ -15,16 +15,6 @@ namespace Toggl.Ross.Views.Charting
 {
     public class DonutChartView : UIView, IReportChart, IXYDonutChartDataSource
     {
-        public EventHandler AnimationEnded { get; set; }
-
-        public EventHandler AnimationStarted { get; set; }
-
-        public EventHandler GoForwardInterval { get; set; }
-
-        public EventHandler GoBackInterval { get; set; }
-
-        public EventHandler ChangeView { get; set; }
-
         private SummaryReportView _reportView;
 
         public SummaryReportView ReportView
@@ -81,6 +71,7 @@ namespace Toggl.Ross.Views.Charting
         }
 
         private bool _normalSelectionMode;
+
         public bool NormalSelectionMode
         {
             get {

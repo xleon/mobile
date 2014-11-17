@@ -28,14 +28,12 @@ namespace Toggl.Ross.Views
             }
         }
 
-        public InfiniteScrollView ( RectangleF frame ) : base ( frame)
+        public InfiniteScrollView ()
         {
-            ContentSize = new SizeF ( PageWidth * 20, Frame.Height);
             visibleViews = new List<ReportView> ();
             cachedViews = new List<ReportView> ();
             _containerView = new UIView ();
-            _containerView.Frame = new RectangleF (0, 0, ContentSize.Width, ContentSize.Height);
-            AddSubview (_containerView);
+            Add (_containerView);
             ShowsHorizontalScrollIndicator = false;
             PagingEnabled = true;
             Delegate = new InfiniteScrollDelegate ();
@@ -81,6 +79,9 @@ namespace Toggl.Ross.Views
         public override void LayoutSubviews ()
         {
             base.LayoutSubviews ();
+
+            ContentSize = new SizeF ( PageWidth * 20, Bounds.Height);
+            _containerView.Frame = new RectangleF (0, 0, ContentSize.Width, ContentSize.Height);
             RecenterIfNeeded ();
 
             // tile content in visible bounds

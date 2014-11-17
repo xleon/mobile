@@ -3,6 +3,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -105,6 +106,9 @@ namespace Toggl.Joey.UI.Fragments
             // Notify that the user explicitly started something
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
         }
     }
 }

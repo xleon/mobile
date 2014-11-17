@@ -234,6 +234,9 @@ namespace Toggl.Ross.ViewControllers
                 if (ContinueCallback != null) {
                     ContinueCallback (DataSource);
                 }
+
+                // Ping analytics
+                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
 
             protected override async void OnDelete ()

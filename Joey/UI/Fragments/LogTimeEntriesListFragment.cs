@@ -5,6 +5,7 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
@@ -68,11 +69,16 @@ namespace Toggl.Joey.UI.Fragments
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
 
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
         }
 
         private async void StopTimeEntry (TimeEntryModel model)
         {
             await model.StopAsync ();
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
         }
 
         public override bool UserVisibleHint

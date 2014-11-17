@@ -5,6 +5,7 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -253,8 +254,14 @@ namespace Toggl.Joey.UI.Components
                 try {
                     if (entry.State == TimeEntryState.New && entry.StopTime.HasValue) {
                         await entry.StoreAsync ();
+
+                        // Ping analytics
+                        ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppManual);
                     } else if (entry.State == TimeEntryState.Running) {
                         await entry.StopAsync ();
+
+                        // Ping analytics
+                        ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
                     } else {
                         var startTask = entry.StartAsync ();
 
@@ -272,6 +279,9 @@ namespace Toggl.Joey.UI.Components
                         } else {
                             await startTask;
                         }
+
+                        // Ping analytics
+                        ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppNew);
                     }
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<Logger> ();

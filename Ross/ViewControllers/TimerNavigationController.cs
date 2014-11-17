@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using MonoTouch.CoreFoundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
@@ -74,6 +75,9 @@ namespace Toggl.Ross.ViewControllers
             try {
                 if (currentTimeEntry != null && currentTimeEntry.State == TimeEntryState.Running) {
                     await currentTimeEntry.StopAsync ();
+
+                    // Ping analytics
+                    ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
                 } else if (timeEntryManager != null) {
                     currentTimeEntry = (TimeEntryModel)timeEntryManager.Draft;
                     if (currentTimeEntry == null) {
@@ -88,6 +92,9 @@ namespace Toggl.Ross.ViewControllers
                         controllers.Add (new ProjectSelectionViewController (currentTimeEntry));
                     }
                     parentController.NavigationController.SetViewControllers (controllers.ToArray (), true);
+
+                    // Ping analytics
+                    ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppNew);
                 }
             } finally {
                 isActing = false;

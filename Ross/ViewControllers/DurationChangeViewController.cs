@@ -96,6 +96,9 @@ namespace Toggl.Ross.ViewControllers
                     var vcs = NavigationController.ViewControllers;
                     vcs [vcs.Length - 1] = controller;
                     NavigationController.SetViewControllers (vcs, true);
+
+                    // Ping analytics
+                    ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppManual);
                 } else {
                     model.SetDuration (duration);
                     await model.SaveAsync ();

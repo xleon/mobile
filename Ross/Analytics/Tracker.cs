@@ -32,6 +32,11 @@ namespace Toggl.Ross.Analytics
             SendHit (GAIDictionaryBuilder.CreateTiming (category, elapsedMilliseconds, variable, label));
         }
 
+        protected override void SendEvent (string category, string action, string label, long value)
+        {
+            SendHit (GAIDictionaryBuilder.CreateEvent (category, action, label, value));
+        }
+
         protected override void SetCustomDimension (int idx, string value)
         {
             customDimensions [idx] = value;

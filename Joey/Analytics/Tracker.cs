@@ -44,6 +44,15 @@ namespace Toggl.Joey.Analytics
                      .SetLabel (label));
         }
 
+        protected override void SendEvent (string category, string action, string label, long value)
+        {
+            SendHit (new HitBuilders.EventBuilder ()
+                     .SetCategory (category)
+                     .SetAction (action)
+                     .SetLabel (label)
+                     .SetValue (value));
+        }
+
         protected override void SetCustomDimension (int idx, string value)
         {
             customDimensions [idx] = value;

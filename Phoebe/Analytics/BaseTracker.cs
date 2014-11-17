@@ -60,6 +60,136 @@ namespace Toggl.Phoebe.Analytics
             SendTiming ((long)duration.TotalMilliseconds, "App", "Init", null);
         }
 
+        public void SendSettingsChangeEvent (SettingName settingName)
+        {
+            string label;
+
+            switch (settingName) {
+            case SettingName.AskForProject:
+                label = "AskForProject";
+                break;
+            case SettingName.IdleNotification:
+                label = "IdleNotification";
+                break;
+            case SettingName.DefaultMobileTag:
+                label = "DefaultMobileTag";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "settingName");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("Settings", "Change", label);
+        }
+
+        public void SendAccountLoginEvent (AccountCredentials credentialsType)
+        {
+            string label;
+
+            switch (credentialsType) {
+            case AccountCredentials.Password:
+                label = "Password";
+                break;
+            case AccountCredentials.Google:
+                label = "Google";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "credentialsType");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("Account", "Login", label);
+        }
+
+        public void SendAccountCreateEvent (AccountCredentials credentialsType)
+        {
+            string label;
+
+            switch (credentialsType) {
+            case AccountCredentials.Password:
+                label = "Password";
+                break;
+            case AccountCredentials.Google:
+                label = "Google";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "credentialsType");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("Account", "Signup", label);
+        }
+
+        public void SendAccountLogoutEvent()
+        {
+            SendEvent ("Account", "Logout");
+        }
+
+        public void SendTimerStartEvent (TimerStartSource startSource)
+        {
+            string label;
+
+            switch (startSource) {
+            case TimerStartSource.AppNew:
+                label = "In-app (new)";
+                break;
+            case TimerStartSource.AppContinue:
+                label = "In-app (continue)";
+                break;
+            case TimerStartSource.AppManual:
+                label = "In-app (manual)";
+                break;
+            case TimerStartSource.WidgetStart:
+                label = "Widget (new)";
+                break;
+            case TimerStartSource.WidgetNew:
+                label = "Widget (continue)";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "startSource");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("Timer", "Start", label);
+        }
+
+        public void SendTimerStopEvent (TimerStopSource stopSource)
+        {
+            string label;
+
+            switch (stopSource) {
+            case TimerStopSource.App:
+                label = "In-app";
+                break;
+            case TimerStopSource.Notification:
+                label = "Notification";
+                break;
+            case TimerStopSource.Widget:
+                label = "Widget";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "stopSource");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("Timer", "Stop", label);
+        }
+
         private string CurrentExperiment
         {
             set { SetCustomDimension (Build.GoogleAnalyticsExperimentIndex, value); }
@@ -85,7 +215,11 @@ namespace Toggl.Phoebe.Analytics
                     planName = "Pro";
                     break;
                 default:
-                    throw new ArgumentException ("Unknown value.", "value");
+                    #if DEBUG
+                    throw new ArgumentException ("Invalid value", "value");
+                    #else
+                    return;
+                    #endif
                 }
 
                 userPlan = value;
@@ -96,7 +230,8 @@ namespace Toggl.Phoebe.Analytics
         public abstract string CurrentScreen { set; }
 
         protected abstract void StartNewSession ();
-        protected abstract void SendTiming (long elapsedMilliseconds, string category, string variable, string label);
+        protected abstract void SendTiming (long elapsedMilliseconds, string category, string variable, string label=null);
+        protected abstract void SendEvent (string category, string action, string label=null, long value=0);
         protected abstract void SetCustomDimension (int idx, string value);
 
         private void OnAuthChanged (AuthChangedMessage msg)

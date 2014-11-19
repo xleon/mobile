@@ -180,11 +180,5 @@ namespace Toggl.Phoebe.Data.Json.Converters
             var converter = ServiceContainer.Resolve<ReportJsonConverter> ();
             return converter.Import (json);
         }
-
-        public static ReportJson Export (this ReportData data)
-        {
-            var converter = ServiceContainer.Resolve<ReportJsonConverter> ();
-            return converter.Export (data);
-        }
     }
 }

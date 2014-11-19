@@ -58,8 +58,6 @@
     <Compile Include="Data\ReportTypes.cs" />
     <Compile Include="Data\DataObjects\ReportData.cs" />
     <Compile Include="Data\Json\ReportJson.cs" />
-    <Compile Include="Data\Json\ReportRowJson.cs" />
-    <Compile Include="Data\Json\ReportProjectJson.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

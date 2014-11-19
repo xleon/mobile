@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
 using XPlatUtils;
@@ -15,7 +13,6 @@ namespace Toggl.Phoebe.Net
 {
     public class ReportsRestClient : IReportsClient
     {
-        private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri reportsv2Url;
 
         public ReportsRestClient (Uri reportsApiUrl)
@@ -52,12 +49,7 @@ namespace Toggl.Phoebe.Net
         private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq, CancellationToken token)
         {
             using (var httpClient = MakeHttpClient ()) {
-
-                var reqTimer = Stopwatch.StartNew ();
-                var httpResp = await httpClient.SendAsync (httpReq, token)
-                               .ConfigureAwait (continueOnCapturedContext: false);
-                reqTimer.Stop ();
-                //TODO: ask taavi about: PrepareResponse (httpResp, reqTimer.Elapsed);
+                var httpResp = await httpClient.SendAsync (httpReq, token).ConfigureAwait (false);
                 return httpResp;
             }
         }
@@ -84,59 +76,9 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
 
-            var httpResp = await SendAsync (httpReq, token)
-                           .ConfigureAwait (continueOnCapturedContext: false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
-
-            var json = JObject.Parse (respData);
-
-            var RowList = new List<ReportRowJson> ();
-            foreach (var row in json["activity"]["rows"]) {
-                RowList.Add (new ReportRowJson () {
-                    StartTime = UnixStart.AddTicks (ToLong (row [0]) * TimeSpan.TicksPerMillisecond),
-                    TotalTime = ToLong (row [1]),
-                    BillableTime = ToLong (row [2])
-                });
-            }
-
-            var ProjectList = new List<ReportProjectJson> ();
-            foreach (var row in json["data"]) {
-                var newProject = new ReportProjectJson () {
-                    Project = (string)row ["title"]["project"],
-                    Client = (string)row ["title"] ["client"],
-                    TotalTime = (long)row ["time"],
-                    Color = row ["title"]["color"].ToObject<int?>(), // TODO: tricky solution?
-                };
-                var timeEntries = new List<ReportTimeEntryJson> ();
-                foreach (var item in row["items"]) {
-                    var timeEntry = new ReportTimeEntryJson() {
-                        Title = (string)item["title"]["time_entry"],
-                        Time = (long)item["time"],
-                        Currency = (string)item["cur"],
-                        //Sum = (float)item["sum"], // TODO: check how to read null values
-                        //Rate = (float)item["rate"]
-                    };
-                    timeEntries.Add (timeEntry);
-                }
-                newProject.Items = timeEntries;
-                ProjectList.Add (newProject);
-            }
-
-            return new ReportJson () {
-                TotalGrand = ToLong (json ["total_grand"]),
-                TotalBillable = ToLong (json ["total_billable"]),
-                Activity = RowList,
-                Projects = ProjectList,
-            };
-        }
-
-        private long ToLong (JToken s)
-        {
-            long l;
-            long.TryParse ((string)s, out l);
-            return l;
+            var httpResp = await SendAsync (httpReq, token).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
+            return JsonConvert.DeserializeObject<ReportJson> (respData, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
         }
     }
 

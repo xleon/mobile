@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
+using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
 using Toggl.Ross.Theme;
+using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -42,6 +45,8 @@ namespace Toggl.Ross.Views.Charting
         {
             _barChartView = new UIView ();
             Add (_barChartView);
+            _animations = new List<CABasicAnimation> ();
+            _animationDelegate = new AnimationDelegate (this);
 
             LabelFont = UIFont.SystemFontOfSize (10.0f);
             LabelColor = UIColor.LightGray;
@@ -53,7 +58,11 @@ namespace Toggl.Ross.Views.Charting
 
         UIView _barChartView;
         CATextLayer[] xAxisText = new CATextLayer[5];
+        NSTimer _animationTimer;
+        List<CABasicAnimation> _animations;
+        AnimationDelegate _animationDelegate;
 
+        const int defaultSliceZOrder = 100;
         const float minBarScale = 0.005f;
         const int defaultOrder = 100;
         const float xAxisMargin = 35;
@@ -109,7 +118,7 @@ namespace Toggl.Ross.Views.Charting
                     Layer.AddSublayer (textLayer);
                     xAxisText [i - 1] = textLayer;
                 }
-            };
+            }
         }
 
         public void ReloadData()
@@ -119,71 +128,47 @@ namespace Toggl.Ross.Views.Charting
             }
 
             CALayer parentLayer = _barChartView.Layer;
-            var barLayers = parentLayer.Sublayers ?? new CALayer[0];
             int barsCount = DataSource.NumberOfBarsOnChart (this);
 
             for (int i = 0; i < xAxisText.Length; i++) {
                 xAxisText [i].String = DataSource.TimeIntervalAtIndex (i);
             }
 
-            CATransaction.Begin ();
-            CATransaction.AnimationDuration = Convert.ToDouble (AnimationSpeed);
             _barChartView.UserInteractionEnabled = false;
-
             float barHeight = (Bounds.Height - topBarMargin - yAxisMargin) / Convert.ToSingle (barsCount);
             const float padding = 1.0f;
             float initialY = barHeight / 2 + topBarMargin;
 
             for (int i = 0; i < barsCount; i++) {
-                BarLayer oneLayer;
-                if (i >= barLayers.Length) {
-                    oneLayer = CreateBarLayer (barHeight - padding);
-                    parentLayer.AddSublayer (oneLayer);
-                } else {
-                    oneLayer = (BarLayer)barLayers [i];
-                    oneLayer.HeightValue = barHeight - padding;
-                }
+                BarLayer oneLayer = CreateBarLayer (barHeight - padding);
+                parentLayer.AddSublayer (oneLayer);
+                oneLayer.Position = new PointF ( 0, initialY + i * barHeight);
                 oneLayer.TimeValue = DataSource.ValueForBarAtIndex (this, i);
                 oneLayer.MoneyValue = DataSource.ValueForSecondaryBarAtIndex (this, i);
-                oneLayer.Position = new PointF ( 0, initialY + i * barHeight);
 
                 var timeTextLayer = (CATextLayer)oneLayer.Sublayers [BarLayer.TimeTextIndex];
                 timeTextLayer.String = DataSource.TimeForBarAtIndex (i);
                 timeTextLayer.Hidden = (string.Compare (timeTextLayer.String, "0.00", StringComparison.Ordinal) == 0);
+                timeTextLayer.Position = new PointF ( timeTextLayer.Position.X, oneLayer.Bounds.Height/2);
+                timeTextLayer.FontSize = (barsCount > 12) ? 9.0f : 10.0f;
 
-                string labelText;
-                if (barsCount > 12) {
-                    labelText = (i % 3 == 0) ? DataSource.TextForBarAtIndex (this, i) : "";
-                    LabelFont = LabelFont.WithSize (9.0f);
-                    timeTextLayer.Opacity = 0.0f;
-                } else {
-                    labelText = DataSource.TextForBarAtIndex (this, i);
-                    LabelFont = LabelFont.WithSize (10.0f);
-                    timeTextLayer.Opacity = (string.Compare (timeTextLayer.String, "0.00", StringComparison.Ordinal) == 0) ? 0.0f : 1.0f;
-                }
-
-                CATransaction.DisableActions = true;
-                var nsString = new NSString ( labelText);
+                var nsString = new NSString ( DataSource.TextForBarAtIndex (this, i));
                 SizeF size = nsString.GetSizeUsingAttributes (new UIStringAttributes () { Font = LabelFont });
-                var textLayer = (CATextLayer)oneLayer.Sublayers [3];
-                textLayer.String = labelText;
+                var textLayer = (CATextLayer)oneLayer.Sublayers [BarLayer.DateTextIndex];
+                textLayer.String = DataSource.TextForBarAtIndex (this, i);
                 textLayer.FontSize = (barsCount > 12) ? 9.0f : 10.0f;
                 textLayer.Bounds = new RectangleF (0, 0, size.Width, size.Height);
                 textLayer.Position = new PointF ( 0.0f, oneLayer.Bounds.Height/2);
-                timeTextLayer.Position = new PointF ( timeTextLayer.Position.X, oneLayer.Bounds.Height/2);
-                timeTextLayer.FontSize = textLayer.FontSize;
-                CATransaction.DisableActions = false;
-            }
 
-            if ( (barsCount - barLayers.Length) < 0) {
-                for (int i = barsCount; i < barLayers.Length; i++) {
-                    var removeLayer = barLayers [i];
-                    removeLayer.RemoveFromSuperLayer ();
+                if (barsCount > 12) {
+                    timeTextLayer.Opacity = 0.0f;
+                    textLayer.Opacity = (i % 3 == 0) ? 1.0f : 0.0f;
+                } else {
+                    timeTextLayer.Opacity = (string.Compare (timeTextLayer.String, "0.00", StringComparison.Ordinal) == 0) ? 0.0f : 1.0f;
                 }
-            }
 
+            }
             _barChartView.UserInteractionEnabled = true;
-            CATransaction.Commit ();
         }
 
         private BarLayer CreateBarLayer ( float barHeight)
@@ -261,18 +246,108 @@ namespace Toggl.Ross.Views.Charting
 
         public override void TouchesBegan (NSSet touches, UIEvent evt)
         {
+            CALayer parentLayer = _barChartView.Layer;
+            var barLayers = parentLayer.Sublayers ?? new CALayer[0];
+            if (barLayers.Length <= 12) {
+                return;
+            }
+
+            // detect touched layer
+            var touch = (UITouch)touches.AnyObject;
+            PointF point = touch.LocationInView (_barChartView);
+            var index = GetSelectedBarChart (point);
+            if (index == -1) {
+                return;
+            }
+
+            var currentHeight = barLayers [0].Bounds.Height;
+            var totalHeight = Frame.Height - topBarMargin - yAxisMargin;
+            float posY = 0.0f;
+
+            const float padding = 1.0f;
+            const float maxBarHeight = 35f;
+            const int zoomCount = 3;
+            float initialY = barLayers[0].Position.Y;
+
+            var minHeight = (totalHeight - maxBarHeight * zoomCount) / (barLayers.Length - zoomCount);
+            float barHeight;
+
+            for (int i = 0; i < barLayers.Length; i++) {
+                var oneLayer = (BarLayer)barLayers [i];
+                if (index == 0 && i < zoomCount) {
+                    barHeight = maxBarHeight;
+                } else if ( index == barLayers.Length - 1 && i > barLayers.Length - 1 - zoomCount) {
+                    barHeight = maxBarHeight;
+                } else if (i >= index - 1 && i <= index + 1) {
+                    barHeight = maxBarHeight;
+                    oneLayer.Sublayers[ BarLayer.TimeTextIndex].Opacity = 1.0f;
+                    oneLayer.Sublayers [BarLayer.DateTextIndex].Opacity = 1.0f;
+                } else {
+                    barHeight = minHeight;
+                }
+
+                oneLayer.CreateBarAnimationForHeight ( oneLayer.Sublayers[ BarLayer.MainBarIndex], barHeight - padding, null);
+                oneLayer.CreateBarAnimationForHeight ( oneLayer.Sublayers[ BarLayer.SecondaryBarIndex], barHeight - padding, null);
+                oneLayer.CreateBarAnimationForHeight ( oneLayer.Sublayers[ BarLayer.EmptyBarIndex], barHeight - padding, null);
+                oneLayer.Sublayers[ BarLayer.DateTextIndex].Position = new PointF ( oneLayer.Sublayers[ BarLayer.DateTextIndex].Position.X, ( barHeight - padding)/2);
+                oneLayer.Sublayers[ BarLayer.TimeTextIndex].Position = new PointF ( oneLayer.Sublayers[ BarLayer.TimeTextIndex].Position.X, ( barHeight - padding)/2);
+                oneLayer.Position = new PointF ( 0, initialY + posY);
+                posY += barHeight;
+            }
         }
 
         public override void TouchesMoved (NSSet touches, UIEvent evt)
         {
+
         }
 
         public override void TouchesEnded (NSSet touches, UIEvent evt)
         {
+            TouchesCancelled (touches, evt);
         }
 
         public override void TouchesCancelled (NSSet touches, UIEvent evt)
         {
+            CALayer parentLayer = _barChartView.Layer;
+            var barLayers = parentLayer.Sublayers ?? new CALayer[0];
+            if (barLayers.Length <= 12) {
+                return;
+            }
+
+            float barHeight = (Frame.Height - topBarMargin - yAxisMargin) / Convert.ToSingle (barLayers.Length);
+            const float padding = 1.0f;
+            float initialY = barHeight / 2 + topBarMargin;
+
+            for (int i = 0; i < barLayers.Length; i++) {
+                var oneLayer = (BarLayer)barLayers [i];
+                oneLayer.CreateBarAnimationForHeight ( oneLayer.Sublayers[ BarLayer.MainBarIndex], barHeight - padding, null);
+                oneLayer.CreateBarAnimationForHeight ( oneLayer.Sublayers[ BarLayer.SecondaryBarIndex], barHeight - padding, null);
+                oneLayer.CreateBarAnimationForHeight ( oneLayer.Sublayers[ BarLayer.EmptyBarIndex], barHeight - padding, null);
+                oneLayer.Sublayers[ BarLayer.DateTextIndex].Position = new PointF ( oneLayer.Sublayers[ BarLayer.DateTextIndex].Position.X, ( barHeight - padding)/2);
+                oneLayer.Sublayers[ BarLayer.TimeTextIndex].Position = new PointF ( oneLayer.Sublayers[ BarLayer.TimeTextIndex].Position.X, ( barHeight - padding)/2);
+                oneLayer.Sublayers[ BarLayer.TimeTextIndex].Opacity = 0.0f;
+                oneLayer.Sublayers[ BarLayer.DateTextIndex].Opacity = (i % 3 == 0) ? 1.0f : 0.0f;
+                oneLayer.Position = new PointF ( 0, initialY + i * barHeight);
+            }
+        }
+
+        private int GetSelectedBarChart ( PointF point)
+        {
+            CALayer parentLayer = _barChartView.Layer;
+            var barLayers = parentLayer.Sublayers ?? new CALayer[0];
+            int idx = 0;
+            int selectedIndex = -1;
+
+            foreach (BarLayer item in barLayers) {
+                if (item.Contains ( _barChartView.Layer.ConvertPointToLayer (point, item) )) {
+                    item.ZPosition = float.MaxValue;
+                    selectedIndex = idx;
+                } else {
+                    item.ZPosition = defaultSliceZOrder;
+                }
+                idx++;
+            }
+            return selectedIndex;
         }
 
         #endregion
@@ -281,18 +356,84 @@ namespace Toggl.Ross.Views.Charting
 
         public void AnimationDidStart (CABasicAnimation anim)
         {
-            throw new NotImplementedException ();
+            if (_animationTimer == null) {
+                const double timeInterval = 1.0f / 60.0f;
+                _animationTimer = NSTimer.CreateTimer (timeInterval, this, new Selector ("updateTimerFired:"),null, true);
+                NSRunLoop.Main.AddTimer (_animationTimer, NSRunLoopMode.Common);
+            }
+            _animations.Add (anim);
         }
 
-        public void AnimationDidStop (CABasicAnimation anim, bool finished)
+        public void AnimationDidStop (CABasicAnimation anim, bool isFinished)
         {
-            throw new NotImplementedException ();
+            _animations.Remove (anim);
+            if (_animations.Count == 0) {
+                _animationTimer.Invalidate ();
+                _animationTimer = null;
+            }
+        }
+
+        #endregion
+
+
+        #region Animation Delegate + Run Loop Timer
+
+        [Export ("updateTimerFired:")]
+        private void UpdateTimerFired (NSTimer timer)
+        {
+            /*
+            var mainBar = Sublayers [0];
+            var secondaryBar = Sublayers [1];
+            var emptyBar = Sublayers [EmptyBarIndex];
+            if (value > 0 && mainBar != null) {
+                float barHeight = value;
+                Bounds = new RectangleF (0.0f, 0.0f, Bounds.Width, barHeight);
+                mainBar.Bounds = new RectangleF (0.0f, 0.0f, mainBar.Bounds.Width, barHeight);
+                secondaryBar.Bounds = new RectangleF (0.0f, 0.0f, secondaryBar.Bounds.Width, barHeight);
+                emptyBar.Bounds = new RectangleF (0.0f, 0.0f, emptyBar.Bounds.Width, barHeight);
+
+                var labelTextLayer = (CATextLayer)Sublayers [DateTextIndex];
+                var labelTimeLayer = (CATextLayer)Sublayers [TimeTextIndex];
+                if (value < 10) {
+                    labelTextLayer.Opacity = (Index % 3 == 0) ? 1.0f : 0.0f;
+                    labelTimeLayer.Opacity = 0.0f;
+                    //LabelFont = LabelFont.WithSize (9.0f);
+                } else {
+                    labelTextLayer.String = _labelText;
+                    labelTimeLayer.ModelLayer.Opacity = 1.0f;
+                    //LabelFont = LabelFont.WithSize (10.0f);
+                    labelTimeLayer.ModelLayer.Opacity = (string.Compare (TimeText, "0.00", StringComparison.Ordinal) == 0) ? 0.0f : 1.0f;
+                }
+                labelTimeLayer.Position = new PointF (labelTimeLayer.Position.X, Bounds.Height / 2);
+                //timeTextLayer.FontSize = textLayer.FontSize;
+
+            }
+            */
+
+            /*
+            foreach (var layer in _barChartView.Layer.Sublayers) {
+                var mainLayer = layer.Sublayers [BarLayer.MainBarIndex];
+                var currentStartAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("heightValue"));
+                var interpolatedStartAngle = currentStartAngle.DoubleValue;
+                var currentEndAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("endAngle"));
+                double interpolatedEndAngle = currentEndAngle.DoubleValue;
+                var path = CGPathCreateArc (_pieCenter, PieRadius, interpolatedStartAngle, interpolatedEndAngle);
+                shapeLayer.Path = path;
+                path.Dispose ();
+                CALayer labelLayer = layer.Sublayers [1];
+                double interpolatedMidAngle = (interpolatedEndAngle + interpolatedStartAngle) / 2;
+                CATransaction.DisableActions = true;
+                labelLayer.Position = new PointF (_pieCenter.X + (LabelRadius * Convert.ToSingle (Math.Cos (interpolatedMidAngle))), _pieCenter.Y + (LabelRadius * Convert.ToSingle (Math.Sin (interpolatedMidAngle))));
+                CATransaction.DisableActions = false;
+            }
+            */
+
         }
 
         #endregion
     }
 
-    class BarLayer : CALayer
+    sealed class BarLayer : CALayer
     {
         public const int MainBarIndex = 0;
         public const int SecondaryBarIndex = 1;
@@ -317,8 +458,8 @@ namespace Toggl.Ross.Views.Charting
                 var mainBar = Sublayers [0];
                 if (mainBar != null ) {
                     var xScale = (_timeValue > minBarScale) ? _timeValue : minBarScale;
-                    CreateBarAnimationForKeyPath (mainBar, "transform.scale.x", xScale, null);
-                    CreateBarAnimationForKeyPath (Sublayers [TimeTextIndex], "position.x", mainBar.Bounds.Width * xScale + 5.0f + mainBar.Position.X, null);
+                    CreateBarAnimationForKeyPath (mainBar, "transform.scale.x", xScale );
+                    CreateBarAnimationForKeyPath (Sublayers [TimeTextIndex], "position.x", mainBar.Bounds.Width * xScale + 5.0f + mainBar.Position.X );
                 }
                 Sublayers [EmptyBarIndex].Opacity = (_timeValue > 0) ? 0.0f : 1.0f;
             }
@@ -341,36 +482,13 @@ namespace Toggl.Ross.Views.Charting
                 var secondaryBar = Sublayers [SecondaryBarIndex];
                 if (secondaryBar != null ) {
                     var xScale = (_moneyValue > minBarScale) ? _moneyValue : minBarScale;
-                    CreateBarAnimationForKeyPath (secondaryBar, "transform.scale.x", xScale, null);
+                    CreateBarAnimationForKeyPath (secondaryBar, "transform.scale.x", xScale);
                 }
                 if ( _moneyValue > _timeValue && _moneyValue > 0) { // TODO: weird case where _moneyValue > _timeValue!
                     Sublayers [EmptyBarIndex].Opacity = (value > 0) ? 0.0f : 1.0f;
                 }
             }
         }
-
-        [Export ("heightValue")]
-        public float HeightValue
-        {
-            get {
-                return Sublayers [0] != null ? Sublayers [0].Bounds.Height : 0;
-            } set {
-                var mainBar = Sublayers [0];
-                var secondaryBar = Sublayers [1];
-                var emptyBar = Sublayers [EmptyBarIndex];
-                if (value > 0 && mainBar != null) {
-                    float barHeight = value;
-                    Bounds = new RectangleF ( 0.0f, 0.0f, Bounds.Width, barHeight);
-                    mainBar.Bounds = new RectangleF ( 0.0f, 0.0f, mainBar.Bounds.Width, barHeight);
-                    secondaryBar.Bounds = new RectangleF (0.0f, 0.0f, secondaryBar.Bounds.Width, barHeight);
-                    emptyBar.Bounds = new RectangleF ( 0.0f, 0.0f, emptyBar.Bounds.Width, barHeight);
-                }
-            }
-        }
-
-        public bool IsSelected { get; set; }
-
-        public string Text { get; set; }
 
         const float minBarScale = 0.005f;
 
@@ -386,22 +504,15 @@ namespace Toggl.Ross.Views.Charting
         [Export ("initWithLayer:")]
         public BarLayer (CALayer other) : base (other)
         {
-
         }
 
         public override void Clone (CALayer other)
         {
             base.Clone (other);
-
             var _other = (BarLayer) other;
             if (_other != null) {
                 MoneyValue = _other.MoneyValue;
-                HeightValue = _other.HeightValue;
                 TimeValue = _other.TimeValue;
-                var emptyBar = Sublayers [EmptyBarIndex];
-                if (emptyBar != null) {
-                    emptyBar.Opacity = 0.0f;
-                }
             }
         }
 
@@ -413,15 +524,32 @@ namespace Toggl.Ross.Views.Charting
                 return true;
             case "moneyValue":
                 return true;
-            case "heightValue":
-                return true;
             default:
                 return CALayer.NeedsDisplayForKey (key);
             }
         }
 
-        public void CreateBarAnimationForKeyPath ( CALayer layer, string key, float toValue, CAAnimationDelegate @delegate)
+        public void CreateBarAnimationForKeyPath ( CALayer layer, string key, float toValue )
         {
+            var _fromValue =  layer.ValueForKeyPath ( new NSString ( key));
+            var _toValue = new NSNumber (toValue);
+            var _key = new NSString (key);
+
+            var barAnimation = CABasicAnimation.FromKeyPath (key);
+            var currentValue = _fromValue;
+            if (layer.PresentationLayer != null) {
+                currentValue = layer.PresentationLayer.ValueForKeyPath (_key);
+            }
+            barAnimation.From = currentValue;
+            barAnimation.To = _toValue;
+            barAnimation.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.Default);
+            layer.AddAnimation (barAnimation, key);
+            layer.SetValueForKeyPath (_toValue, _key);
+        }
+
+        public void CreateBarAnimationForHeight ( CALayer layer, float toValue, CAAnimationDelegate @delegate)
+        {
+            const string key = "bounds.size.height";
             var _fromValue =  layer.ValueForKeyPath ( new NSString ( key));
             var _toValue = new NSNumber (toValue);
             var _key = new NSString (key);

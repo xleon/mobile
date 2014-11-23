@@ -21,10 +21,10 @@ namespace Toggl.Phoebe.Data.Reports
 
         public async Task Load (int backDate)
         {
-            if (_isLoading) {
+            if (IsLoading) {
                 return;
             }
-            _isLoading = true;
+            IsLoading = true;
 
             if (workspaceId == null) {
                 await Initialize ();
@@ -111,14 +111,7 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private bool _isLoading;
-
-        public bool IsLoading
-        {
-            get {
-                return _isLoading;
-            }
-        }
+        public bool IsLoading { get; private set; }
 
 
         public int ActivityCount

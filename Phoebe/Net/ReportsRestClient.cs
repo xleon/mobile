@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -49,7 +50,10 @@ namespace Toggl.Phoebe.Net
         private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq, CancellationToken token)
         {
             using (var httpClient = MakeHttpClient ()) {
+                var reqTimer = Stopwatch.StartNew ();
                 var httpResp = await httpClient.SendAsync (httpReq, token).ConfigureAwait (false);
+                reqTimer.Stop ();
+                PrepareResponse (httpResp, reqTimer.Elapsed);
                 return httpResp;
             }
         }

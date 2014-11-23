@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
 using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data.Json
@@ -50,9 +49,8 @@ namespace Toggl.Phoebe.Data.Json
         [JsonProperty ("client")]
         public string Client { get; set; }
 
-        [DefaultValue (-1)]
         [JsonProperty ("color")]
-        public int Color { get; set; }
+        public string Color { get; set; }
     }
 
     #endregion

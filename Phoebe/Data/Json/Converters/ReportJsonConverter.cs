@@ -28,12 +28,13 @@ namespace Toggl.Phoebe.Data.Json.Converters
         private static List<ReportProject> MakeProjectList (List<ReportProjectJson> jsonList)
         {
             var projectList = new List<ReportProject> ();
+            int colorIndex;
 
             foreach (var item in jsonList) {
                 var p = new ReportProject () {
                     Project = item.Description.Project,
                     TotalTime = item.TotalTime,
-                    Color = String.IsNullOrEmpty ( item.Description.Color) ? ProjectModel.HexColors.Length - 1 : int.Parse ( item.Description.Color),
+                    Color = Int32.TryParse (item.Description.Color, out colorIndex) ? colorIndex : ProjectModel.HexColors.Length - 1,
                     BillableTime = item.Items.Where ( t => t.Sum > 0).Sum ( t => t.Time)
                 };
                 p.Items = new List<ReportTimeEntry> ();

@@ -15,16 +15,6 @@ namespace Toggl.Ross.Views.Charting
 {
     public class DonutChartView : UIView, IReportChart, IXYDonutChartDataSource
     {
-        public EventHandler AnimationEnded { get; set; }
-
-        public EventHandler AnimationStarted { get; set; }
-
-        public EventHandler GoForwardInterval { get; set; }
-
-        public EventHandler GoBackInterval { get; set; }
-
-        public EventHandler ChangeView { get; set; }
-
         private SummaryReportView _reportView;
 
         public SummaryReportView ReportView
@@ -81,6 +71,7 @@ namespace Toggl.Ross.Views.Charting
         }
 
         private bool _normalSelectionMode;
+
         public bool NormalSelectionMode
         {
             get {
@@ -101,27 +92,23 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        public List<ReportProject> TableProjectList;
-        public List<ReportProject> DonutProjectList;
-
         public DonutChartView (RectangleF frame) : base (frame)
         {
-            const float pieRadius = 80.0f;
-            const float lineStroke = 40f;
-            const float padding = 24f;
-            const float diameter = pieRadius * 2 + lineStroke;
+        }
 
+        public DonutChartView ()
+        {
             TableProjectList = new List<ReportProject> ();
             DonutProjectList = new List<ReportProject> ();
 
-            grayCircle = new UIView (new RectangleF (0, 0, frame.Width, diameter + padding));
-            grayCircle.Layer.AddSublayer ( CGPathCreateArc ( grayCircle.Center, pieRadius, 0, Math.PI * 2, lineStroke));
+            grayCircle = new UIView ();
+            grayCircle.Layer.AddSublayer (new CAShapeLayer () { FillColor = Color.DonutInactiveGray.CGColor});
             Add (grayCircle);
 
-            donutChart = new XYDonutChart (new RectangleF (0, 0, frame.Width, diameter + padding)) {
-                DataSource = this,
+            donutChart = new XYDonutChart () {
                 PieRadius = pieRadius,
                 DonutLineStroke = lineStroke,
+                DataSource = this,
                 UserInteractionEnabled = true,
                 SelectedSliceStroke = 0,
                 ShowPercentage = false,
@@ -149,52 +136,84 @@ namespace Toggl.Ross.Views.Charting
             };
             donutChart.DidDeselectAllSlices += (sender, e) => DeselectAllProjects ();
 
-            projectTableView = new UITableView (new RectangleF (0, donutChart.Frame.Height, frame.Width, frame.Height - donutChart.Frame.Height));
+            projectTableView = new UITableView ();
             projectTableView.RegisterClassForCellReuse (typeof (ProjectReportCell), ProjectReportCell.ProjectReportCellId);
             projectTableView.Source = new ProjectListSource (this);
-            projectTableView.RowHeight = lineStroke;
+            projectTableView.RowHeight = 40f;
             projectTableView.TableFooterView = new UIView ();
             var insets = projectTableView.ScrollIndicatorInsets;
             insets.Right -= 3.0f;
             projectTableView.ScrollIndicatorInsets = insets;
             Add (projectTableView);
-            DrawBottomBoders (projectTableView);
 
-            totalTimeLabel = new UILabel (new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20));
-            totalTimeLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
+            totalTimeLabel = new UILabel ();
             totalTimeLabel.Apply (Style.ReportsView.DonutTimeLabel);
             Add (totalTimeLabel);
 
-            moneyLabel = new UILabel (new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20));
-            moneyLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + 10);
+            moneyLabel = new UILabel ();
             moneyLabel.Apply (Style.ReportsView.DonutMoneyLabel);
             Add (moneyLabel);
 
-            noProjectTitleLabel = new UILabel ( new RectangleF ( 0, 0, donutChart.PieRadius * 2, 20));
-            noProjectTitleLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 20);
+            noProjectTitleLabel = new UILabel ();
             noProjectTitleLabel.Apply (Style.ReportsView.NoProjectTitle);
             noProjectTitleLabel.Text = "ReportsLoadingTitle".Tr ();
             Add (noProjectTitleLabel);
 
-            noProjectTextLabel = new UILabel ( new RectangleF ( 0, 0, donutChart.PieRadius * 2, 35));
-            noProjectTextLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + 5 );
+            noProjectTextLabel = new UILabel ();
             noProjectTextLabel.Apply (Style.ReportsView.DonutMoneyLabel);
             noProjectTextLabel.Lines = 2;
             noProjectTextLabel.Text = "ReportsLoadingText".Tr ();
             Add (noProjectTextLabel);
+
+            topBoder = new UIView ();
+            bottomBoder = new UIView ();
+            Add (topBoder);
+            Add (bottomBoder);
 
             projectTableView.Alpha = 0;
             moneyLabel.Alpha = 0;
             totalTimeLabel.Alpha = 0;
         }
 
-        XYDonutChart donutChart;
-        UITableView projectTableView;
-        UILabel totalTimeLabel;
-        UILabel moneyLabel;
-        UILabel noProjectTitleLabel;
-        UILabel noProjectTextLabel;
-        UIView grayCircle;
+        private XYDonutChart donutChart;
+        private UITableView projectTableView;
+        private UILabel totalTimeLabel;
+        private UILabel moneyLabel;
+        private UILabel noProjectTitleLabel;
+        private UILabel noProjectTextLabel;
+        private UIView grayCircle;
+        private UIView topBoder;
+        private UIView bottomBoder;
+
+        const float pieRadius = 80.0f;
+        const float lineStroke = 40f;
+        const float padding = 24f;
+        const float diameter = pieRadius * 2 + lineStroke;
+
+        public List<ReportProject> TableProjectList;
+        public List<ReportProject> DonutProjectList;
+
+        public override void LayoutSubviews ()
+        {
+            base.LayoutSubviews ();
+
+            grayCircle.Frame = new RectangleF (0, 0, Bounds.Width, diameter + padding);
+            ((CAShapeLayer)grayCircle.Layer.Sublayers [0]).Path = CGPathCreateArc ( grayCircle.Center, pieRadius, 0, Math.PI * 2, lineStroke);
+            donutChart.Frame = new RectangleF (0, 0, Bounds.Width, diameter + padding);
+            projectTableView.Frame = new RectangleF (0, donutChart.Bounds.Height, Bounds.Width, Bounds.Height - donutChart.Bounds.Height);
+
+            totalTimeLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20);
+            totalTimeLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
+            moneyLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20);
+            moneyLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + 10);
+
+            noProjectTitleLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2, 20);
+            noProjectTitleLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 20);
+            noProjectTextLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2, 35);
+            noProjectTextLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + 5 );
+
+            DrawViewBoders (projectTableView, topBoder, bottomBoder);
+        }
 
         public void SelectProjectAt (int index)
         {
@@ -244,14 +263,11 @@ namespace Toggl.Ross.Views.Charting
             donutChart.Dispose ();
         }
 
-        private CAShapeLayer CGPathCreateArc (PointF center, float radius, double startAngle, double endAngle, float lineStroke)
+        private CGPath CGPathCreateArc (PointF center, float radius, double startAngle, double endAngle, float lineStroke)
         {
-            var shapeLayer = new CAShapeLayer ();
             var path = new CGPath ();
             path.AddArc (center.X, center.Y, radius, Convert.ToSingle (startAngle), Convert.ToSingle (endAngle), false);
-            shapeLayer.Path = path.CopyByStrokingPath (lineStroke, CGLineCap.Butt, CGLineJoin.Miter, 10);
-            shapeLayer.FillColor = Color.DonutInactiveGray.CGColor;
-            return shapeLayer;
+            return path.CopyByStrokingPath (lineStroke, CGLineCap.Butt, CGLineJoin.Miter, 10);
         }
 
         private bool AreEquals ( ReportProject a, ReportProject b)
@@ -259,28 +275,25 @@ namespace Toggl.Ross.Views.Charting
             return false || a.TotalTime == b.TotalTime && string.Compare (a.Project, b.Project, StringComparison.Ordinal) == 0 && a.Color == b.Color;
         }
 
-        private void DrawBottomBoders ( UIView view)
+        private void DrawViewBoders ( UIView targetView, UIView tp, UIView btm)
         {
             var mask = new CAGradientLayer ();
-            mask.Frame = new RectangleF (0, 0, view.Frame.Width, 10);
+            mask.Frame = new RectangleF (0, 0, targetView.Bounds.Width, 10);
             mask.Colors = new [] { UIColor.White.CGColor, UIColor.Clear.CGColor };
 
-            var topBoder = new UIView ( new RectangleF ( view.Frame.X, view.Frame.Y, view.Frame.Width, 10));
-            topBoder.BackgroundColor = UIColor.White;
-            topBoder.UserInteractionEnabled = false;
-            topBoder.Layer.Mask = mask;
+            tp.Frame = new RectangleF ( targetView.Frame.X, targetView.Frame.Y, targetView.Bounds.Width, 10);
+            tp.BackgroundColor = UIColor.White;
+            tp.UserInteractionEnabled = false;
+            tp.Layer.Mask = mask;
 
             var maskInverted = new CAGradientLayer ();
-            maskInverted.Frame = new RectangleF (0, 0, view.Frame.Width, 20);
+            maskInverted.Frame = new RectangleF (0, 0, targetView.Frame.Width, 20);
             maskInverted.Colors = new [] { UIColor.Clear.CGColor, UIColor.White.CGColor};
 
-            var bottomBoder = new UIView ( new RectangleF ( view.Frame.X, view.Frame.Y + view.Frame.Height - 20, view.Frame.Width, 20));
-            bottomBoder.BackgroundColor = UIColor.White;
-            bottomBoder.UserInteractionEnabled = false;
-            bottomBoder.Layer.Mask = maskInverted;
-
-            Add (topBoder);
-            Add (bottomBoder);
+            btm.Frame = new RectangleF ( targetView.Frame.X, targetView.Frame.Y + targetView.Bounds.Height - 20, targetView.Bounds.Width, 20);
+            btm.BackgroundColor = UIColor.White;
+            btm.UserInteractionEnabled = false;
+            btm.Layer.Mask = maskInverted;
         }
 
         #region Pie Datasource

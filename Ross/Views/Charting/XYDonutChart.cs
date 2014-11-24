@@ -124,12 +124,15 @@ namespace Toggl.Ross.Views.Charting
         List<CABasicAnimation> _animations;
         AnimationDelegate _animationDelegate;
 
-
         public XYDonutChart (RectangleF frame) : base (frame)
         {
-            _pieView = new UIView (frame);
+        }
+
+        public XYDonutChart ()
+        {
+            _pieView = new UIView ();
             PieBackgroundColor = UIColor.Clear;
-            AddSubview (_pieView);
+            Add (_pieView);
 
             _selectedSliceIndex = -1;
             _animations = new List<CABasicAnimation> ();
@@ -138,18 +141,23 @@ namespace Toggl.Ross.Views.Charting
             AnimationSpeed = 0.5f;
             StartPieAngle = Math.PI * 3;
             SelectedSliceStroke = 2.0f;
-
-            PieRadius = Math.Min (frame.Width / 2, frame.Height / 2) - 10;
-            PieCenter = new PointF (frame.Width / 2, frame.Height / 2);
-            LabelFont = UIFont.BoldSystemFontOfSize (Math.Max (PieRadius / 10, 5));
             LabelColor = UIColor.White;
-            LabelRadius = PieRadius / 2;
-            SelectedSliceOffsetRadius = Math.Max (10, PieRadius / 10);
-            DonutLineStroke = PieRadius / 4;
-
             IsDonut = true;
             ShowLabel = true;
             ShowPercentage = true;
+
+            PieRadius = Math.Min (Bounds.Width / 2, Bounds.Height / 2) - 10;
+            LabelFont = UIFont.BoldSystemFontOfSize (Math.Max (PieRadius / 10, 5));
+            PieCenter = new PointF (Bounds.Width / 2, Bounds.Height / 2);
+            LabelRadius = PieRadius / 2;
+            DonutLineStroke = PieRadius / 4;
+        }
+
+        public override void LayoutSubviews ()
+        {
+            base.LayoutSubviews ();
+            _pieView.Frame = Bounds;
+            PieCenter = new PointF (Bounds.Width / 2, Bounds.Height / 2);
         }
 
         protected override void Dispose (bool disposing)
@@ -273,9 +281,6 @@ namespace Toggl.Ross.Views.Charting
                 angles [index] = Math.PI * 2 * div;
             }
 
-            //CATransaction.Begin ();
-            //CATransaction.AnimationDuration = Convert.ToDouble (AnimationSpeed);
-
             _pieView.UserInteractionEnabled = false;
 
             var layersToRemove = new List<SliceLayer> ();
@@ -294,7 +299,6 @@ namespace Toggl.Ross.Views.Charting
                     layer.CreateArcAnimationForKey ("startAngle", StartPieAngle, StartPieAngle, _animationDelegate);
                     layer.CreateArcAnimationForKey ("endAngle", StartPieAngle, StartPieAngle, _animationDelegate);
                 }
-                //CATransaction.Commit ();
                 return;
             }
 
@@ -358,7 +362,6 @@ namespace Toggl.Ross.Views.Charting
                 startToAngle = endToAngle;
             }
 
-            CATransaction.DisableActions = true;
             foreach (var layer in layersToRemove) {
                 var shapeLayer = (CAShapeLayer)layer.Sublayers [0];
                 layerPool.Remove (layer);
@@ -376,8 +379,6 @@ namespace Toggl.Ross.Views.Charting
             }
 
             _pieView.UserInteractionEnabled = true;
-            CATransaction.DisableActions = false;
-            //CATransaction.Commit ();
         }
 
         public void SetSliceSelectedAtIndex (int index)
@@ -509,9 +510,7 @@ namespace Toggl.Ross.Views.Charting
                     path.Dispose ();
                     CALayer labelLayer = layer.Sublayers [1];
                     double interpolatedMidAngle = (interpolatedEndAngle + interpolatedStartAngle) / 2;
-                    CATransaction.DisableActions = true;
                     labelLayer.Position = new PointF (_pieCenter.X + (LabelRadius * Convert.ToSingle (Math.Cos (interpolatedMidAngle))), _pieCenter.Y + (LabelRadius * Convert.ToSingle (Math.Sin (interpolatedMidAngle))));
-                    CATransaction.DisableActions = false;
                 }
             }
         }
@@ -588,12 +587,10 @@ namespace Toggl.Ross.Views.Charting
 
             SizeF size = ((NSString)"0").StringSize (LabelFont);
 
-            CATransaction.DisableActions = true;
             textLayer.Frame = new RectangleF (new PointF (0, 0), size);
             textLayer.Position = new PointF (_pieCenter.X + (LabelRadius * Convert.ToSingle (Math.Cos (0))), _pieCenter.Y + (LabelRadius * Convert.ToSingle (Math.Sin (0))));
-            CATransaction.DisableActions = false;
             pieLayer.AddSublayer (textLayer);
-            layerPool.Add (pieLayer); // TODO: remove pool!
+            layerPool.Add (pieLayer);
             return pieLayer;
         }
 
@@ -611,14 +608,12 @@ namespace Toggl.Ross.Views.Charting
             var nsString = new NSString (label);
             SizeF size = nsString.GetSizeUsingAttributes (new UIStringAttributes () { Font = LabelFont });
 
-            CATransaction.DisableActions = true;
             if (Math.PI * 2 * LabelRadius * sliceLayer.Percentage < Math.Max (size.Width, size.Height) || value <= 0) {
                 textLayer.String = "";
             } else {
                 textLayer.String = label;
                 textLayer.Bounds = new RectangleF (0, 0, size.Width, size.Height);
             }
-            CATransaction.DisableActions = false;
         }
     }
 

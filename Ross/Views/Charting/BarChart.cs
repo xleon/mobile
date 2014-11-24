@@ -51,8 +51,9 @@ namespace Toggl.Ross.Views.Charting
             BackgroundColor = UIColor.White;
         }
 
-        UIView _barChartView;
-        CATextLayer[] xAxisText = new CATextLayer[5];
+        private UIView _barChartView;
+        private CATextLayer[] xAxisText = new CATextLayer[5];
+        private int lastZoomedIndex;
 
         const int defaultSliceZOrder = 100;
         const float minBarScale = 0.005f;
@@ -237,6 +238,45 @@ namespace Toggl.Ross.Views.Charting
 
         public override void TouchesBegan (NSSet touches, UIEvent evt)
         {
+
+        }
+
+        public override void TouchesMoved (NSSet touches, UIEvent evt)
+        {
+            ZoomOut ();
+        }
+
+        public override void TouchesEnded (NSSet touches, UIEvent evt)
+        {
+            ZoomIn ( touches);
+        }
+
+        public override void TouchesCancelled (NSSet touches, UIEvent evt)
+        {
+            ZoomOut ();
+        }
+
+        private int GetSelectedBarChart ( PointF point)
+        {
+            CALayer parentLayer = _barChartView.Layer;
+            var barLayers = parentLayer.Sublayers ?? new CALayer[0];
+            int idx = 0;
+            int selectedIndex = -1;
+
+            foreach (BarLayer item in barLayers) {
+                if (item.Contains ( _barChartView.Layer.ConvertPointToLayer (point, item) )) {
+                    item.ZPosition = float.MaxValue;
+                    selectedIndex = idx;
+                } else {
+                    item.ZPosition = defaultSliceZOrder;
+                }
+                idx++;
+            }
+            return selectedIndex;
+        }
+
+        private void ZoomIn ( NSSet touches)
+        {
             CALayer parentLayer = _barChartView.Layer;
             var barLayers = parentLayer.Sublayers ?? new CALayer[0];
             if (barLayers.Length <= 12) {
@@ -247,7 +287,9 @@ namespace Toggl.Ross.Views.Charting
             var touch = (UITouch)touches.AnyObject;
             PointF point = touch.LocationInView (_barChartView);
             var index = GetSelectedBarChart (point);
-            if (index == -1) {
+
+            if (index == -1 || ( index >= lastZoomedIndex - 1 && index <= lastZoomedIndex + 1)) {
+                ZoomOut ();
                 return;
             }
 
@@ -273,6 +315,8 @@ namespace Toggl.Ross.Views.Charting
                     oneLayer.Sublayers [BarLayer.DateTextIndex].Opacity = 1.0f;
                 } else {
                     barHeight = minHeight;
+                    oneLayer.Sublayers[ BarLayer.TimeTextIndex].Opacity = 0.0f;
+                    oneLayer.Sublayers[ BarLayer.DateTextIndex].Opacity = (i % 3 == 0) ? 1.0f : 0.0f;
                 }
 
                 oneLayer.CreateBarAnimationForHeight ( oneLayer.Sublayers[ BarLayer.MainBarIndex], barHeight - padding, null);
@@ -283,19 +327,11 @@ namespace Toggl.Ross.Views.Charting
                 oneLayer.Position = new PointF ( 0, initialY + posY);
                 posY += barHeight;
             }
+
+            lastZoomedIndex = index;
         }
 
-        public override void TouchesMoved (NSSet touches, UIEvent evt)
-        {
-
-        }
-
-        public override void TouchesEnded (NSSet touches, UIEvent evt)
-        {
-            TouchesCancelled (touches, evt);
-        }
-
-        public override void TouchesCancelled (NSSet touches, UIEvent evt)
+        private void ZoomOut()
         {
             CALayer parentLayer = _barChartView.Layer;
             var barLayers = parentLayer.Sublayers ?? new CALayer[0];
@@ -318,25 +354,7 @@ namespace Toggl.Ross.Views.Charting
                 oneLayer.Sublayers[ BarLayer.DateTextIndex].Opacity = (i % 3 == 0) ? 1.0f : 0.0f;
                 oneLayer.Position = new PointF ( 0, initialY + i * barHeight);
             }
-        }
-
-        private int GetSelectedBarChart ( PointF point)
-        {
-            CALayer parentLayer = _barChartView.Layer;
-            var barLayers = parentLayer.Sublayers ?? new CALayer[0];
-            int idx = 0;
-            int selectedIndex = -1;
-
-            foreach (BarLayer item in barLayers) {
-                if (item.Contains ( _barChartView.Layer.ConvertPointToLayer (point, item) )) {
-                    item.ZPosition = float.MaxValue;
-                    selectedIndex = idx;
-                } else {
-                    item.ZPosition = defaultSliceZOrder;
-                }
-                idx++;
-            }
-            return selectedIndex;
+            lastZoomedIndex = -1;
         }
 
         #endregion
@@ -477,4 +495,3 @@ namespace Toggl.Ross.Views.Charting
         }
     }
 }
-

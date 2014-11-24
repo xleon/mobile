@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
@@ -16,8 +15,8 @@ namespace Toggl.Phoebe.Data.Reports
         private DateTime endDate;
         private ReportData dataObject;
         private DayOfWeek startOfWeek;
+        private IReportsClient reportClient;
         private long? workspaceId;
-        private CancellationTokenSource cts;
         public ZoomLevel Period;
 
         public async Task Load (int backDate)
@@ -39,8 +38,8 @@ namespace Toggl.Phoebe.Data.Reports
 
         public void CancelLoad()
         {
-            if (IsLoading && cts != null) {
-                cts.Cancel ();
+            if (IsLoading ) {
+                reportClient.CancelRequest ();
             }
         }
 
@@ -48,6 +47,7 @@ namespace Toggl.Phoebe.Data.Reports
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var user = ServiceContainer.Resolve<AuthManager> ().User;
+            reportClient = ServiceContainer.Resolve<IReportsClient> ();
             workspaceId = await store.ExecuteInTransactionAsync (ctx => ctx.GetRemoteId<WorkspaceData> (user.DefaultWorkspaceId));
             startOfWeek = user.StartOfWeek;
         }
@@ -55,16 +55,14 @@ namespace Toggl.Phoebe.Data.Reports
         private async Task FetchData ()
         {
             dataObject = CreateEmptyReport ();
-            cts = new CancellationTokenSource();
             try {
                 _isError = false;
-                var client = ServiceContainer.Resolve<IReportsClient> ();
-                var json = await client.GetReports (startDate, endDate, (long)workspaceId, cts.Token);
+                var json = await reportClient.GetReports (startDate, endDate, (long)workspaceId);
                 dataObject = json.Import ();
             } catch ( Exception exc) {
                 var log = ServiceContainer.Resolve<Logger> ();
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                    var msg = (cts.IsCancellationRequested) ? "Fetch reports cancelation requested by user" : "Failed to fetch reports. Network failure.";
+                    var msg = (reportClient.IsCancellationRequested) ? "Fetch reports cancelation requested by user" : "Failed to fetch reports. Network failure.";
                     log.Info (Tag, exc, msg);
                 } else {
                     log.Warning (Tag, exc, "Failed to fetch reports.");
@@ -72,7 +70,6 @@ namespace Toggl.Phoebe.Data.Reports
                 }
             } finally {
                 CalculateReportData ();
-                cts.Dispose ();
             }
         }
 

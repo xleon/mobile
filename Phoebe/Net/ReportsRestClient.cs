@@ -15,6 +15,7 @@ namespace Toggl.Phoebe.Net
     public class ReportsRestClient : IReportsClient
     {
         private readonly Uri reportsv2Url;
+        private CancellationTokenSource cts;
 
         public ReportsRestClient (Uri reportsApiUrl)
         {
@@ -47,11 +48,13 @@ namespace Toggl.Phoebe.Net
             return req;
         }
 
-        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq, CancellationToken token)
+        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq)
         {
             using (var httpClient = MakeHttpClient ()) {
                 var reqTimer = Stopwatch.StartNew ();
-                var httpResp = await httpClient.SendAsync (httpReq, token).ConfigureAwait (false);
+                HttpResponseMessage httpResp;
+                cts = new CancellationTokenSource ();
+                httpResp = await httpClient.SendAsync (httpReq, cts.Token).ConfigureAwait (false);
                 reqTimer.Stop ();
                 PrepareResponse (httpResp, reqTimer.Elapsed);
                 return httpResp;
@@ -66,7 +69,9 @@ namespace Toggl.Phoebe.Net
             }
         }
 
-        public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId, CancellationToken token)
+        #region IReportClient implementation
+
+        public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             var start = startDate.ToString ("yyyy-MM-dd");
@@ -80,10 +85,26 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
 
-            var httpResp = await SendAsync (httpReq, token).ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
             var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             return JsonConvert.DeserializeObject<ReportJson> (respData, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
         }
+
+        public void CancelRequest()
+        {
+            if (cts != null && cts.Token.CanBeCanceled) {
+                cts.Cancel ();
+            }
+        }
+
+        public bool IsCancellationRequested
+        {
+            get {
+                return cts.IsCancellationRequested;
+            }
+        }
+
+        #endregion
     }
 
 }

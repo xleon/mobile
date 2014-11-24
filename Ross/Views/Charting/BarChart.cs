@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreGraphics;
 using MonoTouch.Foundation;
-using MonoTouch.ObjCRuntime;
 using MonoTouch.UIKit;
 using Toggl.Ross.Theme;
-using System.Diagnostics;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -27,7 +24,7 @@ namespace Toggl.Ross.Views.Charting
         string TimeForBarAtIndex (int index);
     }
 
-    public class BarChart : UIView, IAnimationDelegate
+    public class BarChart : UIView
     {
         public IBarChartDataSource DataSource { get; set; }
 
@@ -45,8 +42,6 @@ namespace Toggl.Ross.Views.Charting
         {
             _barChartView = new UIView ();
             Add (_barChartView);
-            _animations = new List<CABasicAnimation> ();
-            _animationDelegate = new AnimationDelegate (this);
 
             LabelFont = UIFont.SystemFontOfSize (10.0f);
             LabelColor = UIColor.LightGray;
@@ -58,9 +53,6 @@ namespace Toggl.Ross.Views.Charting
 
         UIView _barChartView;
         CATextLayer[] xAxisText = new CATextLayer[5];
-        NSTimer _animationTimer;
-        List<CABasicAnimation> _animations;
-        AnimationDelegate _animationDelegate;
 
         const int defaultSliceZOrder = 100;
         const float minBarScale = 0.005f;
@@ -166,7 +158,6 @@ namespace Toggl.Ross.Views.Charting
                 } else {
                     timeTextLayer.Opacity = (string.Compare (timeTextLayer.String, "0.00", StringComparison.Ordinal) == 0) ? 0.0f : 1.0f;
                 }
-
             }
             _barChartView.UserInteractionEnabled = true;
         }
@@ -274,11 +265,9 @@ namespace Toggl.Ross.Views.Charting
 
             for (int i = 0; i < barLayers.Length; i++) {
                 var oneLayer = (BarLayer)barLayers [i];
-                if (index == 0 && i < zoomCount) {
-                    barHeight = maxBarHeight;
-                } else if ( index == barLayers.Length - 1 && i > barLayers.Length - 1 - zoomCount) {
-                    barHeight = maxBarHeight;
-                } else if (i >= index - 1 && i <= index + 1) {
+                if ((index == barLayers.Length - 1 && i > barLayers.Length - 1 - zoomCount) ||
+                        (i >= index - 1 && i <= index + 1) ||
+                        (index == 0 && i < zoomCount)) {
                     barHeight = maxBarHeight;
                     oneLayer.Sublayers[ BarLayer.TimeTextIndex].Opacity = 1.0f;
                     oneLayer.Sublayers [BarLayer.DateTextIndex].Opacity = 1.0f;
@@ -348,86 +337,6 @@ namespace Toggl.Ross.Views.Charting
                 idx++;
             }
             return selectedIndex;
-        }
-
-        #endregion
-
-        #region IAnimationDelegate implementation
-
-        public void AnimationDidStart (CABasicAnimation anim)
-        {
-            if (_animationTimer == null) {
-                const double timeInterval = 1.0f / 60.0f;
-                _animationTimer = NSTimer.CreateTimer (timeInterval, this, new Selector ("updateTimerFired:"),null, true);
-                NSRunLoop.Main.AddTimer (_animationTimer, NSRunLoopMode.Common);
-            }
-            _animations.Add (anim);
-        }
-
-        public void AnimationDidStop (CABasicAnimation anim, bool isFinished)
-        {
-            _animations.Remove (anim);
-            if (_animations.Count == 0) {
-                _animationTimer.Invalidate ();
-                _animationTimer = null;
-            }
-        }
-
-        #endregion
-
-
-        #region Animation Delegate + Run Loop Timer
-
-        [Export ("updateTimerFired:")]
-        private void UpdateTimerFired (NSTimer timer)
-        {
-            /*
-            var mainBar = Sublayers [0];
-            var secondaryBar = Sublayers [1];
-            var emptyBar = Sublayers [EmptyBarIndex];
-            if (value > 0 && mainBar != null) {
-                float barHeight = value;
-                Bounds = new RectangleF (0.0f, 0.0f, Bounds.Width, barHeight);
-                mainBar.Bounds = new RectangleF (0.0f, 0.0f, mainBar.Bounds.Width, barHeight);
-                secondaryBar.Bounds = new RectangleF (0.0f, 0.0f, secondaryBar.Bounds.Width, barHeight);
-                emptyBar.Bounds = new RectangleF (0.0f, 0.0f, emptyBar.Bounds.Width, barHeight);
-
-                var labelTextLayer = (CATextLayer)Sublayers [DateTextIndex];
-                var labelTimeLayer = (CATextLayer)Sublayers [TimeTextIndex];
-                if (value < 10) {
-                    labelTextLayer.Opacity = (Index % 3 == 0) ? 1.0f : 0.0f;
-                    labelTimeLayer.Opacity = 0.0f;
-                    //LabelFont = LabelFont.WithSize (9.0f);
-                } else {
-                    labelTextLayer.String = _labelText;
-                    labelTimeLayer.ModelLayer.Opacity = 1.0f;
-                    //LabelFont = LabelFont.WithSize (10.0f);
-                    labelTimeLayer.ModelLayer.Opacity = (string.Compare (TimeText, "0.00", StringComparison.Ordinal) == 0) ? 0.0f : 1.0f;
-                }
-                labelTimeLayer.Position = new PointF (labelTimeLayer.Position.X, Bounds.Height / 2);
-                //timeTextLayer.FontSize = textLayer.FontSize;
-
-            }
-            */
-
-            /*
-            foreach (var layer in _barChartView.Layer.Sublayers) {
-                var mainLayer = layer.Sublayers [BarLayer.MainBarIndex];
-                var currentStartAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("heightValue"));
-                var interpolatedStartAngle = currentStartAngle.DoubleValue;
-                var currentEndAngle = (NSNumber)layer.PresentationLayer.ValueForKey (new NSString ("endAngle"));
-                double interpolatedEndAngle = currentEndAngle.DoubleValue;
-                var path = CGPathCreateArc (_pieCenter, PieRadius, interpolatedStartAngle, interpolatedEndAngle);
-                shapeLayer.Path = path;
-                path.Dispose ();
-                CALayer labelLayer = layer.Sublayers [1];
-                double interpolatedMidAngle = (interpolatedEndAngle + interpolatedStartAngle) / 2;
-                CATransaction.DisableActions = true;
-                labelLayer.Position = new PointF (_pieCenter.X + (LabelRadius * Convert.ToSingle (Math.Cos (interpolatedMidAngle))), _pieCenter.Y + (LabelRadius * Convert.ToSingle (Math.Sin (interpolatedMidAngle))));
-                CATransaction.DisableActions = false;
-            }
-            */
-
         }
 
         #endregion

@@ -4,6 +4,7 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
@@ -54,6 +55,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (state);
             RetainInstance = true;
+        }
+
+        public override void OnStart ()
+        {
+            base.OnStart ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Feedback";
         }
 
         private async void OnSendClick (object sender, EventArgs e)

@@ -2,10 +2,12 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 
 namespace Toggl.Joey.UI.Fragments
@@ -50,6 +52,12 @@ namespace Toggl.Joey.UI.Fragments
             base.OnCreate (state);
 
             LoadData ();
+        }
+
+        public override void OnStart ()
+        {
+            base.OnStart ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
         }
 
         private async void LoadData ()

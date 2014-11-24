@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
-using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
 using Toggl.Ross.Data;
@@ -119,9 +119,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Settings View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Settings";
         }
 
         public override void ViewWillDisappear (bool animated)

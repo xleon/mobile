@@ -7,8 +7,10 @@ using Android.Text;
 using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 
@@ -144,6 +146,8 @@ namespace Toggl.Joey.UI.Fragments
             OkButton = dia.GetButton ((int)DialogButtonType.Positive);
 
             Rebind ();
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         private void Rebind ()

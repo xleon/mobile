@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using GoogleAnalytics.iOS;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -37,9 +37,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Recent View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Recent";
         }
 
         protected override void Dispose (bool disposing)
@@ -236,6 +234,9 @@ namespace Toggl.Ross.ViewControllers
                 if (ContinueCallback != null) {
                     ContinueCallback (DataSource);
                 }
+
+                // Ping analytics
+                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
 
             protected override async void OnDelete ()

@@ -1,13 +1,13 @@
 ﻿using System;
 using Cirrious.FluentLayouts.Touch;
-using GoogleAnalytics.iOS;
 using MonoTouch.Foundation;
 using MonoTouch.TTTAttributedLabel;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
-using Toggl.Ross.Views;
 using XPlatUtils;
 using Toggl.Ross.Theme;
+using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -142,9 +142,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Signup View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Signup";
         }
 
         public override void ViewWillDisappear (bool animated)

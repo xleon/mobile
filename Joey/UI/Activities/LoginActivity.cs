@@ -14,6 +14,7 @@ using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
@@ -33,6 +34,7 @@ namespace Toggl.Joey.UI.Activities
         private const string LogTag = "LoginActivity";
 
         private static readonly string ExtraShowPassword = "com.toggl.timer.show_password";
+        private Mode? lastScreen;
         private bool hasGoogleAccounts;
         private bool showPassword;
         private bool isAuthenticating;
@@ -143,9 +145,36 @@ namespace Toggl.Joey.UI.Activities
             outState.PutBoolean (ExtraShowPassword, showPassword);
         }
 
+        protected override void OnStart ()
+        {
+            base.OnStart ();
+            SyncCurrentScreen ();
+        }
+
         private void OnTabsRadioGroupCheckedChange (object sender, RadioGroup.CheckedChangeEventArgs e)
         {
             SyncContent ();
+            SyncCurrentScreen ();
+        }
+
+        private void SyncCurrentScreen()
+        {
+            // Just to make sure we don't double count screens should this funciton be called multiple times in a row
+            var currentScreen = CurrentMode;
+            if (lastScreen == currentScreen) {
+                return;
+            }
+
+            switch (currentScreen) {
+            case Mode.Login:
+                ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Login";
+                break;
+            default:
+                ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Signup";
+                break;
+            }
+
+            lastScreen = currentScreen;
         }
 
         private void SyncContent ()

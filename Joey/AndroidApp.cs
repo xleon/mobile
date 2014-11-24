@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Android.App;
 using Android.Content;
-using Android.Gms.Analytics;
 using Android.Net;
 using Bugsnag;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Joey.Analytics;
 using Toggl.Joey.Data;
 using Toggl.Joey.Net;
 
@@ -23,7 +25,8 @@ namespace Toggl.Joey
                Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo
     {
-        bool componentsInitialized = false;
+        private bool componentsInitialized = false;
+        private Stopwatch startTimeMeasure = Stopwatch.StartNew();
 
         public AndroidApp () : base ()
         {
@@ -51,6 +54,9 @@ namespace Toggl.Joey
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
+            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
+                typeof (Toggl.Phoebe.Analytics.Experiments),
+                typeof (Toggl.Joey.Analytics.Experiments)));
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
@@ -60,16 +66,7 @@ namespace Toggl.Joey
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };
             });
-            ServiceContainer.Register<Tracker> (delegate {
-                var ga = GoogleAnalytics.GetInstance (this);
-                #if DEBUG
-                ga.SetDryRun (true);
-                #endif
-
-                var tracker = ga.NewTracker (Resource.Xml.Analytics);
-                tracker.Set ("&tid", Build.GoogleAnalyticsId);
-                return tracker;
-            });
+            ServiceContainer.Register<ITracker> (() => new Tracker (this));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
         }
 
@@ -90,6 +87,16 @@ namespace Toggl.Joey
             ServiceContainer.Resolve<SyncMonitor> ();
             ServiceContainer.Resolve<GcmRegistrationManager> ();
             ServiceContainer.Resolve<AndroidNotificationManager> ();
+        }
+
+        public void MarkLaunched()
+        {
+            if (!startTimeMeasure.IsRunning) {
+                return;
+            }
+
+            startTimeMeasure.Stop ();
+            ServiceContainer.Resolve<ITracker> ().SendAppInitTime (startTimeMeasure.Elapsed);
         }
 
         public override void OnTrimMemory (TrimMemory level)

@@ -26,6 +26,7 @@ namespace Toggl.Joey
         private PropertyChangeTracker propertyTracker;
         private ActiveTimeEntryManager timeEntryManager;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
+        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private TimeEntryModel backingRunningTimeEntry;
 
         public AndroidNotificationManager ()
@@ -41,6 +42,7 @@ namespace Toggl.Joey
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
+            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
             SyncRunningModel ();
             SyncNotification ();
@@ -56,6 +58,10 @@ namespace Toggl.Joey
             if (subscriptionSettingChanged != null) {
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
+            }
+            if (subscriptionAuthChanged != null) {
+                bus.Unsubscribe (subscriptionAuthChanged);
+                subscriptionAuthChanged = null;
             }
             if (timeEntryManager != null) {
                 timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
@@ -160,6 +166,11 @@ namespace Toggl.Joey
             if (msg.Name == SettingsStore.PropertyIdleNotification) {
                 SyncNotification ();
             }
+        }
+
+        private void OnAuthChanged (AuthChangedMessage msg)
+        {
+            SyncNotification ();
         }
 
         private void SyncNotification ()

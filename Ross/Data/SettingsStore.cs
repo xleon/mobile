@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using MonoTouch.Foundation;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
 
@@ -14,6 +15,7 @@ namespace Toggl.Ross.Data
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
+        private const string PhoebeExperimentIdKey = "phoebeExperimentId";
         private const string RossInstallIdKey = "rossInstallId";
         private const string RossPreferredStartViewKey = "rossPreferredStartView";
         private const string RossChooseProjectForNewKey = "rossChooseProjectForNew";
@@ -156,6 +158,7 @@ namespace Toggl.Ross.Data
             set {
                 SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
                 OnSettingChanged (PropertyUseDefaultTag);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.DefaultMobileTag);
             }
         }
 
@@ -165,6 +168,17 @@ namespace Toggl.Ross.Data
         {
             get { return GetString (PhoebeLastAppVersionKey); }
             set { SetString (PhoebeLastAppVersionKey, value); }
+        }
+
+        public static readonly string PropertyExperimentId = GetPropertyName (s => s.ExperimentId);
+
+        public string ExperimentId
+        {
+            get { return GetString (PhoebeExperimentIdKey); }
+            set {
+                SetString (PhoebeExperimentIdKey, value);
+                OnSettingChanged (PropertyExperimentId);
+            }
         }
 
         public static readonly string PropertyPreferredStartView = GetPropertyName (s => s.PreferredStartView);
@@ -186,6 +200,7 @@ namespace Toggl.Ross.Data
             set {
                 SetInt (RossChooseProjectForNewKey, value ? 1 : 0);
                 OnSettingChanged (PropertyChooseProjectForNew);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.AskForProject);
             }
         }
 

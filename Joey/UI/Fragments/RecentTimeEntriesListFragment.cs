@@ -3,13 +3,14 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using ListFragment = Android.Support.V4.App.ListFragment;
-using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -84,6 +85,9 @@ namespace Toggl.Joey.UI.Fragments
             // Notify that the user explicitly started something
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
         }
 
         public override bool UserVisibleHint

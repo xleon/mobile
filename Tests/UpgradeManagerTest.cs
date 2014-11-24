@@ -4,6 +4,7 @@ using Toggl.Phoebe.Data;
 using XPlatUtils;
 using Toggl.Phoebe.Data.DataObjects;
 using System.Linq;
+using Toggl.Phoebe.Analytics;
 
 namespace Toggl.Phoebe.Tests
 {
@@ -20,6 +21,7 @@ namespace Toggl.Phoebe.Tests
 
             ServiceContainer.Register<IPlatformInfo> (platformInfo = new PlatformInfo ());
             ServiceContainer.Register<ISettingsStore> (settingStore = new SettingStore ());
+            ServiceContainer.Register<ExperimentManager> (new ExperimentManager ());
             upgradeManager = new UpgradeManger ();
         }
 
@@ -103,6 +105,8 @@ namespace Toggl.Phoebe.Tests
             public bool UseDefaultTag { get; set; }
 
             public string LastAppVersion { get; set; }
+
+            public string ExperimentId { get; set; }
         }
     }
 }

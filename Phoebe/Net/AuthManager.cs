@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
@@ -55,7 +56,7 @@ namespace Toggl.Phoebe.Net
             User = rows.FirstOrDefault ();
         }
 
-        private async Task<AuthResult> Authenticate (Func<Task<UserJson>> getUser)
+        private async Task<AuthResult> Authenticate (Func<Task<UserJson>> getUser, AuthChangeReason reason, AccountCredentials credentialsType)
         {
             if (IsAuthenticated) {
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
@@ -122,9 +123,20 @@ namespace Toggl.Phoebe.Net
                 IsAuthenticated = true;
 
                 ServiceContainer.Resolve<MessageBus> ().Send (
-                    new AuthChangedMessage (this));
+                    new AuthChangedMessage (this, reason));
             } finally {
                 IsAuthenticating = false;
+            }
+
+            // Ping analytics service
+            var tracker = ServiceContainer.Resolve<ITracker> ();
+            switch (reason) {
+            case AuthChangeReason.Login:
+                tracker.SendAccountLoginEvent (credentialsType);
+                break;
+            case AuthChangeReason.Signup:
+                tracker.SendAccountCreateEvent (credentialsType);
+                break;
             }
 
             return AuthResult.Success;
@@ -136,7 +148,7 @@ namespace Toggl.Phoebe.Net
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with email ({0}).", username);
-            return Authenticate (() => client.GetUser (username, password));
+            return Authenticate (() => client.GetUser (username, password), AuthChangeReason.Login, AccountCredentials.Password);
         }
 
         public Task<AuthResult> AuthenticateWithGoogle (string accessToken)
@@ -145,7 +157,7 @@ namespace Toggl.Phoebe.Net
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with Google access token.");
-            return Authenticate (() => client.GetUser (accessToken));
+            return Authenticate (() => client.GetUser (accessToken), AuthChangeReason.Login, AccountCredentials.Google);
         }
 
         public Task<AuthResult> Signup (string email, string password)
@@ -158,7 +170,7 @@ namespace Toggl.Phoebe.Net
                 Email = email,
                 Password = password,
                 Timezone = Time.TimeZoneId,
-            }));
+            }), AuthChangeReason.Signup, AccountCredentials.Password);
         }
 
         public Task<AuthResult> SignupWithGoogle (string accessToken)
@@ -170,7 +182,7 @@ namespace Toggl.Phoebe.Net
             return Authenticate (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
-            }));
+            }), AuthChangeReason.Signup, AccountCredentials.Google);
         }
 
         public void Forget ()
@@ -191,7 +203,10 @@ namespace Toggl.Phoebe.Net
             User = null;
 
             ServiceContainer.Resolve<MessageBus> ().Send (
-                new AuthChangedMessage (this));
+                new AuthChangedMessage (this, AuthChangeReason.Logout));
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendAccountLogoutEvent ();
         }
 
         private void OnDataChange (DataChangeMessage msg)

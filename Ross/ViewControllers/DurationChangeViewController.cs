@@ -1,6 +1,6 @@
 ﻿using System;
-using GoogleAnalytics.iOS;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
@@ -60,9 +60,7 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidAppear (animated);
             durationView.BecomeFirstResponder ();
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Duration Change View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         public override void ViewWillDisappear (bool animated)
@@ -98,6 +96,9 @@ namespace Toggl.Ross.ViewControllers
                     var vcs = NavigationController.ViewControllers;
                     vcs [vcs.Length - 1] = controller;
                     NavigationController.SetViewControllers (vcs, true);
+
+                    // Ping analytics
+                    ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppManual);
                 } else {
                     model.SetDuration (duration);
                     await model.SaveAsync ();

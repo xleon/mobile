@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
-using GoogleAnalytics.iOS;
 using MonoTouch.CoreAnimation;
 using MonoTouch.CoreFoundation;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
@@ -477,9 +477,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Edit Time Entry View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
 
         public override void ViewWillDisappear (bool animated)

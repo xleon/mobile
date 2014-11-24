@@ -4,6 +4,7 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -71,6 +72,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnStart ();
 
             ToggleTimerDuration ();
+            SyncCurrentScreen ();
 
             // Trigger a partial sync, if the sync from OnCreate is still running, it does nothing
             ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Auto);
@@ -125,6 +127,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             ToggleTimerDuration ();
+            SyncCurrentScreen ();
         }
 
         private void OnUserTimeEntryStateChange (UserTimeEntryStateChangeMessage msg)
@@ -142,6 +145,21 @@ namespace Toggl.Joey.UI.Fragments
             var timer = Timer;
             if (timer != null) {
                 timer.HideDuration = viewPager.CurrentItem == MainPagerAdapter.EditPosition;
+            }
+        }
+
+        private void SyncCurrentScreen ()
+        {
+            switch (viewPager.CurrentItem) {
+            case MainPagerAdapter.EditPosition:
+                ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Current Time Entry";
+                break;
+            case MainPagerAdapter.RecentPosition:
+                ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Recent";
+                break;
+            case MainPagerAdapter.LogPosition:
+                ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Log";
+                break;
             }
         }
 

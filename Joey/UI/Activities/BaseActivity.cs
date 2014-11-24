@@ -1,6 +1,5 @@
 ﻿using System;
 using Android.Content;
-using Android.Gms.Analytics;
 using Android.OS;
 using Android.Views;
 using Bugsnag;
@@ -107,16 +106,6 @@ namespace Toggl.Joey.UI.Activities
             RequestWindowFeature (WindowFeatures.Progress);
         }
 
-        protected override void OnStart ()
-        {
-            base.OnStart ();
-
-            // Make sure the tracker is initialized
-            ServiceContainer.Resolve<Tracker> ();
-
-            GoogleAnalytics.GetInstance (this).ReportActivityStart (this);
-        }
-
         protected sealed override void OnResume ()
         {
             base.OnResume ();
@@ -138,19 +127,13 @@ namespace Toggl.Joey.UI.Activities
                     app.InitializeComponents ();
                 }, 5000);
             }
+            app.MarkLaunched ();
         }
 
         protected override void OnPause ()
         {
             base.OnPause ();
             BugsnagClient.OnActivityPaused (this);
-        }
-
-        protected override void OnStop ()
-        {
-            base.OnStop ();
-
-            GoogleAnalytics.GetInstance (this).ReportActivityStop (this);
         }
 
         protected override void OnDestroy ()

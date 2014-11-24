@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Support.V4.Content;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -58,6 +59,9 @@ namespace Toggl.Joey
             var stopTasks = runningEntries
                             .Select (data => new TimeEntryModel (data).StopAsync ());
             await Task.WhenAll (stopTasks).ConfigureAwait (false);
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Notification);
         }
 
         public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)

@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using Android.Content;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
 
@@ -19,6 +20,7 @@ namespace Toggl.Joey.Data
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
+        private const string PhoebeExperimentIdKey = "phoebeExperimentId";
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
@@ -181,6 +183,17 @@ namespace Toggl.Joey.Data
             }
         }
 
+        public static readonly string PropertyExperimentId = GetPropertyName (s => s.ExperimentId);
+
+        public string ExperimentId
+        {
+            get { return GetString (PhoebeExperimentIdKey); }
+            set {
+                SetString (PhoebeExperimentIdKey, value);
+                OnSettingChanged (PropertyExperimentId);
+            }
+        }
+
         public static readonly string PropertyIdleNotification = GetPropertyName (s => s.IdleNotification);
 
         public bool IdleNotification
@@ -189,6 +202,7 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (IdleNotificationKey, value ? 1 : 0);
                 OnSettingChanged (PropertyIdleNotification);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.IdleNotification);
             }
         }
 
@@ -200,6 +214,7 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (ChooseProjectForNewKey, value ? 1 : 0);
                 OnSettingChanged (PropertyChooseProjectForNew);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.AskForProject);
             }
         }
 
@@ -211,6 +226,7 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
                 OnSettingChanged (PropertyUseDefaultTag);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.DefaultMobileTag);
             }
         }
 

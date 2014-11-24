@@ -1,5 +1,7 @@
 ﻿using System;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -15,6 +17,12 @@ namespace Toggl.Joey.UI.Fragments
 
         public ChangeTimeEntryStartTimeDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public override void OnStart ()
+        {
+            base.OnStart ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         protected override DateTime GetInitialDate ()

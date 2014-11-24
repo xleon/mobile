@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Bugsnag;
 using Moq;
 using NUnit.Framework;
-using Bugsnag;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -90,7 +90,7 @@ namespace Toggl.Phoebe.Tests
             checkUser ();
             await tcs.Task;
 
-            MessageBus.Send (new AuthChangedMessage (authManager));
+            MessageBus.Send (new AuthChangedMessage (authManager, AuthChangeReason.Login));
         }
 
         protected void RunAsync (Func<Task> fn)

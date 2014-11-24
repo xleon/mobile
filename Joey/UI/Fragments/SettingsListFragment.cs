@@ -1,9 +1,11 @@
 ﻿using Android.OS;
+using Android.Util;
 using Android.Views;
+using Android.Widget;
+using Toggl.Phoebe.Analytics;
+using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using ListFragment = Android.Support.V4.App.ListFragment;
-using Android.Util;
-using Android.Widget;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -31,6 +33,12 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
             ((SettingsAdapter)ListAdapter).OnItemClicked (position);
+        }
+
+        public override void OnStart ()
+        {
+            base.OnStart ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Settings";
         }
     }
 }

@@ -10,6 +10,9 @@ namespace Toggl.Phoebe
         public static readonly Uri ApiUrl = new Uri ("https://toggl.com/api/");
         public static readonly Uri PrivacyPolicyUrl = new Uri ("https://toggl.com/privacy");
         public static readonly Uri TermsOfServiceUrl = new Uri ("https://toggl.com/terms");
+        public static readonly string GoogleAnalyticsId = "";
+        public static readonly int GoogleAnalyticsPlanIndex = 1;
+        public static readonly int GoogleAnalyticsExperimentIndex = 2;
 
         #endregion
 
@@ -20,7 +23,6 @@ namespace Toggl.Phoebe
         public static readonly string GcmSenderId = "";
         public static readonly string BugsnagApiKey = "";
         public static readonly string GooglePlayUrl = "https://play.google.com/store/apps/details?id=com.toggl.timer";
-        public static readonly string GoogleAnalyticsId = "";
         #endif
         #endregion
 
@@ -30,7 +32,6 @@ namespace Toggl.Phoebe
         public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl/toggltimer";
         public static readonly string AppIdentifier = "TogglRoss";
         public static readonly string BugsnagApiKey = "";
-        public static readonly string GoogleAnalyticsId = "";
         public static readonly string GoogleOAuthClientId = "";
         #endif
         #endregion

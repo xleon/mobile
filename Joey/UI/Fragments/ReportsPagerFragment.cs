@@ -35,8 +35,15 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
             previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
             nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
+            previousPeriod.Click += (sender, e) => NavigatePage (-1);
+            nextPeriod.Click += (sender, e) => NavigatePage (1);
 
             return view;
+        }
+
+        public void NavigatePage(int direction)
+        {
+            viewPager.SetCurrentItem(viewPager.CurrentItem + direction, true);
         }
 
         public override void OnDestroyView ()

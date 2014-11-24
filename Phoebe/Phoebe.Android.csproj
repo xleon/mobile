@@ -60,12 +60,12 @@
     <Compile Include="Data\ReportTypes.cs" />
     <Compile Include="Data\Json\ReportProjectJson.cs" />
     <Compile Include="Data\Json\ReportJson.cs" />
-    <Compile Include="Data\Json\ReportRowJson.cs" />
     <Compile Include="Data\Json\Converters\ReportJsonConverter.cs" />
     <Compile Include="Data\DataObjects\ReportData.cs" />
     <Compile Include="Data\Reports\SummaryReportView.cs" />
     <Compile Include="Net\IReportsClient.cs" />
     <Compile Include="Net\ReportsRestClient.cs" />
+    <Compile Include="Data\Json\ReportActivityJson.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

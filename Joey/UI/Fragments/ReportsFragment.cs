@@ -63,16 +63,13 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
-            pieChart.SelectSlice (position);
             var adapter = ListView.Adapter as ProjectListAdapter;
-            adapter.SetFocus (position);
-            if (adapter == null) {
-                return;
-            }
-
-            var model = adapter.GetItem (position);
-            if (model == null) {
-                return;
+            if (pieChart.CurrentSlice == position) {
+                pieChart.SelectSlice (-1);
+                adapter.SetFocus (-1);
+            } else {
+                pieChart.SelectSlice (position);
+                adapter.SetFocus (position);
             }
         }
 
@@ -80,7 +77,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             var adapter = ListView.Adapter as ProjectListAdapter;
             adapter.SetFocus (position);
-            ListView.SmoothScrollToPositionFromTop (position, 0);
+            if (position != -1) {
+                ListView.SmoothScrollToPositionFromTop (position, 0);
+            }
         }
 
         private void EnsureAdapter ()
@@ -113,7 +112,7 @@ namespace Toggl.Joey.UI.Fragments
         private void StretchUpperView ()
         {
             var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
-            lp.BottomMargin = mainView.Height - barChart.Bottom - pieChart.Height/3;
+            lp.BottomMargin = mainView.Height - barChart.Bottom - pieChart.Height / 3;
             mainView.pieChartSnapPos = barChart.Bottom + lp.BottomMargin;
             barChart.RequestLayout ();
         }
@@ -124,7 +123,7 @@ namespace Toggl.Joey.UI.Fragments
             var layoutParams = ListView.LayoutParameters;
             layoutParams.Height = listViewHeight;
             ListView.LayoutParameters = layoutParams;
-            ListView.RequestLayout();
+            ListView.RequestLayout ();
         }
 
         private void GenerateBarChart ()

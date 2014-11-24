@@ -12,6 +12,9 @@ using Android.Widget;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using System.Collections.Generic;
+using Toggl.Phoebe;
+using XPlatUtils;
+using Toggl.Phoebe.Net;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -35,6 +38,7 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
             previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
             nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
+
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
 
@@ -44,6 +48,8 @@ namespace Toggl.Joey.UI.Fragments
         public void NavigatePage(int direction)
         {
             viewPager.SetCurrentItem(viewPager.CurrentItem + direction, true);
+            backDate = viewPager.CurrentItem + direction - PagesCount / 2;
+            UpdatePeriod ();
         }
 
         public override void OnDestroyView ()
@@ -62,7 +68,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public void Initialize ()
         {
-            timePeriod.Text = FormattedDateSelector (viewPager.CurrentItem - PagesCount / 2);
+            timePeriod.Text = FormattedDateSelector ();
+        }
+        private void UpdatePeriod()
+        {
+            timePeriod.Text = FormattedDateSelector ();
         }
 
         private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
@@ -82,13 +92,14 @@ namespace Toggl.Joey.UI.Fragments
             if (adapter != null) {
                 var frag = (ReportsFragment)adapter.GetItem (idx);
                 frag.UserVisibleHint = true;
+                backDate = viewPager.CurrentItem - PagesCount / 2;
+                UpdatePeriod ();
             }
-            timePeriod.Text = FormattedDateSelector (viewPager.CurrentItem - PagesCount / 2);
         }
 
-        public string FormattedDateSelector (int currentBackDate)
+        public string FormattedDateSelector ()
         {
-            if (currentBackDate == 0) {
+            if (backDate == 0) {
                 if (zoomLevel == ZoomLevel.Week) {
                     return Resources.GetString (Resource.String.ReportsThisWeek);
                 } else if (zoomLevel == ZoomLevel.Month) {
@@ -96,7 +107,7 @@ namespace Toggl.Joey.UI.Fragments
                 } else {
                     return Resources.GetString (Resource.String.ReportsThisYear);
                 }
-            } else if (currentBackDate == -1) {
+            } else if (backDate == -1) {
                 if (zoomLevel == ZoomLevel.Week) {
                     return Resources.GetString (Resource.String.ReportsLastWeek);
                 } else if (zoomLevel == ZoomLevel.Month) {
@@ -105,14 +116,47 @@ namespace Toggl.Joey.UI.Fragments
                     return Resources.GetString (Resource.String.ReportsLastYear);
                 }
             } else {
-//                var startDate = summaryReport.ResolveStartDate (backDate);
-//                var endDate = summaryReport.ResolveEndDate (startDate);
+                var startDate = ResolveStartDate (backDate);
+
                 if (zoomLevel == ZoomLevel.Week) {
-//                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
-                } else {
+                    var endDate = ResolveEndDate (startDate);
+                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
+                } else if (zoomLevel == ZoomLevel.Month){
+                    return String.Format ("{0:M}", startDate);
                 }
-                return "1";
+                return startDate.Year.ToString ();
             }
+        }
+
+        public DateTime ResolveStartDate (int backDate)
+        {
+            var current = DateTime.Today;
+            if (zoomLevel == ZoomLevel.Week) {
+                var user = ServiceContainer.Resolve<AuthManager> ().User;
+                var startOfWeek = user.StartOfWeek;
+                var date = current.StartOfWeek (startOfWeek).AddDays (backDate * 7);
+                return date;
+            }
+
+            if (zoomLevel == ZoomLevel.Month) {
+                current = current.AddMonths (backDate);
+                return new DateTime (current.Year, current.Month, 1);
+            }
+
+            return new DateTime (current.Year + backDate, 1, 1);
+        }
+
+        public DateTime ResolveEndDate (DateTime start)
+        {
+            if (zoomLevel == ZoomLevel.Week) {
+                return start.AddDays (6);
+            }
+
+            if (zoomLevel == ZoomLevel.Month) {
+                return start.AddMonths (1).AddDays (-1);
+            }
+
+            return start.AddYears (1).AddDays (-1);
         }
 
         private class MainPagerAdapter : FragmentPagerAdapter

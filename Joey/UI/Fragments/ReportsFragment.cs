@@ -55,10 +55,6 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnCreate(Bundle state){
-            base.OnCreate (state);
-        }
-
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
@@ -93,6 +89,12 @@ namespace Toggl.Joey.UI.Fragments
             ListAdapter = adapter;
         }
 
+        private void EmptyState ()
+        {
+            totalValue.Text = summaryReport.FormatMilliseconds (0);
+            billableValue.Text = summaryReport.FormatMilliseconds (0);
+        }
+
         private async void LoadElements ()
         {
             await LoadData ();
@@ -107,13 +109,17 @@ namespace Toggl.Joey.UI.Fragments
             mainView.InnerList = ListView;
             mainView.InnerPieChart = pieChart;
         }
-        private void StretchUpperView(){
+
+        private void StretchUpperView ()
+        {
             var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
-            lp.BottomMargin = mainView.Height - barChart.Bottom - (int)pieChart.Height/3;
+            lp.BottomMargin = mainView.Height - barChart.Bottom - pieChart.Height/3;
             mainView.pieChartSnapPos = barChart.Bottom + lp.BottomMargin;
             barChart.RequestLayout ();
         }
-        private void StretchListView(){
+
+        private void StretchListView ()
+        {
             var listViewHeight = mainView.Height - pieChart.Height;
             var layoutParams = ListView.LayoutParameters;
             layoutParams.Height = listViewHeight;

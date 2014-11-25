@@ -27,7 +27,7 @@ namespace Toggl.Joey.UI.Fragments
         private TextView timePeriod;
         private int backDate;
         public ZoomLevel zoomLevel = ZoomLevel.Week;
-        private List<string> dates = new List<string>();
+        private List<string> dates = new List<string> ();
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -45,9 +45,9 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public void NavigatePage(int direction)
+        public void NavigatePage (int direction)
         {
-            viewPager.SetCurrentItem(viewPager.CurrentItem + direction, true);
+            viewPager.SetCurrentItem (viewPager.CurrentItem + direction, true);
             backDate = viewPager.CurrentItem + direction - PagesCount / 2;
             UpdatePeriod ();
         }
@@ -70,7 +70,8 @@ namespace Toggl.Joey.UI.Fragments
         {
             timePeriod.Text = FormattedDateSelector ();
         }
-        private void UpdatePeriod()
+
+        private void UpdatePeriod ()
         {
             timePeriod.Text = FormattedDateSelector ();
         }
@@ -121,7 +122,7 @@ namespace Toggl.Joey.UI.Fragments
                 if (zoomLevel == ZoomLevel.Week) {
                     var endDate = ResolveEndDate (startDate);
                     return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
-                } else if (zoomLevel == ZoomLevel.Month){
+                } else if (zoomLevel == ZoomLevel.Month) {
                     return String.Format ("{0:M}", startDate);
                 }
                 return startDate.Year.ToString ();
@@ -174,7 +175,7 @@ namespace Toggl.Joey.UI.Fragments
 
             public override Fragment GetItem (int position)
             {
-                return new ReportsFragment (position - PagesCount / 2, zoomLevel);
+                return new ReportsFragment (position - PagesCount / 2);
             }
         }
     }

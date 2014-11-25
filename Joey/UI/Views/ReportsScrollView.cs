@@ -17,14 +17,14 @@ namespace Toggl.Joey.UI.Views
     public class ReportsScrollView : ScrollView, GestureDetector.IOnGestureListener
     {
 
-        private const float snapPadding = 30;
-        public int barChartSnapPos = 0;
-        public int pieChartSnapPos = 0;
-        private int currentSnap = 0;
-        private bool autoScrolling = false;
+        public int BarChartSnapPos = 0;
+        public int PieChartSnapPos = 0;
         public ListView InnerList;
         public PieChart InnerPieChart;
+        private const float snapPadding = 30;
         private GestureDetectorCompat gestureDetector;
+        private int currentSnap = 0;
+        private bool autoScrolling = false;
         private bool scrollRegistered = false;
         private bool listTouch = false;
 
@@ -47,15 +47,15 @@ namespace Toggl.Joey.UI.Views
             Initialize (context);
         }
 
-        private void Initialize(Context ctx)
+        private void Initialize (Context ctx)
         {
             gestureDetector = new GestureDetectorCompat (ctx, this);
         }
 
-        public override bool OnInterceptTouchEvent(MotionEvent ev)
+        public override bool OnInterceptTouchEvent (MotionEvent ev)
         {
             base.OnInterceptTouchEvent (ev);
-            if (currentSnap == pieChartSnapPos && currentSnap == ScrollY && InnerList.Top - currentSnap < ev.GetY ()) {
+            if (currentSnap == PieChartSnapPos && currentSnap == ScrollY && InnerList.Top - currentSnap < ev.GetY ()) {
                 listTouch = true;
                 gestureDetector.OnTouchEvent (ev);
                 return false;
@@ -63,12 +63,13 @@ namespace Toggl.Joey.UI.Views
 
             return true;
         }
+
         public override bool OnTouchEvent (MotionEvent ev)
         {
-            if (currentSnap == pieChartSnapPos && ev.Action == MotionEventActions.Up && scrollRegistered) {
+            if (currentSnap == PieChartSnapPos && ev.Action == MotionEventActions.Up && scrollRegistered) {
                 ResolveSnap ();
                 scrollRegistered = false;
-            }else if (currentSnap == pieChartSnapPos) {
+            } else if (currentSnap == PieChartSnapPos) {
                 gestureDetector.OnTouchEvent (ev);
                 return true;
             }
@@ -81,32 +82,35 @@ namespace Toggl.Joey.UI.Views
             return true;
         }
 
-        private void ResolveSnap()
+        private void ResolveSnap ()
         {
             if (autoScrolling)
                 return;
-            if (currentSnap == barChartSnapPos) {
+            if (currentSnap == BarChartSnapPos) {
                 if (ScrollY > currentSnap + snapPadding) {
-                    FocusSnapPoint (pieChartSnapPos);
+                    FocusSnapPoint (PieChartSnapPos);
                 } else {
                     FocusSnapPoint (currentSnap);
                 }
             } else {
                 if (ScrollY < currentSnap - snapPadding) {
-                    FocusSnapPoint (barChartSnapPos);
+                    FocusSnapPoint (BarChartSnapPos);
                 } else {
                     FocusSnapPoint (currentSnap);
                 }
             }
         }
+
         public bool OnDown (MotionEvent e)
         {
             return false;
         }
+
         public bool OnFling (MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
         {
             return false;
         }
+
         public void OnLongPress (MotionEvent e)
         {
         }
@@ -124,9 +128,11 @@ namespace Toggl.Joey.UI.Views
             }
             return false;
         }
+
         public void OnShowPress (MotionEvent e)
         {
         }
+
         public bool OnSingleTapUp (MotionEvent e)
         {
             if (listTouch) {
@@ -139,7 +145,7 @@ namespace Toggl.Joey.UI.Views
             return true;
         }
 
-        private void FocusSnapPoint(int snapPoint)
+        private void FocusSnapPoint (int snapPoint)
         {
             autoScrolling = true;
             currentSnap = snapPoint;
@@ -150,6 +156,7 @@ namespace Toggl.Joey.UI.Views
         }
 
         private int scrollPosition;
+
         private int ScrollPosition {
             get {
                 return scrollPosition;
@@ -163,9 +170,9 @@ namespace Toggl.Joey.UI.Views
         private void AnimatedScroll ()
         {
             ScrollY = ScrollPosition;
-            if(ScrollY == (int)currentSnap)
+            if (ScrollY == (int)currentSnap)
                 autoScrolling = false;
-        }    
+        }
     }
 }
 

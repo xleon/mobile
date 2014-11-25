@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Android.Animation;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
-using Android.Support.V4.View;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
@@ -27,14 +25,11 @@ namespace Toggl.Joey.UI.Fragments
         private TextView billableValue;
         private SummaryReportView summaryReport;
         private int backDate;
-        private ZoomLevel zoomLevel;
-        private GestureDetectorCompat gestureDetect;
         private ReportsScrollView mainView;
 
-        public ReportsFragment (int period, ZoomLevel level)
+        public ReportsFragment (int period)
         {
             backDate = period;
-            zoomLevel = level;
             summaryReport = new SummaryReportView ();
             summaryReport.Period = ZoomLevel.Week;
         }
@@ -104,7 +99,7 @@ namespace Toggl.Joey.UI.Fragments
             GenerateBarChart ();
             StretchUpperView ();
             StretchListView ();
-            mainView.barChartSnapPos = 0;
+            mainView.BarChartSnapPos = 0;
             mainView.InnerList = ListView;
             mainView.InnerPieChart = pieChart;
         }
@@ -113,7 +108,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
             lp.BottomMargin = mainView.Height - barChart.Bottom - pieChart.Height / 3;
-            mainView.pieChartSnapPos = barChart.Bottom + lp.BottomMargin;
+            mainView.PieChartSnapPos = barChart.Bottom + lp.BottomMargin;
             barChart.RequestLayout ();
         }
 
@@ -199,8 +194,12 @@ namespace Toggl.Joey.UI.Fragments
             projectName = view.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
             colorSquare = view.FindViewById<View> (Resource.Id.ColorSquare);
             projectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
+            if (String.IsNullOrEmpty (dataView [position].Project)) {
+                projectName.SetText (Resource.String.ReportsListViewNoProject);
+            } else {
+                projectName.Text = dataView [position].Project;
+            }
 
-            projectName.Text = dataView [position].Project;
             projectDuration.Text = FormatMilliseconds (dataView [position].TotalTime);
             var SquareDrawable = new GradientDrawable ();
             SquareDrawable.SetCornerRadius (5);

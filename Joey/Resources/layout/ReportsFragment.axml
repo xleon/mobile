@@ -58,6 +58,8 @@
             android:divider="@drawable/DividerHorizontalLight"
             android:dividerHeight="1dp"
             android:requiresFadingEdge="vertical"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
             android:fadingEdgeLength="8dp" />
     </LinearLayout>
 </toggl.joey.ui.views.ReportsScrollView>

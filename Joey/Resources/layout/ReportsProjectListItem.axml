@@ -26,5 +26,5 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_marginRight="10dp"
-        android:textColor="@color/light_gray" />
+        android:textColor="@color/gray" />
 </RelativeLayout>

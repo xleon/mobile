@@ -23,20 +23,21 @@ namespace Toggl.Joey.UI.Fragments
         private PieChart pieChart;
         private TextView totalValue;
         private TextView billableValue;
-        private ImageButton previousPeriod;
-        private ImageButton nextPeriod;
-        private TextView timePeriod;
         private SummaryReportView summaryReport;
         private int backDate;
+        private ReportsScrollView mainView;
 
         public ReportsFragment (int period)
         {
             backDate = period;
+            summaryReport = new SummaryReportView ();
+            summaryReport.Period = ZoomLevel.Week;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
+            mainView = view.FindViewById<ReportsScrollView> (Resource.Id.ReportsScrollView);
 
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
@@ -44,14 +45,8 @@ namespace Toggl.Joey.UI.Fragments
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
 
-            timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
-            previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
-            nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
-
-            previousPeriod.Click += (sender, e) => NavigatePeriod (1);
-            nextPeriod.Click += (sender, e) => NavigatePeriod (-1);
-
             LoadElements ();
+
             return view;
         }
 
@@ -63,33 +58,23 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnListItemClick (ListView l, View v, int position, long id)
         {
-            pieChart.SelectSlice (position);
             var adapter = ListView.Adapter as ProjectListAdapter;
-            adapter.SetFocus (position);
-            if (adapter == null) {
-                return;
-            }
-
-            var model = adapter.GetItem (position);
-            if (model == null) {
-                return;
-            }
-        }
-
-        private void NavigatePeriod (int direction)
-        {
-            if (backDate == 0 && direction < 0) {
-                backDate = 0;
+            if (pieChart.CurrentSlice == position) {
+                pieChart.SelectSlice (-1);
+                adapter.SetFocus (-1);
             } else {
-                backDate = backDate + direction;
+                pieChart.SelectSlice (position);
+                adapter.SetFocus (position);
             }
-            LoadElements ();
         }
 
         private void OnSliceSelect (int position)
         {
             var adapter = ListView.Adapter as ProjectListAdapter;
             adapter.SetFocus (position);
+            if (position != -1) {
+                ListView.SmoothScrollToPositionFromTop (position, 0);
+            }
         }
 
         private void EnsureAdapter ()
@@ -98,15 +83,42 @@ namespace Toggl.Joey.UI.Fragments
             ListAdapter = adapter;
         }
 
+        private void EmptyState ()
+        {
+            totalValue.Text = summaryReport.FormatMilliseconds (0);
+            billableValue.Text = summaryReport.FormatMilliseconds (0);
+        }
+
         private async void LoadElements ()
         {
             await LoadData ();
             totalValue.Text = summaryReport.TotalGrand;
             billableValue.Text = summaryReport.TotalBillale;
-            timePeriod.Text = FormattedDateSelector ();
             EnsureAdapter ();
             GeneratePieChart ();
             GenerateBarChart ();
+            StretchUpperView ();
+            StretchListView ();
+            mainView.BarChartSnapPos = 0;
+            mainView.InnerList = ListView;
+            mainView.InnerPieChart = pieChart;
+        }
+
+        private void StretchUpperView ()
+        {
+            var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
+            lp.BottomMargin = mainView.Height - barChart.Bottom - pieChart.Height / 3;
+            mainView.PieChartSnapPos = barChart.Bottom + lp.BottomMargin;
+            barChart.RequestLayout ();
+        }
+
+        private void StretchListView ()
+        {
+            var listViewHeight = mainView.Height - pieChart.Height;
+            var layoutParams = ListView.LayoutParameters;
+            layoutParams.Height = listViewHeight;
+            ListView.LayoutParameters = layoutParams;
+            ListView.RequestLayout ();
         }
 
         private void GenerateBarChart ()
@@ -142,38 +154,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private async Task LoadData ()
         {
-            summaryReport = new SummaryReportView ();
-            summaryReport.Period = ZoomLevel.Week;
             await summaryReport.Load (backDate);
-        }
-
-        public string FormattedDateSelector ()
-        {
-            if (backDate == 0) {
-                if (summaryReport.Period == ZoomLevel.Week) {
-                    return Resources.GetString (Resource.String.ReportsThisWeek);
-                } else if (summaryReport.Period == ZoomLevel.Month) {
-                    return Resources.GetString (Resource.String.ReportsThisMonth);
-                } else {
-                    return Resources.GetString (Resource.String.ReportsThisYear);
-                }
-            } else if (backDate == 1) {
-                if (summaryReport.Period == ZoomLevel.Week) {
-                    return Resources.GetString (Resource.String.ReportsLastWeek);
-                } else if (summaryReport.Period == ZoomLevel.Month) {
-                    return Resources.GetString (Resource.String.ReportsLastMonth);
-                } else {
-                    return Resources.GetString (Resource.String.ReportsLastYear);
-                }
-            } else {
-                var startDate = summaryReport.ResolveStartDate (backDate);
-                var endDate = summaryReport.ResolveEndDate (startDate);
-                if (summaryReport.Period == ZoomLevel.Week) {
-                    return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
-                } else {
-                    return "";
-                }
-            }
         }
 
         public class SliceListener : PieChart.IOnSliceClickedListener
@@ -213,8 +194,12 @@ namespace Toggl.Joey.UI.Fragments
             projectName = view.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
             colorSquare = view.FindViewById<View> (Resource.Id.ColorSquare);
             projectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
+            if (String.IsNullOrEmpty (dataView [position].Project)) {
+                projectName.SetText (Resource.String.ReportsListViewNoProject);
+            } else {
+                projectName.Text = dataView [position].Project;
+            }
 
-            projectName.Text = dataView [position].Project;
             projectDuration.Text = FormatMilliseconds (dataView [position].TotalTime);
             var SquareDrawable = new GradientDrawable ();
             SquareDrawable.SetCornerRadius (5);

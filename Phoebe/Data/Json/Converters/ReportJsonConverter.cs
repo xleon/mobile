@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 
@@ -34,17 +33,18 @@ namespace Toggl.Phoebe.Data.Json.Converters
                 var p = new ReportProject () {
                     Project = item.Description.Project,
                     TotalTime = item.TotalTime,
-                    Color = Int32.TryParse (item.Description.Color, out colorIndex) ? colorIndex : ProjectModel.HexColors.Length - 1,
-                    BillableTime = item.Items.Where ( t => t.Sum > 0).Sum ( t => t.Time)
+                    Color = Int32.TryParse (item.Description.Color, out colorIndex) ? colorIndex : ProjectModel.HexColors.Length - 1
                 };
                 p.Items = new List<ReportTimeEntry> ();
-                foreach (var i in item.Items) {
-                    p.Items.Add ( new ReportTimeEntry() {
-                        Rate = i.Rate,
-                        Title = i.Description.Title,
-                        Time = i.Time,
-                        Sum = i.Sum
-                    });
+                if (item.Items != null) {
+                    foreach (var i in item.Items) {
+                        p.Items.Add (new ReportTimeEntry () {
+                            Rate = i.Rate,
+                            Title = i.Description.Title,
+                            Time = i.Time,
+                            Sum = i.Sum
+                        });
+                    }
                 }
                 projectList.Add (p);
             }

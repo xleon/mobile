@@ -74,14 +74,6 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private async Task Initialize ()
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-            workspaceId = await store.ExecuteInTransactionAsync (ctx => ctx.GetRemoteId<WorkspaceData> (user.DefaultWorkspaceId));
-            startOfWeek = user.StartOfWeek;
-        }
-
         private void CalculateReportData()
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;

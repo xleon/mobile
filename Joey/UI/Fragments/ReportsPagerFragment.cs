@@ -1,20 +1,18 @@
 ﻿using System;
-using Android.Content;
+using System.Collections.Generic;
 using Android.OS;
 using Android.Views;
+using Android.Widget;
+using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
-using Android.Widget;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Reports;
-using System.Collections.Generic;
-using Toggl.Phoebe;
-using XPlatUtils;
-using Toggl.Phoebe.Net;
 
 namespace Toggl.Joey.UI.Fragments
 {

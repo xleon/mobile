@@ -1,6 +1,7 @@
 ﻿using System;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -24,7 +25,6 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<LogStore> ();
 
             // Core services that are most likelly to be overriden by UI code:
-            ServiceContainer.Register<Logger> ();
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
 
             RegisterJsonConverters ();

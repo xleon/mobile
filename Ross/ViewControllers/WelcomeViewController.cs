@@ -4,6 +4,7 @@ using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -162,7 +163,7 @@ namespace Toggl.Ross.ViewControllers
                         new UIAlertView ("WelcomeGoogleErrorTitle".Tr (), "WelcomeGoogleErrorMessage".Tr (), null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
                     }
                 } catch (InvalidOperationException ex) {
-                    var log = ServiceContainer.Resolve<Logger> ();
+                    var log = ServiceContainer.Resolve<ILogger> ();
                     log.Info (Tag, ex, "Failed to authenticate (G+) the user.");
                 } finally {
                     IsAuthenticating = false;

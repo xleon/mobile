@@ -1,6 +1,7 @@
 using System;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -13,7 +14,7 @@ namespace Toggl.Phoebe
         {
             var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
             var platformInfo = ServiceContainer.Resolve<IPlatformInfo> ();
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             var oldVersion = settingsStore.LastAppVersion;
             var newVersion = platformInfo.AppVersion;

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -677,7 +678,7 @@ namespace Toggl.Phoebe.Data.Models
                     data = newData;
                 }
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Warning (Tag, ex, "Failed to retrieve/create draft.");
             } finally {
                 draftDataTCS.SetResult (data);

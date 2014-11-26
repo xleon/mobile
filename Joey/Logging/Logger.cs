@@ -1,43 +1,44 @@
 using System;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Logging;
 
-namespace Toggl.Joey
+namespace Toggl.Joey.Logging
 {
-    public class AndroidLogger : Logger
+    public class Logger : BaseLogger
     {
-        public AndroidLogger () : base ()
+        public Logger () : base ()
         {
         }
 
-        public AndroidLogger (Level threshold) : base (threshold)
+        public Logger (LogLevel threshold) : base (threshold)
         {
         }
 
-        protected override void WriteConsole (Level level, string tag, string message, Exception exc)
+        protected override void WriteConsole (LogLevel level, string tag, string message, Exception exc)
         {
             switch (level) {
-            case Level.Debug:
+            case LogLevel.Debug:
                 if (exc == null) {
                     Android.Util.Log.Debug (tag, message);
                 } else {
                     Android.Util.Log.Debug (tag, Java.Lang.Throwable.FromException (exc), message);
                 }
                 break;
-            case Level.Info:
+            case LogLevel.Info:
                 if (exc == null) {
                     Android.Util.Log.Info (tag, message);
                 } else {
                     Android.Util.Log.Info (tag, Java.Lang.Throwable.FromException (exc), message);
                 }
                 break;
-            case Level.Warning:
+            case LogLevel.Warning:
                 if (exc == null) {
                     Android.Util.Log.Warn (tag, message);
                 } else {
                     Android.Util.Log.Warn (tag, Java.Lang.Throwable.FromException (exc), message);
                 }
                 break;
-            case Level.Error:
+            case LogLevel.Error:
                 if (exc == null) {
                     Android.Util.Log.Error (tag, message);
                 } else {
@@ -53,6 +54,11 @@ namespace Toggl.Joey
                 }
                 break;
             }
+        }
+
+        protected override void AddExtraMetadata (Bugsnag.Data.Metadata md)
+        {
+            // TODO: Add user settings
         }
     }
 }

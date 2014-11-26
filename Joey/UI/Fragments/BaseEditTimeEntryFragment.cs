@@ -13,6 +13,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -514,7 +515,7 @@ namespace Toggl.Joey.UI.Fragments
             try {
                 await entry.SaveAsync ().ConfigureAwait (false);
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Warning (Tag, ex, "Failed to save model changes.");
             }
         }

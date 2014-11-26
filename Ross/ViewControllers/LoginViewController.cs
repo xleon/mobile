@@ -3,6 +3,7 @@ using Cirrious.FluentLayouts.Touch;
 using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -152,7 +153,7 @@ namespace Toggl.Ross.ViewControllers
                     ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
                 }
             } catch (InvalidOperationException ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Info (Tag, ex, "Failed to authenticate (password) the user.");
             } finally {
                 IsAuthenticating = false;

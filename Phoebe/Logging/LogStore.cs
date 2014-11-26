@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Toggl.Phoebe
+namespace Toggl.Phoebe.Logging
 {
     public sealed class LogStore
     {
@@ -42,7 +42,7 @@ namespace Toggl.Phoebe
             return ret;
         }
 
-        public void Record (Logger.Level level, string tag, string message, Exception exc)
+        public void Record (LogLevel level, string tag, string message, Exception exc)
         {
             var sb = new StringBuilder ();
             sb.AppendFormat ("[{0}] {1} - {2}: {3}", Time.Now, level, tag, message);

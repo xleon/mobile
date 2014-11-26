@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -96,7 +97,7 @@ namespace Toggl.Phoebe
                 // For whatever reason an InvalidCastException is thrown in the above code occasionally.
                 // As it's not clear where or how, it's better to just log this warning and not let it
                 // crash the whole app.
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Warning (LogTag, ex, "Failed to load previous measurements.");
             }
         }

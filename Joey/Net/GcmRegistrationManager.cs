@@ -4,6 +4,7 @@ using Android.Content;
 using Android.Gms.Common;
 using Android.Gms.Gcm;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -124,7 +125,7 @@ namespace Toggl.Joey.Net
                     RegistrationId = regId = await Task.Factory.StartNew (() =>
                                              gcm.Register (Build.GcmSenderId));
                 } catch (Exception exc) {
-                    var log = ServiceContainer.Resolve<Logger> ();
+                    var log = ServiceContainer.Resolve<ILogger> ();
                     log.Info (Tag, exc, "Failed register device for GCM push.");
                     return;
                 }
@@ -153,7 +154,7 @@ namespace Toggl.Joey.Net
         {
             task.ContinueWith ((t) => {
                 var e = t.Exception;
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Info (Tag, e, "Failed to send GCM info to server.");
             }, TaskContinuationOptions.OnlyOnFaulted);
         }

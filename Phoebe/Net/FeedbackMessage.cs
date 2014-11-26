@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -49,7 +50,7 @@ namespace Toggl.Phoebe.Net
 
                 await client.CreateFeedback (json).ConfigureAwait (false);
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 if (ex.IsNetworkFailure ()) {
                     log.Info (Tag, ex, "Failed to send feedback.");
                 } else {

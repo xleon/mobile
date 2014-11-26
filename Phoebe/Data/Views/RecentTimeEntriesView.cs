@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -199,7 +200,7 @@ namespace Toggl.Phoebe.Data.Views
 
                 groups.Sort ();
             } catch (Exception exc) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (Tag, exc, "Failed to compose recent time entries");
             }
             return groups;

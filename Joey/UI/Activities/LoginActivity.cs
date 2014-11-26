@@ -15,6 +15,7 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
@@ -288,7 +289,7 @@ namespace Toggl.Joey.UI.Activities
             try {
                 authRes = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
             } catch (InvalidOperationException ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Info (LogTag, ex, "Failed to authenticate user with password.");
                 return;
             } finally {
@@ -318,7 +319,7 @@ namespace Toggl.Joey.UI.Activities
             try {
                 authRes = await authManager.Signup (EmailEditText.Text, PasswordEditText.Text);
             } catch (InvalidOperationException ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Info (LogTag, ex, "Failed to signup user with password.");
                 return;
             } finally {
@@ -535,7 +536,7 @@ namespace Toggl.Joey.UI.Activities
                 LoginActivity activity;
 
                 try {
-                    var log = ServiceContainer.Resolve<Logger> ();
+                    var log = ServiceContainer.Resolve<ILogger> ();
                     var authManager = ServiceContainer.Resolve<AuthManager> ();
                     var ctx = Activity;
 
@@ -611,7 +612,7 @@ namespace Toggl.Joey.UI.Activities
 
             private void ClearGoogleToken (Context ctx, string token)
             {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
 
                 ThreadPool.QueueUserWorkItem (delegate {
                     try {

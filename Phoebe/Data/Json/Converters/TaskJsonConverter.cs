@@ -1,6 +1,7 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Merge;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Json.Converters
@@ -41,7 +42,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         public TaskData Import (IDataStoreContext ctx, TaskJson json, Guid? localIdHint = null, TaskData mergeBase = null)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             var data = GetByRemoteId<TaskData> (ctx, json.Id.Value, localIdHint);
 

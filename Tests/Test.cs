@@ -43,7 +43,7 @@ namespace Toggl.Phoebe.Tests
             });
             ServiceContainer.Register<LogStore> ((LogStore)null);
             ServiceContainer.Register<IBugsnagClient> ((IBugsnagClient)null);
-            ServiceContainer.Register<ILogger> (() => new Logger());
+            ServiceContainer.Register<ILogger> (() => new VoidLogger());
         }
 
         [TearDown]

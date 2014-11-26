@@ -1,6 +1,8 @@
 using System;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Logging;
+using XPlatUtils;
+using Toggl.Joey.Data;
 
 namespace Toggl.Joey.Logging
 {
@@ -58,7 +60,16 @@ namespace Toggl.Joey.Logging
 
         protected override void AddExtraMetadata (Bugsnag.Data.Metadata md)
         {
-            // TODO: Add user settings
+            var settings = ServiceContainer.Resolve<SettingsStore> ();
+            md.AddToTab ("State", "Experiment", settings.ExperimentId);
+            md.AddToTab ("State", "Push registered", String.IsNullOrWhiteSpace (settings.GcmRegistrationId) ? "No" : "Yes");
+            md.AddToTab ("State", "Got welcome message", settings.GotWelcomeMessage ? "Yes" : "No");
+            md.AddToTab ("State", "Read recent continue notice", settings.ReadContinueDialog ? "Yes" : "No");
+            md.AddToTab ("State", "Read duration only notice", settings.ReadDurOnlyNotice ? "Yes" : "No");
+
+            md.AddToTab ("Settings", "Show projects for new", settings.ChooseProjectForNew ? "Yes" : "No");
+            md.AddToTab ("Settings", "Idle notifications", settings.IdleNotification ? "Yes" : "No");
+            md.AddToTab ("Settings", "Add default tag", settings.UseDefaultTag ? "Yes" : "No");
         }
     }
 }

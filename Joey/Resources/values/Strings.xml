@@ -129,6 +129,9 @@
     <string name="CreateProjectDialogTitle">Add project</string>
     <string name="CreateProjectDialogHint">Project name&#8230;</string>
     <string name="CreateProjectDialogOk">Create</string>
+    <string name="CreateTagDialogTitle">New tag</string>
+    <string name="CreateTagDialogHint">Tag name&#8230;</string>
+    <string name="CreateTagDialogOk">Create</string>
     <string name="ActionBarDoneButton">Done</string>
     <string name="LastSyncStatusText">Last sync {0}</string>
     <string name="CurrentlySyncingStatusText">Syncing&#8230;</string>

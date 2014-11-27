@@ -130,6 +130,7 @@
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="Analytics\Tracker.cs" />
     <Compile Include="Analytics\Experiments.cs" />
+    <Compile Include="UI\Fragments\CreateTagDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

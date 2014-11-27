@@ -533,6 +533,10 @@
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\TagListCreateItem.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcAddGrey.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcAddGrey.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcAddGrey.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcAddGrey.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

@@ -138,10 +138,16 @@ namespace Toggl.Joey.UI.Fragments
             listView = dia.ListView;
             listView.ItemsCanFocus = false;
             listView.ChoiceMode = ChoiceMode.Multiple;
-            // Reset the item click listener such that the dialog wouldn't be closed on selecting a tag
-            listView.OnItemClickListener = null;
+            listView.ItemClick += OnItemClick;
 
             return dia;
+        }
+
+        private void OnItemClick (object sender, AdapterView.ItemClickEventArgs e)
+        {
+            if (e.Id == TagsAdapter.CreateTagId) {
+                // TODO: Show new dialog for tag creation
+            }
         }
 
         private void SelectInitialTags ()

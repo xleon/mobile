@@ -531,6 +531,7 @@
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
+    <AndroidResource Include="Resources\layout\TagListCreateItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

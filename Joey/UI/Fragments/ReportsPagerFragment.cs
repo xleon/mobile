@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -13,7 +14,6 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
-using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -26,8 +26,17 @@ namespace Toggl.Joey.UI.Fragments
         private TextView timePeriod;
         private int backDate;
 
-        public ZoomLevel ZoomLevel = ZoomLevel.Week;
+        private ZoomLevel zoomPeriod;
 
+        public ZoomLevel ZoomLevel {
+            get {
+                return zoomPeriod;
+            }
+            set {
+                zoomPeriod = value;
+                UpdatePager ();
+            }
+        }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -57,13 +66,27 @@ namespace Toggl.Joey.UI.Fragments
             backDate = viewPager.CurrentItem + direction - PagesCount / 2;
             UpdatePeriod ();
         }
-
+            
         public override void OnResume ()
         {
             base.OnResume ();
             viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
             viewPager.CurrentItem = PagesCount / 2;
             timePeriod.Text = FormattedDateSelector ();
+        }
+
+        private void UpdatePager ()
+        {
+            Console.WriteLine ("Updating");
+            Console.WriteLine ("zoomlevel");
+
+            var adapter = (MainPagerAdapter)viewPager.Adapter;
+            adapter.ZoomLevel = zoomPeriod;
+            viewPager.CurrentItem = PagesCount / 2;
+
+            Console.WriteLine ("PagesCount: {0}", PagesCount / 2);
+            viewPager.CurrentItem = PagesCount / 2;
+            UpdatePeriod ();
         }
 
         private void UpdatePeriod ()
@@ -106,7 +129,6 @@ namespace Toggl.Joey.UI.Fragments
                 }
             } else {
                 var startDate = ResolveStartDate (backDate);
-
                 if (ZoomLevel == ZoomLevel.Week) {
                     var endDate = ResolveEndDate (startDate);
                     return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
@@ -120,6 +142,7 @@ namespace Toggl.Joey.UI.Fragments
         private DateTime ResolveStartDate (int back)
         {
             var current = DateTime.Today;
+
             if (ZoomLevel == ZoomLevel.Week) {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
                 var startOfWeek = user.StartOfWeek;
@@ -158,21 +181,40 @@ namespace Toggl.Joey.UI.Fragments
 
             public List<ReportsFragment> FragmentList
             {
+                get { return fragmentList; }
+            }
+
+            private ZoomLevel zoomLevel = ZoomLevel.Week;
+
+            private FragmentManager fragmentManager;
+
+            public ZoomLevel ZoomLevel{
                 get {
-                    return fragmentList;
+                    return zoomLevel;
+                }
+                set {
+                    zoomLevel = value;
+                    Reset ();
                 }
             }
 
             public MainPagerAdapter (FragmentManager fm) : base (fm)
             {
                 fragmentList = new List<ReportsFragment>();
+                fragmentManager = fm;
             }
 
-            public override int Count
+            public void Reset ()
             {
+                if (fragmentManager.Fragments != null) {
+                    fragmentManager.Fragments.Clear ();
+                }
+            }
+
+            public override int Count {
                 get { return PagesCount; }
             }
-
+                            
             public override Java.Lang.Object InstantiateItem (ViewGroup container, int position)
             {
                 var obj =  (ReportsFragment)base.InstantiateItem (container, position);
@@ -193,7 +235,7 @@ namespace Toggl.Joey.UI.Fragments
             public override Fragment GetItem (int position)
             {
                 var item = FragmentList.Find (r => r.Period == (position - PagesCount / 2));
-                var result =  item ?? new ReportsFragment ((position - PagesCount / 2));
+                var result =  item ?? new ReportsFragment ((position - PagesCount / 2), zoomLevel);
                 result.Position = lastPosition;
                 return result;
             }

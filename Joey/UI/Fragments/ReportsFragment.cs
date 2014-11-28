@@ -23,6 +23,7 @@ namespace Toggl.Joey.UI.Fragments
     public class ReportsFragment : Fragment, View.IOnTouchListener
     {
         private static readonly string ReportPeriodArgument = "com.toggl.timer.report_period";
+        private static readonly string ReportZoomArgument = "com.toggl.timer.report_period";
 
         public event EventHandler PositionChanged;
 
@@ -65,10 +66,15 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public ZoomLevel ZoomLevel
-        {
-            get;
-            set;
+        public ZoomLevel ZoomLevel {
+
+            get { 
+                string zoomValue = ZoomLevel.Week.ToString ();
+                if (Arguments != null) {
+                    zoomValue = Arguments.GetString (ReportPeriodArgument, zoomValue);
+                }
+                return (ZoomLevel)Enum.Parse (typeof(ZoomLevel), zoomValue);
+            }
         }
 
         public bool IsClean
@@ -82,10 +88,11 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ReportsFragment (int period) : base()
+        public ReportsFragment (int period, ZoomLevel zoom) : base()
         {
             var args = new Bundle ();
             args.PutInt (ReportPeriodArgument, period);
+            args.PutString (ReportZoomArgument, zoom.ToString());
 
             Arguments = args;
         }
@@ -333,8 +340,7 @@ namespace Toggl.Joey.UI.Fragments
             NotifyDataSetChanged ();
         }
 
-        public override int Count
-        {
+        public override int Count {
             get {
                 return dataView.Count;
             }

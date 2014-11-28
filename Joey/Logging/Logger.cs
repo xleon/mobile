@@ -1,43 +1,46 @@
 using System;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Logging;
+using XPlatUtils;
+using Toggl.Joey.Data;
 
-namespace Toggl.Joey
+namespace Toggl.Joey.Logging
 {
-    public class AndroidLogger : Logger
+    public class Logger : BaseLogger
     {
-        public AndroidLogger () : base ()
+        public Logger () : base ()
         {
         }
 
-        public AndroidLogger (Level threshold) : base (threshold)
+        public Logger (LogLevel threshold) : base (threshold)
         {
         }
 
-        protected override void WriteConsole (Level level, string tag, string message, Exception exc)
+        protected override void WriteConsole (LogLevel level, string tag, string message, Exception exc)
         {
             switch (level) {
-            case Level.Debug:
+            case LogLevel.Debug:
                 if (exc == null) {
                     Android.Util.Log.Debug (tag, message);
                 } else {
                     Android.Util.Log.Debug (tag, Java.Lang.Throwable.FromException (exc), message);
                 }
                 break;
-            case Level.Info:
+            case LogLevel.Info:
                 if (exc == null) {
                     Android.Util.Log.Info (tag, message);
                 } else {
                     Android.Util.Log.Info (tag, Java.Lang.Throwable.FromException (exc), message);
                 }
                 break;
-            case Level.Warning:
+            case LogLevel.Warning:
                 if (exc == null) {
                     Android.Util.Log.Warn (tag, message);
                 } else {
                     Android.Util.Log.Warn (tag, Java.Lang.Throwable.FromException (exc), message);
                 }
                 break;
-            case Level.Error:
+            case LogLevel.Error:
                 if (exc == null) {
                     Android.Util.Log.Error (tag, message);
                 } else {
@@ -53,6 +56,20 @@ namespace Toggl.Joey
                 }
                 break;
             }
+        }
+
+        protected override void AddExtraMetadata (Bugsnag.Data.Metadata md)
+        {
+            var settings = ServiceContainer.Resolve<SettingsStore> ();
+            md.AddToTab ("State", "Experiment", settings.ExperimentId);
+            md.AddToTab ("State", "Push registered", String.IsNullOrWhiteSpace (settings.GcmRegistrationId) ? "No" : "Yes");
+            md.AddToTab ("State", "Got welcome message", settings.GotWelcomeMessage ? "Yes" : "No");
+            md.AddToTab ("State", "Read recent continue notice", settings.ReadContinueDialog ? "Yes" : "No");
+            md.AddToTab ("State", "Read duration only notice", settings.ReadDurOnlyNotice ? "Yes" : "No");
+
+            md.AddToTab ("Settings", "Show projects for new", settings.ChooseProjectForNew ? "Yes" : "No");
+            md.AddToTab ("Settings", "Idle notifications", settings.IdleNotification ? "Yes" : "No");
+            md.AddToTab ("Settings", "Add default tag", settings.UseDefaultTag ? "Yes" : "No");
         }
     }
 }

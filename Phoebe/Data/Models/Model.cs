@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
@@ -161,7 +162,7 @@ namespace Toggl.Phoebe.Data.Models
             try {
                 await LoadAsync ().ConfigureAwait (false);
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Warning (Tag, ex, "Failed to auto-load data.");
             }
         }

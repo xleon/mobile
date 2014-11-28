@@ -10,6 +10,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Data;
@@ -284,7 +285,7 @@ namespace Toggl.Joey.UI.Components
                         ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppNew);
                     }
                 } catch (Exception ex) {
-                    var log = ServiceContainer.Resolve<Logger> ();
+                    var log = ServiceContainer.Resolve<ILogger> ();
                     log.Warning (LogTag, ex, "Failed to change time entry state.");
                 }
 

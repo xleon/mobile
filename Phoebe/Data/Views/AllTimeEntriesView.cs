@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -261,7 +262,7 @@ namespace Toggl.Phoebe.Data.Views
                         startTime = minStart;
                         HasMore = (endTime.Date - minStart.Date).Days > 0;
                     } catch (Exception exc) {
-                        var log = ServiceContainer.Resolve<Logger> ();
+                        var log = ServiceContainer.Resolve<ILogger> ();
                         if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
                             log.Info (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
                         } else {
@@ -298,7 +299,7 @@ namespace Toggl.Phoebe.Data.Views
                     }
                 }
             } catch (Exception exc) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (Tag, exc, "Failed to fetch time entries");
             } finally {
                 IsLoading = false;

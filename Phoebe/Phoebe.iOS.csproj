@@ -54,6 +54,7 @@
     <Compile Include="Properties\**\*.cs" />
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
+    <Compile Include="Logging\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

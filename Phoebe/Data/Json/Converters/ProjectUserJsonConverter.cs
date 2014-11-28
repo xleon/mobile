@@ -1,6 +1,7 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Merge;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Json.Converters
@@ -39,7 +40,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         public ProjectUserData Import (IDataStoreContext ctx, ProjectUserJson json, Guid? localIdHint = null, ProjectUserData mergeBase = null)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             var data = GetByRemoteId<ProjectUserData> (ctx, json.Id.Value, localIdHint);
 

@@ -8,10 +8,12 @@ using Bugsnag;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.Analytics;
 using Toggl.Joey.Data;
+using Toggl.Joey.Logging;
 using Toggl.Joey.Net;
 
 namespace Toggl.Joey
@@ -49,7 +51,7 @@ namespace Toggl.Joey
             Services.Register ();
 
             // Register Joey components:
-            ServiceContainer.Register<Logger> (() => new AndroidLogger ());
+            ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<Context> (this);
             ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));

@@ -5,6 +5,7 @@ using System.Text;
 using Android.Content;
 using Android.Graphics;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 using FilePath = System.IO.Path;
 
@@ -51,7 +52,7 @@ namespace Toggl.Joey.UI.Utils
                 var imagePath = GetCachePathForUrl (url, "UserImages", ctx) + ".png";
                 return File.Exists (imagePath) ? BitmapFactory.DecodeFile (imagePath) : null;
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Warning (LogTag, ex, "Failed to load bitmap from cache.");
                 return null;
             }
@@ -68,7 +69,7 @@ namespace Toggl.Joey.UI.Utils
                 }
                 return true;
             } catch (IOException ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 if (ex.Message.StartsWith ("Sharing violation on")) {
                     // Treat FAT filesystem related failure as expected behaviour
                     log.Info (LogTag, ex, "Failed to save bitmap to cache.");
@@ -77,7 +78,7 @@ namespace Toggl.Joey.UI.Utils
                 }
                 return false;
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Warning (LogTag, ex, "Failed to save bitmap to cache.");
                 return false;
             }

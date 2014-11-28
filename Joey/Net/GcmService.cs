@@ -6,6 +6,7 @@ using Android.Content;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -122,7 +123,7 @@ namespace Toggl.Joey.Net
                 ScheduleSync ();
             } catch (Exception exc) {
                 // Log errors
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (Tag, exc, "Failed to process pushed message.");
             } finally {
                 SyncOrStop ();

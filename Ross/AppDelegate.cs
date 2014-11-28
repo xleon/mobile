@@ -6,10 +6,12 @@ using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Analytics;
 using Toggl.Ross.Data;
+using Toggl.Ross.Logging;
 using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
@@ -76,6 +78,7 @@ namespace Toggl.Ross
 
             // Register Ross components:
             ServiceContainer.Register<IPlatformInfo> (this);
+            ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<SettingsStore> ();
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (

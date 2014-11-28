@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -87,7 +88,7 @@ namespace Toggl.Phoebe.Net
         private async Task<DateTime?> RunInBackground (SyncMode mode, DateTime? lastRun)
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             var syncDuration = Stopwatch.StartNew ();
 
@@ -162,7 +163,7 @@ namespace Toggl.Phoebe.Net
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             if (lastRun == null) {
                 log.Info (Tag, "Importing all user data from server.");
@@ -245,7 +246,7 @@ namespace Toggl.Phoebe.Net
 
         private static async Task<bool> PushChanges ()
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
             var hasErrors = false;
 
             log.Info (Tag, "Pushing local changes to server.");
@@ -360,7 +361,7 @@ namespace Toggl.Phoebe.Net
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             Exception error = null;
 

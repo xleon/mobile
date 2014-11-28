@@ -1,6 +1,7 @@
 ﻿using System;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Merge;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Json.Converters
@@ -43,7 +44,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         public WorkspaceData Import (IDataStoreContext ctx, WorkspaceJson json, Guid? localIdHint = null, WorkspaceData mergeBase = null)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             var data = GetByRemoteId<WorkspaceData> (ctx, json.Id.Value, localIdHint);
 

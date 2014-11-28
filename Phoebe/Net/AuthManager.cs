@@ -7,6 +7,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -88,7 +89,7 @@ namespace Toggl.Phoebe.Net
                         return AuthResult.InvalidCredentials;
                     }
 
-                    var log = ServiceContainer.Resolve<Logger> ();
+                    var log = ServiceContainer.Resolve<ILogger> ();
                     if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
                         log.Info (Tag, ex, "Failed authenticate user.");
                     } else {
@@ -106,7 +107,7 @@ namespace Toggl.Phoebe.Net
                     var dataStore = ServiceContainer.Resolve<IDataStore> ();
                     userData = await dataStore.ExecuteInTransactionAsync (ctx => userJson.Import (ctx));
                 } catch (Exception ex) {
-                    var log = ServiceContainer.Resolve<Logger> ();
+                    var log = ServiceContainer.Resolve<ILogger> ();
                     log.Error (Tag, ex, "Failed to import authenticated user.");
 
                     ServiceContainer.Resolve<MessageBus> ().Send (
@@ -144,7 +145,7 @@ namespace Toggl.Phoebe.Net
 
         public Task<AuthResult> Authenticate (string username, string password)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with email ({0}).", username);
@@ -153,7 +154,7 @@ namespace Toggl.Phoebe.Net
 
         public Task<AuthResult> AuthenticateWithGoogle (string accessToken)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with Google access token.");
@@ -162,7 +163,7 @@ namespace Toggl.Phoebe.Net
 
         public Task<AuthResult> Signup (string email, string password)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email ({0}).", email);
@@ -175,7 +176,7 @@ namespace Toggl.Phoebe.Net
 
         public Task<AuthResult> SignupWithGoogle (string accessToken)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email Google access token.");
@@ -191,7 +192,7 @@ namespace Toggl.Phoebe.Net
                 throw new InvalidOperationException ("Cannot forget credentials which don't exist.");
             }
 
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
             log.Info (Tag, "Forgetting current user.");
 
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();

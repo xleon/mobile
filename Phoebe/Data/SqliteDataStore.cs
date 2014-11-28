@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SQLite;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -306,7 +307,7 @@ namespace Toggl.Phoebe.Data
                 try {
                     await Task.Factory.StartNew (ProcessQueue);
                 } catch (Exception ex) {
-                    var log = ServiceContainer.Resolve<Logger> ();
+                    var log = ServiceContainer.Resolve<ILogger> ();
                     log.Error (Tag, ex, "Something exploded on the SQLite background thread.");
                 } finally {
                     OnIdle ();

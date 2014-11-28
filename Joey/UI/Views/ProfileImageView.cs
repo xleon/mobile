@@ -7,6 +7,7 @@ using Android.Graphics;
 using Android.Util;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 
@@ -59,7 +60,7 @@ namespace Toggl.Joey.UI.Views
                 CachingUtil.PutBitmapToCacheByUrl (url, bitmap, Context);
                 return bitmap;
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 log.Debug (LogTag, ex, "Failed to get user profile image.");
                 return null;
             }

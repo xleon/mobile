@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Merge;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -182,7 +183,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
         public TimeEntryData Import (IDataStoreContext ctx, TimeEntryJson json, Guid? localIdHint = null, TimeEntryData mergeBase = null)
         {
-            var log = ServiceContainer.Resolve<Logger> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
 
             var data = GetByRemoteId<TimeEntryData> (ctx, json.Id.Value, localIdHint);
 

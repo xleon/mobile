@@ -6,6 +6,7 @@ using Bugsnag;
 using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -42,7 +43,7 @@ namespace Toggl.Phoebe.Tests
             });
             ServiceContainer.Register<LogStore> ((LogStore)null);
             ServiceContainer.Register<IBugsnagClient> ((IBugsnagClient)null);
-            ServiceContainer.Register<Logger> ();
+            ServiceContainer.Register<ILogger> (() => new VoidLogger());
         }
 
         [TearDown]

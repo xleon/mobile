@@ -84,7 +84,6 @@
     <Compile Include="Net\GcmService.cs" />
     <Compile Include="Net\GcmRegistrationManager.cs" />
     <Compile Include="UI\Fragments\DeleteTimeEntriesPromptDialogFragment.cs" />
-    <Compile Include="AndroidLogger.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopRunningTimeEntryService.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
@@ -130,6 +129,7 @@
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="Analytics\Tracker.cs" />
     <Compile Include="Analytics\Experiments.cs" />
+    <Compile Include="Logging\Logger.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -560,6 +560,7 @@
     <Folder Include="Resources\anim\" />
     <Folder Include="UI\Text\" />
     <Folder Include="Analytics\" />
+    <Folder Include="Logging\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

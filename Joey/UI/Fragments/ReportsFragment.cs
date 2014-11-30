@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
@@ -14,41 +13,107 @@ using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using ListFragment = Android.Support.V4.App.ListFragment;
+using Android.Animation;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ReportsFragment : ListFragment
+    public enum ChartPosition {
+        Top = 0,
+        Bottom = 1
+    }
+
+    public class ReportsFragment : ListFragment, View.IOnTouchListener
     {
+        public event EventHandler PositionChanged;
+
         private BarChart barChart;
         private PieChart pieChart;
         private TextView totalValue;
         private TextView billableValue;
         private SummaryReportView summaryReport;
         private int backDate;
-        private ReportsScrollView mainView;
+        private LinearLayout containerView;
+        private float _viewY;
+        private int topPosition;
+        private int bottomPosition;
+        private int contentHeight;
+        private bool isLoading;
+
+        private ChartPosition position;
+
+        public ChartPosition Position
+        {
+            get {
+                return position;
+            } set {
+                position = value;
+                if (containerView != null) {
+                    var currentPos = (position == ChartPosition.Top) ? topPosition : bottomPosition;
+                    containerView.Layout (containerView.Left, currentPos, containerView.Right, currentPos + contentHeight);
+                }
+            }
+        }
+
+        public int Period
+        {
+            get {
+                return backDate;
+            }
+        }
+
+        public ZoomLevel ZoomLevel
+        {
+            get;
+            set;
+        }
+
+        public bool IsClean
+        {
+            get;
+            set;
+        }
 
         public ReportsFragment (int period)
         {
             backDate = period;
-            summaryReport = new SummaryReportView ();
-            summaryReport.Period = ZoomLevel.Week;
+            IsClean = true;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
-            mainView = view.FindViewById<ReportsScrollView> (Resource.Id.ReportsScrollView);
-
+            containerView = view.FindViewById<LinearLayout> (Resource.Id.ReportsLayoutContainer);
+            containerView.SetOnTouchListener (this);
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
+
+            containerView.LayoutChange += (sender, e) => {
+                if ( contentHeight == 0) {
+                    // set list size
+                    var listView = view.FindViewById<ListView> (Android.Resource.Id.List);
+                    var layoutParams = listView.LayoutParameters;
+                    layoutParams.Height = View.Height - barChart.Height;
+                    listView.LayoutParameters = layoutParams;
+
+                    // define positions
+                    topPosition = 0;
+                    bottomPosition = - ( barChart.Height + ((ViewGroup.MarginLayoutParams)barChart.LayoutParameters).BottomMargin);
+
+                    // set correct container size
+                    contentHeight = barChart.Height + pieChart.Height + listView.Height;
+                    layoutParams = containerView.LayoutParameters;
+                    layoutParams.Height = contentHeight;
+                    containerView.LayoutParameters = layoutParams;
+                }
+            };
 
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
 
-            LoadElements ();
-
             return view;
         }
+
+        #region ListFragment
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
@@ -68,61 +133,83 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void OnSliceSelect (int position)
+        private void OnSliceSelect (int pos)
         {
             var adapter = ListView.Adapter as ProjectListAdapter;
-            adapter.SetFocus (position);
-            if (position != -1) {
-                ListView.SmoothScrollToPositionFromTop (position, 0);
+            adapter.SetFocus (pos);
+            if (pos != -1) {
+                ListView.SmoothScrollToPositionFromTop (pos, 0);
             }
         }
+        #endregion
 
-        private void EnsureAdapter ()
+        #region IOnGestureListener
+
+        bool View.IOnTouchListener.OnTouch (View v, MotionEvent e)
         {
-            var adapter = new ProjectListAdapter (summaryReport.Projects);
-            ListAdapter = adapter;
+            switch (e.Action) {
+            case MotionEventActions.Down:
+                _viewY = e.RawY;
+                break;
+            case MotionEventActions.Move:
+                var top = v.Top + (int) (e.RawY - _viewY);
+                _viewY = e.RawY;
+                if ( top <= topPosition && top >= bottomPosition) {
+                    v.Layout (v.Left, top, v.Right, top + contentHeight);
+                }
+                break;
+            case MotionEventActions.Up:
+                var currentSnap = ( v.Top > (bottomPosition - topPosition) / 2) ? topPosition : bottomPosition;
+                ValueAnimator animator = ValueAnimator.OfInt (v.Top, currentSnap);
+                animator.SetDuration (250);
+                animator.Start();
+                animator.Update += (sender, ev) => {
+                    int newValue = (int)ev.Animation.AnimatedValue;
+                    v.Layout (v.Left, newValue, v.Right, newValue + contentHeight);
+                    if ( newValue == currentSnap) {
+                        position = ( currentSnap == topPosition) ? ChartPosition.Top : ChartPosition.Bottom;
+                        if ( PositionChanged != null) {
+                            PositionChanged.Invoke ( this, new EventArgs());
+                        }
+                    }
+                };
+                break;
+            }
+            return true;
         }
 
-        private void EmptyState ()
-        {
-            totalValue.Text = summaryReport.FormatMilliseconds (0);
-            billableValue.Text = summaryReport.FormatMilliseconds (0);
-        }
+        #endregion
 
-        private async void LoadElements ()
+        public async void LoadElements ()
         {
-            await LoadData ();
-            totalValue.Text = summaryReport.TotalGrand;
-            billableValue.Text = summaryReport.TotalBillale;
-            EnsureAdapter ();
+            if ( IsClean) {
+                isLoading = false;
+                IsClean = true;
+                summaryReport = new SummaryReportView ();
+                summaryReport.Period = ZoomLevel;
+                await summaryReport.Load (backDate);
+                isLoading = false;
+                IsClean = false;
+
+                if (summaryReport.Activity != null) {
+                    //totalValue.Text = summaryReport.TotalGrand;
+                    //billableValue.Text = summaryReport.TotalBillale;
+                    Position = position;
+                    IsClean = false;
+                }
+            }
+
+            return;
+
+            ListAdapter = new ProjectListAdapter (summaryReport.Projects);
             GeneratePieChart ();
             GenerateBarChart ();
-            StretchUpperView ();
-            StretchListView ();
-            mainView.BarChartSnapPos = 0;
-            mainView.InnerList = ListView;
-            mainView.InnerPieChart = pieChart;
-        }
-
-        private void StretchUpperView ()
-        {
-            var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
-            lp.BottomMargin = mainView.Height - barChart.Bottom - pieChart.Height / 3;
-            mainView.PieChartSnapPos = barChart.Bottom + lp.BottomMargin;
-            barChart.RequestLayout ();
-        }
-
-        private void StretchListView ()
-        {
-            var listViewHeight = mainView.Height - pieChart.Height;
-            var layoutParams = ListView.LayoutParameters;
-            layoutParams.Height = listViewHeight;
-            ListView.LayoutParameters = layoutParams;
-            ListView.RequestLayout ();
         }
 
         private void GenerateBarChart ()
         {
+            return;
+
             barChart.Reset ();
             foreach (var row in summaryReport.Activity) {
                 var bar = new BarItem ();
@@ -139,10 +226,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void GeneratePieChart ()
         {
+            return;
+
             pieChart.Reset ();
             var listener = new SliceListener ();
             pieChart.SetOnSliceClickedListener (listener);
-            pieChart.SliceClicked += OnSliceSelect;
+            //pieChart.SliceClicked += OnSliceSelect;
             foreach (var project in summaryReport.Projects) {
                 var slice = new PieSlice ();
                 slice.Value = project.TotalTime;
@@ -150,11 +239,6 @@ namespace Toggl.Joey.UI.Fragments
                 pieChart.AddSlice (slice);
             }
             pieChart.Refresh ();
-        }
-
-        private async Task LoadData ()
-        {
-            await summaryReport.Load (backDate);
         }
 
         public class SliceListener : PieChart.IOnSliceClickedListener
@@ -200,7 +284,7 @@ namespace Toggl.Joey.UI.Fragments
                 projectName.Text = dataView [position].Project;
             }
 
-            projectDuration.Text = FormatMilliseconds (dataView [position].TotalTime);
+            projectDuration.Text = dataView [position].FormattedTotalTime;
             var SquareDrawable = new GradientDrawable ();
             SquareDrawable.SetCornerRadius (5);
             SquareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [dataView [position].Color % ProjectModel.HexColors.Length]));
@@ -213,7 +297,6 @@ namespace Toggl.Joey.UI.Fragments
                 projectName.SetTextColor (Color.LightGray);
                 projectDuration.SetTextColor (Color.LightGray);
             }
-            colorSquare.SetBackgroundDrawable (SquareDrawable);
             return view;
         }
 
@@ -228,12 +311,6 @@ namespace Toggl.Joey.UI.Fragments
             get {
                 return dataView.Count;
             }
-        }
-
-        private string FormatMilliseconds (long ms)
-        {
-            var timeSpan = TimeSpan.FromMilliseconds (ms);
-            return String.Format ("{0}:{1:mm\\:ss}", Math.Floor (timeSpan.TotalHours).ToString ("00"), timeSpan);
         }
     }
 }

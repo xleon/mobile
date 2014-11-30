@@ -1,65 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<toggl.joey.ui.views.ReportsScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ReportsLayoutContainer"
+    android:orientation="vertical"
+    android:layout_marginLeft="15dp"
+    android:layout_marginRight="15dp"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:id="@+id/ReportsScrollView">
+    android:layout_height="match_parent">
     <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:paddingTop="12dp">
-            <TextView
-                android:id="@+id/TotalLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="35dp"
-                android:textSize="13dp"
-                android:text="Total "
-                android:textColor="@color/light_gray" />
-            <TextView
-                android:id="@+id/TotalValue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="13dp"
-                android:text="0h 0min" />
-            <TextView
-                android:id="@+id/BillableLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="15dp"
-                android:textSize="13dp"
-                android:text="Billable "
-                android:textColor="@color/light_gray" />
-            <TextView
-                android:id="@+id/BillableValue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="13dp"
-                android:text="0h 0min" />
-        </LinearLayout>
-        <toggl.joey.ui.views.BarChart
-            android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:paddingTop="12dp">
+        <TextView
+            android:id="@+id/TotalLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:textSize="13dp"
+            android:text="Total "
+            android:textColor="@color/light_gray" />
+        <TextView
+            android:id="@+id/TotalValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13dp"
+            android:text="0h 0min" />
+        <TextView
+            android:id="@+id/BillableLabel"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="15dp"
-            android:layout_marginRight="15dp"
-            android:id="@+id/BarChart" />
-        <toggl.joey.ui.views.PieChart
-            android:layout_width="match_parent"
-            android:layout_height="250dp"
-            android:id="@+id/PieChart" />
-        <ListView
-            android:id="@id/android:list"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:divider="@drawable/DividerHorizontalLight"
-            android:dividerHeight="1dp"
-            android:requiresFadingEdge="vertical"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:fadingEdgeLength="8dp" />
+            android:textSize="13dp"
+            android:text="Billable "
+            android:textColor="@color/light_gray" />
+        <TextView
+            android:id="@+id/BillableValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13dp"
+            android:text="0h 0min" />
     </LinearLayout>
-</toggl.joey.ui.views.ReportsScrollView>
+    <toggl.joey.ui.views.BarChart
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:id="@+id/BarChart" />
+    <toggl.joey.ui.views.PieChart
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:id="@+id/PieChart" />
+    <ListView
+        android:id="@id/android:list"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:divider="@drawable/DividerHorizontalLight"
+        android:dividerHeight="1dp"
+        android:requiresFadingEdge="vertical"
+        android:fadingEdgeLength="8dp" />
+</LinearLayout>

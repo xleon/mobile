@@ -24,14 +24,14 @@ namespace Toggl.Phoebe.Data.Reports
             if (IsLoading) {
                 return;
             }
-
             IsLoading = true;
+
             if (workspaceId == null) {
                 await Initialize ();
             }
+
             startDate = ResolveStartDate (backDate);
             endDate = ResolveEndDate (startDate);
-
             await FetchData ();
             IsLoading = false;
         }
@@ -55,6 +55,7 @@ namespace Toggl.Phoebe.Data.Reports
         private async Task FetchData ()
         {
             dataObject = CreateEmptyReport ();
+
             try {
                 _isError = false;
                 var json = await reportClient.GetReports (startDate, endDate, (long)workspaceId);
@@ -101,7 +102,6 @@ namespace Toggl.Phoebe.Data.Reports
                 _chartTimeLabels.Add (String.Format ("{0} h", _maxTotal / 5 * i));
             }
         }
-
 
         public bool IsLoading { get; private set; }
 

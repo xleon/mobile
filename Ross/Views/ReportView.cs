@@ -1,8 +1,10 @@
 ﻿using System.Drawing;
+using System.Threading.Tasks;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Views.Charting;
+using System.Threading;
 
 namespace Toggl.Ross.Views
 {
@@ -96,6 +98,8 @@ namespace Toggl.Ross.Views
         private bool _loading;
         private float topY;
         private float downY;
+        private CancellationTokenSource cts;
+        private bool _delaying;
 
         const float padding = 30;
         const float navBarHeight = 64;
@@ -117,16 +121,29 @@ namespace Toggl.Ross.Views
         public async void LoadData()
         {
             if ( IsClean) {
-                _loading = true;
-                dataSource = new SummaryReportView ();
-                dataSource.Period = ZoomLevel;
-                await dataSource.Load (TimeSpaceIndex);
-                _loading = false;
+                try {
+                    _loading = true;
+                    dataSource = new SummaryReportView ();
+                    dataSource.Period = ZoomLevel;
 
-                if (dataSource.Activity != null) {
-                    barChart.ReportView = dataSource;
-                    pieChart.ReportView  = dataSource;
-                    IsClean = false;
+                    _delaying = true;
+                    cts = new CancellationTokenSource ();
+                    await Task.Delay (500, cts.Token);
+                    _delaying = false;
+
+                    await dataSource.Load (TimeSpaceIndex);
+
+                    if ( !dataSource.IsLoading) {
+                        barChart.ReportView = dataSource;
+                        pieChart.ReportView = dataSource;
+                        IsClean = false;
+                    }
+                } catch (System.Exception ex) {
+                    IsClean = true;
+                } finally {
+                    _loading = false;
+                    _delaying = false;
+                    cts.Dispose ();
                 }
             }
         }
@@ -134,9 +151,8 @@ namespace Toggl.Ross.Views
         public void StopReloadData()
         {
             if (_loading) {
+                if (_delaying) { cts.Cancel (); }
                 dataSource.CancelLoad ();
-                IsClean = true;
-                _loading = false;
             }
         }
 
@@ -166,7 +182,7 @@ namespace Toggl.Ross.Views
                     var p0 = pg.LocationInView (this);
                     var currentY = (_position == ChartPosition.Top) ? topY : downY;
 
-                    if (dy == 0) {
+                    if (dy.CompareTo (0) == 0) {
                         dy = p0.Y - currentY;
                     }
 

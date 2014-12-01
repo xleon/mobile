@@ -113,6 +113,7 @@ namespace Toggl.Ross.ViewControllers
             private readonly static NSString TagCellId = new NSString ("EntryCellId");
             private readonly TagSelectionViewController controller;
             private readonly HashSet<Guid> selectedTags;
+            private UIButton newTagButton;
 
             public Source (TagSelectionViewController controller, IEnumerable<Guid> selectedTagIds)
             : base (controller.TableView, new WorkspaceTagsView (controller.model.Workspace.Id))
@@ -165,6 +166,40 @@ namespace Toggl.Ross.ViewControllers
             {
                 get {
                     return DataView.Data.Where (data => selectedTags.Contains (data.Id));
+                }
+            }
+
+            private void RefreshSelected()
+            {
+                foreach (var cell in TableView.VisibleCells) {
+                    var tagCell = cell as TagCell;
+                    if (tagCell != null) {
+                        tagCell.Checked = selectedTags.Contains (tagCell.TagId);
+                    }
+                }
+            }
+
+            protected override void UpdateFooter ()
+            {
+                base.UpdateFooter ();
+
+                if (TableView.TableFooterView == null) {
+                    if (newTagButton == null) {
+                        newTagButton = new UIButton (new RectangleF (0, 0, 200, 60)).Apply (Style.TagList.NewTagButton);
+                        newTagButton.SetTitle ("TagNewTag".Tr(), UIControlState.Normal);
+                        newTagButton.TouchUpInside += delegate {
+                            var vc = new NewTagViewController (controller.model.Workspace);
+                            vc.TagCreated = (tag) => {
+                                selectedTags.Add (tag.Id);
+                                RefreshSelected();
+
+                                controller.NavigationController.PopToViewController (controller, true);
+                            };
+                            controller.NavigationController.PushViewController (vc, true);
+                        };
+                    }
+
+                    TableView.TableFooterView = newTagButton;
                 }
             }
         }

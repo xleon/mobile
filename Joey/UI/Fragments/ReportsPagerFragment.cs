@@ -81,7 +81,6 @@ namespace Toggl.Joey.UI.Fragments
             adapter.ZoomLevel = zoomPeriod;
             adapter.ClearFragmentList ();
             adapter.NotifyDataSetChanged ();
-            viewPager.CurrentItem = PagesCount / 2;
             UpdatePeriod ();
         }
 
@@ -186,7 +185,7 @@ namespace Toggl.Joey.UI.Fragments
 
             private FragmentManager fragmentManager;
 
-            public ZoomLevel ZoomLevel{
+            public ZoomLevel ZoomLevel {
                 get {
                     return zoomLevel;
                 }
@@ -214,7 +213,7 @@ namespace Toggl.Joey.UI.Fragments
                 return obj;
             }
 
-            public void ClearFragmentList()
+            public void ClearFragmentList ()
             {
                 fragmentManager.Fragments.Clear ();
             }

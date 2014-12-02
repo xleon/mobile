@@ -201,6 +201,20 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         #endregion
+        /*
+        private void StretchUpperView ()
+        {
+            var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
+            barChart.Measure (0, 0);
+            int bottomCorrection = barChart.Bottom - barChart.Height + barChart.MeasuredHeight;
+            lp.BottomMargin = mainView.Height - bottomCorrection- pieChart.Height / 3;
+            if (lp.BottomMargin < 40) {
+                lp.BottomMargin = 40;
+            }
+
+            mainView.PieChartSnapPos = bottomCorrection + lp.BottomMargin;
+            barChart.RequestLayout ();
+        }*/
 
         public async void LoadElements ()
         {

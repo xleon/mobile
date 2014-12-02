@@ -77,14 +77,10 @@ namespace Toggl.Joey.UI.Fragments
 
         private void UpdatePager ()
         {
-            Console.WriteLine ("Updating");
-            Console.WriteLine ("zoomlevel");
-
             var adapter = (MainPagerAdapter)viewPager.Adapter;
             adapter.ZoomLevel = zoomPeriod;
-            viewPager.CurrentItem = PagesCount / 2;
-
-            Console.WriteLine ("PagesCount: {0}", PagesCount / 2);
+            adapter.ClearFragmentList ();
+            adapter.NotifyDataSetChanged ();
             viewPager.CurrentItem = PagesCount / 2;
             UpdatePeriod ();
         }
@@ -97,6 +93,8 @@ namespace Toggl.Joey.UI.Fragments
         private async void OnPageSelected ( object sender, ViewPager.PageSelectedEventArgs e)
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
+            adapter.ZoomLevel = zoomPeriod;
+
             var frag = (ReportsFragment)adapter.GetItem ( e.Position);
             if (frag.IsResumed) {
                 frag.LoadElements ();
@@ -194,7 +192,6 @@ namespace Toggl.Joey.UI.Fragments
                 }
                 set {
                     zoomLevel = value;
-                    Reset ();
                 }
             }
 
@@ -202,13 +199,6 @@ namespace Toggl.Joey.UI.Fragments
             {
                 fragmentList = new List<ReportsFragment>();
                 fragmentManager = fm;
-            }
-
-            public void Reset ()
-            {
-                if (fragmentManager.Fragments != null) {
-                    fragmentManager.Fragments.Clear ();
-                }
             }
 
             public override int Count {
@@ -222,6 +212,11 @@ namespace Toggl.Joey.UI.Fragments
                 obj.Position = lastPosition;
                 obj.PositionChanged += ChangeReportsPosition;
                 return obj;
+            }
+
+            public void ClearFragmentList()
+            {
+                fragmentManager.Fragments.Clear ();
             }
 
             public override void DestroyItem (ViewGroup container, int position, Java.Lang.Object @object)

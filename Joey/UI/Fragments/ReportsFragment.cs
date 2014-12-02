@@ -10,10 +10,8 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Fragment = Android.Support.V4.App.Fragment;
-using FragmentManager = Android.Support.V4.App.FragmentManager;
-using ListFragment = Android.Support.V4.App.ListFragment;
 using Android.Animation;
+using Android.Support.V4.App;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -22,13 +20,14 @@ namespace Toggl.Joey.UI.Fragments
         Bottom = 1
     }
 
-    public class ReportsFragment : ListFragment, View.IOnTouchListener
+    public class ReportsFragment : Fragment, View.IOnTouchListener
     {
         public event EventHandler PositionChanged;
 
         private BarChart barChart;
         private PieChart pieChart;
         private TextView totalValue;
+        private ListView listView;
         private TextView billableValue;
         private SummaryReportView summaryReport;
         private int backDate;
@@ -86,59 +85,57 @@ namespace Toggl.Joey.UI.Fragments
             containerView.SetOnTouchListener (this);
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
+            listView = view.FindViewById<ListView> (Resource.Id.ReportList);
+            listView.ItemClick += OnListItemClick;
 
             containerView.LayoutChange += (sender, e) => {
                 if ( contentHeight == 0) {
-                    // set list size
-                    var listView = view.FindViewById<ListView> (Android.Resource.Id.List);
-                    var layoutParams = listView.LayoutParameters;
-                    layoutParams.Height = View.Height - barChart.Height;
-                    listView.LayoutParameters = layoutParams;
-
                     // define positions
                     topPosition = 0;
-                    bottomPosition = - ( barChart.Height + ((ViewGroup.MarginLayoutParams)barChart.LayoutParameters).BottomMargin);
+                    bottomPosition = -pieChart.Top;
 
                     // set correct container size
-                    contentHeight = barChart.Height + pieChart.Height + listView.Height;
-                    layoutParams = containerView.LayoutParameters;
+                    contentHeight = view.Height + pieChart.Top; // it works! :)
+                    var layoutParams = containerView.LayoutParameters;
                     layoutParams.Height = contentHeight;
                     containerView.LayoutParameters = layoutParams;
                 }
+
+                Console.WriteLine ( "refresh layout! " + Period + " " + containerView.Top + " " + position);
             };
 
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
-
             return view;
         }
 
         #region ListFragment
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnStart ()
         {
-            base.OnViewCreated (view, savedInstanceState);
-            ListView.SetClipToPadding (false);
+            base.OnStart ();
+            listView.LayoutMode = ViewLayoutMode.ClipBounds;
+            listView.SetClipToPadding (false);
         }
 
-        public override void OnListItemClick (ListView l, View v, int position, long id)
+        public void OnListItemClick ( object sender, AdapterView.ItemClickEventArgs args)
         {
-            var adapter = ListView.Adapter as ProjectListAdapter;
-            if (pieChart.CurrentSlice == position) {
+            var adapter = listView.Adapter as ProjectListAdapter;
+            if (pieChart.CurrentSlice == args.Position) {
                 pieChart.SelectSlice (-1);
                 adapter.SetFocus (-1);
             } else {
-                pieChart.SelectSlice (position);
-                adapter.SetFocus (position);
+                pieChart.SelectSlice (args.Position);
+                adapter.SetFocus (args.Position);
             }
         }
 
         private void OnSliceSelect (int pos)
         {
-            var adapter = ListView.Adapter as ProjectListAdapter;
+            var adapter = listView.Adapter as ProjectListAdapter;
             adapter.SetFocus (pos);
             if (pos != -1) {
-                ListView.SmoothScrollToPositionFromTop (pos, 0);
+                listView.SmoothScrollToPositionFromTop (pos, 0);
             }
         }
         #endregion
@@ -154,9 +151,10 @@ namespace Toggl.Joey.UI.Fragments
             case MotionEventActions.Move:
                 var top = v.Top + (int) (e.RawY - _viewY);
                 _viewY = e.RawY;
-                if ( top <= topPosition && top >= bottomPosition) {
+                if (top <= topPosition && top >= bottomPosition) {
                     v.Layout (v.Left, top, v.Right, top + contentHeight);
                 }
+                Console.WriteLine (v.ScrollY);
                 break;
             case MotionEventActions.Up:
                 var currentSnap = ( v.Top > (bottomPosition - topPosition) / 2) ? topPosition : bottomPosition;
@@ -182,34 +180,30 @@ namespace Toggl.Joey.UI.Fragments
 
         public async void LoadElements ()
         {
-            if ( IsClean) {
-                isLoading = false;
-                IsClean = true;
-                summaryReport = new SummaryReportView ();
-                summaryReport.Period = ZoomLevel;
-                await summaryReport.Load (backDate);
-                isLoading = false;
+            //if ( IsClean) {
+            isLoading = false;
+            IsClean = true;
+            summaryReport = new SummaryReportView ();
+            summaryReport.Period = ZoomLevel;
+            await summaryReport.Load (backDate);
+            isLoading = false;
+            IsClean = false;
+
+            if (summaryReport.Activity != null) {
+                totalValue.Text = summaryReport.TotalGrand;
+                billableValue.Text = summaryReport.TotalBillale;
+                var adapter = new ProjectListAdapter ( Activity, summaryReport.Projects);
+                listView.Layout (listView.Left, listView.Top - 100, listView.Right, listView.Bottom);
+                listView.Adapter = adapter;
+                GeneratePieChart ();
+                GenerateBarChart ();
                 IsClean = false;
-
-                if (summaryReport.Activity != null) {
-                    //totalValue.Text = summaryReport.TotalGrand;
-                    //billableValue.Text = summaryReport.TotalBillale;
-                    Position = position;
-                    IsClean = false;
-                }
             }
-
-            return;
-
-            ListAdapter = new ProjectListAdapter (summaryReport.Projects);
-            GeneratePieChart ();
-            GenerateBarChart ();
+            //}
         }
 
         private void GenerateBarChart ()
         {
-            return;
-
             barChart.Reset ();
             foreach (var row in summaryReport.Activity) {
                 var bar = new BarItem ();
@@ -226,8 +220,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private void GeneratePieChart ()
         {
-            return;
-
             pieChart.Reset ();
             var listener = new SliceListener ();
             pieChart.SetOnSliceClickedListener (listener);
@@ -247,19 +239,28 @@ namespace Toggl.Joey.UI.Fragments
             {
             }
         }
+
+        protected void ChangeViewsPositions ( int posY)
+        {
+            listView.Layout (listView.Left, posY, listView.Right, posY + listView.Bottom);
+            barChart.Layout (listView.Left, posY, listView.Right, posY + listView.Bottom);
+            listView.Layout (listView.Left, posY, listView.Right, posY + listView.Bottom);
+        }
     }
 
-    public class ProjectListAdapter : BaseAdapter
+    public class ProjectListAdapter : BaseAdapter<ReportProject>
     {
-        List<ReportProject> dataView;
+        private List<ReportProject> dataView;
         private View colorSquare;
         private TextView projectName;
         private TextView projectDuration;
         private int focus = -1;
+        private Android.App.Activity context;
 
-        public ProjectListAdapter (List<ReportProject> dataView)
+        public ProjectListAdapter ( Android.App.Activity ctx, List<ReportProject> dataView)
         {
             this.dataView = dataView;
+            context = ctx;
         }
 
         public override Java.Lang.Object GetItem (int position)
@@ -272,9 +273,21 @@ namespace Toggl.Joey.UI.Fragments
             return position;
         }
 
+        #region implemented abstract members of BaseAdapter
+
+        public override ReportProject this [int index]
+        {
+            get {
+                return dataView[index];
+            }
+        }
+
+        #endregion
+
         public override View GetView (int position, View convertView, ViewGroup parent)
         {
-            var view = LayoutInflater.FromContext (parent.Context).Inflate (Resource.Layout.ReportsProjectListItem, parent, false);
+            var view = convertView ?? context.LayoutInflater.Inflate (Resource.Layout.ReportsProjectListItem, null);
+
             projectName = view.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
             colorSquare = view.FindViewById<View> (Resource.Id.ColorSquare);
             projectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);

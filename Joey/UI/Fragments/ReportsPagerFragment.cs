@@ -13,6 +13,7 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
+using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -57,9 +58,9 @@ namespace Toggl.Joey.UI.Fragments
             UpdatePeriod ();
         }
 
-        public override void OnStart ()
+        public override void OnResume ()
         {
-            base.OnStart ();
+            base.OnResume ();
             viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
             viewPager.CurrentItem = PagesCount / 2;
             timePeriod.Text = FormattedDateSelector ();
@@ -70,38 +71,19 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod.Text = FormattedDateSelector ();
         }
 
-        private void OnPageSelected ( object sender, ViewPager.PageSelectedEventArgs e)
+        private async void OnPageSelected ( object sender, ViewPager.PageSelectedEventArgs e)
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
             var frag = (ReportsFragment)adapter.GetItem ( e.Position);
-
-            frag.LoadElements ();
-            frag.UserVisibleHint = true;
-            backDate = e.Position - PagesCount / 2;
-            UpdatePeriod ();
-        }
-
-        private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
-        {
-            var current = viewPager.CurrentItem;
-            var pos = e.Position + e.PositionOffset;
-            int idx;
-            if (pos + 0.05f < current) {
-                idx = (int)Math.Floor (pos);
-            } else if (pos - 0.05f > current) {
-                idx = (int)Math.Ceiling (pos);
-            } else {
-                return;
-            }
-
-            var adapter = (MainPagerAdapter)viewPager.Adapter;
-            if (adapter != null) {
-                var frag = (ReportsFragment)adapter.GetItem (idx);
+            if (frag.IsResumed) {
                 frag.LoadElements ();
                 frag.UserVisibleHint = true;
-                backDate = viewPager.CurrentItem - PagesCount / 2;
-                UpdatePeriod ();
+            } else {
+                await Task.Delay (200);
+                OnPageSelected (sender, e); // recursive?
             }
+            backDate = e.Position - PagesCount / 2;
+            UpdatePeriod ();
         }
 
         private string FormattedDateSelector ()

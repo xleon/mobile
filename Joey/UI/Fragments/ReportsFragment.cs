@@ -186,7 +186,6 @@ namespace Toggl.Joey.UI.Fragments
         {
             if ( IsClean) {
                 isLoading = false;
-                IsClean = true;
                 summaryReport = new SummaryReportView ();
                 summaryReport.Period = ZoomLevel;
                 await summaryReport.Load (backDate);

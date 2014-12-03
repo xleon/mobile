@@ -134,7 +134,6 @@
     <Compile Include="UI\Views\PieChart.cs" />
     <Compile Include="UI\Views\BarChart.cs" />
     <Compile Include="UI\Fragments\ReportsPagerFragment.cs" />
-    <Compile Include="UI\Views\ReportsScrollView.cs" />
     <Compile Include="UI\Fragments\ReportsFragment.cs" />
   </ItemGroup>
   <ItemGroup>

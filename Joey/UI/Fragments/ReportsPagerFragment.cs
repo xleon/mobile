@@ -24,7 +24,6 @@ namespace Toggl.Joey.UI.Fragments
         private ImageButton nextPeriod;
         private TextView timePeriod;
         private int backDate;
-        private int currentIndexValue = -1;
 
         public ZoomLevel ZoomLevel = ZoomLevel.Week;
 
@@ -33,7 +32,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.ReportsPagerFragment, container, false);
             viewPager = view.FindViewById<ViewPager> (Resource.Id.ReportsViewPager);
-            viewPager.PageScrolled += OnViewPagerPageScrolled;
+            viewPager.PageSelected += OnPageSelected;
 
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
             previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
@@ -45,6 +44,12 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
+        public override void OnDestroyView ()
+        {
+            viewPager.PageSelected -= OnPageSelected;
+            base.OnDestroyView ();
+        }
+
         public void NavigatePage (int direction)
         {
             viewPager.SetCurrentItem (viewPager.CurrentItem + direction, true);
@@ -52,15 +57,9 @@ namespace Toggl.Joey.UI.Fragments
             UpdatePeriod ();
         }
 
-        public override void OnDestroyView ()
+        public override void OnStart ()
         {
-            viewPager.PageScrolled -= OnViewPagerPageScrolled;
-            base.OnDestroyView ();
-        }
-
-        public override void OnActivityCreated (Bundle savedInstanceState)
-        {
-            base.OnActivityCreated (savedInstanceState);
+            base.OnStart ();
             viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
             viewPager.CurrentItem = PagesCount / 2;
             timePeriod.Text = FormattedDateSelector ();
@@ -69,6 +68,17 @@ namespace Toggl.Joey.UI.Fragments
         private void UpdatePeriod ()
         {
             timePeriod.Text = FormattedDateSelector ();
+        }
+
+        private void OnPageSelected ( object sender, ViewPager.PageSelectedEventArgs e)
+        {
+            var adapter = (MainPagerAdapter)viewPager.Adapter;
+            var frag = (ReportsFragment)adapter.GetItem ( e.Position);
+
+            frag.LoadElements ();
+            frag.UserVisibleHint = true;
+            backDate = e.Position - PagesCount / 2;
+            UpdatePeriod ();
         }
 
         private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
@@ -85,32 +95,13 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             var adapter = (MainPagerAdapter)viewPager.Adapter;
-
-            if (adapter != null && currentIndexValue != idx) {
+            if (adapter != null) {
                 var frag = (ReportsFragment)adapter.GetItem (idx);
                 frag.LoadElements ();
                 frag.UserVisibleHint = true;
                 backDate = viewPager.CurrentItem - PagesCount / 2;
-                currentIndexValue = idx;
                 UpdatePeriod ();
             }
-        }
-
-        private ReportsFragment GetCurrentReport()
-        {
-            var current = viewPager.CurrentItem;
-            var adapter = (MainPagerAdapter)viewPager.Adapter;
-
-            if (adapter == null) {
-                return null;
-            }
-
-            var result = adapter.FragmentList [0];
-            foreach (var item in adapter.FragmentList)
-                if (item.Period == current - PagesCount / 2) {
-                    result = item;
-                }
-            return result;
         }
 
         private string FormattedDateSelector ()
@@ -204,6 +195,7 @@ namespace Toggl.Joey.UI.Fragments
             {
                 var obj =  (ReportsFragment)base.InstantiateItem (container, position);
                 fragmentList.Add (obj);
+                obj.Position = lastPosition;
                 obj.PositionChanged += ChangeReportsPosition;
                 return obj;
             }

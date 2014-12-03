@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using Android.Animation;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
+using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
@@ -10,8 +12,6 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Android.Animation;
-using Android.Support.V4.App;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -33,10 +33,10 @@ namespace Toggl.Joey.UI.Fragments
         private int backDate;
         private LinearLayout containerView;
         private float _viewY;
-        private int topPosition;
-        private int bottomPosition;
-        private int contentHeight;
+        private float topPosition;
+        private float bottomPosition;
         private bool isLoading;
+        private int contentHeight;
 
         private ChartPosition position;
 
@@ -45,10 +45,10 @@ namespace Toggl.Joey.UI.Fragments
             get {
                 return position;
             } set {
+                if (position == value) { return; }
                 position = value;
                 if (containerView != null) {
-                    var currentPos = (position == ChartPosition.Top) ? topPosition : bottomPosition;
-                    containerView.Layout (containerView.Left, currentPos, containerView.Right, currentPos + contentHeight);
+                    containerView.RequestLayout ();
                 }
             }
         }
@@ -75,12 +75,11 @@ namespace Toggl.Joey.UI.Fragments
         public ReportsFragment (int period)
         {
             backDate = period;
-            IsClean = true;
         }
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup c, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
+            var view = inflater.Inflate (Resource.Layout.ReportsFragment, c, false);
             containerView = view.FindViewById<LinearLayout> (Resource.Id.ReportsLayoutContainer);
             containerView.SetOnTouchListener (this);
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
@@ -89,19 +88,23 @@ namespace Toggl.Joey.UI.Fragments
             listView.ItemClick += OnListItemClick;
 
             containerView.LayoutChange += (sender, e) => {
-                if ( contentHeight == 0) {
+
+                if ( topPosition.CompareTo ( bottomPosition) == 0) {
                     // define positions
                     topPosition = 0;
-                    bottomPosition = -pieChart.Top;
-
-                    // set correct container size
-                    contentHeight = view.Height + pieChart.Top; // it works! :)
-                    var layoutParams = containerView.LayoutParameters;
-                    layoutParams.Height = contentHeight;
-                    containerView.LayoutParameters = layoutParams;
+                    bottomPosition = -Convert.ToSingle ( pieChart.Top);
+                    contentHeight =  view.Height + pieChart.Top; // it works! :)
                 }
 
-                Console.WriteLine ( "refresh layout! " + Period + " " + containerView.Top + " " + position);
+                // set position
+                var currentPos = (position == ChartPosition.Top) ? topPosition : bottomPosition;
+                containerView.SetY (currentPos);
+
+                // set correct container size
+                var layoutParams = containerView.LayoutParameters;
+                layoutParams.Height = contentHeight;
+                containerView.LayoutParameters = layoutParams;
+                containerView.Layout ( containerView.Left, containerView.Top, containerView.Right, containerView.Top + contentHeight);
             };
 
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
@@ -116,6 +119,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnStart ();
             listView.LayoutMode = ViewLayoutMode.ClipBounds;
             listView.SetClipToPadding (false);
+            IsClean = true;
         }
 
         public void OnListItemClick ( object sender, AdapterView.ItemClickEventArgs args)
@@ -138,6 +142,7 @@ namespace Toggl.Joey.UI.Fragments
                 listView.SmoothScrollToPositionFromTop (pos, 0);
             }
         }
+
         #endregion
 
         #region IOnGestureListener
@@ -149,23 +154,22 @@ namespace Toggl.Joey.UI.Fragments
                 _viewY = e.RawY;
                 break;
             case MotionEventActions.Move:
-                var top = v.Top + (int) (e.RawY - _viewY);
-                _viewY = e.RawY;
-                if (top <= topPosition && top >= bottomPosition) {
-                    v.Layout (v.Left, top, v.Right, top + contentHeight);
+                var topY = v.GetY() + e.RawY - _viewY;
+                if ( topY <= topPosition && topY >= bottomPosition) {
+                    v.SetY (topY);
                 }
-                Console.WriteLine (v.ScrollY);
+                _viewY = e.RawY;
                 break;
             case MotionEventActions.Up:
-                var currentSnap = ( v.Top > (bottomPosition - topPosition) / 2) ? topPosition : bottomPosition;
-                ValueAnimator animator = ValueAnimator.OfInt (v.Top, currentSnap);
+                var currentSnap = ( v.GetY() > (bottomPosition - topPosition) / 2) ? topPosition : bottomPosition;
+                ValueAnimator animator = ValueAnimator.OfFloat (v.GetY(), currentSnap);
                 animator.SetDuration (250);
                 animator.Start();
                 animator.Update += (sender, ev) => {
-                    int newValue = (int)ev.Animation.AnimatedValue;
-                    v.Layout (v.Left, newValue, v.Right, newValue + contentHeight);
-                    if ( newValue == currentSnap) {
-                        position = ( currentSnap == topPosition) ? ChartPosition.Top : ChartPosition.Bottom;
+                    var newValue = (float)ev.Animation.AnimatedValue;
+                    v.SetY ( newValue);
+                    if ( newValue.CompareTo ( currentSnap) == 0) {
+                        Position = ( currentSnap.CompareTo ( topPosition) == 0) ? ChartPosition.Top : ChartPosition.Bottom;
                         if ( PositionChanged != null) {
                             PositionChanged.Invoke ( this, new EventArgs());
                         }
@@ -180,26 +184,24 @@ namespace Toggl.Joey.UI.Fragments
 
         public async void LoadElements ()
         {
-            //if ( IsClean) {
-            isLoading = false;
-            IsClean = true;
-            summaryReport = new SummaryReportView ();
-            summaryReport.Period = ZoomLevel;
-            await summaryReport.Load (backDate);
-            isLoading = false;
-            IsClean = false;
-
-            if (summaryReport.Activity != null) {
-                totalValue.Text = summaryReport.TotalGrand;
-                billableValue.Text = summaryReport.TotalBillale;
-                var adapter = new ProjectListAdapter ( Activity, summaryReport.Projects);
-                listView.Layout (listView.Left, listView.Top - 100, listView.Right, listView.Bottom);
-                listView.Adapter = adapter;
-                GeneratePieChart ();
-                GenerateBarChart ();
+            if ( IsClean) {
+                isLoading = false;
+                IsClean = true;
+                summaryReport = new SummaryReportView ();
+                summaryReport.Period = ZoomLevel;
+                await summaryReport.Load (backDate);
+                isLoading = false;
                 IsClean = false;
+
+                if (summaryReport.Activity != null) {
+                    totalValue.Text = summaryReport.TotalGrand;
+                    billableValue.Text = summaryReport.TotalBillale;
+                    listView.Adapter = new ProjectListAdapter ( Activity, summaryReport.Projects);
+                    GeneratePieChart ();
+                    GenerateBarChart ();
+                    IsClean = false;
+                }
             }
-            //}
         }
 
         private void GenerateBarChart ()

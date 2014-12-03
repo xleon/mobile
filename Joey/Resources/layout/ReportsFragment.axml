@@ -2,8 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ReportsLayoutContainer"
     android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="fill_parent">
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="fill_parent"
@@ -65,17 +65,15 @@
         android:layout_width="match_parent"
         android:layout_height="250dp"
         android:id="@+id/PieChart" />
-    <FrameLayout
+    <ListView
+        android:id="@+id/ReportList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
-        <ListView
-            android:id="@+id/ReportList"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:divider="@drawable/DividerHorizontalLight"
-            android:dividerHeight="1dp"
-            android:requiresFadingEdge="vertical"
-            android:fadingEdgeLength="8dp" />
-    </FrameLayout>
+        android:divider="@drawable/DividerHorizontalLight"
+        android:dividerHeight="1dp"
+        android:requiresFadingEdge="vertical"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:fadingEdgeLength="8dp" />
 </LinearLayout>

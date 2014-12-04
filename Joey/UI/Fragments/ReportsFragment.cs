@@ -288,6 +288,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             this.dataView = dataView;
             context = ctx;
+
         }
 
         public override Java.Lang.Object GetItem (int position)
@@ -313,30 +314,16 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View GetView (int position, View convertView, ViewGroup parent)
         {
-            var view = convertView ?? context.LayoutInflater.Inflate (Resource.Layout.ReportsProjectListItem, null);
+            View view = convertView;
 
-            projectName = view.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
-            colorSquare = view.FindViewById<View> (Resource.Id.ColorSquare);
-            projectDuration = view.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
-            if (String.IsNullOrEmpty (dataView [position].Project)) {
-                projectName.SetText (Resource.String.ReportsListViewNoProject);
-            } else {
-                projectName.Text = dataView [position].Project;
+            if (convertView == null) {
+                view = context.LayoutInflater.Inflate (Resource.Layout.ReportsProjectListItem, null);
+                view.Tag = new ReportViewHolder (view);
             }
+            var holder = (ReportViewHolder)view.Tag;
+            holder.Bind (dataView [position]);
+            holder.SetFocus (focus, position); // mmm...
 
-            projectDuration.Text = dataView [position].FormattedTotalTime;
-            var SquareDrawable = new GradientDrawable ();
-            SquareDrawable.SetCornerRadius (5);
-            SquareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [dataView [position].Color % ProjectModel.HexColors.Length]));
-
-            if (focus == position) {
-                SquareDrawable.SetShape (ShapeType.Oval);
-            } else if (focus != -1 && focus != position) {
-                SquareDrawable.SetShape (ShapeType.Rectangle);
-                SquareDrawable.SetAlpha (150);
-                projectName.SetTextColor (Color.LightGray);
-                projectDuration.SetTextColor (Color.LightGray);
-            }
             return view;
         }
 
@@ -350,6 +337,58 @@ namespace Toggl.Joey.UI.Fragments
         {
             get {
                 return dataView.Count;
+            }
+        }
+    }
+
+    internal class ReportViewHolder : BindableViewHolder<ReportProject>
+    {
+
+        public View ColorSquareView  { get; private set; }
+
+        public TextView NameTextView  { get; private set; }
+
+        public TextView DurationTextView  { get; private set; }
+
+
+        public ReportViewHolder ( View root)  : base (root)
+        {
+            NameTextView = root.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
+
+            ColorSquareView = root.FindViewById<View> (Resource.Id.ColorSquare);
+
+            DurationTextView = root.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
+        }
+
+        protected override void Rebind ()
+        {
+            if (String.IsNullOrEmpty ( DataSource.Project)) {
+                NameTextView.SetText (Resource.String.ReportsListViewNoProject);
+            } else {
+                NameTextView.Text = DataSource.Project;
+            }
+
+            DurationTextView.Text = DataSource.FormattedTotalTime;
+
+            var squareDrawable = new GradientDrawable ();
+            squareDrawable.SetCornerRadius (5);
+            squareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length]));
+
+            ColorSquareView.SetBackgroundDrawable (squareDrawable);
+        }
+
+        public void SetFocus ( int focus, int position )
+        {
+            var squareDrawable = (GradientDrawable)ColorSquareView.Background;
+
+            if (focus == position) {
+                squareDrawable.SetShape (ShapeType.Oval);
+            } else if (focus != -1 && focus != position) {
+                squareDrawable.SetShape (ShapeType.Rectangle);
+                squareDrawable.SetAlpha (150);
+
+                NameTextView.SetTextColor (Color.LightGray);
+                DurationTextView.SetTextColor (Color.DarkGray);
             }
         }
     }

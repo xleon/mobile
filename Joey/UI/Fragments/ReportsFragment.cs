@@ -4,7 +4,6 @@ using Android.Animation;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
-using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data;
@@ -12,6 +11,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -22,6 +22,8 @@ namespace Toggl.Joey.UI.Fragments
 
     public class ReportsFragment : Fragment, View.IOnTouchListener
     {
+        private static readonly string ReportPeriodArgument = "com.toggl.timer.report_period";
+
         public event EventHandler PositionChanged;
 
         private BarChart barChart;
@@ -30,7 +32,6 @@ namespace Toggl.Joey.UI.Fragments
         private ListView listView;
         private TextView billableValue;
         private SummaryReportView summaryReport;
-        private int backDate;
         private LinearLayout containerView;
         private float _viewY;
         private float topPosition;
@@ -56,7 +57,11 @@ namespace Toggl.Joey.UI.Fragments
         public int Period
         {
             get {
-                return backDate;
+                int period = 0;
+                if (Arguments != null) {
+                    period = Arguments.GetInt (ReportPeriodArgument);
+                }
+                return period;
             }
         }
 
@@ -72,14 +77,22 @@ namespace Toggl.Joey.UI.Fragments
             set;
         }
 
-        public ReportsFragment (int period)
+
+        public ReportsFragment ()
         {
-            backDate = period;
         }
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup c, Bundle savedInstanceState)
+        public ReportsFragment (int period) : base()
         {
-            var view = inflater.Inflate (Resource.Layout.ReportsFragment, c, false);
+            var args = new Bundle ();
+            args.PutInt (ReportPeriodArgument, period);
+
+            Arguments = args;
+        }
+
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        {
+            var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
             containerView = view.FindViewById<LinearLayout> (Resource.Id.ReportsLayoutContainer);
             containerView.SetOnTouchListener (this);
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
@@ -112,8 +125,6 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        #region ListFragment
-
         public override void OnStart ()
         {
             base.OnStart ();
@@ -121,6 +132,8 @@ namespace Toggl.Joey.UI.Fragments
             listView.SetClipToPadding (false);
             IsClean = true;
         }
+
+        #region ListFragment
 
         public void OnListItemClick ( object sender, AdapterView.ItemClickEventArgs args)
         {
@@ -188,7 +201,7 @@ namespace Toggl.Joey.UI.Fragments
                 isLoading = false;
                 summaryReport = new SummaryReportView ();
                 summaryReport.Period = ZoomLevel;
-                await summaryReport.Load (backDate);
+                await summaryReport.Load (Period);
                 isLoading = false;
                 IsClean = false;
 

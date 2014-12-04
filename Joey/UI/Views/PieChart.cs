@@ -148,7 +148,7 @@ namespace Toggl.Joey.UI.Views
                 var slicePath = new Path ();
                 paint.Color = slice.Color;
                 if (indexSelected != count && listener != null && indexSelected != -1) {
-                    paint.Alpha = (int)(255 - sliceSlideOutAnimation * 127F);
+                    paint.Alpha = (int) (255 - sliceSlideOutAnimation * 127F);
                 }
 
                 currentSweep = ((float)slice.Value / (float)totalValue) * (360);
@@ -175,7 +175,7 @@ namespace Toggl.Joey.UI.Views
                             centerY + innerRadius - slicePadding
                         ),
                         loadAnimation * (currentAngle + currentSweep) + angleCorrection,
-                        loadAnimation * -(currentSweep)
+                        loadAnimation * - (currentSweep)
                     );
                 }
 
@@ -192,10 +192,10 @@ namespace Toggl.Joey.UI.Views
 
                 slice.Path = slicePath;
                 slice.Region = new Region (
-                    (int)(centerX - radius),
-                    (int)(centerY - radius),
-                    (int)(centerX + radius),
-                    (int)(centerY + radius)
+                    (int) (centerX - radius),
+                    (int) (centerY - radius),
+                    (int) (centerX + radius),
+                    (int) (centerY + radius)
                 );
                 canvas.DrawPath (slicePath, paint);
 
@@ -232,7 +232,7 @@ namespace Toggl.Joey.UI.Views
                 StartSlideBackAnimation ();
                 OnSliceSelected ();
             } else if (clickedSlice == indexSelected) {
-                return true;
+                return base.OnTouchEvent ( ev);
             } else {
                 indexSelected = clickedSlice;
                 if (ev.Action == MotionEventActions.Up) {
@@ -240,7 +240,7 @@ namespace Toggl.Joey.UI.Views
                     StartSliceSlideAnimation ();
                 }
             }
-            return true;
+            return base.OnTouchEvent ( ev);
         }
 
         public void StartDrawAnimation ()
@@ -268,11 +268,11 @@ namespace Toggl.Joey.UI.Views
             animator.Start ();
         }
 
-        public float SlideAnimationProgress {
+        public float SlideAnimationProgress
+        {
             get {
                 return slideAnimationProgress;
-            }
-            set {
+            } set {
                 slideAnimationProgress = value;
                 if (deselectedIndex != -1 && slideAnimationProgress == 1) {
                     deselectedIndex = -1;
@@ -281,11 +281,11 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public int AnimationProgress {
+        public int AnimationProgress
+        {
             get {
                 return animationProgress;
-            }
-            set {
+            } set {
                 if (animationProgress == 360) {
                     animationProgress = value;
                 }
@@ -295,11 +295,11 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public int CurrentSlice {
+        public int CurrentSlice
+        {
             get {
                 return indexSelected;
-            }
-            set {
+            } set {
                 indexSelected = value;
                 PostInvalidate ();
             }

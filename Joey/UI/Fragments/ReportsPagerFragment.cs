@@ -13,6 +13,7 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
+using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -24,14 +25,15 @@ namespace Toggl.Joey.UI.Fragments
         private ImageButton nextPeriod;
         private TextView timePeriod;
         private int backDate;
-        public ZoomLevel zoomLevel = ZoomLevel.Week;
-        private List<string> dates = new List<string> ();
+
+        public ZoomLevel ZoomLevel = ZoomLevel.Week;
+
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsPagerFragment, container, false);
             viewPager = view.FindViewById<ViewPager> (Resource.Id.ReportsViewPager);
-            viewPager.PageScrolled += OnViewPagerPageScrolled;
+            viewPager.PageSelected += OnPageSelected;
 
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
             previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
@@ -43,6 +45,12 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
+        public override void OnDestroyView ()
+        {
+            viewPager.PageSelected -= OnPageSelected;
+            base.OnDestroyView ();
+        }
+
         public void NavigatePage (int direction)
         {
             viewPager.SetCurrentItem (viewPager.CurrentItem + direction, true);
@@ -50,22 +58,11 @@ namespace Toggl.Joey.UI.Fragments
             UpdatePeriod ();
         }
 
-        public override void OnDestroyView ()
+        public override void OnResume ()
         {
-            viewPager.PageScrolled -= OnViewPagerPageScrolled;
-            base.OnDestroyView ();
-        }
-
-        public override void OnActivityCreated (Bundle savedInstanceState)
-        {
-            base.OnActivityCreated (savedInstanceState);
+            base.OnResume ();
             viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
             viewPager.CurrentItem = PagesCount / 2;
-            Initialize ();
-        }
-
-        public void Initialize ()
-        {
             timePeriod.Text = FormattedDateSelector ();
         }
 
@@ -74,42 +71,35 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod.Text = FormattedDateSelector ();
         }
 
-        private void OnViewPagerPageScrolled (object sender, ViewPager.PageScrolledEventArgs e)
+        private async void OnPageSelected ( object sender, ViewPager.PageSelectedEventArgs e)
         {
-            var current = viewPager.CurrentItem;
-            var pos = e.Position + e.PositionOffset;
-            int idx;
-            if (pos + 0.05f < current) {
-                idx = (int)Math.Floor (pos);
-            } else if (pos - 0.05f > current) {
-                idx = (int)Math.Ceiling (pos);
-            } else {
-                return;
-            }
-
             var adapter = (MainPagerAdapter)viewPager.Adapter;
-            if (adapter != null) {
-                var frag = (ReportsFragment)adapter.GetItem (idx);
+            var frag = (ReportsFragment)adapter.GetItem ( e.Position);
+            if (frag.IsResumed) {
+                frag.LoadElements ();
                 frag.UserVisibleHint = true;
-                backDate = viewPager.CurrentItem - PagesCount / 2;
-                UpdatePeriod ();
+            } else {
+                await Task.Delay (200);
+                OnPageSelected (sender, e); // recursive?
             }
+            backDate = e.Position - PagesCount / 2;
+            UpdatePeriod ();
         }
 
-        public string FormattedDateSelector ()
+        private string FormattedDateSelector ()
         {
             if (backDate == 0) {
-                if (zoomLevel == ZoomLevel.Week) {
+                if (ZoomLevel == ZoomLevel.Week) {
                     return Resources.GetString (Resource.String.ReportsThisWeek);
-                } else if (zoomLevel == ZoomLevel.Month) {
+                } else if (ZoomLevel == ZoomLevel.Month) {
                     return Resources.GetString (Resource.String.ReportsThisMonth);
                 } else {
                     return Resources.GetString (Resource.String.ReportsThisYear);
                 }
             } else if (backDate == -1) {
-                if (zoomLevel == ZoomLevel.Week) {
+                if (ZoomLevel == ZoomLevel.Week) {
                     return Resources.GetString (Resource.String.ReportsLastWeek);
-                } else if (zoomLevel == ZoomLevel.Month) {
+                } else if (ZoomLevel == ZoomLevel.Month) {
                     return Resources.GetString (Resource.String.ReportsLastMonth);
                 } else {
                     return Resources.GetString (Resource.String.ReportsLastYear);
@@ -117,41 +107,41 @@ namespace Toggl.Joey.UI.Fragments
             } else {
                 var startDate = ResolveStartDate (backDate);
 
-                if (zoomLevel == ZoomLevel.Week) {
+                if (ZoomLevel == ZoomLevel.Week) {
                     var endDate = ResolveEndDate (startDate);
                     return String.Format ("{0:MMM dd}th - {1:MMM dd}th", startDate, endDate);
-                } else if (zoomLevel == ZoomLevel.Month) {
+                } else if (ZoomLevel == ZoomLevel.Month) {
                     return String.Format ("{0:M}", startDate);
                 }
                 return startDate.Year.ToString ();
             }
         }
 
-        public DateTime ResolveStartDate (int backDate)
+        private DateTime ResolveStartDate (int back)
         {
             var current = DateTime.Today;
-            if (zoomLevel == ZoomLevel.Week) {
+            if (ZoomLevel == ZoomLevel.Week) {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
                 var startOfWeek = user.StartOfWeek;
-                var date = current.StartOfWeek (startOfWeek).AddDays (backDate * 7);
+                var date = current.StartOfWeek (startOfWeek).AddDays (back * 7);
                 return date;
             }
 
-            if (zoomLevel == ZoomLevel.Month) {
-                current = current.AddMonths (backDate);
+            if (ZoomLevel == ZoomLevel.Month) {
+                current = current.AddMonths (back);
                 return new DateTime (current.Year, current.Month, 1);
             }
 
-            return new DateTime (current.Year + backDate, 1, 1);
+            return new DateTime (current.Year + back, 1, 1);
         }
 
-        public DateTime ResolveEndDate (DateTime start)
+        private DateTime ResolveEndDate (DateTime start)
         {
-            if (zoomLevel == ZoomLevel.Week) {
+            if (ZoomLevel == ZoomLevel.Week) {
                 return start.AddDays (6);
             }
 
-            if (zoomLevel == ZoomLevel.Month) {
+            if (ZoomLevel == ZoomLevel.Month) {
                 return start.AddMonths (1).AddDays (-1);
             }
 
@@ -161,10 +151,21 @@ namespace Toggl.Joey.UI.Fragments
         private class MainPagerAdapter : FragmentPagerAdapter
         {
             public int Current = PagesCount / 2;
-            private ZoomLevel zoomLevel = ZoomLevel.Week;
+
+            private List<ReportsFragment> fragmentList;
+
+            private ChartPosition lastPosition;
+
+            public List<ReportsFragment> FragmentList
+            {
+                get {
+                    return fragmentList;
+                }
+            }
 
             public MainPagerAdapter (FragmentManager fm) : base (fm)
             {
+                fragmentList = new List<ReportsFragment>();
             }
 
             public override int Count
@@ -172,9 +173,38 @@ namespace Toggl.Joey.UI.Fragments
                 get { return PagesCount; }
             }
 
+            public override Java.Lang.Object InstantiateItem (ViewGroup container, int position)
+            {
+                var obj =  (ReportsFragment)base.InstantiateItem (container, position);
+                fragmentList.Add (obj);
+                obj.Position = lastPosition;
+                obj.PositionChanged += ChangeReportsPosition;
+                return obj;
+            }
+
+            public override void DestroyItem (ViewGroup container, int position, Java.Lang.Object @object)
+            {
+                var obj = (ReportsFragment)@object;
+                fragmentList.Remove (obj);
+                obj.PositionChanged -= ChangeReportsPosition;
+                base.DestroyItem (container, position, @object);
+            }
+
             public override Fragment GetItem (int position)
             {
-                return new ReportsFragment (position - PagesCount / 2);
+                var item = FragmentList.Find (r => r.Period == (position - PagesCount / 2));
+                var result =  item ?? new ReportsFragment ((position - PagesCount / 2));
+                result.Position = lastPosition;
+                return result;
+            }
+
+            private void ChangeReportsPosition ( object sender, EventArgs args )
+            {
+                var pos = ((ReportsFragment)sender).Position;
+                foreach (var item in FragmentList) {
+                    item.Position = pos;
+                }
+                lastPosition = pos;
             }
         }
     }

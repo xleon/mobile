@@ -6,25 +6,26 @@
     android:gravity="center_vertical">
     <View
         android:id="@+id/ColorSquare"
-        android:layout_width="15dp"
-        android:layout_height="15dp"
-        android:layout_marginLeft="3dp"
-        android:layout_marginTop="2dp" />
+        android:layout_alignParentLeft="true"
+        android:gravity="center_vertical"
+        android:layout_width="16dp"
+        android:layout_height="16dp" />
     <TextView
-        android:text="Name"
+        android:textSize="14dp"
         android:id="@+id/ProjectName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="30dp"
         android:layout_alignParentLeft="true"
         android:gravity="center_vertical"
-        android:textColor="@color/gray" />
+        android:textColor="@color/reports_title" />
     <TextView
-        android:text="Duration"
+        android:textSize="14dp"
         android:id="@+id/ProjectDuration"
+        android:gravity="center_vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_marginRight="10dp"
-        android:textColor="@color/gray" />
+        android:textColor="@color/reports_value" />
 </RelativeLayout>

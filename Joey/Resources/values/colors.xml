@@ -19,4 +19,6 @@
     <color name="drawer_text_default">@color/gray</color>
     <color name="drawer_sync_status_box">#989898</color>
     <color name="button_divider">#DBDBDB</color>    
+    <color name="reports_title">#777777</color> 
+    <color name="reports_value">#222222</color> 
 </resources>

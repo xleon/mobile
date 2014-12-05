@@ -211,36 +211,55 @@ namespace Toggl.Joey.UI.Views
             canvas.DrawText (FormatMilliseconds (selectedSliceValue > 0 ? selectedSliceValue : totalValue), centerX, centerY, chartCenterText);
         }
 
-        public override bool OnTouchEvent (MotionEvent ev)
+        public override bool DispatchTouchEvent (MotionEvent e)
         {
             Point point = new Point ();
-            point.X = (int)ev.GetX ();
-            point.Y = (int)ev.GetY ();
+            point.X = (int)e.GetX ();
+            point.Y = (int)e.GetY ();
+
             int clickedSlice = -1;
             int count = 0;
-            foreach (PieSlice slice in slices) {
-                Region r = new Region ();
-                r.SetPath (slice.Path, slice.Region);
-                if (r.Contains (point.X, point.Y) && ev.Action == MotionEventActions.Up) {
-                    clickedSlice = count;
+
+            if (e.Action == MotionEventActions.Down) {
+
+                // get selected
+                foreach (PieSlice slice in slices) {
+                    var r = new Region ();
+                    r.SetPath (slice.Path, slice.Region);
+                    if (r.Contains (point.X, point.Y)) {
+                        clickedSlice = count;
+                    }
+                    count++;
                 }
-                count++;
+
+                // set selected and deselected index
+                if (clickedSlice != -1) {
+                    deselectedIndex = (clickedSlice == indexSelected) ? clickedSlice : -1;
+                    indexSelected = (clickedSlice == indexSelected) ? -1 : clickedSlice;
+                    return true;
+                }
+
+                // deselect all
+                if (indexSelected != -1) {
+                    deselectedIndex = indexSelected;
+                    indexSelected = -1;
+                    return true;
+                }
+
             }
-            if (clickedSlice == indexSelected && ev.Action == MotionEventActions.Up) {
-                indexSelected = -1;
-                deselectedIndex = clickedSlice;
-                StartSlideBackAnimation ();
-                OnSliceSelected ();
-            } else if (clickedSlice == indexSelected) {
-                return base.OnTouchEvent ( ev);
-            } else {
-                indexSelected = clickedSlice;
-                if (ev.Action == MotionEventActions.Up) {
-                    OnSliceSelected ();
+
+            if (e.Action == MotionEventActions.Up) {
+                if (indexSelected != -1) {
                     StartSliceSlideAnimation ();
+                } else {
+                    StartSlideBackAnimation ();
                 }
+
+                OnSliceSelected ();
+                return false;
+
             }
-            return base.OnTouchEvent ( ev);
+            return false;
         }
 
         public void StartDrawAnimation ()

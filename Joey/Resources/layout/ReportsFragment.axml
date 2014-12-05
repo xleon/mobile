@@ -73,7 +73,7 @@
         android:divider="@drawable/DividerHorizontalLight"
         android:dividerHeight="1dp"
         android:requiresFadingEdge="vertical"
-        android:layout_marginLeft="15dp"
-        android:layout_marginRight="15dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
         android:fadingEdgeLength="8dp" />
 </LinearLayout>

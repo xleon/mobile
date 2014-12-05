@@ -538,7 +538,6 @@
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\xml\Analytics.xml" />
     <AndroidResource Include="Resources\layout\ReportsFragment.axml" />
     <AndroidResource Include="Resources\layout\ReportsProjectListItem.axml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyLeft.png" />

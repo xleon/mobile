@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Drawing;
-using GoogleAnalytics.iOS;
 using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using XPlatUtils;
@@ -115,9 +115,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
 
-            var tracker = ServiceContainer.Resolve<IGAITracker> ();
-            tracker.Set (GAIConstants.ScreenName, "Reports View");
-            tracker.Send (GAIDictionaryBuilder.CreateAppView ().Build ());
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Reports";
         }
 
         private void ChangeReportState ()

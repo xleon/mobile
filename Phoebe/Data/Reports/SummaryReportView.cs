@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -61,7 +62,7 @@ namespace Toggl.Phoebe.Data.Reports
                 var json = await reportClient.GetReports (startDate, endDate, (long)workspaceId);
                 dataObject = json.Import ();
             } catch ( Exception exc) {
-                var log = ServiceContainer.Resolve<Logger> ();
+                var log = ServiceContainer.Resolve<ILogger> ();
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
                     var msg = (reportClient.IsCancellationRequested) ? "Fetch reports cancelation requested by user" : "Failed to fetch reports. Network failure.";
                     log.Info (Tag, exc, msg);

@@ -6,9 +6,11 @@ using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
+using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -139,6 +141,8 @@ namespace Toggl.Joey.UI.Fragments
             listView.LayoutMode = ViewLayoutMode.ClipBounds;
             listView.SetClipToPadding (false);
             IsClean = true;
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Reports";
         }
 
         #region ListFragment

@@ -154,9 +154,6 @@
     <Reference Include="Google.Plus">
       <HintPath>..\Components\googleplusandplayios-1.7.0\lib\ios\Google.Plus.dll</HintPath>
     </Reference>
-    <Reference Include="GoogleAnalytics.iOS">
-      <HintPath>..\Components\googleanalytics-3.0.7\lib\ios\GoogleAnalytics.iOS.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />

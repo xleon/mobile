@@ -306,9 +306,9 @@ namespace Toggl.Joey.UI.Views
                 return animationProgress;
             } set {
                 if (animationProgress == 360) {
-                    animationProgress = value;
+                    loadAnimate = false;
                 }
-                loadAnimate = false;
+                animationProgress = value;
 
                 PostInvalidate ();
             }

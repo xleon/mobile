@@ -165,14 +165,15 @@ namespace Toggl.Joey.UI.Views
             int count = 0;
             float currentSweep;
             foreach (PieSlice slice in dataObject) {
-                canvasPath.Reset ();
                 currentSweep = ((float)slice.Value / (float)totalValue) * 360F;
 
+                slice.Path = slice.Path ?? new Path ();
+                slice.Path.Reset ();
                 if ((int)currentSweep == 360 && animationProgress == 360) { // only one project
-                    canvasPath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
-                    canvasPath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
+                    slice.Path.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
+                    slice.Path.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
                 } else {
-                    canvasPath.ArcTo (
+                    slice.Path.ArcTo (
                         new RectF (
                             centerX - radius + slicePadding,
                             centerY - radius + slicePadding,
@@ -182,7 +183,7 @@ namespace Toggl.Joey.UI.Views
                         loadAnimation * currentAngle + angleCorrection,
                         loadAnimation * currentSweep
                     );
-                    canvasPath.ArcTo (
+                    slice.Path.ArcTo (
                         new RectF (
                             centerX - innerRadius + slicePadding,
                             centerY - innerRadius + slicePadding,
@@ -202,13 +203,11 @@ namespace Toggl.Joey.UI.Views
                     var angleToRadian = sliceSector / (180 / Math.PI);
                     var dx = (float)Math.Sin (angleToRadian) * slicePadding;
                     var dy = (float)Math.Cos (angleToRadian) * slicePadding * -1;
-                    canvasPath.Offset (dx * sliceSlideOutAnimation, dy * sliceSlideOutAnimation);
+                    slice.Path.Offset (dx * sliceSlideOutAnimation, dy * sliceSlideOutAnimation);
                     selectedSliceValue = slice.Value;
                 }
 
-                canvasPath.Close ();
-
-                slice.Path = canvasPath;
+                slice.Path.Close ();
                 slice.Region = new Region (
                     (int) (centerX - radius),
                     (int) (centerY - radius),
@@ -217,7 +216,7 @@ namespace Toggl.Joey.UI.Views
                 );
 
                 canvasPaint.Color = slice.Color;
-                canvas.DrawPath (canvasPath, canvasPaint);
+                canvas.DrawPath (slice.Path, canvasPaint);
                 currentAngle += currentSweep;
                 count++;
             }

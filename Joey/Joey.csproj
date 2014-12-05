@@ -28,18 +28,18 @@
     <WarningLevel>4</WarningLevel>
     <AndroidLinkMode>None</AndroidLinkMode>
     <ConsolePause>false</ConsolePause>
+    <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <DefineConstants>__MOBILE__;__ANDROID__;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <AndroidLinkMode>Full</AndroidLinkMode>
     <AndroidLinkSkip>Bugsnag;Bugsnag.Android;Phoebe;Joey</AndroidLinkSkip>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -56,17 +56,20 @@
     <Reference Include="Bugsnag.Android">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoAndroid10\Bugsnag.Android.dll</HintPath>
     </Reference>
-    <Reference Include="GooglePlayServicesLib">
-      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\GooglePlayServicesLib.dll</HintPath>
+    <Reference Include="Xamarin.Android.Support.v13">
+      <HintPath>..\packages\Xamarin.Android.Support.v13.20.0.0.4\lib\MonoAndroid32\Xamarin.Android.Support.v13.dll</HintPath>
     </Reference>
     <Reference Include="Xamarin.Android.Support.v4">
-      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\Xamarin.Android.Support.v4.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.AppCompat">
-      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
+      <HintPath>..\packages\Xamarin.Android.Support.v4.20.0.0.4\lib\MonoAndroid32\Xamarin.Android.Support.v4.dll</HintPath>
     </Reference>
     <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
-      <HintPath>..\Components\googleplayservices-19.0.0.2\lib\android\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
+      <HintPath>..\packages\Xamarin.Android.Support.v7.MediaRouter.20.0.0\lib\MonoAndroid10\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.AppCompat">
+      <HintPath>..\packages\Xamarin.Android.Support.v7.AppCompat.20.0.0\lib\MonoAndroid10\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
+    </Reference>
+    <Reference Include="GooglePlayServicesLib">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.19.0.0.1\lib\MonoAndroid23\GooglePlayServicesLib.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -127,6 +130,10 @@
     <Compile Include="UI\Views\LogTimeEntryItem.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
+    <Compile Include="UI\Views\PieChart.cs" />
+    <Compile Include="UI\Views\BarChart.cs" />
+    <Compile Include="UI\Fragments\ReportsPagerFragment.cs" />
+    <Compile Include="UI\Fragments\ReportsFragment.cs" />
     <Compile Include="Analytics\Tracker.cs" />
     <Compile Include="Analytics\Experiments.cs" />
     <Compile Include="Logging\Logger.cs" />
@@ -531,6 +538,19 @@
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
+    <AndroidResource Include="Resources\xml\Analytics.xml" />
+    <AndroidResource Include="Resources\layout\ReportsFragment.axml" />
+    <AndroidResource Include="Resources\layout\ReportsProjectListItem.axml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyRight.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcKeyRight.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcKeyRight.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcKeyLeft.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcKeyRight.png" />
+    <AndroidResource Include="Resources\layout\ReportsPagerFragment.axml" />
+    <AndroidResource Include="Resources\layout\MainDrawerSubListItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

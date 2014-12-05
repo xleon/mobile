@@ -89,6 +89,7 @@
     <Compile Include="PropertyChangeTrackerTest.cs" />
     <Compile Include="Analytics\ExperimentManagerTest.cs" />
     <Compile Include="VoidLogger.cs" />
+    <Compile Include="Views\SummaryReportViewTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

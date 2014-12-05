@@ -15,6 +15,7 @@ namespace Toggl.Ross.ViewControllers
         private UIView menuView;
         private UIButton logButton;
         private UIButton recentButton;
+        private UIButton reportsButton;
         private UIButton settingsButton;
         private UIButton feedbackButton;
         private UIButton signOutButton;
@@ -92,12 +93,14 @@ namespace Toggl.Ross.ViewControllers
             menuButtons = new[] {
                 // (recentButton = new UIButton ()),
                 (logButton = new UIButton ()),
+                (reportsButton = new UIButton ()),
                 (settingsButton = new UIButton ()),
                 (feedbackButton = new UIButton ()),
                 (signOutButton = new UIButton ()),
             };
             // recentButton.SetTitle ("NavMenuRecent".Tr (), UIControlState.Normal);
             logButton.SetTitle ("NavMenuLog".Tr (), UIControlState.Normal);
+            reportsButton.SetTitle ("NavMenuReports".Tr (), UIControlState.Normal);
             settingsButton.SetTitle ("NavMenuSettings".Tr (), UIControlState.Normal);
             feedbackButton.SetTitle ("NavMenuFeedback".Tr (), UIControlState.Normal);
             signOutButton.SetTitle ("NavMenuSignOut".Tr (), UIControlState.Normal);
@@ -180,6 +183,9 @@ namespace Toggl.Ross.ViewControllers
                 ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
                 var navController = controller.NavigationController;
                 navController.SetViewControllers (new[] { new LogViewController () }, true);
+            } else if (sender == reportsButton ) {
+                var navController = controller.NavigationController;
+                navController.PushViewController (new ReportsViewController (), true);
             } else if (sender == settingsButton) {
                 var navController = controller.NavigationController;
                 navController.PushViewController (new SettingsViewController (), true);

@@ -90,6 +90,9 @@
     <string name="CurrentTimeEntryEditDeleteToast">Time entry has been discarded</string>
     <string name="MainDrawerTimer">Timer</string>
     <string name="MainDrawerReports">Reports</string>
+    <string name="MainDrawerReportsWeek">Week</string>
+    <string name="MainDrawerReportsMonth">Month</string>
+    <string name="MainDrawerReportsYear">Year</string>
     <string name="MainDrawerFeedback">Feedback</string>
     <string name="MainDrawerSettings">Settings</string>
     <string name="MainDrawerLogout">Log out</string>
@@ -149,4 +152,17 @@
     <string name="FeedbackThankYouTitle">Thank you</string>
     <string name="FeedbackThankYouOK">OK</string>
     <string name="FeedbackSendFailedText">Could not send to server. Please try again.</string>
+    <string name="ReportsThisWeek">This Week</string>
+    <string name="ReportsThisMonth">This Month</string>
+    <string name="ReportsThisYear">This Year</string>
+    <string name="ReportsLastWeek">Last Week</string>
+    <string name="ReportsLastMonth">Last Month</string>
+    <string name="ReportsLastYear">Last Year</string>
+    <string name="ReportsPieChartEmptyHeader">Nothing yet!</string>
+    <string name="ReportsPieChartEmptyText">There is no data for the selected\nperiod to display anything.</string>
+    <string name="ReportsPieChartLoadingHeader">Loading...</string>
+    <string name="ReportsPieChartLoadingText">Getting report data from server.</string>
+    <string name="ReportsListViewNoProject">(no project)</string>
+    <string name="ReportsTotalBanner">Total</string>
+    <string name="ReportsBillableBanner">Billable</string>
 </resources>

@@ -19,13 +19,14 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <MtouchLink>None</MtouchLink>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchDebug>true</MtouchDebug>
     <MtouchI18n>
     </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
+    <MtouchArch>i386</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchProfiling>true</MtouchProfiling>
+    <MtouchUseSGen>true</MtouchUseSGen>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <Optimize>true</Optimize>
@@ -38,7 +39,7 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchI18n>
     </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
+    <MtouchArch>i386</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
@@ -59,8 +60,11 @@
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchProfiling>true</MtouchProfiling>
+    <BuildIpa>true</BuildIpa>
     <MtouchUseSGen>true</MtouchUseSGen>
     <MtouchUseRefCounting>true</MtouchUseRefCounting>
+    <MtouchLink>None</MtouchLink>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <Optimize>true</Optimize>
@@ -96,12 +100,12 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchUseLlvm>true</MtouchUseLlvm>
     <MtouchUseSGen>true</MtouchUseSGen>
-    <MtouchUseRefCounting>true</MtouchUseRefCounting>
     <CustomCommands>
       <CustomCommands>
         <Command type="AfterBuild" command="upload_dsym_bugsnag.sh ${ProjectDir} ${TargetDir}" workingdir="${ProjectDir}" />
       </CustomCommands>
     </CustomCommands>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
     <Optimize>true</Optimize>
@@ -144,6 +148,9 @@
     <Reference Include="Bugsnag.iOS">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.0\lib\MonoTouch10\Bugsnag.iOS.dll</HintPath>
     </Reference>
+    <Reference Include="GoogleAnalytics.iOS">
+      <HintPath>..\Components\googleanalytics-3.0.3.4\lib\ios\GoogleAnalytics.iOS.dll</HintPath>
+    </Reference>
     <Reference Include="Google.Plus">
       <HintPath>..\Components\googleplusandplayios-1.7.0\lib\ios\Google.Plus.dll</HintPath>
     </Reference>
@@ -173,6 +180,14 @@
     <BundleResource Include="Resources\icon-retry%402x.png" />
     <BundleResource Include="Resources\bg-tag.png" />
     <BundleResource Include="Resources\bg-tag%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-left.png" />
+    <BundleResource Include="Resources\btn-arrow-left%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-right.png" />
+    <BundleResource Include="Resources\btn-arrow-right%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-down.png" />
+    <BundleResource Include="Resources\btn-arrow-down%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-up.png" />
+    <BundleResource Include="Resources\btn-arrow-up%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -293,6 +308,20 @@
     <Compile Include="Analytics\Tracker.cs" />
     <Compile Include="Analytics\Experiments.cs" />
     <Compile Include="Logging\Logger.cs" />
+    <Compile Include="ViewControllers\ReportsViewController.cs" />
+    <Compile Include="ViewControllers\ReportsMenuController.cs" />
+    <Compile Include="Theme\Style.ReportsView.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Charting\IReportChart.cs" />
+    <Compile Include="Views\DateSelectorView.cs" />
+    <Compile Include="Views\ProjectReportCell.cs" />
+    <Compile Include="Views\Charting\XYDonutChart.cs" />
+    <Compile Include="Views\Charting\BarChartView.cs" />
+    <Compile Include="Views\Charting\DonutChartView.cs" />
+    <Compile Include="Views\Charting\BarChart.cs" />
+    <Compile Include="Views\InfiniteScrollView.cs" />
+    <Compile Include="Views\ReportView.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />
@@ -316,6 +345,7 @@
     <Folder Include="Net\" />
     <Folder Include="Analytics\" />
     <Folder Include="Logging\" />
+    <Folder Include="Views\Charting\" />
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />

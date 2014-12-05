@@ -34,7 +34,6 @@ namespace Toggl.Ross.ViewControllers
                     subscriptionSettingChanged = null;
                 }
             }
-
             base.Dispose (disposing);
         }
 

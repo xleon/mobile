@@ -204,10 +204,10 @@ namespace Toggl.Joey.UI.Views
             }
 
 
-            chartCenterText.Color = Color.Black;
+            chartCenterText.Color = Color.ParseColor ("#666666");
             chartCenterText.TextAlign = Paint.Align.Center;
             chartCenterText.AntiAlias = true;
-            chartCenterText.TextSize = 30;
+            chartCenterText.TextSize = 35;
             canvas.DrawText (FormatMilliseconds (selectedSliceValue > 0 ? selectedSliceValue : totalValue), centerX, centerY, chartCenterText);
         }
 
@@ -305,7 +305,7 @@ namespace Toggl.Joey.UI.Views
             get {
                 return animationProgress;
             } set {
-                if (animationProgress == 360) {
+                if (value == 360) {
                     loadAnimate = false;
                 }
                 animationProgress = value;

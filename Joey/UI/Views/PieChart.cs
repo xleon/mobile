@@ -27,7 +27,7 @@ namespace Toggl.Joey.UI.Views
         private int indexSelected = -1;
         private int deselectedIndex = -1;
         private int animationProgress;
-        private int centerHeaderTextSize = 35;
+        private int centerHeaderTextSize = 30;
         private int centerTextSize = 20;
         private long totalValue;
         private long selectedSliceValue;

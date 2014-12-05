@@ -251,10 +251,11 @@ namespace Toggl.Joey.UI.Views
             if (e.Action == MotionEventActions.Up) {
                 if (indexSelected != -1) {
                     StartSliceSlideAnimation ();
-                    OnSliceSelected ();
                 } else {
                     StartSlideBackAnimation ();
                 }
+
+                OnSliceSelected ();
                 return false;
 
             }

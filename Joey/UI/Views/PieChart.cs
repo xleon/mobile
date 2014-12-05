@@ -13,24 +13,34 @@ namespace Toggl.Joey.UI.Views
 
     public class PieChart : View
     {
-        private List<PieSlice> slices = new List<PieSlice> ();
-        private Paint paint = new Paint ();
-        private Path path = new Path ();
-        private Paint basePaint = new Paint ();
-        private Paint emptyText = new Paint ();
-        private Paint chartCenterText = new Paint ();
-        private int thickness = 65;
+        private List<PieSlice> dataObject = new List<PieSlice> ();
+        private Path canvasPath = new Path ();
+        private Paint canvasPaint = new Paint ();
+        private TextPaint textPaint = new TextPaint ();
+        private Rect textBoundsRect = new Rect ();
+        private Color emptyStateColor = Color.ParseColor ("#808080");
+        private Color baseCircleColor = Color.ParseColor ("#EDEDED");
+        private Color centerTextColor = Color.ParseColor ("#666666");
+        private const int chartThickness = 65;
+        private const int slicePadding = 20;
+        private const float angleCorrection = 270;
         private int indexSelected = -1;
         private int deselectedIndex = -1;
-        private const float angleCorrection = 270;
-        private const int slicePadding = 20;
-        private IOnSliceClickedListener listener;
         private int animationProgress;
+        private int centerHeaderTextSize = 30;
+        private int centerTextSize = 20;
+        private long totalValue;
+        private long selectedSliceValue;
+        private float currentAngle;
+        private float centerX;
+        private float centerY;
         private float slideAnimationProgress;
-        private Color emptyStateColor = Color.ParseColor ("#808080");
+        private float radius;
+        private float innerRadius;
         private bool loadAnimate;
 
 
+        private IOnSliceClickedListener listener;
         public event SliceClickedEventHandler SliceClicked;
 
         public PieChart (Context context, IAttributeSet attrs) : base (context, attrs)
@@ -43,12 +53,13 @@ namespace Toggl.Joey.UI.Views
 
         public void Reset ()
         {
-            slices.Clear ();
+            dataObject.Clear ();
             indexSelected = -1;
         }
 
         public void Refresh ()
         {
+            InitializeDrawParams ();
             StartDrawAnimation ();
         }
 
@@ -68,7 +79,7 @@ namespace Toggl.Joey.UI.Views
 
         public void AddSlice (PieSlice slice)
         {
-            slices.Add (slice);
+            dataObject.Add (slice);
         }
 
         public void SetOnSliceClickedListener (IOnSliceClickedListener listener)
@@ -93,71 +104,76 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
+        private void InitializeDrawParams()
+        {
+            centerX = Width / 2;
+            centerY = Height / 2;
+            radius = centerX < centerY ? centerX : centerY;
+            innerRadius = radius - chartThickness;
+        }
+
         public override void Draw (Canvas canvas)
         {
-            long totalValue = 0;
-            long selectedSliceValue = 0;
-            float currentAngle = 0;
-            float currentSweep;
-            float centerX = Width / 2;
-            float centerY = Height / 2;
-            float radius = centerX < centerY ? centerX : centerY;
-            float innerRadius = radius - thickness;
+            if (radius == 0) {
+                InitializeDrawParams ();
+            }
+            totalValue = 0;
+            foreach (PieSlice slice in dataObject) {
+                totalValue += slice.Value;
+            }
+            currentAngle = 0;
             float loadAnimation = loadAnimate ? (float)animationProgress / 360F : 1F;
             float sliceSlideOutAnimation = slideAnimationProgress / (float)slicePadding;
 
-            foreach (PieSlice slice in slices) {
-                totalValue += slice.Value;
-            }
-
             canvas.DrawColor (Color.Transparent);
-            paint.Reset ();
-            paint.AntiAlias = true;
-            path.Reset ();
+            canvasPaint.Reset ();
+            canvasPaint.AntiAlias = true;
+            canvasPaint.TextAlign = Paint.Align.Center;
+            canvasPath.Reset ();
 
-            if (loadAnimate || slices.Count == 0) {
-                var basePath = new Path ();
-                basePath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
-                basePath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
-                basePaint.Color = Color.ParseColor ("#EDEDED");
-                canvas.DrawPath (basePath, basePaint);
+            if (loadAnimate || dataObject.Count == 0) {
+                canvasPath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
+                canvasPath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
+                canvasPaint.Color = baseCircleColor;
+                canvas.DrawPath (canvasPath, canvasPaint);
             }
 
-            if (slices.Count == 0) {
-                emptyText.Color = emptyStateColor;
-                emptyText.TextAlign = Paint.Align.Center;
-                emptyText.AntiAlias = true;
-                emptyText.TextSize = 30;
-                canvas.DrawText (Resources.GetText (Resource.String.ReportsPieChartEmptyHeader), centerX, centerY, emptyText);
+            if (dataObject.Count == 0) {
+                canvasPaint.Color = emptyStateColor;
+                canvasPaint.TextSize = centerHeaderTextSize;
+                canvas.DrawText (Resources.GetText (Resource.String.ReportsPieChartEmptyHeader), centerX, centerY, canvasPaint);
 
-                var textPaint = new TextPaint ();
-                textPaint.Color = emptyStateColor;
                 textPaint.TextAlign = Paint.Align.Center;
                 textPaint.AntiAlias = true;
-                textPaint.TextSize = 20;
+                textPaint.Color = emptyStateColor;
+                textPaint.TextSize = centerTextSize;
 
-                StaticLayout emptyStateText = new StaticLayout (Resources.GetText (Resource.String.ReportsPieChartEmptyText), textPaint, 300, StaticLayout.Alignment.AlignNormal, 1, 0, false);
+                StaticLayout emptyStateText = new StaticLayout (
+                    Resources.GetText (Resource.String.ReportsPieChartEmptyText),
+                    textPaint,
+                    300,
+                    StaticLayout.Alignment.AlignNormal,
+                    1,
+                    0,
+                    false
+                );
                 canvas.Translate (centerX, centerY + 10);
                 emptyStateText.Draw (canvas);
                 return;
             }
 
             int count = 0;
-            foreach (PieSlice slice in slices) {
+            float currentSweep;
+            foreach (PieSlice slice in dataObject) {
+                currentSweep = ((float)slice.Value / (float)totalValue) * 360F;
 
-                var slicePath = new Path ();
-                paint.Color = slice.Color;
-                if (indexSelected != count && listener != null && indexSelected != -1) {
-                    paint.Alpha = (int) (255 - sliceSlideOutAnimation * 127F);
-                }
-
-                currentSweep = ((float)slice.Value / (float)totalValue) * (360);
-
-                if ((int)currentSweep == 360 && animationProgress == 360) {
-                    slicePath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
-                    slicePath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
+                slice.Path = slice.Path ?? new Path ();
+                slice.Path.Reset ();
+                if ((int)currentSweep == 360 && animationProgress == 360) { // only one project
+                    slice.Path.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
+                    slice.Path.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
                 } else {
-                    slicePath.ArcTo (
+                    slice.Path.ArcTo (
                         new RectF (
                             centerX - radius + slicePadding,
                             centerY - radius + slicePadding,
@@ -167,7 +183,7 @@ namespace Toggl.Joey.UI.Views
                         loadAnimation * currentAngle + angleCorrection,
                         loadAnimation * currentSweep
                     );
-                    slicePath.ArcTo (
+                    slice.Path.ArcTo (
                         new RectF (
                             centerX - innerRadius + slicePadding,
                             centerY - innerRadius + slicePadding,
@@ -175,40 +191,43 @@ namespace Toggl.Joey.UI.Views
                             centerY + innerRadius - slicePadding
                         ),
                         loadAnimation * (currentAngle + currentSweep) + angleCorrection,
-                        loadAnimation * - (currentSweep)
+                        loadAnimation * -currentSweep
                     );
                 }
 
-                if ((indexSelected == count || deselectedIndex == count) && listener != null && (int)currentSweep != 360) {
+                if (indexSelected != count && indexSelected != -1) {
+                    canvasPaint.Alpha = (int) (255 - sliceSlideOutAnimation * 127F); // fade out other slices if one is selected
+                }
+                if ((indexSelected == count || deselectedIndex == count) && (int)currentSweep != 360) {
                     var sliceSector = currentAngle + (currentSweep / 2);
                     var angleToRadian = sliceSector / (180 / Math.PI);
                     var dx = (float)Math.Sin (angleToRadian) * slicePadding;
                     var dy = (float)Math.Cos (angleToRadian) * slicePadding * -1;
-                    slicePath.Offset (dx * sliceSlideOutAnimation, dy * sliceSlideOutAnimation);
+                    slice.Path.Offset (dx * sliceSlideOutAnimation, dy * sliceSlideOutAnimation);
                     selectedSliceValue = slice.Value;
                 }
 
-                slicePath.Close ();
-
-                slice.Path = slicePath;
+                slice.Path.Close ();
                 slice.Region = new Region (
                     (int) (centerX - radius),
                     (int) (centerY - radius),
                     (int) (centerX + radius),
                     (int) (centerY + radius)
                 );
-                canvas.DrawPath (slicePath, paint);
 
+                canvasPaint.Color = slice.Color;
+                canvas.DrawPath (slice.Path, canvasPaint);
                 currentAngle += currentSweep;
                 count++;
             }
 
-
-            chartCenterText.Color = Color.Black;
-            chartCenterText.TextAlign = Paint.Align.Center;
-            chartCenterText.AntiAlias = true;
-            chartCenterText.TextSize = 30;
-            canvas.DrawText (FormatMilliseconds (selectedSliceValue > 0 ? selectedSliceValue : totalValue), centerX, centerY, chartCenterText);
+            canvasPaint.Color = centerTextColor;
+            canvasPaint.TextAlign = Paint.Align.Center;
+            canvasPaint.TextSize = centerHeaderTextSize;
+            textBoundsRect = new Rect ();
+            string duration = FormatMilliseconds (selectedSliceValue > 0 ? selectedSliceValue : totalValue);
+            canvasPaint.GetTextBounds (duration, 0, duration.Length, textBoundsRect);
+            canvas.DrawText (duration, centerX, centerY + textBoundsRect.Height() / 2, canvasPaint);
         }
 
         public override bool DispatchTouchEvent (MotionEvent e)
@@ -223,7 +242,7 @@ namespace Toggl.Joey.UI.Views
             if (e.Action == MotionEventActions.Down) {
 
                 // get selected
-                foreach (PieSlice slice in slices) {
+                foreach (PieSlice slice in dataObject) {
                     var r = new Region ();
                     r.SetPath (slice.Path, slice.Region);
                     if (r.Contains (point.X, point.Y)) {
@@ -305,10 +324,10 @@ namespace Toggl.Joey.UI.Views
             get {
                 return animationProgress;
             } set {
-                if (animationProgress == 360) {
-                    animationProgress = value;
+                if (value == 360) {
+                    loadAnimate = false;
                 }
-                loadAnimate = false;
+                animationProgress = value;
 
                 PostInvalidate ();
             }

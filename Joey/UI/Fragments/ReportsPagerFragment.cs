@@ -28,11 +28,11 @@ namespace Toggl.Joey.UI.Fragments
 
         private ZoomLevel zoomPeriod;
 
-        public ZoomLevel ZoomLevel {
+        public ZoomLevel ZoomLevel
+        {
             get {
                 return zoomPeriod;
-            }
-            set {
+            } set {
                 zoomPeriod = value;
                 UpdatePager ();
             }
@@ -66,7 +66,7 @@ namespace Toggl.Joey.UI.Fragments
             backDate = viewPager.CurrentItem + direction - PagesCount / 2;
             UpdatePeriod ();
         }
-            
+
         public override void OnResume ()
         {
             base.OnResume ();
@@ -79,8 +79,11 @@ namespace Toggl.Joey.UI.Fragments
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
             adapter.ZoomLevel = zoomPeriod;
-            adapter.ClearFragmentList ();
-            adapter.NotifyDataSetChanged ();
+            foreach (var item in adapter.FragmentList) {
+                item.SetZoomLevel ( zoomPeriod);
+                item.IsClean = true;
+                item.LoadElements ();
+            }
             UpdatePeriod ();
         }
 
@@ -185,11 +188,11 @@ namespace Toggl.Joey.UI.Fragments
 
             private FragmentManager fragmentManager;
 
-            public ZoomLevel ZoomLevel {
+            public ZoomLevel ZoomLevel
+            {
                 get {
                     return zoomLevel;
-                }
-                set {
+                } set {
                     zoomLevel = value;
                 }
             }
@@ -200,22 +203,19 @@ namespace Toggl.Joey.UI.Fragments
                 fragmentManager = fm;
             }
 
-            public override int Count {
+            public override int Count
+            {
                 get { return PagesCount; }
             }
-                            
+
             public override Java.Lang.Object InstantiateItem (ViewGroup container, int position)
             {
                 var obj =  (ReportsFragment)base.InstantiateItem (container, position);
                 fragmentList.Add (obj);
                 obj.Position = lastPosition;
+                obj.SetZoomLevel (zoomLevel);
                 obj.PositionChanged += ChangeReportsPosition;
                 return obj;
-            }
-
-            public void ClearFragmentList ()
-            {
-                fragmentManager.Fragments.Clear ();
             }
 
             public override void DestroyItem (ViewGroup container, int position, Java.Lang.Object @object)
@@ -230,6 +230,7 @@ namespace Toggl.Joey.UI.Fragments
             {
                 var item = FragmentList.Find (r => r.Period == (position - PagesCount / 2));
                 var result =  item ?? new ReportsFragment ((position - PagesCount / 2), zoomLevel);
+                result.SetZoomLevel (zoomLevel);
                 result.Position = lastPosition;
                 return result;
             }

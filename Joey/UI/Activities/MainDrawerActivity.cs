@@ -19,14 +19,14 @@ using Toggl.Phoebe.Data;
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
-        Label = "@string/EntryName",
-        Exported = true,
+         Label = "@string/EntryName",
+         Exported = true,
          #if DEBUG
          // The actual entry-point is defined in manifest via activity-alias, this here is just to
          // make adb launch the activity automatically when developing.
-        MainLauncher = true,
+         MainLauncher = true,
          #endif
-        Theme = "@style/Theme.Toggl.App")]
+         Theme = "@style/Theme.Toggl.App")]
     public class MainDrawerActivity : BaseActivity
     {
         private const string PageStackExtra = "com.toggl.timer.page_stack";
@@ -181,7 +181,7 @@ namespace Toggl.Joey.UI.Activities
                 base.OnBackPressed ();
             }
         }
-        private void SetMenuSelection(int pos)
+        private void SetMenuSelection (int pos)
         {
             int parentPos = drawerAdapter.GetParentPosition (pos -1);
             DrawerListView.ClearChoices ();
@@ -210,20 +210,20 @@ namespace Toggl.Joey.UI.Activities
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.SettingsPageId);
             } else if (id == DrawerListAdapter.ReportsPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
-                if (reportFragment.Value.ZoomPeriod == ZoomLevel.Week) {
+                if (reportFragment.Value.ZoomLevel == ZoomLevel.Week) {
                     id = DrawerListAdapter.ReportsWeekPageId;
-                } else if (reportFragment.Value.ZoomPeriod == ZoomLevel.Month) {
+                } else if (reportFragment.Value.ZoomLevel == ZoomLevel.Month) {
                     id = DrawerListAdapter.ReportsMonthPageId;
                 } else {
                     id = DrawerListAdapter.ReportsYearPageId;
                 }
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsWeekPageId) {
-                reportFragment.Value.ZoomPeriod = ZoomLevel.Week;
+                reportFragment.Value.ZoomLevel = ZoomLevel.Week;
             } else if (id == DrawerListAdapter.ReportsMonthPageId) {
-                reportFragment.Value.ZoomPeriod = ZoomLevel.Month;
+                reportFragment.Value.ZoomLevel = ZoomLevel.Month;
             } else if (id == DrawerListAdapter.ReportsYearPageId) {
-                reportFragment.Value.ZoomPeriod = ZoomLevel.Year;
+                reportFragment.Value.ZoomLevel = ZoomLevel.Year;
             } else if (id == DrawerListAdapter.FeedbackPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.FeedbackPageId);
                 OpenFragment (feedbackFragment.Value);
@@ -231,7 +231,7 @@ namespace Toggl.Joey.UI.Activities
                 OpenFragment (trackingFragment.Value);
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.TimerPageId);
             }
-            SetMenuSelection (drawerAdapter.GetItemPosition(id));
+            SetMenuSelection (drawerAdapter.GetItemPosition (id));
 
             pageStack.Remove (id);
             pageStack.Add (id);
@@ -336,7 +336,8 @@ namespace Toggl.Joey.UI.Activities
             return DateUtils.GetRelativeTimeSpanString (lastSyncInMillis, NowInMillis, 0L);
         }
 
-        public TimerComponent Timer {
+        public TimerComponent Timer
+        {
             get { return barTimer; }
         }
     }

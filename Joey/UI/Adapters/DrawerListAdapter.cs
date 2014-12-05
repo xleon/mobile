@@ -93,10 +93,11 @@ namespace Toggl.Joey.UI.Adapters
             get { return 3; }
         }
 
-        public int GetParentPosition(int pos)
+        public int GetParentPosition (int pos)
         {
-            if (rowItems [pos].ChildOf == 0)
+            if (rowItems [pos].ChildOf == 0) {
                 return -1;
+            }
             return GetItemPosition (rowItems [pos].ChildOf);
         }
 
@@ -128,7 +129,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
-                                Resource.Layout.MainDrawerSubListItem, parent, false);
+                               Resource.Layout.MainDrawerSubListItem, parent, false);
                     view.Tag = new DrawerSubItemViewHolder (view);
                 }
 

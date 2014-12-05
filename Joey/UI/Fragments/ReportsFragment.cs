@@ -23,7 +23,7 @@ namespace Toggl.Joey.UI.Fragments
     public class ReportsFragment : Fragment, View.IOnTouchListener
     {
         private static readonly string ReportPeriodArgument = "com.toggl.timer.report_period";
-        private static readonly string ReportZoomArgument = "com.toggl.timer.report_period";
+        private static readonly string ReportZoomArgument = "com.toggl.timer.report_zoom";
 
         public event EventHandler PositionChanged;
 
@@ -66,14 +66,15 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public ZoomLevel ZoomLevel {
+        public ZoomLevel ZoomLevel
+        {
 
-            get { 
+            get {
                 string zoomValue = ZoomLevel.Week.ToString ();
                 if (Arguments != null) {
-                    zoomValue = Arguments.GetString (ReportPeriodArgument, zoomValue);
+                    zoomValue = Arguments.GetString (ReportZoomArgument, zoomValue);
                 }
-                return (ZoomLevel)Enum.Parse (typeof(ZoomLevel), zoomValue);
+                return (ZoomLevel)Enum.Parse (typeof (ZoomLevel), zoomValue);
             }
         }
 
@@ -201,25 +202,11 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         #endregion
-        /*
-        private void StretchUpperView ()
-        {
-            var lp = (ViewGroup.MarginLayoutParams)barChart.LayoutParameters;
-            barChart.Measure (0, 0);
-            int bottomCorrection = barChart.Bottom - barChart.Height + barChart.MeasuredHeight;
-            lp.BottomMargin = mainView.Height - bottomCorrection- pieChart.Height / 3;
-            if (lp.BottomMargin < 40) {
-                lp.BottomMargin = 40;
-            }
-
-            mainView.PieChartSnapPos = bottomCorrection + lp.BottomMargin;
-            barChart.RequestLayout ();
-        }*/
 
         public async void LoadElements ()
         {
             if ( IsClean) {
-                isLoading = false;
+                isLoading = true;
                 summaryReport = new SummaryReportView ();
                 summaryReport.Period = ZoomLevel;
                 await summaryReport.Load (Period);
@@ -235,6 +222,11 @@ namespace Toggl.Joey.UI.Fragments
                     IsClean = false;
                 }
             }
+        }
+
+        public void SetZoomLevel ( ZoomLevel zoomlevel)
+        {
+            Arguments.PutString (ReportZoomArgument, zoomlevel.ToString());
         }
 
         private void GenerateBarChart ()
@@ -354,7 +346,8 @@ namespace Toggl.Joey.UI.Fragments
             NotifyDataSetChanged ();
         }
 
-        public override int Count {
+        public override int Count
+        {
             get {
                 return dataView.Count;
             }

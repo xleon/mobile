@@ -15,8 +15,8 @@ namespace Toggl.Phoebe.Logging
             threshold = LogLevel.Debug;
             consoleThreshold = LogLevel.Debug;
             #else
-            threshold = Level.Info;
-            consoleThreshold = Level.Warning;
+            threshold = LogLevel.Info;
+            consoleThreshold = LogLevel.Warning;
             #endif
         }
 

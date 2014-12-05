@@ -23,6 +23,7 @@ namespace Toggl.Joey.UI.Fragments
     public class ReportsFragment : Fragment, View.IOnTouchListener
     {
         private static readonly string ReportPeriodArgument = "com.toggl.timer.report_period";
+        private static readonly string ReportZoomArgument = "com.toggl.timer.report_zoom";
 
         public event EventHandler PositionChanged;
 
@@ -67,8 +68,14 @@ namespace Toggl.Joey.UI.Fragments
 
         public ZoomLevel ZoomLevel
         {
-            get;
-            set;
+
+            get {
+                string zoomValue = ZoomLevel.Week.ToString ();
+                if (Arguments != null) {
+                    zoomValue = Arguments.GetString (ReportZoomArgument, zoomValue);
+                }
+                return (ZoomLevel)Enum.Parse (typeof (ZoomLevel), zoomValue);
+            }
         }
 
         public bool IsClean
@@ -82,10 +89,11 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ReportsFragment (int period) : base()
+        public ReportsFragment (int period, ZoomLevel zoom) : base()
         {
             var args = new Bundle ();
             args.PutInt (ReportPeriodArgument, period);
+            args.PutString (ReportZoomArgument, zoom.ToString());
 
             Arguments = args;
         }
@@ -198,7 +206,7 @@ namespace Toggl.Joey.UI.Fragments
         public async void LoadElements ()
         {
             if ( IsClean) {
-                isLoading = false;
+                isLoading = true;
                 summaryReport = new SummaryReportView ();
                 summaryReport.Period = ZoomLevel;
                 await summaryReport.Load (Period);
@@ -216,6 +224,11 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public void SetZoomLevel ( ZoomLevel zoomlevel)
+        {
+            Arguments.PutString (ReportZoomArgument, zoomlevel.ToString());
+        }
+
         private void GenerateBarChart ()
         {
             barChart.Reset ();
@@ -227,8 +240,8 @@ namespace Toggl.Joey.UI.Fragments
                 barChart.AddBar (bar);
             }
             barChart.CeilingValue = summaryReport.MaxTotal;
-            barChart.BarTitles = summaryReport.ChartRowLabels;
-            barChart.LineTitles = summaryReport.ChartTimeLabels;
+            barChart.YAxisLabels = summaryReport.ChartRowLabels;
+            barChart.XAxisLabels = summaryReport.ChartTimeLabels;
             barChart.Refresh ();
         }
 

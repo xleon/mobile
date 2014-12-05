@@ -14,6 +14,7 @@ using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
+using Toggl.Phoebe.Data;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -180,6 +181,19 @@ namespace Toggl.Joey.UI.Activities
                 base.OnBackPressed ();
             }
         }
+        private void SetMenuSelection (int pos)
+        {
+            int parentPos = drawerAdapter.GetParentPosition (pos -1);
+            DrawerListView.ClearChoices ();
+            if (parentPos > -1) {
+                DrawerListView.ChoiceMode = (ChoiceMode)ListView.ChoiceModeMultiple;
+                DrawerListView.SetItemChecked (parentPos, true);
+                DrawerListView.SetItemChecked (pos, true);
+            } else {
+                DrawerListView.ChoiceMode = (ChoiceMode)ListView.ChoiceModeSingle;
+                DrawerListView.SetItemChecked (pos, true);
+            }
+        }
 
         private void OpenPage (int id)
         {
@@ -192,18 +206,32 @@ namespace Toggl.Joey.UI.Activities
             }
 
             if (id == DrawerListAdapter.SettingsPageId) {
-                DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.SettingsPageId), true);
                 OpenFragment (settingsFragment.Value);
+                drawerAdapter.ExpandCollapse (DrawerListAdapter.SettingsPageId);
             } else if (id == DrawerListAdapter.ReportsPageId) {
-                DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.ReportsPageId), true);
+                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
+                if (reportFragment.Value.ZoomLevel == ZoomLevel.Week) {
+                    id = DrawerListAdapter.ReportsWeekPageId;
+                } else if (reportFragment.Value.ZoomLevel == ZoomLevel.Month) {
+                    id = DrawerListAdapter.ReportsMonthPageId;
+                } else {
+                    id = DrawerListAdapter.ReportsYearPageId;
+                }
                 OpenFragment (reportFragment.Value);
+            } else if (id == DrawerListAdapter.ReportsWeekPageId) {
+                reportFragment.Value.ZoomLevel = ZoomLevel.Week;
+            } else if (id == DrawerListAdapter.ReportsMonthPageId) {
+                reportFragment.Value.ZoomLevel = ZoomLevel.Month;
+            } else if (id == DrawerListAdapter.ReportsYearPageId) {
+                reportFragment.Value.ZoomLevel = ZoomLevel.Year;
             } else if (id == DrawerListAdapter.FeedbackPageId) {
-                DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.FeedbackPageId), true);
+                drawerAdapter.ExpandCollapse (DrawerListAdapter.FeedbackPageId);
                 OpenFragment (feedbackFragment.Value);
             } else {
-                DrawerListView.SetItemChecked (drawerAdapter.GetItemPosition (DrawerListAdapter.TimerPageId), true);
                 OpenFragment (trackingFragment.Value);
+                drawerAdapter.ExpandCollapse (DrawerListAdapter.TimerPageId);
             }
+            SetMenuSelection (drawerAdapter.GetItemPosition (id));
 
             pageStack.Remove (id);
             pageStack.Add (id);
@@ -241,7 +269,12 @@ namespace Toggl.Joey.UI.Activities
                 StartAuthActivity ();
             } else if (e.Id == DrawerListAdapter.ReportsPageId) {
                 OpenPage (DrawerListAdapter.ReportsPageId);
-
+            } else if (e.Id == DrawerListAdapter.ReportsWeekPageId) {
+                OpenPage (DrawerListAdapter.ReportsWeekPageId);
+            } else if (e.Id == DrawerListAdapter.ReportsMonthPageId) {
+                OpenPage (DrawerListAdapter.ReportsMonthPageId);
+            } else if (e.Id == DrawerListAdapter.ReportsYearPageId) {
+                OpenPage (DrawerListAdapter.ReportsYearPageId);
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
                 OpenPage (DrawerListAdapter.SettingsPageId);
 

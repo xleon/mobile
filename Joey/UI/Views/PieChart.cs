@@ -244,11 +244,12 @@ namespace Toggl.Joey.UI.Views
 
                 // get selected
                 foreach (PieSlice slice in dataObject) {
-                    Region r = new Region ();
+                    var r = new Region ();
                     r.SetPath (slice.Path, slice.Region);
                     if (r.Contains (point.X, point.Y)) {
                         clickedSlice = count;
                     }
+                    count++;
                 }
 
                 // set selected and deselected index

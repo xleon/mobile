@@ -34,6 +34,8 @@ namespace Toggl.Phoebe.Data
 
         public string FormattedBillableTime { get; set; }
 
+        public List<ReportCurrency> Currencies;
+
         public List<ReportTimeEntry> Items;
     }
 
@@ -56,7 +58,7 @@ namespace Toggl.Phoebe.Data
 
         public string Currency { get; set; }
 
-        public string Ammount { get; set; }
+        public float Amount { get; set; }
 
     }
 }

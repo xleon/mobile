@@ -128,6 +128,13 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
+        public string TotalCost
+        {
+            get {
+                return dataObject.TotalCost;
+            }
+        }
+
         public string TotalBillale
         {
             get {

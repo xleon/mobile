@@ -131,25 +131,25 @@ namespace Toggl.Ross.ViewControllers
             if (backDate == 0) {
                 switch (ZoomLevel) {
                 case ZoomLevel.Week:
-                    result = "ThisWeekSelector".Tr ();
+                    result = "ReportsThisWeekSelector".Tr ();
                     break;
                 case ZoomLevel.Month:
-                    result = "ThisMonthSelector".Tr ();
+                    result = "ReportsThisMonthSelector".Tr ();
                     break;
                 case ZoomLevel.Year:
-                    result = "ThisYearSelector".Tr ();
+                    result = "ReportsThisYearSelector".Tr ();
                     break;
                 }
             } else if (backDate == -1) {
                 switch (ZoomLevel) {
                 case ZoomLevel.Week:
-                    result = "LastWeekSelector".Tr ();
+                    result = "ReportsLastWeekSelector".Tr ();
                     break;
                 case ZoomLevel.Month:
-                    result = "LastMonthSelector".Tr ();
+                    result = "ReportsLastMonthSelector".Tr ();
                     break;
                 case ZoomLevel.Year:
-                    result = "LastYearSelector".Tr ();
+                    result = "ReportsLastYearSelector".Tr ();
                     break;
                 }
             } else {
@@ -159,16 +159,16 @@ namespace Toggl.Ross.ViewControllers
                 switch (ZoomLevel) {
                 case ZoomLevel.Week:
                     if (startDate.Month == endDate.Month) {
-                        result = startDate.ToString ("StartWeekInterval".Tr ()) + " - " + endDate.ToString ("EndWeekInterval".Tr ());
+                        result = startDate.ToString ("ReportsStartWeekInterval".Tr ()) + " - " + endDate.ToString ("ReportsEndWeekInterval".Tr ());
                     } else {
                         result = startDate.Day + "th " + startDate.ToString ("MMM") + " - " + endDate.Day + "th " + startDate.ToString ("MMM");
                     }
                     break;
                 case ZoomLevel.Month:
-                    result = startDate.ToString ("MonthInterval".Tr ());
+                    result = startDate.ToString ("ReportsMonthInterval".Tr ());
                     break;
                 case ZoomLevel.Year:
-                    result = startDate.ToString ("YearInterval".Tr ());
+                    result = startDate.ToString ("ReportsYearInterval".Tr ());
                     break;
                 }
             }

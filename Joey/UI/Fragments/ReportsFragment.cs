@@ -222,7 +222,7 @@ namespace Toggl.Joey.UI.Fragments
                     billableValue.Text = summaryReport.TotalBillale;
                     listView.Adapter = new ProjectListAdapter ( Activity, summaryReport.Projects);
                     GeneratePieChart ();
-                    GenerateBarChart ();
+                    barChart.Reset (summaryReport);
                     IsClean = false;
                 }
             }
@@ -231,22 +231,6 @@ namespace Toggl.Joey.UI.Fragments
         public void SetZoomLevel ( ZoomLevel zoomlevel)
         {
             Arguments.PutString (ReportZoomArgument, zoomlevel.ToString());
-        }
-
-        private void GenerateBarChart ()
-        {
-            barChart.Reset ();
-            foreach (var row in summaryReport.Activity) {
-                var bar = new BarItem ();
-                bar.Value = (float)row.TotalTime;
-                bar.Billable = (float)row.BillableTime;
-                bar.Name = row.StartTime.ToShortTimeString ();
-                barChart.AddBar (bar);
-            }
-            barChart.CeilingValue = summaryReport.MaxTotal;
-            barChart.YAxisLabels = summaryReport.ChartRowLabels;
-            barChart.XAxisLabels = summaryReport.ChartTimeLabels;
-            barChart.Refresh ();
         }
 
         private void GeneratePieChart ()

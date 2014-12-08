@@ -3,380 +3,426 @@ using System.Collections.Generic;
 using Android.Animation;
 using Android.Content;
 using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.Text;
 using Android.Util;
 using Android.Views;
+using Android.Widget;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Reports;
 
 namespace Toggl.Joey.UI.Views
 {
-    public class BarChart : View
+    public class BarChart : ViewGroup
     {
-        public int CeilingValue;
-        private List<BarItem> dataObject = new List<BarItem> ();
-        private List<String> yAxisLabels = new List<String> ();
-        private List<String> xAxisLabels = new List<String> ();
-        private Paint canvasPaint = new Paint ();
-        private Paint emptyText = new Paint ();
-        private Rect basePlate = new Rect ();
-        private Rect textBoundsRect = new Rect();
-        private Rect rectangle = new Rect ();
-        private Rect notBillableRectangle = new Rect ();
-        private Canvas baseCanvas;
-        private Bitmap baseBitmap;
-        private TextPaint textPaint = new TextPaint();
-        private Color gridColor = Color.ParseColor ("#CCCCCC");
-        private Color lightBlueBarColor = Color.ParseColor ("#80D6FF");
-        private Color darkBlueBarColor = Color.ParseColor ("#00AEFF");
-        private Color darkGrayBarColor = Color.ParseColor ("#666666");
-        private Color emptyStateTextColor = Color.ParseColor ("#808080");
-        private ZoomLevel zoomLevel;
-        private ChartState currentChartState;
-        private int barPadding = 2;
-        private int barHeight = 60;
-        private int bottomPadding = 35;
-        private int leftColumnWidth = 70;
-        private int topPadding = 10;
-        private int labelTextSize = 20;
-        private int yAxisLineWidth = 8;
-        private int animationProgress;
-        private bool animating;
-        private bool redrawBaseBitmap = false;
-        private float usableWidth;
-        private float loadAnimation;
-        private float ceilingSeconds;
+        private static Color LightGrayColor = Color.ParseColor ("#CCCCCC");
+        private static Color DarkGrayColor = Color.ParseColor ("#666666");
+        private static Color DarkBlueColor = Color.ParseColor ("#00AEFF");
+        private static Color LightBlueColor = Color.ParseColor ("#80D6FF");
+
+        private readonly List<Row> rows = new List<Row> (31);
+        private int leftMargin;
+        private int leftPadding;
+        private int topPadding;
+        private int bottomPadding;
+        private int rightPadding;
+        private int barZeroSize;
+        private int barLabelSpacing;
+        private BackgroundView backgroundView;
+        private Animator currentAnimation;
 
         public BarChart (Context context, IAttributeSet attrs) : base (context, attrs)
         {
+            Initialize (context);
         }
 
         public BarChart (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
         {
+            Initialize (context);
         }
 
-        public void Reset ()
+        private void Initialize (Context ctx)
         {
-            dataObject.Clear ();
-            yAxisLabels.Clear ();
-            xAxisLabels.Clear ();
+            var dm = ctx.Resources.DisplayMetrics;
+            leftMargin = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 35, dm);
+            leftPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 4, dm);
+            topPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 10, dm);
+            bottomPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 23, dm);
+            rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 30, dm);
+            barZeroSize = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 3, dm);
+            barLabelSpacing = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
+
+            backgroundView = new BackgroundView (ctx);
+            AddView (backgroundView);
         }
 
-        public void AddBar (BarItem point)
+        private void ResetRows (int neededRows)
         {
-            dataObject.Add (point);
-        }
+            var existingRows = rows.Count;
+            var totalRows = (int)Math.Max (existingRows, neededRows);
+            var expandRows = neededRows > existingRows;
+            var contractRows = existingRows > neededRows;
 
-        public void Refresh ()
-        {
-            OnMeasure (MeasuredWidth, MeasuredHeight);
-            redrawBaseBitmap = true;
-            StartAnimate ();
-        }
+            if (expandRows) {
+                for (var i = existingRows; i < totalRows; i++) {
+                    // Create new row
+                    var row = new Row (Context);
+                    rows.Add (row);
 
-        public List<string> YAxisLabels
-        {
-            get {
-                return yAxisLabels;
-            } set {
-                yAxisLabels = value;
-            }
-        }
-
-        public List<string> XAxisLabels
-        {
-            get {
-                return xAxisLabels;
-            } set {
-                xAxisLabels = value;
-            }
-        }
-
-        private string FormatSeconds (double seconds)
-        {
-            var t = TimeSpan.FromSeconds (seconds);
-            return String.Format ("{0}:{1:mm}", (int)t.TotalHours, t);
-        }
-
-        private ChartState DetectChartState()
-        {
-            if (dataObject.Count == 0) {
-                return ChartState.Loading;
-            }
-
-            bool isEmpty = true;
-            foreach (BarItem p in dataObject) {
-                if ((int)p.Value > 0) {
-                    isEmpty = false;
+                    // Add new row views
+                    var startIndex = 1 + 3 * i;
+                    AddView (row.YAxisTextView, startIndex++);
+                    AddView (row.BarView, startIndex++);
+                    AddView (row.ValueTextView, startIndex++);
                 }
+            } else if (contractRows) {
+                // Remove unused rows and views
+                var rowCount = existingRows - neededRows;
+                rows.RemoveRange (neededRows, rowCount);
+
+                var startIndex = 1 + 3 * neededRows;
+                var viewCount = 3 * rowCount;
+                RemoveViews (startIndex, viewCount);
             }
-            return isEmpty ? ChartState.Empty : ChartState.Normal;
+
+            foreach (var row in rows) {
+                row.Reset ();
+            }
         }
 
-        private void BaseBitmap ()
+        public void Reset (SummaryReportView data)
         {
-            float usableWidth = Width - leftColumnWidth;
-            baseBitmap = Bitmap.CreateBitmap (Width, MeasuredHeight, Bitmap.Config.Argb8888);
-            baseCanvas = new Canvas (baseBitmap);
-
-            canvasPaint.Color = Color.White;
-            basePlate.Set (leftColumnWidth, 0, Width, Height);
-            baseCanvas.DrawRect (basePlate, canvasPaint);
-
-            if (xAxisLabels.Count == 0) {
-                xAxisLabels = new List<string> (new [] { "0h", "0h", "0h", "0h", "0h" });
-            }
-            canvasPaint.Color = gridColor;
-            canvasPaint.StrokeWidth = 1;
-            canvasPaint.AntiAlias = true;
-            for (int i = 0; i <= xAxisLabels.Count - 1; i++) {
-                baseCanvas.DrawLine (
-                    leftColumnWidth + usableWidth / 6 * (i + 1),
-                    topPadding,
-                    leftColumnWidth + usableWidth / 6 * (i + 1),
-                    Height - bottomPadding,
-                    canvasPaint
-                );
-
-                canvasPaint.TextSize = labelTextSize;
-                canvasPaint.GetTextBounds (xAxisLabels [i], 0, xAxisLabels [i].Length, textBoundsRect);
-                baseCanvas.DrawText (
-                    xAxisLabels [i],
-                    leftColumnWidth + usableWidth / 6 * (i + 1) - textBoundsRect.Width () / 2,
-                    Height - bottomPadding / 2 + textBoundsRect.Height () / 2,
-                    canvasPaint
-                );
+            // Cancel old animation
+            if (currentAnimation != null) {
+                currentAnimation.Cancel ();
+                currentAnimation = null;
             }
 
-            canvasPaint.Color = gridColor;
-            canvasPaint.StrokeWidth = yAxisLineWidth;
-            baseCanvas.DrawLine (
-                leftColumnWidth + yAxisLineWidth / 2,
-                0,
-                leftColumnWidth + yAxisLineWidth / 2,
-                Height,
-                canvasPaint
-            );
+            backgroundView.XAxisLabels = data.ChartTimeLabels.ToArray();
 
-            if (currentChartState == ChartState.Empty || currentChartState == ChartState.Loading) { // draw empty or loading state
-                emptyText.Color = emptyStateTextColor;
-                emptyText.TextAlign = Paint.Align.Center;
-                emptyText.AntiAlias = true;
-                emptyText.TextSize = 30;
-                baseCanvas.DrawText (
-                    currentChartState == ChartState.Empty ? Resources.GetText (Resource.String.ReportsPieChartEmptyHeader) : Resources.GetText (Resource.String.ReportsPieChartLoadingHeader),
-                    Width / 2,
-                    Height / 2 - 20,
-                    emptyText
-                );
+            var totalRows = (int)Math.Min (data.Activity.Count, data.ChartRowLabels.Count);
+            var hasTime = false;
+            ResetRows (totalRows);
 
-                textPaint.Color = emptyStateTextColor;
-                textPaint.TextAlign = Paint.Align.Center;
-                textPaint.AntiAlias = true;
-                textPaint.TextSize = 25;
+            for (var i = 0; i < totalRows; i++) {
+                var activity = data.Activity [i];
+                var yLabel = data.ChartRowLabels [i];
 
-                var emptyStateText = new StaticLayout (
-                    currentChartState == ChartState.Empty ? Resources.GetText (Resource.String.ReportsPieChartEmptyText) : Resources.GetText (Resource.String.ReportsPieChartLoadingText),
-                    textPaint,
-                    500,
-                    StaticLayout.Alignment.AlignNormal,
-                    1,
-                    0,
-                    false
-                );
-                baseCanvas.Translate (Width / 2, Height / 2 - 10);
-                emptyStateText.Draw (baseCanvas);
+                if (activity.TotalTime > 0) {
+                    hasTime = true;
+                }
+
+                var barWidth = (float)activity.TotalTime / (float) (data.MaxTotal * 3600);
+
+                // Bind the data to row
+                var row = rows [i];
+                row.RelativeWidth = barWidth;
+                row.BarView.BillableTime = activity.BillableTime;
+                row.BarView.TotalTime = activity.TotalTime;
+                row.ValueTextView.Text = FormatTime (activity.TotalTime);
+                row.YAxisTextView.Text = yLabel;
+            }
+
+            // Detect state
+            if (totalRows == 0) {
+                // TODO: Loading...
+            } else if (!hasTime) {
+                // TODO: Empty..
             } else {
-                canvasPaint.Color = darkGrayBarColor;
-                canvasPaint.TextSize = labelTextSize;
-                for (int i = 0; i <= dataObject.Count - 1; i++) {
-                    if (zoomLevel != ZoomLevel.Month || (zoomLevel == ZoomLevel.Month && i % 3 == 0)) {
-                        canvasPaint.TextSize = labelTextSize;
-                        canvasPaint.Color = darkGrayBarColor;
+                // Animate data in for normal state
+                var scene = new AnimatorSet ();
+                foreach (var row in rows) {
+                    var axisFadeIn = ObjectAnimator.OfFloat (row.YAxisTextView, "alpha", 0f, 1f).SetDuration (200);
+                    var barScaleUp = ObjectAnimator.OfFloat (row.BarView, "scaleX", 0f, 1f).SetDuration (750);
+                    var valueFadeIn = ObjectAnimator.OfFloat (row.ValueTextView, "alpha", 0f, 1f).SetDuration (200);
 
-                        textBoundsRect = new Rect ();
-                        canvasPaint.GetTextBounds (yAxisLabels [i], 0, yAxisLabels [i].Length, textBoundsRect);
-
-                        baseCanvas.DrawText (
-                            yAxisLabels [i],
-                            0,
-                            (int) ((barPadding * 2 + barHeight) * i + topPadding + barPadding + textBoundsRect.Height () / 2 + barHeight / 2),
-                            canvasPaint
-                        );
-                    }
+                    scene.Play (axisFadeIn);
+                    scene.Play (barScaleUp).After (100);
+                    scene.Play (valueFadeIn).After (barScaleUp);
                 }
+
+                currentAnimation = scene;
+                scene.Start();
             }
 
-            return;
-        }
-
-        public override void Draw (Canvas canvas)
-        {
-            if (currentChartState != DetectChartState ()) {
-                currentChartState = DetectChartState ();
-                redrawBaseBitmap = true;
-            }
-            if (baseBitmap == null || redrawBaseBitmap) {
-                BaseBitmap ();
-            }
-            canvas.DrawBitmap (baseBitmap, 0, 0, canvasPaint);
-
-            loadAnimation = animating ? (float) (animationProgress / 100F) : 1;
-            ceilingSeconds = (float)CeilingValue * 3600F;
-            usableWidth = Width - leftColumnWidth - (Width - leftColumnWidth) / 6;
-
-            for (int i = 0; i < dataObject.Count; i++) {
-
-                MakeBarAt (i);
-                if (notBillableRectangle.Width() > 0) {
-                    canvasPaint.Color = lightBlueBarColor;
-                    canvas.DrawRect (notBillableRectangle, canvasPaint);
-                }
-                canvasPaint.Color = (int)dataObject[i].Value > 0 ? darkBlueBarColor : darkGrayBarColor;
-                canvas.DrawRect (rectangle, canvasPaint);
-
-                if (animationProgress == 100 && zoomLevel != ZoomLevel.Month && (int)dataObject[i].Value > 0 ) {
-                    canvasPaint.TextSize = labelTextSize;
-                    var barTitle = FormatSeconds (dataObject[i].Value);
-                    canvasPaint.GetTextBounds (barTitle, 0, barTitle.Length, textBoundsRect);
-                    canvas.DrawText (
-                        barTitle,
-                        leftColumnWidth + 10 + (int) ((usableWidth * (dataObject[i].Value / ceilingSeconds))),
-                        (int) ((barPadding * 2) * i + barPadding + barHeight * i + topPadding + barHeight / 2 + textBoundsRect.Height () / 2),
-                        canvasPaint
-                    );
-                }
-            }
-        }
-
-        private void MakeBarAt (int count)
-        {
-            if (dataObject [count].Value == 0) {
-                rectangle.Set (
-                    leftColumnWidth,
-                    BarTopPosition (count),
-                    leftColumnWidth + yAxisLineWidth,
-                    BarBottomPosition (count)
-                );
-                return;
-            }
-
-            var bar = dataObject [count];
-            if (bar.Billable < bar.Value) {
-                float notBillable = bar.Value - bar.Billable;
-                float totalWidth = (usableWidth * (bar.Value / ceilingSeconds));
-                float billableWidth = (usableWidth * (bar.Billable / ceilingSeconds));
-                float notBillableWidth = (usableWidth * (notBillable / ceilingSeconds));
-                if ((loadAnimation * totalWidth) > billableWidth) {
-                    rectangle.Set (
-                        leftColumnWidth,
-                        BarTopPosition (count),
-                        leftColumnWidth + (int) (billableWidth),
-                        BarBottomPosition (count)
-                    );
-                    notBillableRectangle.Set (
-                        leftColumnWidth,
-                        BarTopPosition (count),
-                        leftColumnWidth + (int) (notBillableWidth * loadAnimation + billableWidth),
-                        BarBottomPosition (count)
-                    );
-                } else {
-                    rectangle.Set (
-                        leftColumnWidth,
-                        BarTopPosition (count),
-                        leftColumnWidth + (int) (loadAnimation * totalWidth),
-                        BarBottomPosition (count)
-                    );
-                }
-            } else {
-                float totalWidth = (usableWidth * (bar.Value / ceilingSeconds));
-                rectangle.Set (
-                    leftColumnWidth,
-                    BarTopPosition (count),
-                    leftColumnWidth + (int) (loadAnimation * totalWidth),
-                    BarBottomPosition (count)
-                );
-                notBillableRectangle = new Rect ();;
-            }
-        }
-
-        private int BarTopPosition (int count)
-        {
-            return (barPadding * 2) * count + barPadding + barHeight * count + topPadding;
-        }
-
-        private int BarBottomPosition (int count)
-        {
-            return (barPadding * 2) * count + barPadding + barHeight * (count + 1) + topPadding;
-        }
-        private void DetermineZoomLevel()
-        {
-            if (dataObject.Count == 12) {
-                zoomLevel = ZoomLevel.Year;
-                barHeight = 45;
-                labelTextSize = 18;
-            } else if (dataObject.Count > 12) {
-                zoomLevel = ZoomLevel.Month;
-                barHeight = 20;
-                barPadding = 1;
-                labelTextSize = 16;
-            } else {
-                zoomLevel = ZoomLevel.Week;
-                barHeight = 60;
-            }
+            RequestLayout ();
         }
 
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
         {
-            DetermineZoomLevel ();
-            int barCount = dataObject.Count == 0 ? 7 : dataObject.Count;
-            int heightSize = (barPadding * 2 + barHeight) * barCount + bottomPadding + topPadding;
-            int widthSize = MeasureSpec.GetSize (widthMeasureSpec);
+            var dm = Resources.DisplayMetrics;
 
-            SetMeasuredDimension (widthSize, heightSize);
+            // Let various labels measure themselves
+            var unspecifiedMeasureSpec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
+            foreach (var row in rows) {
+                row.YAxisTextView.Measure (unspecifiedMeasureSpec, unspecifiedMeasureSpec);
+                row.ValueTextView.Measure (unspecifiedMeasureSpec, unspecifiedMeasureSpec);
+            }
+
+            var width = (int)Math.Max (
+                            TypedValue.ApplyDimension (ComplexUnitType.Dip, 300, dm),
+                            MeasureSpec.GetSize (widthMeasureSpec)
+                        );
+            var height = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 250, dm);
+
+            SetMeasuredDimension (width, height);
         }
 
-        public void StartAnimate ()
+        protected override void OnLayout (bool changed, int l, int t, int r, int b)
         {
-            animating = true;
-            var animator = ValueAnimator.OfInt (1, 100);
-            animator.SetDuration (750);
-            animator.Update += (sender, e) => AnimationProgress = (int)e.Animation.AnimatedValue;
-            animator.Start ();
-        }
+            var dm = Resources.DisplayMetrics;
+            var width = r - l;
+            var height = b - t;
 
-        public int AnimationProgress
-        {
-            get {
-                return animationProgress;
-            } set {
-                animationProgress = value;
-                if (value == 100) {
-                    animating = false;
+            // Assign positions to children
+            var backgroundWidth = width - leftMargin;
+            backgroundView.Layout (leftMargin, 0, leftMargin + backgroundWidth, height);
+
+            if (rows.Count > 0) {
+                var rowHeight = (height - topPadding - bottomPadding) / rows.Count;
+                var rowMargin = (int)Math.Max (
+                                    TypedValue.ApplyDimension (ComplexUnitType.Dip, 1f, dm), // Minimum
+                                    Math.Min (
+                                        rowHeight * 0.05f,
+                                        TypedValue.ApplyDimension (ComplexUnitType.Dip, 5f, dm) // Maximum
+                                    )
+                                );
+                rowHeight -= rowMargin * 2;
+                var effBgWidth = backgroundWidth - barZeroSize - rightPadding;
+
+                // Layout rows
+                for (var i = 0; i < rows.Count; i++) {
+                    var row = rows [i];
+
+                    var rowTop = topPadding + rowMargin + (2 * rowMargin + rowHeight) * i;
+                    var rowWidth = barZeroSize + (int) (row.RelativeWidth * effBgWidth);
+                    row.BarView.Layout (leftMargin, rowTop, leftMargin + rowWidth, rowTop + rowHeight);
+
+                    // Position value label
+                    var tv = row.ValueTextView;
+                    var valueX = leftMargin + rowWidth + barLabelSpacing;
+                    var valueY = rowTop + (rowHeight - tv.MeasuredHeight - (tv.MeasuredHeight - tv.Baseline)) / 2;
+                    if (rowHeight < tv.MeasuredHeight) {
+                        // If the bar is smaller than text, we baseline algin the text to bar bottom
+                        valueY = rowTop + rowHeight - tv.Baseline;
+                    }
+                    tv.Layout (valueX, valueY, valueX + tv.MeasuredWidth, valueY + tv.MeasuredHeight);
+
+                    // Position y-axis label
+                    tv = row.YAxisTextView;
+                    var axisX = leftPadding;
+                    var axisY = rowTop + (rowHeight - tv.MeasuredHeight - (tv.MeasuredHeight - tv.Baseline)) / 2;
+                    if (rowHeight < tv.MeasuredHeight) {
+                        // If the bar is smaller than text, we baseline algin the text to bar bottom
+                        axisY = rowTop + rowHeight - tv.Baseline;
+                    }
+                    tv.Layout (axisX, axisY, axisX + tv.MeasuredWidth, axisY + tv.MeasuredHeight);
                 }
-                PostInvalidate ();
             }
         }
 
-        private enum ChartState {
-            Loading,
-            Empty,
-            Normal
+        private static string FormatTime (long seconds)
+        {
+            if (seconds == 0) {
+                return String.Empty;
+            }
+            var t = TimeSpan.FromSeconds (seconds);
+            return String.Format ("{0}:{1:mm}", (int)t.TotalHours, t);
+        }
+
+        private class BackgroundView : View
+        {
+            // Contains the background with X-axis
+            private int leftBorderWidth;
+            private int topPadding;
+            private int bottomPadding;
+            private int rightPadding;
+            private Paint backgroundPaint;
+            private Paint borderPaint;
+            private Paint linePaint;
+            private Paint xLabelPaint;
+            private Rect rect = new Rect();
+            private string[] xLabels;
+
+            public BackgroundView (Context ctx) : base (ctx)
+            {
+                var dm = ctx.Resources.DisplayMetrics;
+
+                leftBorderWidth = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 3, dm);
+                topPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
+                bottomPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 18, dm);
+                rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 30, dm);
+                var lineWidth = (int)Math.Max (1, TypedValue.ApplyDimension (ComplexUnitType.Dip, 0.5f, dm));
+                var xLabelFontSize = TypedValue.ApplyDimension (ComplexUnitType.Sp, 10, dm);
+
+                backgroundPaint = new Paint() {
+                    Color = Color.White,
+                };
+                borderPaint = new Paint() {
+                    Color = LightGrayColor,
+                };
+                linePaint = new Paint() {
+                    Color = borderPaint.Color,
+                    StrokeWidth = lineWidth,
+                };
+                xLabelPaint = new Paint() {
+                    Color = linePaint.Color,
+                    TextSize = xLabelFontSize,
+                    AntiAlias = true,
+                };
+
+                var zeroLabel = "0h"; // TODO: Localize
+                xLabels = new[] { zeroLabel, zeroLabel, zeroLabel, zeroLabel, zeroLabel };
+            }
+
+            protected override void OnDraw (Canvas canvas)
+            {
+                base.OnDraw (canvas);
+
+                var width = canvas.Width;
+                var height = canvas.Height;
+
+                // Background
+                int backgroundWidth = width - leftBorderWidth;
+                rect.Set (leftBorderWidth, 0, width, height);
+                canvas.DrawRect (rect, backgroundPaint);
+
+                // Left border
+                rect.Set (0, 0, leftBorderWidth, height);
+                canvas.DrawRect (rect, borderPaint);
+
+                for (int i = 0; i < xLabels.Length; i++) {
+                    // X-axis line
+                    var lineRight = (int) ((backgroundWidth - rightPadding) / (float)xLabels.Length * (i + 1));
+                    canvas.DrawLine (
+                        leftBorderWidth + lineRight,
+                        topPadding,
+                        leftBorderWidth + lineRight,
+                        height - bottomPadding,
+                        linePaint
+                    );
+
+                    // X-axis label
+                    var label = xLabels [i];
+                    xLabelPaint.GetTextBounds (label, 0, label.Length, rect);
+                    canvas.DrawText (
+                        label,
+                        leftBorderWidth + lineRight - rect.Width () / 2f,
+                        height - bottomPadding / 2f + rect.Height () / 2f,
+                        xLabelPaint
+                    );
+                }
+            }
+
+            public string[] XAxisLabels
+            {
+                get { return xLabels; }
+                set {
+                    if (value == null) {
+                        throw new ArgumentNullException ("value");
+                    }
+                    xLabels = value;
+                    Invalidate ();
+                }
+            }
+        }
+
+        private class BarView : View
+        {
+            // A single barchat layer which is animated using scaleX
+            private long totalTime;
+            private long billableTime;
+            private readonly Paint emptyPaint;
+            private readonly Paint billablePaint;
+            private readonly Paint charityPaint;
+
+            public BarView (Context ctx) : base (ctx)
+            {
+                emptyPaint = new Paint() {
+                    Color = DarkGrayColor,
+                };
+                billablePaint = new Paint() {
+                    Color = DarkBlueColor,
+                };
+                charityPaint = new Paint() {
+                    Color = LightBlueColor,
+                };
+            }
+
+            protected override void OnDraw (Canvas canvas)
+            {
+                base.OnDraw (canvas);
+
+                if (totalTime == 0) {
+                    canvas.DrawRect (0, 0, canvas.Width, canvas.Height, emptyPaint);
+                } else {
+                    if (billableTime == 0) {
+                        canvas.DrawRect (0, 0, canvas.Width, canvas.Height, charityPaint);
+                    } else if (billableTime == totalTime) {
+                        canvas.DrawRect (0, 0, canvas.Width, canvas.Height, billablePaint);
+                    } else {
+                        var billableWidth = canvas.Width * (float)billableTime / totalTime;
+                        canvas.DrawRect (0, 0, billableWidth, canvas.Height, billablePaint);
+                        canvas.DrawRect (billableWidth, 0, canvas.Width, canvas.Height, charityPaint);
+                    }
+                }
+            }
+
+            public long TotalTime
+            {
+                get { return totalTime; }
+                set {
+                    if (totalTime == value) {
+                        return;
+                    }
+                    totalTime = value;
+                    Invalidate ();
+                }
+            }
+
+            public long BillableTime
+            {
+                get { return billableTime; }
+                set {
+                    if (billableTime == value) {
+                        return;
+                    }
+                    billableTime = value;
+                    Invalidate ();
+                }
+            }
+        }
+
+        private class Row
+        {
+            public Row (Context ctx)
+            {
+                YAxisTextView = new TextView (ctx) {
+                    TextSize = 10,
+                };
+                YAxisTextView.SetTextColor (DarkGrayColor);
+
+                BarView = new BarView (ctx) {
+                    PivotX = 0f,
+                };
+
+                ValueTextView = new TextView (ctx) {
+                    TextSize = 10,
+                };
+                ValueTextView.SetTextColor (DarkBlueColor);
+            }
+
+            public void Reset()
+            {
+                YAxisTextView.Alpha = 0f;
+                BarView.ScaleX = 0f;
+                ValueTextView.Alpha = 0f;
+            }
+
+            public float RelativeWidth { get; set; }
+            public TextView YAxisTextView { get; set; }
+            public BarView BarView { get; set; }
+            public TextView ValueTextView { get; set; }
         }
     }
-
-    public class BarItem
-    {
-        public Color Color { get; set; }
-
-        public String Name { get; set; }
-
-        public float Value { get; set; }
-
-        public float Billable { get; set; }
-
-        public Path Path { get; set; }
-
-        public Region Region { get; set; }
-    }
 }
-

@@ -186,12 +186,12 @@ namespace Toggl.Joey.UI.Views
                 scene.Play (fadeOverlayOut);
 
                 foreach (var row in rows) {
-                    var axisFadeIn = ObjectAnimator.OfFloat (row.YAxisTextView, "alpha", 0f, 1f).SetDuration (200);
+                    var axisFadeIn = ObjectAnimator.OfFloat (row.YAxisTextView, "alpha", 0f, 1f).SetDuration (500);
                     var barScaleUp = ObjectAnimator.OfFloat (row.BarView, "scaleX", 0f, 1f).SetDuration (750);
-                    var valueFadeIn = ObjectAnimator.OfFloat (row.ValueTextView, "alpha", 0f, 1f).SetDuration (200);
+                    var valueFadeIn = ObjectAnimator.OfFloat (row.ValueTextView, "alpha", 0f, 1f).SetDuration (400);
 
                     scene.Play (axisFadeIn);
-                    scene.Play (barScaleUp).After (100);
+                    scene.Play (barScaleUp).After (axisFadeIn.Duration / 2);
                     scene.Play (valueFadeIn).After (barScaleUp);
                 }
 

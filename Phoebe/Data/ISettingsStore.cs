@@ -15,5 +15,9 @@ namespace Toggl.Phoebe.Data
         string LastAppVersion { get; set; }
 
         string ExperimentId { get; set; }
+
+        int? LastReportPeriodViewed { get; set; }
+
+        string LastReportZoomViewed { get; set; }
     }
 }

@@ -53,6 +53,7 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewWillDisappear (bool animated)
         {
             NavigationController.InteractivePopGestureRecognizer.Enabled = true;
+            SummaryReportView.SaveReportsState (_timeSpaceIndex, ZoomLevel);
             base.ViewWillDisappear (animated);
         }
 
@@ -69,6 +70,9 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLoad ();
 
+            _zoomLevel = SummaryReportView.GetLastZoomViewed ();
+            var previousIndex = SummaryReportView.GetLastPeriodViewed ();
+
             View.BackgroundColor = UIColor.White;
             menuController.Attach (this);
 
@@ -82,7 +86,7 @@ namespace Toggl.Ross.ViewControllers
 
             scrollView = new InfiniteScrollView ();
             scrollView.OnChangeReport += (sender, e) => {
-                _timeSpaceIndex = scrollView.PageIndex;
+                _timeSpaceIndex = scrollView.PageIndex + previousIndex;
                 var reportView = scrollView.VisibleReportView;
                 reportView.ZoomLevel = ZoomLevel;
                 reportView.TimeSpaceIndex = _timeSpaceIndex;
@@ -94,7 +98,6 @@ namespace Toggl.Ross.ViewControllers
             Add (dateSelectorView);
             Add (topBorder);
 
-            ChangeReportState ();
             NavigationController.InteractivePopGestureRecognizer.Enabled = false;
         }
 
@@ -114,7 +117,6 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidAppear (bool animated)
         {
             base.ViewDidAppear (animated);
-
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Reports";
         }
 

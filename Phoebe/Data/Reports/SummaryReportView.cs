@@ -18,6 +18,7 @@ namespace Toggl.Phoebe.Data.Reports
         private DayOfWeek startOfWeek;
         private IReportsClient reportClient;
         private long? workspaceId;
+
         public ZoomLevel Period;
 
         public async Task Load (int backDate)
@@ -220,6 +221,26 @@ namespace Toggl.Phoebe.Data.Reports
             }
 
             return start.AddYears (1).AddDays (-1);
+        }
+
+        public static int GetLastPeriodViewed()
+        {
+            var settings = ServiceContainer.Resolve<ISettingsStore> ();
+            return settings.LastReportPeriodViewed ?? 0;
+        }
+
+        public static ZoomLevel GetLastZoomViewed()
+        {
+            var settings = ServiceContainer.Resolve<ISettingsStore> ();
+            var str = settings.LastReportZoomViewed ?? ZoomLevel.Week.ToString();
+            return (ZoomLevel)Enum.Parse (typeof (ZoomLevel), str);
+        }
+
+        public static void SaveReportsState ( int period, ZoomLevel zoomLevel)
+        {
+            var settings = ServiceContainer.Resolve<ISettingsStore> ();
+            settings.LastReportPeriodViewed = period;
+            settings.LastReportZoomViewed = zoomLevel.ToString ();
         }
 
         private string LabelForDate (DateTime date)

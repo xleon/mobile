@@ -59,9 +59,11 @@ namespace Toggl.Ross.Theme
 
             public static void DonutMoneyLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 14f);
+                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 13f);
                 v.TextColor = Color.DarkGray;
                 v.TextAlignment = UITextAlignment.Center;
+                v.Lines = 0;
+                v.LineBreakMode = UILineBreakMode.WordWrap;
             }
 
             public static void NoProjectTitle (UILabel v)

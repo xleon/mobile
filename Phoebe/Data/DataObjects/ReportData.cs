@@ -17,7 +17,7 @@ namespace Toggl.Phoebe.Data.DataObjects
             Projects = other.Projects;
         }
 
-        public string TotalCost;
+        public List<string> TotalCost;
 
         public long TotalGrand { get; set; }
 

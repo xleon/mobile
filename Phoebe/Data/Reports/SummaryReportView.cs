@@ -128,7 +128,7 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        public string TotalCost
+        public List<string> TotalCost
         {
             get {
                 return dataObject.TotalCost;

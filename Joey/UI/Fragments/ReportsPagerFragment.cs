@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -11,12 +10,12 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
-using Toggl.Joey.UI.Utils;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
+using Toggl.Phoebe.Data.Reports;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -30,7 +29,7 @@ namespace Toggl.Joey.UI.Fragments
         private ImageButton previousPeriod;
         private ImageButton nextPeriod;
         private TextView timePeriod;
-        private ZoomLevel zoomPeriod = ZoomLevel.Week;
+        private ZoomLevel zoomLevel = ZoomLevel.Week;
         private int backDate;
         private Context ctx;
         private Pool<View> projectListItemPool;
@@ -39,12 +38,12 @@ namespace Toggl.Joey.UI.Fragments
         public ZoomLevel ZoomLevel
         {
             get {
-                return zoomPeriod;
+                return zoomLevel;
             } set {
-                if (value == zoomPeriod) {
+                if (value == zoomLevel) {
                     return;
                 }
-                zoomPeriod = value;
+                zoomLevel = value;
                 ResetAdapter ();
                 UpdatePeriod ();
             }
@@ -71,6 +70,7 @@ namespace Toggl.Joey.UI.Fragments
             reportsControllerPool = new Pool<ReportsFragment.Controller> (CreateController, ResetController) {
                 Count = 3,
             };
+            zoomLevel = SummaryReportView.GetLastZoomViewed ();
         }
 
         private ReportsFragment.Controller CreateController()
@@ -124,6 +124,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroyView ()
         {
             viewPager.PageSelected -= OnPageSelected;
+            SummaryReportView.SaveReportsState ( zoomLevel);
             base.OnDestroyView ();
         }
 
@@ -154,7 +155,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ResetAdapter()
         {
-            var adapter = new MainPagerAdapter (ChildFragmentManager, zoomPeriod);
+            var adapter = new MainPagerAdapter (ChildFragmentManager, zoomLevel);
             viewPager.Adapter = adapter;
             viewPager.CurrentItem = StartPage;
             backDate = 0;
@@ -276,7 +277,7 @@ namespace Toggl.Joey.UI.Fragments
             {
                 var period = position - StartPage;
                 return currentFragments.Find (frag => frag.Period == period)
-                       ?? new ReportsFragment (period, zoomLevel);
+                    ?? new ReportsFragment (period, zoomLevel);
             }
 
             private void ChangeReportsPosition (object sender, EventArgs args )

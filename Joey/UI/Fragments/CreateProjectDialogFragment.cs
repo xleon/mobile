@@ -138,6 +138,12 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
+            bool existWithName = await ProjectModel.ExistsWithNameAsync (nameEditText.Text);
+            if (existWithName) {
+                // TODO: show notification
+                return;
+            }
+
             isSaving = true;
             try {
                 var workspaceModel = workspace;

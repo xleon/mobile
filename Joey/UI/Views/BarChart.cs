@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Android.Animation;
 using Android.Content;
 using Android.Graphics;
@@ -26,6 +27,7 @@ namespace Toggl.Joey.UI.Views
         private int topPadding;
         private int bottomPadding;
         private int rightPadding;
+        private int yAxisSpacing;
         private int barZeroSize;
         private int barLabelSpacing;
         private BackgroundView backgroundView;
@@ -48,11 +50,12 @@ namespace Toggl.Joey.UI.Views
             var dm = ctx.Resources.DisplayMetrics;
             var inflater = LayoutInflater.FromContext (ctx);
 
-            leftMargin = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 35, dm);
-            leftPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 4, dm);
+            leftMargin = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
+            leftPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 14, dm);
             topPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 10, dm);
             bottomPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 23, dm);
-            rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 30, dm);
+            rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
+            yAxisSpacing = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
             barZeroSize = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 3, dm);
             barLabelSpacing = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
 
@@ -116,10 +119,18 @@ namespace Toggl.Joey.UI.Views
                 backgroundView.XAxisLabels = null;
                 ResetRows (totalRows);
             } else {
+                var showEveryYLabel = 1;
+                var showValueLabels = true;
+
                 backgroundView.XAxisLabels = data.ChartTimeLabels.ToArray ();
 
                 totalRows = (int)Math.Min (data.Activity.Count, data.ChartRowLabels.Count);
                 ResetRows (totalRows);
+
+                if (totalRows > 25) {
+                    showEveryYLabel = 3;
+                    showValueLabels = false;
+                }
 
                 for (var i = 0; i < totalRows; i++) {
                     var activity = data.Activity [i];
@@ -130,6 +141,7 @@ namespace Toggl.Joey.UI.Views
                     }
 
                     var barWidth = (float)activity.TotalTime / (float) (data.MaxTotal * 3600);
+                    var showYAxis = i % showEveryYLabel == 0;
 
                     // Bind the data to row
                     var row = rows [i];
@@ -137,7 +149,9 @@ namespace Toggl.Joey.UI.Views
                     row.BarView.BillableTime = activity.BillableTime;
                     row.BarView.TotalTime = activity.TotalTime;
                     row.ValueTextView.Text = FormatTime (activity.TotalTime);
+                    row.ValueTextView.Visibility = showValueLabels ? ViewStates.Visible : ViewStates.Gone;
                     row.YAxisTextView.Text = yLabel;
+                    row.YAxisTextView.Visibility = showYAxis ? ViewStates.Visible : ViewStates.Gone;
                 }
             }
 
@@ -254,6 +268,11 @@ namespace Toggl.Joey.UI.Views
                 rowHeight -= rowMargin * 2;
                 var effBgWidth = backgroundWidth - barZeroSize - rightPadding;
 
+                // Determine Y-axis left margin (by respecting yAxisSpacing)
+                var yAxisLeftMargin = leftPadding;
+                var maxYAxisWidth = rows.Max (x => x.YAxisTextView.MeasuredWidth);
+                yAxisLeftMargin += (int)Math.Min (0, leftMargin - yAxisLeftMargin - yAxisSpacing - maxYAxisWidth);
+
                 // Layout rows
                 for (var i = 0; i < rows.Count; i++) {
                     var row = rows [i];
@@ -274,7 +293,7 @@ namespace Toggl.Joey.UI.Views
 
                     // Position y-axis label
                     tv = row.YAxisTextView;
-                    var axisX = leftPadding;
+                    var axisX = yAxisLeftMargin;
                     var axisY = rowTop + (rowHeight - tv.MeasuredHeight - (tv.MeasuredHeight - tv.Baseline)) / 2;
                     if (rowHeight < tv.MeasuredHeight) {
                         // If the bar is smaller than text, we baseline algin the text to bar bottom
@@ -316,7 +335,7 @@ namespace Toggl.Joey.UI.Views
                 leftBorderWidth = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 3, dm);
                 topPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
                 bottomPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 18, dm);
-                rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 30, dm);
+                rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
                 var lineWidth = (int)Math.Max (1, TypedValue.ApplyDimension (ComplexUnitType.Dip, 0.5f, dm));
                 var xLabelFontSize = TypedValue.ApplyDimension (ComplexUnitType.Sp, 10, dm);
 
@@ -479,8 +498,10 @@ namespace Toggl.Joey.UI.Views
 
             public void Reset()
             {
+                YAxisTextView.Visibility = ViewStates.Visible;
                 YAxisTextView.Alpha = 0f;
                 BarView.ScaleX = 0f;
+                ValueTextView.Visibility = ViewStates.Visible;
                 ValueTextView.Alpha = 0f;
             }
 

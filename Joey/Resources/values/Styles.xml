@@ -153,4 +153,14 @@
         <item name="android:padding">20dp</item>
     </style>
 
+    <style name="BarChartOverlay">
+    </style>
+    <style name="BarChartOverlay.Text">
+        <item name="android:textColor">@color/barchart_overlay_text</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+    <style name="BarChartOverlay.Text.Title">
+        <item name="android:textSize">15sp</item>
+    </style>
+
 </resources>

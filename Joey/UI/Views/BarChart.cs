@@ -29,6 +29,8 @@ namespace Toggl.Joey.UI.Views
         private int barZeroSize;
         private int barLabelSpacing;
         private BackgroundView backgroundView;
+        private View loadingOverlayView;
+        private View emptyOverlayView;
         private Animator currentAnimation;
 
         public BarChart (Context context, IAttributeSet attrs) : base (context, attrs)
@@ -44,6 +46,8 @@ namespace Toggl.Joey.UI.Views
         private void Initialize (Context ctx)
         {
             var dm = ctx.Resources.DisplayMetrics;
+            var inflater = LayoutInflater.FromContext (ctx);
+
             leftMargin = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 35, dm);
             leftPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 4, dm);
             topPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 10, dm);
@@ -54,6 +58,13 @@ namespace Toggl.Joey.UI.Views
 
             backgroundView = new BackgroundView (ctx);
             AddView (backgroundView);
+
+            loadingOverlayView = inflater.Inflate (Resource.Layout.BarChartLoading, this, false);
+            AddView (loadingOverlayView);
+
+            emptyOverlayView = inflater.Inflate (Resource.Layout.BarChartEmpty, this, false);
+            emptyOverlayView.Visibility = ViewStates.Gone;
+            AddView (emptyOverlayView);
         }
 
         private void ResetRows (int neededRows)
@@ -98,39 +109,82 @@ namespace Toggl.Joey.UI.Views
                 currentAnimation = null;
             }
 
-            backgroundView.XAxisLabels = data.ChartTimeLabels.ToArray();
-
-            var totalRows = (int)Math.Min (data.Activity.Count, data.ChartRowLabels.Count);
+            var totalRows = 0;
             var hasTime = false;
-            ResetRows (totalRows);
 
-            for (var i = 0; i < totalRows; i++) {
-                var activity = data.Activity [i];
-                var yLabel = data.ChartRowLabels [i];
+            if (data == null) {
+                backgroundView.XAxisLabels = null;
+                ResetRows (totalRows);
+            } else {
+                backgroundView.XAxisLabels = data.ChartTimeLabels.ToArray ();
 
-                if (activity.TotalTime > 0) {
-                    hasTime = true;
+                totalRows = (int)Math.Min (data.Activity.Count, data.ChartRowLabels.Count);
+                ResetRows (totalRows);
+
+                for (var i = 0; i < totalRows; i++) {
+                    var activity = data.Activity [i];
+                    var yLabel = data.ChartRowLabels [i];
+
+                    if (activity.TotalTime > 0) {
+                        hasTime = true;
+                    }
+
+                    var barWidth = (float)activity.TotalTime / (float) (data.MaxTotal * 3600);
+
+                    // Bind the data to row
+                    var row = rows [i];
+                    row.RelativeWidth = barWidth;
+                    row.BarView.BillableTime = activity.BillableTime;
+                    row.BarView.TotalTime = activity.TotalTime;
+                    row.ValueTextView.Text = FormatTime (activity.TotalTime);
+                    row.YAxisTextView.Text = yLabel;
                 }
-
-                var barWidth = (float)activity.TotalTime / (float) (data.MaxTotal * 3600);
-
-                // Bind the data to row
-                var row = rows [i];
-                row.RelativeWidth = barWidth;
-                row.BarView.BillableTime = activity.BillableTime;
-                row.BarView.TotalTime = activity.TotalTime;
-                row.ValueTextView.Text = FormatTime (activity.TotalTime);
-                row.YAxisTextView.Text = yLabel;
             }
 
             // Detect state
-            if (totalRows == 0) {
-                // TODO: Loading...
-            } else if (!hasTime) {
-                // TODO: Empty..
-            } else {
-                // Animate data in for normal state
+            var isLoading = totalRows == 0 || (data != null && data.IsLoading);
+            var isEmpty = !isLoading && !hasTime;
+
+            if (isLoading) {
+                // Loading state
+                loadingOverlayView.Visibility = ViewStates.Visible;
+                loadingOverlayView.Alpha = 1f;
+
+                emptyOverlayView.Visibility = ViewStates.Gone;
+            } else if (isEmpty) {
+                // Error state
+                loadingOverlayView.Visibility = ViewStates.Visible;
+                loadingOverlayView.Alpha = 1f;
+
+                emptyOverlayView.Visibility = ViewStates.Visible;
+                emptyOverlayView.Alpha = 0f;
+
+                // Animate overlay in
                 var scene = new AnimatorSet ();
+
+                var fadeIn = ObjectAnimator.OfFloat (emptyOverlayView, "alpha", 0f, 1f).SetDuration (500);
+                var fadeOut = ObjectAnimator.OfFloat (loadingOverlayView, "alpha", 1f, 0f).SetDuration (500);
+                fadeOut.AnimationEnd += delegate {
+                    loadingOverlayView.Visibility = ViewStates.Gone;
+                };
+
+                scene.Play (fadeOut);
+                scene.Play (fadeIn).After (3 * fadeOut.Duration / 4);
+
+                currentAnimation = scene;
+                scene.Start();
+            } else {
+                // Normal state
+                var scene = new AnimatorSet ();
+
+                // Fade loading message out
+                var fadeOverlayOut = ObjectAnimator.OfFloat (loadingOverlayView, "alpha", 1f, 0f).SetDuration (500);
+                fadeOverlayOut.AnimationEnd += delegate {
+                    loadingOverlayView.Visibility = ViewStates.Gone;
+                };
+
+                scene.Play (fadeOverlayOut);
+
                 foreach (var row in rows) {
                     var axisFadeIn = ObjectAnimator.OfFloat (row.YAxisTextView, "alpha", 0f, 1f).SetDuration (200);
                     var barScaleUp = ObjectAnimator.OfFloat (row.BarView, "scaleX", 0f, 1f).SetDuration (750);
@@ -165,6 +219,12 @@ namespace Toggl.Joey.UI.Views
                         );
             var height = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 250, dm);
 
+            // Measure overlays
+            var overlayWidthSpec = MeasureSpec.MakeMeasureSpec (width - leftMargin, MeasureSpecMode.Exactly);
+            var overlayHeightSpec = MeasureSpec.MakeMeasureSpec (height, MeasureSpecMode.Exactly);
+            loadingOverlayView.Measure (overlayWidthSpec, overlayHeightSpec);
+            emptyOverlayView.Measure (overlayWidthSpec, overlayHeightSpec);
+
             SetMeasuredDimension (width, height);
         }
 
@@ -177,6 +237,10 @@ namespace Toggl.Joey.UI.Views
             // Assign positions to children
             var backgroundWidth = width - leftMargin;
             backgroundView.Layout (leftMargin, 0, leftMargin + backgroundWidth, height);
+
+            // Position overlays
+            loadingOverlayView.Layout (leftMargin, 0, leftMargin + backgroundWidth, height);
+            emptyOverlayView.Layout (leftMargin, 0, leftMargin + backgroundWidth, height);
 
             if (rows.Count > 0) {
                 var rowHeight = (height - topPadding - bottomPadding) / rows.Count;
@@ -243,6 +307,7 @@ namespace Toggl.Joey.UI.Views
             private Paint xLabelPaint;
             private Rect rect = new Rect();
             private string[] xLabels;
+            private string[] defaultXLabels;
 
             public BackgroundView (Context ctx) : base (ctx)
             {
@@ -272,7 +337,7 @@ namespace Toggl.Joey.UI.Views
                 };
 
                 var zeroLabel = "0h"; // TODO: Localize
-                xLabels = new[] { zeroLabel, zeroLabel, zeroLabel, zeroLabel, zeroLabel };
+                xLabels = defaultXLabels = new[] { zeroLabel, zeroLabel, zeroLabel, zeroLabel, zeroLabel };
             }
 
             protected override void OnDraw (Canvas canvas)
@@ -319,7 +384,7 @@ namespace Toggl.Joey.UI.Views
                 get { return xLabels; }
                 set {
                     if (value == null) {
-                        throw new ArgumentNullException ("value");
+                        value = defaultXLabels;
                     }
                     xLabels = value;
                     Invalidate ();

@@ -21,4 +21,6 @@
     <color name="button_divider">#DBDBDB</color>    
     <color name="reports_title">#777777</color> 
     <color name="reports_value">#222222</color> 
+    <color name="barchart_overlay_bg">#11CCCCCC</color>
+    <color name="barchart_overlay_text">#808080</color>
 </resources>

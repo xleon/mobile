@@ -117,6 +117,23 @@ namespace Toggl.Ross.ViewControllers
                 return;
             }
 
+            bool existWithName = await model.ExistsWithNameAsync (model.Name);
+            if (existWithName) {
+                var alert = new UIAlertView (
+                    "NewProjectNameExistTitle".Tr (),
+                    "NewProjectNameExistMessage".Tr (),
+                    null,
+                    "NewProjectNameExistOk".Tr (),
+                    null);
+                alert.Clicked += async (s, ev) => {
+                    if (ev.ButtonIndex == 0) {
+                        nameTextField.BecomeFirstResponder ();
+                    }
+                };
+                alert.Show ();
+                return;
+            }
+
             isSaving = true;
             try {
                 // Create new project:

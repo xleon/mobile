@@ -2,6 +2,8 @@ using System;
 using System.ComponentModel;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.DataObjects;
+using XPlatUtils;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.Data.Models
 {
@@ -239,6 +241,13 @@ namespace Toggl.Phoebe.Data.Models
         public static implicit operator ProjectData (ProjectModel model)
         {
             return model.Data;
+        }
+
+        public async Task<bool> ExistsWithNameAsync (string name)
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var rows = await dataStore.Table<ProjectData> ().QueryAsync (r => r.Name == name);
+            return rows.Count != 0;
         }
     }
 }

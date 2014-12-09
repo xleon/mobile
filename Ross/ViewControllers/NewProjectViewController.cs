@@ -117,7 +117,7 @@ namespace Toggl.Ross.ViewControllers
                 return;
             }
 
-            bool existWithName = await model.ExistsWithNameAsync (model.Name);
+            bool existWithName = await ProjectModel.ExistsWithNameAsync (model.Name);
             if (existWithName) {
                 var alert = new UIAlertView (
                     "NewProjectNameExistTitle".Tr (),

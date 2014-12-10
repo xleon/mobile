@@ -18,9 +18,11 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.Projects = MakeProjectList (json.Projects);
             data.TotalCost = new List<string> ();
 
-            json.TotalCurrencies.Sort ((x, y) => y.Amount.CompareTo (x.Amount));
-            foreach (var row in json.TotalCurrencies) {
-                data.TotalCost.Add (String.Format ("{0} {1}", row.Amount, row.Currency));
+            if (json.TotalCurrencies != null) {
+                json.TotalCurrencies.Sort ((x, y) => y.Amount.CompareTo (x.Amount));
+                foreach (var row in json.TotalCurrencies) {
+                    data.TotalCost.Add (String.Format ("{0} {1}", row.Amount, row.Currency));
+                }
             }
             return data;
         }

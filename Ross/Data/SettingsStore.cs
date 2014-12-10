@@ -16,7 +16,6 @@ namespace Toggl.Ross.Data
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
         private const string PhoebeExperimentIdKey = "phoebeExperimentId";
-        private const string PhoebeLastReportPeriodKey = "lastReportPeriodKey";
         private const string PhoebeLastReportZoomKey = "lastReportZoomKey";
         private const string RossInstallIdKey = "rossInstallId";
         private const string RossPreferredStartViewKey = "rossPreferredStartView";
@@ -228,18 +227,7 @@ namespace Toggl.Ross.Data
             }
         }
 
-        public static readonly string PropertyLastReportPeriodViewed = GetPropertyName (s => s.LastReportPeriodViewed);
-
-        public int? LastReportPeriodViewed
-        {
-            get { return GetInt (PhoebeLastReportPeriodKey); }
-            set {
-                SetInt (PhoebeLastReportPeriodKey, value);
-                OnSettingChanged (PropertyLastReportPeriodViewed);
-            }
-        }
-
-        public static readonly string PropertyLastReportZoomViewed = GetPropertyName (s => s.LastReportPeriodViewed);
+        public static readonly string PropertyLastReportZoomViewed = GetPropertyName (s => s.LastReportZoomViewed);
 
         public string LastReportZoomViewed
         {

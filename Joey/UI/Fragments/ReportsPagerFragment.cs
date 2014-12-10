@@ -98,6 +98,11 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
+        public ReportsPagerFragment ()
+        {
+            zoomLevel = SummaryReportView.GetLastZoomViewed ();
+        }
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsPagerFragment, container, false);

@@ -223,12 +223,6 @@ namespace Toggl.Phoebe.Data.Reports
             return start.AddYears (1).AddDays (-1);
         }
 
-        public static int GetLastPeriodViewed()
-        {
-            var settings = ServiceContainer.Resolve<ISettingsStore> ();
-            return settings.LastReportPeriodViewed ?? 0;
-        }
-
         public static ZoomLevel GetLastZoomViewed()
         {
             var settings = ServiceContainer.Resolve<ISettingsStore> ();
@@ -236,10 +230,9 @@ namespace Toggl.Phoebe.Data.Reports
             return (ZoomLevel)Enum.Parse (typeof (ZoomLevel), str);
         }
 
-        public static void SaveReportsState ( int period, ZoomLevel zoomLevel)
+        public static void SaveReportsState ( ZoomLevel zoomLevel)
         {
             var settings = ServiceContainer.Resolve<ISettingsStore> ();
-            settings.LastReportPeriodViewed = period;
             settings.LastReportZoomViewed = zoomLevel.ToString ();
         }
 

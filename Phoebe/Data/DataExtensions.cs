@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
@@ -50,6 +51,7 @@ namespace Toggl.Phoebe.Data
         public static async Task<CommonData> PutDataAsync (this IDataStore ds, CommonData data)
         {
             var type = data.GetType ();
+
             if (type == typeof (ClientData)) {
                 return await ds.PutAsync ((ClientData)data).ConfigureAwait (false);
             } else if (type == typeof (ProjectData)) {
@@ -70,6 +72,18 @@ namespace Toggl.Phoebe.Data
                 return await ds.PutAsync ((WorkspaceUserData)data).ConfigureAwait (false);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
+        }
+
+        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ClientData> query, string name)
+        {
+            var rows = await query.QueryAsync (r => r.Name == name);
+            return rows.Count != 0;
+        }
+
+        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ProjectData> query, string name)
+        {
+            var rows = await query.QueryAsync (r => r.Name == name);
+            return rows.Count != 0;
         }
     }
 }

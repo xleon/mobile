@@ -9,6 +9,8 @@ using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -117,34 +119,39 @@ namespace Toggl.Ross.ViewControllers
                 return;
             }
 
-            bool existWithName = await ProjectModel.ExistsWithNameAsync (model.Name);
-            if (existWithName) {
-                var alert = new UIAlertView (
-                    "NewProjectNameExistTitle".Tr (),
-                    "NewProjectNameExistMessage".Tr (),
-                    null,
-                    "NewProjectNameExistOk".Tr (),
-                    null);
-                alert.Clicked += async (s, ev) => {
-                    if (ev.ButtonIndex == 0) {
-                        nameTextField.BecomeFirstResponder ();
-                    }
-                };
-                alert.Show ();
-                return;
-            }
-
             isSaving = true;
-            try {
-                // Create new project:
-                await model.SaveAsync ();
 
-                // Invoke callback hook
-                var cb = ProjectCreated;
-                if (cb != null) {
-                    cb (model);
+            try {
+
+                // Check for existing name
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var existWithName = await ((IDataQuery<ProjectData>)dataStore.Table<ProjectData>()).ExistWithNameAsync ( model.Name);
+
+                if (existWithName) {
+                    var alert = new UIAlertView (
+                        "NewProjectNameExistTitle".Tr (),
+                        "NewProjectNameExistMessage".Tr (),
+                        null,
+                        "NewProjectNameExistOk".Tr (),
+                        null);
+                    alert.Clicked += async (s, ev) => {
+                        if (ev.ButtonIndex == 0) {
+                            nameTextField.BecomeFirstResponder ();
+                        }
+                    };
+                    alert.Show ();
                 } else {
-                    NavigationController.PopViewControllerAnimated (true);
+
+                    // Create new project:
+                    await model.SaveAsync ();
+
+                    // Invoke callback hook
+                    var cb = ProjectCreated;
+                    if (cb != null) {
+                        cb (model);
+                    } else {
+                        NavigationController.PopViewControllerAnimated (true);
+                    }
                 }
             } finally {
                 isSaving = false;

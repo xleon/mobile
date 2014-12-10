@@ -242,12 +242,5 @@ namespace Toggl.Phoebe.Data.Models
         {
             return model.Data;
         }
-
-        public static async Task<bool> ExistsWithNameAsync (string name)
-        {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var rows = await dataStore.Table<ProjectData> ().QueryAsync (r => r.Name == name);
-            return rows.Count != 0;
-        }
     }
 }

@@ -9,6 +9,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -138,14 +139,15 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            bool existWithName = await ProjectModel.ExistsWithNameAsync (nameEditText.Text);
-            if (existWithName) {
-                // TODO: show notification
-                return;
-            }
-
             isSaving = true;
             try {
+
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var existWithName = await ((IDataQuery<ProjectData>)dataStore.Table<ProjectData>()).ExistWithNameAsync ( nameEditText.Text);
+                if (existWithName) {
+                    return;
+                }
+
                 var workspaceModel = workspace;
                 var timeEntryModel = timeEntry;
 

@@ -556,6 +556,8 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcAddGrey.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcAddGrey.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcAddGrey.png" />
+    <AndroidResource Include="Resources\layout\BarChartLoading.axml" />
+    <AndroidResource Include="Resources\layout\BarChartEmpty.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.1/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

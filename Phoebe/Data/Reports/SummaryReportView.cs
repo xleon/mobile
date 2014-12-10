@@ -91,7 +91,7 @@ namespace Toggl.Phoebe.Data.Reports
                 max = max < s.TotalTime ? s.TotalTime : max;
             }
 
-            _maxTotal = (int)Math.Ceiling ( max/3600/ (double)5) * 5;
+            _maxTotal = (int)Math.Ceiling (max / 3600f / 5f) * 5;
 
             _chartRowLabels = new List<string> ();
             foreach (var row in dataObject.Activity) {

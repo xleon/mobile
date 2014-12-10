@@ -5,12 +5,12 @@ using Cirrious.FluentLayouts.Touch;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -91,7 +91,7 @@ namespace Toggl.Ross.ViewControllers
 
                 // Check for existing name
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var existWithName = await ((IDataQuery<ClientData>)dataStore.Table<ClientData>()).ExistWithNameAsync ( model.Name);
+                var existWithName = await dataStore.Table<ClientData>().ExistWithNameAsync ( model.Name);
 
                 if (existWithName) {
                     var alert = new UIAlertView (

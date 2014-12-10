@@ -7,9 +7,9 @@ using Android.Text;
 using Android.Widget;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
-using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -143,7 +143,7 @@ namespace Toggl.Joey.UI.Fragments
             try {
 
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var existWithName = await ((IDataQuery<ProjectData>)dataStore.Table<ProjectData>()).ExistWithNameAsync ( nameEditText.Text);
+                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync ( nameEditText.Text);
                 if (existWithName) {
                     return;
                 }

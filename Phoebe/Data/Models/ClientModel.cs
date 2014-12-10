@@ -1,9 +1,6 @@
 using System;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.DataObjects;
-using System.ComponentModel;
-using System.Threading.Tasks;
-using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
 {
@@ -89,22 +86,12 @@ namespace Toggl.Phoebe.Data.Models
 
         public static explicit operator ClientModel (ClientData data)
         {
-            if (data == null) {
-                return null;
-            }
-            return new ClientModel (data);
+            return data == null ? null : new ClientModel (data);
         }
 
         public static implicit operator ClientData (ClientModel model)
         {
             return model.Data;
-        }
-
-        public static async Task<bool> ExistsWithNameAsync (string name)
-        {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var rows = await dataStore.Table<ClientData> ().QueryAsync (r => r.Name == name);
-            return rows.Count != 0;
         }
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
-using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
@@ -76,13 +75,13 @@ namespace Toggl.Phoebe.Data
 
         public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ClientData> query, string name)
         {
-            var rows = await query.QueryAsync (r => r.Name == name);
+            var rows = await query.QueryAsync (r => r.Name == name).ConfigureAwait (false);
             return rows.Count != 0;
         }
 
         public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ProjectData> query, string name)
         {
-            var rows = await query.QueryAsync (r => r.Name == name);
+            var rows = await query.QueryAsync (r => r.Name == name).ConfigureAwait (false);
             return rows.Count != 0;
         }
     }

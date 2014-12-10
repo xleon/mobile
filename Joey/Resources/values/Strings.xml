@@ -108,6 +108,7 @@
     <string name="ChooseTimeEntryTagsDialogTitle">Select tags</string>
     <string name="ChooseTimeEntryTagsDialogCancel">Cancel</string>
     <string name="ChooseTimeEntryTagsDialogOk">Ok</string>
+    <string name="TagsAdapterCreateTag">New&#8230;</string>
     <string name="ChooseTimeEntryProjectDialogTitle">Select project</string>
     <string name="ChooseTimeEntryProjectDialogCancel">Cancel</string>
     <string name="WelcomeBoxTapToStart">Tap on the start button to start tracking</string>
@@ -131,6 +132,9 @@
     <string name="CreateProjectDialogTitle">Add project</string>
     <string name="CreateProjectDialogHint">Project name&#8230;</string>
     <string name="CreateProjectDialogOk">Create</string>
+    <string name="CreateTagDialogTitle">New tag</string>
+    <string name="CreateTagDialogHint">Tag name&#8230;</string>
+    <string name="CreateTagDialogOk">Create</string>
     <string name="ActionBarDoneButton">Done</string>
     <string name="LastSyncStatusText">Last sync {0}</string>
     <string name="CurrentlySyncingStatusText">Syncing&#8230;</string>

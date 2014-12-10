@@ -11,20 +11,69 @@ namespace Toggl.Joey.UI.Adapters
 {
     public class TagsAdapter : BaseDataViewAdapter<TagData>
     {
+        public const long CreateTagId = -1;
+        protected static readonly int ViewTypeCreateTag = ViewTypeContent + 1;
+
         public TagsAdapter (IDataView<TagData> view) : base (view)
         {
+        }
+
+        public override long GetItemId (int position)
+        {
+            if (!DataView.IsLoading && position == DataView.Count) {
+                return CreateTagId;
+            }
+            return base.GetItemId (position);
+        }
+
+        public override int ViewTypeCount
+        {
+            get {
+                return base.ViewTypeCount + 1;
+            }
+        }
+
+        public override int GetItemViewType (int position)
+        {
+            if (GetItemId (position) == CreateTagId) {
+                return ViewTypeCreateTag;
+            }
+            return base.GetItemViewType (position);
+        }
+
+        public override int Count
+        {
+            get {
+                var count = base.Count;
+                if (!DataView.IsLoading) {
+                    count += 1;
+                }
+                return count;
+            }
         }
 
         protected override View GetModelView (int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
-            if (view == null) {
-                view = LayoutInflater.FromContext (parent.Context).Inflate (
-                           Resource.Layout.TagListItem, parent, false);
-                view.Tag = new TagListItemHolder (view);
+
+            var viewType = GetItemViewType (position);
+
+            if (viewType == ViewTypeCreateTag) {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                               Resource.Layout.TagListCreateItem, parent, false);
+                    view.FindViewById<TextView> (Resource.Id.CreateLabelTextView).SetFont (Font.Roboto);
+                }
+            } else {
+                if (view == null) {
+                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                               Resource.Layout.TagListItem, parent, false);
+                    view.Tag = new TagListItemHolder (view);
+                }
+                var holder = (TagListItemHolder)view.Tag;
+                holder.Bind ((TagModel)GetEntry (position));
             }
-            var holder = (TagListItemHolder)view.Tag;
-            holder.Bind ((TagModel)GetEntry (position));
+
             return view;
         }
 

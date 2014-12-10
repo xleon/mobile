@@ -319,6 +319,7 @@
     <Compile Include="Views\Charting\BarChart.cs" />
     <Compile Include="Views\InfiniteScrollView.cs" />
     <Compile Include="Views\ReportView.cs" />
+    <Compile Include="ViewControllers\NewTagViewController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />

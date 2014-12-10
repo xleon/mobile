@@ -26,7 +26,6 @@ namespace Toggl.Joey.UI.Fragments
         private TimeEntryModel model;
         private bool tagsSelected;
         private bool hasStarted;
-        private bool isSaving;
 
         public ChooseTimeEntryTagsDialogFragment (TimeEntryModel model) : base ()
         {
@@ -138,10 +137,20 @@ namespace Toggl.Joey.UI.Fragments
             listView = dia.ListView;
             listView.ItemsCanFocus = false;
             listView.ChoiceMode = ChoiceMode.Multiple;
-            // Reset the item click listener such that the dialog wouldn't be closed on selecting a tag
-            listView.OnItemClickListener = null;
+            listView.ItemClick += OnItemClick;
 
             return dia;
+        }
+
+        private void OnItemClick (object sender, AdapterView.ItemClickEventArgs e)
+        {
+            if (e.Id == TagsAdapter.CreateTagId) {
+                // Commit changes the user has made thusfar
+                ReplaceTags (model, modelTags, SelectedTags);
+
+                new CreateTagDialogFragment (WorkspaceId, model).Show (FragmentManager, "new_tag_dialog");
+                Dismiss ();
+            }
         }
 
         private void SelectInitialTags ()
@@ -178,46 +187,40 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
         {
-            Dismiss ();
         }
 
-        private async void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+        private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
         {
-            if (isSaving) {
-                return;
-            }
+            ReplaceTags (model, modelTags, SelectedTags);
+        }
 
-            isSaving = true;
-            try {
-                // Store the model reference so it wouldn't get nulled by OnDestroy while doing async things.
-                var model = this.model;
-
-                // Resolve selected indexes into TagData:
+        private List<TagData> SelectedTags
+        {
+            get {
                 var selected = listView.CheckedItemPositions;
-                var tags = workspaceTagsView.Data
-                           .Where ((tag, idx) => selected.Get (idx, false))
-                           .ToList ();
+                return workspaceTagsView.Data
+                       .Where ((tag, idx) => selected.Get (idx, false))
+                       .ToList ();
+            }
+        }
 
-                // Delete unused tag relations:
-                var deleteTasks = modelTags
-                                  .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
-                                  .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
+        private async static void ReplaceTags (TimeEntryModel model, List<TimeEntryTagData> modelTags, List<TagData> selectedTags)
+        {
+            // Delete unused tag relations:
+            var deleteTasks = modelTags
+                              .Where (oldTag => !selectedTags.Any (newTag => newTag.Id == oldTag.TagId))
+                              .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
 
-                // Create new tag relations:
-                var createTasks = tags
-                                  .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-                .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ());
+            // Create new tag relations:
+            var createTasks = selectedTags
+                              .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
+            .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ());
 
-                await Task.WhenAll (deleteTasks.Concat (createTasks));
+            await Task.WhenAll (deleteTasks.Concat (createTasks));
 
-                if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
-                    model.Touch ();
-                    await model.SaveAsync ();
-                }
-
-                Dismiss ();
-            } finally {
-                isSaving = false;
+            if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
+                model.Touch ();
+                await model.SaveAsync ();
             }
         }
     }

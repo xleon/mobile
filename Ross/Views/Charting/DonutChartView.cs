@@ -32,8 +32,8 @@ namespace Toggl.Ross.Views.Charting
                 var delayData = (_reportView.Projects.Count == 0) ? 0 : 0.6;
 
                 if (_reportView.Projects.Count == 0) {
-                    noProjectTitleLabel.Text = (_reportView.IsError) ? "DataErrorTitle".Tr () : "NoDataTitle".Tr ();
-                    noProjectTextLabel.Text = (_reportView.IsError) ? "DataErrorText".Tr () : "NoDataText".Tr ();
+                    noProjectTitleLabel.Text = (_reportView.IsError) ? "ReportsDataErrorTitle".Tr () : "ReportsNoDataTitle".Tr ();
+                    noProjectTextLabel.Text = (_reportView.IsError) ? "ReportsDataErrorText".Tr () : "ReportsNoDataText".Tr ();
                 }
 
                 UIView.Animate (0.4, delayNoData, UIViewAnimationOptions.TransitionNone,

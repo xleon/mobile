@@ -24,8 +24,8 @@ namespace Toggl.Ross.Views.Charting
                 }
 
                 if (_reportView.Projects.Count == 0) {
-                    noProjectTitleLabel.Text = (_reportView.IsError) ? "DataErrorTitle".Tr () : "NoDataTitle".Tr ();
-                    noProjectTextLabel.Text = (_reportView.IsError) ? "DataErrorText".Tr () : "NoDataText".Tr ();
+                    noProjectTitleLabel.Text = (_reportView.IsError) ? "ReportsDataErrorTitle".Tr () : "ReportsNoDataTitle".Tr ();
+                    noProjectTextLabel.Text = (_reportView.IsError) ? "ReportsDataErrorText".Tr () : "ReportsNoDataText".Tr ();
                 }
 
                 var delayNoData = (_reportView.Projects.Count == 0) ? 0.5 : 0;

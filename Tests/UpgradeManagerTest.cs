@@ -107,6 +107,8 @@ namespace Toggl.Phoebe.Tests
             public string LastAppVersion { get; set; }
 
             public string ExperimentId { get; set; }
+
+            public string LastReportZoomViewed { get; set; }
         }
     }
 }

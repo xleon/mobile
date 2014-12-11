@@ -34,7 +34,9 @@ namespace Toggl.Joey.UI.Utils
 
         public void Release (T inst)
         {
-            reset (inst);
+            if (reset != null) {
+                reset (inst);
+            }
             instances.Enqueue (inst);
         }
 

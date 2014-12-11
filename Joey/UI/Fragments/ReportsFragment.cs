@@ -137,14 +137,16 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public void SetZoomLevel ( ZoomLevel zoomlevel)
+        public void SetZoomLevel (ZoomLevel zoomlevel)
         {
-            Arguments.PutString (ReportZoomArgument, zoomlevel.ToString());
+            Arguments.PutInt (ReportZoomArgument, (int)zoomlevel);
         }
 
-        public sealed class Controller : IDisposable
+        public sealed class Controller : Java.Lang.Object, ViewGroup.IOnHierarchyChangeListener
         {
+            private readonly List<View> trackedProjectListItems = new List<View>();
             private Context ctx;
+            private Pool<View> projectListItemPool;
             private View rootView;
             private SnappyLayout snappyLayout;
             private BarChart barChart;
@@ -155,9 +157,10 @@ namespace Toggl.Joey.UI.Fragments
 
             private SummaryReportView data;
 
-            public Controller (Context ctx)
+            public Controller (Context ctx, Pool<View> projectListItemPool)
             {
                 this.ctx = ctx;
+                this.projectListItemPool = projectListItemPool;
                 var inflater = LayoutInflater.From (ctx);
 
                 var view = rootView = inflater.Inflate (Resource.Layout.ReportsFragment, null, false);
@@ -175,21 +178,27 @@ namespace Toggl.Joey.UI.Fragments
                 listView.LayoutMode = ViewLayoutMode.ClipBounds;
                 listView.SetClipToPadding (false);
                 listView.ItemClick += OnListItemClick;
+                listView.SetOnHierarchyChangeListener (this);
             }
 
-            public void Dispose ()
+            protected override void Dispose (bool disposing)
             {
-                snappyLayout.ActiveChildChanged -= OnSnappyActiveChildChanged;
-                pieChart.SliceClicked -= OnSliceSelect;
-                listView.ItemClick -= OnListItemClick;
+                base.Dispose (disposing);
 
-                DisposeAndNull (ref totalValue);
-                DisposeAndNull (ref billableValue);
-                DisposeAndNull (ref listView);
-                DisposeAndNull (ref barChart);
-                DisposeAndNull (ref pieChart);
-                DisposeAndNull (ref snappyLayout);
-                DisposeAndNull (ref rootView);
+                if (disposing) {
+                    snappyLayout.ActiveChildChanged -= OnSnappyActiveChildChanged;
+                    pieChart.SliceClicked -= OnSliceSelect;
+                    listView.ItemClick -= OnListItemClick;
+                    listView.SetOnHierarchyChangeListener (null);
+
+                    DisposeAndNull (ref totalValue);
+                    DisposeAndNull (ref billableValue);
+                    DisposeAndNull (ref listView);
+                    DisposeAndNull (ref barChart);
+                    DisposeAndNull (ref pieChart);
+                    DisposeAndNull (ref snappyLayout);
+                    DisposeAndNull (ref rootView);
+                }
             }
 
             private static void DisposeAndNull<T> (ref T disposable)
@@ -203,8 +212,7 @@ namespace Toggl.Joey.UI.Fragments
 
             private void OnListItemClick (object sender, AdapterView.ItemClickEventArgs args)
             {
-                // TODO: Review
-                var adapter = listView.Adapter as ReportProjectAdapter;
+                var adapter = (ReportProjectAdapter)listView.Adapter;
                 if (pieChart.CurrentSlice == args.Position) {
                     pieChart.SelectSlice (-1);
                     adapter.SetFocus (-1);
@@ -216,13 +224,10 @@ namespace Toggl.Joey.UI.Fragments
 
             private void OnSliceSelect (int pos)
             {
-                // TODO: Review
-                var adapter = listView.Adapter as ReportProjectAdapter;
-                if (adapter != null) {
-                    adapter.SetFocus (pos);
-                    if (pos != -1) {
-                        listView.SmoothScrollToPositionFromTop (pos, 0);
-                    }
+                var adapter = (ReportProjectAdapter)listView.Adapter;
+                adapter.SetFocus (pos);
+                if (pos != -1) {
+                    listView.SmoothScrollToPositionFromTop (pos, 0);
                 }
             }
 
@@ -234,9 +239,33 @@ namespace Toggl.Joey.UI.Fragments
                 }
             }
 
+            public View ObtainProjectListItem()
+            {
+                var v = projectListItemPool.Obtain ();
+                trackedProjectListItems.Add (v);
+                return v;
+            }
+
+            void ViewGroup.IOnHierarchyChangeListener.OnChildViewAdded (View parent, View child)
+            {
+            }
+
+            void ViewGroup.IOnHierarchyChangeListener.OnChildViewRemoved (View parent, View child)
+            {
+                // Monitor when the ListView is done with the child and release it back to the pool
+                if (trackedProjectListItems.Remove (child)) {
+                    projectListItemPool.Release (child);
+                }
+            }
+
             public View View
             {
                 get { return rootView; }
+            }
+
+            public Context Context
+            {
+                get { return ctx; }
             }
 
             public int SnapPosition
@@ -257,8 +286,6 @@ namespace Toggl.Joey.UI.Fragments
 
                     data = value;
 
-                    // TODO: Return all project rows to pool
-
                     if (data == null) {
                         // Reset everything to blank
                         totalValue.Text = String.Empty;
@@ -272,7 +299,7 @@ namespace Toggl.Joey.UI.Fragments
                         billableValue.Text = data.TotalBillale;
                         barChart.Reset (data);
                         ResetPieChart (data);
-                        listView.Adapter = new ReportProjectAdapter (ctx, data.Projects);
+                        listView.Adapter = new ReportProjectAdapter (this, data.Projects);
                     }
                 }
             }
@@ -298,17 +325,13 @@ namespace Toggl.Joey.UI.Fragments
         private class ReportProjectAdapter : BaseAdapter<ReportProject>
         {
             private List<ReportProject> dataView;
-            private View colorSquare;
-            private TextView projectName;
-            private TextView projectDuration;
             private int focus = -1;
-            private Context context;
+            private Controller controller;
 
-            public ReportProjectAdapter (Context ctx, List<ReportProject> dataView)
+            public ReportProjectAdapter (Controller controller, List<ReportProject> dataView)
             {
+                this.controller = controller;
                 this.dataView = dataView;
-                context = ctx;
-
             }
 
             public override Java.Lang.Object GetItem (int position)
@@ -321,26 +344,19 @@ namespace Toggl.Joey.UI.Fragments
                 return position;
             }
 
-            #region implemented abstract members of BaseAdapter
-
             public override ReportProject this [int index]
             {
-                get {
-                    return dataView[index];
-                }
+                get { return dataView[index]; }
             }
-
-            #endregion
 
             public override View GetView (int position, View convertView, ViewGroup parent)
             {
                 View view = convertView;
 
                 if (convertView == null) {
-                    view = LayoutInflater.From (context).Inflate (Resource.Layout.ReportsProjectListItem, parent, false);
-                    view.Tag = new ProjectViewHolder (view);
+                    view = controller.ObtainProjectListItem ();
                 }
-                var holder = (ProjectViewHolder)view.Tag;
+                var holder = (ProjectListItemHolder)view.Tag;
                 holder.Bind (dataView [position]);
                 holder.SetFocus (focus, position); // mmm...
 
@@ -359,54 +375,54 @@ namespace Toggl.Joey.UI.Fragments
                     return dataView.Count;
                 }
             }
+        }
 
-            private class ProjectViewHolder : BindableViewHolder<ReportProject>
+        public class ProjectListItemHolder : BindableViewHolder<ReportProject>
+        {
+            private View _root;
+
+            public View ColorSquareView  { get; private set; }
+
+            public TextView NameTextView  { get; private set; }
+
+            public TextView DurationTextView  { get; private set; }
+
+            public ProjectListItemHolder ( View root)  : base (root)
             {
-                private View _root;
+                NameTextView = root.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
 
-                public View ColorSquareView  { get; private set; }
+                ColorSquareView = root.FindViewById<View> (Resource.Id.ColorSquare);
 
-                public TextView NameTextView  { get; private set; }
+                DurationTextView = root.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
 
-                public TextView DurationTextView  { get; private set; }
+                _root = root;
+            }
 
-                public ProjectViewHolder ( View root)  : base (root)
-                {
-                    NameTextView = root.FindViewById<TextView> (Resource.Id.ProjectName).SetFont (Font.Roboto);
-
-                    ColorSquareView = root.FindViewById<View> (Resource.Id.ColorSquare);
-
-                    DurationTextView = root.FindViewById<TextView> (Resource.Id.ProjectDuration).SetFont (Font.Roboto);
-
-                    _root = root;
+            protected override void Rebind ()
+            {
+                if (String.IsNullOrEmpty ( DataSource.Project)) {
+                    NameTextView.SetText (Resource.String.ReportsListViewNoProject);
+                } else {
+                    NameTextView.Text = DataSource.Project;
                 }
 
-                protected override void Rebind ()
-                {
-                    if (String.IsNullOrEmpty ( DataSource.Project)) {
-                        NameTextView.SetText (Resource.String.ReportsListViewNoProject);
-                    } else {
-                        NameTextView.Text = DataSource.Project;
-                    }
+                DurationTextView.Text = DataSource.FormattedTotalTime;
+                var squareDrawable = new GradientDrawable ();
+                squareDrawable.SetCornerRadius (5);
+                squareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length]));
+                ColorSquareView.SetBackgroundDrawable (squareDrawable);
+            }
 
-                    DurationTextView.Text = DataSource.FormattedTotalTime;
-                    var squareDrawable = new GradientDrawable ();
+            public void SetFocus ( int focus, int position )
+            {
+                var squareDrawable = (GradientDrawable)ColorSquareView.Background;
+                if (focus != -1) {
+                    _root.Alpha = (focus == position) ? 1 : 0.5f;
+                    var radius = (focus == position) ? Convert.ToSingle ( ColorSquareView.Height / 2) : 5.0f;
+                    squareDrawable.SetCornerRadius ( radius);
+                } else {
+                    _root.Alpha = 1;
                     squareDrawable.SetCornerRadius (5);
-                    squareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length]));
-                    ColorSquareView.SetBackgroundDrawable (squareDrawable);
-                }
-
-                public void SetFocus ( int focus, int position )
-                {
-                    var squareDrawable = (GradientDrawable)ColorSquareView.Background;
-                    if (focus != -1) {
-                        _root.Alpha = (focus == position) ? 1 : 0.5f;
-                        var radius = (focus == position) ? Convert.ToSingle ( ColorSquareView.Height / 2) : 5.0f;
-                        squareDrawable.SetCornerRadius ( radius);
-                    } else {
-                        _root.Alpha = 1;
-                        squareDrawable.SetCornerRadius (5);
-                    }
                 }
             }
         }

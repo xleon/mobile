@@ -29,6 +29,7 @@ namespace Toggl.Joey.UI.Fragments
         private TextView timePeriod;
         private int backDate;
         private Context ctx;
+        private Pool<View> projectListItemPool;
         private Pool<ReportsFragment.Controller> reportsControllerPool;
 
         private ZoomLevel zoomPeriod;
@@ -43,6 +44,11 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public Pool<View> ProjectListItems
+        {
+            get { return projectListItemPool; }
+        }
+
         public Pool<ReportsFragment.Controller> ReportsControllers
         {
             get { return reportsControllerPool; }
@@ -53,6 +59,9 @@ namespace Toggl.Joey.UI.Fragments
             base.OnCreate (savedInstanceState);
 
             ctx = Activity;
+            projectListItemPool = new Pool<View> (CreateProjectListItem) {
+                Count = 3 /*controller count*/ * 7 /*list items per controller*/,
+            };
             reportsControllerPool = new Pool<ReportsFragment.Controller> (CreateController, ResetController) {
                 Count = 3,
             };
@@ -60,7 +69,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private ReportsFragment.Controller CreateController()
         {
-            return new ReportsFragment.Controller (ctx);
+            return new ReportsFragment.Controller (ctx, projectListItemPool);
         }
 
         private void ResetController (ReportsFragment.Controller inst)
@@ -74,6 +83,13 @@ namespace Toggl.Joey.UI.Fragments
             // Reset data
             inst.Data = null;
             inst.SnapPosition = 0;
+        }
+
+        private View CreateProjectListItem()
+        {
+            var view = LayoutInflater.From (ctx).Inflate (Resource.Layout.ReportsProjectListItem, null, false);
+            view.Tag = new ReportsFragment.ProjectListItemHolder (view);
+            return view;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)

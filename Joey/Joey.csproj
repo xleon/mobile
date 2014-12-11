@@ -138,6 +138,7 @@
     <Compile Include="Analytics\Experiments.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="UI\Fragments\CreateTagDialogFragment.cs" />
+    <Compile Include="UI\Views\SnappyLayout.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

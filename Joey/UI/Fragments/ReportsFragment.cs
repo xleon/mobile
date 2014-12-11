@@ -22,25 +22,21 @@ namespace Toggl.Joey.UI.Fragments
         Bottom = 1
     }
 
-    public class ReportsFragment : Fragment, View.IOnTouchListener
+    public class ReportsFragment : Fragment
     {
         private static readonly string ReportPeriodArgument = "com.toggl.timer.report_period";
         private static readonly string ReportZoomArgument = "com.toggl.timer.report_zoom";
 
         public event EventHandler PositionChanged;
 
+        private SnappyLayout snappyLayout;
         private BarChart barChart;
         private PieChart pieChart;
         private TextView totalValue;
         private ListView listView;
         private TextView billableValue;
         private SummaryReportView summaryReport;
-        private LinearLayout containerView;
-        private float _viewY;
-        private float topPosition;
-        private float bottomPosition;
         private bool isLoading;
-        private int contentHeight;
 
         private ChartPosition position;
 
@@ -49,10 +45,13 @@ namespace Toggl.Joey.UI.Fragments
             get {
                 return position;
             } set {
-                if (position == value) { return; }
+                if (position == value) {
+                    return;
+                }
                 position = value;
-                if (containerView != null) {
-                    containerView.RequestLayout ();
+
+                if (snappyLayout != null) {
+                    snappyLayout.ActiveChild = (int)position;
                 }
             }
         }
@@ -103,36 +102,31 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
-            containerView = view.FindViewById<LinearLayout> (Resource.Id.ReportsLayoutContainer);
-            containerView.SetOnTouchListener (this);
+            snappyLayout = view.FindViewById<SnappyLayout> (Resource.Id.SnappyLayout);
+            snappyLayout.ActiveChild = (int)position;
+            snappyLayout.ActiveChildChanged += OnSnappyActiveChildChanged;
             barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
             pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
             listView = view.FindViewById<ListView> (Resource.Id.ReportList);
             listView.ItemClick += OnListItemClick;
 
-            containerView.LayoutChange += (sender, e) => {
-
-                if ( topPosition.CompareTo ( bottomPosition) == 0) {
-                    // define positions
-                    topPosition = 0;
-                    bottomPosition = -Convert.ToSingle ( pieChart.Top);
-                    contentHeight =  view.Height + pieChart.Top; // it works! :)
-                }
-
-                // set position
-                var currentPos = (position == ChartPosition.Top) ? topPosition : bottomPosition;
-                containerView.SetY (currentPos);
-
-                // set correct container size
-                var layoutParams = containerView.LayoutParameters;
-                layoutParams.Height = contentHeight;
-                containerView.LayoutParameters = layoutParams;
-                containerView.Layout ( containerView.Left, containerView.Top, containerView.Right, containerView.Top + contentHeight);
-            };
-
             totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
             billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
+
             return view;
+        }
+
+        private void OnSnappyActiveChildChanged (object sender, EventArgs e)
+        {
+            var value = (ChartPosition)snappyLayout.ActiveChild;
+            if (position == value) {
+                return;
+            }
+
+            position = value;
+            if (PositionChanged != null) {
+                PositionChanged (this, EventArgs.Empty);
+            }
         }
 
         public override void OnStart ()
@@ -166,43 +160,6 @@ namespace Toggl.Joey.UI.Fragments
             if (pos != -1) {
                 listView.SmoothScrollToPositionFromTop (pos, 0);
             }
-        }
-
-        #endregion
-
-        #region IOnGestureListener
-
-        bool View.IOnTouchListener.OnTouch (View v, MotionEvent e)
-        {
-            switch (e.Action) {
-            case MotionEventActions.Down:
-                _viewY = e.RawY;
-                break;
-            case MotionEventActions.Move:
-                var topY = v.GetY() + e.RawY - _viewY;
-                if ( topY <= topPosition && topY >= bottomPosition) {
-                    v.SetY (topY);
-                }
-                _viewY = e.RawY;
-                break;
-            case MotionEventActions.Up:
-                var currentSnap = ( v.GetY() > (bottomPosition - topPosition) / 2) ? topPosition : bottomPosition;
-                ValueAnimator animator = ValueAnimator.OfFloat (v.GetY(), currentSnap);
-                animator.SetDuration (250);
-                animator.Start();
-                animator.Update += (sender, ev) => {
-                    var newValue = (float)ev.Animation.AnimatedValue;
-                    v.SetY ( newValue);
-                    if ( newValue.CompareTo ( currentSnap) == 0) {
-                        Position = ( currentSnap.CompareTo ( topPosition) == 0) ? ChartPosition.Top : ChartPosition.Bottom;
-                        if ( PositionChanged != null) {
-                            PositionChanged.Invoke ( this, new EventArgs());
-                        }
-                    }
-                };
-                break;
-            }
-            return true;
         }
 
         #endregion

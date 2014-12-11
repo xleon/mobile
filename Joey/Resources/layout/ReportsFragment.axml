@@ -1,78 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/ReportsLayoutContainer"
-    android:orientation="vertical"
+<Toggl.Joey.UI.Views.SnappyLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/SnappyLayout"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="fill_parent">
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="fill_parent"
-        android:layout_height="40dp"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp">
+        android:layout_height="wrap_content">
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_weight="0.5"
-            android:layout_width="0dp"
-            android:layout_height="fill_parent">
-            <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="40dp">
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_weight="0.5"
+                android:layout_width="0dp"
+                android:layout_height="fill_parent">
+                <TextView
+                    android:gravity="center_vertical"
+                    android:id="@+id/TotalLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:textSize="14dp"
+                    android:text="@string/ReportsTotalBanner"
+                    android:textColor="@color/light_gray" />
+                <TextView
+                    android:paddingLeft="4dp"
+                    android:gravity="center_vertical"
+                    android:id="@+id/TotalValue"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:textSize="14dp" />
+            </LinearLayout>
+            <LinearLayout
                 android:gravity="center_vertical"
-                android:id="@+id/TotalLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:textSize="14dp"
-                android:text="@string/ReportsTotalBanner"
-                android:textColor="@color/light_gray" />
-            <TextView
-                android:paddingLeft="4dp"
-                android:gravity="center_vertical"
-                android:id="@+id/TotalValue"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:textSize="14dp" />
+                android:orientation="horizontal"
+                android:layout_weight="0.5"
+                android:layout_width="0dp"
+                android:layout_height="fill_parent">
+                <TextView
+                    android:gravity="center_vertical"
+                    android:id="@+id/BillableLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:textSize="14dp"
+                    android:text="@string/ReportsBillableBanner"
+                    android:textColor="@color/light_gray" />
+                <TextView
+                    android:paddingLeft="4dp"
+                    android:gravity="center_vertical"
+                    android:id="@+id/BillableValue"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:textSize="14dp" />
+            </LinearLayout>
         </LinearLayout>
-        <LinearLayout
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:layout_weight="0.5"
-            android:layout_width="0dp"
-            android:layout_height="fill_parent">
-            <TextView
-                android:gravity="center_vertical"
-                android:id="@+id/BillableLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:textSize="14dp"
-                android:text="@string/ReportsBillableBanner"
-                android:textColor="@color/light_gray" />
-            <TextView
-                android:paddingLeft="4dp"
-                android:gravity="center_vertical"
-                android:id="@+id/BillableValue"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:textSize="14dp" />
-        </LinearLayout>
+        <Toggl.Joey.UI.Views.BarChart
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="30dp"
+            android:id="@+id/BarChart" />
     </LinearLayout>
-    <toggl.joey.ui.views.BarChart
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="10dp"
-        android:layout_marginBottom="30dp"
-        android:id="@+id/BarChart" />
-    <toggl.joey.ui.views.PieChart
-        android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:id="@+id/PieChart" />
-    <ListView
-        android:id="@+id/ReportList"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="@drawable/DividerHorizontalLight"
-        android:dividerHeight="1dp"
-        android:requiresFadingEdge="vertical"
-        android:layout_marginLeft="25dp"
-        android:layout_marginRight="25dp"
-        android:fadingEdgeLength="8dp" />
-</LinearLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+        <Toggl.Joey.UI.Views.PieChart
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:id="@+id/PieChart" />
+        <ListView
+            android:id="@+id/ReportList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="@drawable/DividerHorizontalLight"
+            android:dividerHeight="1dp"
+            android:requiresFadingEdge="vertical"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp"
+            android:fadingEdgeLength="8dp" />
+    </LinearLayout>
+</Toggl.Joey.UI.Views.SnappyLayout>

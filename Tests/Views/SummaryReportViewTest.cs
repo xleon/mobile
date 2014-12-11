@@ -131,8 +131,8 @@ namespace Toggl.Phoebe.Tests.Views
                 } else {
                     activiy.Add ( startDate.AddMonths (i).ToLongDateString());
                 }
-                activiy.Add ( "0");
-                activiy.Add ( "0");
+                activiy.Add ( "0"); // add totalTime
+                activiy.Add ( "0"); // add billableTime
                 rows.Add (activiy);
             }
             activityContainer.Rows = rows;
@@ -145,6 +145,12 @@ namespace Toggl.Phoebe.Tests.Views
                     Project = "project"
                 };
                 project.TotalTime = 0;
+                project.Currencies = new List<ReportCurrencyJson> () {
+                    new ReportCurrencyJson() {
+                        Amount = 0,
+                        Currency = "eur"
+                    }
+                };
                 projectsJsonList.Add (project);
             }
 
@@ -152,7 +158,10 @@ namespace Toggl.Phoebe.Tests.Views
                 Projects = projectsJsonList,
                 ActivityContainer = activityContainer,
                 TotalBillable = 0,
-                TotalGrand = 0
+                TotalGrand = 0,
+                TotalCurrencies = new List<ReportCurrencyJson> () {
+                    new ReportCurrencyJson() { Amount = 0, Currency = "eur" }
+                }
             };
         }
 

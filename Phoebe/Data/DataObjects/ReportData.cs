@@ -12,9 +12,12 @@ namespace Toggl.Phoebe.Data.DataObjects
         {
             TotalGrand = other.TotalGrand;
             TotalBillable = other.TotalBillable;
+            TotalCost = other.TotalCost;
             Activity = other.Activity;
             Projects = other.Projects;
         }
+
+        public List<string> TotalCost;
 
         public long TotalGrand { get; set; }
 

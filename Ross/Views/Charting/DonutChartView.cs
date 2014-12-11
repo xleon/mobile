@@ -60,13 +60,13 @@ namespace Toggl.Ross.Views.Charting
                 var totalValue = Convert.ToSingle ( _reportView.Projects.Sum (p => p.TotalTime));
                 DonutProjectList = _reportView.Projects.Where (p => Convert.ToSingle ( p.TotalTime) / totalValue > maxAngle).ToList ();
                 TableProjectList = new List<ReportProject> (_reportView.Projects);
+                currencies = _reportView.TotalCost.OrderBy (s => s.Length).Reverse<string> ().ToList<string> ();
 
                 donutChart.UserInteractionEnabled = (DonutProjectList.Count > 1);
                 donutChart.ReloadData ();
                 projectTableView.ReloadData ();
 
-                totalTimeLabel.Text = _reportView.TotalGrand;
-                moneyLabel.Text = _reportView.TotalBillale;
+                SetTotalInfo ();
             }
         }
 
@@ -125,9 +125,7 @@ namespace Toggl.Ross.Views.Charting
                 var idx = TableProjectList.FindIndex (p => AreEquals ( p, selectedProject));
                 projectTableView.SelectRow (NSIndexPath.FromRowSection (idx, 0), true, UITableViewScrollPosition.Top);
                 ((ProjectListSource)projectTableView.Source).LastSelectedIndex = idx;
-                totalTimeLabel.Text = selectedProject.FormattedTotalTime;
-                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
-                moneyLabel.Alpha = 0.0f;
+                SetProjectInfo (selectedProject);
             };
             donutChart.DidDeselectSliceAtIndex += (sender, e) => {
                 var selectedProject = DonutProjectList [e.Index];
@@ -184,6 +182,7 @@ namespace Toggl.Ross.Views.Charting
         private UIView grayCircle;
         private UIView topBoder;
         private UIView bottomBoder;
+        private List<string> currencies;
 
         const float pieRadius = 80.0f;
         const float lineStroke = 40f;
@@ -204,8 +203,8 @@ namespace Toggl.Ross.Views.Charting
 
             totalTimeLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20);
             totalTimeLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
-            moneyLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20);
-            moneyLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + 10);
+            moneyLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, moneyLabel.Bounds.Height );
+            moneyLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + moneyLabel.Bounds.Height / 2);
 
             noProjectTitleLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2, 20);
             noProjectTitleLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 20);
@@ -226,9 +225,7 @@ namespace Toggl.Ross.Views.Charting
                 } else {
                     donutChart.DeselectAllSlices ();
                 }
-                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
-                totalTimeLabel.Text = selectedProject.FormattedTotalTime;
-                moneyLabel.Alpha = 0.0f;
+                SetProjectInfo (selectedProject);
             }
         }
 
@@ -251,9 +248,7 @@ namespace Toggl.Ross.Views.Charting
             for (int i = 0; i < TableProjectList.Count; i++) {
                 projectTableView.DeselectRow ( NSIndexPath.FromRowSection ( 0, i), true);
             }
-            totalTimeLabel.Text = _reportView.TotalGrand;
-            totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
-            moneyLabel.Alpha = 1.0f;
+            SetTotalInfo ();
             ((ProjectListSource)projectTableView.Source).LastSelectedIndex = -1;
         }
 
@@ -261,6 +256,48 @@ namespace Toggl.Ross.Views.Charting
         {
             base.Dispose (disposing);
             donutChart.Dispose ();
+        }
+
+        private void SetProjectInfo ( ReportProject selectedProject)
+        {
+            totalTimeLabel.Text = selectedProject.FormattedTotalTime;
+            int currCount = selectedProject.Currencies.Count;
+
+            if (currCount > 0) {
+                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
+                string moneyInfo = "";
+                foreach (var item in selectedProject.Currencies) {
+                    moneyInfo += item.Amount + " " + item.Currency + "\n";
+                }
+                moneyInfo = moneyInfo.Substring (0, moneyInfo.Length - 1);
+                moneyLabel.Alpha = 1.0f;
+                moneyLabel.Text = moneyInfo;
+            } else {
+                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
+                moneyLabel.Alpha = 0.0f;
+            }
+            moneyLabel.SizeToFit ();
+        }
+
+        private void SetTotalInfo()
+        {
+            totalTimeLabel.Text = _reportView.TotalGrand;
+            int currCount = currencies.Count;
+
+            if (currCount > 0) {
+                string moneyInfo = "";
+                currCount = (currencies.Count > 3) ? 3 : currencies.Count;
+                for (int i = 0; i < currCount; i++) {
+                    moneyInfo += currencies[i] + "\n";
+                }
+                moneyInfo = moneyInfo.Substring (0, moneyInfo.Length - 1);
+                moneyLabel.Alpha = 1.0f;
+                moneyLabel.Text = moneyInfo;
+            } else {
+                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
+                moneyLabel.Alpha = 0.0f;
+            }
+            moneyLabel.SizeToFit ();
         }
 
         private CGPath CGPathCreateArc (PointF center, float radius, double startAngle, double endAngle, float lineStroke)

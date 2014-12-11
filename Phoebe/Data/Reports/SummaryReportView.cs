@@ -68,8 +68,9 @@ namespace Toggl.Phoebe.Data.Reports
                     log.Info (Tag, exc, msg);
                 } else {
                     log.Warning (Tag, exc, "Failed to fetch reports.");
-                    _isError = true;
                 }
+
+                _isError = ! (exc is TaskCanceledException);
             } finally {
                 CalculateReportData ();
             }
@@ -125,6 +126,13 @@ namespace Toggl.Phoebe.Data.Reports
         {
             get {
                 return dataObject.Projects;
+            }
+        }
+
+        public List<string> TotalCost
+        {
+            get {
+                return dataObject.TotalCost;
             }
         }
 

@@ -12,7 +12,7 @@ namespace Toggl.Phoebe.Data.Json
         public long TotalBillable { get; set; }
 
         [JsonProperty ("total_currencies")]
-        public List<ReportCurrencyJson> Currencies { get; set; }
+        public List<ReportCurrencyJson> TotalCurrencies { get; set; }
 
         [JsonProperty ("activity")]
         public ReportActivityJson ActivityContainer { get; set; }

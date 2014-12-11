@@ -16,6 +16,14 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.TotalBillable = json.TotalBillable;
             data.Activity = MakeActivityList (json.ActivityContainer);
             data.Projects = MakeProjectList (json.Projects);
+            data.TotalCost = new List<string> ();
+
+            if (json.TotalCurrencies != null) {
+                json.TotalCurrencies.Sort ((x, y) => y.Amount.CompareTo (x.Amount));
+                foreach (var row in json.TotalCurrencies) {
+                    data.TotalCost.Add (String.Format ("{0} {1}", row.Amount, row.Currency));
+                }
+            }
             return data;
         }
 
@@ -43,6 +51,15 @@ namespace Toggl.Phoebe.Data.Json.Converters
                             Title = i.Description.Title,
                             Time = i.Time,
                             Sum = i.Sum
+                        });
+                    }
+                }
+                p.Currencies = new List<ReportCurrency> ();
+                if (item.Currencies != null) {
+                    foreach (var i in item.Currencies) {
+                        p.Currencies.Add (new ReportCurrency () {
+                            Amount = i.Amount,
+                            Currency = i.Currency
                         });
                     }
                 }

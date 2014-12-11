@@ -22,25 +22,31 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ReportsPagerFragment : Fragment
     {
-        private static readonly int PagesCount = 2000;
+        private const string ExtraCurrentItem = "com.toggl.timer.current_item";
+        private const int PagesCount = 500;
+        private const int StartPage = PagesCount - 2;
+
         private ViewPager viewPager;
         private ImageButton previousPeriod;
         private ImageButton nextPeriod;
         private TextView timePeriod;
+        private ZoomLevel zoomPeriod = ZoomLevel.Week;
         private int backDate;
         private Context ctx;
         private Pool<View> projectListItemPool;
         private Pool<ReportsFragment.Controller> reportsControllerPool;
-
-        private ZoomLevel zoomPeriod;
 
         public ZoomLevel ZoomLevel
         {
             get {
                 return zoomPeriod;
             } set {
+                if (value == zoomPeriod) {
+                    return;
+                }
                 zoomPeriod = value;
-                UpdatePager ();
+                ResetAdapter ();
+                UpdatePeriod ();
             }
         }
 
@@ -105,6 +111,13 @@ namespace Toggl.Joey.UI.Fragments
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
 
+            ResetAdapter ();
+            UpdatePeriod ();
+
+            if (savedInstanceState != null) {
+                viewPager.CurrentItem = savedInstanceState.GetInt (ExtraCurrentItem, viewPager.CurrentItem);
+            }
+
             return view;
         }
 
@@ -112,6 +125,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             viewPager.PageSelected -= OnPageSelected;
             base.OnDestroyView ();
+        }
+
+        public override void OnSaveInstanceState (Bundle outState)
+        {
+            base.OnSaveInstanceState (outState);
+            outState.PutInt (ExtraCurrentItem, viewPager.CurrentItem);
         }
 
         public override void OnStart ()
@@ -123,28 +142,22 @@ namespace Toggl.Joey.UI.Fragments
 
         public void NavigatePage (int direction)
         {
-            viewPager.SetCurrentItem (viewPager.CurrentItem + direction, true);
-            backDate = viewPager.CurrentItem + direction - PagesCount / 2;
-            UpdatePeriod ();
-        }
+            var newItem = viewPager.CurrentItem + direction;
+            newItem = Math.Max (0, Math.Min (newItem, PagesCount - 1));
 
-        public override void OnResume ()
-        {
-            base.OnResume ();
-            viewPager.Adapter = new MainPagerAdapter (ChildFragmentManager);
-            viewPager.CurrentItem = PagesCount / 2;
-            timePeriod.Text = FormattedDateSelector ();
-        }
-
-        private void UpdatePager ()
-        {
-            var adapter = (MainPagerAdapter)viewPager.Adapter;
-            adapter.ZoomLevel = zoomPeriod;
-            foreach (var item in adapter.FragmentList) {
-                item.SetZoomLevel ( zoomPeriod);
-                item.EnsureLoaded ();
+            if (newItem != viewPager.CurrentItem) {
+                viewPager.SetCurrentItem (newItem, true);
+                backDate = newItem - StartPage;
+                UpdatePeriod ();
             }
-            UpdatePeriod ();
+        }
+
+        private void ResetAdapter()
+        {
+            var adapter = new MainPagerAdapter (ChildFragmentManager, zoomPeriod);
+            viewPager.Adapter = adapter;
+            viewPager.CurrentItem = StartPage;
+            backDate = 0;
         }
 
         private void UpdatePeriod ()
@@ -152,20 +165,13 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod.Text = FormattedDateSelector ();
         }
 
-        private async void OnPageSelected ( object sender, ViewPager.PageSelectedEventArgs e)
+        private void OnPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
-            adapter.ZoomLevel = zoomPeriod;
 
-            var frag = (ReportsFragment)adapter.GetItem ( e.Position);
-            if (frag.IsResumed) {
-                frag.EnsureLoaded ();
-                frag.UserVisibleHint = true;
-            } else {
-                await Task.Delay (200);
-                OnPageSelected (sender, e); // recursive?
-            }
-            backDate = e.Position - PagesCount / 2;
+            var frag = (ReportsFragment)adapter.GetItem (e.Position);
+            frag.UserVisibleHint = true;
+            backDate = e.Position - StartPage;
             UpdatePeriod ();
         }
 
@@ -233,34 +239,15 @@ namespace Toggl.Joey.UI.Fragments
 
         private class MainPagerAdapter : FragmentPagerAdapter
         {
-            public int Current = PagesCount / 2;
+            private readonly List<ReportsFragment> currentFragments = new List<ReportsFragment>();
+            private readonly ZoomLevel zoomLevel;
+            private readonly FragmentManager fragmentManager;
+            private int snapPosition;
 
-            private List<ReportsFragment> fragmentList;
-
-            private int lastPosition;
-
-            public List<ReportsFragment> FragmentList
+            public MainPagerAdapter (FragmentManager fragmentManager, ZoomLevel zoomLevel) : base (fragmentManager)
             {
-                get { return fragmentList; }
-            }
-
-            private ZoomLevel zoomLevel = ZoomLevel.Week;
-
-            private FragmentManager fragmentManager;
-
-            public ZoomLevel ZoomLevel
-            {
-                get {
-                    return zoomLevel;
-                } set {
-                    zoomLevel = value;
-                }
-            }
-
-            public MainPagerAdapter (FragmentManager fm) : base (fm)
-            {
-                fragmentList = new List<ReportsFragment>();
-                fragmentManager = fm;
+                this.fragmentManager = fragmentManager;
+                this.zoomLevel = zoomLevel;
             }
 
             public override int Count
@@ -270,38 +257,39 @@ namespace Toggl.Joey.UI.Fragments
 
             public override Java.Lang.Object InstantiateItem (ViewGroup container, int position)
             {
-                var obj =  (ReportsFragment)base.InstantiateItem (container, position);
-                fragmentList.Add (obj);
-                obj.Position = lastPosition;
-                obj.SetZoomLevel (zoomLevel);
-                obj.PositionChanged += ChangeReportsPosition;
-                return obj;
+                var frag = (ReportsFragment)base.InstantiateItem (container, position);
+                frag.Position = snapPosition;
+                frag.PositionChanged += ChangeReportsPosition;
+                currentFragments.Add (frag);
+                return frag;
             }
 
             public override void DestroyItem (ViewGroup container, int position, Java.Lang.Object @object)
             {
-                var obj = (ReportsFragment)@object;
-                fragmentList.Remove (obj);
-                obj.PositionChanged -= ChangeReportsPosition;
-                base.DestroyItem (container, position, @object);
+                var frag = (ReportsFragment)@object;
+                frag.PositionChanged -= ChangeReportsPosition;
+                currentFragments.Remove (frag);
+                base.DestroyItem (container, position, frag);
             }
 
             public override Fragment GetItem (int position)
             {
-                var item = FragmentList.Find (r => r.Period == (position - PagesCount / 2));
-                var result =  item ?? new ReportsFragment ((position - PagesCount / 2), zoomLevel);
-                result.SetZoomLevel (zoomLevel);
-                result.Position = lastPosition;
-                return result;
+                var period = position - StartPage;
+                return currentFragments.Find (frag => frag.Period == period)
+                       ?? new ReportsFragment (period, zoomLevel);
             }
 
-            private void ChangeReportsPosition ( object sender, EventArgs args )
+            private void ChangeReportsPosition (object sender, EventArgs args )
             {
                 var pos = ((ReportsFragment)sender).Position;
-                foreach (var item in FragmentList) {
-                    item.Position = pos;
+                if (snapPosition == pos) {
+                    return;
                 }
-                lastPosition = pos;
+
+                snapPosition = pos;
+                foreach (var frag in currentFragments) {
+                    frag.Position = pos;
+                }
             }
         }
     }

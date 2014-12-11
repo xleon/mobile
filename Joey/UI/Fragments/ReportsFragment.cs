@@ -91,6 +91,12 @@ namespace Toggl.Joey.UI.Fragments
             controllerPool = null;
         }
 
+        public override void OnResume ()
+        {
+            base.OnResume ();
+            EnsureLoaded ();
+        }
+
         private void OnControllerSnapPositionChanged (object sender, EventArgs e)
         {
             // Cascade event to our listeners
@@ -116,9 +122,18 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public async void EnsureLoaded ()
+        public override bool UserVisibleHint
         {
-            if (isLoading || controller == null || controller.Data != null) {
+            get { return base.UserVisibleHint; }
+            set {
+                base.UserVisibleHint = value;
+                EnsureLoaded ();
+            }
+        }
+
+        private async void EnsureLoaded ()
+        {
+            if (isLoading || !UserVisibleHint || controller == null || controller.Data != null) {
                 return;
             }
 
@@ -135,11 +150,6 @@ namespace Toggl.Joey.UI.Fragments
             } finally {
                 isLoading = false;
             }
-        }
-
-        public void SetZoomLevel (ZoomLevel zoomlevel)
-        {
-            Arguments.PutInt (ReportZoomArgument, (int)zoomlevel);
         }
 
         public sealed class Controller : Java.Lang.Object, ViewGroup.IOnHierarchyChangeListener

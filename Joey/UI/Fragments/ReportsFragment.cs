@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Android.Animation;
+using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
@@ -17,44 +17,15 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public enum ChartPosition {
-        Top = 0,
-        Bottom = 1
-    }
-
     public class ReportsFragment : Fragment
     {
         private static readonly string ReportPeriodArgument = "com.toggl.timer.report_period";
         private static readonly string ReportZoomArgument = "com.toggl.timer.report_zoom";
 
-        public event EventHandler PositionChanged;
-
-        private SnappyLayout snappyLayout;
-        private BarChart barChart;
-        private PieChart pieChart;
-        private TextView totalValue;
-        private ListView listView;
-        private TextView billableValue;
-        private SummaryReportView summaryReport;
         private bool isLoading;
-
-        private ChartPosition position;
-
-        public ChartPosition Position
-        {
-            get {
-                return position;
-            } set {
-                if (position == value) {
-                    return;
-                }
-                position = value;
-
-                if (snappyLayout != null) {
-                    snappyLayout.ActiveChild = (int)position;
-                }
-            }
-        }
+        private Controller controller;
+        private Pool<Controller> controllerPool;
+        private int position;
 
         public int Period
         {
@@ -69,22 +40,14 @@ namespace Toggl.Joey.UI.Fragments
 
         public ZoomLevel ZoomLevel
         {
-
             get {
-                string zoomValue = ZoomLevel.Week.ToString ();
+                var zoomValue = ZoomLevel.Week;
                 if (Arguments != null) {
-                    zoomValue = Arguments.GetString (ReportZoomArgument, zoomValue);
+                    zoomValue = (ZoomLevel)Arguments.GetInt (ReportZoomArgument, (int)zoomValue);
                 }
-                return (ZoomLevel)Enum.Parse (typeof (ZoomLevel), zoomValue);
+                return zoomValue;
             }
         }
-
-        public bool IsClean
-        {
-            get;
-            set;
-        }
-
 
         public ReportsFragment ()
         {
@@ -94,94 +57,83 @@ namespace Toggl.Joey.UI.Fragments
         {
             var args = new Bundle ();
             args.PutInt (ReportPeriodArgument, period);
-            args.PutString (ReportZoomArgument, zoom.ToString());
+            args.PutInt (ReportZoomArgument, (int)zoom);
 
             Arguments = args;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.ReportsFragment, container, false);
-            snappyLayout = view.FindViewById<SnappyLayout> (Resource.Id.SnappyLayout);
-            snappyLayout.ActiveChild = (int)position;
-            snappyLayout.ActiveChildChanged += OnSnappyActiveChildChanged;
-            barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
-            pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
-            listView = view.FindViewById<ListView> (Resource.Id.ReportList);
-            listView.ItemClick += OnListItemClick;
-
-            totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
-            billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
-
-            return view;
-        }
-
-        private void OnSnappyActiveChildChanged (object sender, EventArgs e)
-        {
-            var value = (ChartPosition)snappyLayout.ActiveChild;
-            if (position == value) {
-                return;
+            var pagerFragment = ParentFragment as ReportsPagerFragment;
+            if (pagerFragment == null) {
+                return new View (Activity);
             }
 
-            position = value;
+            controllerPool = pagerFragment.ReportsControllers;
+
+            controller = controllerPool.Obtain();
+            controller.SnapPosition = position;
+            controller.SnapPositionChanged += OnControllerSnapPositionChanged;
+
+            return controller.View;
+        }
+
+        public override void OnDestroyView ()
+        {
+            base.OnDestroyView ();
+
+            if (controller != null) {
+                controller.SnapPositionChanged -= OnControllerSnapPositionChanged;
+                controllerPool.Release (controller);
+                controller = null;
+            }
+
+            controllerPool = null;
+        }
+
+        private void OnControllerSnapPositionChanged (object sender, EventArgs e)
+        {
+            // Cascade event to our listeners
             if (PositionChanged != null) {
                 PositionChanged (this, EventArgs.Empty);
             }
         }
 
-        public override void OnStart ()
+        public event EventHandler PositionChanged;
+
+        public int Position
         {
-            base.OnStart ();
-            listView.LayoutMode = ViewLayoutMode.ClipBounds;
-            listView.SetClipToPadding (false);
-            IsClean = true;
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Reports";
-        }
-
-        #region ListFragment
-
-        public void OnListItemClick ( object sender, AdapterView.ItemClickEventArgs args)
-        {
-            var adapter = listView.Adapter as ReportProjectAdapter;
-            if (pieChart.CurrentSlice == args.Position) {
-                pieChart.SelectSlice (-1);
-                adapter.SetFocus (-1);
-            } else {
-                pieChart.SelectSlice (args.Position);
-                adapter.SetFocus (args.Position);
-            }
-        }
-
-        private void OnSliceSelect (int pos)
-        {
-            var adapter = listView.Adapter as ReportProjectAdapter;
-            adapter.SetFocus (pos);
-            if (pos != -1) {
-                listView.SmoothScrollToPositionFromTop (pos, 0);
-            }
-        }
-
-        #endregion
-
-        public async void LoadElements ()
-        {
-            if ( IsClean) {
-                isLoading = true;
-                summaryReport = new SummaryReportView ();
-                summaryReport.Period = ZoomLevel;
-                await summaryReport.Load (Period);
-                isLoading = false;
-                IsClean = false;
-
-                if (summaryReport.Activity != null) {
-                    totalValue.Text = summaryReport.TotalGrand;
-                    billableValue.Text = summaryReport.TotalBillale;
-                    listView.Adapter = new ReportProjectAdapter ( Activity, summaryReport.Projects);
-                    GeneratePieChart ();
-                    barChart.Reset (summaryReport);
-                    IsClean = false;
+            get {
+                if (controller == null) {
+                    return position;
                 }
+                return controller.SnapPosition;
+            } set {
+                position = value;
+                if (controller != null) {
+                    controller.SnapPosition = position;
+                }
+            }
+        }
+
+        public async void EnsureLoaded ()
+        {
+            if (isLoading || controller == null || controller.Data != null) {
+                return;
+            }
+
+            isLoading = true;
+            try {
+                var data = new SummaryReportView() {
+                    Period = ZoomLevel,
+                };
+                await data.Load (Period);
+
+                if (controller != null) {
+                    controller.Data = data;
+                }
+            } finally {
+                isLoading = false;
             }
         }
 
@@ -190,33 +142,157 @@ namespace Toggl.Joey.UI.Fragments
             Arguments.PutString (ReportZoomArgument, zoomlevel.ToString());
         }
 
-        private void GeneratePieChart ()
+        public sealed class Controller : IDisposable
         {
-            pieChart.Reset ();
-            var listener = new SliceListener ();
-            pieChart.SetOnSliceClickedListener (listener);
-            pieChart.SliceClicked += OnSliceSelect;
-            foreach (var project in summaryReport.Projects) {
-                var slice = new PieSlice ();
-                slice.Value = project.TotalTime;
-                slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
-                pieChart.AddSlice (slice);
-            }
-            pieChart.Refresh ();
-        }
+            private Context ctx;
+            private View rootView;
+            private SnappyLayout snappyLayout;
+            private BarChart barChart;
+            private PieChart pieChart;
+            private TextView totalValue;
+            private ListView listView;
+            private TextView billableValue;
 
-        public class SliceListener : PieChart.IOnSliceClickedListener
-        {
-            public void OnClick (int index)
+            private SummaryReportView data;
+
+            public Controller (Context ctx)
             {
-            }
-        }
+                this.ctx = ctx;
+                var inflater = LayoutInflater.From (ctx);
 
-        protected void ChangeViewsPositions ( int posY)
-        {
-            listView.Layout (listView.Left, posY, listView.Right, posY + listView.Bottom);
-            barChart.Layout (listView.Left, posY, listView.Right, posY + listView.Bottom);
-            listView.Layout (listView.Left, posY, listView.Right, posY + listView.Bottom);
+                var view = rootView = inflater.Inflate (Resource.Layout.ReportsFragment, null, false);
+                snappyLayout = view.FindViewById<SnappyLayout> (Resource.Id.SnappyLayout);
+                barChart = view.FindViewById<BarChart> (Resource.Id.BarChart);
+                pieChart = view.FindViewById<PieChart> (Resource.Id.PieChart);
+                listView = view.FindViewById<ListView> (Resource.Id.ReportList);
+                totalValue = view.FindViewById<TextView> (Resource.Id.TotalValue);
+                billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
+
+                snappyLayout.ActiveChildChanged += OnSnappyActiveChildChanged;
+
+                pieChart.SliceClicked += OnSliceSelect;
+
+                listView.LayoutMode = ViewLayoutMode.ClipBounds;
+                listView.SetClipToPadding (false);
+                listView.ItemClick += OnListItemClick;
+            }
+
+            public void Dispose ()
+            {
+                snappyLayout.ActiveChildChanged -= OnSnappyActiveChildChanged;
+                pieChart.SliceClicked -= OnSliceSelect;
+                listView.ItemClick -= OnListItemClick;
+
+                DisposeAndNull (ref totalValue);
+                DisposeAndNull (ref billableValue);
+                DisposeAndNull (ref listView);
+                DisposeAndNull (ref barChart);
+                DisposeAndNull (ref pieChart);
+                DisposeAndNull (ref snappyLayout);
+                DisposeAndNull (ref rootView);
+            }
+
+            private static void DisposeAndNull<T> (ref T disposable)
+            where T : class, IDisposable
+            {
+                if (disposable != null) {
+                    disposable.Dispose ();
+                    disposable = null;
+                }
+            }
+
+            private void OnListItemClick (object sender, AdapterView.ItemClickEventArgs args)
+            {
+                // TODO: Review
+                var adapter = listView.Adapter as ReportProjectAdapter;
+                if (pieChart.CurrentSlice == args.Position) {
+                    pieChart.SelectSlice (-1);
+                    adapter.SetFocus (-1);
+                } else {
+                    pieChart.SelectSlice (args.Position);
+                    adapter.SetFocus (args.Position);
+                }
+            }
+
+            private void OnSliceSelect (int pos)
+            {
+                // TODO: Review
+                var adapter = listView.Adapter as ReportProjectAdapter;
+                if (adapter != null) {
+                    adapter.SetFocus (pos);
+                    if (pos != -1) {
+                        listView.SmoothScrollToPositionFromTop (pos, 0);
+                    }
+                }
+            }
+
+            private void OnSnappyActiveChildChanged (object sender, EventArgs e)
+            {
+                // Cascade the event down to our listeners
+                if (SnapPositionChanged != null) {
+                    SnapPositionChanged (this, EventArgs.Empty);
+                }
+            }
+
+            public View View
+            {
+                get { return rootView; }
+            }
+
+            public int SnapPosition
+            {
+                get { return snappyLayout.ActiveChild; }
+                set { snappyLayout.ActiveChild = value; }
+            }
+
+            public event EventHandler SnapPositionChanged;
+
+            public SummaryReportView Data
+            {
+                get { return data; }
+                set {
+                    if (value == data) {
+                        return;
+                    }
+
+                    data = value;
+
+                    // TODO: Return all project rows to pool
+
+                    if (data == null) {
+                        // Reset everything to blank
+                        totalValue.Text = String.Empty;
+                        billableValue.Text = String.Empty;
+                        barChart.Reset (null);
+                        ResetPieChart (null);
+                        listView.Adapter = null;
+                    } else {
+                        // Bind the data to the view
+                        totalValue.Text = data.TotalGrand;
+                        billableValue.Text = data.TotalBillale;
+                        barChart.Reset (data);
+                        ResetPieChart (data);
+                        listView.Adapter = new ReportProjectAdapter (ctx, data.Projects);
+                    }
+                }
+            }
+
+            private void ResetPieChart (SummaryReportView data)
+            {
+                pieChart.Reset ();
+
+                if (data != null) {
+                    foreach (var project in data.Projects) {
+                        var slice = new PieSlice ();
+                        slice.Value = project.TotalTime;
+                        slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
+                        pieChart.AddSlice (slice);
+                    }
+                    pieChart.Refresh ();
+                } else {
+                    pieChart.Invalidate ();
+                }
+            }
         }
 
         private class ReportProjectAdapter : BaseAdapter<ReportProject>
@@ -226,9 +302,9 @@ namespace Toggl.Joey.UI.Fragments
             private TextView projectName;
             private TextView projectDuration;
             private int focus = -1;
-            private Android.App.Activity context;
+            private Context context;
 
-            public ReportProjectAdapter ( Android.App.Activity ctx, List<ReportProject> dataView)
+            public ReportProjectAdapter (Context ctx, List<ReportProject> dataView)
             {
                 this.dataView = dataView;
                 context = ctx;
@@ -261,7 +337,7 @@ namespace Toggl.Joey.UI.Fragments
                 View view = convertView;
 
                 if (convertView == null) {
-                    view = context.LayoutInflater.Inflate (Resource.Layout.ReportsProjectListItem, parent, false);
+                    view = LayoutInflater.From (context).Inflate (Resource.Layout.ReportsProjectListItem, parent, false);
                     view.Tag = new ProjectViewHolder (view);
                 }
                 var holder = (ProjectViewHolder)view.Tag;

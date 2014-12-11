@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
+using Toggl.Joey.UI.Utils;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
@@ -25,6 +28,8 @@ namespace Toggl.Joey.UI.Fragments
         private ImageButton nextPeriod;
         private TextView timePeriod;
         private int backDate;
+        private Context ctx;
+        private Pool<ReportsFragment.Controller> reportsControllerPool;
 
         private ZoomLevel zoomPeriod;
 
@@ -36,6 +41,39 @@ namespace Toggl.Joey.UI.Fragments
                 zoomPeriod = value;
                 UpdatePager ();
             }
+        }
+
+        public Pool<ReportsFragment.Controller> ReportsControllers
+        {
+            get { return reportsControllerPool; }
+        }
+
+        public override void OnCreate (Bundle savedInstanceState)
+        {
+            base.OnCreate (savedInstanceState);
+
+            ctx = Activity;
+            reportsControllerPool = new Pool<ReportsFragment.Controller> (CreateController, ResetController) {
+                Count = 3,
+            };
+        }
+
+        private ReportsFragment.Controller CreateController()
+        {
+            return new ReportsFragment.Controller (ctx);
+        }
+
+        private void ResetController (ReportsFragment.Controller inst)
+        {
+            // Remove from parent
+            var parent = inst.View.Parent as ViewGroup;
+            if (parent != null) {
+                parent.RemoveView (inst.View);
+            }
+
+            // Reset data
+            inst.Data = null;
+            inst.SnapPosition = 0;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -60,6 +98,13 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroyView ();
         }
 
+        public override void OnStart ()
+        {
+            base.OnStart ();
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Reports";
+        }
+
         public void NavigatePage (int direction)
         {
             viewPager.SetCurrentItem (viewPager.CurrentItem + direction, true);
@@ -81,8 +126,7 @@ namespace Toggl.Joey.UI.Fragments
             adapter.ZoomLevel = zoomPeriod;
             foreach (var item in adapter.FragmentList) {
                 item.SetZoomLevel ( zoomPeriod);
-                item.IsClean = true;
-                item.LoadElements ();
+                item.EnsureLoaded ();
             }
             UpdatePeriod ();
         }
@@ -99,7 +143,7 @@ namespace Toggl.Joey.UI.Fragments
 
             var frag = (ReportsFragment)adapter.GetItem ( e.Position);
             if (frag.IsResumed) {
-                frag.LoadElements ();
+                frag.EnsureLoaded ();
                 frag.UserVisibleHint = true;
             } else {
                 await Task.Delay (200);
@@ -177,7 +221,7 @@ namespace Toggl.Joey.UI.Fragments
 
             private List<ReportsFragment> fragmentList;
 
-            private ChartPosition lastPosition;
+            private int lastPosition;
 
             public List<ReportsFragment> FragmentList
             {

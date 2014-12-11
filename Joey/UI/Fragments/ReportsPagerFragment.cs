@@ -35,6 +35,9 @@ namespace Toggl.Joey.UI.Fragments
         private Context ctx;
         private Pool<View> projectListItemPool;
         private Pool<ReportsFragment.Controller> reportsControllerPool;
+        private FrameLayout syncErrorBar;
+        private ImageButton syncRetry;
+
 
         public ZoomLevel ZoomLevel
         {
@@ -114,9 +117,12 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
             previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
             nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
-
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
+            
+            syncErrorBar = view.FindViewById<FrameLayout> (Resource.Id.ReportsSyncBar);
+            syncRetry = view.FindViewById<ImageButton> (Resource.Id.ReportsSyncRetryButton);
+            syncRetry.Click += (sender, e) => UpdatePager();
 
             ResetAdapter ();
             UpdatePeriod ();
@@ -124,7 +130,6 @@ namespace Toggl.Joey.UI.Fragments
             if (savedInstanceState != null) {
                 viewPager.CurrentItem = savedInstanceState.GetInt (ExtraCurrentItem, viewPager.CurrentItem);
             }
-
             return view;
         }
 

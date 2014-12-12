@@ -69,7 +69,6 @@ namespace Toggl.Phoebe.Data.Reports
                 } else {
                     log.Warning (Tag, exc, "Failed to fetch reports.");
                 }
-
                 _isError = ! (exc is TaskCanceledException);
             } finally {
                 CalculateReportData ();

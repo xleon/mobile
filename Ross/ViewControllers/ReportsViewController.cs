@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
@@ -11,7 +13,7 @@ using Toggl.Ross.Views;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class ReportsViewController : UIViewController
+    public class ReportsViewController : UIViewController, InfiniteScrollView<ReportView>.IInfiniteScrollViewSource
     {
         private ZoomLevel _zoomLevel;
 
@@ -24,7 +26,7 @@ namespace Toggl.Ross.ViewControllers
                     return;
                 }
                 _zoomLevel = value;
-                scrollView.RefreshVisibleReportView ();
+                scrollView.RefreshVisibleView ();
             }
         }
 
@@ -32,8 +34,11 @@ namespace Toggl.Ross.ViewControllers
         private DateSelectorView dateSelectorView;
         private TopBorder topBorder;
         private SummaryReportView dataSource;
-        private InfiniteScrollView scrollView;
+        private InfiniteScrollView<ReportView> scrollView;
+        private SyncStatusViewController.StatusView statusView;
+        private List<ReportView> cachedReports;
         private int _timeSpaceIndex;
+        private bool showStatus;
 
         const float padding  = 24;
         const float navBarHeight = 64;
@@ -45,6 +50,7 @@ namespace Toggl.Ross.ViewControllers
             EdgesForExtendedLayout = UIRectEdge.None;
             menuController = new ReportsMenuController ();
             dataSource = new SummaryReportView ();
+            cachedReports = new List<ReportView>();
 
             _zoomLevel = ZoomLevel.Week;
             _timeSpaceIndex = 0;
@@ -80,19 +86,26 @@ namespace Toggl.Ross.ViewControllers
                 scrollView.SetPageIndex ( 1, true);
             };
 
-            scrollView = new InfiniteScrollView ();
-            scrollView.OnChangeReport += (sender, e) => {
+            scrollView = new InfiniteScrollView<ReportView> ( this);
+            scrollView.Delegate = new InfiniteScrollDelegate();
+            scrollView.OnChangePage += (sender, e) => {
                 _timeSpaceIndex = scrollView.PageIndex;
-                var reportView = scrollView.VisibleReportView;
+                var reportView = (ReportView)scrollView.CurrentPage;
                 reportView.ZoomLevel = ZoomLevel;
                 reportView.TimeSpaceIndex = _timeSpaceIndex;
                 reportView.LoadData();
                 ChangeReportState();
             };
 
+            statusView = new SyncStatusViewController.StatusView () {
+                Retry = RetrySync,
+                Cancel = Dismiss,
+            };
+
             Add (scrollView);
             Add (dateSelectorView);
             Add (topBorder);
+            Add (statusView);
 
             ChangeReportState ();
             NavigationController.InteractivePopGestureRecognizer.Enabled = false;
@@ -104,6 +117,7 @@ namespace Toggl.Ross.ViewControllers
             topBorder.Frame = new RectangleF (0.0f, 0.0f, View.Bounds.Width, 2.0f);
             dateSelectorView.Frame = new RectangleF (0, View.Bounds.Height - selectorHeight, View.Bounds.Width, selectorHeight);
             scrollView.Frame = new RectangleF (0.0f, 0.0f, View.Bounds.Width, View.Bounds.Height - selectorHeight);
+            LayoutStatusBar ();
         }
 
         public override void LoadView ()
@@ -173,6 +187,89 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
             return result;
+        }
+
+        #region StatusBar
+
+        private void LayoutStatusBar ()
+        {
+            var size = View.Frame.Size;
+            var statusY = showStatus ? size.Height - selectorHeight : size.Height + 2f;
+            statusView.Frame = new RectangleF ( 0, statusY, size.Width, selectorHeight);
+        }
+
+        private void RetrySync ()
+        {
+            Debug.WriteLine ("RetrySync");
+        }
+
+        private void Dismiss ()
+        {
+            StatusBarShown = false;
+        }
+
+        private bool StatusBarShown
+        {
+            get { return showStatus; }
+            set {
+                if (showStatus == value) {
+                    return;
+                }
+                showStatus = value;
+                UIView.Animate (0.5f, LayoutStatusBar);
+            }
+        }
+
+        #endregion
+
+        #region IInfiniteScrollViewSource implementation
+
+        public ReportView CreateView ()
+        {
+            ReportView view;
+            if (cachedReports.Count == 0) {
+                view = new ReportView ();
+            } else {
+                view = cachedReports[0];
+                cachedReports.RemoveAt (0);
+            }
+            if ( scrollView.Pages.Count > 0) {
+                view.Position = scrollView.CurrentPage.Position;
+            }
+            return view;
+        }
+
+        public void Dispose (ReportView view)
+        {
+            var reportView = view;
+            if (reportView.IsClean) {
+                reportView.StopReloadData ();
+            }
+        }
+
+        public bool ShouldStartScroll ()
+        {
+            var currentReport = scrollView.CurrentPage;
+
+            if (!currentReport.Dragging) {
+                currentReport.ScrollEnabled = false;
+                foreach (var item in scrollView.Pages) {
+                    var report = item;
+                    report.Position = currentReport.Position;
+                }
+            }
+            return !currentReport.Dragging;
+        }
+
+        #endregion
+
+        internal class InfiniteScrollDelegate : UIScrollViewDelegate
+        {
+            public override void DecelerationEnded (UIScrollView scrollView)
+            {
+                var infiniteScroll = (InfiniteScrollView<ReportView>)scrollView;
+                infiniteScroll.CurrentPage.ScrollEnabled = true;
+            }
         }
 
         internal class TopBorder : UIView

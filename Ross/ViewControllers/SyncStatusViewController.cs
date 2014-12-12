@@ -146,7 +146,7 @@ namespace Toggl.Ross.ViewControllers
             get { return contentViewController.NavigationItem; }
         }
 
-        private class StatusView : UIView
+        public class StatusView : UIView
         {
             private UIButton retryButton;
             private UIButton cancelButton;

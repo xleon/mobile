@@ -39,8 +39,6 @@ namespace Toggl.Joey.UI.Views
         private float innerRadius;
         private bool loadAnimate;
 
-
-        private IOnSliceClickedListener listener;
         public event SliceClickedEventHandler SliceClicked;
 
         public PieChart (Context context, IAttributeSet attrs) : base (context, attrs)
@@ -80,16 +78,6 @@ namespace Toggl.Joey.UI.Views
         public void AddSlice (PieSlice slice)
         {
             dataObject.Add (slice);
-        }
-
-        public void SetOnSliceClickedListener (IOnSliceClickedListener listener)
-        {
-            this.listener = listener;
-        }
-
-        public interface IOnSliceClickedListener
-        {
-            void OnClick (int index);
         }
 
         public void SelectSlice (int position)

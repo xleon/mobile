@@ -1,10 +1,10 @@
 ﻿using System;
-using NUnit.Framework;
-using Toggl.Phoebe.Data;
-using XPlatUtils;
-using Toggl.Phoebe.Data.DataObjects;
 using System.Linq;
+using NUnit.Framework;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests
 {

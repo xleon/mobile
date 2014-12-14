@@ -7,15 +7,16 @@ using Android.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Reports;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
+using Toggl.Joey.UI.Utils;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
-using Toggl.Phoebe.Data.Reports;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -282,7 +283,7 @@ namespace Toggl.Joey.UI.Fragments
             {
                 var period = position - StartPage;
                 return currentFragments.Find (frag => frag.Period == period)
-                    ?? new ReportsFragment (period, zoomLevel);
+                       ?? new ReportsFragment (period, zoomLevel);
             }
 
             private void ChangeReportsPosition (object sender, EventArgs args )

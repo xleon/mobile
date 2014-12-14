@@ -122,10 +122,9 @@ namespace Toggl.Ross.ViewControllers
             isSaving = true;
 
             try {
-
                 // Check for existing name
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync ( model.Name);
+                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync ( model.Name, nameTextField.Text);
 
                 if (existWithName) {
                     var alert = new UIAlertView (

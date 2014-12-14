@@ -141,13 +141,6 @@ namespace Toggl.Joey.UI.Fragments
 
             isSaving = true;
             try {
-
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync ( nameEditText.Text);
-                if (existWithName) {
-                    return;
-                }
-
                 var workspaceModel = workspace;
                 var timeEntryModel = timeEntry;
 
@@ -155,12 +148,21 @@ namespace Toggl.Joey.UI.Fragments
                     return;
                 }
 
-                var project = new ProjectModel () {
-                    Workspace = workspaceModel,
-                    Name = nameEditText.Text,
-                    Color = ProjectColor,
-                    IsActive = true,
-                };
+                ProjectModel project;
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var existingProjectData = await dataStore.Table<ProjectData>().QueryAsync ( p => p.Name == nameEditText.Text);
+
+                if (existingProjectData != null) {
+                    project = new ProjectModel ( existingProjectData);
+                } else {
+                    project = new ProjectModel () {
+                        Workspace = workspaceModel,
+                        Name = nameEditText.Text,
+                        Color = ProjectColor
+                    };
+                }
+
+                project.IsActive = true;
                 await project.SaveAsync ();
 
                 if (timeEntryModel != null) {

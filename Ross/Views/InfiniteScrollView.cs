@@ -221,7 +221,7 @@ namespace Toggl.Ross.Views
             firstView = pages.First();
             while ( CGRectGetMaxX ( firstView.Frame) < minX) {
                 firstView.RemoveFromSuperview ();
-                viewSource.Dispose (lastView);
+                viewSource.Dispose (firstView);
                 pages.Remove (firstView);
                 firstView = pages.First();
             }

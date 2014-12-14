@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
@@ -88,18 +87,11 @@ namespace Toggl.Ross.ViewControllers
 
             scrollView = new InfiniteScrollView<ReportView> ( this);
             scrollView.Delegate = new InfiniteScrollDelegate();
-            scrollView.OnChangePage += (sender, e) => {
-                _timeSpaceIndex = scrollView.PageIndex;
-                var reportView = (ReportView)scrollView.CurrentPage;
-                reportView.ZoomLevel = ZoomLevel;
-                reportView.TimeSpaceIndex = _timeSpaceIndex;
-                reportView.LoadData();
-                ChangeReportState();
-            };
+            scrollView.OnChangePage += (sender, e) => LoadReportData ();
 
             statusView = new SyncStatusViewController.StatusView () {
-                Retry = RetrySync,
-                Cancel = Dismiss,
+                Retry = LoadReportData,
+                Cancel = () => StatusBarShown = false,
             };
 
             Add (scrollView);
@@ -136,6 +128,16 @@ namespace Toggl.Ross.ViewControllers
         {
             dataSource.Period = _zoomLevel;
             dateSelectorView.DateContent = FormattedIntervalDate (_timeSpaceIndex);
+        }
+
+        private void LoadReportData()
+        {
+            _timeSpaceIndex = scrollView.PageIndex;
+            var reportView = scrollView.CurrentPage;
+            reportView.ZoomLevel = ZoomLevel;
+            reportView.TimeSpaceIndex = _timeSpaceIndex;
+            reportView.LoadData();
+            ChangeReportState();
         }
 
         private string FormattedIntervalDate (int backDate)
@@ -198,16 +200,6 @@ namespace Toggl.Ross.ViewControllers
             statusView.Frame = new RectangleF ( 0, statusY, size.Width, selectorHeight);
         }
 
-        private void RetrySync ()
-        {
-            Debug.WriteLine ("RetrySync");
-        }
-
-        private void Dismiss ()
-        {
-            StatusBarShown = false;
-        }
-
         private bool StatusBarShown
         {
             get { return showStatus; }
@@ -236,6 +228,9 @@ namespace Toggl.Ross.ViewControllers
             if ( scrollView.Pages.Count > 0) {
                 view.Position = scrollView.CurrentPage.Position;
             }
+            view.LoadStart += ReportLoadStart;
+            view.LoadFinished += ReportLoadFinished;
+
             return view;
         }
 
@@ -245,6 +240,8 @@ namespace Toggl.Ross.ViewControllers
             if (reportView.IsClean) {
                 reportView.StopReloadData ();
             }
+            view.LoadStart -= ReportLoadStart;
+            view.LoadFinished -= ReportLoadFinished;
         }
 
         public bool ShouldStartScroll ()
@@ -262,6 +259,24 @@ namespace Toggl.Ross.ViewControllers
         }
 
         #endregion
+
+        private void ReportLoadStart ( object sender, EventArgs args)
+        {
+            statusView.IsSyncing |= StatusBarShown;
+        }
+
+        private void ReportLoadFinished ( object sender, EventArgs args)
+        {
+            var report = (ReportView)sender;
+            if (report.IsError ) {
+                // Make sure that error is shown
+                statusView.IsSyncing = false;
+                StatusBarShown = true;
+            } else {
+                // Successful sync, clear ignoring flag
+                StatusBarShown = false;
+            }
+        }
 
         internal class InfiniteScrollDelegate : UIScrollViewDelegate
         {

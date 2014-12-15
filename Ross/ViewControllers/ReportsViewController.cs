@@ -92,6 +92,8 @@ namespace Toggl.Ross.ViewControllers
             statusView = new SyncStatusViewController.StatusView () {
                 Retry = LoadReportData,
                 Cancel = () => StatusBarShown = false,
+                StatusFailText = "ReportsStatusFailText".Tr(),
+                StatusSyncingText = "ReportsStatusSyncText".Tr()
             };
 
             Add (scrollView);
@@ -136,6 +138,7 @@ namespace Toggl.Ross.ViewControllers
             var reportView = scrollView.CurrentPage;
             reportView.ZoomLevel = ZoomLevel;
             reportView.TimeSpaceIndex = _timeSpaceIndex;
+            StatusBarShown &= reportView.IsClean;
             reportView.LoadData();
             ChangeReportState();
         }

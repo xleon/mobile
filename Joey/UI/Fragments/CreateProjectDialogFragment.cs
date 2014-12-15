@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
@@ -152,8 +153,8 @@ namespace Toggl.Joey.UI.Fragments
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var existingProjectData = await dataStore.Table<ProjectData>().QueryAsync ( p => p.Name == nameEditText.Text);
 
-                if (existingProjectData != null) {
-                    project = new ProjectModel ( existingProjectData);
+                if (existingProjectData.Count > 0) {
+                    project = new ProjectModel ( existingProjectData.First());
                 } else {
                     project = new ProjectModel () {
                         Workspace = workspaceModel,

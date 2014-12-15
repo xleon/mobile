@@ -151,7 +151,7 @@ namespace Toggl.Joey.UI.Fragments
 
                 ProjectModel project;
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var existingProjectData = await dataStore.Table<ProjectData>().QueryAsync ( p => p.Name == nameEditText.Text);
+                var existingProjectData = await dataStore.Table<ProjectData>().QueryAsync ( p => p.Name == nameEditText.Text && p.ClientId == null);
 
                 if (existingProjectData.Count > 0) {
                     project = new ProjectModel ( existingProjectData.First());

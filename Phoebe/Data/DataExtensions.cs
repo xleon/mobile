@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
-using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
 {
@@ -81,16 +79,14 @@ namespace Toggl.Phoebe.Data
             return rows.Count != 0;
         }
 
-        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ProjectData> query, string projectName, string clientName)
+        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ProjectData> query, string projectName, Guid clientId)
         {
             List<ProjectData> existingProjects;
-            Guid? clientId;
-            if (!String.IsNullOrEmpty (clientName)) {
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var clients = await dataStore.Table<ClientData> ().QueryAsync (r => r.Name == clientName).ConfigureAwait (false);
-                clientId = clients.First().Id;
+            if ( clientId != Guid.Empty) {
+                existingProjects = await query.QueryAsync (r => r.Name == projectName && r.ClientId == clientId).ConfigureAwait (false);
+            } else {
+                existingProjects = await query.QueryAsync (r => r.Name == projectName && r.ClientId == null).ConfigureAwait (false);
             }
-            existingProjects = await query.QueryAsync (r => r.Name == projectName && r.ClientId == clientId).ConfigureAwait (false);
             return existingProjects.Count != 0;
         }
     }

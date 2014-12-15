@@ -25,6 +25,7 @@ namespace Toggl.Ross.ViewControllers
                 }
                 _zoomLevel = value;
                 scrollView.RefreshVisibleReportView ();
+                SummaryReportView.SaveReportsState (ZoomLevel);
             }
         }
 
@@ -53,7 +54,6 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewWillDisappear (bool animated)
         {
             NavigationController.InteractivePopGestureRecognizer.Enabled = true;
-            SummaryReportView.SaveReportsState (ZoomLevel);
             base.ViewWillDisappear (animated);
         }
 

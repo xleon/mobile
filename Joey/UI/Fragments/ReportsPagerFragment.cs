@@ -47,6 +47,7 @@ namespace Toggl.Joey.UI.Fragments
                 zoomLevel = value;
                 ResetAdapter ();
                 UpdatePeriod ();
+                SummaryReportView.SaveReportsState ( zoomLevel);
             }
         }
 
@@ -130,7 +131,6 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroyView ()
         {
             viewPager.PageSelected -= OnPageSelected;
-            SummaryReportView.SaveReportsState ( zoomLevel);
             base.OnDestroyView ();
         }
 

@@ -275,11 +275,11 @@ namespace Toggl.Joey.Data
 
         public static readonly string PropertyLastReportZoomViewed = GetPropertyName (s => s.LastReportZoomViewed);
 
-        public string LastReportZoomViewed
+        public int? LastReportZoomViewed
         {
-            get { return GetString (PhoebeLastReportZoomKey); }
+            get { return GetInt (PhoebeLastReportZoomKey); }
             set {
-                SetString (PhoebeLastReportZoomKey, value);
+                SetInt (PhoebeLastReportZoomKey, value);
                 OnSettingChanged (PropertyLastReportZoomViewed);
             }
         }

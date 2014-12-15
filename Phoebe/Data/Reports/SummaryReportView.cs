@@ -226,14 +226,14 @@ namespace Toggl.Phoebe.Data.Reports
         public static ZoomLevel GetLastZoomViewed()
         {
             var settings = ServiceContainer.Resolve<ISettingsStore> ();
-            var str = settings.LastReportZoomViewed ?? ZoomLevel.Week.ToString();
-            return (ZoomLevel)Enum.Parse (typeof (ZoomLevel), str);
+            var value = settings.LastReportZoomViewed ?? (int)ZoomLevel.Week;
+            return (ZoomLevel)value;
         }
 
         public static void SaveReportsState ( ZoomLevel zoomLevel)
         {
             var settings = ServiceContainer.Resolve<ISettingsStore> ();
-            settings.LastReportZoomViewed = zoomLevel.ToString ();
+            settings.LastReportZoomViewed = (int)zoomLevel;
         }
 
         private string LabelForDate (DateTime date)

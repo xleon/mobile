@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace Toggl.Phoebe.Data
 {
     public enum ZoomLevel {
-        Week,
-        Month,
-        Year
+        Week = 1,
+        Month = 2,
+        Year = 3
     }
 
     public struct ReportActivity {

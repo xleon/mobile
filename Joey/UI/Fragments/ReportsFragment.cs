@@ -6,13 +6,11 @@ using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Analytics;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
-using XPlatUtils;
-using Toggl.Joey.UI.Utils;
-using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -319,7 +317,8 @@ namespace Toggl.Joey.UI.Fragments
                 pieChart.Reset ();
 
                 if (data != null) {
-                    foreach (var project in data.Projects) {
+                    var projectList = data.GetProjectsByAngle (3.0f);
+                    foreach (var project in projectList) {
                         var slice = new PieSlice ();
                         slice.Value = project.TotalTime;
                         slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);

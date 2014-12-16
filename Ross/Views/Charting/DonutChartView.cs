@@ -56,9 +56,7 @@ namespace Toggl.Ross.Views.Charting
                     grayCircle.Alpha = 1;
                 }
 
-                const float maxAngle = 3.0f / 360f; // angle in degrees
-                var totalValue = Convert.ToSingle ( _reportView.Projects.Sum (p => p.TotalTime));
-                DonutProjectList = _reportView.Projects.Where (p => Convert.ToSingle ( p.TotalTime) / totalValue > maxAngle).ToList ();
+                DonutProjectList = _reportView.GetProjectsByAngle (3.0f);
                 TableProjectList = new List<ReportProject> (_reportView.Projects);
                 currencies = _reportView.TotalCost.OrderBy (s => s.Length).Reverse<string> ().ToList<string> ();
 

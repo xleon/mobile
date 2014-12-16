@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
@@ -220,6 +221,17 @@ namespace Toggl.Phoebe.Data.Reports
             }
 
             return start.AddYears (1).AddDays (-1);
+        }
+
+        public List<ReportProject> GetProjectsByAngle ( float minimunAngle)
+        {
+            if (dataObject == null) {
+                return new List<ReportProject> ();
+            }
+
+            float angle = minimunAngle / 360f; // angle in degrees
+            var totalValue = Convert.ToSingle ( dataObject.Projects.Sum (p => p.TotalTime));
+            return dataObject.Projects.Where (p => Convert.ToSingle ( p.TotalTime) / totalValue > angle).ToList ();
         }
 
         public static ZoomLevel GetLastZoomViewed()

@@ -164,7 +164,7 @@ namespace Toggl.Joey.UI.Fragments
             private TextView totalValue;
             private ListView listView;
             private TextView billableValue;
-
+            private int focusedPosition = -1;
             private SummaryReportView data;
 
             public Controller (Context ctx, Pool<View> projectListItemPool)
@@ -183,7 +183,7 @@ namespace Toggl.Joey.UI.Fragments
 
                 snappyLayout.ActiveChildChanged += OnSnappyActiveChildChanged;
 
-                pieChart.SliceClicked += OnSliceSelect;
+                pieChart.ActiveSliceChanged += OnPieActiveSliceChanged;
 
                 listView.LayoutMode = ViewLayoutMode.ClipBounds;
                 listView.SetClipToPadding (false);
@@ -197,7 +197,7 @@ namespace Toggl.Joey.UI.Fragments
 
                 if (disposing) {
                     snappyLayout.ActiveChildChanged -= OnSnappyActiveChildChanged;
-                    pieChart.SliceClicked -= OnSliceSelect;
+                    pieChart.ActiveSliceChanged -= OnPieActiveSliceChanged;
                     listView.ItemClick -= OnListItemClick;
                     listView.SetOnHierarchyChangeListener (null);
 
@@ -220,25 +220,31 @@ namespace Toggl.Joey.UI.Fragments
                 }
             }
 
-            private void OnListItemClick (object sender, AdapterView.ItemClickEventArgs args)
+            private void SetFocusedPosition (int value, bool scrollToPosition = false)
             {
+                if (value == focusedPosition) {
+                    return;
+                }
+
+                focusedPosition = value;
+
                 var adapter = (ReportProjectAdapter)listView.Adapter;
-                if (pieChart.CurrentSlice == args.Position) {
-                    pieChart.SelectSlice (-1);
-                    adapter.SetFocus (-1);
-                } else {
-                    pieChart.SelectSlice (args.Position);
-                    adapter.SetFocus (args.Position);
+                adapter.SetFocus (focusedPosition);
+                pieChart.ActiveSlice = focusedPosition;
+
+                if (scrollToPosition && focusedPosition >= 0) {
+                    listView.SmoothScrollToPositionFromTop (focusedPosition, 0);
                 }
             }
 
-            private void OnSliceSelect (int pos)
+            private void OnListItemClick (object sender, AdapterView.ItemClickEventArgs args)
             {
-                var adapter = (ReportProjectAdapter)listView.Adapter;
-                adapter.SetFocus (pos);
-                if (pos != -1) {
-                    listView.SmoothScrollToPositionFromTop (pos, 0);
-                }
+                SetFocusedPosition (focusedPosition != args.Position ? args.Position : -1);
+            }
+
+            private void OnPieActiveSliceChanged (object sender, EventArgs args)
+            {
+                SetFocusedPosition (pieChart.ActiveSlice, scrollToPosition: true);
             }
 
             private void OnSnappyActiveChildChanged (object sender, EventArgs e)
@@ -301,33 +307,16 @@ namespace Toggl.Joey.UI.Fragments
                         totalValue.Text = String.Empty;
                         billableValue.Text = String.Empty;
                         barChart.Reset (null);
-                        ResetPieChart (null);
+                        pieChart.Reset (null);
                         listView.Adapter = null;
                     } else {
                         // Bind the data to the view
                         totalValue.Text = data.TotalGrand;
                         billableValue.Text = data.TotalBillale;
                         barChart.Reset (data);
-                        ResetPieChart (data);
+                        pieChart.Reset (data);
                         listView.Adapter = new ReportProjectAdapter (this, data.Projects);
                     }
-                }
-            }
-
-            private void ResetPieChart (SummaryReportView data)
-            {
-                pieChart.Reset ();
-
-                if (data != null) {
-                    foreach (var project in data.Projects) {
-                        var slice = new PieSlice ();
-                        slice.Value = project.TotalTime;
-                        slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
-                        pieChart.AddSlice (slice);
-                    }
-                    pieChart.Refresh ();
-                } else {
-                    pieChart.Invalidate ();
                 }
             }
         }

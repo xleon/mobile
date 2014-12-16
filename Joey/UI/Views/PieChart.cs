@@ -1,350 +1,533 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Android.Animation;
 using Android.Content;
 using Android.Graphics;
 using Android.Text;
 using Android.Util;
 using Android.Views;
+using Android.Widget;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Reports;
 
 namespace Toggl.Joey.UI.Views
 {
-    public delegate void SliceClickedEventHandler (int position);
-
-    public class PieChart : View
+    public class PieChart : ViewGroup
     {
-        private List<PieSlice> dataObject = new List<PieSlice> ();
-        private Path canvasPath = new Path ();
-        private Paint canvasPaint = new Paint ();
-        private TextPaint textPaint = new TextPaint ();
-        private Rect textBoundsRect = new Rect ();
-        private Color emptyStateColor = Color.ParseColor ("#808080");
-        private Color baseCircleColor = Color.ParseColor ("#EDEDED");
-        private Color centerTextColor = Color.ParseColor ("#666666");
-        private const int chartThickness = 65;
-        private const int slicePadding = 20;
-        private const float angleCorrection = 270;
-        private int indexSelected = -1;
-        private int deselectedIndex = -1;
-        private int animationProgress;
-        private int centerHeaderTextSize = 30;
-        private int centerTextSize = 20;
-        private long totalValue;
-        private long selectedSliceValue;
-        private float currentAngle;
-        private float centerX;
-        private float centerY;
-        private float slideAnimationProgress;
-        private float radius;
-        private float innerRadius;
-        private bool loadAnimate;
-
-        public event SliceClickedEventHandler SliceClicked;
+        private const float ActiveSliceScale = 1.1f;
+        private const float NonActiveSliceScale = 1f;
+        private static Color emptyPieColor = Color.ParseColor ("#EDEDED");
+        private readonly List<SliceView> slices = new List<SliceView> ();
+        private SliceView backgroundView;
+        private View loadingOverlayView;
+        private View emptyOverlayView;
+        private View statsOverlayView;
+        private TextView statsTimeTextView;
+        private TextView statsMoneyTextView;
+        private int defaultRadius;
+        private int overlayInset;
+        private int activeSlice = -1;
+        private SummaryReportView data;
+        private Animator currentRevealAnimation;
+        private Animator currentSelectAnimation;
 
         public PieChart (Context context, IAttributeSet attrs) : base (context, attrs)
         {
+            Initialize (context);
         }
 
         public PieChart (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
         {
+            Initialize (context);
         }
 
-        public void Reset ()
+        private void Initialize (Context ctx)
         {
-            dataObject.Clear ();
-            indexSelected = -1;
+            var dm = ctx.Resources.DisplayMetrics;
+            var inflater = LayoutInflater.FromContext (ctx);
+
+            overlayInset = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
+
+            backgroundView = new SliceView (ctx) {
+                StartAngle = 0,
+                EndAngle = 360,
+                Color = emptyPieColor,
+            };
+            AddView (backgroundView);
+
+            loadingOverlayView = inflater.Inflate (Resource.Layout.PieChartLoading, this, false);
+            AddView (loadingOverlayView);
+
+            emptyOverlayView = inflater.Inflate (Resource.Layout.PieChartEmpty, this, false);
+            emptyOverlayView.Visibility = ViewStates.Gone;
+            AddView (emptyOverlayView);
+
+            statsOverlayView = inflater.Inflate (Resource.Layout.PieChartStats, this, false);
+            statsOverlayView.Visibility = ViewStates.Gone;
+            AddView (statsOverlayView);
+
+            statsTimeTextView = statsOverlayView.FindViewById<TextView> (Resource.Id.TimeTextView);
+            statsMoneyTextView = statsOverlayView.FindViewById<TextView> (Resource.Id.MoneyTextView);
         }
 
-        public void Refresh ()
+        protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
         {
-            InitializeDrawParams ();
-            StartDrawAnimation ();
+            var dm = Resources.DisplayMetrics;
+
+            var width = (int)Math.Max (
+                            TypedValue.ApplyDimension (ComplexUnitType.Dip, 270, dm),
+                            MeasureSpec.GetSize (widthMeasureSpec)
+                        );
+            var height = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 270, dm);
+
+            // Determine default radius for slices
+            var sliceSide = Math.Min (width, height);
+            var oldRadius = defaultRadius;
+            defaultRadius = (int) (sliceSide / 2 / ActiveSliceScale);
+
+            // Readjust the radius if it has changed
+            if (defaultRadius != oldRadius) {
+                backgroundView.Radius = defaultRadius;
+                foreach (var slice in slices) {
+                    slice.Radius = defaultRadius;
+                }
+            }
+
+            // Measure overlays
+            var overlaySide = (defaultRadius - overlayInset) * 2;
+            var overlaySizeSpec = MeasureSpec.MakeMeasureSpec (overlaySide, MeasureSpecMode.Exactly);
+            loadingOverlayView.Measure (overlaySizeSpec, overlaySizeSpec);
+            emptyOverlayView.Measure (overlaySizeSpec, overlaySizeSpec);
+            statsOverlayView.Measure (overlaySizeSpec, overlaySizeSpec);
+
+            SetMeasuredDimension (width, height);
         }
 
-        private string FormatMilliseconds (long ms)
+        protected override void OnLayout (bool changed, int l, int t, int r, int b)
+        {
+            var dm = Resources.DisplayMetrics;
+            var width = r - l;
+            var height = b - t;
+
+            // Layout slices as rectangles in the center of this view
+            var sliceSide = Math.Min (width, height);
+            var sliceLeft = (width - sliceSide) / 2;
+            var sliceTop = (height - sliceSide) / 2;
+
+            backgroundView.Layout (sliceLeft, sliceTop, sliceLeft + sliceSide, sliceTop + sliceSide);
+
+            // Position overlays
+            var overlaySide = (int) (sliceSide / ActiveSliceScale) - overlayInset * 2;
+            var overlayLeft = (width - overlaySide) / 2;
+            var overlayTop = (height - overlaySide) / 2;
+            loadingOverlayView.Layout (overlayLeft, overlayTop, overlayLeft + overlaySide, overlayTop + overlaySide);
+            emptyOverlayView.Layout (overlayLeft, overlayTop, overlayLeft + overlaySide, overlayTop + overlaySide);
+            statsOverlayView.Layout (overlayLeft, overlayTop, overlayLeft + overlaySide, overlayTop + overlaySide);
+
+            foreach (var slice in slices) {
+                slice.Layout (sliceLeft, sliceTop, sliceLeft + sliceSide, sliceTop + sliceSide);
+            }
+        }
+
+        public void Reset (SummaryReportView data)
+        {
+            this.data = data;
+
+            // Cancel old animation
+            if (currentRevealAnimation != null) {
+                currentRevealAnimation.Cancel ();
+                currentRevealAnimation = null;
+            }
+            if (currentSelectAnimation != null) {
+                currentSelectAnimation.Cancel ();
+                currentSelectAnimation = null;
+            }
+
+            var totalSlices = data == null || data.Projects == null ? 0 : data.Projects.Count;
+
+            SetActiveSlice (-1, updateStats: false);
+            backgroundView.Visibility = ViewStates.Visible;
+            backgroundView.Radius = defaultRadius;
+
+            ResetSlices (totalSlices);
+            if (totalSlices > 0) {
+                var totalTime = data.Projects.Sum (x => x.TotalTime);
+                var startAngle = 0f;
+
+                for (var i = 0; i < totalSlices; i++) {
+                    var slice = slices [i];
+                    var project = data.Projects [i];
+                    var percentOfAll = (float)project.TotalTime / totalTime;
+
+                    slice.Visibility = ViewStates.Gone;
+                    slice.Radius = defaultRadius;
+                    slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
+                    slice.StartAngle = startAngle;
+                    startAngle += percentOfAll * 360;
+                    // TODO: project.TotalTime
+                }
+            }
+
+            // Detect state
+            var isLoading = data == null || data.IsLoading;
+            var isEmpty = !isLoading && totalSlices == 0;
+
+            if (isLoading) {
+                // Loading state
+                loadingOverlayView.Visibility = ViewStates.Visible;
+                loadingOverlayView.Alpha = 1f;
+
+                emptyOverlayView.Visibility = ViewStates.Gone;
+                statsOverlayView.Visibility = ViewStates.Gone;
+            } else if (isEmpty) {
+                // Error state
+                loadingOverlayView.Visibility = ViewStates.Visible;
+                loadingOverlayView.Alpha = 1f;
+
+                emptyOverlayView.Visibility = ViewStates.Visible;
+                emptyOverlayView.Alpha = 0f;
+
+                statsOverlayView.Visibility = ViewStates.Gone;
+
+                // Animate overlay in
+                var scene = new AnimatorSet ();
+
+                var fadeIn = ObjectAnimator.OfFloat (emptyOverlayView, "alpha", 0f, 1f).SetDuration (500);
+                var fadeOut = ObjectAnimator.OfFloat (loadingOverlayView, "alpha", 1f, 0f).SetDuration (500);
+                fadeOut.AnimationEnd += delegate {
+                    loadingOverlayView.Visibility = ViewStates.Gone;
+                };
+
+                scene.Play (fadeOut);
+                scene.Play (fadeIn).After (3 * fadeOut.Duration / 4);
+
+                currentRevealAnimation = scene;
+                scene.Start();
+            } else {
+                // Normal state
+                var scene = new AnimatorSet ();
+
+                // Fade loading message out
+                statsOverlayView.Visibility = ViewStates.Visible;
+                statsOverlayView.Alpha = 0f;
+
+                var fadeOverlayOut = ObjectAnimator.OfFloat (loadingOverlayView, "alpha", 1f, 0f).SetDuration (500);
+                fadeOverlayOut.AnimationEnd += delegate {
+                    loadingOverlayView.Visibility = ViewStates.Gone;
+                };
+                scene.Play (fadeOverlayOut);
+
+                var fadeOverlayIn = ObjectAnimator.OfFloat (statsOverlayView, "alpha", 0f, 1f).SetDuration (500);
+                scene.Play (fadeOverlayIn).After (3 * fadeOverlayOut.Duration / 4);
+
+                var donutReveal = ValueAnimator.OfFloat (0, 360);
+                donutReveal.SetDuration (750);
+                donutReveal.Update += (sender, e) => ShowSlices ((float)e.Animation.AnimatedValue);
+                scene.Play (donutReveal).After (fadeOverlayOut.Duration / 2);
+
+                currentRevealAnimation = scene;
+                scene.Start();
+            }
+
+            UpdateStats ();
+            RequestLayout ();
+        }
+
+        private void ShowSlices (float endAngle)
+        {
+            for (var i = 0; i < slices.Count; i++) {
+                var slice = slices [i];
+                var sliceEndAngle = i + 1 < slices.Count ? slices [i + 1].StartAngle : 360;
+
+                if (slice.StartAngle <= endAngle) {
+                    slice.EndAngle = Math.Min (sliceEndAngle, endAngle);
+                    slice.Visibility = ViewStates.Visible;
+                } else {
+                    slice.Visibility = ViewStates.Gone;
+                }
+            }
+
+            backgroundView.Visibility = endAngle >= 360 ? ViewStates.Gone : ViewStates.Visible;
+        }
+
+        private void ResetSlices (int neededSlices)
+        {
+            var existingSlices = slices.Count;
+            var totalRows = (int)Math.Max (existingSlices, neededSlices);
+            var expandSlices = neededSlices > existingSlices;
+            var contractSlices = existingSlices > neededSlices;
+
+            if (expandSlices) {
+                for (var i = existingSlices; i < totalRows; i++) {
+                    // Create new row
+                    var slice = new SliceView (Context);
+                    slice.Click += OnSliceClicked;
+                    slices.Add (slice);
+
+                    // Add new slice views
+                    AddView (slice, 1 + i);
+                }
+            } else if (contractSlices) {
+                // Remove unused rows and views
+                var sliceCount = existingSlices - neededSlices;
+                for (var i = neededSlices; i < existingSlices; i++) {
+                    var slice = slices [0];
+                    slice.Click -= OnSliceClicked;
+                }
+                slices.RemoveRange (neededSlices, sliceCount);
+
+                var startIndex = 1 + neededSlices;
+                var viewCount = sliceCount;
+                RemoveViews (startIndex, viewCount);
+            }
+        }
+
+        private void OnSliceClicked (object sender, EventArgs e)
+        {
+            var pos = slices.IndexOf ((SliceView)sender);
+            ActiveSlice = pos != ActiveSlice ? pos : -1;
+        }
+
+        private void UpdateStats()
+        {
+            if (data == null) {
+                return;
+            }
+
+            if (ActiveSlice >= 0 && ActiveSlice < data.Projects.Count) {
+                var proj = data.Projects [ActiveSlice];
+                statsTimeTextView.Text = FormatMilliseconds (proj.TotalTime);
+                statsMoneyTextView.Text = String.Join (", ", proj.Currencies.Select (c => String.Format ("{0} {1}", c.Amount, c.Currency)));
+            } else {
+                statsTimeTextView.Text = FormatMilliseconds (data.Projects.Sum (x => x.TotalTime));
+                statsMoneyTextView.Text = String.Join (", ", data.TotalCost);
+            }
+        }
+
+        public event EventHandler ActiveSliceChanged;
+
+        public int ActiveSlice
+        {
+            get { return activeSlice; }
+            set { SetActiveSlice (value, animate: true); }
+        }
+
+        private void SetActiveSlice (int value, bool animate = false, bool updateStats = true)
+        {
+            if (slices.Count == 1 || value >= slices.Count) {
+                value = -1;
+            }
+
+            if (value == activeSlice) {
+                return;
+            }
+
+            activeSlice = value;
+
+            if (updateStats) {
+                UpdateStats ();
+            }
+
+            if (animate) {
+                // Finish currently running animations
+                if (currentSelectAnimation != null) {
+                    currentSelectAnimation.Cancel ();
+                }
+
+                // Animate changes
+                var scene = new AnimatorSet ();
+                for (var i = 0; i < slices.Count; i++) {
+                    var slice = slices [i];
+
+                    if (i == activeSlice) {
+                        // Slice activating animations
+                        if (slice.Alpha < 1) {
+                            var fadeIn = ObjectAnimator.OfFloat (slice, "alpha", slice.Alpha, 1).SetDuration (500);
+                            scene.Play (fadeIn);
+                        }
+                        if (slice.ScaleX != ActiveSliceScale) {
+                            var scaleXUp = ObjectAnimator.OfFloat (slice, "scaleX", slice.ScaleX, ActiveSliceScale).SetDuration (500);
+                            scene.Play (scaleXUp);
+                        }
+                        if (slice.ScaleY != ActiveSliceScale) {
+                            var scaleYUp = ObjectAnimator.OfFloat (slice, "scaleY", slice.ScaleY, ActiveSliceScale).SetDuration (500);
+                            scene.Play (scaleYUp);
+                        }
+                    } else if (activeSlice >= 0) {
+                        // Slice deactivating animations
+                        if (slice.Alpha > 0.5f) {
+                            var fadeOut = ObjectAnimator.OfFloat (slice, "alpha", slice.Alpha, 0.5f).SetDuration (300);
+                            scene.Play (fadeOut);
+                        }
+                        if (slice.ScaleX != NonActiveSliceScale) {
+                            var scaleXDown = ObjectAnimator.OfFloat (slice, "scaleX", slice.ScaleX, NonActiveSliceScale).SetDuration (300);
+                            scene.Play (scaleXDown);
+                        }
+                        if (slice.ScaleY != NonActiveSliceScale) {
+                            var scaleYDown = ObjectAnimator.OfFloat (slice, "scaleY", slice.ScaleY, NonActiveSliceScale).SetDuration (300);
+                            scene.Play (scaleYDown);
+                        }
+                    } else {
+                        // No slice selected animations
+                        if (slice.Alpha < 1) {
+                            var fadeIn = ObjectAnimator.OfFloat (slice, "alpha", slice.Alpha, 1).SetDuration (300);
+                            scene.Play (fadeIn);
+                        }
+                        if (slice.ScaleX != 1) {
+                            var scaleXDown = ObjectAnimator.OfFloat (slice, "scaleX", slice.ScaleX, 1f).SetDuration (300);
+                            scene.Play (scaleXDown);
+                        }
+                        if (slice.ScaleY != 1) {
+                            var scaleYDown = ObjectAnimator.OfFloat (slice, "scaleY", slice.ScaleY, 1f).SetDuration (300);
+                            scene.Play (scaleYDown);
+                        }
+                    }
+                }
+
+                currentSelectAnimation = scene;
+                scene.Start ();
+            }
+
+            // Notify listeners
+            if (ActiveSliceChanged != null) {
+                ActiveSliceChanged (this, EventArgs.Empty);
+            }
+        }
+
+        private static string FormatMilliseconds (long ms)
         {
             var timeSpan = TimeSpan.FromMilliseconds (ms);
             return String.Format ("{0}:{1:mm\\:ss}", Math.Floor (timeSpan.TotalHours).ToString ("00"), timeSpan);
         }
 
-        protected virtual void OnSliceSelected ()
+        private class SliceView : View
         {
-            var sliceClicked = SliceClicked;
-            if (sliceClicked != null) {
-                sliceClicked (indexSelected);
-            }
-        }
+            private readonly Paint slicePaint;
+            private readonly Path slicePath = new Path ();
+            private readonly RectF rect = new RectF();
+            private readonly int thickness;
+            private float startAngle;
+            private float endAngle;
+            private float radius;
 
-        public void AddSlice (PieSlice slice)
-        {
-            dataObject.Add (slice);
-        }
+            public SliceView (Context context) : base (context)
+            {
+                var dm = context.Resources.DisplayMetrics;
 
-        public void SelectSlice (int position)
-        {
-            if (position == -1) {
-                deselectedIndex = indexSelected;
-                StartSlideBackAnimation ();
-                indexSelected = position;
-            } else {
-                indexSelected = position;
-                StartSliceSlideAnimation ();
-            }
-        }
+                thickness = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
 
-        private void InitializeDrawParams()
-        {
-            centerX = Width / 2;
-            centerY = Height / 2;
-            radius = centerX < centerY ? centerX : centerY;
-            innerRadius = radius - chartThickness;
-        }
+                slicePaint = new Paint() {
+                    AntiAlias = true,
+                };
 
-        public override void Draw (Canvas canvas)
-        {
-            if (radius == 0) {
-                InitializeDrawParams ();
-            }
-            totalValue = 0;
-            foreach (PieSlice slice in dataObject) {
-                totalValue += slice.Value;
-            }
-            currentAngle = 0;
-            float loadAnimation = loadAnimate ? (float)animationProgress / 360F : 1F;
-            float sliceSlideOutAnimation = slideAnimationProgress / (float)slicePadding;
-
-            canvas.DrawColor (Color.Transparent);
-            canvasPaint.Reset ();
-            canvasPaint.AntiAlias = true;
-            canvasPaint.TextAlign = Paint.Align.Center;
-            canvasPath.Reset ();
-
-            if (loadAnimate || dataObject.Count == 0) {
-                canvasPath.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
-                canvasPath.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
-                canvasPaint.Color = baseCircleColor;
-                canvas.DrawPath (canvasPath, canvasPaint);
+                Clickable = true;
             }
 
-            if (dataObject.Count == 0) {
-                canvasPaint.Color = emptyStateColor;
-                canvasPaint.TextSize = centerHeaderTextSize;
-                canvas.DrawText (Resources.GetText (Resource.String.ReportsPieChartEmptyHeader), centerX, centerY, canvasPaint);
+            public override bool OnTouchEvent (MotionEvent e)
+            {
+                // Verify that the touch is in the drawn slice
+                var x = e.GetX() - Width / 2;
+                var y = e.GetY() - Height / 2;
 
-                textPaint.TextAlign = Paint.Align.Center;
-                textPaint.AntiAlias = true;
-                textPaint.Color = emptyStateColor;
-                textPaint.TextSize = centerTextSize;
-
-                StaticLayout emptyStateText = new StaticLayout (
-                    Resources.GetText (Resource.String.ReportsPieChartEmptyText),
-                    textPaint,
-                    300,
-                    StaticLayout.Alignment.AlignNormal,
-                    1,
-                    0,
-                    false
-                );
-                canvas.Translate (centerX, centerY + 10);
-                emptyStateText.Draw (canvas);
-                return;
-            }
-
-            int count = 0;
-            float currentSweep;
-            foreach (PieSlice slice in dataObject) {
-                currentSweep = ((float)slice.Value / (float)totalValue) * 360F;
-
-                slice.Path = slice.Path ?? new Path ();
-                slice.Path.Reset ();
-                if ((int)currentSweep == 360 && animationProgress == 360) { // only one project
-                    slice.Path.AddCircle (centerX, centerY, radius - slicePadding, Path.Direction.Cw);
-                    slice.Path.AddCircle (centerX, centerY, innerRadius - slicePadding, Path.Direction.Ccw);
-                } else {
-                    slice.Path.ArcTo (
-                        new RectF (
-                            centerX - radius + slicePadding,
-                            centerY - radius + slicePadding,
-                            centerX + radius - slicePadding,
-                            centerY + radius - slicePadding
-                        ),
-                        loadAnimation * currentAngle + angleCorrection,
-                        loadAnimation * currentSweep
-                    );
-                    slice.Path.ArcTo (
-                        new RectF (
-                            centerX - innerRadius + slicePadding,
-                            centerY - innerRadius + slicePadding,
-                            centerX + innerRadius - slicePadding,
-                            centerY + innerRadius - slicePadding
-                        ),
-                        loadAnimation * (currentAngle + currentSweep) + angleCorrection,
-                        loadAnimation * -currentSweep
-                    );
+                // Convert to polar coordinates and verify location of the touch event
+                var distance = Math.Sqrt (Math.Pow (x, 2) + Math.Pow (y, 2));
+                if (distance == 0 || distance < Radius - thickness || distance > Radius) {
+                    return false;
+                }
+                var angle = ((Math.Atan2 (y, x) + 5 * Math.PI / 2) % (2 * Math.PI)) * 180 / Math.PI;
+                if (angle < StartAngle || angle > EndAngle) {
+                    return false;
                 }
 
-                if (indexSelected != count && indexSelected != -1) {
-                    canvasPaint.Alpha = (int) (255 - sliceSlideOutAnimation * 127F); // fade out other slices if one is selected
-                }
-                if ((indexSelected == count || deselectedIndex == count) && (int)currentSweep != 360) {
-                    var sliceSector = currentAngle + (currentSweep / 2);
-                    var angleToRadian = sliceSector / (180 / Math.PI);
-                    var dx = (float)Math.Sin (angleToRadian) * slicePadding;
-                    var dy = (float)Math.Cos (angleToRadian) * slicePadding * -1;
-                    slice.Path.Offset (dx * sliceSlideOutAnimation, dy * sliceSlideOutAnimation);
-                    selectedSliceValue = slice.Value;
-                }
-
-                slice.Path.Close ();
-                slice.Region = new Region (
-                    (int) (centerX - radius),
-                    (int) (centerY - radius),
-                    (int) (centerX + radius),
-                    (int) (centerY + radius)
-                );
-
-                canvasPaint.Color = slice.Color;
-                canvas.DrawPath (slice.Path, canvasPaint);
-                currentAngle += currentSweep;
-                count++;
+                return base.OnTouchEvent (e);
             }
 
-            canvasPaint.Color = centerTextColor;
-            canvasPaint.TextAlign = Paint.Align.Center;
-            canvasPaint.TextSize = centerHeaderTextSize;
-            textBoundsRect = new Rect ();
-            string duration = FormatMilliseconds (selectedSliceValue > 0 ? selectedSliceValue : totalValue);
-            canvasPaint.GetTextBounds (duration, 0, duration.Length, textBoundsRect);
-            canvas.DrawText (duration, centerX, centerY + textBoundsRect.Height() / 2, canvasPaint);
-        }
+            protected override void OnDraw (Canvas canvas)
+            {
+                base.OnDraw (canvas);
 
-        public override bool DispatchTouchEvent (MotionEvent e)
-        {
-            Point point = new Point ();
-            point.X = (int)e.GetX ();
-            point.Y = (int)e.GetY ();
+                var width = canvas.Width;
+                var height = canvas.Height;
 
-            int clickedSlice = -1;
-            int count = 0;
+                // Center the canvas
+                canvas.Translate (width / 2f, height / 2f);
 
-            if (e.Action == MotionEventActions.Down) {
+                if (slicePath.IsEmpty) {
+                    if (startAngle == 0 && endAngle == 360) {
+                        slicePath.AddCircle (0, 0, radius - thickness, Path.Direction.Cw);
+                        slicePath.AddCircle (0, 0, radius, Path.Direction.Ccw);
+                        slicePath.Close ();
+                    } else {
+                        // Inner arc
+                        rect.Set (-radius + thickness, -radius + thickness, radius - thickness, radius - thickness);
+                        slicePath.ArcTo (rect, -90 + startAngle, endAngle - startAngle);
 
-                // get selected
-                foreach (PieSlice slice in dataObject) {
-                    var r = new Region ();
-                    r.SetPath (slice.Path, slice.Region);
-                    if (r.Contains (point.X, point.Y)) {
-                        clickedSlice = count;
+                        // Outer arc
+                        rect.Set (-radius, -radius, radius, radius);
+                        slicePath.ArcTo (rect, -90 + endAngle, startAngle - endAngle);
+
+                        slicePath.Close ();
                     }
-                    count++;
                 }
 
-                // set selected and deselected index
-                if (clickedSlice != -1) {
-                    deselectedIndex = (clickedSlice == indexSelected) ? clickedSlice : -1;
-                    indexSelected = (clickedSlice == indexSelected) ? -1 : clickedSlice;
-                    return true;
-                }
-
-                // deselect all
-                if (indexSelected != -1) {
-                    deselectedIndex = indexSelected;
-                    indexSelected = -1;
-                    return true;
-                }
-
+                canvas.DrawPath (slicePath, slicePaint);
             }
 
-            if (e.Action == MotionEventActions.Up) {
-                if (indexSelected != -1) {
-                    StartSliceSlideAnimation ();
-                } else {
-                    StartSlideBackAnimation ();
+            public float StartAngle
+            {
+                get { return startAngle; }
+                set {
+                    if (value == startAngle) {
+                        return;
+                    }
+
+                    startAngle = value;
+                    slicePath.Reset ();
+                    Invalidate ();
                 }
-
-                OnSliceSelected ();
-                return false;
-
             }
-            return false;
-        }
 
-        public void StartDrawAnimation ()
-        {
-            loadAnimate = true;
-            var animator = ValueAnimator.OfInt (1, 360);
-            animator.SetDuration (750);
-            animator.Update += (sender, e) => AnimationProgress = (int)e.Animation.AnimatedValue;
-            animator.Start ();
-        }
+            public float EndAngle
+            {
+                get { return endAngle; }
+                set {
+                    if (value == endAngle) {
+                        return;
+                    }
 
-        public void StartSliceSlideAnimation ()
-        {
-            var animator = ValueAnimator.OfInt (1, slicePadding);
-            animator.SetDuration (300);
-            animator.Update += (sender, e) => SlideAnimationProgress = (float)e.Animation.AnimatedValue;
-            animator.Start ();
-        }
-
-        public void StartSlideBackAnimation ()
-        {
-            var animator = ValueAnimator.OfInt (slicePadding, 1);
-            animator.SetDuration (300);
-            animator.Update += (sender, e) => SlideAnimationProgress = (float)e.Animation.AnimatedValue;
-            animator.Start ();
-        }
-
-        public float SlideAnimationProgress
-        {
-            get {
-                return slideAnimationProgress;
-            } set {
-                slideAnimationProgress = value;
-                if (deselectedIndex != -1 && slideAnimationProgress == 1) {
-                    deselectedIndex = -1;
+                    endAngle = value;
+                    slicePath.Reset ();
+                    Invalidate ();
                 }
-                PostInvalidate ();
             }
-        }
 
-        public int AnimationProgress
-        {
-            get {
-                return animationProgress;
-            } set {
-                if (value == 360) {
-                    loadAnimate = false;
+            public float Radius
+            {
+                get { return radius; }
+                set {
+                    if (value == radius) {
+                        return;
+                    }
+
+                    radius = value;
+                    slicePath.Reset ();
+                    Invalidate ();
                 }
-                animationProgress = value;
+            }
 
-                PostInvalidate ();
+            public Color Color
+            {
+                get { return slicePaint.Color; }
+                set {
+                    if (value == slicePaint.Color) {
+                        return;
+                    }
+
+                    slicePaint.Color = value;
+                    Invalidate ();
+                }
             }
         }
-
-        public int CurrentSlice
-        {
-            get {
-                return indexSelected;
-            } set {
-                indexSelected = value;
-                PostInvalidate ();
-            }
-        }
-
-    }
-
-    public class PieSlice
-    {
-        public string Title { get; set; }
-
-        public Color Color { get; set; }
-
-        public long Value { get; set; }
-
-        public Path Path { get; set; }
-
-        public Region Region { get; set; }
     }
 }
-
-

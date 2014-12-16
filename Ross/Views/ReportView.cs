@@ -1,15 +1,20 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
+using System.Threading;
 using System.Threading.Tasks;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Views.Charting;
-using System.Threading;
 
 namespace Toggl.Ross.Views
 {
     public sealed class ReportView : UIView
     {
+        public event EventHandler LoadStart;
+
+        public event EventHandler LoadFinished;
+
         public ZoomLevel ZoomLevel
         {
             get;
@@ -26,6 +31,38 @@ namespace Toggl.Ross.Views
         {
             get;
             set;
+        }
+
+        public bool IsError
+        {
+            get {
+                return dataSource != null && dataSource.IsError;
+            }
+        }
+
+        private bool _loading;
+
+        public bool IsLoading
+        {
+            get { return _loading; }
+
+            private set {
+                if (_loading == value) {
+                    return;
+                }
+
+                _loading = value;
+
+                if (_loading) {
+                    if (LoadStart != null) {
+                        LoadStart.Invoke (this, new EventArgs ());
+                    }
+                } else {
+                    if (LoadFinished != null) {
+                        LoadFinished.Invoke (this, new EventArgs ());
+                    }
+                }
+            }
         }
 
         private ChartPosition _position;
@@ -95,7 +132,6 @@ namespace Toggl.Ross.Views
         private DonutChartView pieChart;
         private BarChartView barChart;
         private SummaryReportView dataSource;
-        private bool _loading;
         private float topY;
         private float downY;
         private CancellationTokenSource cts;
@@ -122,7 +158,7 @@ namespace Toggl.Ross.Views
         {
             if ( IsClean) {
                 try {
-                    _loading = true;
+                    IsLoading = true;
                     dataSource = new SummaryReportView ();
                     dataSource.Period = ZoomLevel;
 
@@ -136,12 +172,13 @@ namespace Toggl.Ross.Views
                     if ( !dataSource.IsLoading) {
                         barChart.ReportView = dataSource;
                         pieChart.ReportView = dataSource;
-                        IsClean = false;
                     }
-                } catch (System.Exception ex) {
+                    IsClean = IsError; // Declare ReportView as clean if an error occurs..
+
+                } catch (Exception ex) {
                     IsClean = true;
                 } finally {
-                    _loading = false;
+                    IsLoading = false;
                     _delaying = false;
                     cts.Dispose ();
                 }
@@ -150,7 +187,7 @@ namespace Toggl.Ross.Views
 
         public void StopReloadData()
         {
-            if (_loading) {
+            if (IsLoading) {
                 if (_delaying) { cts.Cancel (); }
                 dataSource.CancelLoad ();
             }

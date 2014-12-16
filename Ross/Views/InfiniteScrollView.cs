@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using MonoTouch.UIKit;
 using MonoTouch.CoreGraphics;
+using MonoTouch.UIKit;
 
 namespace Toggl.Ross.Views
 {
-    public class InfiniteScrollView : UIScrollView
+    public class InfiniteScrollView<TView> : UIScrollView where TView : UIView
     {
-        public event EventHandler OnChangeReport;
+        public event EventHandler OnChangePage;
 
         private int _pageIndex;
 
@@ -20,35 +20,42 @@ namespace Toggl.Ross.Views
             }
         }
 
-        private ReportView _visibleReportView;
+        private TView currentPage;
 
-        public ReportView VisibleReportView
+        public TView CurrentPage
         {
             get {
                 var pos = ConvertPointToView ( ContentOffset, _containerView).X;
-                foreach (var view in visibleViews)
+                foreach (var view in pages)
                     if ( Math.Abs (pos - view.Frame.X) <= PageWidth / 2) {
-                        _visibleReportView = view;
+                        currentPage = view;
                     }
 
-                return _visibleReportView;
+                return currentPage;
             }
         }
 
-        public InfiniteScrollView ()
+        public List<TView> Pages
         {
-            visibleViews = new List<ReportView> ();
-            cachedViews = new List<ReportView> ();
-            _containerView = new UIView ();
-            Add (_containerView);
-            ShowsHorizontalScrollIndicator = false;
-            PagingEnabled = true;
-            Delegate = new InfiniteScrollDelegate ();
+            get {
+                return pages;
+            }
         }
 
-        List<ReportView> visibleViews;
-        List<ReportView> cachedViews;
+        public InfiniteScrollView ( IInfiniteScrollViewSource viewSource)
+        {
+            this.viewSource = viewSource;
+            pages = new List<TView> ();
+            _containerView = new UIView ();
+            Add (_containerView);
+
+            ShowsHorizontalScrollIndicator = false;
+            PagingEnabled = true;
+        }
+
+        List<TView> pages;
         UIView _containerView;
+        IInfiniteScrollViewSource viewSource;
 
         public const float PageWidth = 320;
         private int tmpOffset;
@@ -64,23 +71,12 @@ namespace Toggl.Ross.Views
             if (distanceFromCenter > (contentWidth / 4.0f) && (distanceFromCenter - PageWidth/2) % PageWidth == 0) {
                 _pageIndex += Convert.ToInt32 ( ContentOffset.X / PageWidth) - tmpOffset;
                 ContentOffset = new PointF (centerOffsetX - PageWidth/2, currentOffset.Y);
-                foreach (var item in visibleViews) {
+                foreach (var item in pages) {
                     PointF center = _containerView.ConvertPointToView (item.Center, this);
                     center.X += centerOffsetX - currentOffset.X - PageWidth/2;
                     item.Center = ConvertPointToView (center, _containerView);
                 }
             }
-        }
-
-        public override bool GestureRecognizerShouldBegin (UIGestureRecognizer gestureRecognizer)
-        {
-            if (!VisibleReportView.Dragging) {
-                VisibleReportView.ScrollEnabled = false;
-                foreach (var item in visibleViews) {
-                    item.Position = VisibleReportView.Position;
-                }
-            }
-            return !VisibleReportView.Dragging;
         }
 
         public override void LayoutSubviews ()
@@ -99,8 +95,8 @@ namespace Toggl.Ross.Views
 
             if (prevPageIndex != PageIndex) {
                 prevPageIndex = PageIndex;
-                if (OnChangeReport != null) {
-                    OnChangeReport.Invoke (this, new EventArgs ());
+                if (OnChangePage != null) {
+                    OnChangePage.Invoke (this, new EventArgs ());
                 }
             }
         }
@@ -114,20 +110,20 @@ namespace Toggl.Ross.Views
             }
         }
 
-        public void RefreshVisibleReportView()
+        public void RefreshVisibleView()
         {
             if (Dragging) {
                 return;
             }
 
-            var currentView = visibleViews.Find (v => v.Frame.X.CompareTo ( ContentOffset.X) == 0);
+            var currentView = pages.Find (v => v.Frame.X.CompareTo ( ContentOffset.X) == 0);
             var center = currentView.Center;
-            var newReportView = InsertView ();
+            TView newView = InsertView ();
             var offSetY = ContentSize.Height;
             var frame = currentView.Frame;
 
             frame.Y += offSetY;
-            newReportView.Frame = frame;
+            newView.Frame = frame;
 
             UIView.Animate (0.6, 0.4, UIViewAnimationOptions.CurveEaseIn, () => { currentView.Alpha = 0.25f; }, null);
 
@@ -139,44 +135,37 @@ namespace Toggl.Ross.Views
 
             UIView.Animate (0.7, 0.6, UIViewAnimationOptions.CurveEaseInOut,
             () => {
-                newReportView.Center = center;
+                newView.Center = center;
             },() => {
-                foreach (var item in visibleViews) {
-                    if (item.IsClean) {
-                        item.StopReloadData ();
-                    }
+                foreach (var item in pages) {
+                    viewSource.Dispose ( item);
                     item.RemoveFromSuperview();
                 }
-                visibleViews.Clear();
-                visibleViews.Add ( newReportView);
-                if (OnChangeReport != null) {
-                    OnChangeReport.Invoke (this, new EventArgs ());
+                pages.Clear();
+                pages.Add (newView);
+                if (OnChangePage != null) {
+                    OnChangePage.Invoke (this, new EventArgs ());
                 }
             });
         }
 
-        private ReportView InsertView()
+        public override bool GestureRecognizerShouldBegin (UIGestureRecognizer gestureRecognizer)
         {
-            ReportView view;
-            if (cachedViews.Count == 0) {
-                view = new ReportView ();
-            } else {
-                view = cachedViews[0];
-                cachedViews.RemoveAt (0);
-            }
-            view.Frame = new RectangleF (0, 0, PageWidth, Bounds.Height);
+            return viewSource.ShouldStartScroll ();
+        }
 
-            if ( visibleViews.Count > 0) {
-                view.Position = VisibleReportView.Position;
-            }
+        private TView InsertView()
+        {
+            TView view = viewSource.CreateView ();
+            view.Frame = new RectangleF (0, 0, PageWidth, Bounds.Height);
             _containerView.Add (view);
             return view;
         }
 
         private float PlaceNewViewOnRight ( float rightEdge)
         {
-            ReportView view = InsertView ();
-            visibleViews.Add (view); // add rightmost label at the end of the array
+            TView view = InsertView ();
+            pages.Add (view); // add rightmost label at the end of the array
 
             RectangleF viewFrame = view.Frame;
             viewFrame.X = rightEdge;
@@ -186,8 +175,8 @@ namespace Toggl.Ross.Views
 
         private float PlaceNewViewOnLeft ( float leftEdge)
         {
-            ReportView view = InsertView ();
-            visibleViews.Insert ( 0, view); // add leftmost label at the beginning of the array
+            TView view = InsertView ();
+            pages.Insert ( 0, view); // add leftmost label at the beginning of the array
 
             RectangleF viewFrame = view.Frame;
             viewFrame.X = leftEdge - viewFrame.Width;
@@ -199,48 +188,42 @@ namespace Toggl.Ross.Views
         {
             // the upcoming tiling logic depends on there already being at least one label in the visibleLabels array, so
             // to kick off the tiling we need to make sure there's at least one label
-            if (visibleViews.Count == 0) {
+            if (pages.Count == 0) {
                 tmpOffset = Convert.ToInt32 (ContentOffset.X / PageWidth);
                 PlaceNewViewOnRight (minX);
-                _visibleReportView = visibleViews [0];
+                currentPage = pages [0];
             }
 
             // add views that are missing on right side
-            ReportView lastView = visibleViews [visibleViews.Count - 1];
+            TView lastView = pages [pages.Count - 1];
             float rightEdge = CGRectGetMaxX ( lastView.Frame);
             while ( rightEdge < maxX) {
                 rightEdge = PlaceNewViewOnRight (rightEdge);
             }
 
             // add views that are missing on left side
-            ReportView firstView = visibleViews [0];
+            TView firstView = pages [0];
             float leftEdge = CGRectGetMinX ( firstView.Frame);
             while ( leftEdge > minX) {
                 leftEdge = PlaceNewViewOnLeft (leftEdge);
             }
 
             // remove views that have fallen off right edge
-            lastView = visibleViews.Last();
+            lastView = pages.Last();
             while (lastView.Frame.X > maxX) {
                 lastView.RemoveFromSuperview ();
-                if (lastView.IsClean) {
-                    //cachedViews.Add (lastView);
-                    lastView.StopReloadData ();
-                }
-                visibleViews.Remove (lastView);
-                lastView = visibleViews.Last();
+                viewSource.Dispose (lastView);
+                pages.Remove (lastView);
+                lastView = pages.Last();
             }
 
             // remove views that have fallen off left edge
-            firstView = visibleViews.First();
+            firstView = pages.First();
             while ( CGRectGetMaxX ( firstView.Frame) < minX) {
                 firstView.RemoveFromSuperview ();
-                if (firstView.IsClean) {
-                    //cachedViews.Add (firstView);
-                    firstView.StopReloadData ();
-                }
-                visibleViews.Remove (firstView);
-                firstView = visibleViews.First();
+                viewSource.Dispose (firstView);
+                pages.Remove (firstView);
+                firstView = pages.First();
             }
         }
 
@@ -254,15 +237,15 @@ namespace Toggl.Ross.Views
             return rect.X + rect.Width;
         }
 
-    }
-
-    internal class InfiniteScrollDelegate : UIScrollViewDelegate
-    {
-        public override void DecelerationEnded (UIScrollView scrollView)
+        public interface IInfiniteScrollViewSource
         {
-            var infiniteScroll = (InfiniteScrollView)scrollView;
-            infiniteScroll.VisibleReportView.ScrollEnabled = true;
-        }
+            TView CreateView ();
 
+            void Dispose (TView view);
+
+            bool ShouldStartScroll();
+        }
     }
+
+
 }

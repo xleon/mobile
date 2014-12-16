@@ -146,12 +146,14 @@ namespace Toggl.Ross.ViewControllers
             get { return contentViewController.NavigationItem; }
         }
 
-        private class StatusView : UIView
+        public class StatusView : UIView
         {
             private UIButton retryButton;
             private UIButton cancelButton;
             private UILabel statusLabel;
             private bool isSyncing;
+            private string statusSyncingText;
+            private string statusFailText;
 
             public StatusView ()
             {
@@ -172,12 +174,35 @@ namespace Toggl.Ross.ViewControllers
 
                 this.Apply (Style.SyncStatus.BarBackground);
 
+                statusSyncingText = "SyncStatusSyncing".Tr ();
+                statusFailText = "SyncStatusFail".Tr ();
+
                 ResetState ();
             }
 
             public Action Retry { get; set; }
 
             public Action Cancel { get; set; }
+
+            public string StatusFailText
+            {
+                get {
+                    return statusFailText;
+                } set {
+                    statusFailText = value;
+                    ResetState ();
+                }
+            }
+
+            public string StatusSyncingText
+            {
+                get {
+                    return statusSyncingText;
+                } set {
+                    statusSyncingText = value;
+                    ResetState ();
+                }
+            }
 
             public override void LayoutSubviews ()
             {
@@ -203,13 +228,13 @@ namespace Toggl.Ross.ViewControllers
             {
                 if (isSyncing) {
                     retryButton.UserInteractionEnabled = cancelButton.UserInteractionEnabled = false;
-                    statusLabel.Text = "SyncStatusSyncing".Tr ();
+                    statusLabel.Text = statusSyncingText;
                     cancelButton.Hidden = true;
 
                     StartRetryRotation ();
                 } else {
                     retryButton.UserInteractionEnabled = cancelButton.UserInteractionEnabled = true;
-                    statusLabel.Text = "SyncStatusFail".Tr ();
+                    statusLabel.Text = statusFailText;
                     cancelButton.Hidden = false;
                 }
             }

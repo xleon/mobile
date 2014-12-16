@@ -21,6 +21,7 @@ namespace Toggl.Joey.Data
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
         private const string PhoebeExperimentIdKey = "phoebeExperimentId";
+        private const string PhoebeLastReportZoomKey = "lastReportZoomKey";
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
@@ -29,6 +30,7 @@ namespace Toggl.Joey.Data
         private const string IdleNotificationKey = "idleNotification";
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
         private const string ReadContinueDialogKey = "readContinueDialog";
+
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -268,6 +270,17 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (ReadContinueDialogKey, value ? 1 : 0);
                 OnSettingChanged (PropertyReadContinueDialog);
+            }
+        }
+
+        public static readonly string PropertyLastReportZoomViewed = GetPropertyName (s => s.LastReportZoomViewed);
+
+        public int? LastReportZoomViewed
+        {
+            get { return GetInt (PhoebeLastReportZoomKey); }
+            set {
+                SetInt (PhoebeLastReportZoomKey, value);
+                OnSettingChanged (PropertyLastReportZoomViewed);
             }
         }
     }

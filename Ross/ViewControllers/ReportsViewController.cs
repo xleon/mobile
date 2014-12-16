@@ -25,6 +25,7 @@ namespace Toggl.Ross.ViewControllers
                 }
                 _zoomLevel = value;
                 scrollView.RefreshVisibleReportView ();
+                SummaryReportView.SaveReportsState (ZoomLevel);
             }
         }
 
@@ -69,6 +70,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLoad ();
 
+            _zoomLevel = SummaryReportView.GetLastZoomViewed ();
             View.BackgroundColor = UIColor.White;
             menuController.Attach (this);
 
@@ -94,7 +96,6 @@ namespace Toggl.Ross.ViewControllers
             Add (dateSelectorView);
             Add (topBorder);
 
-            ChangeReportState ();
             NavigationController.InteractivePopGestureRecognizer.Enabled = false;
         }
 
@@ -114,7 +115,6 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidAppear (bool animated)
         {
             base.ViewDidAppear (animated);
-
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Reports";
         }
 

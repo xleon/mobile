@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using MonoTouch.CoreGraphics;
 using MonoTouch.UIKit;
 
@@ -18,6 +19,8 @@ namespace Toggl.Ross.Views
             get {
                 return _pageIndex + (Convert.ToInt32 ( ContentOffset.X / PageWidth) - tmpOffset);
             }
+
+
         }
 
         private TView currentPage;
@@ -42,6 +45,17 @@ namespace Toggl.Ross.Views
             }
         }
 
+        private int rightIndexLimit;
+
+        public int RightIndexLimit
+        {
+            get {
+                return rightIndexLimit;
+            } set {
+                rightIndexLimit = value;
+            }
+        }
+
         public InfiniteScrollView ( IInfiniteScrollViewSource viewSource)
         {
             this.viewSource = viewSource;
@@ -51,6 +65,7 @@ namespace Toggl.Ross.Views
 
             ShowsHorizontalScrollIndicator = false;
             PagingEnabled = true;
+            rightIndexLimit = 1;
         }
 
         List<TView> pages;
@@ -68,7 +83,7 @@ namespace Toggl.Ross.Views
             float centerOffsetX = (contentWidth - Bounds.Width) / 2.0f;
             float distanceFromCenter = Math.Abs ( currentOffset.X - centerOffsetX);
 
-            if (distanceFromCenter > (contentWidth / 4.0f) && (distanceFromCenter - PageWidth/2) % PageWidth == 0) {
+            if (distanceFromCenter > contentWidth / 4.0f && (distanceFromCenter - PageWidth/2) % PageWidth == 0) {
                 _pageIndex += Convert.ToInt32 ( ContentOffset.X / PageWidth) - tmpOffset;
                 ContentOffset = new PointF (centerOffsetX - PageWidth/2, currentOffset.Y);
                 foreach (var item in pages) {
@@ -79,9 +94,21 @@ namespace Toggl.Ross.Views
             }
         }
 
-        public override void LayoutSubviews ()
+        public async override void LayoutSubviews ()
         {
             base.LayoutSubviews ();
+
+            if (prevPageIndex >= rightIndexLimit) {
+                prevPageIndex = PageIndex;
+                if (PageIndex > rightIndexLimit) {
+                    UserInteractionEnabled = false;
+                    var offset = ContentOffset.X % PageWidth;
+                    SetContentOffset (new PointF ( ContentOffset.X - offset, ContentOffset.Y), true);
+                    await Task.Delay (350);
+                    UserInteractionEnabled = true;
+                }
+                return;
+            }
 
             ContentSize = new SizeF ( PageWidth * 20, Bounds.Height);
             _containerView.Frame = new RectangleF (0, 0, ContentSize.Width, ContentSize.Height);

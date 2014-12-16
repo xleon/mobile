@@ -166,6 +166,10 @@
     <string name="ReportsPieChartEmptyText">There is no data for the selected\nperiod to display anything.</string>
     <string name="ReportsPieChartLoadingHeader">Loading...</string>
     <string name="ReportsPieChartLoadingText">Getting report data from server.</string>
+    <string name="ReportsBarChartEmptyHeader">Nothing yet!</string>
+    <string name="ReportsBarChartEmptyText">There is no data for the selected\nperiod to display anything.</string>
+    <string name="ReportsBarChartLoadingHeader">Loading...</string>
+    <string name="ReportsBarChartLoadingText">Getting report data from server.</string>
     <string name="ReportsListViewNoProject">(no project)</string>
     <string name="ReportsTotalBanner">Total</string>
     <string name="ReportsBillableBanner">Billable</string>

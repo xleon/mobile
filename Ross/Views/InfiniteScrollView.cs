@@ -98,12 +98,21 @@ namespace Toggl.Ross.Views
         {
             base.LayoutSubviews ();
 
+            // simulate end of scrollView at right
+            // condition to avoid new creations of views
             if (prevPageIndex >= rightIndexLimit) {
+
                 prevPageIndex = PageIndex;
                 if (PageIndex > rightIndexLimit) {
+
+                    // disable user interaction
                     UserInteractionEnabled = false;
+
+                    // animate scrollview to correct position
                     var offset = ContentOffset.X % PageWidth;
                     SetContentOffset (new PointF ( ContentOffset.X - offset, ContentOffset.Y), true);
+
+                    // wait for movement and enable user interaction
                     await Task.Delay (350);
                     UserInteractionEnabled = true;
                 }

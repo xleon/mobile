@@ -13,7 +13,10 @@ namespace Toggl.Joey.UI.Views
         private float translateY;
         private float maxTranslateY;
         private float scrollThreshold;
+        private float touchSlop;
         private float touchY;
+        private float touchX;
+        private bool isDragging;
         private Animator scrollAnim;
 
         public SnappyLayout (Context ctx) : base (ctx)
@@ -41,6 +44,9 @@ namespace Toggl.Joey.UI.Views
             var dm = Resources.DisplayMetrics;
 
             scrollThreshold = TypedValue.ApplyDimension (ComplexUnitType.Dip, 75, dm);
+
+            var conf = ViewConfiguration.Get (Context);
+            touchSlop = conf.ScaledTouchSlop;
         }
 
         private void ForEachChild (Action<View> act)
@@ -108,38 +114,106 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public override bool OnTouchEvent (MotionEvent e)
+        public override bool OnInterceptTouchEvent (MotionEvent ev)
         {
-            switch (e.Action) {
+            switch (ev.Action) {
             case MotionEventActions.Down:
-                touchY = e.RawY;
+                touchX = ev.RawX;
+                touchY = ev.RawY;
                 CancelAnimations ();
+                break;
+            case MotionEventActions.Cancel:
+            case MotionEventActions.Up:
+                EndTouch ();
+                break;
+            case MotionEventActions.Move:
+                float dx = Math.Abs (ev.RawX - touchX);
+                float dy = Math.Abs (ev.RawY - touchY);
+
+                if (dy > dx && dy > touchSlop) {
+                    isDragging = true;
+                    touchY = ev.RawY;
+                    return true;
+                }
+                break;
+            }
+
+
+            return false;
+        }
+
+        public override bool OnTouchEvent (MotionEvent ev)
+        {
+            switch (ev.Action) {
+            case MotionEventActions.Down:
                 return true;
             case MotionEventActions.Move:
-                var dy = e.RawY - touchY;
-                touchY = e.RawY;
+                if (isDragging) {
+                    var dy = ev.RawY - touchY;
+                    touchY = ev.RawY;
 
-                translateY += dy;
-                UpdateChildrenTranslationY ();
+                    translateY += dy;
+                    UpdateChildrenTranslationY ();
+                } else {
+                    float dx = Math.Abs (ev.RawX - touchX);
+                    float dy = Math.Abs (ev.RawY - touchY);
 
+                    if (dy > dx && dy > touchSlop) {
+                        isDragging = true;
+                        touchY = ev.RawY;
+                        return true;
+                    }
+                }
                 return true;
             case MotionEventActions.Up:
             case MotionEventActions.Cancel:
-                if (ChildCount == 0) {
-                    translateY = 0;
-                } else {
-                    // Determine new ActiveChild
-                    var active = GetChildAt (ActiveChild);
-                    var offset = -translateY - active.Top;
+                EndTouch ();
+                return true;
+            }
 
-                    if (offset < 0 && ActiveChild > 0) {
-                        // Scroll to one of the previous children
-                        var previous = GetChildAt (ActiveChild - 1);
-                        // Adjust the scroll threshold to account for children smaller than that
-                        var threshold = Math.Min (previous.Height / 2f, scrollThreshold);
+            return base.OnTouchEvent (ev);
+        }
 
-                        if (-offset > threshold) {
-                            // Determine which child is the new active one
+        private void EndTouch()
+        {
+            isDragging = false;
+
+            if (ChildCount == 0) {
+                translateY = 0;
+            } else {
+                // Determine new ActiveChild
+                var active = GetChildAt (ActiveChild);
+                var offset = -translateY - active.Top;
+
+                if (offset < 0 && ActiveChild > 0) {
+                    // Scroll to one of the previous children
+                    var previous = GetChildAt (ActiveChild - 1);
+                    // Adjust the scroll threshold to account for children smaller than that
+                    var threshold = Math.Min (previous.Height / 2f, scrollThreshold);
+
+                    if (-offset > threshold) {
+                        // Determine which child is the new active one
+                        ForEachChild ((i, child) => {
+                            var y = -translateY;
+                            if (child.Top <= y && y <= child.Bottom) {
+                                SetActiveChild (i);
+                                active = child;
+                            }
+                        });
+                    }
+
+                } else if (offset > 0 && ActiveChild + 1 < ChildCount) {
+                    // Scroll to one of the following children
+                    // Adjust the scroll threshold to account for children smaller than that
+                    var threshold = Math.Min (active.Height / 2f, scrollThreshold);
+
+                    if (offset > threshold) {
+                        if (-translateY <= active.Bottom) {
+                            // Just the next child
+                            SetActiveChild (ActiveChild + 1);
+                            active = GetChildAt (ActiveChild);
+                        } else {
+                            // Scroll many children at once
                             ForEachChild ((i, child) => {
                                 var y = -translateY;
                                 if (child.Top <= y && y <= child.Bottom) {
@@ -148,43 +222,18 @@ namespace Toggl.Joey.UI.Views
                                 }
                             });
                         }
-
-                    } else if (offset > 0 && ActiveChild + 1 < ChildCount) {
-                        // Scroll to one of the following children
-                        // Adjust the scroll threshold to account for children smaller than that
-                        var threshold = Math.Min (active.Height / 2f, scrollThreshold);
-
-                        if (offset > threshold) {
-                            if (-translateY <= active.Bottom) {
-                                // Just the next child
-                                SetActiveChild (ActiveChild + 1);
-                                active = GetChildAt (ActiveChild);
-                            } else {
-                                // Scroll many children at once
-                                ForEachChild ((i, child) => {
-                                    var y = -translateY;
-                                    if (child.Top <= y && y <= child.Bottom) {
-                                        SetActiveChild (i);
-                                        active = child;
-                                    }
-                                });
-                            }
-                        }
                     }
-
-                    // Scroll to active
-                    var anim = ValueAnimator.OfFloat (translateY, -active.Top);
-                    anim.Update += OnScrollAnimationUpdate;
-                    anim.SetDuration (250);
-                    anim.Start ();
-                    scrollAnim = anim;
-
-                    UpdateChildrenTranslationY ();
                 }
-                return true;
-            }
 
-            return base.OnTouchEvent (e);
+                // Scroll to active
+                var anim = ValueAnimator.OfFloat (translateY, -active.Top);
+                anim.Update += OnScrollAnimationUpdate;
+                anim.SetDuration (250);
+                anim.Start ();
+                scrollAnim = anim;
+
+                UpdateChildrenTranslationY ();
+            }
         }
 
         private void OnScrollAnimationUpdate (object sender, ValueAnimator.AnimatorUpdateEventArgs e)

@@ -188,6 +188,7 @@ namespace Toggl.Joey.UI.Fragments
                 listView.LayoutMode = ViewLayoutMode.ClipBounds;
                 listView.SetClipToPadding (false);
                 listView.ItemClick += OnListItemClick;
+                listView.Touch += OnListTouch;
                 listView.SetOnHierarchyChangeListener (this);
             }
 
@@ -218,6 +219,26 @@ namespace Toggl.Joey.UI.Fragments
                     disposable.Dispose ();
                     disposable = null;
                 }
+            }
+
+            private void OnListTouch (object sender, View.TouchEventArgs e)
+            {
+                switch (e.Event.Action) {
+                case MotionEventActions.Down:
+                    // Disable SnappyList intercepting list view scroll events
+                    listView.Parent.RequestDisallowInterceptTouchEvent (true);
+                    // Enable view pager to intercept swiping gesture
+                    snappyLayout.Parent.RequestDisallowInterceptTouchEvent (false);
+                    break;
+
+                case MotionEventActions.Up:
+                case MotionEventActions.Cancel:
+                    listView.Parent.RequestDisallowInterceptTouchEvent (false);
+                    break;
+                }
+
+                // Run the usual touch logic for ListView
+                e.Handled = listView.OnTouchEvent (e.Event);
             }
 
             private void SetFocusedPosition (int value, bool scrollToPosition = false)

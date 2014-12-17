@@ -279,6 +279,13 @@ namespace Toggl.Joey.UI.Fragments
                 base.DestroyItem (container, position, frag);
             }
 
+            public override long GetItemId (int position)
+            {
+                // The item Id needs to be dependent on zoom level. Otherwise the Android fragment system will
+                // try to restore old fragment data (Arguments) to new ones when switching zoom level.
+                return PagesCount * (long)zoomLevel + position;
+            }
+
             public override Fragment GetItem (int position)
             {
                 var period = position - StartPage;

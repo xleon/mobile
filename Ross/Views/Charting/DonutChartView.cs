@@ -51,12 +51,11 @@ namespace Toggl.Ross.Views.Charting
                     grayCircle.Alpha = (_reportView.Projects.Count == 0) ? 1 : 0;
                 });
 
-                _reportView.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( x.TotalTime));
                 if (_reportView.Projects.Count == 0) {
                     grayCircle.Alpha = 1;
                 }
 
-                DonutProjectList = _reportView.GetProjectsByAngle (3.0f);
+                DonutProjectList = new List<ReportProject> (_reportView.Projects);
                 TableProjectList = new List<ReportProject> (_reportView.Projects);
                 currencies = _reportView.TotalCost.OrderBy (s => s.Length).Reverse<string> ().ToList<string> ();
 

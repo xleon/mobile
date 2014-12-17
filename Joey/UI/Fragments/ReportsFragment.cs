@@ -317,8 +317,7 @@ namespace Toggl.Joey.UI.Fragments
                 pieChart.Reset ();
 
                 if (data != null) {
-                    var projectList = data.GetProjectsByAngle (3.0f);
-                    foreach (var project in projectList) {
+                    foreach (var project in data.Projects) {
                         var slice = new PieSlice ();
                         slice.Value = project.TotalTime;
                         slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);

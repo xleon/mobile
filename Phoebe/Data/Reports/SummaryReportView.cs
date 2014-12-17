@@ -19,6 +19,7 @@ namespace Toggl.Phoebe.Data.Reports
         private DayOfWeek startOfWeek;
         private IReportsClient reportClient;
         private long? workspaceId;
+        private List<ReportProject> projects;
 
         public ZoomLevel Period;
 
@@ -81,13 +82,6 @@ namespace Toggl.Phoebe.Data.Reports
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
-            for (int i = 0; i < dataObject.Projects.Count; i++) {
-                var project = dataObject.Projects[i];
-                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
-                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
-                dataObject.Projects[i] = project;
-            }
-
             long max = 0;
             foreach (var s in dataObject.Activity) {
                 max = max < s.TotalTime ? s.TotalTime : max;
@@ -104,6 +98,43 @@ namespace Toggl.Phoebe.Data.Reports
             for (int i = 1; i <= 5; i++) {
                 _chartTimeLabels.Add (String.Format ("{0} h", _maxTotal / 5 * i));
             }
+
+            dataObject.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( x.TotalTime));
+
+            projects = new List<ReportProject> ();
+            var containerProject = new ReportProject {
+                Currencies = new List<ReportCurrency>(),
+                Color = 0
+            };
+
+            const float minimunWeight = 0.01f; // minimum weight of project respect to total time
+            var totalValue = Convert.ToSingle ( dataObject.Projects.Sum (p => p.TotalTime));
+            int count = 1;
+
+            foreach (var item in dataObject.Projects) {
+                if (Convert.ToSingle (item.TotalTime) / totalValue > minimunWeight) {
+                    projects.Add (item);
+                } else {
+                    containerProject.BillableTime += item.BillableTime;
+                    containerProject.TotalTime += item.TotalTime;
+                    containerProject.Currencies.AddRange (item.Currencies);
+                    count++;
+                }
+            }
+
+            if (containerProject.TotalTime > 0) {
+                containerProject.Project = count + " other projects";
+                projects.Add (containerProject);
+            }
+
+            // format total and billable time
+            for (int i = 0; i < projects.Count; i++) {
+                var project = projects[i];
+                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
+                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
+                projects[i] = project;
+            }
+
         }
 
         public bool IsLoading { get; private set; }
@@ -126,7 +157,7 @@ namespace Toggl.Phoebe.Data.Reports
         public List<ReportProject> Projects
         {
             get {
-                return dataObject.Projects;
+                return projects;
             }
         }
 

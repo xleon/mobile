@@ -307,7 +307,7 @@ namespace Toggl.Joey.UI.Fragments
                         billableValue.Text = data.TotalBillale;
                         barChart.Reset (data);
                         ResetPieChart (data);
-                        listView.Adapter = new ReportProjectAdapter (this, data.Projects);
+                        listView.Adapter = new ReportProjectAdapter (this, data.ListChartProjects);
                     }
                 }
             }
@@ -317,10 +317,14 @@ namespace Toggl.Joey.UI.Fragments
                 pieChart.Reset ();
 
                 if (data != null) {
-                    foreach (var project in data.Projects) {
+                    foreach (var project in data.PieChartProjects) {
                         var slice = new PieSlice ();
                         slice.Value = project.TotalTime;
-                        slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
+                        if (project.Color == ProjectModel.GroupedProjectColorIndex) {
+                            slice.Color = Color.ParseColor (ProjectModel.GroupedProjectColor);
+                        } else {
+                            slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
+                        }
                         pieChart.AddSlice (slice);
                     }
                     pieChart.Refresh ();
@@ -408,8 +412,10 @@ namespace Toggl.Joey.UI.Fragments
 
             protected override void Rebind ()
             {
-                if (String.IsNullOrEmpty ( DataSource.Project)) {
+                if (String.IsNullOrEmpty (DataSource.Project)) {
                     NameTextView.SetText (Resource.String.ReportsListViewNoProject);
+                } else if (DataSource.Color == ProjectModel.GroupedProjectColorIndex) {
+                    NameTextView.SetText (String.Format ( _root.Context.GetText ( Resource.String.ReportsListViewGroupedProject), DataSource.Project), TextView.BufferType.Normal);
                 } else {
                     NameTextView.Text = DataSource.Project;
                 }
@@ -417,7 +423,8 @@ namespace Toggl.Joey.UI.Fragments
                 DurationTextView.Text = DataSource.FormattedTotalTime;
                 var squareDrawable = new GradientDrawable ();
                 squareDrawable.SetCornerRadius (5);
-                squareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length]));
+                var color = (DataSource.Color == ProjectModel.GroupedProjectColorIndex) ? ProjectModel.GroupedProjectColor : ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length];
+                squareDrawable.SetColor (Color.ParseColor (color));
                 ColorSquareView.SetBackgroundDrawable (squareDrawable);
             }
 

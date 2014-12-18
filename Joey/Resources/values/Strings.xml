@@ -169,4 +169,5 @@
     <string name="ReportsListViewNoProject">(no project)</string>
     <string name="ReportsTotalBanner">Total</string>
     <string name="ReportsBillableBanner">Billable</string>
+    <string name="ReportsListViewGroupedProject">{0} other projects</string>
 </resources>

@@ -120,10 +120,10 @@ namespace Toggl.Joey.UI.Fragments
             nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
-            
+
             syncErrorBar = view.FindViewById<FrameLayout> (Resource.Id.ReportsSyncBar);
             syncRetry = view.FindViewById<ImageButton> (Resource.Id.ReportsSyncRetryButton);
-            syncRetry.Click += (sender, e) => ResetAdapter();
+            syncRetry.Click += (sender, e) => ReloadCurrent();
 
             ResetAdapter ();
             UpdatePeriod ();
@@ -173,6 +173,14 @@ namespace Toggl.Joey.UI.Fragments
             backDate = 0;
         }
 
+        private void ReloadCurrent()
+        {
+            var adapter = (MainPagerAdapter)viewPager.Adapter;
+            var frag = (ReportsFragment)adapter.GetItem (viewPager.CurrentItem);
+            frag.ReloadData ();
+            frag.LoadReady += (s, e) => ShowSyncError (frag.IsError);
+        }
+
         private void UpdatePeriod ()
         {
             timePeriod.Text = FormattedDateSelector ();
@@ -183,10 +191,13 @@ namespace Toggl.Joey.UI.Fragments
             var adapter = (MainPagerAdapter)viewPager.Adapter;
 
             var frag = (ReportsFragment)adapter.GetItem (e.Position);
+            frag.LoadReady += (s, ev) => ShowSyncError (frag.IsError);
+            if (frag.IsError) {
+                frag.ReloadData ();
+            }
             frag.UserVisibleHint = true;
             backDate = e.Position - StartPage;
             UpdatePeriod ();
-            ShowSyncError (frag.IsError);
         }
 
         private void ShowSyncError (bool visible)
@@ -194,19 +205,19 @@ namespace Toggl.Joey.UI.Fragments
             var slideIn = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 100f, 0f).SetDuration (500);
             var slideOut = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 0f, 100f).SetDuration (500);
 
-                slideOut.AnimationEnd += delegate {
-                    syncErrorBar.Visibility = ViewStates.Gone;
-                };
+            slideOut.AnimationEnd += delegate {
+                syncErrorBar.Visibility = ViewStates.Gone;
+            };
 
-                slideIn.AnimationStart += delegate {
-                    syncErrorBar.Visibility = ViewStates.Visible;
-                };
+            slideIn.AnimationStart += delegate {
+                syncErrorBar.Visibility = ViewStates.Visible;
+            };
 
-                if (visible && syncErrorBar.Visibility == ViewStates.Gone) {
-                    slideIn.Start ();
-                } else if (!visible && syncErrorBar.Visibility == ViewStates.Visible) {
-                    slideOut.Start ();
-                }
+            if (visible && syncErrorBar.Visibility == ViewStates.Gone) {
+                slideIn.Start ();
+            } else if (!visible && syncErrorBar.Visibility == ViewStates.Visible) {
+                slideOut.Start ();
+            }
         }
 
         private string FormattedDateSelector ()

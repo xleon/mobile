@@ -50,7 +50,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public bool IsError {
+        public bool IsError
+        {
             get;
             set;
         }
@@ -113,6 +114,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public event EventHandler PositionChanged;
 
+        public event EventHandler LoadReady;
+
         public int Position
         {
             get {
@@ -137,6 +140,25 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public async Task ReloadData()
+        {
+            isLoading = true;
+            try {
+                var data = new SummaryReportView() {
+                    Period = ZoomLevel,
+                };
+                await data.Load (Period);
+                IsError = data.IsError;
+                controller.Data = null;
+                controller.Data = data;
+            } finally {
+                isLoading = false;
+                if (LoadReady != null) {
+                    LoadReady (this, EventArgs.Empty);
+                }
+            }
+        }
+
         private async void EnsureLoaded ()
         {
             if (isLoading || !UserVisibleHint || controller == null || controller.Data != null) {
@@ -155,6 +177,9 @@ namespace Toggl.Joey.UI.Fragments
                 }
             } finally {
                 isLoading = false;
+                if (LoadReady != null) {
+                    LoadReady (this, EventArgs.Empty);
+                }
             }
         }
 

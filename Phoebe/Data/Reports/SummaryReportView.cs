@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -19,7 +20,8 @@ namespace Toggl.Phoebe.Data.Reports
         private DayOfWeek startOfWeek;
         private IReportsClient reportClient;
         private long? workspaceId;
-        private List<ReportProject> projects;
+        private List<ReportProject> pieChartProjects;
+        private List<ReportProject> listChartProjects;
 
         public ZoomLevel Period;
 
@@ -100,41 +102,57 @@ namespace Toggl.Phoebe.Data.Reports
             }
 
             dataObject.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( x.TotalTime));
+            pieChartProjects = new List<ReportProject> ();
+            listChartProjects = new List<ReportProject> ();
 
-            projects = new List<ReportProject> ();
             var containerProject = new ReportProject {
                 Currencies = new List<ReportCurrency>(),
-                Color = 0
+                Color = ProjectModel.GroupedProjectColorIndex
             };
 
             const float minimunWeight = 0.01f; // minimum weight of project respect to total time
             var totalValue = Convert.ToSingle ( dataObject.Projects.Sum (p => p.TotalTime));
-            int count = 1;
+            int count = ProjectModel.GroupedProjectColorIndex;
 
+            // group projects on one single project
             foreach (var item in dataObject.Projects) {
                 if (Convert.ToSingle (item.TotalTime) / totalValue > minimunWeight) {
-                    projects.Add (item);
+                    pieChartProjects.Add (item);
                 } else {
                     containerProject.BillableTime += item.BillableTime;
                     containerProject.TotalTime += item.TotalTime;
-                    containerProject.Currencies.AddRange (item.Currencies);
+
+                    // group currencies
+                    foreach (var currencyItem in item.Currencies) {
+                        var index = containerProject.Currencies.FindIndex (c => c.Currency == currencyItem.Currency);
+                        if (index != -1)
+                            containerProject.Currencies [index] = new ReportCurrency {
+                            Amount = containerProject.Currencies [index].Amount + currencyItem.Amount,
+                            Currency = currencyItem.Currency
+                        };
+                        else {
+                            containerProject.Currencies.Add ( currencyItem);
+                        }
+                    }
                     count++;
                 }
             }
 
-            if (containerProject.TotalTime > 0) {
-                containerProject.Project = count + " other projects";
-                projects.Add (containerProject);
+            // check if small projects exists and are enough to be a separeted slice
+            if (containerProject.TotalTime > 0 && Convert.ToSingle (containerProject.TotalTime) / totalValue > minimunWeight) {
+                containerProject.Project = count.ToString();
+
+
+                pieChartProjects.Add (containerProject);
+                listChartProjects = new List<ReportProject> (pieChartProjects);
+            } else {
+                listChartProjects = new List<ReportProject> (dataObject.Projects);
             }
 
             // format total and billable time
-            for (int i = 0; i < projects.Count; i++) {
-                var project = projects[i];
-                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
-                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
-                projects[i] = project;
-            }
-
+            FormatTimeData (pieChartProjects, user);
+            FormatTimeData (listChartProjects, user);
+            FormatTimeData (dataObject.Projects, user);
         }
 
         public bool IsLoading { get; private set; }
@@ -157,7 +175,21 @@ namespace Toggl.Phoebe.Data.Reports
         public List<ReportProject> Projects
         {
             get {
-                return projects;
+                return dataObject.Projects;
+            }
+        }
+
+        public List<ReportProject> PieChartProjects
+        {
+            get {
+                return pieChartProjects;
+            }
+        }
+
+        public List<ReportProject> ListChartProjects
+        {
+            get {
+                return listChartProjects;
             }
         }
 
@@ -310,6 +342,16 @@ namespace Toggl.Phoebe.Data.Reports
                 }
             }
             return formattedString;
+        }
+
+        private void FormatTimeData ( IList<ReportProject> items, UserData user)
+        {
+            for (int i = 0; i < items.Count; i++) {
+                var project = items[i];
+                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
+                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
+                items[i] = project;
+            }
         }
 
         private ReportData CreateEmptyReport()

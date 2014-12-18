@@ -55,8 +55,8 @@ namespace Toggl.Ross.Views.Charting
                     grayCircle.Alpha = 1;
                 }
 
-                DonutProjectList = new List<ReportProject> (_reportView.Projects);
-                TableProjectList = new List<ReportProject> (_reportView.Projects);
+                DonutProjectList = _reportView.PieChartProjects;
+                TableProjectList = _reportView.ListChartProjects;
                 currencies = _reportView.TotalCost.OrderBy (s => s.Length).Reverse<string> ().ToList<string> ();
 
                 donutChart.UserInteractionEnabled = (DonutProjectList.Count > 1);
@@ -263,9 +263,13 @@ namespace Toggl.Ross.Views.Charting
             if (currCount > 0) {
                 totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
                 string moneyInfo = "";
-                foreach (var item in selectedProject.Currencies) {
-                    moneyInfo += item.Amount + " " + item.Currency + "\n";
+
+                currCount = (selectedProject.Currencies.Count > 3) ? 3 : selectedProject.Currencies.Count;
+                var  projectCurrencies = selectedProject.Currencies.OrderBy (s => s.Amount.ToString().Length).Reverse<ReportCurrency> ().ToList<ReportCurrency>();
+                for (int i = 0; i < currCount; i++) {
+                    moneyInfo += projectCurrencies[i].Amount + " " + projectCurrencies[i].Currency + "\n";
                 }
+
                 moneyInfo = moneyInfo.Substring (0, moneyInfo.Length - 1);
                 moneyLabel.Alpha = 1.0f;
                 moneyLabel.Text = moneyInfo;
@@ -344,7 +348,12 @@ namespace Toggl.Ross.Views.Charting
 
         public UIColor ColorForSliceAtIndex (XYDonutChart pieChart, int index)
         {
-            var hex = ProjectModel.HexColors [DonutProjectList [index].Color % ProjectModel.HexColors.Length];
+            string hex;
+            if (DonutProjectList [index].Color == ProjectModel.GroupedProjectColorIndex) {
+                hex = ProjectModel.GroupedProjectColor;
+            } else {
+                hex = ProjectModel.HexColors [DonutProjectList [index].Color % ProjectModel.HexColors.Length];
+            }
             return UIColor.Clear.FromHex (hex);
         }
 

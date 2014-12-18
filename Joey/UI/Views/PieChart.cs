@@ -69,6 +69,12 @@ namespace Toggl.Joey.UI.Views
 
             statsTimeTextView = statsOverlayView.FindViewById<TextView> (Resource.Id.TimeTextView);
             statsMoneyTextView = statsOverlayView.FindViewById<TextView> (Resource.Id.MoneyTextView);
+
+            Click += delegate {
+                // Deselect slices on click. The Clickable property is set to true only when a slice is selected.
+                ActiveSlice = -1;
+            };
+            Clickable = false;
         }
 
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
@@ -324,6 +330,7 @@ namespace Toggl.Joey.UI.Views
             }
 
             activeSlice = value;
+            Clickable = activeSlice >= 0;
 
             if (updateStats) {
                 UpdateStats ();

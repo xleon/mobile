@@ -389,14 +389,10 @@ namespace Toggl.Ross.Views.Charting
 
             var layer = (SliceLayer)_pieView.Layer.Sublayers [index];
             if (layer != null && !layer.IsSelected) {
-                PointF currPos = layer.Position;
-                double middleAngle = (layer.StartAngle + layer.EndAngle) / 2.0;
-                var newPos = new PointF (currPos.X + SelectedSliceOffsetRadius * Convert.ToSingle (Math.Cos (middleAngle)), currPos.Y + SelectedSliceOffsetRadius * Convert.ToSingle (Math.Sin (middleAngle)));
-                layer.MoveToPosition (newPos);
+                layer.CreateAnimationForKeyPath ( layer, "transform.scale", 1.08f);
                 layer.IsSelected = true;
                 _selectedSliceIndex = index;
             }
-
             foreach (var item in layerPool) {
                 item.Opacity = (item.IsSelected) ? 1.0f : 0.5f;
             }
@@ -410,7 +406,7 @@ namespace Toggl.Ross.Views.Charting
 
             var layer = (SliceLayer)_pieView.Layer.Sublayers [index];
             if (layer != null && layer.IsSelected) {
-                layer.MoveToPosition (new PointF (0, 0));
+                layer.CreateAnimationForKeyPath ( layer, "transform.scale", 1.0f);
                 layer.IsSelected = false;
                 _selectedSliceIndex = -1;
             }
@@ -558,6 +554,7 @@ namespace Toggl.Ross.Views.Charting
         private SliceLayer createSliceLayer ()
         {
             var pieLayer = new SliceLayer ();
+            pieLayer.Frame = _pieView.Frame;
             var arcLayer = new CAShapeLayer ();
             arcLayer.ZPosition = 0;
             arcLayer.StrokeColor = null;
@@ -745,6 +742,24 @@ namespace Toggl.Ross.Views.Charting
             colorAnim.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.Default);
             shapeLayer.AddAnimation (colorAnim, "fillColor");
             shapeLayer.FillColor = color.CGColor;
+        }
+
+        public void CreateAnimationForKeyPath ( CALayer layer, string key, float toValue )
+        {
+            var _fromValue =  layer.ValueForKeyPath ( new NSString ( key));
+            var _toValue = new NSNumber (toValue);
+            var _key = new NSString (key);
+
+            var barAnimation = CABasicAnimation.FromKeyPath (key);
+            var currentValue = _fromValue;
+            if (layer.PresentationLayer != null) {
+                currentValue = layer.PresentationLayer.ValueForKeyPath (_key);
+            }
+            barAnimation.From = currentValue;
+            barAnimation.To = _toValue;
+            barAnimation.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.Default);
+            layer.AddAnimation (barAnimation, key);
+            layer.SetValueForKeyPath (_toValue, _key);
         }
     }
 

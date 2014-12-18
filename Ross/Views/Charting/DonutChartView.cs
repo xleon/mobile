@@ -115,7 +115,7 @@ namespace Toggl.Ross.Views.Charting
                 StartPieAngle = Math.PI * 3/2,
                 ShowLabel = false,
                 AnimationSpeed = 1.0f,
-                SelectedSliceOffsetRadius = 8f
+                SelectedSliceOffsetRadius = 15f
             };
             Add (donutChart);
 

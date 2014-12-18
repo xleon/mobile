@@ -149,7 +149,7 @@ namespace Toggl.Joey.UI.Fragments
                     Period = ZoomLevel,
                 };
                 await data.Load (Period);
-
+                IsError = data.IsError;
                 if (controller != null) {
                     controller.Data = data;
                 }

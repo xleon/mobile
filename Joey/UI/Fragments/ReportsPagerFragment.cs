@@ -17,6 +17,7 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
+using Android.Animation;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -122,7 +123,7 @@ namespace Toggl.Joey.UI.Fragments
             
             syncErrorBar = view.FindViewById<FrameLayout> (Resource.Id.ReportsSyncBar);
             syncRetry = view.FindViewById<ImageButton> (Resource.Id.ReportsSyncRetryButton);
-            syncRetry.Click += (sender, e) => UpdatePager();
+            syncRetry.Click += (sender, e) => ResetAdapter();
 
             ResetAdapter ();
             UpdatePeriod ();
@@ -185,6 +186,27 @@ namespace Toggl.Joey.UI.Fragments
             frag.UserVisibleHint = true;
             backDate = e.Position - StartPage;
             UpdatePeriod ();
+            ShowSyncError (frag.IsError);
+        }
+
+        private void ShowSyncError (bool visible)
+        {
+            var slideIn = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 100f, 0f).SetDuration (500);
+            var slideOut = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 0f, 100f).SetDuration (500);
+
+                slideOut.AnimationEnd += delegate {
+                    syncErrorBar.Visibility = ViewStates.Gone;
+                };
+
+                slideIn.AnimationStart += delegate {
+                    syncErrorBar.Visibility = ViewStates.Visible;
+                };
+
+                if (visible && syncErrorBar.Visibility == ViewStates.Gone) {
+                    slideIn.Start ();
+                } else if (!visible && syncErrorBar.Visibility == ViewStates.Visible) {
+                    slideOut.Start ();
+                }
         }
 
         private string FormattedDateSelector ()

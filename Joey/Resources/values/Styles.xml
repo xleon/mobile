@@ -163,4 +163,16 @@
         <item name="android:textSize">15sp</item>
     </style>
 
+    <style name="PieChartOverlay">
+    </style>
+    <style name="PieChartOverlay.Text">
+        <item name="android:textColor">@color/barchart_overlay_text</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+    <style name="PieChartOverlay.Text.Title">
+        <item name="android:textSize">15sp</item>
+    </style>
+    <style name="PieChartOverlay.Text.Time">
+        <item name="android:textSize">24sp</item>
+    </style>
 </resources>

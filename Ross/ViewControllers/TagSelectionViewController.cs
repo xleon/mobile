@@ -88,16 +88,16 @@ namespace Toggl.Ross.ViewControllers
                 // Delete unused tag relations:
                 var deleteTasks = modelTags
                                   .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
-                                  .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
+                                  .Select (data => new TimeEntryTagModel (data).DeleteAsync ()).ToList();
 
                 // Create new tag relations:
                 var createTasks = tags
                                   .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-                .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ());
+                .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ()).ToList();
 
                 await Task.WhenAll (deleteTasks.Concat (createTasks));
 
-                if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
+                if (deleteTasks.Count > 0 || createTasks.Count > 0) {
                     model.Touch ();
                     await model.SaveAsync ();
                 }

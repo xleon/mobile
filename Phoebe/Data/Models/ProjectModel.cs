@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.DataObjects;
 
@@ -230,10 +229,7 @@ namespace Toggl.Phoebe.Data.Models
 
         public static explicit operator ProjectModel (ProjectData data)
         {
-            if (data == null) {
-                return null;
-            }
-            return new ProjectModel (data);
+            return data == null ? null : new ProjectModel (data);
         }
 
         public static implicit operator ProjectData (ProjectModel model)

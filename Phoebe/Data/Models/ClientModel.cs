@@ -1,8 +1,6 @@
 using System;
 using System.Linq.Expressions;
 using Toggl.Phoebe.Data.DataObjects;
-using System.ComponentModel;
-using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.Data.Models
 {
@@ -88,10 +86,7 @@ namespace Toggl.Phoebe.Data.Models
 
         public static explicit operator ClientModel (ClientData data)
         {
-            if (data == null) {
-                return null;
-            }
-            return new ClientModel (data);
+            return data == null ? null : new ClientModel (data);
         }
 
         public static implicit operator ClientData (ClientModel model)

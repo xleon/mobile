@@ -5,6 +5,8 @@ using Cirrious.FluentLayouts.Touch;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -118,16 +120,38 @@ namespace Toggl.Ross.ViewControllers
             }
 
             isSaving = true;
-            try {
-                // Create new project:
-                await model.SaveAsync ();
 
-                // Invoke callback hook
-                var cb = ProjectCreated;
-                if (cb != null) {
-                    cb (model);
+            try {
+                // Check for existing name
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                Guid clientId = ( model.Client == null) ?  Guid.Empty : model.Client.Id;
+                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync ( model.Name, clientId);
+
+                if (existWithName) {
+                    var alert = new UIAlertView (
+                        "NewProjectNameExistTitle".Tr (),
+                        "NewProjectNameExistMessage".Tr (),
+                        null,
+                        "NewProjectNameExistOk".Tr (),
+                        null);
+                    alert.Clicked += async (s, ev) => {
+                        if (ev.ButtonIndex == 0) {
+                            nameTextField.BecomeFirstResponder ();
+                        }
+                    };
+                    alert.Show ();
                 } else {
-                    NavigationController.PopViewControllerAnimated (true);
+
+                    // Create new project:
+                    await model.SaveAsync ();
+
+                    // Invoke callback hook
+                    var cb = ProjectCreated;
+                    if (cb != null) {
+                        cb (model);
+                    } else {
+                        NavigationController.PopViewControllerAnimated (true);
+                    }
                 }
             } finally {
                 isSaving = false;

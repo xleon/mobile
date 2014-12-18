@@ -5,6 +5,8 @@ using Cirrious.FluentLayouts.Touch;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Ross.Theme;
@@ -84,16 +86,38 @@ namespace Toggl.Ross.ViewControllers
             }
 
             isSaving = true;
-            try {
-                // Create new project:
-                await model.SaveAsync ();
 
-                // Invoke callback hook
-                var cb = ClientCreated;
-                if (cb != null) {
-                    cb (model);
+            try {
+
+                // Check for existing name
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var existWithName = await dataStore.Table<ClientData>().ExistWithNameAsync ( model.Name);
+
+                if (existWithName) {
+                    var alert = new UIAlertView (
+                        "NewClientNameExistTitle".Tr (),
+                        "NewClientNameExistMessage".Tr (),
+                        null,
+                        "NewClientNameExistOk".Tr (),
+                        null);
+                    alert.Clicked += async (s, ev) => {
+                        if (ev.ButtonIndex == 0) {
+                            nameTextField.BecomeFirstResponder ();
+                        }
+                    };
+                    alert.Show ();
                 } else {
-                    NavigationController.PopViewControllerAnimated (true);
+
+                    // Create new client:
+                    await model.SaveAsync ();
+
+                    // Invoke callback hook
+                    var cb = ClientCreated;
+                    if (cb != null) {
+                        cb (model);
+                    } else {
+                        NavigationController.PopViewControllerAnimated (true);
+                    }
                 }
             } finally {
                 isSaving = false;

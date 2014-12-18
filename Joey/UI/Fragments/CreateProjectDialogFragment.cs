@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
@@ -7,6 +8,7 @@ using Android.Text;
 using Android.Widget;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 
@@ -147,12 +149,21 @@ namespace Toggl.Joey.UI.Fragments
                     return;
                 }
 
-                var project = new ProjectModel () {
-                    Workspace = workspaceModel,
-                    Name = nameEditText.Text,
-                    Color = ProjectColor,
-                    IsActive = true,
-                };
+                ProjectModel project;
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var existingProjectData = await dataStore.Table<ProjectData>().QueryAsync ( p => p.Name == nameEditText.Text && p.ClientId == null);
+
+                if (existingProjectData.Count > 0) {
+                    project = new ProjectModel ( existingProjectData.First());
+                } else {
+                    project = new ProjectModel () {
+                        Workspace = workspaceModel,
+                        Name = nameEditText.Text,
+                        Color = ProjectColor
+                    };
+                }
+
+                project.IsActive = true;
                 await project.SaveAsync ();
 
                 if (timeEntryModel != null) {

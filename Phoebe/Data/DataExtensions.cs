@@ -50,6 +50,7 @@ namespace Toggl.Phoebe.Data
         public static async Task<CommonData> PutDataAsync (this IDataStore ds, CommonData data)
         {
             var type = data.GetType ();
+
             if (type == typeof (ClientData)) {
                 return await ds.PutAsync ((ClientData)data).ConfigureAwait (false);
             } else if (type == typeof (ProjectData)) {
@@ -70,6 +71,23 @@ namespace Toggl.Phoebe.Data
                 return await ds.PutAsync ((WorkspaceUserData)data).ConfigureAwait (false);
             }
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
+        }
+
+        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ClientData> query, string name)
+        {
+            var rows = await query.QueryAsync (r => r.Name == name).ConfigureAwait (false);
+            return rows.Count != 0;
+        }
+
+        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ProjectData> query, string projectName, Guid clientId)
+        {
+            List<ProjectData> existingProjects;
+            if ( clientId != Guid.Empty) {
+                existingProjects = await query.QueryAsync (r => r.Name == projectName && r.ClientId == clientId).ConfigureAwait (false);
+            } else {
+                existingProjects = await query.QueryAsync (r => r.Name == projectName && r.ClientId == null).ConfigureAwait (false);
+            }
+            return existingProjects.Count != 0;
         }
     }
 }

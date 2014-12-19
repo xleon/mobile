@@ -415,7 +415,11 @@ namespace Toggl.Joey.UI.Fragments
                 if (String.IsNullOrEmpty (DataSource.Project)) {
                     NameTextView.SetText (Resource.String.ReportsListViewNoProject);
                 } else if (DataSource.Color == ProjectModel.GroupedProjectColorIndex) {
-                    NameTextView.SetText (String.Format ( _root.Context.GetText ( Resource.String.ReportsListViewGroupedProject), DataSource.Project), TextView.BufferType.Normal);
+                    NameTextView.Text = _root.Context.Resources.GetQuantityString (
+                                            Resource.Plurals.GroupedReportProjectCell,
+                                            int.Parse (DataSource.Project),
+                                            int.Parse (DataSource.Project)
+                                        );
                 } else {
                     NameTextView.Text = DataSource.Project;
                 }

@@ -307,7 +307,7 @@ namespace Toggl.Joey.UI.Fragments
                         billableValue.Text = data.TotalBillale;
                         barChart.Reset (data);
                         ResetPieChart (data);
-                        listView.Adapter = new ReportProjectAdapter (this, data.ListChartProjects);
+                        listView.Adapter = new ReportProjectAdapter (this, data.Projects);
                     }
                 }
             }
@@ -317,7 +317,7 @@ namespace Toggl.Joey.UI.Fragments
                 pieChart.Reset ();
 
                 if (data != null) {
-                    foreach (var project in data.PieChartProjects) {
+                    foreach (var project in data.CollapsedProjects) {
                         var slice = new PieSlice ();
                         slice.Value = project.TotalTime;
                         if (project.Color == ProjectModel.GroupedProjectColorIndex) {

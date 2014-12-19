@@ -20,8 +20,8 @@ namespace Toggl.Phoebe.Data.Reports
         private DayOfWeek startOfWeek;
         private IReportsClient reportClient;
         private long? workspaceId;
-        private List<ReportProject> pieChartProjects;
-        private List<ReportProject> listChartProjects;
+        private List<ReportProject> collapsedProjects;
+        private List<ReportProject> projects;
 
         public ZoomLevel Period;
 
@@ -102,8 +102,8 @@ namespace Toggl.Phoebe.Data.Reports
             }
 
             dataObject.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( x.TotalTime));
-            pieChartProjects = new List<ReportProject> ();
-            listChartProjects = new List<ReportProject> ();
+            collapsedProjects = new List<ReportProject> ();
+            projects = new List<ReportProject> ();
 
             var containerProject = new ReportProject {
                 Currencies = new List<ReportCurrency>(),
@@ -117,7 +117,7 @@ namespace Toggl.Phoebe.Data.Reports
             // group projects on one single project
             foreach (var item in dataObject.Projects) {
                 if (Convert.ToSingle (item.TotalTime) / totalValue > minimunWeight) {
-                    pieChartProjects.Add (item);
+                    collapsedProjects.Add (item);
                 } else {
                     containerProject.BillableTime += item.BillableTime;
                     containerProject.TotalTime += item.TotalTime;
@@ -141,17 +141,15 @@ namespace Toggl.Phoebe.Data.Reports
             // check if small projects exists and are enough to be a separeted slice
             if (containerProject.TotalTime > 0 && Convert.ToSingle (containerProject.TotalTime) / totalValue > minimunWeight) {
                 containerProject.Project = count.ToString();
-
-
-                pieChartProjects.Add (containerProject);
-                listChartProjects = new List<ReportProject> (pieChartProjects);
+                collapsedProjects.Add (containerProject);
+                projects = new List<ReportProject> (collapsedProjects);
             } else {
-                listChartProjects = new List<ReportProject> (dataObject.Projects);
+                projects = new List<ReportProject> (dataObject.Projects);
             }
 
             // format total and billable time
-            FormatTimeData (pieChartProjects, user);
-            FormatTimeData (listChartProjects, user);
+            FormatTimeData (collapsedProjects, user);
+            FormatTimeData (projects, user);
             FormatTimeData (dataObject.Projects, user);
         }
 
@@ -172,24 +170,17 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
+        public List<ReportProject> CollapsedProjects
+        {
+            get {
+                return collapsedProjects;
+            }
+        }
+
         public List<ReportProject> Projects
         {
             get {
-                return dataObject.Projects;
-            }
-        }
-
-        public List<ReportProject> PieChartProjects
-        {
-            get {
-                return pieChartProjects;
-            }
-        }
-
-        public List<ReportProject> ListChartProjects
-        {
-            get {
-                return listChartProjects;
+                return projects;
             }
         }
 
@@ -284,17 +275,6 @@ namespace Toggl.Phoebe.Data.Reports
             }
 
             return start.AddYears (1).AddDays (-1);
-        }
-
-        public List<ReportProject> GetProjectsByAngle ( float minimunAngle)
-        {
-            if (dataObject == null) {
-                return new List<ReportProject> ();
-            }
-
-            float angle = minimunAngle / 360f; // angle in degrees
-            var totalValue = Convert.ToSingle ( dataObject.Projects.Sum (p => p.TotalTime));
-            return dataObject.Projects.Where (p => Convert.ToSingle ( p.TotalTime) / totalValue > angle).ToList ();
         }
 
         public static ZoomLevel GetLastZoomViewed()

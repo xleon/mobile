@@ -75,8 +75,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.AreEqual (false, view.IsError);
                 Assert.AreEqual (true, view.ActivityCount == 7);
                 Assert.AreEqual (true, view.Projects.Count > 0);
-                Assert.AreEqual (true, view.PieChartProjects.Count > 0);
-                Assert.AreEqual (true, view.ListChartProjects.Count > 0);
+                Assert.AreEqual (true, view.CollapsedProjects.Count > 0);
             });
         }
 
@@ -91,8 +90,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.AreEqual (false, view.IsError);
                 Assert.AreEqual (true, view.ActivityCount > 27);
                 Assert.AreEqual (true, view.Projects.Count > 0);
-                Assert.AreEqual (true, view.PieChartProjects.Count > 0);
-                Assert.AreEqual (true, view.ListChartProjects.Count > 0);
+                Assert.AreEqual (true, view.CollapsedProjects.Count > 0);
             });
         }
 
@@ -107,8 +105,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.AreEqual (false, view.IsError);
                 Assert.AreEqual (true, view.ActivityCount == 12);
                 Assert.AreEqual (true, view.Projects.Count > 0);
-                Assert.AreEqual (true, view.PieChartProjects.Count > 0);
-                Assert.AreEqual (true, view.ListChartProjects.Count > 0);
+                Assert.AreEqual (true, view.CollapsedProjects.Count > 0);
             });
         }
 

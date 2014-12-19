@@ -55,8 +55,8 @@ namespace Toggl.Ross.Views.Charting
                     grayCircle.Alpha = 1;
                 }
 
-                DonutProjectList = _reportView.PieChartProjects;
-                TableProjectList = _reportView.ListChartProjects;
+                DonutProjectList = _reportView.CollapsedProjects;
+                TableProjectList = _reportView.Projects;
                 currencies = _reportView.TotalCost.OrderBy (s => s.Length).Reverse<string> ().ToList<string> ();
 
                 donutChart.UserInteractionEnabled = (DonutProjectList.Count > 1);

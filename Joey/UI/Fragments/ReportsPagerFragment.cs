@@ -38,7 +38,7 @@ namespace Toggl.Joey.UI.Fragments
         private Pool<ReportsFragment.Controller> reportsControllerPool;
         private FrameLayout syncErrorBar;
         private ImageButton syncRetry;
-
+        private Animator currentAnimation;
 
         public ZoomLevel ZoomLevel
         {
@@ -137,6 +137,8 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroyView ()
         {
             viewPager.PageSelected -= OnPageSelected;
+            var adapter = (MainPagerAdapter)viewPager.Adapter;
+            adapter.LoadReady -= OnLoadReady;
             base.OnDestroyView ();
         }
 
@@ -169,6 +171,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var adapter = new MainPagerAdapter (ChildFragmentManager, zoomLevel);
             viewPager.Adapter = adapter;
+            adapter.LoadReady += OnLoadReady;
             viewPager.CurrentItem = StartPage;
             backDate = 0;
         }
@@ -178,7 +181,6 @@ namespace Toggl.Joey.UI.Fragments
             var adapter = (MainPagerAdapter)viewPager.Adapter;
             var frag = (ReportsFragment)adapter.GetItem (viewPager.CurrentItem);
             frag.ReloadData ();
-            frag.LoadReady += (s, e) => ShowSyncError (frag.IsError);
         }
 
         private void UpdatePeriod ()
@@ -186,12 +188,16 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod.Text = FormattedDateSelector ();
         }
 
+        private void OnLoadReady (object sender, ReportsFragment.LoadReadyEventArgs e)
+        {
+            ShowSyncError (e.IsError);
+        }
+
         private void OnPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
 
             var frag = (ReportsFragment)adapter.GetItem (e.Position);
-            frag.LoadReady += (s, ev) => ShowSyncError (frag.IsError);
             if (frag.IsError) {
                 frag.ReloadData ();
             }
@@ -202,21 +208,25 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ShowSyncError (bool visible)
         {
-            var slideIn = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 100f, 0f).SetDuration (500);
-            var slideOut = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 0f, 100f).SetDuration (500);
-
-            slideOut.AnimationEnd += delegate {
-                syncErrorBar.Visibility = ViewStates.Gone;
-            };
-
-            slideIn.AnimationStart += delegate {
-                syncErrorBar.Visibility = ViewStates.Visible;
-            };
+            if (currentAnimation != null) {
+                currentAnimation.Cancel();
+                currentAnimation = null;
+            }
 
             if (visible && syncErrorBar.Visibility == ViewStates.Gone) {
-                slideIn.Start ();
+                var slideIn = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 100f, 0f).SetDuration (500);
+                slideIn.AnimationStart += delegate {
+                    syncErrorBar.Visibility = ViewStates.Visible;
+                };
+                currentAnimation = slideIn;
+                currentAnimation.Start ();
             } else if (!visible && syncErrorBar.Visibility == ViewStates.Visible) {
-                slideOut.Start ();
+                var slideOut = ObjectAnimator.OfFloat (syncErrorBar, "translationY", syncErrorBar.TranslationY, 100f).SetDuration (500);
+                slideOut.AnimationEnd += delegate {
+                    syncErrorBar.Visibility = ViewStates.Gone;
+                };
+                currentAnimation = slideOut;
+                currentAnimation.Start ();
             }
         }
 
@@ -288,6 +298,7 @@ namespace Toggl.Joey.UI.Fragments
             private readonly ZoomLevel zoomLevel;
             private readonly FragmentManager fragmentManager;
             private int snapPosition;
+            public event EventHandler<ReportsFragment.LoadReadyEventArgs> LoadReady;
 
             public MainPagerAdapter (FragmentManager fragmentManager, ZoomLevel zoomLevel) : base (fragmentManager)
             {
@@ -305,6 +316,7 @@ namespace Toggl.Joey.UI.Fragments
                 var frag = (ReportsFragment)base.InstantiateItem (container, position);
                 frag.Position = snapPosition;
                 frag.PositionChanged += ChangeReportsPosition;
+                frag.LoadReady += ShowSyncError;
                 currentFragments.Add (frag);
                 return frag;
             }
@@ -313,6 +325,7 @@ namespace Toggl.Joey.UI.Fragments
             {
                 var frag = (ReportsFragment)@object;
                 frag.PositionChanged -= ChangeReportsPosition;
+                frag.LoadReady -= ShowSyncError;
                 currentFragments.Remove (frag);
                 base.DestroyItem (container, position, frag);
             }
@@ -322,6 +335,13 @@ namespace Toggl.Joey.UI.Fragments
                 var period = position - StartPage;
                 return currentFragments.Find (frag => frag.Period == period)
                        ?? new ReportsFragment (period, zoomLevel);
+            }
+
+            private void ShowSyncError (object sender, ReportsFragment.LoadReadyEventArgs args)
+            {
+                if (LoadReady != null) {
+                    LoadReady (this, args);
+                }
             }
 
             private void ChangeReportsPosition (object sender, EventArgs args )

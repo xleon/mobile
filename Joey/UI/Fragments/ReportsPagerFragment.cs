@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Android.Animation;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -17,7 +18,6 @@ using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using ViewPager = Android.Support.V4.View.ViewPager;
-using Android.Animation;
 
 namespace Toggl.Joey.UI.Fragments
 {

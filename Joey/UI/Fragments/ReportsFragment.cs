@@ -14,7 +14,6 @@ using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
-using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {

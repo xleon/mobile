@@ -5,16 +5,17 @@ using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Text.Format;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
-using Toggl.Phoebe.Data;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -42,6 +43,7 @@ namespace Toggl.Joey.UI.Activities
         private DrawerListAdapter drawerAdapter;
         private ImageButton syncRetryButton;
         private TextView syncStatusText;
+        private TextView ReportsPeriodTextView;
         private long lastSyncInMillis;
         private int syncStatus;
         private Subscription<SyncStartedMessage> drawerSyncStarted;
@@ -89,6 +91,10 @@ namespace Toggl.Joey.UI.Activities
             syncRetryButton.Click += OnSyncRetryClick;
 
             syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
+
+            ReportsPeriodTextView = new TextView(BaseContext);
+            ReportsPeriodTextView.SetTextAppearance(BaseContext, Resource.Attribute.actionMenuTextAppearance);
+            ReportsPeriodTextView.TextSize = TypedValue.ApplyDimension (ComplexUnitType.Dip, 8, Resources.DisplayMetrics);
 
             ActionBar.SetCustomView (Timer.Root, lp);
             ActionBar.SetDisplayShowCustomEnabled (true);
@@ -195,20 +201,39 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void OpenPage (int id)
+        private void SwitchActionBarView(int pageId)
         {
+            bool showReportsActionBar = (pageId == DrawerListAdapter.ReportsPageId ||
+                pageId == DrawerListAdapter.ReportsWeekPageId ||
+                pageId == DrawerListAdapter.ReportsMonthPageId ||
+                pageId == DrawerListAdapter.ReportsYearPageId);
+
+            var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
+            if(showReportsActionBar){
+                lp.Gravity = GravityFlags.Left | GravityFlags.CenterVertical;
+                ActionBar.SetCustomView(ReportsPeriodTextView, lp);
+            } else {
+                lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
+                ActionBar.SetCustomView (Timer.Root, lp);
+            }
+
             // Configure timer component for selected page:
-            if (id != DrawerListAdapter.TimerPageId) {
+            if (pageId != DrawerListAdapter.TimerPageId) {
                 Timer.HideAction = true;
                 Timer.HideDuration = false;
             } else {
                 Timer.HideAction = false;
             }
+        }
+
+        private void OpenPage (int id)
+        {
+            SwitchActionBarView(id);
 
             if (id == DrawerListAdapter.SettingsPageId) {
                 OpenFragment (settingsFragment.Value);
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.SettingsPageId);
             } else if (id == DrawerListAdapter.ReportsPageId) {
+                ReportsPeriodTextView.SetText(Resource.String.MainDrawerReportsWeek);
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 if (reportFragment.Value.ZoomLevel == ZoomLevel.Week) {
                     id = DrawerListAdapter.ReportsWeekPageId;
@@ -219,10 +244,13 @@ namespace Toggl.Joey.UI.Activities
                 }
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsWeekPageId) {
+                ReportsPeriodTextView.SetText(Resource.String.MainDrawerReportsWeek);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Week;
             } else if (id == DrawerListAdapter.ReportsMonthPageId) {
+                ReportsPeriodTextView.SetText( Resource.String.MainDrawerReportsMonth);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Month;
             } else if (id == DrawerListAdapter.ReportsYearPageId) {
+                ReportsPeriodTextView.SetText(Resource.String.MainDrawerReportsYear);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Year;
             } else if (id == DrawerListAdapter.FeedbackPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.FeedbackPageId);

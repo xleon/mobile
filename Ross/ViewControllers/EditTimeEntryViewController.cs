@@ -21,6 +21,7 @@ namespace Toggl.Ross.ViewControllers
     public class EditTimeEntryViewController : UIViewController
     {
         private readonly TimerNavigationController timerController;
+        private NSLayoutConstraint[] trackedWrapperConstraints;
         private UIView wrapper;
         private StartStopView startStopView;
         private UIDatePicker datePicker;
@@ -282,9 +283,19 @@ namespace Toggl.Ross.ViewControllers
             billableSwitch.Apply (BindBillableSwitch);
 
             if (billableHidden != billableSwitch.Hidden) {
-                wrapper.RemoveConstraints (wrapper.Constraints);
-                wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+                ResetWrapperConstraints ();
             }
+        }
+
+        private void ResetWrapperConstraints()
+        {
+            if (trackedWrapperConstraints != null) {
+                wrapper.RemoveConstraints (trackedWrapperConstraints);
+                trackedWrapperConstraints = null;
+            }
+
+            trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
+            wrapper.AddConstraints (trackedWrapperConstraints);
         }
 
         private void RebindTags ()
@@ -348,7 +359,7 @@ namespace Toggl.Ross.ViewControllers
             deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
-            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+            ResetWrapperConstraints ();
             scrollView.AddConstraints (
                 wrapper.AtTopOf (scrollView),
                 wrapper.AtBottomOf (scrollView),
@@ -535,8 +546,7 @@ namespace Toggl.Ross.ViewControllers
                             datePicker.Alpha = 0;
                         });
                         UIView.AddKeyframeWithRelativeStartTime (0.2, 0.8, delegate {
-                            wrapper.RemoveConstraints (wrapper.Constraints);
-                            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+                            ResetWrapperConstraints();
                             View.LayoutIfNeeded ();
                         });
                     },
@@ -553,8 +563,7 @@ namespace Toggl.Ross.ViewControllers
                         0.4, 0, 0,
                     delegate {
                         UIView.AddKeyframeWithRelativeStartTime (0, 0.6, delegate {
-                            wrapper.RemoveConstraints (wrapper.Constraints);
-                            wrapper.AddConstraints (VerticalLinearLayout (wrapper));
+                            ResetWrapperConstraints();
                             View.LayoutIfNeeded ();
                         });
                         UIView.AddKeyframeWithRelativeStartTime (0.4, 0.8, delegate {
@@ -598,6 +607,7 @@ namespace Toggl.Ross.ViewControllers
 
         private class StartStopView : UIView
         {
+            private readonly List<NSLayoutConstraint> trackedConstraints = new List<NSLayoutConstraint>();
             private readonly UILabel startDateLabel;
             private readonly UILabel startTimeLabel;
             private readonly UIButton startDateTimeButton;
@@ -793,25 +803,28 @@ namespace Toggl.Ross.ViewControllers
 
             public override void UpdateConstraints ()
             {
-                RemoveConstraints (Constraints);
+                if (trackedConstraints.Count > 0) {
+                    RemoveConstraints (trackedConstraints.ToArray());
+                    trackedConstraints.Clear ();
+                }
 
                 switch (viewLayout) {
                 case LayoutVariant.StartOnly:
                     arrowImageView.RemoveFromSuperview ();
                     stopDateTimeButton.RemoveFromSuperview ();
 
-                    this.AddConstraints (
+                    trackedConstraints.AddRange (new FluentLayout[] {
                         startDateTimeButton.WithSameCenterX (this),
                         startDateTimeButton.WithSameCenterY (this),
                         startDateTimeButton.AtTopOf (this, 10f),
                         startDateTimeButton.AtBottomOf (this, 10f)
-                    );
+                    } .ToLayoutConstraints());
                     break;
                 case LayoutVariant.BothCenterStart:
                     AddSubview (arrowImageView);
                     AddSubview (stopDateTimeButton);
 
-                    this.AddConstraints (
+                    trackedConstraints.AddRange (new FluentLayout[] {
                         startDateTimeButton.WithSameCenterX (this),
                         startDateTimeButton.WithSameCenterY (this),
                         startDateTimeButton.AtTopOf (this, 10f),
@@ -823,14 +836,14 @@ namespace Toggl.Ross.ViewControllers
 
                         stopDateTimeButton.AtTopOf (this, 10f),
                         stopDateTimeButton.AtBottomOf (this, 10f)
-                    );
+                    } .ToLayoutConstraints());
                     break;
                 case LayoutVariant.BothCenterAll:
                 default:
                     AddSubview (arrowImageView);
                     AddSubview (stopDateTimeButton);
 
-                    this.AddConstraints (
+                    trackedConstraints.AddRange (new FluentLayout[] {
                         startDateTimeButton.AtTopOf (this, 10f),
                         startDateTimeButton.AtBottomOf (this, 10f),
 
@@ -841,9 +854,11 @@ namespace Toggl.Ross.ViewControllers
 
                         stopDateTimeButton.AtTopOf (this, 10f),
                         stopDateTimeButton.AtBottomOf (this, 10f)
-                    );
+                    } .ToLayoutConstraints());
                     break;
                 }
+
+                AddConstraints (trackedConstraints.ToArray ());
 
                 base.UpdateConstraints ();
             }
@@ -882,6 +897,7 @@ namespace Toggl.Ross.ViewControllers
 
         private class ProjectClientTaskButton : UIButton
         {
+            private readonly List<NSLayoutConstraint> trackedConstraints = new List<NSLayoutConstraint>();
             private readonly UIView container;
             private readonly UILabel projectLabel;
             private readonly UILabel clientLabel;
@@ -924,47 +940,52 @@ namespace Toggl.Ross.ViewControllers
 
             public override void UpdateConstraints ()
             {
-                RemoveConstraints (Constraints);
+                if (trackedConstraints.Count > 0) {
+                    RemoveConstraints (trackedConstraints.ToArray());
+                    trackedConstraints.Clear ();
+                }
 
-                this.AddConstraints (
+                trackedConstraints.AddRange (new FluentLayout[] {
                     container.AtLeftOf (this, 15f),
                     container.WithSameCenterY (this),
 
                     projectLabel.AtTopOf (container),
                     projectLabel.AtLeftOf (container),
                     null
-                );
+                } .ToLayoutConstraints());
 
                 if (!clientLabel.Hidden) {
                     var baselineOffset = (float)Math.Floor (projectLabel.Font.Descender - clientLabel.Font.Descender);
-                    this.AddConstraints (
+                    trackedConstraints.AddRange (new FluentLayout[] {
                         clientLabel.AtTopOf (container, -baselineOffset),
                         clientLabel.AtRightOf (container),
                         clientLabel.ToRightOf (projectLabel, 5f),
                         clientLabel.AtBottomOf (projectLabel, baselineOffset),
                         null
-                    );
+                    } .ToLayoutConstraints());
                 } else {
-                    this.AddConstraints (
+                    trackedConstraints.AddRange (new FluentLayout[] {
                         projectLabel.AtRightOf (container),
                         null
-                    );
+                    } .ToLayoutConstraints());
                 }
 
                 if (!taskLabel.Hidden) {
-                    this.AddConstraints (
+                    trackedConstraints.AddRange (new FluentLayout[] {
                         taskLabel.Below (projectLabel, 3f),
                         taskLabel.AtLeftOf (container),
                         taskLabel.AtRightOf (container),
                         taskLabel.AtBottomOf (container),
                         null
-                    );
+                    } .ToLayoutConstraints());
                 } else {
-                    this.AddConstraints (
+                    trackedConstraints.AddRange (new FluentLayout[] {
                         projectLabel.AtBottomOf (container),
                         null
-                    );
+                    } .ToLayoutConstraints());
                 }
+
+                AddConstraints (trackedConstraints.ToArray ());
 
                 base.UpdateConstraints ();
             }

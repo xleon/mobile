@@ -239,14 +239,20 @@ namespace Toggl.Joey.UI.Activities
                 }
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsWeekPageId) {
+                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 ActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Week;
+                OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsMonthPageId) {
+                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 ActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Month;
+                OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsYearPageId) {
+                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 ActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Year;
+                OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.FeedbackPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.FeedbackPageId);
                 OpenFragment (feedbackFragment.Value);

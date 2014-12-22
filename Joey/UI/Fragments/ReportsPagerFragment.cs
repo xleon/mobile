@@ -27,8 +27,8 @@ namespace Toggl.Joey.UI.Fragments
         private const int StartPage = PagesCount - 2;
 
         private ViewPager viewPager;
-        private ImageButton previousPeriod;
-        private ImageButton nextPeriod;
+        private View previousPeriod;
+        private View nextPeriod;
         private TextView timePeriod;
         private ZoomLevel zoomLevel = ZoomLevel.Week;
         private int backDate;
@@ -112,8 +112,8 @@ namespace Toggl.Joey.UI.Fragments
             viewPager.PageSelected += OnPageSelected;
 
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
-            previousPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonPrevious);
-            nextPeriod = view.FindViewById<ImageButton> (Resource.Id.ButtonNext);
+            previousPeriod = view.FindViewById (Resource.Id.PreviousFrameLayout);
+            nextPeriod = view.FindViewById (Resource.Id.NextFrameLayout);
 
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);

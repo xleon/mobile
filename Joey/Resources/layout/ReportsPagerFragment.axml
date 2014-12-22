@@ -10,14 +10,21 @@
         android:layout_height="40dp"
         android:paddingTop="13dp"
         android:gravity="center_vertical">
-        <ImageButton
-            android:id="@+id/ButtonPrevious"
-            android:src="@drawable/IcKeyLeft"
+        <FrameLayout
+            android:id="@+id/PreviousFrameLayout"
             android:scaleType="fitStart"
             android:layout_weight="1"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            style="?android:attr/borderlessButtonStyle" />
+            style="?android:attr/borderlessButtonStyle">
+            <ImageView
+                android:src="@drawable/IcKeyLeft"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:layout_gravity="left|center" />
+        </FrameLayout>
         <TextView
             android:id="@+id/TimePeriodLabel"
             android:layout_height="wrap_content"
@@ -26,16 +33,21 @@
             android:layout_weight="2"
             android:layout_alignParentTop="true"
             android:textAlignment="center" />
-        <ImageButton
-            android:id="@+id/ButtonNext"
-            android:src="@drawable/IcKeyRight"
-            android:gravity="right"
-            android:layout_gravity="right"
+        <FrameLayout
+            android:id="@+id/NextFrameLayout"
+            android:scaleType="fitStart"
             android:layout_weight="1"
-            android:layout_height="40dp"
             android:layout_width="wrap_content"
-            android:scaleType="fitEnd"
-            style="?android:attr/borderlessButtonStyle" />
+            android:layout_height="40dp"
+            style="?android:attr/borderlessButtonStyle">
+            <ImageView
+                android:src="@drawable/IcKeyRight"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:layout_gravity="right|center" />
+        </FrameLayout>
     </LinearLayout>
     <android.support.v4.view.ViewPager
         android:id="@+id/ReportsViewPager"

@@ -277,7 +277,7 @@ namespace Toggl.Joey.UI.Activities
                 FragmentManager.BeginTransaction ()
                 .Add (Resource.Id.ContentFrameLayout, fragment)
                 .Commit ();
-            } else {
+            } else if (old != fragment) {
                 // The detach/attach is a workaround for https://code.google.com/p/android/issues/detail?id=42601
                 FragmentManager.BeginTransaction ()
                 .Detach (old)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Android.Animation;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -35,6 +36,9 @@ namespace Toggl.Joey.UI.Fragments
         private Context ctx;
         private Pool<View> projectListItemPool;
         private Pool<ReportsFragment.Controller> reportsControllerPool;
+        private FrameLayout syncErrorBar;
+        private ImageButton syncRetry;
+        private Animator currentAnimation;
 
         public ZoomLevel ZoomLevel
         {
@@ -114,9 +118,12 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod = view.FindViewById<TextView> (Resource.Id.TimePeriodLabel);
             previousPeriod = view.FindViewById (Resource.Id.PreviousFrameLayout);
             nextPeriod = view.FindViewById (Resource.Id.NextFrameLayout);
+            syncErrorBar = view.FindViewById<FrameLayout> (Resource.Id.ReportsSyncBar);
+            syncRetry = view.FindViewById<ImageButton> (Resource.Id.ReportsSyncRetryButton);
 
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
+            syncRetry.Click += (sender, e) => ReloadCurrent();
 
             ResetAdapter ();
             UpdatePeriod ();
@@ -124,13 +131,14 @@ namespace Toggl.Joey.UI.Fragments
             if (savedInstanceState != null) {
                 viewPager.CurrentItem = savedInstanceState.GetInt (ExtraCurrentItem, viewPager.CurrentItem);
             }
-
             return view;
         }
 
         public override void OnDestroyView ()
         {
             viewPager.PageSelected -= OnPageSelected;
+            var adapter = (MainPagerAdapter)viewPager.Adapter;
+            adapter.LoadReady -= OnLoadReady;
             base.OnDestroyView ();
         }
 
@@ -163,8 +171,16 @@ namespace Toggl.Joey.UI.Fragments
         {
             var adapter = new MainPagerAdapter (ChildFragmentManager, zoomLevel);
             viewPager.Adapter = adapter;
+            adapter.LoadReady += OnLoadReady;
             viewPager.CurrentItem = StartPage;
             backDate = 0;
+        }
+
+        private void ReloadCurrent()
+        {
+            var adapter = (MainPagerAdapter)viewPager.Adapter;
+            var frag = (ReportsFragment)adapter.GetItem (viewPager.CurrentItem);
+            frag.ReloadData ();
         }
 
         private void UpdatePeriod ()
@@ -172,14 +188,46 @@ namespace Toggl.Joey.UI.Fragments
             timePeriod.Text = FormattedDateSelector ();
         }
 
+        private void OnLoadReady (object sender, ReportsFragment.LoadReadyEventArgs e)
+        {
+            ShowSyncError (e.IsError);
+        }
+
         private void OnPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
 
             var frag = (ReportsFragment)adapter.GetItem (e.Position);
+            if (frag.IsError) {
+                frag.ReloadData();
+            }
             frag.UserVisibleHint = true;
             backDate = e.Position - StartPage;
             UpdatePeriod ();
+        }
+
+        private void ShowSyncError (bool visible)
+        {
+            if (currentAnimation != null) {
+                currentAnimation.Cancel();
+                currentAnimation = null;
+            }
+
+            if (visible && syncErrorBar.Visibility == ViewStates.Gone) {
+                var slideIn = ObjectAnimator.OfFloat (syncErrorBar, "translationY", 100f, 0f).SetDuration (500);
+                slideIn.AnimationStart += delegate {
+                    syncErrorBar.Visibility = ViewStates.Visible;
+                };
+                currentAnimation = slideIn;
+                currentAnimation.Start ();
+            } else if (!visible && syncErrorBar.Visibility == ViewStates.Visible) {
+                var slideOut = ObjectAnimator.OfFloat (syncErrorBar, "translationY", syncErrorBar.TranslationY, 100f).SetDuration (500);
+                slideOut.AnimationEnd += delegate {
+                    syncErrorBar.Visibility = ViewStates.Gone;
+                };
+                currentAnimation = slideOut;
+                currentAnimation.Start ();
+            }
         }
 
         private string FormattedDateSelector ()
@@ -250,6 +298,7 @@ namespace Toggl.Joey.UI.Fragments
             private readonly ZoomLevel zoomLevel;
             private readonly FragmentManager fragmentManager;
             private int snapPosition;
+            public event EventHandler<ReportsFragment.LoadReadyEventArgs> LoadReady;
 
             public MainPagerAdapter (FragmentManager fragmentManager, ZoomLevel zoomLevel) : base (fragmentManager)
             {
@@ -267,6 +316,7 @@ namespace Toggl.Joey.UI.Fragments
                 var frag = (ReportsFragment)base.InstantiateItem (container, position);
                 frag.Position = snapPosition;
                 frag.PositionChanged += ChangeReportsPosition;
+                frag.LoadReady += ShowSyncError;
                 currentFragments.Add (frag);
                 return frag;
             }
@@ -275,6 +325,7 @@ namespace Toggl.Joey.UI.Fragments
             {
                 var frag = (ReportsFragment)@object;
                 frag.PositionChanged -= ChangeReportsPosition;
+                frag.LoadReady -= ShowSyncError;
                 currentFragments.Remove (frag);
                 base.DestroyItem (container, position, frag);
             }
@@ -291,6 +342,13 @@ namespace Toggl.Joey.UI.Fragments
                 var period = position - StartPage;
                 return currentFragments.Find (frag => frag.Period == period)
                        ?? new ReportsFragment (period, zoomLevel);
+            }
+
+            private void ShowSyncError (object sender, ReportsFragment.LoadReadyEventArgs args)
+            {
+                if (LoadReady != null) {
+                    LoadReady (this, args);
+                }
             }
 
             private void ChangeReportsPosition (object sender, EventArgs args )

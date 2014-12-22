@@ -52,5 +52,29 @@
     <android.support.v4.view.ViewPager
         android:id="@+id/ReportsViewPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+    <FrameLayout
+        android:id="@+id/ReportsSyncBar"
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom"
+        android:background="@color/drawer_sync_status_box"
+        android:visibility="gone">
+        <TextView
+            android:text="@string/ReportsSyncFailed"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:paddingLeft="15dp"
+            android:gravity="center_vertical"
+            android:textColor="@android:color/white" />
+        <ImageButton
+            android:id="@+id/ReportsSyncRetryButton"
+            android:src="@drawable/SyncRetryButton"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:background="@drawable/ButtonNoFrame" />
+    </FrameLayout>
 </LinearLayout>

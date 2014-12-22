@@ -47,6 +47,12 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public bool IsError
+        {
+            get;
+            set;
+        }
+
         public ReportsFragment ()
         {
         }
@@ -105,6 +111,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public event EventHandler PositionChanged;
 
+        public event EventHandler<ReportsFragment.LoadReadyEventArgs> LoadReady;
+
         public int Position
         {
             get {
@@ -129,6 +137,15 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public void ReloadData()
+        {
+            if (isLoading || controller == null) {
+                return;
+            }
+            controller.Data = null;
+            EnsureLoaded();
+        }
+
         private async void EnsureLoaded ()
         {
             if (isLoading || !UserVisibleHint || controller == null || controller.Data != null) {
@@ -141,12 +158,15 @@ namespace Toggl.Joey.UI.Fragments
                     Period = ZoomLevel,
                 };
                 await data.Load (Period);
-
+                IsError = data.IsError;
                 if (controller != null) {
                     controller.Data = data;
                 }
             } finally {
                 isLoading = false;
+                if (LoadReady != null) {
+                    LoadReady (this, new LoadReadyEventArgs (Period, IsError));
+                }
             }
         }
 
@@ -448,6 +468,32 @@ namespace Toggl.Joey.UI.Fragments
                 } else {
                     _root.Alpha = 1;
                     squareDrawable.SetCornerRadius (5);
+                }
+            }
+        }
+
+        public class LoadReadyEventArgs : EventArgs
+        {
+            private int fragmentPeriod;
+            private bool isError;
+
+            public LoadReadyEventArgs (int period, bool error)
+            {
+                fragmentPeriod = period;
+                isError = error;
+            }
+
+            public int Period
+            {
+                get {
+                    return fragmentPeriod;
+                }
+            }
+
+            public bool IsError
+            {
+                get {
+                    return isError;
                 }
             }
         }

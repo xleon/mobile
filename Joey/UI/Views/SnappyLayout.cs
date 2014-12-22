@@ -245,21 +245,10 @@ namespace Toggl.Joey.UI.Views
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
         {
             var widthSize = MeasureSpec.GetSize (widthMeasureSpec);
-            var widthMode = MeasureSpec.GetMode (widthMeasureSpec);
             var heightSize = MeasureSpec.GetSize (heightMeasureSpec);
-            var heightMode = MeasureSpec.GetMode (heightMeasureSpec);
 
             ForEachChild (child => {
-                var childWidth = widthMeasureSpec;
-                if (widthMode != MeasureSpecMode.Unspecified) {
-                    childWidth = MeasureSpec.MakeMeasureSpec (widthSize, MeasureSpecMode.AtMost);
-                }
-                var childHeight = heightMeasureSpec;
-                if (heightMode != MeasureSpecMode.Unspecified) {
-                    childHeight = MeasureSpec.MakeMeasureSpec (heightSize, MeasureSpecMode.AtMost);
-                }
-
-                child.Measure (childWidth, childHeight);
+                MeasureChildWithMargins (child, widthMeasureSpec, 0, heightMeasureSpec, 0);
             });
 
             SetMeasuredDimension (widthSize, heightSize);
@@ -267,16 +256,67 @@ namespace Toggl.Joey.UI.Views
 
         protected override void OnLayout (bool changed, int l, int t, int r, int b)
         {
-            var width = r - l;
             var currentTop = 0;
 
             ForEachChild (child => {
+                var childWidth = child.MeasuredWidth;
                 var childHeight = child.MeasuredHeight;
 
-                child.Layout (0, currentTop, width, currentTop + childHeight);
-                maxTranslateY = -currentTop;
+                var left = 0;
+                var top = currentTop;
+                var right = childWidth;
+                var bottom = currentTop + childHeight;
+
+                var lp = child.LayoutParameters as SnappyLayout.LayoutParams;
+                if (lp != null) {
+                    left += lp.LeftMargin;
+                    right += lp.LeftMargin;
+                    top += lp.TopMargin;
+                    bottom += lp.TopMargin;
+                }
+
+                child.Layout (left, top, right, bottom);
+                maxTranslateY = -top;
                 currentTop += childHeight;
+                if (lp != null) {
+                    currentTop += lp.TopMargin + lp.BottomMargin;
+                }
             });
+        }
+
+        public override ViewGroup.LayoutParams GenerateLayoutParams (IAttributeSet attrs)
+        {
+            return new SnappyLayout.LayoutParams (Context, attrs);
+        }
+
+        protected override ViewGroup.LayoutParams GenerateDefaultLayoutParams ()
+        {
+            return new SnappyLayout.LayoutParams (LayoutParams.MatchParent, LayoutParams.MatchParent);
+        }
+
+        protected override ViewGroup.LayoutParams GenerateLayoutParams (ViewGroup.LayoutParams p)
+        {
+            return new SnappyLayout.LayoutParams (p);
+        }
+
+        protected override bool CheckLayoutParams (ViewGroup.LayoutParams p)
+        {
+            return p is SnappyLayout.LayoutParams;
+        }
+
+        public class LayoutParams : ViewGroup.MarginLayoutParams
+        {
+            public LayoutParams (Context ctx, IAttributeSet attrs) : base (ctx, attrs)
+            {
+            }
+
+            public LayoutParams (int width, int height) : base (width, height)
+            {
+            }
+
+            public LayoutParams (ViewGroup.LayoutParams source) : base (source)
+            {
+            }
         }
     }
 }

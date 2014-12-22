@@ -231,7 +231,10 @@ namespace Toggl.Joey.UI.Views
                             TypedValue.ApplyDimension (ComplexUnitType.Dip, 300, dm),
                             MeasureSpec.GetSize (widthMeasureSpec)
                         );
-            var height = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 250, dm);
+            var height = (int)Math.Max (
+                             TypedValue.ApplyDimension (ComplexUnitType.Dip, 250, dm),
+                             MeasureSpec.GetSize (heightMeasureSpec)
+                         );
 
             // Measure overlays
             var overlayWidthSpec = MeasureSpec.MakeMeasureSpec (width - leftMargin, MeasureSpecMode.Exactly);

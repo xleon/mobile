@@ -24,10 +24,17 @@
     </style>
     <style name="Theme.Toggl.ActionBar" parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
         <item name="android:background">@color/dark_gray</item>
-        <item name="android:titleTextStyle">@android:color/white</item>
+        <item name="android:titleTextStyle">@style/ActionBarTitle</item>
         <item name="android:progressBarPadding">0dip</item>
         <item name="android:displayOptions">showHome|useLogo</item>
     </style>
+    <style name="ActionBarTitle" parent="@android:style/TextAppearance.StatusBar.Title">
+        <item name="android:textColor">#A5A5A5</item>
+        <item name="android:textSize">15dp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+
 
     <style name="RadioButtonTab">
         <item name="android:button">@null</item>
@@ -175,4 +182,5 @@
     <style name="PieChartOverlay.Text.Time">
         <item name="android:textSize">24sp</item>
     </style>
+
 </resources>

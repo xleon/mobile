@@ -310,7 +310,7 @@ namespace Toggl.Joey.UI.Views
                 statsMoneyTextView.Text = String.Join (", ", proj.Currencies.Select (c => String.Format ("{0} {1}", c.Amount, c.Currency)));
             } else {
                 statsTimeTextView.Text = FormatMilliseconds (data.Projects.Sum (x => x.TotalTime));
-                statsMoneyTextView.Text = String.Join (", ", data.TotalCost);
+                statsMoneyTextView.Text = data.TotalCost != null ? String.Join (", ", data.TotalCost) : String.Empty;
             }
         }
 

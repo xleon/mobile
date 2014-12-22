@@ -8,13 +8,13 @@ using Android.Text.Format;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using Fragment = Android.Support.V4.App.Fragment;
-using Toggl.Phoebe.Data;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -195,34 +195,57 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void OpenPage (int id)
+        private void SwitchActionBarView (int pageId)
         {
+            bool showReportsActionBar = (pageId == DrawerListAdapter.ReportsPageId ||
+                                         pageId == DrawerListAdapter.ReportsWeekPageId ||
+                                         pageId == DrawerListAdapter.ReportsMonthPageId ||
+                                         pageId == DrawerListAdapter.ReportsYearPageId);
+
+            if (showReportsActionBar) {
+                ActionBar.SetDisplayShowTitleEnabled (true);
+                ActionBar.SetDisplayShowCustomEnabled (false);
+            } else {
+                ActionBar.SetDisplayShowTitleEnabled (false);
+                ActionBar.SetDisplayShowCustomEnabled (true);
+            }
+
             // Configure timer component for selected page:
-            if (id != DrawerListAdapter.TimerPageId) {
+            if (pageId != DrawerListAdapter.TimerPageId) {
                 Timer.HideAction = true;
                 Timer.HideDuration = false;
             } else {
                 Timer.HideAction = false;
             }
+        }
+
+        private void OpenPage (int id)
+        {
+            SwitchActionBarView (id);
 
             if (id == DrawerListAdapter.SettingsPageId) {
                 OpenFragment (settingsFragment.Value);
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.SettingsPageId);
             } else if (id == DrawerListAdapter.ReportsPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 if (reportFragment.Value.ZoomLevel == ZoomLevel.Week) {
+                    ActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
                     id = DrawerListAdapter.ReportsWeekPageId;
                 } else if (reportFragment.Value.ZoomLevel == ZoomLevel.Month) {
+                    ActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
                     id = DrawerListAdapter.ReportsMonthPageId;
                 } else {
+                    ActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
                     id = DrawerListAdapter.ReportsYearPageId;
                 }
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsWeekPageId) {
+                ActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Week;
             } else if (id == DrawerListAdapter.ReportsMonthPageId) {
+                ActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Month;
             } else if (id == DrawerListAdapter.ReportsYearPageId) {
+                ActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Year;
             } else if (id == DrawerListAdapter.FeedbackPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.FeedbackPageId);

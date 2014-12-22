@@ -14,6 +14,7 @@ namespace Toggl.Ross.ViewControllers
     public class FeedbackViewController : UIViewController
     {
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
+        private NSLayoutConstraint[] trackedConstraints;
         private float keyboardDuration;
         private float keyboardHeight;
         private UILabel moodLabel;
@@ -89,11 +90,14 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetConstraints ()
         {
-            View.RemoveConstraints (View.Constraints);
+            if (trackedConstraints != null) {
+                View.RemoveConstraints (trackedConstraints);
+                trackedConstraints = null;
+            }
 
             var keyboardVisible = keyboardHeight >= 1f;
 
-            View.AddConstraints (
+            trackedConstraints = new FluentLayout[] {
                 moodLabel.AtTopOf (View, keyboardVisible ? 20f : 70f),
                 moodLabel.AtLeftOf (View, 5f),
                 moodLabel.AtRightOf (View, 5f),
@@ -139,7 +143,9 @@ namespace Toggl.Ross.ViewControllers
                 sendButton.Height ().EqualTo (60f),
 
                 null
-            );
+            } .ToLayoutConstraints();
+
+            View.AddConstraints (trackedConstraints);
         }
 
         public override void ViewWillAppear (bool animated)

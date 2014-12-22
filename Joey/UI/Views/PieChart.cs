@@ -150,7 +150,7 @@ namespace Toggl.Joey.UI.Views
                 currentSelectAnimation = null;
             }
 
-            var totalSlices = data == null || data.Projects == null ? 0 : data.Projects.Count;
+            var totalSlices = data == null || data.CollapsedProjects == null ? 0 : data.CollapsedProjects.Count;
 
             SetActiveSlice (-1, updateStats: false);
             backgroundView.Visibility = ViewStates.Visible;
@@ -158,20 +158,23 @@ namespace Toggl.Joey.UI.Views
 
             ResetSlices (totalSlices);
             if (totalSlices > 0) {
-                var totalTime = data.Projects.Sum (x => x.TotalTime);
+                var totalTime = data.CollapsedProjects.Sum (x => x.TotalTime);
                 var startAngle = 0f;
 
                 for (var i = 0; i < totalSlices; i++) {
                     var slice = slices [i];
-                    var project = data.Projects [i];
+                    var project = data.CollapsedProjects [i];
                     var percentOfAll = (float)project.TotalTime / totalTime;
 
                     slice.Visibility = ViewStates.Gone;
                     slice.Radius = defaultRadius;
-                    slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
+                    if (project.Color == ProjectModel.GroupedProjectColorIndex) {
+                        slice.Color = Color.ParseColor (ProjectModel.GroupedProjectColor);
+                    } else {
+                        slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
+                    }
                     slice.StartAngle = startAngle;
                     startAngle += percentOfAll * 360;
-                    // TODO: project.TotalTime
                 }
             }
 

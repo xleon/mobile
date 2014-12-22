@@ -5,4 +5,8 @@
         <item quantity="one">One time entry will be deleted.</item>
         <item quantity="other">%d time entries will be deleted.</item>
     </plurals>
+    <plurals name="GroupedReportProjectCell">
+        <item quantity="one">One other project</item>
+        <item quantity="other">%d other projects</item>
+    </plurals>
 </resources>

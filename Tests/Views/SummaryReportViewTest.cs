@@ -75,6 +75,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.AreEqual (false, view.IsError);
                 Assert.AreEqual (true, view.ActivityCount == 7);
                 Assert.AreEqual (true, view.Projects.Count > 0);
+                Assert.AreEqual (true, view.CollapsedProjects.Count > 0);
             });
         }
 
@@ -89,6 +90,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.AreEqual (false, view.IsError);
                 Assert.AreEqual (true, view.ActivityCount > 27);
                 Assert.AreEqual (true, view.Projects.Count > 0);
+                Assert.AreEqual (true, view.CollapsedProjects.Count > 0);
             });
         }
 
@@ -103,6 +105,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.AreEqual (false, view.IsError);
                 Assert.AreEqual (true, view.ActivityCount == 12);
                 Assert.AreEqual (true, view.Projects.Count > 0);
+                Assert.AreEqual (true, view.CollapsedProjects.Count > 0);
             });
         }
 
@@ -144,10 +147,10 @@ namespace Toggl.Phoebe.Tests.Views
                     Color = "0",
                     Project = "project"
                 };
-                project.TotalTime = 0;
+                project.TotalTime = 1;
                 project.Currencies = new List<ReportCurrencyJson> () {
                     new ReportCurrencyJson() {
-                        Amount = 0,
+                        Amount = 1,
                         Currency = "eur"
                     }
                 };
@@ -157,8 +160,8 @@ namespace Toggl.Phoebe.Tests.Views
             return new ReportJson () {
                 Projects = projectsJsonList,
                 ActivityContainer = activityContainer,
-                TotalBillable = 0,
-                TotalGrand = 0,
+                TotalBillable = 1,
+                TotalGrand = 1,
                 TotalCurrencies = new List<ReportCurrencyJson> () {
                     new ReportCurrencyJson() { Amount = 0, Currency = "eur" }
                 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -18,6 +20,8 @@ namespace Toggl.Phoebe.Data.Reports
         private DayOfWeek startOfWeek;
         private IReportsClient reportClient;
         private long? workspaceId;
+        private List<ReportProject> collapsedProjects;
+        private List<ReportProject> projects;
 
         public ZoomLevel Period;
 
@@ -80,13 +84,6 @@ namespace Toggl.Phoebe.Data.Reports
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
-            for (int i = 0; i < dataObject.Projects.Count; i++) {
-                var project = dataObject.Projects[i];
-                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
-                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
-                dataObject.Projects[i] = project;
-            }
-
             long max = 0;
             foreach (var s in dataObject.Activity) {
                 max = max < s.TotalTime ? s.TotalTime : max;
@@ -103,6 +100,57 @@ namespace Toggl.Phoebe.Data.Reports
             for (int i = 1; i <= 5; i++) {
                 _chartTimeLabels.Add (String.Format ("{0} h", _maxTotal / 5 * i));
             }
+
+            dataObject.Projects.Sort ((x, y) => y.TotalTime.CompareTo ( x.TotalTime));
+            collapsedProjects = new List<ReportProject> ();
+            projects = new List<ReportProject> ();
+
+            var containerProject = new ReportProject {
+                Currencies = new List<ReportCurrency>(),
+                Color = ProjectModel.GroupedProjectColorIndex
+            };
+
+            const float minimunWeight = 0.01f; // minimum weight of project respect to total time
+            var totalValue = Convert.ToSingle ( dataObject.Projects.Sum (p => p.TotalTime));
+            int count = ProjectModel.GroupedProjectColorIndex;
+
+            // group projects on one single project
+            foreach (var item in dataObject.Projects) {
+                if (Convert.ToSingle (item.TotalTime) / totalValue > minimunWeight) {
+                    collapsedProjects.Add (item);
+                } else {
+                    containerProject.BillableTime += item.BillableTime;
+                    containerProject.TotalTime += item.TotalTime;
+
+                    // group currencies
+                    foreach (var currencyItem in item.Currencies) {
+                        var index = containerProject.Currencies.FindIndex (c => c.Currency == currencyItem.Currency);
+                        if (index != -1)
+                            containerProject.Currencies [index] = new ReportCurrency {
+                            Amount = containerProject.Currencies [index].Amount + currencyItem.Amount,
+                            Currency = currencyItem.Currency
+                        };
+                        else {
+                            containerProject.Currencies.Add ( currencyItem);
+                        }
+                    }
+                    count++;
+                }
+            }
+
+            // check if small projects exists and are enough to be a separeted slice
+            if (containerProject.TotalTime > 0 && Convert.ToSingle (containerProject.TotalTime) / totalValue > minimunWeight) {
+                containerProject.Project = count.ToString();
+                collapsedProjects.Add (containerProject);
+                projects = new List<ReportProject> (collapsedProjects);
+            } else {
+                projects = new List<ReportProject> (dataObject.Projects);
+            }
+
+            // format total and billable time
+            FormatTimeData (collapsedProjects, user);
+            FormatTimeData (projects, user);
+            FormatTimeData (dataObject.Projects, user);
         }
 
         public bool IsLoading { get; private set; }
@@ -122,10 +170,17 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
+        public List<ReportProject> CollapsedProjects
+        {
+            get {
+                return collapsedProjects;
+            }
+        }
+
         public List<ReportProject> Projects
         {
             get {
-                return dataObject.Projects;
+                return projects;
             }
         }
 
@@ -267,6 +322,16 @@ namespace Toggl.Phoebe.Data.Reports
                 }
             }
             return formattedString;
+        }
+
+        private void FormatTimeData ( IList<ReportProject> items, UserData user)
+        {
+            for (int i = 0; i < items.Count; i++) {
+                var project = items[i];
+                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
+                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
+                items[i] = project;
+            }
         }
 
         private ReportData CreateEmptyReport()

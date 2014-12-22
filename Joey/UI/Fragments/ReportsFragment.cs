@@ -6,13 +6,11 @@ using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Analytics;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
-using XPlatUtils;
-using Toggl.Joey.UI.Utils;
-using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -420,8 +418,14 @@ namespace Toggl.Joey.UI.Fragments
 
             protected override void Rebind ()
             {
-                if (String.IsNullOrEmpty ( DataSource.Project)) {
+                if (String.IsNullOrEmpty (DataSource.Project)) {
                     NameTextView.SetText (Resource.String.ReportsListViewNoProject);
+                } else if (DataSource.Color == ProjectModel.GroupedProjectColorIndex) {
+                    NameTextView.Text = _root.Context.Resources.GetQuantityString (
+                                            Resource.Plurals.GroupedReportProjectCell,
+                                            int.Parse (DataSource.Project),
+                                            int.Parse (DataSource.Project)
+                                        );
                 } else {
                     NameTextView.Text = DataSource.Project;
                 }
@@ -429,7 +433,8 @@ namespace Toggl.Joey.UI.Fragments
                 DurationTextView.Text = DataSource.FormattedTotalTime;
                 var squareDrawable = new GradientDrawable ();
                 squareDrawable.SetCornerRadius (5);
-                squareDrawable.SetColor (Color.ParseColor (ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length]));
+                var color = (DataSource.Color == ProjectModel.GroupedProjectColorIndex) ? ProjectModel.GroupedProjectColor : ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length];
+                squareDrawable.SetColor (Color.ParseColor (color));
                 ColorSquareView.SetBackgroundDrawable (squareDrawable);
             }
 

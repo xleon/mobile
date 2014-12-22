@@ -20,9 +20,15 @@ namespace Toggl.Ross.Views
             } set {
                 _data = value;
 
-                var hex = ProjectModel.HexColors [ _data.Color % ProjectModel.HexColors.Length];
+                string hex;
+                if (_data.Color == ProjectModel.GroupedProjectColorIndex) {
+                    hex = ProjectModel.GroupedProjectColor;
+                    projectTitleLabel.Text = String.Format ( "ReportsCellGroupedProject".Tr(), _data.Project);
+                } else {
+                    hex = ProjectModel.HexColors [ _data.Color % ProjectModel.HexColors.Length];
+                    projectTitleLabel.Text = String.IsNullOrEmpty ( _data.Project) ? "ReportsCellNoProject".Tr() : _data.Project;
+                }
                 circleView.BackgroundColor = UIColor.Clear.FromHex ( hex);
-                projectTitleLabel.Text = String.IsNullOrEmpty ( _data.Project) ? "ReportsCellNoProject".Tr() : _data.Project;
                 timeLabel.Text = _data.FormattedTotalTime;
                 projectTitleLabel.SetNeedsDisplay ();
             }

@@ -300,7 +300,7 @@ namespace Toggl.Joey.UI.Views
 
         private void UpdateStats()
         {
-            if (data == null) {
+            if (data == null || data.IsError) {
                 return;
             }
 

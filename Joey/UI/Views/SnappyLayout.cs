@@ -245,30 +245,10 @@ namespace Toggl.Joey.UI.Views
         protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
         {
             var widthSize = MeasureSpec.GetSize (widthMeasureSpec);
-            var widthMode = MeasureSpec.GetMode (widthMeasureSpec);
             var heightSize = MeasureSpec.GetSize (heightMeasureSpec);
-            var heightMode = MeasureSpec.GetMode (heightMeasureSpec);
 
             ForEachChild (child => {
-                var vertMargin = 0;
-                var horizMargin = 0;
-
-                var lp = child.LayoutParameters as SnappyLayout.LayoutParams;
-                if (lp != null) {
-                    vertMargin += lp.LeftMargin + lp.RightMargin;
-                    horizMargin += lp.TopMargin + lp.BottomMargin;
-                }
-
-                var childWidth = widthMeasureSpec;
-                if (widthMode != MeasureSpecMode.Unspecified) {
-                    childWidth = MeasureSpec.MakeMeasureSpec (widthSize - vertMargin, MeasureSpecMode.AtMost);
-                }
-                var childHeight = heightMeasureSpec;
-                if (heightMode != MeasureSpecMode.Unspecified) {
-                    childHeight = MeasureSpec.MakeMeasureSpec (heightSize - horizMargin, MeasureSpecMode.AtMost);
-                }
-
-                child.Measure (childWidth, childHeight);
+                MeasureChildWithMargins (child, widthMeasureSpec, 0, heightMeasureSpec, 0);
             });
 
             SetMeasuredDimension (widthSize, heightSize);
@@ -296,7 +276,7 @@ namespace Toggl.Joey.UI.Views
                 }
 
                 child.Layout (left, top, right, bottom);
-                maxTranslateY = -currentTop;
+                maxTranslateY = -top;
                 currentTop += childHeight;
                 if (lp != null) {
                     currentTop += lp.TopMargin + lp.BottomMargin;

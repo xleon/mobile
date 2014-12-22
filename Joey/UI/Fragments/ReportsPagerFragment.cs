@@ -199,7 +199,7 @@ namespace Toggl.Joey.UI.Fragments
 
             var frag = (ReportsFragment)adapter.GetItem (e.Position);
             if (frag.IsError) {
-                frag.ReloadData ();
+                ReloadCurrent();
             }
             frag.UserVisibleHint = true;
             backDate = e.Position - StartPage;

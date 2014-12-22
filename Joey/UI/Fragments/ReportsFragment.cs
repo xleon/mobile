@@ -141,7 +141,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public void ReloadData()
         {
-            if (isLoading || !UserVisibleHint || controller == null) {
+            if (isLoading || controller == null) {
                 return;
             }
             controller.Data = null;

@@ -27,6 +27,7 @@ namespace Toggl.Ross.ViewControllers
                 _zoomLevel = value;
                 scrollView.RefreshVisibleView ();
                 SummaryReportView.SaveReportsState (ZoomLevel);
+                TrackScreenView ();
             }
         }
 
@@ -123,7 +124,25 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidAppear (bool animated)
         {
             base.ViewDidAppear (animated);
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Reports";
+            TrackScreenView ();
+        }
+
+        private void TrackScreenView()
+        {
+            var screen = "Reports";
+            switch (ZoomLevel) {
+            case ZoomLevel.Week:
+                screen = "Reports (Week)";
+                break;
+            case ZoomLevel.Month:
+                screen = "Reports (Month)";
+                break;
+            case ZoomLevel.Year:
+                screen = "Reports (Year)";
+                break;
+            }
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = screen;
         }
 
         private void ChangeReportState ()

@@ -300,17 +300,17 @@ namespace Toggl.Joey.UI.Views
 
         private void UpdateStats()
         {
-            if (data == null) {
+            if (data == null || data.IsError) {
                 return;
             }
 
-            if (ActiveSlice >= 0 && ActiveSlice < data.Projects.Count) {
-                var proj = data.Projects [ActiveSlice];
+            if (ActiveSlice >= 0 && ActiveSlice < data.CollapsedProjects.Count) {
+                var proj = data.CollapsedProjects [ActiveSlice];
                 statsTimeTextView.Text = FormatMilliseconds (proj.TotalTime);
                 statsMoneyTextView.Text = String.Join (", ", proj.Currencies.Select (c => String.Format ("{0} {1}", c.Amount, c.Currency)));
             } else {
-                statsTimeTextView.Text = FormatMilliseconds (data.Projects.Sum (x => x.TotalTime));
-                statsMoneyTextView.Text = String.Join (", ", data.TotalCost);
+                statsTimeTextView.Text = FormatMilliseconds (data.CollapsedProjects.Sum (x => x.TotalTime));
+                statsMoneyTextView.Text = data.TotalCost != null ? String.Join (", ", data.TotalCost) : String.Empty;
             }
         }
 

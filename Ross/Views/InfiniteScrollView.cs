@@ -74,7 +74,7 @@ namespace Toggl.Ross.Views
 
         private float pageWidth = -1;
         private int tmpOffset;
-        private int prevPageIndex = 5000;
+        private int prevPageIndex = Int32.MinValue;
 
         private void RecenterIfNeeded()
         {

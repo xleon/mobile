@@ -17,7 +17,7 @@ namespace Toggl.Ross.Views
         public int PageIndex
         {
             get {
-                return _pageIndex + (Convert.ToInt32 ( ContentOffset.X / PageWidth) - tmpOffset);
+                return _pageIndex + (Convert.ToInt32 ( ContentOffset.X / pageWidth) - tmpOffset);
             }
 
 
@@ -30,7 +30,7 @@ namespace Toggl.Ross.Views
             get {
                 var pos = ConvertPointToView ( ContentOffset, _containerView).X;
                 foreach (var view in pages)
-                    if ( Math.Abs (pos - view.Frame.X) <= PageWidth / 2) {
+                    if ( Math.Abs (pos - view.Frame.X) <= pageWidth / 2) {
                         currentPage = view;
                     }
 
@@ -72,7 +72,7 @@ namespace Toggl.Ross.Views
         UIView _containerView;
         IInfiniteScrollViewSource viewSource;
 
-        public const float PageWidth = 320;
+        private float pageWidth = -1;
         private int tmpOffset;
         private int prevPageIndex = 5000;
 
@@ -83,12 +83,12 @@ namespace Toggl.Ross.Views
             float centerOffsetX = (contentWidth - Bounds.Width) / 2.0f;
             float distanceFromCenter = Math.Abs ( currentOffset.X - centerOffsetX);
 
-            if (distanceFromCenter > contentWidth / 4.0f && (distanceFromCenter - PageWidth/2) % PageWidth == 0) {
-                _pageIndex += Convert.ToInt32 ( ContentOffset.X / PageWidth) - tmpOffset;
-                ContentOffset = new PointF (centerOffsetX - PageWidth/2, currentOffset.Y);
+            if (distanceFromCenter > contentWidth / 4.0f && (distanceFromCenter - pageWidth/2) % pageWidth == 0) {
+                _pageIndex += Convert.ToInt32 ( ContentOffset.X / pageWidth) - tmpOffset;
+                ContentOffset = new PointF (centerOffsetX - pageWidth/2, currentOffset.Y);
                 foreach (var item in pages) {
                     PointF center = _containerView.ConvertPointToView (item.Center, this);
-                    center.X += centerOffsetX - currentOffset.X - PageWidth/2;
+                    center.X += centerOffsetX - currentOffset.X - pageWidth/2;
                     item.Center = ConvertPointToView (center, _containerView);
                 }
             }
@@ -97,6 +97,11 @@ namespace Toggl.Ross.Views
         public async override void LayoutSubviews ()
         {
             base.LayoutSubviews ();
+
+            // set correct page width
+            if (pageWidth == -1) {
+                pageWidth = Bounds.Width;
+            }
 
             // simulate end of scrollView at right
             // condition to avoid new creations of views
@@ -109,7 +114,7 @@ namespace Toggl.Ross.Views
                     UserInteractionEnabled = false;
 
                     // animate scrollview to correct position
-                    var offset = ContentOffset.X % PageWidth;
+                    var offset = ContentOffset.X % pageWidth;
                     SetContentOffset (new PointF ( ContentOffset.X - offset, ContentOffset.Y), true);
 
                     // wait for movement and enable user interaction
@@ -119,7 +124,7 @@ namespace Toggl.Ross.Views
                 return;
             }
 
-            ContentSize = new SizeF ( PageWidth * 20, Bounds.Height);
+            ContentSize = new SizeF ( pageWidth * 20, Bounds.Height);
             _containerView.Frame = new RectangleF (0, 0, ContentSize.Width, ContentSize.Height);
             RecenterIfNeeded ();
 
@@ -140,8 +145,8 @@ namespace Toggl.Ross.Views
         public void SetPageIndex ( int offSet, bool animated)
         {
             var currentCOffset = ContentOffset;
-            if (currentCOffset.X % PageWidth == 0) {
-                currentCOffset.X += PageWidth * offSet;
+            if (currentCOffset.X % pageWidth == 0) {
+                currentCOffset.X += pageWidth * offSet;
                 SetContentOffset (currentCOffset, animated);
             }
         }
@@ -193,7 +198,7 @@ namespace Toggl.Ross.Views
         private TView InsertView()
         {
             TView view = viewSource.CreateView ();
-            view.Frame = new RectangleF (0, 0, PageWidth, Bounds.Height);
+            view.Frame = new RectangleF (0, 0, pageWidth, Bounds.Height);
             _containerView.Add (view);
             return view;
         }
@@ -225,7 +230,7 @@ namespace Toggl.Ross.Views
             // the upcoming tiling logic depends on there already being at least one label in the visibleLabels array, so
             // to kick off the tiling we need to make sure there's at least one label
             if (pages.Count == 0) {
-                tmpOffset = Convert.ToInt32 (ContentOffset.X / PageWidth);
+                tmpOffset = Convert.ToInt32 (ContentOffset.X / pageWidth);
                 PlaceNewViewOnRight (minX);
                 currentPage = pages [0];
             }

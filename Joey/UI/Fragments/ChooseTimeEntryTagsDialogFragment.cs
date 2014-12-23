@@ -209,12 +209,14 @@ namespace Toggl.Joey.UI.Fragments
             // Delete unused tag relations:
             var deleteTasks = modelTags
                               .Where (oldTag => !selectedTags.Any (newTag => newTag.Id == oldTag.TagId))
-                              .Select (data => new TimeEntryTagModel (data).DeleteAsync ());
+                              .Select (data => new TimeEntryTagModel (data).DeleteAsync ())
+                              .ToList();
 
             // Create new tag relations:
             var createTasks = selectedTags
                               .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-            .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ());
+            .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ())
+            .ToList();
 
             await Task.WhenAll (deleteTasks.Concat (createTasks));
 

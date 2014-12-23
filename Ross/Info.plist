@@ -23,9 +23,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.toggl.timer</string>
 	<key>CFBundleShortVersionString</key>
-	<string>7.0.19</string>
+	<string>7.0.20</string>
 	<key>CFBundleVersion</key>
-	<string>11</string>
+	<string>12</string>
 	<key>UIPrerenderedIcon</key>
 	<true/>
 	<key>XSAppIconAssets</key>

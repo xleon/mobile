@@ -358,6 +358,8 @@
     <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash4%402x.png" />
     <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash%402x.png" />
     <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash.png" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash47%402x.png" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\TogglSplash55%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <ITunesArtwork Include="iTunesArtwork" />

@@ -318,6 +318,11 @@ namespace Toggl.Joey.UI.Views
                 return base.OnTouchEvent (e);
             }
 
+            if (e.Action == MotionEventActions.Move) {
+                ZoomOutBars ();
+                return base.OnTouchEvent (e);
+            }
+
             if (e.Action == MotionEventActions.Up) {
                 ZoomInBars (rowIndex);
             }
@@ -333,11 +338,9 @@ namespace Toggl.Joey.UI.Views
                 return;
             }
 
-            // Cancel old animation
-            if (currentAnimation != null) {
-                currentAnimation.Cancel ();
-                currentAnimation = null;
-            }
+            // Return if previous animation is running
+            if (currentAnimation != null && currentAnimation.IsRunning) 
+                return;
 
             int zoomedTop = rows.First().BarView.Top; // first bar position
             var contentHeight = rows.Last().BarView.Bottom - zoomedTop + 2 * rowMargin;
@@ -402,13 +405,7 @@ namespace Toggl.Joey.UI.Views
             if (!isZooming) {
                 return;
             }
-
-            // Cancel old animation
-            if (currentAnimation != null) {
-                currentAnimation.Cancel ();
-                currentAnimation = null;
-            }
-
+                
             for (int i = 0; i < rows.Count; i++) {
                 var row = rows [i];
 
@@ -435,6 +432,8 @@ namespace Toggl.Joey.UI.Views
             foreach (var item in rows) {
                 var area = new Rect ();
                 item.BarView.GetHitRect (area);
+                area.Top -= rowMargin;
+                area.Bottom += rowMargin;
                 area.Right = Right;
                 if ( area.Contains ( x, y)) {
                     result = index;

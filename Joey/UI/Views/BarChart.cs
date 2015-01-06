@@ -28,12 +28,14 @@ namespace Toggl.Joey.UI.Views
         private int rightPadding;
         private int yAxisSpacing;
         private int rowMargin;
+        private int selectedRowIndex;
         private int barZeroSize;
         private int barLabelSpacing;
         private BackgroundView backgroundView;
         private View loadingOverlayView;
         private View emptyOverlayView;
         private Animator currentAnimation;
+        private PointF tapInitialPos;
         private bool isZooming;
 
         public BarChart (Context context, IAttributeSet attrs) : base (context, attrs)
@@ -311,22 +313,24 @@ namespace Toggl.Joey.UI.Views
                 return base.OnTouchEvent (e);
             }
 
-            // check selected row
-            var rowIndex = GetSelectedBarIndex (Convert.ToInt32 (e.GetX ()), Convert.ToInt32 (e.GetY ()));
-            if (rowIndex == -1) {
-                ZoomOutBars ();
-                return base.OnTouchEvent (e);
+            if (e.Action == MotionEventActions.Down) {
+                // check selected row
+                selectedRowIndex = GetSelectedBarIndex (Convert.ToInt32 (e.GetX ()), Convert.ToInt32 (e.GetY ()));
+                if (selectedRowIndex == -1) {
+                    ZoomOutBars ();
+                    return base.OnTouchEvent (e);
+                }
+                tapInitialPos = new PointF (e.GetX (), e.GetY ());
             }
 
-            if (e.Action == MotionEventActions.Move) {
-                ZoomOutBars ();
-                return base.OnTouchEvent (e);
+            if (e.Action == MotionEventActions.Up || e.Action == MotionEventActions.Cancel) {
+                // set a small threshold to detect drag
+                if ( Math.Abs ( tapInitialPos.X - e.GetX ()) > 30 || Math.Abs ( tapInitialPos.Y - e.GetY ()) > 30 ) {
+                    ZoomOutBars ();
+                    return base.OnTouchEvent (e);
+                }
+                ZoomInBars (selectedRowIndex);
             }
-
-            if (e.Action == MotionEventActions.Up) {
-                ZoomInBars (rowIndex);
-            }
-
             return true;
         }
 
@@ -339,8 +343,9 @@ namespace Toggl.Joey.UI.Views
             }
 
             // Return if previous animation is running
-            if (currentAnimation != null && currentAnimation.IsRunning) 
+            if (currentAnimation != null && currentAnimation.IsRunning) {
                 return;
+            }
 
             int zoomedTop = rows.First().BarView.Top; // first bar position
             var contentHeight = rows.Last().BarView.Bottom - zoomedTop + 2 * rowMargin;
@@ -405,7 +410,7 @@ namespace Toggl.Joey.UI.Views
             if (!isZooming) {
                 return;
             }
-                
+
             for (int i = 0; i < rows.Count; i++) {
                 var row = rows [i];
 

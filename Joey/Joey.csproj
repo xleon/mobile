@@ -140,6 +140,9 @@
     <Compile Include="UI\Fragments\CreateTagDialogFragment.cs" />
     <Compile Include="UI\Views\SnappyLayout.cs" />
     <Compile Include="UI\Utils\Pool.cs" />
+    <Compile Include="Net\WidgetService.cs" />
+    <Compile Include="StartNewTimeEntryService.cs" />
+    <Compile Include="Net\WidgetProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -563,6 +566,19 @@
     <AndroidResource Include="Resources\layout\PieChartEmpty.axml" />
     <AndroidResource Include="Resources\layout\PieChartLoading.axml" />
     <AndroidResource Include="Resources\layout\PieChartStats.axml" />
+    <AndroidResource Include="Resources\xml\widget_info.xml" />
+    <AndroidResource Include="Resources\drawable\widget_color_shape.xml" />
+    <AndroidResource Include="Resources\layout\widget_list_item.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcWidgetStop.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcWidgetPlay.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcWidgetStop.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcWidgetPlay.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcWidgetStop.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcWidgetPlay.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcWidgetStop.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcWidgetPlay.png" />
+    <AndroidResource Include="Resources\layout\keyguard_widget.axml" />
+    <AndroidResource Include="Resources\layout\widget_login.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />
@@ -593,6 +609,7 @@
     <Folder Include="UI\Text\" />
     <Folder Include="Analytics\" />
     <Folder Include="Logging\" />
+    <Folder Include="Resources\xml\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

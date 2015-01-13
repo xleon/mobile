@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
+using Toggl.Phoebe.Net;
 
 namespace Toggl.Phoebe.Tests.Analytics
 {
@@ -19,6 +20,29 @@ namespace Toggl.Phoebe.Tests.Analytics
                         (store) => store.ExperimentId == (string)null));
             ServiceContainer.Register<ExperimentManager> (new ExperimentManager ());
             tracker = new TestTracker ();
+        }
+
+        [Test]
+        public void TestSendAppInitTime ()
+        {
+            try {
+                tracker.SendAppInitTime (TimeSpan.FromMilliseconds (1000));
+            } catch (Exception e) {
+                Assert.AreEqual (TestTracker.SendTimingExceptionMessage, e.Message);
+            }
+        }
+
+        [Test]
+        public void TestAuthChanged()
+        {
+            var authManager = new AuthManager ();
+            ServiceContainer.Register<AuthManager> (authManager);
+            try {
+                MessageBus.Send (new AuthChangedMessage (authManager, AuthChangeReason.Login));
+            } catch (Exception e) {
+                Assert.AreEqual (TestTracker.StartNewSessionException, e.Message);
+            }
+            MessageBus.Send (new AuthChangedMessage (authManager, AuthChangeReason.Signup)); // No action
         }
 
         [Test]

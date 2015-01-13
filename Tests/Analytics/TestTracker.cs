@@ -8,10 +8,13 @@ namespace Toggl.Phoebe.Tests.Analytics
 
         public const string SendEventExceptionMessage = "SendEventCalled";
         public const string SendTimingExceptionMessage = "SendTimingCalled";
+        public const string StartNewSessionException = "StartNewSession";
+
         public SendData CurrentSendData { get; set; }
 
         protected override void StartNewSession()
         {
+            throw new Exception (StartNewSessionException);
         }
 
         protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label = null)
@@ -34,7 +37,9 @@ namespace Toggl.Phoebe.Tests.Analytics
 
         public override string CurrentScreen
         {
-            set { }
+            set {
+                throw new Exception (StartNewSessionException);
+            }
         }
 
         public class SendData

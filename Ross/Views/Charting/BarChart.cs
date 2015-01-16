@@ -12,9 +12,9 @@ namespace Toggl.Ross.Views.Charting
     {
         int NumberOfBarsOnChart (BarChart barChart);
 
-        float ValueForBarAtIndex (BarChart barChart, int index);
+        nfloat ValueForBarAtIndex (BarChart barChart, int index);
 
-        float ValueForSecondaryBarAtIndex ( BarChart barChart, int index);
+        nfloat ValueForSecondaryBarAtIndex ( BarChart barChart, int index);
 
         string TextForBarAtIndex (BarChart barChart, int index);
 
@@ -27,7 +27,7 @@ namespace Toggl.Ross.Views.Charting
     {
         public IBarChartDataSource DataSource { get; set; }
 
-        public float AnimationSpeed { get; set; }
+        public nfloat AnimationSpeed { get; set; }
 
         public UIFont LabelFont { get; set; }
 
@@ -119,7 +119,7 @@ namespace Toggl.Ross.Views.Charting
             }
 
             CALayer parentLayer = _barChartView.Layer;
-            int barsCount = DataSource.NumberOfBarsOnChart (this);
+            var barsCount = DataSource.NumberOfBarsOnChart (this);
 
             for (int i = 0; i < xAxisText.Length; i++) {
                 xAxisText [i].String = DataSource.TimeIntervalAtIndex (i);
@@ -263,7 +263,7 @@ namespace Toggl.Ross.Views.Charting
 
             foreach (BarLayer item in barLayers) {
                 if (item.Contains ( _barChartView.Layer.ConvertPointToLayer (point, item) )) {
-                    item.ZPosition = float.MaxValue;
+                    item.ZPosition = nfloat.MaxValue;
                     selectedIndex = idx;
                 } else {
                     item.ZPosition = defaultSliceZOrder;
@@ -366,10 +366,10 @@ namespace Toggl.Ross.Views.Charting
         public const int DateTextIndex = 3;
         public const int TimeTextIndex = 4;
 
-        private float _timeValue;
+        private nfloat _timeValue;
 
         [Export ("timeValue")]
-        public float TimeValue
+        public nfloat TimeValue
         {
             get {
                 return _timeValue;
@@ -390,10 +390,10 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        private float _moneyValue;
+        private nfloat _moneyValue;
 
         [Export ("moneyValue")]
-        public float MoneyValue
+        public nfloat MoneyValue
         {
             get {
                 return _moneyValue;
@@ -415,7 +415,7 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        const float minBarScale = 0.005f;
+        readonly static nfloat minBarScale = 0.005f;
 
         public BarLayer ()
         {

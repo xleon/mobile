@@ -1,4 +1,3 @@
-﻿using System;
 using SQLite;
 
 namespace Toggl.Phoebe.Data

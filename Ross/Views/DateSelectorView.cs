@@ -21,7 +21,7 @@ namespace Toggl.Ross.Views
         private UIButton leftArrow;
         private UIButton rightArrow;
 
-        const float dateWidth = 170;
+        readonly static nfloat dateWidth = 170;
 
         public DateSelectorView ()
         {

@@ -225,7 +225,7 @@ namespace Toggl.Ross.Views.Charting
                     shapeLayer.LineWidth = SelectedSliceStroke;
                     shapeLayer.StrokeColor = UIColor.White.CGColor;
                     shapeLayer.LineJoin = CAShapeLayer.JoinBevel;
-                    item.ZPosition = float.MaxValue;
+                    item.ZPosition = nfloat.MaxValue;
                     selectedIndex = idx;
                 } else {
                     item.ZPosition = defaultSliceZOrder;
@@ -346,7 +346,7 @@ namespace Toggl.Ross.Views.Charting
                 if (DataSource.ColorForSliceAtIndex (this, index) != null) {
                     color = DataSource.ColorForSliceAtIndex (this, index);
                 } else {
-                    color = UIColor.FromHSBA ((float) (index / 8f % 20.0f / 20.0 + 0.02f), (float) ((index % 8 + 3) / 10.0), (float) (91 / 100.0), 1);
+                    color = UIColor.FromHSBA ((nfloat) (index / 8f % 20.0f / 20.0 + 0.02f), (nfloat) ((index % 8 + 3) / 10.0), (nfloat) (91 / 100.0), 1);
                 }
 
                 layer.ChangeToColor (color);
@@ -480,9 +480,9 @@ namespace Toggl.Ross.Views.Charting
             return result;
         }
 
-        private bool equals ( float a, float b)
+        private bool equals ( nfloat a, nfloat b)
         {
-            return (Math.Abs (a - b) < float.Epsilon);
+            return (Math.Abs (a - b) < nfloat.Epsilon);
         }
 
         #region Animation Delegate + Run Loop Timer

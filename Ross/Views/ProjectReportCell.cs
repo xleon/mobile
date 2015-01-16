@@ -64,7 +64,7 @@ namespace Toggl.Ross.Views
         public override void LayoutSubviews ()
         {
             base.LayoutSubviews ();
-            const float radius = 17.0f;
+            nfloat radius = 17.0f;
             var contentFrame = ContentView.Frame;
 
             projectTitleLabel.Frame = new CGRect ( radius + radius * 0.5f, (contentFrame.Height - 20)/2, 250, 20);

@@ -133,20 +133,20 @@ namespace Toggl.Ross.Views.Charting
             return ActivityList.Count;
         }
 
-        public float ValueForBarAtIndex (BarChart barChart, int index)
+        public nfloat ValueForBarAtIndex (BarChart barChart, int index)
         {
             if (_reportView.MaxTotal == 0) {
                 return 0;
             }
-            return (ActivityList [index].TotalTime == 0) ? 0 : (float) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
+            return (ActivityList [index].TotalTime == 0) ? 0 : (nfloat) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
         }
 
-        public float ValueForSecondaryBarAtIndex (BarChart barChart, int index)
+        public nfloat ValueForSecondaryBarAtIndex (BarChart barChart, int index)
         {
             if (_reportView.MaxTotal == 0) {
                 return 0;
             }
-            return (ActivityList [index].BillableTime == 0) ? 0 : (float) (ActivityList [index].BillableTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
+            return (ActivityList [index].BillableTime == 0) ? 0 : (nfloat) (ActivityList [index].BillableTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
         }
 
         public string TextForBarAtIndex (BarChart barChart, int index)

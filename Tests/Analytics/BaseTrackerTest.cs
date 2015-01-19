@@ -3,8 +3,8 @@ using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using XPlatUtils;
 using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Analytics
 {

@@ -23,41 +23,35 @@ namespace Toggl.Phoebe.Tests.Analytics
         }
 
         [Test]
+        [ExpectedException (typeof (ArgumentException))]
         public void TestSendAppInitTime ()
         {
-            try {
-                tracker.SendAppInitTime (TimeSpan.FromMilliseconds (1000));
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.SendTimingExceptionMessage, e.Message);
-            }
+            tracker.SendAppInitTime (TimeSpan.FromMilliseconds (1000));
         }
 
         [Test]
         public void TestAuthChanged()
         {
+            Assert.Throws<ArgumentException> (()=>SendAuthMessage (AuthChangeReason.Login), "Start a new session whenever the user changes.");
+            Assert.DoesNotThrow (()=>SendAuthMessage (AuthChangeReason.Signup), "Exception being signup where the user just created an account.");
+        }
+
+        private void SendAuthMessage (AuthChangeReason reason)
+        {
             var authManager = new AuthManager ();
             ServiceContainer.Register<AuthManager> (authManager);
-            try {
-                MessageBus.Send (new AuthChangedMessage (authManager, AuthChangeReason.Login));
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.StartNewSessionException, e.Message);
-            }
-            MessageBus.Send (new AuthChangedMessage (authManager, AuthChangeReason.Signup)); // No action
+            MessageBus.Send (new AuthChangedMessage (authManager, reason));
         }
 
         [Test]
         public void TestSendSettingsChangeEvent ()
         {
-            try {
-                tracker.SendSettingsChangeEvent (SettingName.AskForProject);
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.SendEventExceptionMessage, e.Message);
-                Assert.AreEqual (tracker.CurrentSendData.Label, "AskForProject");
-            }
+            Assert.Throws<ArgumentException> (()=> tracker.SendSettingsChangeEvent (SettingName.AskForProject));
+            Assert.AreEqual (tracker.CurrentSendData.Label, "AskForProject");
 
             try {
                 tracker.SendSettingsChangeEvent ((SettingName)100);
-            } catch (Exception e) {
+            } catch (ArgumentException e) {
                 Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
@@ -65,16 +59,12 @@ namespace Toggl.Phoebe.Tests.Analytics
         [Test]
         public void TestSendAccountLoginEvent ()
         {
-            try {
-                tracker.SendAccountLoginEvent (AccountCredentials.Password);
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.SendEventExceptionMessage, e.Message);
-                Assert.AreEqual (tracker.CurrentSendData.Label, "Password");
-            }
+            Assert.Throws<Exception> (()=> tracker.SendAccountLoginEvent (AccountCredentials.Password));
+            Assert.AreEqual (tracker.CurrentSendData.Label, "Password");
 
             try {
                 tracker.SendAccountLoginEvent ((AccountCredentials)100);
-            } catch (Exception e) {
+            } catch (ArgumentException e) {
                 Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
@@ -82,42 +72,31 @@ namespace Toggl.Phoebe.Tests.Analytics
         [Test]
         public void TestSendAccountCreateEvent ()
         {
-            try {
-                tracker.SendAccountCreateEvent (AccountCredentials.Password);
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.SendEventExceptionMessage, e.Message);
-                Assert.AreEqual (tracker.CurrentSendData.Label, "Password");
-            }
+            Assert.Throws<ArgumentException> (()=> tracker.SendAccountCreateEvent (AccountCredentials.Password));
+            Assert.AreEqual (tracker.CurrentSendData.Label, "Password");
 
             try {
                 tracker.SendAccountCreateEvent ((AccountCredentials)100);
-            } catch (Exception e) {
+            } catch (ArgumentException e) {
                 Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
 
         [Test]
+        [ExpectedException (typeof (ArgumentException))]
         public void TestSendAccountLogoutEvent ()
         {
-            try {
-                tracker.SendAccountLogoutEvent ();
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.SendEventExceptionMessage, e.Message);
-            }
+            tracker.SendAccountLogoutEvent ();
         }
 
         [Test]
         public void TestSendTimerStartEvent ()
         {
-            try {
-                tracker.SendTimerStartEvent (TimerStartSource.AppNew);
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.SendEventExceptionMessage, e.Message);
-            }
+            Assert.Throws<ArgumentException> (()=> tracker.SendTimerStartEvent (TimerStartSource.AppNew));
 
             try {
                 tracker.SendTimerStartEvent ((TimerStartSource)100);
-            } catch (Exception e) {
+            } catch (ArgumentException e) {
                 Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
@@ -125,15 +104,11 @@ namespace Toggl.Phoebe.Tests.Analytics
         [Test]
         public void TestSendTimerStopEvent ()
         {
-            try {
-                tracker.SendTimerStopEvent (TimerStopSource.App);
-            } catch (Exception e) {
-                Assert.AreEqual (TestTracker.SendEventExceptionMessage, e.Message);
-            }
+            Assert.Throws<ArgumentException> (()=> tracker.SendTimerStopEvent (TimerStopSource.App));
 
             try {
                 tracker.SendTimerStopEvent ((TimerStopSource)100);
-            } catch (Exception e) {
+            } catch (ArgumentException e) {
                 Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
             }
         }

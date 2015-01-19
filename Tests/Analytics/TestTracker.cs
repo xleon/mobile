@@ -14,12 +14,12 @@ namespace Toggl.Phoebe.Tests.Analytics
 
         protected override void StartNewSession()
         {
-            throw new Exception (StartNewSessionException);
+            throw new ArgumentException (StartNewSessionException);
         }
 
         protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label = null)
         {
-            throw new Exception (SendTimingExceptionMessage);
+            throw new ArgumentException (SendTimingExceptionMessage);
         }
 
         protected override void SendEvent (string category, string action, string label = null, long value = 0L)
@@ -28,7 +28,7 @@ namespace Toggl.Phoebe.Tests.Analytics
             CurrentSendData.Category = category;
             CurrentSendData.Action = action;
             CurrentSendData.Label = label;
-            throw new Exception (SendEventExceptionMessage);
+            throw new ArgumentException (SendEventExceptionMessage);
         }
 
         protected override void SetCustomDimension (int idx, string value)
@@ -38,7 +38,7 @@ namespace Toggl.Phoebe.Tests.Analytics
         public override string CurrentScreen
         {
             set {
-                throw new Exception (StartNewSessionException);
+                throw new ArgumentException (StartNewSessionException);
             }
         }
 

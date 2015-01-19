@@ -4,8 +4,6 @@ using System.Linq;
 using Android.Animation;
 using Android.Content;
 using Android.Graphics;
-using Android.Graphics.Drawables;
-using Android.Text;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -20,6 +18,7 @@ namespace Toggl.Joey.UI.Views
         private static Color DarkGrayColor = Color.ParseColor ("#666666");
         private static Color DarkBlueColor = Color.ParseColor ("#00AEFF");
         private static Color LightBlueColor = Color.ParseColor ("#80D6FF");
+        private const int ZoomCount = 3;
 
         private readonly List<Row> rows = new List<Row> (31);
         private int leftMargin;
@@ -28,12 +27,16 @@ namespace Toggl.Joey.UI.Views
         private int bottomPadding;
         private int rightPadding;
         private int yAxisSpacing;
+        private int rowMargin;
+        private int selectedRowIndex;
         private int barZeroSize;
         private int barLabelSpacing;
         private BackgroundView backgroundView;
         private View loadingOverlayView;
         private View emptyOverlayView;
         private Animator currentAnimation;
+        private PointF tapInitialPos;
+        private bool isZooming;
 
         public BarChart (Context context, IAttributeSet attrs) : base (context, attrs)
         {
@@ -73,7 +76,7 @@ namespace Toggl.Joey.UI.Views
         private void ResetRows (int neededRows)
         {
             var existingRows = rows.Count;
-            var totalRows = (int)Math.Max (existingRows, neededRows);
+            var totalRows = Math.Max (existingRows, neededRows);
             var expandRows = neededRows > existingRows;
             var contractRows = existingRows > neededRows;
 
@@ -112,6 +115,9 @@ namespace Toggl.Joey.UI.Views
                 currentAnimation = null;
             }
 
+            // Not zooming
+            isZooming = false;
+
             var totalRows = 0;
             var hasTime = false;
 
@@ -124,7 +130,7 @@ namespace Toggl.Joey.UI.Views
 
                 backgroundView.XAxisLabels = data.ChartTimeLabels.ToArray ();
 
-                totalRows = (int)Math.Min (data.Activity.Count, data.ChartRowLabels.Count);
+                totalRows = Math.Min (data.Activity.Count, data.ChartRowLabels.Count);
                 ResetRows (totalRows);
 
                 if (totalRows > 25) {
@@ -261,20 +267,21 @@ namespace Toggl.Joey.UI.Views
 
             if (rows.Count > 0) {
                 var rowHeight = (height - topPadding - bottomPadding) / rows.Count;
-                var rowMargin = (int)Math.Max (
-                                    TypedValue.ApplyDimension (ComplexUnitType.Dip, 1f, dm), // Minimum
-                                    Math.Min (
-                                        rowHeight * 0.05f,
-                                        TypedValue.ApplyDimension (ComplexUnitType.Dip, 5f, dm) // Maximum
-                                    )
-                                );
+                rowMargin = (int)Math.Max (
+                                TypedValue.ApplyDimension (ComplexUnitType.Dip, 1f, dm), // Minimum
+                                Math.Min (
+                                    rowHeight * 0.05f,
+                                    TypedValue.ApplyDimension (ComplexUnitType.Dip, 5f, dm) // Maximum
+                                )
+                            );
+
                 rowHeight -= rowMargin * 2;
                 var effBgWidth = backgroundWidth - barZeroSize - rightPadding;
 
                 // Determine Y-axis left margin (by respecting yAxisSpacing)
                 var yAxisLeftMargin = leftPadding;
                 var maxYAxisWidth = rows.Max (x => x.YAxisTextView.MeasuredWidth);
-                yAxisLeftMargin += (int)Math.Min (0, leftMargin - yAxisLeftMargin - yAxisSpacing - maxYAxisWidth);
+                yAxisLeftMargin += Math.Min (0, leftMargin - yAxisLeftMargin - yAxisSpacing - maxYAxisWidth);
 
                 // Layout rows
                 for (var i = 0; i < rows.Count; i++) {
@@ -287,24 +294,158 @@ namespace Toggl.Joey.UI.Views
                     // Position value label
                     var tv = row.ValueTextView;
                     var valueX = leftMargin + rowWidth + barLabelSpacing;
-                    var valueY = rowTop + (rowHeight - tv.MeasuredHeight - (tv.MeasuredHeight - tv.Baseline)) / 2;
-                    if (rowHeight < tv.MeasuredHeight) {
-                        // If the bar is smaller than text, we baseline algin the text to bar bottom
-                        valueY = rowTop + rowHeight - tv.Baseline;
-                    }
+                    var valueY = rowTop + CalculateTextViewY (tv, rowHeight);
                     tv.Layout (valueX, valueY, valueX + tv.MeasuredWidth, valueY + tv.MeasuredHeight);
 
                     // Position y-axis label
                     tv = row.YAxisTextView;
                     var axisX = yAxisLeftMargin;
-                    var axisY = rowTop + (rowHeight - tv.MeasuredHeight - (tv.MeasuredHeight - tv.Baseline)) / 2;
-                    if (rowHeight < tv.MeasuredHeight) {
-                        // If the bar is smaller than text, we baseline algin the text to bar bottom
-                        axisY = rowTop + rowHeight - tv.Baseline;
-                    }
+                    var axisY = rowTop + CalculateTextViewY (tv, rowHeight);
                     tv.Layout (axisX, axisY, axisX + tv.MeasuredWidth, axisY + tv.MeasuredHeight);
                 }
             }
+        }
+
+        public override bool OnTouchEvent (MotionEvent e)
+        {
+            // check correct zoomlevel
+            if (rows.Count <= 12) {
+                return base.OnTouchEvent (e);
+            }
+
+            if (e.Action == MotionEventActions.Down) {
+                // check selected row
+                selectedRowIndex = GetSelectedBarIndex (Convert.ToInt32 (e.GetX ()), Convert.ToInt32 (e.GetY ()));
+                if (selectedRowIndex == -1) {
+                    ZoomOutBars ();
+                    return base.OnTouchEvent (e);
+                }
+                tapInitialPos = new PointF (e.GetX (), e.GetY ());
+            }
+
+            if (e.Action == MotionEventActions.Up || e.Action == MotionEventActions.Cancel) {
+                // set a small threshold to detect drag
+                if ( Math.Abs ( tapInitialPos.X - e.GetX ()) > 30 || Math.Abs ( tapInitialPos.Y - e.GetY ()) > 30 ) {
+                    ZoomOutBars ();
+                    return base.OnTouchEvent (e);
+                }
+                ZoomInBars (selectedRowIndex);
+            }
+            return true;
+        }
+
+        private void ZoomInBars ( int index)
+        {
+            // Do zoomout if bar is previously zoomed
+            if (rows [index].IsZoomed) {
+                ZoomOutBars ();
+                return;
+            }
+
+            // Return if previous animation is running
+            if (currentAnimation != null && currentAnimation.IsRunning) {
+                return;
+            }
+
+            int zoomedTop = rows.First().BarView.Top; // first bar position
+            var contentHeight = rows.Last().BarView.Bottom - zoomedTop + 2 * rowMargin;
+
+            // Max zoomed height slightly bigger than week bars
+            var maxZoomedHeight = Convert.ToInt32 ( contentHeight / 6.8f); ;
+            var minZoomedHeight = (contentHeight - maxZoomedHeight * ZoomCount) / (rows.Count - ZoomCount);
+
+            // calculate leftover space
+            var offset = contentHeight - maxZoomedHeight * ZoomCount - minZoomedHeight * (rows.Count - ZoomCount);
+
+            maxZoomedHeight -= rowMargin * 2;
+            minZoomedHeight -= rowMargin * 2;
+
+            int zoomedHeight;
+            float axisAlphaEnd;
+            float valueAlphaEnd;
+
+            for (int i = 0; i < rows.Count; i++) {
+                var row = rows [i];
+
+                if ((index == rows.Count - 1 && i > rows.Count - 1 - ZoomCount) ||
+                        (i >= index - 1 && i <= index + 1) ||
+                        (index == 0 && i < ZoomCount)) {
+                    zoomedHeight = maxZoomedHeight;
+                    axisAlphaEnd = 1f;
+                    valueAlphaEnd = 1f;
+                    row.IsZoomed = true;
+                } else {
+                    // add 1 space unit to every row until offset == 0
+                    zoomedHeight = minZoomedHeight;
+                    if (offset > 0) {
+                        zoomedHeight = minZoomedHeight + 1;
+                        offset--; // decrease overflow
+                    }
+                    axisAlphaEnd = (i % 3 == 0) ? 1.0f : 0.0f;
+                    valueAlphaEnd = 0f;
+                    row.IsZoomed = false;
+                }
+
+                // Define initial alpha values for textviews
+                row.YAxisTextView.Alpha = (row.YAxisTextView.Visibility == ViewStates.Gone) ? 0f : row.YAxisTextView.Alpha;
+                row.ValueTextView.Alpha = (row.ValueTextView.Visibility == ViewStates.Gone) ? 0f : row.ValueTextView.Alpha;
+                row.ValueTextView.Visibility = row.YAxisTextView.Visibility = ViewStates.Visible;
+
+                // Get difference between future and current top value
+                var yAxisTranslate = zoomedTop + CalculateTextViewY (row.YAxisTextView, zoomedHeight) - row.YAxisTextView.Top;
+                var yValueTranslate = zoomedTop + CalculateTextViewY (row.ValueTextView, zoomedHeight) - row.ValueTextView.Top;
+
+                row.YAxisTextView.Animate ().Alpha (axisAlphaEnd).TranslationY (yAxisTranslate);
+                row.ValueTextView.Animate ().Alpha (valueAlphaEnd).TranslationY ( yValueTranslate);
+                row.BarView.Animate ().TranslationY ( zoomedTop - row.BarView.Top).ScaleY ( (float)zoomedHeight/ (float)row.BarView.Height);
+
+                zoomedTop += (2 * rowMargin + zoomedHeight);
+            }
+
+            isZooming = true;
+        }
+
+        private void ZoomOutBars()
+        {
+            if (!isZooming) {
+                return;
+            }
+
+            for (int i = 0; i < rows.Count; i++) {
+                var row = rows [i];
+
+                row.YAxisTextView.Animate ().Alpha ( i % 3 == 0 ? 1.0f : 0.0f).TranslationY (0f).WithEndAction ( new Java.Lang.Runnable (() => {
+                    row.ValueTextView.Visibility = (i % 3 == 0) ? ViewStates.Visible : ViewStates.Gone;
+                }));
+
+                row.ValueTextView.Animate ().Alpha (0f).TranslationY (0f).WithEndAction ( new Java.Lang.Runnable (() => {
+                    row.ValueTextView.Visibility = ViewStates.Gone;
+                }));
+
+                row.BarView.Animate ().TranslationY (0f).ScaleY (1f);
+                row.IsZoomed = false;
+            }
+
+            isZooming = false;
+        }
+
+        private int GetSelectedBarIndex ( int x, int y)
+        {
+            var result = -1;
+            var index = 0;
+
+            foreach (var item in rows) {
+                var area = new Rect ();
+                item.BarView.GetHitRect (area);
+                area.Top -= rowMargin;
+                area.Bottom += rowMargin;
+                area.Right = Right;
+                if ( area.Contains ( x, y)) {
+                    result = index;
+                }
+                index++;
+            }
+            return result;
         }
 
         private static string FormatTime (long seconds)
@@ -314,6 +455,16 @@ namespace Toggl.Joey.UI.Views
             }
             var t = TimeSpan.FromSeconds (seconds);
             return String.Format ("{0}:{1:mm}", (int)t.TotalHours, t);
+        }
+
+        private static int CalculateTextViewY ( TextView tv, int rowHeight)
+        {
+            var valueY = (rowHeight - tv.MeasuredHeight - (tv.MeasuredHeight - tv.Baseline)) / 2;
+            if (rowHeight < tv.MeasuredHeight) {
+                // If the bar is smaller than text, we baseline algin the text to bar bottom
+                valueY = rowHeight - tv.Baseline;
+            }
+            return valueY;
         }
 
         private class BackgroundView : View
@@ -497,6 +648,8 @@ namespace Toggl.Joey.UI.Views
                     TextSize = 10,
                 };
                 ValueTextView.SetTextColor (DarkBlueColor);
+
+                IsZoomed = false;
             }
 
             public void Reset()
@@ -506,12 +659,14 @@ namespace Toggl.Joey.UI.Views
                 BarView.ScaleX = 0f;
                 ValueTextView.Visibility = ViewStates.Visible;
                 ValueTextView.Alpha = 0f;
+                IsZoomed = false;
             }
 
             public float RelativeWidth { get; set; }
             public TextView YAxisTextView { get; set; }
             public BarView BarView { get; set; }
             public TextView ValueTextView { get; set; }
+            public bool IsZoomed { get; set; }
         }
     }
 }

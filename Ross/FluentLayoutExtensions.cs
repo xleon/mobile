@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
-using MonoTouch.UIKit;
+using UIKit;
 
 namespace Toggl.Ross
 {

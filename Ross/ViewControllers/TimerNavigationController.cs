@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using MonoTouch.CoreFoundation;
-using MonoTouch.UIKit;
+using CoreFoundation;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;

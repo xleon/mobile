@@ -1,5 +1,5 @@
-﻿using System;
-using MonoTouch.UIKit;
+using System;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
@@ -102,7 +102,7 @@ namespace Toggl.Ross.ViewControllers
                 } else {
                     model.SetDuration (duration);
                     await model.SaveAsync ();
-                    NavigationController.PopViewControllerAnimated (true);
+                    NavigationController.PopViewController (true);
                 }
             } finally {
                 isSaving = false;

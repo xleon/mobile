@@ -1,6 +1,6 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using UIKit;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
 
@@ -54,8 +54,8 @@ namespace Toggl.Ross.Views
             Right
         }
 
-        private PointF panStart;
-        private float panDeltaX;
+        private CGPoint panStart;
+        private nfloat panDeltaX;
         private bool panLockInHorizDirection;
         private bool panDeleteConfirmed;
         private PanLock panLock;
@@ -199,8 +199,8 @@ namespace Toggl.Ross.Views
 
             switch (panLock) {
             case PanLock.None:
-                continueActionLabel.Alpha = Math.Min (1, Math.Max (0, -2 * panDeltaX / ContinueSwipeWidth - 1));
-                var delAlpha = Math.Min (1, Math.Max (0, 2 * panDeltaX / DeleteSwipeWidth - 1));
+                continueActionLabel.Alpha = (nfloat)Math.Min (1, Math.Max (0, -2 * panDeltaX / ContinueSwipeWidth - 1));
+                var delAlpha = (nfloat)Math.Min (1, Math.Max (0, 2 * panDeltaX / DeleteSwipeWidth - 1));
                 confirmActionLabel.Alpha = panDeleteConfirmed ? 0 : delAlpha;
                 deleteActionLabel.Alpha = panDeleteConfirmed ? delAlpha : 0;
                 break;
@@ -225,12 +225,12 @@ namespace Toggl.Ross.Views
 
             LayoutActualContentView ();
 
-            continueActionLabel.Frame = new RectangleF (
+            continueActionLabel.Frame = new CGRect (
                 x: 0, y: 0,
                 height: contentFrame.Height,
                 width: ContinueSwipeWidth + SnapDistance
             );
-            confirmActionLabel.Frame = deleteActionLabel.Frame = new RectangleF (
+            confirmActionLabel.Frame = deleteActionLabel.Frame = new CGRect (
                 x: contentFrame.Width - DeleteSwipeWidth - SnapDistance,
                 y: 0,
                 height: contentFrame.Height,

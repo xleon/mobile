@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
+using CoreGraphics;
 using System.Linq;
 using System.Threading.Tasks;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -102,7 +102,7 @@ namespace Toggl.Ross.ViewControllers
                     await model.SaveAsync ();
                 }
 
-                NavigationController.PopViewControllerAnimated (true);
+                NavigationController.PopViewController (true);
             } finally {
                 isSaving = false;
             }
@@ -130,12 +130,12 @@ namespace Toggl.Ross.ViewControllers
                 controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
             }
 
-            public override float EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
             {
                 return 60f;
             }
 
-            public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
                 return EstimatedHeight (tableView, indexPath);
             }
@@ -185,7 +185,7 @@ namespace Toggl.Ross.ViewControllers
 
                 if (TableView.TableFooterView == null) {
                     if (newTagButton == null) {
-                        newTagButton = new UIButton (new RectangleF (0, 0, 200, 60)).Apply (Style.TagList.NewTagButton);
+                        newTagButton = new UIButton (new CGRect (0, 0, 200, 60)).Apply (Style.TagList.NewTagButton);
                         newTagButton.SetTitle ("TagNewTag".Tr(), UIControlState.Normal);
                         newTagButton.TouchUpInside += delegate {
                             var vc = new NewTagViewController (controller.model.Workspace);
@@ -219,7 +219,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.LayoutSubviews ();
 
-                var contentFrame = new RectangleF (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
+                var contentFrame = new CGRect (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
                 SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
 
                 contentFrame.X = 15f;

@@ -1,6 +1,6 @@
-﻿using System;
-using MonoTouch.UIKit;
-using System.Drawing;
+using System;
+using UIKit;
+using CoreGraphics;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.Views
@@ -20,19 +20,19 @@ namespace Toggl.Ross.Views
         public override void LayoutSubviews ()
         {
             var titleSize = titleLabel.SizeThatFits (Frame.Size);
-            var messageSize = messageLabel.SizeThatFits (new SizeF (Frame.Width, Frame.Height - titleSize.Height));
+            var messageSize = messageLabel.SizeThatFits (new CGSize (Frame.Width, Frame.Height - titleSize.Height));
             var spacing = titleSize.Height * 0.25f;
 
             var topOffset = (Frame.Height - titleSize.Height - spacing - messageSize.Height) / 2;
 
-            titleLabel.Frame = new RectangleF (
+            titleLabel.Frame = new CGRect (
                 (Frame.Width - titleSize.Width) / 2,
                 topOffset,
                 titleSize.Width,
                 titleSize.Height
             );
 
-            messageLabel.Frame = new RectangleF (
+            messageLabel.Frame = new CGRect (
                 (Frame.Width - messageSize.Width) / 2,
                 titleLabel.Frame.Bottom + spacing,
                 messageSize.Width,

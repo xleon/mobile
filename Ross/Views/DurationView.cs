@@ -1,8 +1,8 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.Foundation;
-using MonoTouch.ObjCRuntime;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using Foundation;
+using ObjCRuntime;
+using UIKit;
 using Toggl.Phoebe.Data;
 
 namespace Toggl.Ross.Views
@@ -36,7 +36,7 @@ namespace Toggl.Ross.Views
             base.LayoutSubviews ();
 
             var cursorHeight = Font.Ascender;
-            cursorView.Frame = new RectangleF (
+            cursorView.Frame = new CGRect (
                 Frame.Width - 7f - CursorWidth,
                 (Frame.Height - cursorHeight) / 2,
                 CursorWidth,

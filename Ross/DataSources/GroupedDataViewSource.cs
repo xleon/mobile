@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
+using CoreGraphics;
 using System.Linq;
-using MonoTouch.CoreFoundation;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using CoreFoundation;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
@@ -191,7 +191,7 @@ namespace Toggl.Ross.DataSources
             if (dataView.HasMore || dataView.IsLoading) {
                 if (defaultFooterView == null) {
                     defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
-                    defaultFooterView.Frame = new RectangleF (0, 0, 50, 50);
+                    defaultFooterView.Frame = new CGRect (0, 0, 50, 50);
                 }
                 tableView.TableFooterView = defaultFooterView;
                 defaultFooterView.StartAnimating ();
@@ -202,12 +202,12 @@ namespace Toggl.Ross.DataSources
             }
         }
 
-        public override int NumberOfSections (UITableView tableView)
+        public override nint NumberOfSections (UITableView tableView)
         {
             return cache.GetSections ().Count;
         }
 
-        public override int RowsInSection (UITableView tableview, int section)
+        public override nint RowsInSection (UITableView tableview, nint section)
         {
             return GetCachedRows (GetSection (section)).Count;
         }
@@ -222,9 +222,9 @@ namespace Toggl.Ross.DataSources
             return cache.GetRows (section);
         }
 
-        protected TSection GetSection (int section)
+        protected TSection GetSection (nint section)
         {
-            return GetCachedSections () [section];
+            return GetCachedSections () [ (int)section];
         }
 
         protected TRow GetRow (NSIndexPath indexPath)

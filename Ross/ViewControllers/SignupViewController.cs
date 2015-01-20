@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using Cirrious.FluentLayouts.Touch;
-using MonoTouch.Foundation;
+using Foundation;
 using MonoTouch.TTTAttributedLabel;
-using MonoTouch.UIKit;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
 using XPlatUtils;

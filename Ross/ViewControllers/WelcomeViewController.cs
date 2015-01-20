@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using Cirrious.FluentLayouts.Touch;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;

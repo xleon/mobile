@@ -1,6 +1,6 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using UIKit;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.Views
@@ -21,7 +21,7 @@ namespace Toggl.Ross.Views
         {
             base.LayoutSubviews ();
 
-            backgroundView.Frame = new RectangleF (0, -480, Frame.Width, 480);
+            backgroundView.Frame = new CGRect (0, -480, Frame.Width, 480);
         }
 
         public override UIColor BackgroundColor

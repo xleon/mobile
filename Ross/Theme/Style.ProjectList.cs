@@ -1,6 +1,6 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using UIKit;
 
 namespace Toggl.Ross.Theme
 {
@@ -63,10 +63,10 @@ namespace Toggl.Ross.Theme
                 const int imageSize = 60;
                 const float circleDiameter = 30;
 
-                UIGraphics.BeginImageContextWithOptions (new SizeF (imageSize, imageSize), false, UIScreen.MainScreen.Scale);
+                UIGraphics.BeginImageContextWithOptions (new CGSize (imageSize, imageSize), false, UIScreen.MainScreen.Scale);
                 var ctx = UIGraphics.GetCurrentContext ();
 
-                ctx.SetFillColorWithColor (circleColor.CGColor);
+                ctx.SetFillColor (circleColor.CGColor);
                 ctx.AddArc (imageSize / 2f, imageSize / 2f, circleDiameter / 2f, 0, (float) (2 * Math.PI), true);
                 ctx.FillPath ();
 

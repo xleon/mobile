@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using CoreGraphics;
+using Foundation;
+using UIKit;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.Views
@@ -28,9 +28,9 @@ namespace Toggl.Ross.Views
             return image;
         }
 
-        private static float GetScale (UIView hostView)
+        private static nfloat GetScale (UIView hostView)
         {
-            var scale = 0f;
+            nfloat scale = 0f;
             if (hostView.Window != null && hostView.Window.Screen != null) {
                 scale = hostView.Window.Screen.Scale;
             } else {
@@ -39,20 +39,20 @@ namespace Toggl.Ross.Views
             return scale;
         }
 
-        private UIImage CreateImage (NSString title, float scale)
+        private UIImage CreateImage (NSString title, nfloat scale)
         {
             var titleAttrs = new UIStringAttributes () {
                 Font = UIFont.FromName ("HelveticaNeue", 13f),
                 ForegroundColor = Color.Gray,
             };
 
-            var titleBounds = new RectangleF (
-                new PointF (0, 0),
+            var titleBounds = new CGRect (
+                new CGPoint (0, 0),
                 title.GetSizeUsingAttributes (titleAttrs)
             );
 
             var image = Image.TagBackground;
-            var imageBounds = new RectangleF (
+            var imageBounds = new CGRect (
                 0, 0,
                 (float)Math.Ceiling (titleBounds.Width) + image.CapInsets.Left + image.CapInsets.Right + 4f,
                 (float)Math.Ceiling (titleBounds.Height) + image.CapInsets.Top + image.CapInsets.Bottom

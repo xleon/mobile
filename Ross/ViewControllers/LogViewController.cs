@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
+using CoreGraphics;
 using System.Linq;
-using MonoTouch.CoreAnimation;
-using MonoTouch.CoreFoundation;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using CoreAnimation;
+using CoreFoundation;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -84,7 +84,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.ViewDidLayoutSubviews ();
 
-                emptyView.Frame = new RectangleF (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+                emptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
             }
         }
 
@@ -118,12 +118,12 @@ namespace Toggl.Ross.ViewControllers
                 return section.DataObjects;
             }
 
-            public override float EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
             {
                 return 60f;
             }
 
-            public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
                 return EstimatedHeight (tableView, indexPath);
             }
@@ -136,17 +136,17 @@ namespace Toggl.Ross.ViewControllers
                 return cell;
             }
 
-            public override float EstimatedHeightForHeader (UITableView tableView, int section)
+            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
             {
                 return 42f;
             }
 
-            public override float GetHeightForHeader (UITableView tableView, int section)
+            public override nfloat GetHeightForHeader (UITableView tableView, nint section)
             {
                 return EstimatedHeightForHeader (tableView, section);
             }
 
-            public override UIView GetViewForHeader (UITableView tableView, int section)
+            public override UIView GetViewForHeader (UITableView tableView, nint section)
             {
                 var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (SectionHeaderId);
                 view.Bind (GetSection (section));
@@ -172,7 +172,7 @@ namespace Toggl.Ross.ViewControllers
             private void OnContinue (TimeEntryModel model)
             {
                 DurationOnlyNoticeAlertView.TryShow ();
-                controller.TableView.ScrollRectToVisible (new RectangleF (0, 0, 1, 1), true);
+                controller.TableView.ScrollRectToVisible (new CGRect (0, 0, 1, 1), true);
             }
         }
 
@@ -189,7 +189,7 @@ namespace Toggl.Ross.ViewControllers
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
             private TimeEntryTagsView tagsView;
-            private int rebindCounter;
+            private nint rebindCounter;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -210,9 +210,9 @@ namespace Toggl.Ross.ViewControllers
                 );
 
                 var maskLayer = new CAGradientLayer () {
-                    AnchorPoint = PointF.Empty,
-                    StartPoint = new PointF (0.0f, 0.0f),
-                    EndPoint = new PointF (1.0f, 0.0f),
+                    AnchorPoint = CGPoint.Empty,
+                    StartPoint = new CGPoint (0.0f, 0.0f),
+                    EndPoint = new CGPoint (1.0f, 0.0f),
                     Colors = new [] {
                         UIColor.FromWhiteAlpha (1, 1).CGColor,
                         UIColor.FromWhiteAlpha (1, 1).CGColor,
@@ -295,7 +295,7 @@ namespace Toggl.Ross.ViewControllers
                 var contentFrame = ContentView.Frame;
 
                 const float durationLabelWidth = 80f;
-                durationLabel.Frame = new RectangleF (
+                durationLabel.Frame = new CGRect (
                     x: contentFrame.Width - durationLabelWidth - HorizPadding,
                     y: 0,
                     width: durationLabelWidth,
@@ -304,7 +304,7 @@ namespace Toggl.Ross.ViewControllers
 
                 const float billableTagsHeight = 20f;
                 const float billableTagsWidth = 20f;
-                billableTagsImageView.Frame = new RectangleF (
+                billableTagsImageView.Frame = new CGRect (
                     y: (contentFrame.Height - billableTagsHeight) / 2,
                     height: billableTagsHeight,
                     x: durationLabel.Frame.X - billableTagsWidth,
@@ -313,14 +313,14 @@ namespace Toggl.Ross.ViewControllers
 
                 var runningHeight = runningImageView.Image.Size.Height;
                 var runningWidth = runningImageView.Image.Size.Width;
-                runningImageView.Frame = new RectangleF (
+                runningImageView.Frame = new CGRect (
                     y: (contentFrame.Height - runningHeight) / 2,
                     height: runningHeight,
                     x: contentFrame.Width - (HorizPadding + runningWidth) / 2,
                     width: runningWidth
                 );
 
-                textContentView.Frame = new RectangleF (
+                textContentView.Frame = new CGRect (
                     x: 0, y: 0,
                     width: billableTagsImageView.Frame.X - 2f,
                     height: contentFrame.Height
@@ -328,7 +328,7 @@ namespace Toggl.Ross.ViewControllers
                 textContentView.Layer.Mask.Bounds = textContentView.Frame;
 
                 var bounds = GetBoundingRect (projectLabel);
-                projectLabel.Frame = new RectangleF (
+                projectLabel.Frame = new CGRect (
                     x: HorizPadding,
                     y: contentFrame.Height / 2 - bounds.Height,
                     width: bounds.Width,
@@ -337,7 +337,7 @@ namespace Toggl.Ross.ViewControllers
 
                 const float clientLeftMargin = 7.5f;
                 bounds = GetBoundingRect (clientLabel);
-                clientLabel.Frame = new RectangleF (
+                clientLabel.Frame = new CGRect (
                     x: projectLabel.Frame.X + projectLabel.Frame.Width + clientLeftMargin,
                     y: (float)Math.Floor (projectLabel.Frame.Y + projectLabel.Font.Ascender - clientLabel.Font.Ascender),
                     width: bounds.Width,
@@ -345,10 +345,10 @@ namespace Toggl.Ross.ViewControllers
                 );
 
                 const float secondLineTopMargin = 3f;
-                var offsetX = HorizPadding + 1f;
+                nfloat offsetX = HorizPadding + 1f;
                 if (!taskLabel.Hidden) {
                     bounds = GetBoundingRect (taskLabel);
-                    taskLabel.Frame = new RectangleF (
+                    taskLabel.Frame = new CGRect (
                         x: offsetX,
                         y: contentFrame.Height / 2 + secondLineTopMargin,
                         width: bounds.Width,
@@ -358,8 +358,8 @@ namespace Toggl.Ross.ViewControllers
 
                     if (!taskSeparatorImageView.Hidden) {
                         const float separatorOffsetY = -2f;
-                        var imageSize = taskSeparatorImageView.Image != null ? taskSeparatorImageView.Image.Size : SizeF.Empty;
-                        taskSeparatorImageView.Frame = new RectangleF (
+                        var imageSize = taskSeparatorImageView.Image != null ? taskSeparatorImageView.Image.Size : CGSize.Empty;
+                        taskSeparatorImageView.Frame = new CGRect (
                             x: offsetX,
                             y: taskLabel.Frame.Y + taskLabel.Font.Ascender - imageSize.Height + separatorOffsetY,
                             width: imageSize.Width,
@@ -371,7 +371,7 @@ namespace Toggl.Ross.ViewControllers
 
                     if (!descriptionLabel.Hidden) {
                         bounds = GetBoundingRect (descriptionLabel);
-                        descriptionLabel.Frame = new RectangleF (
+                        descriptionLabel.Frame = new CGRect (
                             x: offsetX,
                             y: (float)Math.Floor (taskLabel.Frame.Y + taskLabel.Font.Ascender - descriptionLabel.Font.Ascender),
                             width: bounds.Width,
@@ -382,7 +382,7 @@ namespace Toggl.Ross.ViewControllers
                     }
                 } else if (!descriptionLabel.Hidden) {
                     bounds = GetBoundingRect (descriptionLabel);
-                    descriptionLabel.Frame = new RectangleF (
+                    descriptionLabel.Frame = new CGRect (
                         x: offsetX,
                         y: contentFrame.Height / 2 + secondLineTopMargin,
                         width: bounds.Width,
@@ -391,13 +391,13 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            private static RectangleF GetBoundingRect (UILabel view)
+            private static CGRect GetBoundingRect (UILabel view)
             {
                 var attrs = new UIStringAttributes () {
                     Font = view.Font,
                 };
                 var rect = ((NSString) (view.Text ?? String.Empty)).GetBoundingRect (
-                               new SizeF (Single.MaxValue, Single.MaxValue),
+                               new CGSize (Single.MaxValue, Single.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
                 rect.Height = (float)Math.Ceiling (rect.Height);
@@ -594,14 +594,14 @@ namespace Toggl.Ross.ViewControllers
                 base.LayoutSubviews ();
                 var contentFrame = ContentView.Frame;
 
-                dateLabel.Frame = new RectangleF (
+                dateLabel.Frame = new CGRect (
                     x: HorizSpacing,
                     y: 0,
                     width: (contentFrame.Width - 3 * HorizSpacing) / 2,
                     height: contentFrame.Height
                 );
 
-                totalDurationLabel.Frame = new RectangleF (
+                totalDurationLabel.Frame = new CGRect (
                     x: (contentFrame.Width - 3 * HorizSpacing) / 2 + 2 * HorizSpacing,
                     y: 0,
                     width: (contentFrame.Width - 3 * HorizSpacing) / 2,

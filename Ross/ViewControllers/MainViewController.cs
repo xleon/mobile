@@ -1,6 +1,6 @@
-﻿using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using System;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -137,7 +137,7 @@ namespace Toggl.Ross.ViewControllers
             switch (interactiveEdgePanGestureRecognizer.State) {
             case UIGestureRecognizerState.Began:
                 navDelegate.InteractiveTransition = new UIPercentDrivenInteractiveTransition ();
-                PopViewControllerAnimated (true);
+                PopViewController (true);
                 break;
             case UIGestureRecognizerState.Changed:
                 navDelegate.InteractiveTransition.UpdateInteractiveTransition (progress);

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Ross.Theme;
 
@@ -123,7 +123,7 @@ namespace Toggl.Ross.ViewControllers
             containerView.AddSubview (menuView);
 
             // Layout items:
-            var offsetY = 15f;
+            nfloat offsetY = 15f;
             var sepIdx = 0;
             foreach (var menuButton in menuButtons) {
                 menuButton.SizeToFit ();
@@ -139,7 +139,7 @@ namespace Toggl.Ross.ViewControllers
                 if (sepIdx < separators.Length) {
                     var separator = separators [sepIdx];
                     var rightMargin = menuButton.ContentEdgeInsets.Right;
-                    separator.Frame = new RectangleF (
+                    separator.Frame = new CGRect (
                         x: rightMargin,
                         y: offsetY,
                         width: navController.View.Frame.Width - rightMargin,
@@ -152,14 +152,14 @@ namespace Toggl.Ross.ViewControllers
             }
             offsetY += 15f;
 
-            containerView.Frame = new RectangleF (
+            containerView.Frame = new CGRect (
                 x: 0,
                 y: navController.NavigationBar.Frame.Bottom,
                 width: navController.View.Frame.Width,
                 height: offsetY
             );
 
-            menuView.Frame = new RectangleF (
+            menuView.Frame = new CGRect (
                 x: 0,
                 y: -containerView.Frame.Height,
                 width: containerView.Frame.Width,
@@ -219,7 +219,7 @@ namespace Toggl.Ross.ViewControllers
                     0.4, 0,
                     UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseIn,
                 delegate {
-                    menuView.Frame = new RectangleF (
+                    menuView.Frame = new CGRect (
                         x: 0,
                         y: -containerView.Frame.Height,
                         width: containerView.Frame.Width,
@@ -238,7 +238,7 @@ namespace Toggl.Ross.ViewControllers
                     0.4, 0,
                     UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseOut,
                 delegate {
-                    menuView.Frame = new RectangleF (
+                    menuView.Frame = new CGRect (
                         x: 0,
                         y: 0,
                         width: containerView.Frame.Width,
@@ -301,13 +301,13 @@ namespace Toggl.Ross.ViewControllers
 
             public ZoomSelectorView ()
             {
-                Frame = new RectangleF ( 0,0, 100, 44);
+                Frame = new CGRect ( 0,0, 100, 44);
 
                 SelectorButton = new UIButton();
                 SelectorButton = new UIButton ().Apply (Style.ReportsView.SelectorButton);
                 SelectorButton.SetTitle ("ReportsTitleWeekly".Tr (), UIControlState.Normal); // dummy text stuff
                 SelectorButton.SizeToFit();
-                SelectorButton.Frame = new RectangleF ( Frame.X, (Frame.Height - SelectorButton.Frame.Height)/2 - 1, Frame.Width, SelectorButton.Frame.Height);
+                SelectorButton.Frame = new CGRect ( Frame.X, (Frame.Height - SelectorButton.Frame.Height)/2 - 1, Frame.Width, SelectorButton.Frame.Height);
                 Add ( SelectorButton);
 
                 arrowUpImage = UIImage.FromFile ( "btn-arrow-up.png");
@@ -315,7 +315,7 @@ namespace Toggl.Ross.ViewControllers
 
                 arrowView = new UIImageView ( arrowDownImage);
                 arrowView.SizeToFit();
-                arrowView.Frame = new RectangleF ( (Frame.Width - arrowView.Frame.Width)/2, SelectorButton.Frame.Height, arrowView.Frame.Width, arrowView.Frame.Height);
+                arrowView.Frame = new CGRect ( (Frame.Width - arrowView.Frame.Width)/2, SelectorButton.Frame.Height, arrowView.Frame.Width, arrowView.Frame.Height);
                 Add ( arrowView);
             }
 

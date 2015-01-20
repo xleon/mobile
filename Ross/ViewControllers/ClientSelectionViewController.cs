@@ -1,7 +1,7 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -83,12 +83,12 @@ namespace Toggl.Ross.ViewControllers
                 controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
             }
 
-            public override float EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
             {
                 return 60f;
             }
 
-            public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
                 return EstimatedHeight (tableView, indexPath);
             }
@@ -126,7 +126,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.LayoutSubviews ();
 
-                var contentFrame = new RectangleF (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
+                var contentFrame = new CGRect (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
                 SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
 
                 contentFrame.X = 15f;

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Linq.Expressions;
-using MonoTouch.Foundation;
+using Foundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;

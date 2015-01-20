@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using Toggl.Phoebe.Net;
-using MonoTouch.UIKit;
-using MonoTouch.MessageUI;
+using UIKit;
+using MessageUI;
 
 namespace Toggl.Ross.Views
 {

@@ -1,15 +1,15 @@
-﻿using System.Drawing;
-using MonoTouch.UIKit;
+using CoreGraphics;
+using UIKit;
 
 namespace Toggl.Ross
 {
     public class TogglWindow : UIWindow
     {
-        public TogglWindow (RectangleF bounds) : base (bounds)
+        public TogglWindow (CGRect bounds) : base (bounds)
         {
         }
 
-        public override UIView HitTest (PointF point, UIEvent uievent)
+        public override UIView HitTest (CGPoint point, UIEvent uievent)
         {
             var view = base.HitTest (point, uievent);
             if (OnHitTest != null) {

@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using MonoTouch.CoreAnimation;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using CoreGraphics;
+using CoreAnimation;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -111,12 +111,12 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public override float EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
             {
                 return 60f;
             }
 
-            public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
                 var row = GetRow (indexPath);
                 if (row is ProjectAndTaskView.Workspace) {
@@ -128,12 +128,12 @@ namespace Toggl.Ross.ViewControllers
                 return EstimatedHeight (tableView, indexPath);
             }
 
-            public override float EstimatedHeightForHeader (UITableView tableView, int section)
+            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
             {
                 return -1f;
             }
 
-            public override float GetHeightForHeader (UITableView tableView, int section)
+            public override nfloat GetHeightForHeader (UITableView tableView, nint section)
             {
                 return EstimatedHeightForHeader (tableView, section);
             }
@@ -176,7 +176,7 @@ namespace Toggl.Ross.ViewControllers
                 throw new InvalidOperationException (String.Format ("Unknown row type {0}", row.GetType ()));
             }
 
-            public override UIView GetViewForHeader (UITableView tableView, int section)
+            public override UIView GetViewForHeader (UITableView tableView, nint section)
             {
                 return new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
             }
@@ -247,9 +247,9 @@ namespace Toggl.Ross.ViewControllers
                 textContentView.Add (clientLabel = new UILabel ().Apply (Style.ProjectList.ClientLabel));
 
                 var maskLayer = new CAGradientLayer () {
-                    AnchorPoint = PointF.Empty,
-                    StartPoint = new PointF (0.0f, 0.0f),
-                    EndPoint = new PointF (1.0f, 0.0f),
+                    AnchorPoint = CGPoint.Empty,
+                    StartPoint = new CGPoint (0.0f, 0.0f),
+                    EndPoint = new CGPoint (1.0f, 0.0f),
                     Colors = new [] {
                         UIColor.FromWhiteAlpha (1, 1).CGColor,
                         UIColor.FromWhiteAlpha (1, 1).CGColor,
@@ -290,14 +290,14 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.LayoutSubviews ();
 
-                var contentFrame = new RectangleF (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
+                var contentFrame = new CGRect (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
                 SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
 
                 if (!tasksButton.Hidden) {
                     var virtualWidth = contentFrame.Height;
                     var buttonWidth = tasksButton.CurrentBackgroundImage.Size.Width;
                     var extraPadding = (virtualWidth - buttonWidth) / 2f;
-                    tasksButton.Frame = new RectangleF (
+                    tasksButton.Frame = new CGRect (
                         contentFrame.Width - virtualWidth + extraPadding, extraPadding,
                         buttonWidth, buttonWidth);
                     contentFrame.Width -= virtualWidth;
@@ -308,12 +308,12 @@ namespace Toggl.Ross.ViewControllers
                 textContentView.Frame = contentFrame;
                 textContentView.Layer.Mask.Bounds = contentFrame;
 
-                contentFrame = new RectangleF (PointF.Empty, contentFrame.Size);
+                contentFrame = new CGRect (CGPoint.Empty, contentFrame.Size);
 
                 if (clientLabel.Hidden) {
                     // Only display single item, so make it fill the whole text frame
                     var bounds = GetBoundingRect (projectLabel);
-                    projectLabel.Frame = new RectangleF (
+                    projectLabel.Frame = new CGRect (
                         x: 0,
                         y: (contentFrame.Height - bounds.Height + projectLabel.Font.Descender) / 2f,
                         width: contentFrame.Width,
@@ -322,7 +322,7 @@ namespace Toggl.Ross.ViewControllers
                 } else {
                     // Carefully craft the layout
                     var bounds = GetBoundingRect (projectLabel);
-                    projectLabel.Frame = new RectangleF (
+                    projectLabel.Frame = new CGRect (
                         x: 0,
                         y: (contentFrame.Height - bounds.Height + projectLabel.Font.Descender) / 2f,
                         width: bounds.Width,
@@ -331,7 +331,7 @@ namespace Toggl.Ross.ViewControllers
 
                     const float clientLeftMargin = 7.5f;
                     bounds = GetBoundingRect (clientLabel);
-                    clientLabel.Frame = new RectangleF (
+                    clientLabel.Frame = new CGRect (
                         x: projectLabel.Frame.X + projectLabel.Frame.Width + clientLeftMargin,
                         y: (float)Math.Floor (projectLabel.Frame.Y + projectLabel.Font.Ascender - clientLabel.Font.Ascender),
                         width: bounds.Width,
@@ -340,13 +340,13 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            private static RectangleF GetBoundingRect (UILabel view)
+            private static CGRect GetBoundingRect (UILabel view)
             {
                 var attrs = new UIStringAttributes () {
                     Font = view.Font,
                 };
                 var rect = ((NSString) (view.Text ?? String.Empty)).GetBoundingRect (
-                               new SizeF (Single.MaxValue, Single.MaxValue),
+                               new CGSize (Single.MaxValue, Single.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
                 rect.Height = (float)Math.Ceiling (rect.Height);
@@ -461,7 +461,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.LayoutSubviews ();
 
-                var contentFrame = new RectangleF (0, 0, Frame.Width, Frame.Height);
+                var contentFrame = new CGRect (0, 0, Frame.Width, Frame.Height);
 
                 if (isFirst) {
                     contentFrame.Y += CellSpacing / 2;
@@ -480,7 +480,7 @@ namespace Toggl.Ross.ViewControllers
                 contentFrame.Width -= 15f;
 
                 nameLabel.Frame = contentFrame;
-                separatorView.Frame = new RectangleF (
+                separatorView.Frame = new CGRect (
                     contentFrame.X, contentFrame.Y + contentFrame.Height - 1f,
                     contentFrame.Width, 1f);
             }
@@ -572,7 +572,7 @@ namespace Toggl.Ross.ViewControllers
                 base.LayoutSubviews ();
                 var contentFrame = ContentView.Frame;
 
-                nameLabel.Frame = new RectangleF (
+                nameLabel.Frame = new CGRect (
                     x: HorizSpacing,
                     y: 0,
                     width: contentFrame.Width - 2 * HorizSpacing,

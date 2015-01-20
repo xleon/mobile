@@ -59,7 +59,7 @@ namespace Toggl.Phoebe.Tests.Analytics
         [Test]
         public void TestSendAccountLoginEvent ()
         {
-            Assert.Throws<Exception> (()=> tracker.SendAccountLoginEvent (AccountCredentials.Password));
+            Assert.Throws<ArgumentException> (()=> tracker.SendAccountLoginEvent (AccountCredentials.Password));
             Assert.AreEqual (tracker.CurrentSendData.Label, "Password");
 
             try {

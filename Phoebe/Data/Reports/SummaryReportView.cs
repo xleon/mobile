@@ -305,8 +305,9 @@ namespace Toggl.Phoebe.Data.Reports
 
         private string getFormattedTime ( UserData user, long totalTime)
         {
-            TimeSpan duration = TimeSpan.FromMilliseconds ( totalTime);
-            string formattedString = duration.ToString (@"h\:mm\:ss");
+            TimeSpan duration = TimeSpan.FromMilliseconds ( Time.UtcNow.Millisecond + totalTime);
+            decimal totalHours = Math.Floor ((decimal)duration.TotalHours);
+            string formattedString = String.Format ("{0}:{1}:{2}", (int)totalHours, duration.ToString (@"mm"), duration.ToString (@"ss"));
 
             if ( user!= null) {
                 if ( user.DurationFormat == DurationFormat.Classic) {
@@ -314,8 +315,6 @@ namespace Toggl.Phoebe.Data.Reports
                         formattedString = duration.ToString (@"s\ \s\e\c");
                     } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
                         formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
-                    } else {
-                        formattedString = duration.ToString (@"hh\:mm\:ss");
                     }
                 } else if (user.DurationFormat == DurationFormat.Decimal) {
                     formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
@@ -332,6 +331,19 @@ namespace Toggl.Phoebe.Data.Reports
                 project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
                 items[i] = project;
             }
+        }
+
+        private TimeSpan GetDuration (TimeEntryData data, DateTime now)
+        {
+            if (data.StartTime == DateTime.MinValue) {
+                return TimeSpan.Zero;
+            }
+
+            var duration = (data.StopTime ?? now) - data.StartTime;
+            if (duration < TimeSpan.Zero) {
+                duration = TimeSpan.Zero;
+            }
+            return duration;
         }
 
         private ReportData CreateEmptyReport()

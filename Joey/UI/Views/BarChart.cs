@@ -148,7 +148,7 @@ namespace Toggl.Joey.UI.Views
                     row.RelativeWidth = barWidth;
                     row.BarView.BillableTime = activity.BillableTime;
                     row.BarView.TotalTime = activity.TotalTime;
-                    row.ValueTextView.Text = FormatTime (activity.TotalTime);
+                    row.ValueTextView.Text = activity.FormattedTotalTime;
                     row.ValueTextView.Visibility = showValueLabels ? ViewStates.Visible : ViewStates.Gone;
                     row.YAxisTextView.Text = yLabel;
                     row.YAxisTextView.Visibility = showYAxis ? ViewStates.Visible : ViewStates.Gone;
@@ -305,15 +305,6 @@ namespace Toggl.Joey.UI.Views
                     tv.Layout (axisX, axisY, axisX + tv.MeasuredWidth, axisY + tv.MeasuredHeight);
                 }
             }
-        }
-
-        private static string FormatTime (long seconds)
-        {
-            if (seconds == 0) {
-                return String.Empty;
-            }
-            var t = TimeSpan.FromSeconds (seconds);
-            return String.Format ("{0}:{1:mm}", (int)t.TotalHours, t);
         }
 
         private class BackgroundView : View

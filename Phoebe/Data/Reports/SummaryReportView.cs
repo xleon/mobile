@@ -151,6 +151,7 @@ namespace Toggl.Phoebe.Data.Reports
             FormatTimeData (collapsedProjects, user);
             FormatTimeData (projects, user);
             FormatTimeData (dataObject.Projects, user);
+            FormatActivityTimeData (dataObject.Activity, user);
         }
 
         public bool IsLoading { get; private set; }
@@ -303,9 +304,9 @@ namespace Toggl.Phoebe.Data.Reports
             return String.Format ("{0:MMM}", date);
         }
 
-        private string getFormattedTime ( UserData user, long totalTime)
+        private string GetFormattedTime ( UserData user, long milliseconds)
         {
-            TimeSpan duration = TimeSpan.FromMilliseconds ( Time.UtcNow.Millisecond + totalTime);
+            TimeSpan duration = TimeSpan.FromMilliseconds ( milliseconds);
             decimal totalHours = Math.Floor ((decimal)duration.TotalHours);
             string formattedString = String.Format ("{0}:{1}:{2}", (int)totalHours, duration.ToString (@"mm"), duration.ToString (@"ss"));
 
@@ -327,23 +328,31 @@ namespace Toggl.Phoebe.Data.Reports
         {
             for (int i = 0; i < items.Count; i++) {
                 var project = items[i];
-                project.FormattedTotalTime = getFormattedTime (user, project.TotalTime);
-                project.FormattedBillableTime = getFormattedTime (user, project.BillableTime);
+                project.FormattedTotalTime = GetFormattedTime (user, project.TotalTime);
+                project.FormattedBillableTime = GetFormattedTime (user, project.BillableTime);
                 items[i] = project;
             }
         }
 
-        private TimeSpan GetDuration (TimeEntryData data, DateTime now)
+        private void FormatActivityTimeData ( IList<ReportActivity> activities, UserData user)
         {
-            if (data.StartTime == DateTime.MinValue) {
-                return TimeSpan.Zero;
-            }
+            for (int i = 0; i < activities.Count; i++) {
+                var activity = activities [i];
 
-            var duration = (data.StopTime ?? now) - data.StartTime;
-            if (duration < TimeSpan.Zero) {
-                duration = TimeSpan.Zero;
+                string formattedString = string.Empty;
+                if (activity.TotalTime > 0) {
+                    TimeSpan duration = TimeSpan.FromSeconds (activity.TotalTime);
+                    decimal totalHours = Math.Floor ((decimal)duration.TotalHours);
+
+                    formattedString = String.Format ("{0}:{1}", (int)totalHours, duration.ToString (@"mm"));
+                    if (user.DurationFormat == DurationFormat.Decimal) {
+                        formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+                    }
+                }
+
+                activity.FormattedTotalTime = formattedString;
+                activities [i] = activity;
             }
-            return duration;
         }
 
         private ReportData CreateEmptyReport()

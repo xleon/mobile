@@ -83,7 +83,7 @@ namespace Toggl.Phoebe.Net
                     }
                 } catch (Exception ex) {
                     var reqEx = ex as UnsuccessfulRequestException;
-                    if (reqEx != null && reqEx.IsForbidden) {
+                    if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
                         ServiceContainer.Resolve<MessageBus> ().Send (
                             new AuthFailedMessage (this, AuthResult.InvalidCredentials));
                         return AuthResult.InvalidCredentials;

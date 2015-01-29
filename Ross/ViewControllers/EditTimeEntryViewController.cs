@@ -295,18 +295,9 @@ namespace Toggl.Ross.ViewControllers
             private readonly EditTimeEntryViewController controller;
 
             private readonly SuggestionEntriesView dataView;
-            ITrie<string> trie;
-
 
             public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView())
             {
-                trie = new SuffixTrie<string> (3);
-                trie.Add ("key1", "bear");
-                this.dataView.Updated += (object sender, EventArgs e) => {
-                    tableView.ReloadData();
-                };
-                trie.Add ("key2", "beat");
-                var yo = trie.Retrieve ("key").ToList().Count();
             }
 
             private Source (EditTimeEntryViewController controller, UITableView tableView, SuggestionEntriesView dataView) : base (tableView, dataView)
@@ -320,7 +311,7 @@ namespace Toggl.Ross.ViewControllers
             public void UpdateDescription (string descriptionString)
             {
                 Console.WriteLine ("description string " + descriptionString);
-                this.dataView.FilterBySuffix (descriptionString);
+                dataView.FilterBySuffix (descriptionString);
 
             }
 
@@ -354,7 +345,8 @@ namespace Toggl.Ross.ViewControllers
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
                 tableView.DeselectRow (indexPath, false);
-                var model = (TimeEntryModel)GetRow (indexPath);
+                TimeEntryModel model;
+                //model = (TimeEntryModel)GetRow (indexPath);
                 //controller.SetDescription (model);
             }
         }
@@ -390,7 +382,7 @@ namespace Toggl.Ross.ViewControllers
                 trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
                 break;
             case LayoutVariant.Description:
-                trackedWrapperConstraints = new FluentLayout[] {
+                trackedWrapperConstraints = new [] {
                     descriptionTextField.AtTopOf (wrapper),
                     descriptionTextField.AtLeftOf (wrapper),
                     descriptionTextField.AtRightOf (wrapper),
@@ -400,8 +392,6 @@ namespace Toggl.Ross.ViewControllers
                     autoCompletionTableView.AtRightOf (wrapper),
                     autoCompletionTableView.AtBottomOf (wrapper)
                 } .ToLayoutConstraints ();
-                break;
-            default:
                 break;
             }
 
@@ -446,15 +436,15 @@ namespace Toggl.Ross.ViewControllers
                     "EditEntryDesciptionTimerHint".Tr (),
                     foregroundColor: Color.Gray
                 ),
-                ShouldReturn = (tf) => tf.ResignFirstResponder (),
+                ShouldReturn = tf => tf.ResignFirstResponder (),
             } .Apply (Style.EditTimeEntry.DescriptionField).Apply (BindDescriptionField));
             descriptionTextField.EditingChanged += OnDescriptionFieldEditingChanged;
             descriptionTextField.EditingDidEnd += (s, e) => CommitDescriptionChanges ();
-            descriptionTextField.ShouldBeginEditing += (s) => {
+            descriptionTextField.ShouldBeginEditing += s => {
                 DescriptionEditingMode = true;
                 return true;
             };
-            descriptionTextField.ShouldEndEditing += (s) => {
+            descriptionTextField.ShouldEndEditing += s => {
                 DescriptionEditingMode = false;
                 return true;
             };
@@ -605,16 +595,16 @@ namespace Toggl.Ross.ViewControllers
 
             timerController.Start ();
 
-            ObserveNotification (UIKeyboard.WillHideNotification, (notif) => {
+            ObserveNotification (UIKeyboard.WillHideNotification, notif => {
                 OnKeyboardHeightChanged (0);
             });
-            ObserveNotification (UIKeyboard.WillShowNotification, (notif) => {
+            ObserveNotification (UIKeyboard.WillShowNotification, notif => {
                 var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
                 if (val != null) {
                     OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
                 }
             });
-            ObserveNotification (UIKeyboard.WillChangeFrameNotification, (notif) => {
+            ObserveNotification (UIKeyboard.WillChangeFrameNotification, notif => {
                 var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
                 if (val != null) {
                     OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
@@ -970,7 +960,7 @@ namespace Toggl.Ross.ViewControllers
                     arrowImageView.RemoveFromSuperview ();
                     stopDateTimeButton.RemoveFromSuperview ();
 
-                    trackedConstraints.AddRange (new FluentLayout[] {
+                    trackedConstraints.AddRange (new [] {
                         startDateTimeButton.WithSameCenterX (this),
                         startDateTimeButton.WithSameCenterY (this),
                         startDateTimeButton.AtTopOf (this, 10f),
@@ -981,7 +971,7 @@ namespace Toggl.Ross.ViewControllers
                     AddSubview (arrowImageView);
                     AddSubview (stopDateTimeButton);
 
-                    trackedConstraints.AddRange (new FluentLayout[] {
+                    trackedConstraints.AddRange (new [] {
                         startDateTimeButton.WithSameCenterX (this),
                         startDateTimeButton.WithSameCenterY (this),
                         startDateTimeButton.AtTopOf (this, 10f),
@@ -1000,7 +990,7 @@ namespace Toggl.Ross.ViewControllers
                     AddSubview (arrowImageView);
                     AddSubview (stopDateTimeButton);
 
-                    trackedConstraints.AddRange (new FluentLayout[] {
+                    trackedConstraints.AddRange (new [] {
                         startDateTimeButton.AtTopOf (this, 10f),
                         startDateTimeButton.AtBottomOf (this, 10f),
 

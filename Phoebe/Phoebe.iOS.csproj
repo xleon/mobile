@@ -47,6 +47,9 @@
     <Reference Include="Bugsnag.iOS">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.1\lib\Xamarin.iOS10\Bugsnag.iOS.dll</HintPath>
     </Reference>
+    <Reference Include="Gma.DataStructures.StringSearch">
+      <HintPath>Assemblies\Gma.DataStructures.StringSearch.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Contrib\sqlite-net\src\SQLite.cs">

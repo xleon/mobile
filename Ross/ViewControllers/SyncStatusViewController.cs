@@ -1,9 +1,8 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.CoreAnimation;
-using MonoTouch.CoreGraphics;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using System;
+using CoreAnimation;
+using CoreGraphics;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -120,7 +119,7 @@ namespace Toggl.Ross.ViewControllers
 
             // Add content view controller:
             AddChildViewController (contentViewController);
-            contentViewController.View.Frame = new RectangleF (PointF.Empty, View.Frame.Size);
+            contentViewController.View.Frame = new CGRect (CGPoint.Empty, View.Frame.Size);
             View.InsertSubviewBelow (contentViewController.View, statusView);
             contentViewController.DidMoveToParentViewController (this);
         }
@@ -137,7 +136,7 @@ namespace Toggl.Ross.ViewControllers
             var size = View.Frame.Size;
 
             var statusY = showStatus ? size.Height - StatusBarHeight : size.Height + 2f;
-            statusView.Frame = new RectangleF (
+            statusView.Frame = new CGRect (
                 0, statusY, size.Width, StatusBarHeight);
         }
 
@@ -211,16 +210,16 @@ namespace Toggl.Ross.ViewControllers
                 var size = Frame.Size;
 
                 var buttonDimension = size.Height;
-                retryButton.Frame = new RectangleF (
+                retryButton.Frame = new CGRect (
                     0, (size.Height - buttonDimension) / 2,
                     buttonDimension, buttonDimension);
-                cancelButton.Frame = new RectangleF (
+                cancelButton.Frame = new CGRect (
                     size.Width - retryButton.Frame.Width,
                     (size.Height - retryButton.Frame.Height) / 2,
                     buttonDimension, buttonDimension);
 
                 var statusX = retryButton.Frame.X + retryButton.Frame.Width;
-                statusLabel.Frame = new RectangleF (
+                statusLabel.Frame = new CGRect (
                     statusX, 0, cancelButton.Frame.X - statusX, size.Height);
             }
 

@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -94,7 +94,7 @@ namespace Toggl.Ross.ViewControllers
                 if (cb != null) {
                     cb (tag);
                 } else {
-                    NavigationController.PopViewControllerAnimated (true);
+                    NavigationController.PopViewController (true);
                 }
             } finally {
                 isSaving = false;

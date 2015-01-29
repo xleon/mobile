@@ -1,15 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using MonoTouch.CoreAnimation;
-using MonoTouch.CoreGraphics;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using CoreAnimation;
+using CoreGraphics;
+using Foundation;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
+using UIKit;
 
 namespace Toggl.Ross.Views.Charting
 {
@@ -89,7 +88,7 @@ namespace Toggl.Ross.Views.Charting
             }
         }
 
-        public DonutChartView (RectangleF frame) : base (frame)
+        public DonutChartView (CGRect frame) : base (frame)
         {
         }
 
@@ -109,7 +108,7 @@ namespace Toggl.Ross.Views.Charting
                 UserInteractionEnabled = true,
                 SelectedSliceStroke = 0,
                 ShowPercentage = false,
-                StartPieAngle = Math.PI * 3/2,
+                StartPieAngle = (nfloat)Math.PI * 3/2,
                 ShowLabel = false,
                 AnimationSpeed = 1.0f,
                 SelectedSliceOffsetRadius = 15f
@@ -193,20 +192,20 @@ namespace Toggl.Ross.Views.Charting
         {
             base.LayoutSubviews ();
 
-            grayCircle.Frame = new RectangleF (0, 0, Bounds.Width, diameter + padding);
-            ((CAShapeLayer)grayCircle.Layer.Sublayers [0]).Path = CGPathCreateArc ( grayCircle.Center, pieRadius, 0, Math.PI * 2, lineStroke);
-            donutChart.Frame = new RectangleF (0, 0, Bounds.Width, diameter + padding);
-            projectTableView.Frame = new RectangleF (0, donutChart.Bounds.Height, Bounds.Width, Bounds.Height - donutChart.Bounds.Height);
+            grayCircle.Frame = new CGRect (0, 0, Bounds.Width, diameter + padding);
+            ((CAShapeLayer)grayCircle.Layer.Sublayers [0]).Path = CGPathCreateArc ( grayCircle.Center, pieRadius, 0, (nfloat)Math.PI * 2, lineStroke);
+            donutChart.Frame = new CGRect (0, 0, Bounds.Width, diameter + padding);
+            projectTableView.Frame = new CGRect (0, donutChart.Bounds.Height, Bounds.Width, Bounds.Height - donutChart.Bounds.Height);
 
-            totalTimeLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20);
-            totalTimeLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
-            moneyLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, moneyLabel.Bounds.Height );
-            moneyLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + moneyLabel.Bounds.Height / 2);
+            totalTimeLabel.Bounds = new CGRect ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, 20);
+            totalTimeLabel.Center = new CGPoint (donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
+            moneyLabel.Bounds = new CGRect ( 0, 0, donutChart.PieRadius * 2 - donutChart.DonutLineStroke, moneyLabel.Bounds.Height );
+            moneyLabel.Center = new CGPoint (donutChart.PieCenter.X, donutChart.PieCenter.Y + moneyLabel.Bounds.Height / 2);
 
-            noProjectTitleLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2, 20);
-            noProjectTitleLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y - 20);
-            noProjectTextLabel.Bounds = new RectangleF ( 0, 0, donutChart.PieRadius * 2, 35);
-            noProjectTextLabel.Center = new PointF (donutChart.PieCenter.X, donutChart.PieCenter.Y + 5 );
+            noProjectTitleLabel.Bounds = new CGRect ( 0, 0, donutChart.PieRadius * 2, 20);
+            noProjectTitleLabel.Center = new CGPoint (donutChart.PieCenter.X, donutChart.PieCenter.Y - 20);
+            noProjectTextLabel.Bounds = new CGRect ( 0, 0, donutChart.PieRadius * 2, 35);
+            noProjectTextLabel.Center = new CGPoint (donutChart.PieCenter.X, donutChart.PieCenter.Y + 5 );
 
             DrawViewBoders (projectTableView, topBoder, bottomBoder);
         }
@@ -261,7 +260,7 @@ namespace Toggl.Ross.Views.Charting
             int currCount = selectedProject.Currencies.Count;
 
             if (currCount > 0) {
-                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
+                totalTimeLabel.Center = new CGPoint ( donutChart.PieCenter.X, donutChart.PieCenter.Y - 10);
                 string moneyInfo = "";
 
                 currCount = (selectedProject.Currencies.Count > 3) ? 3 : selectedProject.Currencies.Count;
@@ -274,7 +273,7 @@ namespace Toggl.Ross.Views.Charting
                 moneyLabel.Alpha = 1.0f;
                 moneyLabel.Text = moneyInfo;
             } else {
-                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
+                totalTimeLabel.Center = new CGPoint ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
                 moneyLabel.Alpha = 0.0f;
             }
             moneyLabel.SizeToFit ();
@@ -295,16 +294,16 @@ namespace Toggl.Ross.Views.Charting
                 moneyLabel.Alpha = 1.0f;
                 moneyLabel.Text = moneyInfo;
             } else {
-                totalTimeLabel.Center = new PointF ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
+                totalTimeLabel.Center = new CGPoint ( donutChart.PieCenter.X, donutChart.PieCenter.Y);
                 moneyLabel.Alpha = 0.0f;
             }
             moneyLabel.SizeToFit ();
         }
 
-        private CGPath CGPathCreateArc (PointF center, float radius, double startAngle, double endAngle, float lineStroke)
+        private CGPath CGPathCreateArc (CGPoint center, nfloat radius, nfloat startAngle, nfloat endAngle, nfloat lineStroke)
         {
             var path = new CGPath ();
-            path.AddArc (center.X, center.Y, radius, Convert.ToSingle (startAngle), Convert.ToSingle (endAngle), false);
+            path.AddArc (center.X, center.Y, radius, startAngle, endAngle, false);
             return path.CopyByStrokingPath (lineStroke, CGLineCap.Butt, CGLineJoin.Miter, 10);
         }
 
@@ -316,19 +315,19 @@ namespace Toggl.Ross.Views.Charting
         private void DrawViewBoders ( UIView targetView, UIView tp, UIView btm)
         {
             var mask = new CAGradientLayer ();
-            mask.Frame = new RectangleF (0, 0, targetView.Bounds.Width, 10);
+            mask.Frame = new CGRect (0, 0, targetView.Bounds.Width, 10);
             mask.Colors = new [] { UIColor.White.CGColor, UIColor.Clear.CGColor };
 
-            tp.Frame = new RectangleF ( targetView.Frame.X, targetView.Frame.Y, targetView.Bounds.Width, 10);
+            tp.Frame = new CGRect ( targetView.Frame.X, targetView.Frame.Y, targetView.Bounds.Width, 10);
             tp.BackgroundColor = UIColor.White;
             tp.UserInteractionEnabled = false;
             tp.Layer.Mask = mask;
 
             var maskInverted = new CAGradientLayer ();
-            maskInverted.Frame = new RectangleF (0, 0, targetView.Frame.Width, 20);
+            maskInverted.Frame = new CGRect (0, 0, targetView.Frame.Width, 20);
             maskInverted.Colors = new [] { UIColor.Clear.CGColor, UIColor.White.CGColor};
 
-            btm.Frame = new RectangleF ( targetView.Frame.X, targetView.Frame.Y + targetView.Bounds.Height - 20, targetView.Bounds.Width, 20);
+            btm.Frame = new CGRect ( targetView.Frame.X, targetView.Frame.Y + targetView.Bounds.Height - 20, targetView.Bounds.Width, 20);
             btm.BackgroundColor = UIColor.White;
             btm.UserInteractionEnabled = false;
             btm.Layer.Mask = maskInverted;
@@ -336,28 +335,28 @@ namespace Toggl.Ross.Views.Charting
 
         #region Pie Datasource
 
-        public int NumberOfSlicesInPieChart (XYDonutChart pieChart)
+        public nint NumberOfSlicesInPieChart (XYDonutChart pieChart)
         {
-            return DonutProjectList.Count;
+            return (nint)DonutProjectList.Count;
         }
 
-        public float ValueForSliceAtIndex (XYDonutChart pieChart, int index)
+        public nfloat ValueForSliceAtIndex (XYDonutChart pieChart, nint index)
         {
-            return DonutProjectList [index].TotalTime;
+            return DonutProjectList [ (int)index].TotalTime;
         }
 
-        public UIColor ColorForSliceAtIndex (XYDonutChart pieChart, int index)
+        public UIColor ColorForSliceAtIndex (XYDonutChart pieChart, nint index)
         {
             string hex;
-            if (DonutProjectList [index].Color == ProjectModel.GroupedProjectColorIndex) {
+            if (DonutProjectList [ (int)index].Color == ProjectModel.GroupedProjectColorIndex) {
                 hex = ProjectModel.GroupedProjectColor;
             } else {
-                hex = ProjectModel.HexColors [DonutProjectList [index].Color % ProjectModel.HexColors.Length];
+                hex = ProjectModel.HexColors [DonutProjectList [ (int)index].Color % ProjectModel.HexColors.Length];
             }
             return UIColor.Clear.FromHex (hex);
         }
 
-        public string TextForSliceAtIndex (XYDonutChart pieChart, int index)
+        public string TextForSliceAtIndex (XYDonutChart pieChart, nint index)
         {
             return String.Empty;
         }
@@ -388,7 +387,7 @@ namespace Toggl.Ross.Views.Charting
                 return cell;
             }
 
-            public override int RowsInSection (UITableView tableview, int section)
+            public override nint RowsInSection (UITableView tableview, nint section)
             {
                 return _owner.TableProjectList.Count;
             }

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using MonoTouch.UIKit;
+using UIKit;
 using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Ross.DataSources

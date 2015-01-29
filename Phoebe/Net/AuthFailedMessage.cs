@@ -10,7 +10,7 @@ namespace Toggl.Phoebe.Net
         public AuthFailedMessage (AuthManager manager, AuthResult result, Exception ex = null) : base (manager)
         {
             this.result = result;
-            this.exception = ex;
+            exception = ex;
         }
 
         public AuthResult Result

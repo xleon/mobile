@@ -1,7 +1,7 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
@@ -64,12 +64,12 @@ namespace Toggl.Ross.Views
         public override void LayoutSubviews ()
         {
             base.LayoutSubviews ();
-            const float radius = 17.0f;
+            nfloat radius = 17.0f;
             var contentFrame = ContentView.Frame;
 
-            projectTitleLabel.Frame = new RectangleF ( radius + radius * 0.5f, (contentFrame.Height - 20)/2, 250, 20);
-            timeLabel.Frame = new RectangleF ( contentFrame.Width - 104, (contentFrame.Height - 20)/2, 100, 20);
-            circleView.Frame = new RectangleF (0, (contentFrame.Height - radius) / 2, radius, radius);
+            projectTitleLabel.Frame = new CGRect ( radius + radius * 0.5f, (contentFrame.Height - 20)/2, 250, 20);
+            timeLabel.Frame = new CGRect ( contentFrame.Width - 104, (contentFrame.Height - 20)/2, 100, 20);
+            circleView.Frame = new CGRect (0, (contentFrame.Height - radius) / 2, radius, radius);
         }
 
         public override void SetSelected (bool selected, bool animated)

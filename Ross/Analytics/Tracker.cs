@@ -1,4 +1,4 @@
-﻿using System;
+
 using System.Collections.Generic;
 using GoogleAnalytics.iOS;
 using Toggl.Phoebe;
@@ -22,7 +22,7 @@ namespace Toggl.Ross.Analytics
 
         protected override void StartNewSession ()
         {
-            var builder = GAIDictionaryBuilder.CreateAppView ();
+            var builder = GAIDictionaryBuilder.CreateScreenView ();
             builder.Set ("start", GAIConstants.SessionControl);
             SendHit (builder);
         }
@@ -46,7 +46,7 @@ namespace Toggl.Ross.Analytics
         {
             set {
                 tracker.Set (GAIConstants.ScreenName, value);
-                SendHit (GAIDictionaryBuilder.CreateAppView ());
+                SendHit (GAIDictionaryBuilder.CreateScreenView ());
             }
         }
 

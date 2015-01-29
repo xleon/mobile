@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
@@ -190,7 +190,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void ObserveNotification (string name, Action<NSNotification> callback)
         {
-            var obj = NSNotificationCenter.DefaultCenter.AddObserver (name, callback);
+            var obj = NSNotificationCenter.DefaultCenter.AddObserver (new NSString ( name), callback);
             if (obj != null) {
                 notificationObjects.Add (obj);
             }

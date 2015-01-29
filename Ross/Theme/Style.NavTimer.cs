@@ -1,5 +1,5 @@
-﻿using System;
-using MonoTouch.UIKit;
+using System;
+using UIKit;
 using Toggl.Ross.Views;
 
 namespace Toggl.Ross.Theme
@@ -25,7 +25,7 @@ namespace Toggl.Ross.Theme
                 v.SetTitleColor (Color.White, UIControlState.Highlighted);
                 v.SetTitle ("NavTimerStart".Tr (), UIControlState.Normal);
                 // TODO: Remove this scale workaround
-                v.Transform = MonoTouch.CoreGraphics.CGAffineTransform.MakeScale (0.7f, 0.7f);
+                v.Transform = CoreGraphics.CGAffineTransform.MakeScale (0.7f, 0.7f);
             }
 
             public static void StopButton (UIButton v)
@@ -37,7 +37,7 @@ namespace Toggl.Ross.Theme
                 v.SetTitleColor (Color.White, UIControlState.Highlighted);
                 v.SetTitle ("NavTimerStop".Tr (), UIControlState.Normal);
                 // TODO: Remove this scale workaround
-                v.Transform = MonoTouch.CoreGraphics.CGAffineTransform.MakeScale (0.7f, 0.7f);
+                v.Transform = CoreGraphics.CGAffineTransform.MakeScale (0.7f, 0.7f);
             }
         }
     }

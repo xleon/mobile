@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
+using CoreGraphics;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
-using MonoTouch.CoreAnimation;
-using MonoTouch.CoreFoundation;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using CoreAnimation;
+using CoreFoundation;
+using Foundation;
+using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
@@ -478,7 +478,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void ObserveNotification (string name, Action<NSNotification> callback)
         {
-            var obj = NSNotificationCenter.DefaultCenter.AddObserver (name, callback);
+            var obj = NSNotificationCenter.DefaultCenter.AddObserver (new NSString ( name), callback);
             if (obj != null) {
                 notificationObjects.Add (obj);
             }
@@ -911,9 +911,9 @@ namespace Toggl.Ross.ViewControllers
                 });
 
                 var maskLayer = new CAGradientLayer () {
-                    AnchorPoint = PointF.Empty,
-                    StartPoint = new PointF (0.0f, 0.0f),
-                    EndPoint = new PointF (1.0f, 0.0f),
+                    AnchorPoint = CGPoint.Empty,
+                    StartPoint = new CGPoint (0.0f, 0.0f),
+                    EndPoint = new CGPoint (1.0f, 0.0f),
                     Colors = new [] {
                         UIColor.FromWhiteAlpha (1, 1).CGColor,
                         UIColor.FromWhiteAlpha (1, 1).CGColor,

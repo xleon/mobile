@@ -1,4 +1,4 @@
-﻿using MonoTouch.UIKit;
+using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;

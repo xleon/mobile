@@ -1,6 +1,6 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using UIKit;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Data;
@@ -127,7 +127,7 @@ namespace Toggl.Ross.ViewControllers
             containerView.AddSubview (menuView);
 
             // Layout items:
-            var offsetY = 15f;
+            nfloat offsetY = 15f;
             var sepIdx = 0;
             foreach (var menuButton in menuButtons) {
                 menuButton.SizeToFit ();
@@ -143,7 +143,7 @@ namespace Toggl.Ross.ViewControllers
                 if (sepIdx < separators.Length) {
                     var separator = separators [sepIdx];
                     var rightMargin = menuButton.ContentEdgeInsets.Right;
-                    separator.Frame = new RectangleF (
+                    separator.Frame = new CGRect (
                         x: rightMargin,
                         y: offsetY,
                         width: navController.View.Frame.Width - rightMargin,
@@ -156,14 +156,14 @@ namespace Toggl.Ross.ViewControllers
             }
             offsetY += 15f;
 
-            containerView.Frame = new RectangleF (
+            containerView.Frame = new CGRect (
                 x: 0,
                 y: navController.NavigationBar.Frame.Bottom,
                 width: navController.View.Frame.Width,
                 height: offsetY
             );
 
-            menuView.Frame = new RectangleF (
+            menuView.Frame = new CGRect (
                 x: 0,
                 y: -containerView.Frame.Height,
                 width: containerView.Frame.Width,
@@ -223,7 +223,7 @@ namespace Toggl.Ross.ViewControllers
                     0.4, 0,
                     UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseIn,
                 delegate {
-                    menuView.Frame = new RectangleF (
+                    menuView.Frame = new CGRect (
                         x: 0,
                         y: -containerView.Frame.Height,
                         width: containerView.Frame.Width,
@@ -242,7 +242,7 @@ namespace Toggl.Ross.ViewControllers
                     0.4, 0,
                     UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseOut,
                 delegate {
-                    menuView.Frame = new RectangleF (
+                    menuView.Frame = new CGRect (
                         x: 0,
                         y: 0,
                         width: containerView.Frame.Width,

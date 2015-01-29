@@ -1,7 +1,7 @@
-﻿using System;
-using System.Drawing;
+using System;
+using CoreGraphics;
 using System.Globalization;
-using MonoTouch.UIKit;
+using UIKit;
 
 namespace Toggl.Ross.Theme
 {
@@ -38,13 +38,13 @@ namespace Toggl.Ross.Theme
 
         public static UIImage ToImage (this UIColor color)
         {
-            var size = new SizeF (1f, 1f);
+            var size = new CGSize (1f, 1f);
 
             UIGraphics.BeginImageContext (size);
             var ctx = UIGraphics.GetCurrentContext ();
 
-            ctx.SetFillColorWithColor (color.CGColor);
-            ctx.FillRect (new RectangleF (PointF.Empty, size));
+            ctx.SetFillColor (color.CGColor);
+            ctx.FillRect (new CGRect (CGPoint.Empty, size));
 
             var image = UIGraphics.GetImageFromCurrentImageContext ();
             UIGraphics.EndImageContext ();

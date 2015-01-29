@@ -1,20 +1,19 @@
-using System;
 using System.Collections.Generic;
 using Bugsnag;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Ross.Analytics;
 using Toggl.Ross.Data;
 using Toggl.Ross.Logging;
 using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross
 {
@@ -27,7 +26,7 @@ namespace Toggl.Ross
         private TogglWindow window;
         private bool isResuming;
 
-        public override bool FinishedLaunching (UIApplication app, NSDictionary options)
+        public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
             RegisterComponents ();
 

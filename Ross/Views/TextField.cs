@@ -1,6 +1,6 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {
@@ -16,12 +16,12 @@ namespace Toggl.Ross.Views
         {
         }
 
-        public override RectangleF TextRect (RectangleF forBounds)
+        public override CGRect TextRect (CGRect forBounds)
         {
             return base.TextRect (inset.InsetRect (forBounds));
         }
 
-        public override RectangleF EditingRect (RectangleF forBounds)
+        public override CGRect EditingRect (CGRect forBounds)
         {
             return base.EditingRect (inset.InsetRect (forBounds));
         }

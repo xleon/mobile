@@ -1,8 +1,7 @@
-﻿using System;
-using System.Drawing;
-using MonoTouch.UIKit;
+using System;
+using CoreGraphics;
 using Toggl.Ross.Theme;
-using MonoTouch.CoreGraphics;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {
@@ -22,7 +21,7 @@ namespace Toggl.Ross.Views
         private UIButton leftArrow;
         private UIButton rightArrow;
 
-        const float dateWidth = 170;
+        readonly static nfloat dateWidth = 170;
 
         public DateSelectorView ()
         {
@@ -51,18 +50,18 @@ namespace Toggl.Ross.Views
         {
             base.LayoutSubviews ();
 
-            leftArrow.Frame = new RectangleF ( 0, 0, (Bounds.Width - dateWidth)/2, Bounds.Height);
-            dateLabel.Frame = new RectangleF ( leftArrow.Bounds.Width, 0, dateWidth, Bounds.Height);
-            rightArrow.Frame = new RectangleF (Bounds.Width - leftArrow.Bounds.Width, 0,  (Bounds.Width - dateLabel.Bounds.Width)/2, Bounds.Height);
+            leftArrow.Frame = new CGRect ( 0, 0, (Bounds.Width - dateWidth)/2, Bounds.Height);
+            dateLabel.Frame = new CGRect ( leftArrow.Bounds.Width, 0, dateWidth, Bounds.Height);
+            rightArrow.Frame = new CGRect (Bounds.Width - leftArrow.Bounds.Width, 0,  (Bounds.Width - dateLabel.Bounds.Width)/2, Bounds.Height);
             rightArrow.ImageEdgeInsets = new UIEdgeInsets (0, 0, 0, rightArrow.Bounds.Width - 30);
             leftArrow.ImageEdgeInsets = new UIEdgeInsets (0, leftArrow.Bounds.Width - 30, 0, 0);
         }
 
-        public override void Draw (RectangleF rect)
+        public override void Draw (CGRect rect)
         {
             using (CGContext g = UIGraphics.GetCurrentContext()) {
                 Color.TimeBarBoderColor.SetColor ();
-                g.FillRect (new RectangleF (0.0f, 0.0f, rect.Width, 1.0f / ContentScaleFactor));
+                g.FillRect (new CGRect (0.0f, 0.0f, rect.Width, 1.0f / ContentScaleFactor));
             }
         }
     }

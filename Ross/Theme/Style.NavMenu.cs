@@ -1,5 +1,5 @@
-﻿using System;
-using MonoTouch.UIKit;
+using System;
+using UIKit;
 using Toggl.Ross.Views;
 
 namespace Toggl.Ross.Theme

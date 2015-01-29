@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using MonoTouch.UIKit;
+using CoreGraphics;
+using UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
@@ -77,13 +77,13 @@ namespace Toggl.Ross.Views.Charting
             Add (barChart);
 
             noProjectTitleLabel = new UILabel ();
-            noProjectTitleLabel.Center = new PointF (barChart.Center.X, barChart.Center.Y - 20);
+            noProjectTitleLabel.Center = new CGPoint (barChart.Center.X, barChart.Center.Y - 20);
             noProjectTitleLabel.Apply (Style.ReportsView.NoProjectTitle);
             noProjectTitleLabel.Text = "ReportsLoadingTitle".Tr ();
             Add (noProjectTitleLabel);
 
             noProjectTextLabel = new UILabel ();
-            noProjectTextLabel.Center = new PointF (barChart.Center.X, barChart.Center.Y + 5 );
+            noProjectTextLabel.Center = new CGPoint (barChart.Center.X, barChart.Center.Y + 5 );
             noProjectTextLabel.Apply (Style.ReportsView.DonutMoneyLabel);
             noProjectTextLabel.Lines = 2;
             noProjectTextLabel.Text = "ReportsLoadingText".Tr ();
@@ -103,16 +103,16 @@ namespace Toggl.Ross.Views.Charting
         {
             base.LayoutSubviews ();
 
-            titleTimeLabel.Frame = new RectangleF (0, 0, 120, 20);
-            totalTimeLabel.Frame = new RectangleF (Bounds.Width - 120, 0, 120, 20);
-            titleMoneyLabel.Frame = new RectangleF (0, 20, 120, 20);
-            moneyLabel.Frame = new RectangleF (Bounds.Width - 120, 20, 120, 20);
-            barChart.Frame =  new RectangleF (0, 50, Bounds.Width, Bounds.Height - 50);
+            titleTimeLabel.Frame = new CGRect (0, 0, 120, 20);
+            totalTimeLabel.Frame = new CGRect (Bounds.Width - 120, 0, 120, 20);
+            titleMoneyLabel.Frame = new CGRect (0, 20, 120, 20);
+            moneyLabel.Frame = new CGRect (Bounds.Width - 120, 20, 120, 20);
+            barChart.Frame =  new CGRect (0, 50, Bounds.Width, Bounds.Height - 50);
 
-            noProjectTitleLabel.Bounds = new RectangleF ( 0, 0, Bounds.Width/2, 20);
-            noProjectTitleLabel.Center = new PointF (barChart.Center.X, barChart.Center.Y - 20);
-            noProjectTextLabel.Bounds = new RectangleF ( 0, 0, Bounds.Width/2, 35);
-            noProjectTextLabel.Center = new PointF (barChart.Center.X, barChart.Center.Y + 5 );
+            noProjectTitleLabel.Bounds = new CGRect ( 0, 0, Bounds.Width/2, 20);
+            noProjectTitleLabel.Center = new CGPoint (barChart.Center.X, barChart.Center.Y - 20);
+            noProjectTextLabel.Bounds = new CGRect ( 0, 0, Bounds.Width/2, 35);
+            noProjectTextLabel.Center = new CGPoint (barChart.Center.X, barChart.Center.Y + 5 );
         }
 
         protected override void Dispose (bool disposing)
@@ -133,20 +133,20 @@ namespace Toggl.Ross.Views.Charting
             return ActivityList.Count;
         }
 
-        public float ValueForBarAtIndex (BarChart barChart, int index)
+        public nfloat ValueForBarAtIndex (BarChart barChart, int index)
         {
             if (_reportView.MaxTotal == 0) {
                 return 0;
             }
-            return (ActivityList [index].TotalTime == 0) ? 0 : (float) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
+            return (ActivityList [index].TotalTime == 0) ? 0 : (nfloat) (ActivityList [index].TotalTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
         }
 
-        public float ValueForSecondaryBarAtIndex (BarChart barChart, int index)
+        public nfloat ValueForSecondaryBarAtIndex (BarChart barChart, int index)
         {
             if (_reportView.MaxTotal == 0) {
                 return 0;
             }
-            return (ActivityList [index].BillableTime == 0) ? 0 : (float) (ActivityList [index].BillableTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
+            return (ActivityList [index].BillableTime == 0) ? 0 : (nfloat) (ActivityList [index].BillableTime / TimeSpan.FromHours (_reportView.MaxTotal ).TotalSeconds);
         }
 
         public string TextForBarAtIndex (BarChart barChart, int index)

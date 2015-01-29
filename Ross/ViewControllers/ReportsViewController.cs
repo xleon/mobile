@@ -1,14 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using MonoTouch.CoreGraphics;
-using MonoTouch.UIKit;
+using CoreGraphics;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
-using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -38,12 +37,12 @@ namespace Toggl.Ross.ViewControllers
         private InfiniteScrollView<ReportView> scrollView;
         private SyncStatusViewController.StatusView statusView;
         private List<ReportView> cachedReports;
-        private int _timeSpaceIndex;
+        private nint _timeSpaceIndex;
         private bool showStatus;
 
-        const float padding  = 24;
-        const float navBarHeight = 64;
-        const float selectorHeight = 50;
+        static readonly nfloat padding  = 24;
+        static readonly nfloat navBarHeight = 64;
+        static readonly nfloat selectorHeight = 50;
 
 
         public ReportsViewController ()
@@ -110,9 +109,9 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidLayoutSubviews ()
         {
             base.ViewDidLayoutSubviews ();
-            topBorder.Frame = new RectangleF (0.0f, 0.0f, View.Bounds.Width, 2.0f);
-            dateSelectorView.Frame = new RectangleF (0, View.Bounds.Height - selectorHeight, View.Bounds.Width, selectorHeight);
-            scrollView.Frame = new RectangleF (0.0f, 0.0f, View.Bounds.Width, View.Bounds.Height - selectorHeight);
+            topBorder.Frame = new CGRect (0.0f, 0.0f, View.Bounds.Width, 2.0f);
+            dateSelectorView.Frame = new CGRect (0, View.Bounds.Height - selectorHeight, View.Bounds.Width, selectorHeight);
+            scrollView.Frame = new CGRect (0.0f, 0.0f, View.Bounds.Width, View.Bounds.Height - selectorHeight);
             LayoutStatusBar ();
         }
 
@@ -156,13 +155,13 @@ namespace Toggl.Ross.ViewControllers
             _timeSpaceIndex = scrollView.PageIndex;
             var reportView = scrollView.CurrentPage;
             reportView.ZoomLevel = ZoomLevel;
-            reportView.TimeSpaceIndex = _timeSpaceIndex;
+            reportView.TimeSpaceIndex = (int)_timeSpaceIndex;
             StatusBarShown &= reportView.IsClean;
             reportView.LoadData();
             ChangeReportState();
         }
 
-        private string FormattedIntervalDate (int backDate)
+        private string FormattedIntervalDate (nint backDate)
         {
             string result = "";
 
@@ -191,7 +190,7 @@ namespace Toggl.Ross.ViewControllers
                     break;
                 }
             } else {
-                var startDate = dataSource.ResolveStartDate (_timeSpaceIndex);
+                var startDate = dataSource.ResolveStartDate ((int)_timeSpaceIndex);
                 var endDate = dataSource.ResolveEndDate (startDate);
 
                 switch (ZoomLevel) {
@@ -219,7 +218,7 @@ namespace Toggl.Ross.ViewControllers
         {
             var size = View.Frame.Size;
             var statusY = showStatus ? size.Height - selectorHeight : size.Height + 2f;
-            statusView.Frame = new RectangleF ( 0, statusY, size.Width, selectorHeight);
+            statusView.Frame = new CGRect ( 0, statusY, size.Width, selectorHeight);
         }
 
         private bool StatusBarShown
@@ -316,11 +315,11 @@ namespace Toggl.Ross.ViewControllers
                 BackgroundColor = UIColor.Clear;
             }
 
-            public override void Draw (RectangleF rect)
+            public override void Draw (CGRect rect)
             {
                 using (CGContext g = UIGraphics.GetCurrentContext()) {
                     Color.TimeBarBoderColor.SetColor ();
-                    g.FillRect (new RectangleF (0.0f, 0.0f, rect.Width, 1.0f / ContentScaleFactor));
+                    g.FillRect (new CGRect (0.0f, 0.0f, rect.Width, 1.0f / ContentScaleFactor));
                 }
             }
         }

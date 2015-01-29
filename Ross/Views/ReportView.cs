@@ -1,8 +1,8 @@
-﻿using System;
-using System.Drawing;
+using System;
+using CoreGraphics;
 using System.Threading;
 using System.Threading.Tasks;
-using MonoTouch.UIKit;
+using UIKit;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Views.Charting;
@@ -75,7 +75,7 @@ namespace Toggl.Ross.Views
                 if (_position == value) { return; }
                 _position = value;
                 var posY = ( _position == ChartPosition.Top) ? topY : downY;
-                _containerView.Center = new PointF (_containerView.Center.X, posY);
+                _containerView.Center = new CGPoint (_containerView.Center.X, posY);
             }
         }
 
@@ -103,7 +103,7 @@ namespace Toggl.Ross.Views
             InitView();
         }
 
-        public ReportView ( RectangleF frame) : base ( frame)
+        public ReportView ( CGRect frame) : base ( frame)
         {
             InitView();
         }
@@ -132,26 +132,26 @@ namespace Toggl.Ross.Views
         private DonutChartView pieChart;
         private BarChartView barChart;
         private SummaryReportView dataSource;
-        private float topY;
-        private float downY;
+        private nfloat topY;
+        private nfloat downY;
         private CancellationTokenSource cts;
         private bool _delaying;
 
-        const float padding = 30;
-        const float navBarHeight = 64;
-        const float selectorHeight = 60;
+        static readonly nfloat padding = 30;
+        static readonly nfloat navBarHeight = 64;
+        static readonly nfloat selectorHeight = 60;
 
         public override void LayoutSubviews ()
         {
             base.LayoutSubviews ();
 
-            _containerView.Bounds = new RectangleF ( 0, 0, Bounds.Width, Bounds.Height * 2);
-            barChart.Frame = new RectangleF ( padding/2, padding/2, Bounds.Width - padding, Bounds.Height - padding - selectorHeight );
-            pieChart.Frame = new RectangleF (padding/2, barChart.Bounds.Height + padding, Bounds.Width - padding, Bounds.Height);
+            _containerView.Bounds = new CGRect ( 0, 0, Bounds.Width, Bounds.Height * 2);
+            barChart.Frame = new CGRect ( padding/2, padding/2, Bounds.Width - padding, Bounds.Height - padding - selectorHeight );
+            pieChart.Frame = new CGRect (padding/2, barChart.Bounds.Height + padding, Bounds.Width - padding, Bounds.Height);
             topY = _containerView.Bounds.Height/2;
             downY = _containerView.Bounds.Height/2 - (barChart.Bounds.Height + padding);
             var posY = ( _position == ChartPosition.Top) ? topY : downY;
-            _containerView.Center = new PointF ( Bounds.Width/2, posY);
+            _containerView.Center = new CGPoint ( Bounds.Width/2, posY);
         }
 
         public async void LoadData()
@@ -207,29 +207,29 @@ namespace Toggl.Ross.Views
 
         private UIPanGestureRecognizer CreatePanGesture()
         {
-            UIPanGestureRecognizer result;
-            float dy = 0;
-            const float navX = 70;
+            UIPanGestureRecognizer result = null;
+            nfloat dy = 0;
+            nfloat navX = 70;
 
-            result = new UIPanGestureRecognizer (pg => {
-                if ((pg.State == UIGestureRecognizerState.Began || pg.State == UIGestureRecognizerState.Changed) && (pg.NumberOfTouches == 1)) {
+            result = new UIPanGestureRecognizer (() => {
+                if ((result.State == UIGestureRecognizerState.Began || result.State == UIGestureRecognizerState.Changed) && (result.NumberOfTouches == 1)) {
 
                     _isDragging = true;
 
-                    var p0 = pg.LocationInView (this);
+                    var p0 = result.LocationInView (this);
                     var currentY = (_position == ChartPosition.Top) ? topY : downY;
 
                     if (dy.CompareTo (0) == 0) {
                         dy = p0.Y - currentY;
                     }
 
-                    var p1 = new PointF ( _containerView.Center.X, p0.Y - dy);
+                    var p1 = new CGPoint ( _containerView.Center.X, p0.Y - dy);
                     if ( p1.Y > topY || p1.Y < downY) { return; }
                     _containerView.Center = p1;
 
-                } else if (pg.State == UIGestureRecognizerState.Ended) {
+                } else if (result.State == UIGestureRecognizerState.Ended) {
 
-                    float newY;
+                    nfloat newY;
                     ChartPosition newPosition;
 
                     if ( _position == ChartPosition.Top && _containerView.Center.Y <= topY - navX) {
@@ -245,7 +245,7 @@ namespace Toggl.Ross.Views
 
                     UIView.Animate (0.3, 0, UIViewAnimationOptions.CurveEaseOut,
                     () => {
-                        _containerView.Center = new PointF ( _containerView.Center.X, newY);
+                        _containerView.Center = new CGPoint ( _containerView.Center.X, newY);
                     },() => {
                         _isDragging = false;
                         _position = newPosition;

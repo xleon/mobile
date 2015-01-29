@@ -1,4 +1,3 @@
-﻿using System;
 using Toggl.Phoebe.Analytics;
 using XPlatUtils;
 using Toggl.Ross.Data;

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using MonoTouch.TTTAttributedLabel;
-using MonoTouch.UIKit;
+using UIKit;
 
 namespace Toggl.Ross.Theme
 {

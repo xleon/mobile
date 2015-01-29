@@ -1,10 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
-using MonoTouch.CoreGraphics;
-using MonoTouch.UIKit;
+using CoreGraphics;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {
@@ -12,15 +11,13 @@ namespace Toggl.Ross.Views
     {
         public event EventHandler OnChangePage;
 
-        private int _pageIndex;
+        private nint _pageIndex;
 
-        public int PageIndex
+        public nint PageIndex
         {
             get {
-                return _pageIndex + (Convert.ToInt32 ( ContentOffset.X / pageWidth) - tmpOffset);
+                return _pageIndex + ( Convert.ToInt32 (ContentOffset.X / pageWidth) - tmpOffset);
             }
-
-
         }
 
         private TView currentPage;
@@ -45,9 +42,9 @@ namespace Toggl.Ross.Views
             }
         }
 
-        private int rightIndexLimit;
+        private nint rightIndexLimit;
 
-        public int RightIndexLimit
+        public nint RightIndexLimit
         {
             get {
                 return rightIndexLimit;
@@ -72,22 +69,22 @@ namespace Toggl.Ross.Views
         UIView _containerView;
         IInfiniteScrollViewSource viewSource;
 
-        private float pageWidth = -1;
-        private int tmpOffset;
-        private int prevPageIndex = Int32.MinValue;
+        private nfloat pageWidth = -1;
+        private nint tmpOffset;
+        private nint prevPageIndex = nint.MinValue;
 
         private void RecenterIfNeeded()
         {
-            PointF currentOffset = ContentOffset;
-            float contentWidth = ContentSize.Width;
-            float centerOffsetX = (contentWidth - Bounds.Width) / 2.0f;
-            float distanceFromCenter = Math.Abs ( currentOffset.X - centerOffsetX);
+            CGPoint currentOffset = ContentOffset;
+            nfloat contentWidth = ContentSize.Width;
+            nfloat centerOffsetX = (contentWidth - Bounds.Width) / 2.0f;
+            nfloat distanceFromCenter = (nfloat)Math.Abs ( currentOffset.X - centerOffsetX);
 
             if (distanceFromCenter > contentWidth / 4.0f && (distanceFromCenter - pageWidth/2) % pageWidth == 0) {
-                _pageIndex += Convert.ToInt32 ( ContentOffset.X / pageWidth) - tmpOffset;
-                ContentOffset = new PointF (centerOffsetX - pageWidth/2, currentOffset.Y);
+                _pageIndex += Convert.ToInt32 ( ContentOffset.X / pageWidth - tmpOffset);
+                ContentOffset = new CGPoint (centerOffsetX - pageWidth/2, currentOffset.Y);
                 foreach (var item in pages) {
-                    PointF center = _containerView.ConvertPointToView (item.Center, this);
+                    CGPoint center = _containerView.ConvertPointToView (item.Center, this);
                     center.X += centerOffsetX - currentOffset.X - pageWidth/2;
                     item.Center = ConvertPointToView (center, _containerView);
                 }
@@ -115,7 +112,7 @@ namespace Toggl.Ross.Views
 
                     // animate scrollview to correct position
                     var offset = ContentOffset.X % pageWidth;
-                    SetContentOffset (new PointF ( ContentOffset.X - offset, ContentOffset.Y), true);
+                    SetContentOffset (new CGPoint ( ContentOffset.X - offset, ContentOffset.Y), true);
 
                     // wait for movement and enable user interaction
                     await Task.Delay (350);
@@ -124,14 +121,14 @@ namespace Toggl.Ross.Views
                 return;
             }
 
-            ContentSize = new SizeF ( pageWidth * 20, Bounds.Height);
-            _containerView.Frame = new RectangleF (0, 0, ContentSize.Width, ContentSize.Height);
+            ContentSize = new CGSize ( pageWidth * 20, Bounds.Height);
+            _containerView.Frame = new CGRect (0, 0, ContentSize.Width, ContentSize.Height);
             RecenterIfNeeded ();
 
             // tile content in visible bounds
-            RectangleF visibleBounds = ConvertRectToView (Bounds, _containerView);
-            float minimumVisibleX = CGRectGetMinX ( visibleBounds);
-            float maximumVisibleX = CGRectGetMaxX ( visibleBounds);
+            CGRect visibleBounds = ConvertRectToView (Bounds, _containerView);
+            nfloat minimumVisibleX = CGRectGetMinX ( visibleBounds);
+            nfloat maximumVisibleX = CGRectGetMaxX ( visibleBounds);
             TileViews ( minimumVisibleX, maximumVisibleX);
 
             if (prevPageIndex != PageIndex) {
@@ -171,7 +168,7 @@ namespace Toggl.Ross.Views
             UIView.Animate (0.7, 0.5, UIViewAnimationOptions.CurveEaseIn,
             () => {
                 currentView.Transform = CGAffineTransform.MakeScale ( 0.75f, 0.75f);
-                currentView.Center = new PointF ( center.X, center.Y + 105);
+                currentView.Center = new CGPoint ( center.X, center.Y + 105);
             }, null);
 
             UIView.Animate (0.7, 0.6, UIViewAnimationOptions.CurveEaseInOut,
@@ -198,53 +195,53 @@ namespace Toggl.Ross.Views
         private TView InsertView()
         {
             TView view = viewSource.CreateView ();
-            view.Frame = new RectangleF (0, 0, pageWidth, Bounds.Height);
+            view.Frame = new CGRect (0, 0, pageWidth, Bounds.Height);
             _containerView.Add (view);
             return view;
         }
 
-        private float PlaceNewViewOnRight ( float rightEdge)
+        private nfloat PlaceNewViewOnRight ( nfloat rightEdge)
         {
             TView view = InsertView ();
             pages.Add (view); // add rightmost label at the end of the array
 
-            RectangleF viewFrame = view.Frame;
+            CGRect viewFrame = view.Frame;
             viewFrame.X = rightEdge;
             view.Frame = viewFrame;
             return CGRectGetMaxX ( viewFrame);
         }
 
-        private float PlaceNewViewOnLeft ( float leftEdge)
+        private nfloat PlaceNewViewOnLeft ( nfloat leftEdge)
         {
             TView view = InsertView ();
             pages.Insert ( 0, view); // add leftmost label at the beginning of the array
 
-            RectangleF viewFrame = view.Frame;
+            CGRect viewFrame = view.Frame;
             viewFrame.X = leftEdge - viewFrame.Width;
             view.Frame = viewFrame;
             return CGRectGetMinX ( viewFrame);
         }
 
-        private void TileViews ( float minX, float maxX)
+        private void TileViews ( nfloat minX, nfloat maxX)
         {
             // the upcoming tiling logic depends on there already being at least one label in the visibleLabels array, so
             // to kick off the tiling we need to make sure there's at least one label
             if (pages.Count == 0) {
-                tmpOffset = Convert.ToInt32 (ContentOffset.X / pageWidth);
+                tmpOffset = (nint)Convert.ToInt32 (ContentOffset.X / pageWidth);
                 PlaceNewViewOnRight (minX);
                 currentPage = pages [0];
             }
 
             // add views that are missing on right side
             TView lastView = pages [pages.Count - 1];
-            float rightEdge = CGRectGetMaxX ( lastView.Frame);
+            nfloat rightEdge = CGRectGetMaxX ( lastView.Frame);
             while ( rightEdge < maxX) {
                 rightEdge = PlaceNewViewOnRight (rightEdge);
             }
 
             // add views that are missing on left side
             TView firstView = pages [0];
-            float leftEdge = CGRectGetMinX ( firstView.Frame);
+            nfloat leftEdge = CGRectGetMinX ( firstView.Frame);
             while ( leftEdge > minX) {
                 leftEdge = PlaceNewViewOnLeft (leftEdge);
             }
@@ -268,12 +265,12 @@ namespace Toggl.Ross.Views
             }
         }
 
-        private float CGRectGetMinX ( RectangleF rect)
+        private nfloat CGRectGetMinX ( CGRect rect)
         {
             return rect.X;
         }
 
-        private float CGRectGetMaxX ( RectangleF rect)
+        private nfloat CGRectGetMaxX ( CGRect rect)
         {
             return rect.X + rect.Width;
         }
@@ -287,6 +284,4 @@ namespace Toggl.Ross.Views
             bool ShouldStartScroll();
         }
     }
-
-
 }

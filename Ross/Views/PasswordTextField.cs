@@ -1,6 +1,6 @@
-using System.Drawing;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using CoreGraphics;
+using Foundation;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {
@@ -25,27 +25,27 @@ namespace Toggl.Ross.Views
             RightView = obfuscateButton;
         }
 
-        public override RectangleF RightViewRect (RectangleF forBounds)
+        public override CGRect RightViewRect (CGRect forBounds)
         {
             return GetButtonRect();
         }
 
-        public override RectangleF EditingRect (RectangleF forBounds)
+        public override CGRect EditingRect (CGRect forBounds)
         {
             var rect = base.EditingRect (forBounds);
             rect.Width -= GetButtonSize().Width;
             return rect;
         }
 
-        private RectangleF GetButtonRect()
+        private CGRect GetButtonRect()
         {
             var size = GetButtonSize();
             var x = Frame.Width - size.Width - 15 /* margin right */;
             var y = (Frame.Height - size.Height)/2;
-            return new RectangleF (x, y, size.Width, size.Height);
+            return new CGRect (x, y, size.Width, size.Height);
         }
 
-        private SizeF GetButtonSize()
+        private CGSize GetButtonSize()
         {
             var attr = new UIStringAttributes {Font = buttonFont};
             var size1 = ((NSString) ShowText).GetSizeUsingAttributes (attr);

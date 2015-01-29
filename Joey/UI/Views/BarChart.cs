@@ -154,7 +154,7 @@ namespace Toggl.Joey.UI.Views
                     row.RelativeWidth = barWidth;
                     row.BarView.BillableTime = activity.BillableTime;
                     row.BarView.TotalTime = activity.TotalTime;
-                    row.ValueTextView.Text = FormatTime (activity.TotalTime);
+                    row.ValueTextView.Text = activity.FormattedTotalTime;
                     row.ValueTextView.Visibility = showValueLabels ? ViewStates.Visible : ViewStates.Gone;
                     row.YAxisTextView.Text = yLabel;
                     row.YAxisTextView.Visibility = showYAxis ? ViewStates.Visible : ViewStates.Gone;

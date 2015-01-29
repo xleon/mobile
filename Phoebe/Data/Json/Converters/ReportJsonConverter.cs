@@ -84,7 +84,16 @@ namespace Toggl.Phoebe.Data.Json.Converters
         private static long ToLong (string s)
         {
             long l;
-            long.TryParse (s, out l);
+
+            // round decimal values
+            if (!string.IsNullOrEmpty (s) && s.Contains (".")) {
+                double d;
+                double.TryParse (s, out d);
+                l = (long)Math.Round (d);
+            } else {
+                long.TryParse (s, out l);
+            }
+
             return l;
         }
     }

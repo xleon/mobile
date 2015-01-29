@@ -229,7 +229,7 @@ namespace Toggl.Phoebe.Data.Models
         public string GetFormattedDuration ()
         {
             TimeSpan duration = GetDuration (Data, Time.UtcNow);
-            string formattedString = duration.ToString (@"h\:mm\:ss");
+            string formattedString = duration.ToString (@"hh\:mm\:ss");
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
             if (user == null) {

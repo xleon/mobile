@@ -156,8 +156,7 @@ namespace Toggl.Ross.Views.Charting
 
         public string TimeForBarAtIndex (int index)
         {
-            TimeSpan duration = TimeSpan.FromSeconds ( ActivityList [index].TotalTime);
-            return String.Format ("{0:0.00}", duration.TotalHours);
+            return ActivityList [index].FormattedTotalTime;
         }
 
         #endregion

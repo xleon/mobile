@@ -16,6 +16,8 @@ namespace Toggl.Phoebe.Data
         public long BillableTime { get; set; }
 
         public long TotalTime { get; set; }
+
+        public string FormattedTotalTime { get; set; }
     }
 
     public struct ReportProject {

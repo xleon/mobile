@@ -12,14 +12,22 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Data.DataObjects;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using Toggl.Ross.DataSources;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class EditTimeEntryViewController : UIViewController
     {
+        private enum LayoutVariant {
+            Default,
+            Description
+        }
+
+        private LayoutVariant layoutVariant = LayoutVariant.Default;
         private readonly TimerNavigationController timerController;
         private NSLayoutConstraint[] trackedWrapperConstraints;
         private UIView wrapper;
@@ -39,6 +47,7 @@ namespace Toggl.Ross.ViewControllers
         private bool autoCommitScheduled;
         private int autoCommitId;
         private bool shouldRebindOnAppear;
+        private UITableView autoCompletionTableView;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -230,6 +239,7 @@ namespace Toggl.Ross.ViewControllers
             if (!descriptionChanging && v.Text != model.Description) {
                 v.Text = model.Description;
             }
+
         }
 
         private void BindTagsButton (UIButton v)
@@ -270,6 +280,85 @@ namespace Toggl.Ross.ViewControllers
             v.Switch.On = model.IsBillable;
         }
 
+        private Source autocompletionTableViewSource;
+
+        private void BindAutocompletionTableView (UITableView v)
+        {
+            autocompletionTableViewSource = new Source (this, v);
+            autocompletionTableViewSource.Attach ();
+
+        }
+
+        private class Source : GroupedDataViewSource<TimeEntryData, string, TimeEntryData>
+        {
+            private readonly static NSString EntryCellId = new NSString ("autocompletionCell");
+            private readonly EditTimeEntryViewController controller;
+
+            private readonly SuggestionEntriesView dataView;
+            ITrie<string> trie;
+
+
+            public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView())
+            {
+                trie = new SuffixTrie<string> (3);
+                trie.Add ("key1", "bear");
+                this.dataView.Updated += (object sender, EventArgs e) => {
+                    tableView.ReloadData();
+                };
+                trie.Add ("key2", "beat");
+                var yo = trie.Retrieve ("key").ToList().Count();
+            }
+
+            private Source (EditTimeEntryViewController controller, UITableView tableView, SuggestionEntriesView dataView) : base (tableView, dataView)
+            {
+                this.dataView = dataView;
+                this.controller = controller;
+                tableView.RegisterClassForCellReuse (typeof (LogViewController.TimeEntryCell), EntryCellId);
+            }
+
+
+            public void UpdateDescription (string descriptionString)
+            {
+                Console.WriteLine ("description string " + descriptionString);
+                this.dataView.FilterBySuffix (descriptionString);
+
+            }
+
+            protected override IEnumerable<string> GetSections ()
+            {
+                return new List<string> () { "" };
+            }
+
+            protected override IEnumerable<TimeEntryData> GetRows (string section)
+            {
+                return dataView.Data;
+            }
+
+            public override float EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            {
+                return 60f;
+            }
+
+            public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
+            {
+                return EstimatedHeight (tableView, indexPath);
+            }
+
+            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
+            {
+                var cell = (LogViewController.TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
+                cell.Bind ((TimeEntryModel)GetRow (indexPath));
+                return cell;
+            }
+
+            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
+            {
+                tableView.DeselectRow (indexPath, false);
+                var model = (TimeEntryModel)GetRow (indexPath);
+                //controller.SetDescription (model);
+            }
+        }
+
         private void Rebind ()
         {
             ResetTrackedObservables ();
@@ -287,6 +376,8 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+
+
         private void ResetWrapperConstraints()
         {
             if (trackedWrapperConstraints != null) {
@@ -294,7 +385,26 @@ namespace Toggl.Ross.ViewControllers
                 trackedWrapperConstraints = null;
             }
 
-            trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
+            switch (layoutVariant) {
+            case LayoutVariant.Default:
+                trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
+                break;
+            case LayoutVariant.Description:
+                trackedWrapperConstraints = new FluentLayout[] {
+                    descriptionTextField.AtTopOf (wrapper),
+                    descriptionTextField.AtLeftOf (wrapper),
+                    descriptionTextField.AtRightOf (wrapper),
+                    descriptionTextField.Height ().EqualTo (60.0f),
+                    autoCompletionTableView.Below (descriptionTextField, 5.0f),
+                    autoCompletionTableView.AtLeftOf (wrapper),
+                    autoCompletionTableView.AtRightOf (wrapper),
+                    autoCompletionTableView.AtBottomOf (wrapper)
+                } .ToLayoutConstraints ();
+                break;
+            default:
+                break;
+            }
+
             wrapper.AddConstraints (trackedWrapperConstraints);
         }
 
@@ -340,6 +450,14 @@ namespace Toggl.Ross.ViewControllers
             } .Apply (Style.EditTimeEntry.DescriptionField).Apply (BindDescriptionField));
             descriptionTextField.EditingChanged += OnDescriptionFieldEditingChanged;
             descriptionTextField.EditingDidEnd += (s, e) => CommitDescriptionChanges ();
+            descriptionTextField.ShouldBeginEditing += (s) => {
+                DescriptionEditingMode = true;
+                return true;
+            };
+            descriptionTextField.ShouldEndEditing += (s) => {
+                DescriptionEditingMode = false;
+                return true;
+            };
 
             wrapper.Add (tagsButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
@@ -359,6 +477,11 @@ namespace Toggl.Ross.ViewControllers
             deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
+            wrapper.Add (autoCompletionTableView = new UITableView() {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+                EstimatedRowHeight = 60.0f
+            } .Apply (BindAutocompletionTableView));
+
             ResetWrapperConstraints ();
             scrollView.AddConstraints (
                 wrapper.AtTopOf (scrollView),
@@ -373,12 +496,42 @@ namespace Toggl.Ross.ViewControllers
             View = scrollView;
 
             ResetTrackedObservables ();
+
+            DescriptionEditingMode = false;
         }
 
         public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
             timerController.Attach (this);
+        }
+
+        private bool changedModeOnce = false;
+        private bool descriptionEditingMode__;
+        private bool DescriptionEditingMode
+        {
+            get { return descriptionEditingMode__; }
+            set {
+
+                layoutVariant = value ? LayoutVariant.Description : LayoutVariant.Default;
+                ResetWrapperConstraints ();
+                UIView.Animate (changedModeOnce ? 0.3f : 0.0f, delegate {
+                    wrapper.LayoutIfNeeded();
+                    SetEditingModeViewsHidden (value);
+                }, delegate {
+                    if (value) {
+                        descriptionTextField.BecomeFirstResponder ();
+                    }
+                });
+                descriptionEditingMode__ = value;
+                changedModeOnce = true;
+            }
+        }
+
+        private void SetEditingModeViewsHidden (bool editingMode)
+        {
+            tagsButton.Alpha = startStopView.Alpha = projectButton.Alpha = deleteButton.Alpha = editingMode ? 0 : 1;
+            autoCompletionTableView.Alpha = 1 - tagsButton.Alpha;
         }
 
         private void OnDatePickerValueChanged (object sender, EventArgs e)
@@ -408,8 +561,12 @@ namespace Toggl.Ross.ViewControllers
 
             // Make sure that we're commiting 1 second after the user has stopped typing
             CancelDescriptionChangeAutoCommit ();
-            if (descriptionChanging) {
+            if (descriptionChanging && !DescriptionEditingMode) {
                 ScheduleDescriptionChangeAutoCommit ();
+            }
+
+            if (autocompletionTableViewSource != null) {
+                autocompletionTableViewSource.UpdateDescription (descriptionTextField.Text);
             }
         }
 

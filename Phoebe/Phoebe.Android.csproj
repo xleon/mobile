@@ -44,6 +44,9 @@
     <Reference Include="Bugsnag">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.1\lib\MonoAndroid10\Bugsnag.dll</HintPath>
     </Reference>
+    <Reference Include="Gma.DataStructures.StringSearch">
+      <HintPath>Assemblies\Gma.DataStructures.StringSearch.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Contrib\sqlite-net\src\SQLite.cs">
@@ -65,9 +68,11 @@
     <Folder Include="Contrib\SQLite\" />
     <Folder Include="Contrib\XPlatUtils\" />
     <Folder Include="Data\Reports\" />
+    <Folder Include="Assemblies\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Assemblies\Gma.DataStructures.StringSearch.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
 </Project>

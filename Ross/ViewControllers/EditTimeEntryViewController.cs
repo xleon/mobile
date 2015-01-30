@@ -48,6 +48,7 @@ namespace Toggl.Ross.ViewControllers
         private int autoCommitId;
         private bool shouldRebindOnAppear;
         private UITableView autoCompletionTableView;
+        private UIBarButtonItem autoCopmletionDoneBarButtonItem;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -286,8 +287,26 @@ namespace Toggl.Ross.ViewControllers
         {
             autocompletionTableViewSource = new Source (this, v);
             autocompletionTableViewSource.Attach ();
-
         }
+
+        private void BindAutoCompletionDoneBarButtonItem(UINavigationItem v)
+        {
+            autoCopmletionDoneBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done);
+            autoCopmletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) => {
+                Console.WriteLine("ypp");
+                DescriptionEditingMode = false;
+            };
+            v.SetRightBarButtonItem (autoCopmletionDoneBarButtonItem, true);
+        }
+
+        private void UnBindAutoCompletionDoneBarButtonItem(UINavigationItem v)
+        {
+            if (v.RightBarButtonItem == autoCopmletionDoneBarButtonItem) {
+                v.SetRightBarButtonItem (null, true);
+                autoCopmletionDoneBarButtonItem = null;
+            }
+        }
+
 
         private class Source : GroupedDataViewSource<TimeEntryData, string, TimeEntryData>
         {
@@ -346,8 +365,8 @@ namespace Toggl.Ross.ViewControllers
             {
                 tableView.DeselectRow (indexPath, false);
                 TimeEntryModel model;
-                //model = (TimeEntryModel)GetRow (indexPath);
-                //controller.SetDescription (model);
+                model = (TimeEntryModel)GetRow (indexPath);
+                controller.ChangeDescription (model.Description);
             }
         }
 
@@ -502,16 +521,19 @@ namespace Toggl.Ross.ViewControllers
         {
             get { return descriptionEditingMode__; }
             set {
-
-                layoutVariant = value ? LayoutVariant.Description : LayoutVariant.Default;
+                if (value) {
+                    descriptionTextField.BecomeFirstResponder ();
+                    layoutVariant = LayoutVariant.Description;
+                    NavigationItem.Apply (BindAutoCompletionDoneBarButtonItem);
+                } else {
+                    descriptionTextField.ResignFirstResponder ();
+                    layoutVariant = LayoutVariant.Default;
+                    NavigationItem.Apply (UnBindAutoCompletionDoneBarButtonItem);
+                }
                 ResetWrapperConstraints ();
                 UIView.Animate (changedModeOnce ? 0.3f : 0.0f, delegate {
-                    wrapper.LayoutIfNeeded();
                     SetEditingModeViewsHidden (value);
-                }, delegate {
-                    if (value) {
-                        descriptionTextField.BecomeFirstResponder ();
-                    }
+                    wrapper.LayoutIfNeeded();
                 });
                 descriptionEditingMode__ = value;
                 changedModeOnce = true;
@@ -542,6 +564,13 @@ namespace Toggl.Ross.ViewControllers
         {
             var controller = new ProjectSelectionViewController (model);
             NavigationController.PushViewController (controller, true);
+        }
+
+        public void ChangeDescription(string newDescription)
+        {
+            descriptionTextField.Text = newDescription;
+            OnDescriptionFieldEditingChanged (this, null);
+            DescriptionEditingMode = false;
         }
 
         private void OnDescriptionFieldEditingChanged (object sender, EventArgs e)

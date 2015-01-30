@@ -289,24 +289,22 @@ namespace Toggl.Ross.ViewControllers
             autocompletionTableViewSource.Attach ();
         }
 
-        private void BindAutoCompletionDoneBarButtonItem(UINavigationItem v)
+        private void BindAutoCompletionDoneBarButtonItem (UINavigationItem v)
         {
             autoCopmletionDoneBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done);
             autoCopmletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) => {
-                Console.WriteLine("ypp");
                 DescriptionEditingMode = false;
             };
             v.SetRightBarButtonItem (autoCopmletionDoneBarButtonItem, true);
         }
 
-        private void UnBindAutoCompletionDoneBarButtonItem(UINavigationItem v)
+        private void UnBindAutoCompletionDoneBarButtonItem (UINavigationItem v)
         {
             if (v.RightBarButtonItem == autoCopmletionDoneBarButtonItem) {
                 v.SetRightBarButtonItem (null, true);
                 autoCopmletionDoneBarButtonItem = null;
             }
         }
-
 
         private class Source : GroupedDataViewSource<TimeEntryData, string, TimeEntryData>
         {
@@ -315,7 +313,7 @@ namespace Toggl.Ross.ViewControllers
 
             private readonly SuggestionEntriesView dataView;
 
-            public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView())
+            public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView (controller.model.Description))
             {
             }
 
@@ -522,7 +520,6 @@ namespace Toggl.Ross.ViewControllers
             get { return descriptionEditingMode__; }
             set {
                 if (value) {
-                    descriptionTextField.BecomeFirstResponder ();
                     layoutVariant = LayoutVariant.Description;
                     NavigationItem.Apply (BindAutoCompletionDoneBarButtonItem);
                 } else {
@@ -566,7 +563,7 @@ namespace Toggl.Ross.ViewControllers
             NavigationController.PushViewController (controller, true);
         }
 
-        public void ChangeDescription(string newDescription)
+        public void ChangeDescription (string newDescription)
         {
             descriptionTextField.Text = newDescription;
             OnDescriptionFieldEditingChanged (this, null);

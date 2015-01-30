@@ -70,7 +70,6 @@ namespace Toggl.Phoebe.Data.Views
 
         private async void Load (bool initialLoad)
         {
-
             if (IsLoading) {
                 return;
             }
@@ -79,7 +78,6 @@ namespace Toggl.Phoebe.Data.Views
             ReinitTrie();
 
             try {
-
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 var baseQuery = store.Table<TimeEntryData> ()

@@ -27,6 +27,18 @@ namespace Toggl.Ross.ViewControllers
             Description
         }
 
+        class TGTableView : UITableView
+        {
+            public override UIView TableFooterView
+            {
+                get {
+                    return base.TableFooterView;
+                } set {
+                    base.TableFooterView = value ?? new UIView ();
+                }
+            }
+        }
+
         private LayoutVariant layoutVariant = LayoutVariant.Default;
         private readonly TimerNavigationController timerController;
         private NSLayoutConstraint[] trackedWrapperConstraints;
@@ -404,7 +416,7 @@ namespace Toggl.Ross.ViewControllers
                     descriptionTextField.AtLeftOf (wrapper),
                     descriptionTextField.AtRightOf (wrapper),
                     descriptionTextField.Height ().EqualTo (60.0f),
-                    autoCompletionTableView.Below (descriptionTextField, 5.0f),
+                    autoCompletionTableView.AtTopOf (wrapper, 65.0f),
                     autoCompletionTableView.AtLeftOf (wrapper),
                     autoCompletionTableView.AtRightOf (wrapper),
                     autoCompletionTableView.AtBottomOf (wrapper)
@@ -484,9 +496,10 @@ namespace Toggl.Ross.ViewControllers
             deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
-            wrapper.Add (autoCompletionTableView = new UITableView() {
+            wrapper.Add (autoCompletionTableView = new TGTableView() {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                EstimatedRowHeight = 60.0f
+                EstimatedRowHeight = 60.0f,
+                BackgroundColor = UIColor.Clear
             } .Apply (BindAutocompletionTableView));
 
             ResetWrapperConstraints ();

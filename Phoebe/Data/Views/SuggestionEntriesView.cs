@@ -15,12 +15,11 @@ namespace Toggl.Phoebe.Data.Views
     public class SuggestionEntriesView : IDataView<TimeEntryData>, IDisposable
     {
         private static readonly string Tag = "SuggestionEntriesView";
-        private Subscription<DataChangeMessage> subscribitionDataChange;
         public bool IsLoading { get; private set; }
         public bool HasMore { get; private set; }
         public event EventHandler Updated;
-        public readonly List<TimeEntryData> timeEntries = new List<TimeEntryData>();
-        public readonly List<TimeEntryData> filteredEntries = new List<TimeEntryData> ();
+        public readonly List<TimeEntryData> TimeEntries = new List<TimeEntryData>();
+        public readonly List<TimeEntryData> FilteredEntries = new List<TimeEntryData> ();
         public string CurrentFilterSuffix { get; private set; }
 
 
@@ -42,17 +41,17 @@ namespace Toggl.Phoebe.Data.Views
 
         private void ReinitTrie()
         {
-            trie = new SuffixTrie<TimeEntryData> (2);
+            trie = new SuffixTrie<TimeEntryData> (3);
         }
 
         public IEnumerable<TimeEntryData> Data
         {
-            get { return filteredEntries; }
+            get { return FilteredEntries; }
         }
 
         public long Count
         {
-            get { return filteredEntries.Count; }
+            get { return FilteredEntries.Count; }
         }
 
         public void LoadMore ()
@@ -73,6 +72,7 @@ namespace Toggl.Phoebe.Data.Views
             if (IsLoading) {
                 return;
             }
+
             IsLoading = true;
 
             ReinitTrie();
@@ -87,9 +87,9 @@ namespace Toggl.Phoebe.Data.Views
                                         && r.UserId == userId
                                         && r.Description != null);
                 var entries = await baseQuery.QueryAsync ();
-                timeEntries.AddRange (entries.ToList());
-                foreach (var entry in timeEntries) {
-                    trie.Add (entry.Description, entry);
+                TimeEntries.AddRange (entries.ToList());
+                foreach (var entry in TimeEntries) {
+                    trie.Add (entry.Description.ToLower(), entry);
                 }
 
             } catch (Exception exc) {
@@ -103,12 +103,14 @@ namespace Toggl.Phoebe.Data.Views
 
         public void FilterBySuffix (string suff)
         {
-            if (!suff.Equals (CurrentFilterSuffix)) {
-                CurrentFilterSuffix = suff;
+            var lowerSuff = suff.ToLower ();
+            if (!lowerSuff.Equals (CurrentFilterSuffix)) {
+                CurrentFilterSuffix = lowerSuff;
             }
 
-            filteredEntries.Clear ();
-            filteredEntries.AddRange (trie.Retrieve (CurrentFilterSuffix));
+            var result = trie.Retrieve (CurrentFilterSuffix);
+            FilteredEntries.Clear ();
+            FilteredEntries.AddRange (result);
             OnUpdated ();
         }
 
@@ -119,9 +121,6 @@ namespace Toggl.Phoebe.Data.Views
                 handler (this, EventArgs.Empty);
             }
         }
-
-
-
     }
 }
 

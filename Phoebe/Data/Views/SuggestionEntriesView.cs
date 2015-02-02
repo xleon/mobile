@@ -109,7 +109,10 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             FilteredEntries.Clear ();
-            if (CurrentFilterInfix.Length < 1) { return; }
+            if (CurrentFilterInfix.Length < 1) { 
+                OnUpdated ();
+                return; 
+            }
 
             var result = trie.Retrieve (CurrentFilterInfix);
             FilteredEntries.AddRange (result);

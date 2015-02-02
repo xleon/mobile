@@ -20,7 +20,7 @@ namespace Toggl.Phoebe.Data.Views
         public event EventHandler Updated;
         public readonly List<TimeEntryData> TimeEntries = new List<TimeEntryData>();
         public readonly List<TimeEntryData> FilteredEntries = new List<TimeEntryData> ();
-        public string CurrentFilterSuffix { get; private set; }
+        public string CurrentFilterInfix { get; private set; }
 
 
         private ITrie<TimeEntryData> trie;
@@ -32,7 +32,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public SuggestionEntriesView (string baseFilterSuffix = "")
         {
-            CurrentFilterSuffix = baseFilterSuffix;
+            CurrentFilterInfix = baseFilterSuffix;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             Reload ();
@@ -97,19 +97,21 @@ namespace Toggl.Phoebe.Data.Views
                 log.Error (Tag, exc, "Failed to fetch time entries");
             } finally {
                 IsLoading = false;
-                FilterBySuffix (CurrentFilterSuffix);
+                FilterByInfix (CurrentFilterInfix);
             }
         }
 
-        public void FilterBySuffix (string suff)
+        public void FilterByInfix (string suff)
         {
             var lowerSuff = suff.ToLower ();
-            if (!lowerSuff.Equals (CurrentFilterSuffix)) {
-                CurrentFilterSuffix = lowerSuff;
+            if (!lowerSuff.Equals (CurrentFilterInfix)) {
+                CurrentFilterInfix = lowerSuff;
             }
 
-            var result = trie.Retrieve (CurrentFilterSuffix);
             FilteredEntries.Clear ();
+            if (CurrentFilterInfix.Length < 1) { return; }
+
+            var result = trie.Retrieve (CurrentFilterInfix);
             FilteredEntries.AddRange (result);
             OnUpdated ();
         }

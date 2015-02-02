@@ -339,9 +339,7 @@ namespace Toggl.Ross.ViewControllers
 
             public void UpdateDescription (string descriptionString)
             {
-                Console.WriteLine ("description string " + descriptionString);
-                dataView.FilterBySuffix (descriptionString);
-
+                dataView.FilterByInfix (descriptionString);
             }
 
             protected override IEnumerable<string> GetSections ()

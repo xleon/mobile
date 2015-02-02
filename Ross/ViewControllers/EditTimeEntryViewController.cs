@@ -578,9 +578,9 @@ namespace Toggl.Ross.ViewControllers
             NavigationController.PushViewController (controller, true);
         }
 
-        public void UpdateModel (TimeEntryModel updatedModel)
+        public async void UpdateModel (TimeEntryModel updatedModel)
         {
-            model.MapMinorsFromModel (updatedModel);
+            await model.MapMinorsFromModel (updatedModel);
             Rebind ();
             DescriptionEditingMode = false;
         }

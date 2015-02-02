@@ -731,26 +731,26 @@ namespace Toggl.Phoebe.Data.Models
             return model.Data;
         }
 
-        public async Task MapTagsFromModel(TimeEntryModel model)
+        public async Task MapTagsFromModel (TimeEntryModel model)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             var oldTags = await dataStore.Table<TimeEntryTagData> ()
-                .QueryAsync (r => r.TimeEntryId == Id && r.DeletedAt == null);
+                          .QueryAsync (r => r.TimeEntryId == Id && r.DeletedAt == null);
             var task1 = oldTags.Select (d => new TimeEntryTagModel (d).DeleteAsync ()).ToList();
 
             var modelTags = await dataStore.Table<TimeEntryTagData> ()
-                .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
-            var task2 = modelTags.Select (d => new TimeEntryTagModel () { TimeEntry = this, Tag = new TagModel(d.TagId) }.SaveAsync()).ToList();
+                            .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+            var task2 = modelTags.Select (d => new TimeEntryTagModel () { TimeEntry = this, Tag = new TagModel (d.TagId) } .SaveAsync()).ToList();
 
-            await System.Threading.Tasks.Task.WhenAll (task1.Concat(task2));
+            await System.Threading.Tasks.Task.WhenAll (task1.Concat (task2));
 
             if (modelTags.Count > 0) {
                 Touch ();
             }
         }
 
-        public async Task MapMinorsFromModel(TimeEntryModel model)
+        public async Task MapMinorsFromModel (TimeEntryModel model)
         {
             await MapTagsFromModel (model);
             Workspace = model.Workspace;

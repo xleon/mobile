@@ -374,9 +374,9 @@ namespace Toggl.Ross.ViewControllers
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
                 tableView.DeselectRow (indexPath, false);
-                TimeEntryModel model;
-                model = (TimeEntryModel)GetRow (indexPath);
-                controller.ChangeDescription (model.Description);
+                TimeEntryModel selectedModel;
+                selectedModel = (TimeEntryModel)GetRow (indexPath);
+                controller.UpdateModel (selectedModel);
             }
         }
 
@@ -532,6 +532,8 @@ namespace Toggl.Ross.ViewControllers
         {
             get { return descriptionEditingMode__; }
             set {
+                UIScrollView scrlView = (UIScrollView)View;
+                scrlView.ScrollEnabled = !value;
                 if (value) {
                     layoutVariant = LayoutVariant.Description;
                     NavigationItem.Apply (BindAutoCompletionDoneBarButtonItem);
@@ -576,10 +578,10 @@ namespace Toggl.Ross.ViewControllers
             NavigationController.PushViewController (controller, true);
         }
 
-        public void ChangeDescription (string newDescription)
+        public void UpdateModel (TimeEntryModel updatedModel)
         {
-            descriptionTextField.Text = newDescription;
-            OnDescriptionFieldEditingChanged (this, null);
+            model.MapMinorsFromModel (updatedModel);
+            Rebind ();
             DescriptionEditingMode = false;
         }
 

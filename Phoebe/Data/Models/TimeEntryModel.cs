@@ -730,5 +730,14 @@ namespace Toggl.Phoebe.Data.Models
         {
             return model.Data;
         }
+
+        public void MapMinorsFromModel(TimeEntryModel model)
+        {
+            Workspace = model.Workspace;
+            Project = model.Project;
+            Description = model.Description;
+            IsBillable = model.IsBillable;
+            Task = model.Task;
+        }
     }
 }

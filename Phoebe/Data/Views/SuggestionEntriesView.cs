@@ -8,7 +8,7 @@ using Toggl.Phoebe.Data.Json;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using VDS.Common.Tries;
+using Gma.DataStructures.StringSearch;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -25,7 +25,7 @@ namespace Toggl.Phoebe.Data.Views
 
         private string currentFilterInfix = "";
 
-        private ITrie<String, char, TimeEntryData> trie;
+        private ITrie<TimeEntryData> trie;
 
         public bool HasSuggestions
         {
@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.Data.Views
 
         private void ReinitTrie()
         {
-            trie = new StringTrie<TimeEntryData> ();
+            trie = new SuffixTrie<TimeEntryData> (3);
         }
 
         public IEnumerable<TimeEntryData> Data
@@ -118,7 +118,7 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            var result = trie.Find (currentFilterInfix).Values;
+            var result = trie.Retrieve (currentFilterInfix);
             FilteredEntries.AddRange (result);
             OnUpdated ();
         }

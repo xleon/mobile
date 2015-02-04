@@ -34,7 +34,6 @@ namespace Toggl.Phoebe.Data.Views
         {
             CurrentFilterInfix = baseFilterSuffix;
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
             Reload ();
             IsLoading = false;
         }
@@ -109,9 +108,9 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             FilteredEntries.Clear ();
-            if (CurrentFilterInfix.Length < 1) { 
+            if (CurrentFilterInfix.Length < 1) {
                 OnUpdated ();
-                return; 
+                return;
             }
 
             var result = trie.Retrieve (CurrentFilterInfix);

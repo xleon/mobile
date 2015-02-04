@@ -322,7 +322,6 @@ namespace Toggl.Ross.ViewControllers
         {
             private readonly static NSString EntryCellId = new NSString ("autocompletionCell");
             private readonly EditTimeEntryViewController controller;
-
             private readonly SuggestionEntriesView dataView;
 
             public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView (controller.model.Description))
@@ -333,9 +332,8 @@ namespace Toggl.Ross.ViewControllers
             {
                 this.dataView = dataView;
                 this.controller = controller;
-                tableView.RegisterClassForCellReuse (typeof (LogViewController.TimeEntryCell), EntryCellId);
+                tableView.RegisterClassForCellReuse (typeof (SuggestionTableViewCell), EntryCellId);
             }
-
 
             public void UpdateDescription (string descriptionString)
             {
@@ -364,7 +362,7 @@ namespace Toggl.Ross.ViewControllers
 
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
-                var cell = (LogViewController.TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
+                var cell = (SuggestionTableViewCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
                 cell.Bind ((TimeEntryModel)GetRow (indexPath));
                 return cell;
             }
@@ -552,7 +550,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void SetEditingModeViewsHidden (bool editingMode)
         {
-            tagsButton.Alpha = startStopView.Alpha = projectButton.Alpha = deleteButton.Alpha = editingMode ? 0 : 1;
+            billableSwitch.Alpha = tagsButton.Alpha = startStopView.Alpha = projectButton.Alpha = deleteButton.Alpha = editingMode ? 0 : 1;
             autoCompletionTableView.Alpha = 1 - tagsButton.Alpha;
         }
 

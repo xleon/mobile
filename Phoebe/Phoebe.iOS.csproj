@@ -47,9 +47,6 @@
     <Reference Include="Bugsnag.iOS">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.1\lib\Xamarin.iOS10\Bugsnag.iOS.dll</HintPath>
     </Reference>
-    <Reference Include="VDS.Common">
-      <HintPath>..\packages\VDS.Common.1.4.0\lib\portable-net4+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1\VDS.Common.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Contrib\sqlite-net\src\SQLite.cs">

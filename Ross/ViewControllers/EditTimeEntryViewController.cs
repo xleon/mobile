@@ -363,12 +363,12 @@ namespace Toggl.Ross.ViewControllers
                 return dataView.Data;
             }
 
-            public override float EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
             {
                 return 60f;
             }
 
-            public override float GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
                 return EstimatedHeight (tableView, indexPath);
             }

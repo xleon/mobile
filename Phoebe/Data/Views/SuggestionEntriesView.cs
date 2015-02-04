@@ -17,23 +17,29 @@ namespace Toggl.Phoebe.Data.Views
         private static readonly string Tag = "SuggestionEntriesView";
         public bool IsLoading { get; private set; }
         public bool HasMore { get; private set; }
+
         public event EventHandler Updated;
+
         public readonly List<TimeEntryData> TimeEntries = new List<TimeEntryData>();
         public readonly List<TimeEntryData> FilteredEntries = new List<TimeEntryData> ();
-        public string CurrentFilterInfix { get; private set; }
 
+        private string currentFilterInfix = "";
 
         private ITrie<TimeEntryData> trie;
+
+        public bool HasSuggestions {
+            get { return FilteredEntries != null && FilteredEntries.Count > 0; }
+        }
+
 
         public void Dispose()
         {
 
         }
 
-        public SuggestionEntriesView (string baseFilterSuffix = "")
-        {
-            CurrentFilterInfix = baseFilterSuffix;
 
+        public SuggestionEntriesView ()
+        {
             Reload ();
             IsLoading = false;
         }
@@ -63,10 +69,10 @@ namespace Toggl.Phoebe.Data.Views
             if (IsLoading) {
                 return;
             }
-            Load (true);
+            Load ();
         }
 
-        private async void Load (bool initialLoad)
+        private async void Load ()
         {
             if (IsLoading) {
                 return;
@@ -96,24 +102,24 @@ namespace Toggl.Phoebe.Data.Views
                 log.Error (Tag, exc, "Failed to fetch time entries");
             } finally {
                 IsLoading = false;
-                FilterByInfix (CurrentFilterInfix);
+                FilterByInfix (currentFilterInfix);
             }
         }
 
         public void FilterByInfix (string suff)
         {
             var lowerSuff = suff.ToLower ();
-            if (!lowerSuff.Equals (CurrentFilterInfix)) {
-                CurrentFilterInfix = lowerSuff;
+            if (!lowerSuff.Equals (currentFilterInfix)) {
+                currentFilterInfix = lowerSuff;
             }
 
             FilteredEntries.Clear ();
-            if (CurrentFilterInfix.Length < 1) {
+            if (currentFilterInfix.Length < 3) {
                 OnUpdated ();
                 return;
             }
 
-            var result = trie.Retrieve (CurrentFilterInfix);
+            var result = trie.Retrieve (currentFilterInfix);
             FilteredEntries.AddRange (result);
             OnUpdated ();
         }

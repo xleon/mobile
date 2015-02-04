@@ -305,7 +305,7 @@ namespace Toggl.Ross.ViewControllers
         {
             autoCopmletionDoneBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done);
             autoCopmletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) => {
-                DescriptionEditingMode = false;
+                DescriptionSuggestionsMode = false;
             };
             v.SetRightBarButtonItem (autoCopmletionDoneBarButtonItem, true);
         }
@@ -318,21 +318,34 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private void BeginSuggestionMode()
+        {
+            DescriptionSuggestionsMode = true;
+        }
+
         private class Source : GroupedDataViewSource<TimeEntryData, string, TimeEntryData>
         {
             private readonly static NSString EntryCellId = new NSString ("autocompletionCell");
             private readonly EditTimeEntryViewController controller;
             private readonly SuggestionEntriesView dataView;
 
-            public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView (controller.model.Description))
+            public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView ())
             {
             }
 
             private Source (EditTimeEntryViewController controller, UITableView tableView, SuggestionEntriesView dataView) : base (tableView, dataView)
             {
                 this.dataView = dataView;
+                this.dataView.Updated += (DataViewUpdated);
                 this.controller = controller;
                 tableView.RegisterClassForCellReuse (typeof (SuggestionTableViewCell), EntryCellId);
+            }
+
+            private void DataViewUpdated(object sender, EventArgs args) 
+            {
+                if (sender == dataView && dataView.HasSuggestions) {
+                    controller.BeginSuggestionMode ();
+                }
             }
 
             public void UpdateDescription (string descriptionString)
@@ -464,13 +477,11 @@ namespace Toggl.Ross.ViewControllers
                 ShouldReturn = tf => tf.ResignFirstResponder (),
             } .Apply (Style.EditTimeEntry.DescriptionField).Apply (BindDescriptionField));
             descriptionTextField.EditingChanged += OnDescriptionFieldEditingChanged;
+            descriptionTextField.ShouldChangeCharacters = OnDescriptionFieldShouldChangeCharacters;
             descriptionTextField.EditingDidEnd += (s, e) => CommitDescriptionChanges ();
-            descriptionTextField.ShouldBeginEditing += s => {
-                DescriptionEditingMode = true;
-                return true;
-            };
+            descriptionTextField.ShouldBeginEditing += s => true;
             descriptionTextField.ShouldEndEditing += s => {
-                DescriptionEditingMode = false;
+                DescriptionSuggestionsMode = false;
                 return true;
             };
 
@@ -513,7 +524,7 @@ namespace Toggl.Ross.ViewControllers
 
             ResetTrackedObservables ();
 
-            DescriptionEditingMode = false;
+            DescriptionSuggestionsMode = false;
         }
 
         public override void ViewDidLoad ()
@@ -522,12 +533,15 @@ namespace Toggl.Ross.ViewControllers
             timerController.Attach (this);
         }
 
-        private bool changedModeOnce = false;
-        private bool descriptionEditingMode__;
-        private bool DescriptionEditingMode
+        private bool descriptionSuggestionsMode__;
+        private bool DescriptionSuggestionsMode
         {
-            get { return descriptionEditingMode__; }
+            get { return descriptionSuggestionsMode__; }
             set {
+                if (value == descriptionSuggestionsMode__) {
+                    return;
+                }
+
                 UIScrollView scrlView = (UIScrollView)View;
                 scrlView.ScrollEnabled = !value;
                 if (value) {
@@ -539,12 +553,11 @@ namespace Toggl.Ross.ViewControllers
                     NavigationItem.Apply (UnBindAutoCompletionDoneBarButtonItem);
                 }
                 ResetWrapperConstraints ();
-                UIView.Animate (changedModeOnce ? 0.3f : 0.0f, delegate {
+                UIView.Animate (0.4f, delegate {
                     SetEditingModeViewsHidden (value);
                     wrapper.LayoutIfNeeded();
                 });
-                descriptionEditingMode__ = value;
-                changedModeOnce = true;
+                descriptionSuggestionsMode__ = value;
             }
         }
 
@@ -578,21 +591,31 @@ namespace Toggl.Ross.ViewControllers
         {
             await model.MapMinorsFromModel (updatedModel);
             Rebind ();
-            DescriptionEditingMode = false;
+            DescriptionSuggestionsMode = false;
         }
+
+        bool shouldUpdateAutocompletionTableViewSource = false;
+        
+        private bool OnDescriptionFieldShouldChangeCharacters (UITextField textField, NSRange range, string replacementString) {
+            shouldUpdateAutocompletionTableViewSource = replacementString.Length > 0 && autocompletionTableViewSource != null;
+            return true;
+        }
+
 
         private void OnDescriptionFieldEditingChanged (object sender, EventArgs e)
         {
+            autocompletionTableViewSource.UpdateDescription (descriptionTextField.Text);
+
             // Mark description as changed
             descriptionChanging = descriptionTextField.Text != model.Description;
 
             // Make sure that we're commiting 1 second after the user has stopped typing
             CancelDescriptionChangeAutoCommit ();
-            if (descriptionChanging && !DescriptionEditingMode) {
+            if (descriptionChanging && !DescriptionSuggestionsMode) {
                 ScheduleDescriptionChangeAutoCommit ();
             }
 
-            if (autocompletionTableViewSource != null) {
+            if (shouldUpdateAutocompletionTableViewSource) {
                 autocompletionTableViewSource.UpdateDescription (descriptionTextField.Text);
             }
         }

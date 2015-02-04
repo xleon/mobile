@@ -118,6 +118,7 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             // Add content view controller:
+            contentViewController.WillMoveToParentViewController (this);
             AddChildViewController (contentViewController);
             contentViewController.View.Frame = new CGRect (CGPoint.Empty, View.Frame.Size);
             View.InsertSubviewBelow (contentViewController.View, statusView);

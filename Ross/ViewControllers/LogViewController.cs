@@ -174,6 +174,16 @@ namespace Toggl.Ross.ViewControllers
                 DurationOnlyNoticeAlertView.TryShow ();
                 controller.TableView.ScrollRectToVisible (new CGRect (0, 0, 1, 1), true);
             }
+
+            protected override void Update ()
+            {
+                CATransaction.Begin ();
+                CATransaction.CompletionBlock = delegate {
+                    TableView.ReloadData ();
+                };
+                base.Update ();
+                CATransaction.Commit();
+            }
         }
 
         public class TimeEntryCell : SwipableTimeEntryTableViewCell

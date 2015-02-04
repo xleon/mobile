@@ -186,7 +186,7 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public class TimeEntryCell : SwipableTimeEntryTableViewCell
+        class TimeEntryCell : SwipableTimeEntryTableViewCell
         {
             private const float HorizPadding = 15f;
             private readonly UIView textContentView;

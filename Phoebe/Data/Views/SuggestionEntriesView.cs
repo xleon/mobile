@@ -27,16 +27,15 @@ namespace Toggl.Phoebe.Data.Views
 
         private ITrie<TimeEntryData> trie;
 
-        public bool HasSuggestions {
+        public bool HasSuggestions
+        {
             get { return FilteredEntries != null && FilteredEntries.Count > 0; }
         }
-
 
         public void Dispose()
         {
 
         }
-
 
         public SuggestionEntriesView ()
         {

@@ -341,7 +341,7 @@ namespace Toggl.Ross.ViewControllers
                 tableView.RegisterClassForCellReuse (typeof (SuggestionTableViewCell), EntryCellId);
             }
 
-            private void DataViewUpdated(object sender, EventArgs args) 
+            private void DataViewUpdated (object sender, EventArgs args)
             {
                 if (sender == dataView && dataView.HasSuggestions) {
                     controller.BeginSuggestionMode ();
@@ -596,8 +596,9 @@ namespace Toggl.Ross.ViewControllers
 
         bool shouldUpdateAutocompletionTableViewSource = false;
         NSTimer autocompletionModeTimeoutTimer;
-        
-        private bool OnDescriptionFieldShouldChangeCharacters (UITextField textField, NSRange range, string replacementString) {
+
+        private bool OnDescriptionFieldShouldChangeCharacters (UITextField textField, NSRange range, string replacementString)
+        {
             shouldUpdateAutocompletionTableViewSource = replacementString.Length > 0 && autocompletionTableViewSource != null;
             return true;
         }
@@ -668,16 +669,16 @@ namespace Toggl.Ross.ViewControllers
 
             timerController.Start ();
 
-            ObserveNotification (UIKeyboard.WillHideNotification, notif => {
+            ObserveNotification (UIKeyboard.WillHideNotification, (notif) => {
                 OnKeyboardHeightChanged (0);
             });
-            ObserveNotification (UIKeyboard.WillShowNotification, notif => {
+            ObserveNotification (UIKeyboard.WillShowNotification, (notif) => {
                 var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
                 if (val != null) {
                     OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
                 }
             });
-            ObserveNotification (UIKeyboard.WillChangeFrameNotification, notif => {
+            ObserveNotification (UIKeyboard.WillChangeFrameNotification, (notif) => {
                 var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
                 if (val != null) {
                     OnKeyboardHeightChanged ((int)val.CGRectValue.Height);

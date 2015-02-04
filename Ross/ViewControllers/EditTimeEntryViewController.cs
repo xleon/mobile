@@ -595,6 +595,7 @@ namespace Toggl.Ross.ViewControllers
         }
 
         bool shouldUpdateAutocompletionTableViewSource = false;
+        NSTimer autocompletionModeTimeoutTimer;
         
         private bool OnDescriptionFieldShouldChangeCharacters (UITextField textField, NSRange range, string replacementString) {
             shouldUpdateAutocompletionTableViewSource = replacementString.Length > 0 && autocompletionTableViewSource != null;
@@ -618,6 +619,18 @@ namespace Toggl.Ross.ViewControllers
             if (shouldUpdateAutocompletionTableViewSource) {
                 autocompletionTableViewSource.UpdateDescription (descriptionTextField.Text);
             }
+
+            if (autocompletionModeTimeoutTimer != null) {
+                autocompletionModeTimeoutTimer.Invalidate ();
+                autocompletionModeTimeoutTimer = null;
+            }
+
+            if (descriptionTextField.Text.Length == 0) {
+                autocompletionModeTimeoutTimer = NSTimer.CreateScheduledTimer (5.0f, delegate {
+                    DescriptionSuggestionsMode = false;
+                });
+            }
+
         }
 
         private void OnTagsButtonTouchUpInside (object sender, EventArgs e)

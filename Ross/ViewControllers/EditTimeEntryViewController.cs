@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
-using CoreGraphics;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using CoreAnimation;
 using CoreFoundation;
+using CoreGraphics;
 using Foundation;
-using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
-using Toggl.Phoebe.Data.DataObjects;
-using XPlatUtils;
+using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Ross.DataSources;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {

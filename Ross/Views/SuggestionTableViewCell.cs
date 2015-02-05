@@ -1,8 +1,8 @@
 ﻿using System;
-using UIKit;
+using Cirrious.FluentLayouts.Touch;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
-using Cirrious.FluentLayouts.Touch;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {

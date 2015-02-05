@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gma.DataStructures.StringSearch;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Gma.DataStructures.StringSearch;
 
 namespace Toggl.Phoebe.Data.Views
 {

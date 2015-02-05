@@ -589,6 +589,9 @@ namespace Toggl.Ross.ViewControllers
 
         public async void UpdateModel (TimeEntryModel updatedModel)
         {
+            if (DescriptionSuggestionsMode) {
+                descriptionTextField.Text = updatedModel.Description;
+            }
             await model.MapMinorsFromModel (updatedModel);
             Rebind ();
             DescriptionSuggestionsMode = false;

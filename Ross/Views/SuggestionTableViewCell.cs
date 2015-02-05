@@ -17,6 +17,7 @@ namespace Toggl.Ross.Views
         public SuggestionTableViewCell (IntPtr ptr) : base (ptr)
         {
             textContentView = new UIView ();
+
             projectLabel = new UILabel ().Apply (Style.Recent.CellProjectLabel);
             clientLabel = new UILabel ().Apply (Style.Recent.CellClientLabel);
             descriptionLabel = new UILabel ().Apply (Style.Recent.CellDescriptionLabel);
@@ -35,8 +36,8 @@ namespace Toggl.Ross.Views
             textContentView.AddConstraints (new FluentLayout[] {
                 projectLabel.AtTopOf (textContentView, 8),
                 projectLabel.AtLeftOf (textContentView, HorizPadding),
-                clientLabel.WithSameCenterY (projectLabel),
-                clientLabel.AtLeftOf (projectLabel),
+                clientLabel.WithSameCenterY (projectLabel).Plus (1),
+                clientLabel.ToRightOf (projectLabel, 6),
                 clientLabel.AtRightOf (textContentView, HorizPadding),
                 descriptionLabel.Below (projectLabel, 4),
                 descriptionLabel.AtLeftOf (textContentView, HorizPadding+1),

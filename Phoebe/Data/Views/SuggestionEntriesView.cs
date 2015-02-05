@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Json.Converters;
-using Toggl.Phoebe.Data.Json;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;

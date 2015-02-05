@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using UIKit;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
@@ -75,15 +74,11 @@ namespace Toggl.Ross.Views
                 if (model.Project.Client != null) {
                     clientName = model.Project.Client.Name;
                 }
-            } else {
-                Console.WriteLine ("project model is null");
             }
 
             projectLabel.TextColor = projectColor;
 
-            Console.WriteLine ("Checking {0}", projectName);
             if (projectLabel.Text != projectName) {
-                Console.WriteLine ("Setting project label text {0}", projectName);
                 projectLabel.Text = projectName;
                 projectLabel.InvalidateIntrinsicContentSize ();
                 SetNeedsLayout ();

@@ -60,7 +60,7 @@ namespace Toggl.Ross.ViewControllers
         private int autoCommitId;
         private bool shouldRebindOnAppear;
         private UITableView autoCompletionTableView;
-        private UIBarButtonItem autoCopmletionDoneBarButtonItem;
+        private UIBarButtonItem autoCompletionDoneBarButtonItem;
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -303,18 +303,18 @@ namespace Toggl.Ross.ViewControllers
 
         private void BindAutoCompletionDoneBarButtonItem (UINavigationItem v)
         {
-            autoCopmletionDoneBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done);
-            autoCopmletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) => {
+            autoCompletionDoneBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done);
+            autoCompletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) => {
                 DescriptionSuggestionsMode = false;
             };
-            v.SetRightBarButtonItem (autoCopmletionDoneBarButtonItem, true);
+            v.SetRightBarButtonItem (autoCompletionDoneBarButtonItem, true);
         }
 
         private void UnBindAutoCompletionDoneBarButtonItem (UINavigationItem v)
         {
-            if (v.RightBarButtonItem == autoCopmletionDoneBarButtonItem) {
+            if (v.RightBarButtonItem == autoCompletionDoneBarButtonItem) {
                 v.SetRightBarButtonItem (null, true);
-                autoCopmletionDoneBarButtonItem = null;
+                autoCompletionDoneBarButtonItem = null;
             }
         }
 

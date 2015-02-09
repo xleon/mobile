@@ -9,7 +9,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class SuggestionEntriesView : IDataView<TimeEntryData>, IDisposable
+    public class SuggestionEntriesView : IDataView<TimeEntryData>
     {
         private static readonly string Tag = "SuggestionEntriesView";
         public bool IsLoading { get; private set; }
@@ -29,15 +29,9 @@ namespace Toggl.Phoebe.Data.Views
             get { return FilteredEntries != null && FilteredEntries.Count > 0; }
         }
 
-        public void Dispose()
-        {
-
-        }
-
         public SuggestionEntriesView ()
         {
             Reload ();
-            IsLoading = false;
         }
 
         private void ReinitTrie()

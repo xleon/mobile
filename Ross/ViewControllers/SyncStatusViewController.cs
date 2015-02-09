@@ -2,12 +2,12 @@ using System;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
-using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {

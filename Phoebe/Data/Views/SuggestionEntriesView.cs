@@ -56,9 +56,6 @@ namespace Toggl.Phoebe.Data.Views
 
         public void Reload()
         {
-            if (IsLoading) {
-                return;
-            }
             Load ();
         }
 

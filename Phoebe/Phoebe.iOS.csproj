@@ -62,7 +62,6 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
-    <Compile Include="Data\Views\SuggestionEntriesView.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

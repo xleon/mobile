@@ -497,17 +497,20 @@ namespace Toggl.Ross.ViewControllers
             billableSwitch.Label.Apply (Style.EditTimeEntry.BillableLabel);
             billableSwitch.Switch.ValueChanged += OnBillableSwitchValueChanged;
 
+            wrapper.Add (autoCompletionTableView = new TGTableView() {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+                EstimatedRowHeight = 60.0f,
+                BackgroundColor = UIColor.Clear
+            } .Apply (BindAutocompletionTableView));
+
+
             wrapper.Add (deleteButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.EditTimeEntry.DeleteButton));
             deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
-            wrapper.Add (autoCompletionTableView = new TGTableView() {
-                TranslatesAutoresizingMaskIntoConstraints = false,
-                EstimatedRowHeight = 60.0f,
-                BackgroundColor = UIColor.Clear
-            } .Apply (BindAutocompletionTableView));
+
 
             ResetWrapperConstraints ();
             scrollView.AddConstraints (

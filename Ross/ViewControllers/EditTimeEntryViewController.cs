@@ -479,7 +479,10 @@ namespace Toggl.Ross.ViewControllers
             descriptionTextField.EditingChanged += OnDescriptionFieldEditingChanged;
             descriptionTextField.ShouldChangeCharacters = OnDescriptionFieldShouldChangeCharacters;
             descriptionTextField.EditingDidEnd += (s, e) => CommitDescriptionChanges ();
-            descriptionTextField.ShouldBeginEditing += s => true;
+            descriptionTextField.ShouldBeginEditing += (s) => {
+                ForceDimissDatePicker();
+                return true;
+            };
             descriptionTextField.ShouldEndEditing += s => {
                 DescriptionSuggestionsMode = false;
                 return true;
@@ -756,6 +759,11 @@ namespace Toggl.Ross.ViewControllers
             DatePickerHidden = startStopView.Selected == TimeKind.None;
         }
 
+        private void ForceDimissDatePicker() {
+            DatePickerHidden = true;
+            startStopView.Selected = TimeKind.None;
+        }
+
         private bool DatePickerHidden
         {
             get { return hideDatePicker; }
@@ -784,6 +792,8 @@ namespace Toggl.Ross.ViewControllers
                     }
                     );
                 } else {
+                    descriptionTextField.ResignFirstResponder ();
+
                     datePicker.Hidden = false;
 
                     UIView.AnimateKeyframes (

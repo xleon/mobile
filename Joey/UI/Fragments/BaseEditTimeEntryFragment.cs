@@ -205,12 +205,6 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             StartTimeEditText.Text = startTime.ToDeviceTimeString ();
-            if (startTime.Date != Time.Now.Date) {
-                DateTextView.Text = startTime.ToDeviceDateString ();
-                DateTextView.Visibility = ViewStates.Visible;
-            } else {
-                DateTextView.Visibility = ViewStates.Invisible;
-            }
 
             // Only update DescriptionEditText when content differs, else the user is unable to edit it
             if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
@@ -333,9 +327,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
             cont = container;
-            DateTextView = view.FindViewById<TextView> (Resource.Id.DateTextView).SetFont (Font.Roboto);
-            DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.Roboto);
+            DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
+            StartTimeEditText.SetTextSize (Android.Util.ComplexUnitType.Sp, 12.0f);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
             DescriptionEditText = view.FindViewById<EditText> (Resource.Id.DescriptionEditText).SetFont (Font.RobotoLight);
             ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText).SetFont (Font.RobotoLight);

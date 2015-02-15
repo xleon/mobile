@@ -9,6 +9,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
+using Android.Graphics.Drawables;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -27,16 +28,7 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnCreateActivity (state);
 
-            var actionBarView = CreateDoneActionBarView ();
-            DoneFrameLayout = actionBarView.FindViewById<FrameLayout> (Resource.Id.DoneFrameLayout);
-            DoneFrameLayout.Click += OnDoneFrameLayoutClick;
-
-            ActionBar.SetDisplayOptions (
-                ActionBarDisplayOptions.ShowCustom,
-                (ActionBarDisplayOptions) ((int)ActionBarDisplayOptions.ShowCustom
-                                           | (int)ActionBarDisplayOptions.ShowHome
-                                           | (int)ActionBarDisplayOptions.ShowTitle));
-            ActionBar.CustomView = actionBarView;
+            ActionBar.Hide ();
 
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 

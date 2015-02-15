@@ -7,33 +7,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="10dp">
-        <TextView
-            android:id="@+id/DateTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="4dp"
-            android:text="Today"
-            android:textSize="12dp"
-            android:gravity="center"
-            android:layout_marginBottom="2dp" />
         <LinearLayout
             android:orientation="horizontal"
+            android:minWidth="25px"
+            android:minHeight="25px"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:paddingBottom="12dp"
-            android:gravity="center_vertical">
-            <EditText
-                android:id="@+id/StartTimeEditText"
-                android:layout_width="wrap_content"
+            android:id="@+id/linearLayout1">
+            <ImageButton
+                android:src="@drawable/IcCheck"
+                android:id="@+id/imageButton1"
+                android:background="@null"
+                android:maxHeight="1dp"
+                android:minHeight="0.5dp"
                 android:layout_height="wrap_content"
-                android:paddingLeft="7dp"
-                android:paddingRight="7dp"
-                android:editable="false"
-                android:cursorVisible="false"
-                android:focusableInTouchMode="false"
-                android:textSize="12dp"
-                android:text="12:59 AM" />
+                android:layout_width="wrap_content"
+                android:layout_gravity="center_vertical" />
             <TextView
                 android:id="@+id/DurationTextView"
                 android:layout_width="0dp"
@@ -43,75 +32,151 @@
                 android:text="00:00:00"
                 android:singleLine="true"
                 android:textSize="32dp"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textStyle="normal" />
-            <EditText
-                android:id="@+id/StopTimeEditText"
+                android:textStyle="normal"
+                android:fontFamily="sans-serif-light" />
+            <ImageButton
+                android:src="@drawable/IcDeleteBig"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="7dp"
-                android:paddingRight="7dp"
+                android:id="@+id/imageButton2"
+                android:background="@null"
+                android:minHeight="1dp"
+                android:maxHeight="1dp"
+                android:maxWidth="1dp"
+                android:layout_gravity="center_vertical" />
+        </LinearLayout>
+        <LinearLayout
+            android:orientation="vertical"
+            android:minWidth="25px"
+            android:minHeight="25px"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/linearLayout4"
+            android:paddingRight="32dp"
+            android:paddingLeft="32dp"
+            android:layout_marginTop="10dp">
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:gravity="center_vertical"
+                android:id="@+id/linearLayout5">
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:minWidth="25px"
+                    android:minHeight="25px"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:id="@+id/linearLayout2">
+                    <TextView
+                        android:text="Start"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/textView1"
+                        android:layout_marginBottom="0.0dp"
+                        android:layout_marginTop="0.0dp"
+                        android:textColor="#ff8f8f8f" />
+                    <EditText
+                        android:id="@+id/StartTimeEditText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:editable="false"
+                        android:cursorVisible="false"
+                        android:focusableInTouchMode="false"
+                        android:textSize="12dp"
+                        android:text="12:59 AM" />
+                </LinearLayout>
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:minWidth="25px"
+                    android:minHeight="25px"
+                    android:id="@+id/linearLayout3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:paddingLeft="50dp">
+                    <TextView
+                        android:text="End"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/textView2"
+                        android:textColor="#ff8f8f8f" />
+                    <EditText
+                        android:id="@+id/StopTimeEditText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:editable="false"
+                        android:cursorVisible="false"
+                        android:focusableInTouchMode="false"
+                        android:textSize="12dp"
+                        android:text="12:59 AM" />
+                </LinearLayout>
+            </LinearLayout>
+            <EditText
+                android:id="@+id/DescriptionEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences"
+                android:hint="@string/CurrentTimeEntryEditDescriptionHint"
+                android:imeOptions="actionDone"
+                android:layout_marginBottom="5dp"
+                android:singleLine="true"
+                android:background="@drawable/TextLines" />
+            <EditText
+                android:id="@+id/ProjectEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:editable="false"
                 android:cursorVisible="false"
                 android:focusableInTouchMode="false"
-                android:textSize="12dp"
-                android:text="12:59 AM" />
-        </LinearLayout>
-        <EditText
-            android:id="@+id/DescriptionEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textCapSentences"
-            android:singleLine="true"
-            android:hint="@string/CurrentTimeEntryEditDescriptionHint"
-            android:imeOptions="actionDone"
-            android:layout_marginBottom="5dp" />
-        <EditText
-            android:id="@+id/ProjectEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:editable="false"
-            android:cursorVisible="false"
-            android:focusableInTouchMode="false"
-            android:hint="@string/CurrentTimeEntryEditProjectHint"
-            android:layout_marginBottom="5dp" />
-        <EditText
-            android:id="@+id/TagsEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:editable="false"
-            android:cursorVisible="false"
-            android:focusableInTouchMode="false"
-            android:hint="@string/CurrentTimeEntryEditTagsHint"
-            android:layout_marginBottom="5dp" />
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <CheckBox
-                android:id="@+id/BillableCheckBox"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="@string/CurrentTimeEntryEditBillableUnchecked"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="@color/BillableTextColor"
-                android:gravity="center_vertical"
-                android:button="@null"
-                android:drawableLeft="@drawable/IcBillable"
-                android:drawablePadding="5dp"
-                android:paddingLeft="10dp" />
-            <View
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1" />
-            <ImageButton
-                android:id="@+id/DeleteImageButton"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:src="@drawable/IcDelete"
-                android:background="@drawable/ButtonNoFrame" />
+                android:hint="@string/CurrentTimeEntryEditProjectHint"
+                android:layout_marginBottom="5dp" />
+            <EditText
+                android:id="@+id/TagsEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:editable="false"
+                android:cursorVisible="false"
+                android:focusableInTouchMode="false"
+                android:hint="@string/CurrentTimeEntryEditTagsHint"
+                android:layout_marginBottom="5dp" />
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/linearLayout6">
+                <CheckBox
+                    android:id="@+id/BillableCheckBox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/CurrentTimeEntryEditBillableUnchecked"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/BillableTextColor"
+                    android:gravity="center_vertical"
+                    android:button="@null"
+                    android:drawableLeft="@drawable/IcBillable"
+                    android:drawablePadding="5dp"
+                    android:paddingLeft="10dp" />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:id="@+id/view1" />
+                <ImageButton
+                    android:id="@+id/DeleteImageButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:src="@drawable/IcDelete"
+                    android:background="@drawable/ButtonNoFrame" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

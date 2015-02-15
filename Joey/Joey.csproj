@@ -638,6 +638,7 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcSelectArrowSmallDown.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcStopWhite.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTag.png" />
+    <AndroidResource Include="Resources\drawable\TextLines.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

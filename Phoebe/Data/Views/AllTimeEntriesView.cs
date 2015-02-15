@@ -337,6 +337,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             private readonly DateTime date;
             private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
+            private readonly List<TimeEntryGroup> groupedObjects = new List<TimeEntryGroup>();
 
             public DateGroup (DateTime date)
             {
@@ -353,6 +354,13 @@ namespace Toggl.Phoebe.Data.Views
                 get { return dataObjects; }
             }
 
+            public List<TimeEntryGroup> GroupedObjects
+            {
+                get {
+                    return groupedObjects;
+                }
+            }
+
             public event EventHandler Updated;
 
             private void OnUpdated ()
@@ -365,20 +373,116 @@ namespace Toggl.Phoebe.Data.Views
 
             public void Add (TimeEntryData dataObject)
             {
+                bool existGrouped = false;
+                foreach (var entryGroup in groupedObjects)
+                    if ( entryGroup.Contains ( dataObject)) {
+                        entryGroup.DataObjects.Add ( dataObject);
+                        existGrouped = true;
+                    }
+
+                if ( !existGrouped) {
+                    groupedObjects.Add ( new TimeEntryGroup ( dataObject));
+                }
+
                 dataObjects.Add (dataObject);
                 OnUpdated ();
             }
 
             public void Remove (TimeEntryData dataObject)
             {
+                foreach (var entryGroup in groupedObjects)
+                    if ( entryGroup.Contains ( dataObject)) {
+                        entryGroup.DataObjects.Remove ( dataObject);
+                    }
+
                 dataObjects.Remove (dataObject);
                 OnUpdated ();
+            }
+
+            public void RemoveGroup (TimeEntryGroup dataGroup)
+            {
+                foreach (var item in dataGroup.DataObjects) {
+                    dataObjects.Remove ( item);
+                }
+
+                groupedObjects.Remove (dataGroup);
+                OnUpdated();
             }
 
             public void Sort ()
             {
                 dataObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                groupedObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
                 OnUpdated ();
+            }
+        }
+
+        public class TimeEntryGroup
+        {
+            private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
+
+            public TimeEntryGroup (TimeEntryData data)
+            {
+                dataObjects.Add ( data);
+            }
+
+            public int Count
+            {
+                get {
+                    dataObjects.Count;
+                }
+            }
+
+            public string Description
+            {
+                get {
+                    return dataObjects.First().Description;
+                }
+            }
+
+            public Guid? ProjectId
+            {
+                get {
+                    return dataObjects.First().ProjectId;
+                }
+            }
+
+            public Guid WorkspaceId
+            {
+                get {
+                    return dataObjects.First().WorkspaceId;
+                }
+            }
+
+            public Guid UserId
+            {
+                get {
+                    return dataObjects.First().UserId;
+                }
+            }
+
+            public TimeSpan Duration
+            {
+                get {
+                    return (TimeSpan) (dataObjects.Last ().StopTime - dataObjects.First ().StartTime);
+                }
+            }
+
+            public DateTime StartTime
+            {
+                get {
+                    return dataObjects.First ().StartTime;
+                }
+            }
+
+            public List<TimeEntryData> DataObjects
+            {
+                get { return dataObjects; }
+            }
+
+            public bool Contains ( TimeEntryData data)
+            {
+                return dataObjects.First().IsGroupableWith ( data);
             }
         }
 

@@ -89,5 +89,14 @@ namespace Toggl.Phoebe.Data
             }
             return existingProjects.Count != 0;
         }
+
+        public static bool IsGroupableWith (this TimeEntryData data, TimeEntryData other)
+        {
+            return data.ProjectId == other.ProjectId ||
+                   string.Compare (data.Description, other.Description, StringComparison.Ordinal) == 0 ||
+                   data.TaskId == other.TaskId ||
+                   data.UserId == other.UserId ||
+                   data.WorkspaceId == other.WorkspaceId;
+        }
     }
 }

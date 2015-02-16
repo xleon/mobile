@@ -30,7 +30,7 @@ namespace Toggl.Ross.Data
         {
             get {
                 if ( nsUserDefaults == null) {
-                    nsUserDefaults = new NSUserDefaults ("group.com.toggl.timer", NSUserDefaultsType.SuiteName);
+                    nsUserDefaults = new NSUserDefaults ("group." + NSBundle.MainBundle.BundleIdentifier, NSUserDefaultsType.SuiteName);
                 }
                 return nsUserDefaults;
             }
@@ -95,7 +95,7 @@ namespace Toggl.Ross.Data
         public void UpdateWidgetContent()
         {
             var controller = NCWidgetController.GetWidgetController ();
-            controller.SetHasContent (true, "com.toggl.timer.today");
+            controller.SetHasContent (true, NSBundle.MainBundle.BundleIdentifier + ".today");
         }
 
         #endregion

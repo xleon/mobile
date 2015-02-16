@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
-using CoreGraphics;
 using System.Linq;
 using CoreAnimation;
 using CoreFoundation;
+using CoreGraphics;
 using Foundation;
-using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -173,6 +173,16 @@ namespace Toggl.Ross.ViewControllers
             {
                 DurationOnlyNoticeAlertView.TryShow ();
                 controller.TableView.ScrollRectToVisible (new CGRect (0, 0, 1, 1), true);
+            }
+
+            protected override void Update ()
+            {
+                CATransaction.Begin ();
+                CATransaction.CompletionBlock = delegate {
+                    TableView.ReloadData ();
+                };
+                base.Update ();
+                CATransaction.Commit();
             }
         }
 

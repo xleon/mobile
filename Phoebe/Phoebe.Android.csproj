@@ -65,9 +65,11 @@
     <Folder Include="Contrib\SQLite\" />
     <Folder Include="Contrib\XPlatUtils\" />
     <Folder Include="Data\Reports\" />
+    <Folder Include="Assemblies\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <Import Project="..\Contrib\Trie\Trie.projitems" Label="Shared" Condition="Exists('..\Contrib\Trie\Trie.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
 </Project>

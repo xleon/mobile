@@ -2,12 +2,12 @@ using System;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
-using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -118,6 +118,7 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             // Add content view controller:
+            contentViewController.WillMoveToParentViewController (this);
             AddChildViewController (contentViewController);
             contentViewController.View.Frame = new CGRect (CGPoint.Empty, View.Frame.Size);
             View.InsertSubviewBelow (contentViewController.View, statusView);

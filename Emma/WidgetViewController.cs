@@ -16,7 +16,6 @@ namespace Toggl.Emma
         public static string MillisecondsKey = "milliseconds_key";
         public static string TimeEntriesKey = "time_entries_key";
         public static string StartedEntryKey = "started_entry_key";
-        public static string ViewedEntryKey = "viewed_entry_key";
         public static string IsUserLoggedKey = "is_logged_key";
 
         public static string TodayUrlPrefix = "today";
@@ -57,6 +56,7 @@ namespace Toggl.Emma
         private nfloat marginTop;
         private bool isRunning;
         private bool isLogged;
+        private bool actionFlag; // avoid double interaction
 
         public override void LoadView ()
         {
@@ -64,7 +64,7 @@ namespace Toggl.Emma
 
             isLogged = UserDefaults.BoolForKey ( IsUserLoggedKey);
             marginTop = (isLogged) ? 10f : 1f;
-            height = (isLogged) ? 250f : 70f; // 4 x 60f(cells),
+            height = (isLogged) ? 250f : 62f; // 4 x 60f(cells),
 
             var v = new UIView {
                 BackgroundColor = UIColor.Clear,
@@ -146,7 +146,12 @@ namespace Toggl.Emma
         {
             base.ViewDidLoad ();
 
+            actionFlag = false;
+
             openAppBtn.TouchUpInside += (sender, e) => {
+                if (actionFlag) {
+                    return;
+                }
                 openAppBtn.IsActive = false;
                 UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/"));
             };
@@ -220,9 +225,19 @@ namespace Toggl.Emma
 
             var source = new TableDataSource ( entries);
 
-            source.OnStartStop += (sender, e) => UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/" + StartEntryUrlPrefix));
+            source.OnStartStop += (sender, e) => {
+                if (actionFlag) {
+                    return;
+                }
+                actionFlag = true;
+                UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/" + StartEntryUrlPrefix));
+            };
 
             source.OnContinue += (sender, e) => {
+                if (actionFlag) {
+                    return;
+                }
+                actionFlag = true;
                 var id = string.IsNullOrEmpty ( source.SelectedCellId) ? new Guid().ToString() : source.SelectedCellId;
                 UserDefaults.SetString ( id, StartedEntryKey);
                 UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/" + ContinueEntryUrlPrefix));

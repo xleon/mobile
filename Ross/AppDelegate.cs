@@ -24,7 +24,6 @@ namespace Toggl.Ross
     public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
         private TogglWindow window;
-        private bool isResuming;
 
         public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
@@ -61,14 +60,15 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<NetworkIndicatorManager> ();
             ServiceContainer.Resolve<WidgetSyncManager>();
 
-            isResuming = true;
+            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+            widgetService.SetAppOnBackground (false);
         }
 
         public override bool OpenUrl (UIApplication application, NSUrl url, string sourceApplication, NSObject annotation)
         {
-            if ( url.AbsoluteString.Contains ( WidgetUpdateService.TodayUrlPrefix)) {
+            if (url.AbsoluteString.Contains (WidgetUpdateService.TodayUrlPrefix)) {
                 var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
-                if ( url.AbsoluteString.Contains ( WidgetUpdateService.StartEntryUrlPrefix)) {
+                if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
                     widgetManager.StartStopTimeEntry();
                 } else {
                     widgetManager.ContinueTimeEntry();
@@ -76,6 +76,18 @@ namespace Toggl.Ross
                 return true;
             }
             return Google.Plus.UrlHandler.HandleUrl (url, sourceApplication, annotation);
+        }
+
+        public override void DidEnterBackground (UIApplication application)
+        {
+            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+            widgetService.SetAppOnBackground (true);
+        }
+
+        public override void WillTerminate (UIApplication application)
+        {
+            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+            widgetService.SetAppActivated (false);
         }
 
         private void RegisterComponents ()

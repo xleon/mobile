@@ -17,6 +17,8 @@ namespace Toggl.Emma
         public static string TimeEntriesKey = "time_entries_key";
         public static string StartedEntryKey = "started_entry_key";
         public static string IsUserLoggedKey = "is_logged_key";
+        public static string AppActiveEntryKey = "app_active_entry_key";
+        public static string AppBackgroundEntryKey = "app_bg_entry_key";
 
         public static string TodayUrlPrefix = "today";
         public static string StartEntryUrlPrefix = "start";
@@ -27,7 +29,7 @@ namespace Toggl.Emma
         public NSUserDefaults UserDefaults
         {
             get {
-                if ( nsUserDefaults == null) {
+                if (nsUserDefaults == null) {
                     nsUserDefaults = new NSUserDefaults ("group.com.toggl.timer", NSUserDefaultsType.SuiteName);
                 }
                 return nsUserDefaults;
@@ -36,7 +38,7 @@ namespace Toggl.Emma
 
         private Timer timer;
 
-        public Timer Timer
+        private Timer Timer
         {
             get {
                 if (timer == null)
@@ -44,6 +46,23 @@ namespace Toggl.Emma
                     Interval = 1000,
                 };
                 return timer;
+            }
+        }
+
+        private bool widgetDisabled; // avoid double interaction
+
+        private bool WidgetDisabled
+        {
+            get {
+                return widgetDisabled;
+            }
+
+            set {
+                if (widgetDisabled == value) {
+                    return;
+                }
+                widgetDisabled = value;
+                tableView.UserInteractionEnabled = !widgetDisabled;
             }
         }
 
@@ -55,20 +74,24 @@ namespace Toggl.Emma
         private nfloat height;
         private nfloat marginTop;
         private bool isRunning;
-        private bool isLogged;
-        private bool actionFlag; // avoid double interaction
+        private bool isUserLogged;
+        private bool isAppActive;
+        private bool isAppOnBackground;
 
         public override void LoadView ()
         {
             base.LoadView ();
 
-            isLogged = UserDefaults.BoolForKey ( IsUserLoggedKey);
-            marginTop = (isLogged) ? 10f : 1f;
-            height = (isLogged) ? 250f : 62f; // 4 x 60f(cells),
+            isUserLogged = UserDefaults.BoolForKey (IsUserLoggedKey);
+            isAppActive = UserDefaults.BoolForKey (AppActiveEntryKey);
+            isAppOnBackground = UserDefaults.BoolForKey (AppBackgroundEntryKey);
+
+            marginTop = (isUserLogged && isAppActive) ? 10f : 1f;
+            height = (isUserLogged && isAppActive) ? 250f : 62f; // 4 x 60f(cells),
 
             var v = new UIView {
                 BackgroundColor = UIColor.Clear,
-                Frame = new CGRect ( 0,0, UIScreen.MainScreen.Bounds.Width, height),
+                Frame = new CGRect (0,0, UIScreen.MainScreen.Bounds.Width, height),
             };
 
             v.Add (tableView = new UITableView {
@@ -94,8 +117,8 @@ namespace Toggl.Emma
             UILabel textView;
             openAppView.Add (textView = new UILabel {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Font = UIFont.FromName ( "Helvetica", 13f),
-                Text = "NoLoggedUser".Tr(),
+                Font = UIFont.FromName ("Helvetica", 13f),
+                Text = isAppActive ? "NoLoggedUser".Tr() : "NoActiveApp".Tr(),
                 TextColor = UIColor.White,
                 BackgroundColor = UIColor.Clear,
             });
@@ -107,20 +130,20 @@ namespace Toggl.Emma
 
             openAppView.AddConstraints (
 
-                bg.AtTopOf ( openAppView),
-                bg.AtLeftOf ( openAppView),
-                bg.AtRightOf ( openAppView),
-                bg.AtBottomOf ( openAppView),
+                bg.AtTopOf (openAppView),
+                bg.AtLeftOf (openAppView),
+                bg.AtRightOf (openAppView),
+                bg.AtBottomOf (openAppView),
 
                 textView.WithSameCenterY (openAppView),
-                textView.AtLeftOf ( openAppView, 50f),
-                textView.WithSameHeight ( openAppView),
-                textView.AtRightOf ( openAppView),
+                textView.AtLeftOf (openAppView, 50f),
+                textView.WithSameHeight (openAppView),
+                textView.AtRightOf (openAppView),
 
-                openAppBtn.Width().EqualTo ( 35f),
-                openAppBtn.Height().EqualTo ( 35f),
+                openAppBtn.Width().EqualTo (35f),
+                openAppBtn.Height().EqualTo (35f),
                 openAppBtn.AtRightOf (openAppView, 15f),
-                openAppBtn.WithSameCenterY ( openAppView),
+                openAppBtn.WithSameCenterY (openAppView),
 
                 null
             );
@@ -129,12 +152,12 @@ namespace Toggl.Emma
 
                 tableView.AtTopOf (v),
                 tableView.WithSameWidth (v),
-                tableView.Height().EqualTo ( height - marginTop).SetPriority ( UILayoutPriority.DefaultLow),
+                tableView.Height().EqualTo (height - marginTop).SetPriority (UILayoutPriority.DefaultLow),
                 tableView.AtBottomOf (v),
 
                 openAppView.AtTopOf (v),
                 openAppView.WithSameWidth (v),
-                openAppView.Height().EqualTo ( cellHeight),
+                openAppView.Height().EqualTo (cellHeight),
 
                 null
             );
@@ -146,12 +169,11 @@ namespace Toggl.Emma
         {
             base.ViewDidLoad ();
 
-            actionFlag = false;
-
             openAppBtn.TouchUpInside += (sender, e) => {
-                if (actionFlag) {
+                if (WidgetDisabled) {
                     return;
                 }
+                WidgetDisabled = true;
                 openAppBtn.IsActive = false;
                 UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/"));
             };
@@ -160,9 +182,9 @@ namespace Toggl.Emma
 
             UpdateTimeValue ();
 
-            if ( isRunning) {
+            if (isRunning) {
                 // Start to check time
-                Timer.Elapsed += ( sender, e) => InvokeOnMainThread (UpdateTimeValue);
+                Timer.Elapsed += (sender, e) => InvokeOnMainThread (UpdateTimeValue);
                 Timer.Start();
             }
         }
@@ -176,12 +198,12 @@ namespace Toggl.Emma
         private void UpdateTimeValue()
         {
             // Periodically update content from UserDefaults
-            var timeValue = UserDefaults.StringForKey ( MillisecondsKey);
+            var timeValue = UserDefaults.StringForKey (MillisecondsKey);
 
-            if ( !string.IsNullOrEmpty ( timeValue)) {
-                var cell = ( WidgetCell)tableView.CellAt ( NSIndexPath.FromRowSection ( 0, 0));
-                if ( cell != null) {
-                    cell.TimeValue = UserDefaults.StringForKey ( MillisecondsKey);
+            if (!string.IsNullOrEmpty (timeValue)) {
+                var cell = (WidgetCell)tableView.CellAt (NSIndexPath.FromRowSection (0, 0));
+                if (cell != null) {
+                    cell.TimeValue = isAppOnBackground ? string.Empty : UserDefaults.StringForKey (MillisecondsKey);
                 }
             }
         }
@@ -189,57 +211,58 @@ namespace Toggl.Emma
         private void UpdateContent()
         {
             // Check if user is logged
-            if ( !isLogged) {
+            if (!isUserLogged || !isAppActive) {
                 tableView.Hidden = true;
                 openAppView.Hidden = false;
                 return;
             }
 
             isRunning = false;
+            WidgetDisabled = false;
 
             // Get saved entries
             var entries = new List<WidgetEntryData>();
 
-            var timeEntryJson = UserDefaults.StringForKey ( TimeEntriesKey);
-            if ( timeEntryJson != string.Empty) {
-                entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<WidgetEntryData>> ( timeEntryJson);
+            var timeEntryJson = UserDefaults.StringForKey (TimeEntriesKey);
+            if (timeEntryJson != string.Empty) {
+                entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<WidgetEntryData>> (timeEntryJson);
             }
 
-            if ( entries.Count > 0) {
+            if (entries.Count > 0) {
 
                 // Check running state
                 foreach (var item in entries) {
                     isRunning = isRunning || item.IsRunning;
                 }
 
-                if ( !isRunning) {
+                if (!isRunning) {
                     // Add empty cell at top
                     var emptyEntry = new WidgetEntryData { IsEmpty = true };
-                    entries.Insert ( 0, emptyEntry);
-                    entries.RemoveAt ( entries.Count - 1);
+                    entries.Insert (0, emptyEntry);
+                    entries.RemoveAt (entries.Count - 1);
                 }
 
             } else {
-                entries.Add ( new WidgetEntryData { IsEmpty = true });
+                entries.Add (new WidgetEntryData { IsEmpty = true });
             }
 
-            var source = new TableDataSource ( entries);
+            var source = new TableDataSource (entries);
 
             source.OnStartStop += (sender, e) => {
-                if (actionFlag) {
+                if (WidgetDisabled) {
                     return;
                 }
-                actionFlag = true;
+                WidgetDisabled = true;
                 UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/" + StartEntryUrlPrefix));
             };
 
             source.OnContinue += (sender, e) => {
-                if (actionFlag) {
+                if (WidgetDisabled) {
                     return;
                 }
-                actionFlag = true;
-                var id = string.IsNullOrEmpty ( source.SelectedCellId) ? new Guid().ToString() : source.SelectedCellId;
-                UserDefaults.SetString ( id, StartedEntryKey);
+                WidgetDisabled = true;
+                var id = string.IsNullOrEmpty (source.SelectedCellId) ? new Guid().ToString() : source.SelectedCellId;
+                UserDefaults.SetString (id, StartedEntryKey);
                 UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/" + ContinueEntryUrlPrefix));
             };
 
@@ -275,7 +298,7 @@ namespace Toggl.Emma
 
             public string SelectedCellId { get; set; }
 
-            public TableDataSource ( List<WidgetEntryData> items)
+            public TableDataSource (List<WidgetEntryData> items)
             {
                 this.items = items;
             }
@@ -287,11 +310,11 @@ namespace Toggl.Emma
                 cell.Data = items[ indexPath.Row];
 
                 cell.StartBtnPressed += (sender, e) => {
-                    if ( indexPath.Row == 0 && OnStartStop != null) {
-                        OnStartStop.Invoke ( this, new EventArgs());
-                    } else if ( OnContinue != null) {
+                    if (indexPath.Row == 0 && OnStartStop != null) {
+                        OnStartStop.Invoke (this, new EventArgs());
+                    } else if (OnContinue != null) {
                         SelectedCellId = items[ indexPath.Row].Id;
-                        OnContinue.Invoke ( this, new EventArgs());
+                        OnContinue.Invoke (this, new EventArgs());
                     }
                 };
                 return cell;

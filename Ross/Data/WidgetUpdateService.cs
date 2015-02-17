@@ -17,6 +17,8 @@ namespace Toggl.Ross.Data
         public static string MillisecondsKey = "milliseconds_key";
         public static string TimeEntriesKey = "time_entries_key";
         public static string StartedEntryKey = "started_entry_key";
+        public static string AppActiveEntryKey = "app_active_entry_key";
+        public static string AppBackgroundEntryKey = "app_bg_entry_key";
         public static string IsUserLoggedKey = "is_logged_key";
 
         public static string TodayUrlPrefix = "today";
@@ -29,7 +31,7 @@ namespace Toggl.Ross.Data
         public NSUserDefaults UserDefaults
         {
             get {
-                if ( nsUserDefaults == null) {
+                if (nsUserDefaults == null) {
                     nsUserDefaults = new NSUserDefaults ("group." + NSBundle.MainBundle.BundleIdentifier, NSUserDefaultsType.SuiteName);
                 }
                 return nsUserDefaults;
@@ -45,38 +47,52 @@ namespace Toggl.Ross.Data
             // WidgetUpdateService still doesn't exists.
 
             var authManager = ServiceContainer.Resolve<AuthManager>();
-            SetUserLogged ( authManager.IsAuthenticated);
+            SetUserLogged (authManager.IsAuthenticated);
+            SetAppActivated (true);
+            SetAppOnBackground (false);
             rootController = UIApplication.SharedApplication.KeyWindow.RootViewController;
         }
 
         #region IWidgetUpdateService implementation
 
-        public void SetLastEntries ( List<WidgetSyncManager.WidgetEntryData> lastEntries)
+        public void SetLastEntries (List<WidgetSyncManager.WidgetEntryData> lastEntries)
         {
-            if ( lastEntries != null) {
-                var json = JsonConvert.SerializeObject ( lastEntries);
-                UserDefaults.SetString ( json, TimeEntriesKey);
+            if (lastEntries != null) {
+                var json = JsonConvert.SerializeObject (lastEntries);
+                UserDefaults.SetString (json, TimeEntriesKey);
                 UpdateWidgetContent();
             }
         }
 
         public void SetRunningEntryDuration (string duration)
         {
-            UserDefaults.SetString ( duration, MillisecondsKey);
+            UserDefaults.SetString (duration, MillisecondsKey);
         }
 
         public void SetUserLogged (bool isLogged)
         {
-            UserDefaults.SetBool ( isLogged, IsUserLoggedKey);
+            UserDefaults.SetBool (isLogged, IsUserLoggedKey);
             UpdateWidgetContent();
         }
 
-        public void ShowNewTimeEntryScreen ( TimeEntryModel currentTimeEntry)
+        public void SetAppActivated (bool isActivated)
         {
-            var topVCList = new List<UIViewController> ( rootController.ChildViewControllers);
-            if ( topVCList.Count > 0) {
+            UserDefaults.SetBool (isActivated, AppActiveEntryKey);
+            UpdateWidgetContent();
+        }
+
+        public void SetAppOnBackground (bool isBackground)
+        {
+            UserDefaults.SetBool (isBackground, AppBackgroundEntryKey);
+            UpdateWidgetContent();
+        }
+
+        public void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry)
+        {
+            var topVCList = new List<UIViewController> (rootController.ChildViewControllers);
+            if (topVCList.Count > 0) {
                 // Get current VC's navigation
-                var controllers = new List<UIViewController> ( topVCList[0].NavigationController.ViewControllers);
+                var controllers = new List<UIViewController> (topVCList[0].NavigationController.ViewControllers);
                 controllers.Add (new EditTimeEntryViewController (currentTimeEntry));
                 if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
                     controllers.Add (new ProjectSelectionViewController (currentTimeEntry));

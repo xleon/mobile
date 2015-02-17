@@ -6,13 +6,17 @@ namespace Toggl.Phoebe
 {
     public interface IWidgetUpdateService
     {
-        void SetLastEntries ( List<WidgetSyncManager.WidgetEntryData> lastEntries);
+        void SetLastEntries (List<WidgetSyncManager.WidgetEntryData> lastEntries);
 
-        void SetRunningEntryDuration ( string duration);
+        void SetRunningEntryDuration (string duration);
 
-        void SetUserLogged ( bool isLogged);
+        void SetUserLogged (bool isLogged);
 
-        void ShowNewTimeEntryScreen ( TimeEntryModel currentTimeEntry);
+        void SetAppActivated (bool isActivated);
+
+        void SetAppOnBackground (bool isBackground);
+
+        void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry);
 
         Guid GetEntryIdStarted();
     }

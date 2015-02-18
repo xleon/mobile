@@ -78,6 +78,9 @@ namespace Toggl.Emma
         private bool isAppActive;
         private bool isAppOnBackground;
 
+        readonly TableDataSource source = new TableDataSource ();
+        readonly List<WidgetEntryData> entries = new List<WidgetEntryData> ();
+
         public override void LoadView ()
         {
             base.LoadView ();
@@ -169,13 +172,38 @@ namespace Toggl.Emma
         {
             base.ViewDidLoad ();
 
+            const string prefix = "com.toggl.timer";
+
+            source.OnStartStop += (sender, e) => {
+                if (WidgetDisabled) {
+                    return;
+                }
+                WidgetDisabled = true;
+                UIApplication.SharedApplication.OpenUrl (new NSUrl (prefix + "://" + TodayUrlPrefix + "/" + StartEntryUrlPrefix));
+            };
+
+            source.OnContinue += (sender, e) => {
+                if (WidgetDisabled) {
+                    return;
+                }
+                WidgetDisabled = true;
+                var id = string.IsNullOrEmpty (source.SelectedCellId) ? new Guid().ToString() : source.SelectedCellId;
+                UserDefaults.SetString (id, StartedEntryKey);
+                UIApplication.SharedApplication.OpenUrl (new NSUrl (prefix + "://" + TodayUrlPrefix + "/" + ContinueEntryUrlPrefix));
+            };
+
+            source.Controller = this;
+            tableView.Source = source;
+            tableView.RegisterClassForCellReuse (typeof (WidgetCell), WidgetCell.WidgetProjectCellId);
+            tableView.Delegate = new TableViewDelegate ();
+
             openAppBtn.TouchUpInside += (sender, e) => {
                 if (WidgetDisabled) {
                     return;
                 }
                 WidgetDisabled = true;
                 openAppBtn.IsActive = false;
-                UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/"));
+                UIApplication.SharedApplication.OpenUrl (new NSUrl (prefix + "://" + TodayUrlPrefix + "/"));
             };
 
             UpdateContent();
@@ -221,11 +249,10 @@ namespace Toggl.Emma
             WidgetDisabled = false;
 
             // Get saved entries
-            var entries = new List<WidgetEntryData>();
-
             var timeEntryJson = UserDefaults.StringForKey (TimeEntriesKey);
             if (timeEntryJson != string.Empty) {
-                entries = Newtonsoft.Json.JsonConvert.DeserializeObject<List<WidgetEntryData>> (timeEntryJson);
+                entries.Clear();
+                entries.AddRange ( Newtonsoft.Json.JsonConvert.DeserializeObject<List<WidgetEntryData>> (timeEntryJson));
             }
 
             if (entries.Count > 0) {
@@ -246,29 +273,7 @@ namespace Toggl.Emma
                 entries.Add (new WidgetEntryData { IsEmpty = true });
             }
 
-            var source = new TableDataSource (entries);
-
-            source.OnStartStop += (sender, e) => {
-                if (WidgetDisabled) {
-                    return;
-                }
-                WidgetDisabled = true;
-                UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/" + StartEntryUrlPrefix));
-            };
-
-            source.OnContinue += (sender, e) => {
-                if (WidgetDisabled) {
-                    return;
-                }
-                WidgetDisabled = true;
-                var id = string.IsNullOrEmpty (source.SelectedCellId) ? new Guid().ToString() : source.SelectedCellId;
-                UserDefaults.SetString (id, StartedEntryKey);
-                UIApplication.SharedApplication.OpenUrl (new NSUrl ("com.toggl.timer://" + TodayUrlPrefix + "/" + ContinueEntryUrlPrefix));
-            };
-
-            tableView.RegisterClassForCellReuse (typeof (WidgetCell), WidgetCell.WidgetProjectCellId);
-            tableView.Source = source;
-            tableView.Delegate = new TableViewDelegate ();
+            tableView.ReloadData();
         }
 
         [Export ("widgetPerformUpdateWithCompletionHandler:")]
@@ -290,7 +295,7 @@ namespace Toggl.Emma
 
         internal class TableDataSource : UITableViewSource
         {
-            readonly List<WidgetEntryData> items;
+            public WidgetViewController Controller;
 
             public event EventHandler OnContinue;
 
@@ -298,22 +303,17 @@ namespace Toggl.Emma
 
             public string SelectedCellId { get; set; }
 
-            public TableDataSource (List<WidgetEntryData> items)
-            {
-                this.items = items;
-            }
-
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
                 var cell = (WidgetCell) tableView.DequeueReusableCell (WidgetCell.WidgetProjectCellId, indexPath);
                 cell.TranslatesAutoresizingMaskIntoConstraints = false;
-                cell.Data = items[ indexPath.Row];
+                cell.Data = Controller.entries[ indexPath.Row];
 
                 cell.StartBtnPressed += (sender, e) => {
                     if (indexPath.Row == 0 && OnStartStop != null) {
                         OnStartStop.Invoke (this, new EventArgs());
                     } else if (OnContinue != null) {
-                        SelectedCellId = items[ indexPath.Row].Id;
+                        SelectedCellId = Controller.entries[ indexPath.Row].Id;
                         OnContinue.Invoke (this, new EventArgs());
                     }
                 };
@@ -322,7 +322,7 @@ namespace Toggl.Emma
 
             public override nint RowsInSection (UITableView tableview, nint section)
             {
-                return (nint)items.Count;
+                return (nint)Controller.entries.Count;
             }
         }
 

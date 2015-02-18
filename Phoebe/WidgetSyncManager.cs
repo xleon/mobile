@@ -88,10 +88,10 @@ namespace Toggl.Phoebe
                             .Where (r => r.DeletedAt == null
                                     && r.UserId == userId
                                     && r.Id == stringGuid)
-                            .Take ( 1);
+                            .Take (1);
 
             var entries = await baseQuery.QueryAsync ().ConfigureAwait (false);
-            if ( entries.Count > 0) {
+            if (entries.Count > 0) {
                 entryModel = (TimeEntryModel)entries.FirstOrDefault();
             } else {
                 return;
@@ -123,7 +123,7 @@ namespace Toggl.Phoebe
 
         private async void OnSync (Message msg)
         {
-            if ( isLoading) {
+            if (isLoading) {
                 return;
             }
 
@@ -142,7 +142,7 @@ namespace Toggl.Phoebe
                                         && r.UserId == userId
                                         && r.State != TimeEntryState.New
                                         && r.StartTime >= queryStartDate)
-                                .Take ( 5);
+                                .Take (4);
 
                 var entries = await baseQuery.QueryAsync ().ConfigureAwait (false);
                 var widgetEntries = new List<WidgetEntryData>();
@@ -151,8 +151,8 @@ namespace Toggl.Phoebe
 
                     ProjectData project;
 
-                    if ( entry.ProjectId != null) {
-                        var q = store.Table<ProjectData>().Where ( p => p.Id == entry.ProjectId.Value);
+                    if (entry.ProjectId != null) {
+                        var q = store.Table<ProjectData>().Where (p => p.Id == entry.ProjectId.Value);
                         var l = await q.QueryAsync ().ConfigureAwait (false);
                         project = l.FirstOrDefault();
                     } else {
@@ -162,7 +162,7 @@ namespace Toggl.Phoebe
                         };
                     }
 
-                    widgetEntries.Add ( new WidgetEntryData {
+                    widgetEntries.Add (new WidgetEntryData {
                         Id = entry.Id.ToString(),
                         ProjectName = project.Name,
                         Description = entry.Description,
@@ -173,7 +173,7 @@ namespace Toggl.Phoebe
 
                 }
 
-                widgetUpdateService.SetLastEntries ( widgetEntries);
+                widgetUpdateService.SetLastEntries (widgetEntries);
 
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<ILogger> ();
@@ -185,8 +185,8 @@ namespace Toggl.Phoebe
 
         private void OnAuthPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if ( args.PropertyName == AuthManager.PropertyIsAuthenticated) {
-                widgetUpdateService.SetUserLogged ( authManager.IsAuthenticated);
+            if (args.PropertyName == AuthManager.PropertyIsAuthenticated) {
+                widgetUpdateService.SetUserLogged (authManager.IsAuthenticated);
             }
         }
 
@@ -218,13 +218,13 @@ namespace Toggl.Phoebe
             rebindCounter++;
 
             if (currentTimeEntry == null) {
-                widgetUpdateService.SetRunningEntryDuration ( DefaultDurationText);
+                widgetUpdateService.SetRunningEntryDuration (DefaultDurationText);
             } else {
                 var duration = currentTimeEntry.GetDuration ();
-                widgetUpdateService.SetRunningEntryDuration ( duration.ToString (@"hh\:mm\:ss"));
+                widgetUpdateService.SetRunningEntryDuration (duration.ToString (@"hh\:mm\:ss"));
 
                 var counter = rebindCounter;
-                var timer = new Timer ( 1000 - duration.Milliseconds);
+                var timer = new Timer (1000 - duration.Milliseconds);
                 timer.Elapsed += (sender, e) => {
                     if (counter == rebindCounter) {
                         Rebind ();

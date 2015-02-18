@@ -24,7 +24,6 @@ namespace Toggl.Ross
     public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
         private TogglWindow window;
-        private bool isResuming;
 
         public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
@@ -57,15 +56,38 @@ namespace Toggl.Ross
         public override void OnActivated (UIApplication application)
         {
             // Make sure the user data is refreshed when the application becomes active
-            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
+            ServiceContainer.Resolve<ISyncManager> ().Run ();
             ServiceContainer.Resolve<NetworkIndicatorManager> ();
+            ServiceContainer.Resolve<WidgetSyncManager>();
 
-            isResuming = true;
+            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+            widgetService.SetAppOnBackground (false);
         }
 
         public override bool OpenUrl (UIApplication application, NSUrl url, string sourceApplication, NSObject annotation)
         {
+            if (url.AbsoluteString.Contains (WidgetUpdateService.TodayUrlPrefix)) {
+                var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
+                if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
+                    widgetManager.StartStopTimeEntry();
+                } else {
+                    widgetManager.ContinueTimeEntry();
+                }
+                return true;
+            }
             return Google.Plus.UrlHandler.HandleUrl (url, sourceApplication, annotation);
+        }
+
+        public override void DidEnterBackground (UIApplication application)
+        {
+            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+            widgetService.SetAppOnBackground (true);
+        }
+
+        public override void WillTerminate (UIApplication application)
+        {
+            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+            widgetService.SetAppActivated (false);
         }
 
         private void RegisterComponents ()
@@ -80,6 +102,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<SettingsStore> ();
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
+            ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService());
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));

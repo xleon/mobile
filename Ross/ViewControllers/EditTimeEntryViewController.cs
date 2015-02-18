@@ -759,7 +759,8 @@ namespace Toggl.Ross.ViewControllers
             DatePickerHidden = startStopView.Selected == TimeKind.None;
         }
 
-        private void ForceDimissDatePicker() {
+        private void ForceDimissDatePicker()
+        {
             DatePickerHidden = true;
             startStopView.Selected = TimeKind.None;
         }

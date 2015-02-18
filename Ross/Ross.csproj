@@ -324,6 +324,7 @@
     <Compile Include="ViewControllers\NewTagViewController.cs" />
     <Compile Include="FluentLayoutExtensions.cs" />
     <Compile Include="Views\SuggestionTableViewCell.cs" />
+    <Compile Include="Data\WidgetUpdateService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">
@@ -333,6 +334,11 @@
     <ProjectReference Include="..\Contrib\Cirrious.FluentLayout\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj">
       <Project>{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}</Project>
       <Name>Cirrious.FluentLayouts.Touch</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Emma\Emma.csproj">
+      <Project>{6DDC0688-0534-466A-9134-0E331AC0E998}</Project>
+      <Name>Emma</Name>
+      <IsAppExtension>True</IsAppExtension>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

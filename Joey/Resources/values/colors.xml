@@ -23,4 +23,7 @@
     <color name="reports_value">#222222</color> 
     <color name="barchart_overlay_bg">#11CCCCCC</color>
     <color name="barchart_overlay_text">#808080</color>
+    <color name="material_red">#f30c16</color>
+    <color name="material_gray">#8f8f8f</color>
+    <color name="material_black">#4e4e4e</color>
 </resources>

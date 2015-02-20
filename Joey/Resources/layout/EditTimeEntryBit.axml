@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:addStatesFromChildren="true"
+                android:background="@drawable/BackgroundLine"
+                android:id="@+id/EditTimeEntryBit">
+                <TextView
+                		android:id="@+id/EditTimeEntryBitTitle"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:paddingBottom ="20dp"
+                        android:lines="1"
+                        android:text="Project"
+                        android:textColor="@color/MaterialPlaceholderColor" />
+                <EditText
+                        android:id="@+id/EditTimeEntryBitText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:hint="project"
+                        android:background="@null" />
+                <TextView
+                        android:id="@+id/client_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toLeftOf="@+id/project_name"
+                        android:paddingLeft="5dp"
+                        android:paddingRight="5dp"
+                        android:text="Client M" />
+                <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toLeftOf="@+id/client_name"
+                        android:src="@drawable/IcSelectArrowSmallDown" />
+            </LinearLayout>

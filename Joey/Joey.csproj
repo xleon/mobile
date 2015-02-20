@@ -150,6 +150,7 @@
     <Compile Include="Widget\WidgetStartStopService.cs" />
     <Compile Include="Logging\LogClient.cs" />
     <Compile Include="UI\Adapters\GroupedTimeEntriesAdapter.cs" />
+    <Compile Include="UI\Views\EditTimeEntryBit.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -638,7 +639,9 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcSelectArrowSmallDown.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcStopWhite.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTag.png" />
-    <AndroidResource Include="Resources\drawable\TextLines.xml" />
+    <AndroidResource Include="Resources\layout\EditTimeEntryBit.axml" />
+    <AndroidResource Include="Resources\drawable\BackgroundLine.xml" />
+    <AndroidResource Include="Resources\color\MaterialPlaceholderColor.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

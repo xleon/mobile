@@ -4,16 +4,16 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
+using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 using ListFragment = Android.Support.V4.App.ListFragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -56,8 +56,6 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null) {
                 return;
             }
-
-            adapter.ExpandedPosition = adapter.ExpandedPosition != position ? position : (int?)null;
         }
 
         private async void ContinueTimeEntry (TimeEntryModel model)

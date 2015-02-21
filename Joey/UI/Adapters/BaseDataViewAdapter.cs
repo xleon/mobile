@@ -1,10 +1,8 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Linq;
 using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Joey.UI.Adapters

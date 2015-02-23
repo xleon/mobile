@@ -24,10 +24,11 @@ namespace Toggl.Ross.ViewControllers
 
         public NewProjectViewController (WorkspaceModel workspace, int color)
         {
-            this.model = new ProjectModel () {
+            model = new ProjectModel {
                 Workspace = workspace,
                 Color = color,
                 IsActive = true,
+                IsPrivate = true
             };
             Title = "NewProjectTitle".Tr ();
         }
@@ -124,8 +125,8 @@ namespace Toggl.Ross.ViewControllers
             try {
                 // Check for existing name
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                Guid clientId = ( model.Client == null) ?  Guid.Empty : model.Client.Id;
-                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync ( model.Name, clientId);
+                Guid clientId = (model.Client == null) ?  Guid.Empty : model.Client.Id;
+                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync (model.Name, clientId);
 
                 if (existWithName) {
                     var alert = new UIAlertView (

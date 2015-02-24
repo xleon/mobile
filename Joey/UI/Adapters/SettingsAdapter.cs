@@ -1,13 +1,13 @@
 ﻿using System;
-using Android.Widget;
-using Toggl.Joey.Data;
-using XPlatUtils;
 using System.Collections.Generic;
 using Android.Views;
+using Android.Widget;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -41,6 +41,13 @@ namespace Toggl.Joey.UI.Adapters
                         SettingsStore.PropertyUseDefaultTag,
                         s => s.UseDefaultTag,
                         (s, v) => s.UseDefaultTag = v
+                    ),
+                    new CheckboxListItem (
+                        Resource.String.SettingsGeneralGroupedEntriesTitle,
+                        Resource.String.SettingsGeneralGroupedEntriesDesc,
+                        SettingsStore.PropertyGroupedTimeEntries,
+                        s => s.GroupedTimeEntries,
+                        (s, v) => s.GroupedTimeEntries = v
                     ),
             };
         }

@@ -43,7 +43,7 @@ namespace Toggl.Joey.UI.Views
         }
 
         public EditText TextField {
-            get { return  (EditText)FindViewById (Resource.Id.EditTimeEntryBitText); }
+            get { return (EditText)FindViewById (Resource.Id.EditTimeEntryBitText); }
         }
 
         public EditTimeEntryBit SetName (string name)

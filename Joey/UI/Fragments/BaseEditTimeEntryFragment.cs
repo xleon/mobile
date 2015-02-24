@@ -205,29 +205,35 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             StartTimeEditText.Text = startTime.ToDeviceTimeString ();
+            if (startTime.Date != Time.Now.Date) {
+                DateTextView.Text = startTime.ToDeviceDateString ();
+                DateTextView.Visibility = ViewStates.Visible;
+            } else {
+                DateTextView.Visibility = ViewStates.Invisible;
+            }
 
             // Only update DescriptionEditText when content differs, else the user is unable to edit it
-//            if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
-//                DescriptionEditText.Text = TimeEntry.Description;
-//                DescriptionEditText.SetSelection (DescriptionEditText.Text.Length);
-//            }
-//            DescriptionEditText.SetHint (useTimer
-//                                         ? Resource.String.CurrentTimeEntryEditDescriptionHint
-//                                         : Resource.String.CurrentTimeEntryEditDescriptionPastHint);
-//
-//            if (TimeEntry.StopTime.HasValue) {
-//                StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();
-//                StopTimeEditText.Visibility = ViewStates.Visible;
-//            } else {
-//                StopTimeEditText.Text = Time.Now.ToDeviceTimeString ();
-//                if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
-//                    StopTimeEditText.Visibility = ViewStates.Invisible;
-//                } else {
-//                    StopTimeEditText.Visibility = ViewStates.Visible;
-//                }
-//            }
-//
-//            ProjectEditText.Text = TimeEntry.Project != null ? TimeEntry.Project.Name : String.Empty;
+            if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
+                DescriptionEditText.Text = TimeEntry.Description;
+                DescriptionEditText.SetSelection (DescriptionEditText.Text.Length);
+            }
+            DescriptionEditText.SetHint (useTimer
+                                         ? Resource.String.CurrentTimeEntryEditDescriptionHint
+                                         : Resource.String.CurrentTimeEntryEditDescriptionPastHint);
+
+            if (TimeEntry.StopTime.HasValue) {
+                StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();
+                StopTimeEditText.Visibility = ViewStates.Visible;
+            } else {
+                StopTimeEditText.Text = Time.Now.ToDeviceTimeString ();
+                if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
+                    StopTimeEditText.Visibility = ViewStates.Invisible;
+                } else {
+                    StopTimeEditText.Visibility = ViewStates.Visible;
+                }
+            }
+
+            ProjectEditText.Text = TimeEntry.Project != null ? TimeEntry.Project.Name : String.Empty;
             BillableCheckBox.Checked = !TimeEntry.IsBillable;
             if (TimeEntry.IsBillable) {
                 BillableCheckBox.SetText (Resource.String.CurrentTimeEntryEditBillableChecked);
@@ -349,7 +355,7 @@ namespace Toggl.Joey.UI.Fragments
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText).SetFont (Font.RobotoLight);
 
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
-            DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
+            DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.imageButton2);
 
             DurationTextView.Click += OnDurationTextViewClick;
             StartTimeEditText.Click += OnStartTimeEditTextClick;
@@ -360,7 +366,7 @@ namespace Toggl.Joey.UI.Fragments
             ProjectEditText.Click += OnProjectEditTextClick;
             TagsEditText.Click += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
-//            DeleteImageButton.Click += OnDeleteImageButtonClick;
+            DeleteImageButton.Click += OnDeleteImageButtonClick;
 
             return view;
         }

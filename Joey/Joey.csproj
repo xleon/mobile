@@ -642,6 +642,8 @@
     <AndroidResource Include="Resources\layout\EditTimeEntryBit.axml" />
     <AndroidResource Include="Resources\drawable\BackgroundLine.xml" />
     <AndroidResource Include="Resources\color\MaterialPlaceholderColor.xml" />
+    <AndroidResource Include="Resources\drawable\RoundedGrayBackground.xml" />
+    <AndroidResource Include="Resources\color\MaterialTransparentPlaceholderColor.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

@@ -77,17 +77,19 @@
                         android:id="@+id/textView1"
                         android:layout_marginBottom="0.0dp"
                         android:layout_marginTop="0.0dp"
-                        android:textColor="#ff8f8f8f" />
+                        android:textSize="16dp"
+                        android:textColor="@color/material_gray_line" />
                     <EditText
                         android:id="@+id/StartTimeEditText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingLeft="7dp"
-                        android:paddingRight="7dp"
                         android:editable="false"
                         android:cursorVisible="false"
                         android:focusableInTouchMode="false"
-                        android:textSize="12dp"
+                        android:textSize="16dp"
+                        android:layout_marginLeft="12dp"
+                        android:background="@drawable/BackgroundLine"
+                        android:textColor="@color/material_black"
                         android:text="12:59 AM" />
                 </LinearLayout>
                 <LinearLayout
@@ -97,46 +99,54 @@
                     android:id="@+id/linearLayout3"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:paddingLeft="50dp">
+                    android:paddingLeft="35dp">
                     <TextView
                         android:text="End"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/textView2"
-                        android:textColor="#ff8f8f8f" />
+                        android:textSize="16dp"
+                        android:textColor="@color/material_gray_line" />
                     <EditText
                         android:id="@+id/StopTimeEditText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingLeft="7dp"
-                        android:paddingRight="7dp"
                         android:editable="false"
                         android:cursorVisible="false"
                         android:focusableInTouchMode="false"
-                        android:textSize="12dp"
+                        android:textSize="16dp"
+                        android:layout_marginLeft="12dp"
+                        android:background="@drawable/BackgroundLine"
+                        android:textColor="@color/material_black"
                         android:text="12:59 AM" />
                 </LinearLayout>
             </LinearLayout>
-            <EditText
-                android:id="@+id/DescriptionEditText"
+            <Toggl.Joey.UI.Views.EditTimeEntryBit
                 android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/FirstBit"
+                android:layout_marginTop="10dp" />
+            <Toggl.Joey.UI.Views.EditTimeEntryBit
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/Task"
+                android:layout_marginTop="10dp" />
+            <Toggl.Joey.UI.Views.EditTimeEntryBit
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/Description"
+                android:layout_marginTop="10dp" />
+            <TextView
+                android:id="@+id/EditTimeEntryBitTitle"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapSentences"
-                android:hint="@string/CurrentTimeEntryEditDescriptionHint"
-                android:imeOptions="actionDone"
+                android:layout_marginTop="15dp"
                 android:layout_marginBottom="5dp"
-                android:singleLine="true"
-                android:background="@drawable/TextLines" />
-            <EditText
-                android:id="@+id/ProjectEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:editable="false"
-                android:cursorVisible="false"
-                android:focusableInTouchMode="false"
-                android:hint="@string/CurrentTimeEntryEditProjectHint"
-                android:layout_marginBottom="5dp" />
+                android:textSize="12dp"
+                android:lines="1"
+                android:text="Tags"
+                android:textColor="@color/MaterialPlaceholderColor" />
             <EditText
                 android:id="@+id/TagsEditText"
                 android:layout_width="match_parent"
@@ -146,37 +156,21 @@
                 android:cursorVisible="false"
                 android:focusableInTouchMode="false"
                 android:hint="@string/CurrentTimeEntryEditTagsHint"
+                android:background="@drawable/BackgroundLine"
+                android:paddingBottom="10dp"
                 android:layout_marginBottom="5dp" />
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/linearLayout6">
-                <CheckBox
-                    android:id="@+id/BillableCheckBox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="@string/CurrentTimeEntryEditBillableUnchecked"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="@color/BillableTextColor"
-                    android:gravity="center_vertical"
-                    android:button="@null"
-                    android:drawableLeft="@drawable/IcBillable"
-                    android:drawablePadding="5dp"
-                    android:paddingLeft="10dp" />
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:id="@+id/view1" />
-                <ImageButton
-                    android:id="@+id/DeleteImageButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:src="@drawable/IcDelete"
-                    android:background="@drawable/ButtonNoFrame" />
-            </LinearLayout>
+            <CheckBox
+                android:id="@+id/BillableCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="@string/CurrentTimeEntryEditBillableUnchecked"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/BillableTextColor"
+                android:gravity="center_vertical"
+                android:button="@null"
+                android:layout_marginTop="10dp"
+                android:drawableLeft="@drawable/IcBillableGreen"
+                android:drawablePadding="5dp" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -207,27 +207,27 @@ namespace Toggl.Joey.UI.Fragments
             StartTimeEditText.Text = startTime.ToDeviceTimeString ();
 
             // Only update DescriptionEditText when content differs, else the user is unable to edit it
-            if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
-                DescriptionEditText.Text = TimeEntry.Description;
-                DescriptionEditText.SetSelection (DescriptionEditText.Text.Length);
-            }
-            DescriptionEditText.SetHint (useTimer
-                                         ? Resource.String.CurrentTimeEntryEditDescriptionHint
-                                         : Resource.String.CurrentTimeEntryEditDescriptionPastHint);
-
-            if (TimeEntry.StopTime.HasValue) {
-                StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();
-                StopTimeEditText.Visibility = ViewStates.Visible;
-            } else {
-                StopTimeEditText.Text = Time.Now.ToDeviceTimeString ();
-                if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
-                    StopTimeEditText.Visibility = ViewStates.Invisible;
-                } else {
-                    StopTimeEditText.Visibility = ViewStates.Visible;
-                }
-            }
-
-            ProjectEditText.Text = TimeEntry.Project != null ? TimeEntry.Project.Name : String.Empty;
+//            if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
+//                DescriptionEditText.Text = TimeEntry.Description;
+//                DescriptionEditText.SetSelection (DescriptionEditText.Text.Length);
+//            }
+//            DescriptionEditText.SetHint (useTimer
+//                                         ? Resource.String.CurrentTimeEntryEditDescriptionHint
+//                                         : Resource.String.CurrentTimeEntryEditDescriptionPastHint);
+//
+//            if (TimeEntry.StopTime.HasValue) {
+//                StopTimeEditText.Text = TimeEntry.StopTime.Value.ToLocalTime ().ToDeviceTimeString ();
+//                StopTimeEditText.Visibility = ViewStates.Visible;
+//            } else {
+//                StopTimeEditText.Text = Time.Now.ToDeviceTimeString ();
+//                if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
+//                    StopTimeEditText.Visibility = ViewStates.Invisible;
+//                } else {
+//                    StopTimeEditText.Visibility = ViewStates.Visible;
+//                }
+//            }
+//
+//            ProjectEditText.Text = TimeEntry.Project != null ? TimeEntry.Project.Name : String.Empty;
             BillableCheckBox.Checked = !TimeEntry.IsBillable;
             if (TimeEntry.IsBillable) {
                 BillableCheckBox.SetText (Resource.String.CurrentTimeEntryEditBillableChecked);
@@ -327,26 +327,49 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
             cont = container;
+
+//            var startLabel = view.FindViewById<TextView> (Resource.Id.startTextView);
+//            startLabel.SetTextSize (Android.Util.ComplexUnitType.Sp, 16.0f);
+//
+//            var endlabel = view.FindViewById<TextView> (Resource.Id.endTextView);
+//            endlabel.SetTextSize (Android.Util.ComplexUnitType.Sp, 16.0f);
+
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
-            StartTimeEditText.SetTextSize (Android.Util.ComplexUnitType.Sp, 12.0f);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
-            DescriptionEditText = view.FindViewById<EditText> (Resource.Id.DescriptionEditText).SetFont (Font.RobotoLight);
-            ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText).SetFont (Font.RobotoLight);
+            //DescriptionEditText = view.FindViewById<EditText> (Resource.Id.DescriptionEditText).SetFont (Font.RobotoLight);
+            //ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText).SetFont (Font.RobotoLight);
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText).SetFont (Font.RobotoLight);
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
             DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
 
-            DurationTextView.Click += OnDurationTextViewClick;
+            var bit = view.FindViewById<EditTimeEntryBit> (Resource.Id.FirstBit);
+            var description = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description);
+            var task = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task);
+
+            description.DestroyAssistView ();
+            description.DestroyArrow ();
+            description.SetTitle ("Description");
+            description.SetHint ("Description");
+
+            task.DestroyAssistView ();
+            task.SetTitle ("Task");
+            task.SetHint ("Task");
+
+
+
+            //bit.MakeTextSmall ();
+
+                DurationTextView.Click += OnDurationTextViewClick;
             StartTimeEditText.Click += OnStartTimeEditTextClick;
             StopTimeEditText.Click += OnStopTimeEditTextClick;
-            DescriptionEditText.TextChanged += OnDescriptionTextChanged;
-            DescriptionEditText.EditorAction += OnDescriptionEditorAction;
-            DescriptionEditText.FocusChange += OnDescriptionFocusChange;
-            ProjectEditText.Click += OnProjectEditTextClick;
+//            DescriptionEditText.TextChanged += OnDescriptionTextChanged;
+ //           DescriptionEditText.EditorAction += OnDescriptionEditorAction;
+  //          DescriptionEditText.FocusChange += OnDescriptionFocusChange;
+  //          ProjectEditText.Click += OnProjectEditTextClick;
             TagsEditText.Click += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
-            DeleteImageButton.Click += OnDeleteImageButtonClick;
+//            DeleteImageButton.Click += OnDeleteImageButtonClick;
 
             return view;
         }

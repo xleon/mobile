@@ -14,7 +14,7 @@ using Android.Widget;
 
 namespace Toggl.Joey.UI.Views
 {
-    public class EditTimeEntryBit : LinearLayout
+    public class EditTimeEntryBit : RelativeLayout
     {
         public EditTimeEntryBit (Context context) :
             base (context)
@@ -35,18 +35,12 @@ namespace Toggl.Joey.UI.Views
             Initialize ();
         }
 
-
-
         void Initialize ()
         {
             LayoutInflater inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
             inflater.Inflate (Resource.Layout.EditTimeEntryBit, this);
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-
-
-            TextView v = (TextView)FindViewById (Resource.Id.client_name);
-            v.TextSize = 1.0f;
 
             text.FocusChange += (object sender, FocusChangeEventArgs e) => {
                 title.Pressed = text.HasFocus;
@@ -55,10 +49,26 @@ namespace Toggl.Joey.UI.Views
            
         }
 
-        public void MakeTextSmall()
+        public void SetTitle(string str)
         {
-            TextView v = (TextView)FindViewById (Resource.Id.client_name);
-            v.TextSize = 4f;
+            TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
+            title.Text = str;
+        }
+
+        public void SetHint(string hint)
+        {
+            EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
+            text.Hint = hint;
+        }
+
+        public void DestroyAssistView() {
+            TextView assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
+            assistView.Visibility = ViewStates.Gone;
+        }
+
+        public void DestroyArrow() {
+            ImageView arrow = (ImageView)FindViewById (Resource.Id.EditTimeEntryBitArrow);
+            arrow.Visibility = ViewStates.Gone;
         }
     }
 }

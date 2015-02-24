@@ -205,12 +205,6 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             StartTimeEditText.Text = startTime.ToDeviceTimeString ();
-            if (startTime.Date != Time.Now.Date) {
-                DateTextView.Text = startTime.ToDeviceDateString ();
-                DateTextView.Visibility = ViewStates.Visible;
-            } else {
-                DateTextView.Visibility = ViewStates.Invisible;
-            }
 
             // Only update DescriptionEditText when content differs, else the user is unable to edit it
             if (!descriptionChanging && DescriptionEditText.Text != TimeEntry.Description) {
@@ -311,8 +305,6 @@ namespace Toggl.Joey.UI.Fragments
             return bmpDrawable;
         }
 
-        protected TextView DateTextView { get; private set; }
-
         protected TextView DurationTextView { get; private set; }
 
         protected EditText StartTimeEditText { get; private set; }
@@ -355,7 +347,7 @@ namespace Toggl.Joey.UI.Fragments
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText).SetFont (Font.RobotoLight);
 
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
-            DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.imageButton2);
+            DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.TrashButton);
 
             DurationTextView.Click += OnDurationTextViewClick;
             StartTimeEditText.Click += OnStartTimeEditTextClick;

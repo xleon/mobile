@@ -323,50 +323,41 @@ namespace Toggl.Joey.UI.Fragments
 
         protected ImageButton DeleteImageButton { get; private set; }
 
+        protected EditTimeEntryBit ProjectBit { get; private set; }
+
+        protected EditTimeEntryBit DescriptionBit { get; private set; }
+
+        protected EditTimeEntryBit TaskBit { get; private set; }
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle state)
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
             cont = container;
 
-//            var startLabel = view.FindViewById<TextView> (Resource.Id.startTextView);
-//            startLabel.SetTextSize (Android.Util.ComplexUnitType.Sp, 16.0f);
-//
-//            var endlabel = view.FindViewById<TextView> (Resource.Id.endTextView);
-//            endlabel.SetTextSize (Android.Util.ComplexUnitType.Sp, 16.0f);
-
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
-            //DescriptionEditText = view.FindViewById<EditText> (Resource.Id.DescriptionEditText).SetFont (Font.RobotoLight);
-            //ProjectEditText = view.FindViewById<EditText> (Resource.Id.ProjectEditText).SetFont (Font.RobotoLight);
+
+            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName("Description");
+            DescriptionEditText = DescriptionBit.TextField;
+
+            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Project).SetName("Project");
+            ProjectEditText = ProjectBit.TextField;
+
+            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task).DestroyAssistView ().SetName("Task");
+
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText).SetFont (Font.RobotoLight);
+
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
             DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
 
-            var bit = view.FindViewById<EditTimeEntryBit> (Resource.Id.FirstBit);
-            var description = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description);
-            var task = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task);
-
-            description.DestroyAssistView ();
-            description.DestroyArrow ();
-            description.SetTitle ("Description");
-            description.SetHint ("Description");
-
-            task.DestroyAssistView ();
-            task.SetTitle ("Task");
-            task.SetHint ("Task");
-
-
-
-            //bit.MakeTextSmall ();
-
-                DurationTextView.Click += OnDurationTextViewClick;
+            DurationTextView.Click += OnDurationTextViewClick;
             StartTimeEditText.Click += OnStartTimeEditTextClick;
             StopTimeEditText.Click += OnStopTimeEditTextClick;
-//            DescriptionEditText.TextChanged += OnDescriptionTextChanged;
- //           DescriptionEditText.EditorAction += OnDescriptionEditorAction;
-  //          DescriptionEditText.FocusChange += OnDescriptionFocusChange;
-  //          ProjectEditText.Click += OnProjectEditTextClick;
+            DescriptionEditText.TextChanged += OnDescriptionTextChanged;
+            DescriptionEditText.EditorAction += OnDescriptionEditorAction;
+            DescriptionEditText.FocusChange += OnDescriptionFocusChange;
+            ProjectEditText.Click += OnProjectEditTextClick;
             TagsEditText.Click += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
 //            DeleteImageButton.Click += OnDeleteImageButtonClick;

@@ -17,20 +17,14 @@ namespace Toggl.Joey.UI.Views
     public class EditTimeEntryBit : RelativeLayout
     {
         public EditTimeEntryBit (Context context) :
-            base (context)
+        base (context)
         {
 
             Initialize ();
         }
 
         public EditTimeEntryBit (Context context, IAttributeSet attrs) :
-            base (context, attrs)
-        {
-            Initialize ();
-        }
-
-        public EditTimeEntryBit (Context context, IAttributeSet attrs, int defStyle) :
-            base (context, attrs, defStyle)
+        base (context, attrs)
         {
             Initialize ();
         }
@@ -41,34 +35,38 @@ namespace Toggl.Joey.UI.Views
             inflater.Inflate (Resource.Layout.EditTimeEntryBit, this);
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-
             text.FocusChange += (object sender, FocusChangeEventArgs e) => {
                 title.Pressed = text.HasFocus;
             };
             title.Pressed = this.HasFocus;
-           
+
         }
 
-        public void SetTitle(string str)
+        public EditText TextField {
+            get { return  (EditText)FindViewById (Resource.Id.EditTimeEntryBitText); }
+        }
+
+        public EditTimeEntryBit SetName (string name)
         {
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            title.Text = str;
-        }
-
-        public void SetHint(string hint)
-        {
+            title.Text = name;
             EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-            text.Hint = hint;
+            text.Hint = name;
+            return this;
         }
 
-        public void DestroyAssistView() {
+        public EditTimeEntryBit DestroyAssistView()
+        {
             TextView assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
             assistView.Visibility = ViewStates.Gone;
+            return this;
         }
 
-        public void DestroyArrow() {
+        public EditTimeEntryBit DestroyArrow()
+        {
             ImageView arrow = (ImageView)FindViewById (Resource.Id.EditTimeEntryBitArrow);
             arrow.Visibility = ViewStates.Gone;
+            return this;
         }
     }
 }

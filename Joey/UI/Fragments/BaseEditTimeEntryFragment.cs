@@ -344,13 +344,13 @@ namespace Toggl.Joey.UI.Fragments
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
 
-            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName("Description");
+            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName ("Description");
             DescriptionEditText = DescriptionBit.TextField;
 
-            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Project).SetName("Project");
+            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Project).SetName ("Project");
             ProjectEditText = ProjectBit.TextField;
 
-            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task).DestroyAssistView ().SetName("Task");
+            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task).DestroyAssistView ().SetName ("Task");
 
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText).SetFont (Font.RobotoLight);
 

@@ -54,7 +54,7 @@
             android:id="@+id/linearLayout4"
             android:paddingRight="32dp"
             android:paddingLeft="32dp"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="20dp">
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
@@ -78,7 +78,8 @@
                         android:layout_marginBottom="0.0dp"
                         android:layout_marginTop="0.0dp"
                         android:textSize="16dp"
-                        android:textColor="@color/material_gray_transparent" />
+                        android:textColor="@color/material_gray_transparent"
+                  	/>
                     <EditText
                         android:id="@+id/StartTimeEditText"
                         android:layout_width="wrap_content"
@@ -90,7 +91,8 @@
                         android:layout_marginLeft="12dp"
                         android:background="@drawable/BackgroundLine"
                         android:textColor="@color/material_black"
-                        android:text="12:59 AM" />
+                        android:text="12:59 AM"
+                        android:drawableRight="@drawable/IcSelectArrowSmallDown" />
                 </LinearLayout>
                 <LinearLayout
                     android:orientation="horizontal"
@@ -99,7 +101,7 @@
                     android:id="@+id/linearLayout3"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:paddingLeft="35dp">
+                    android:paddingLeft="20dp">
                     <TextView
                         android:text="End"
                         android:textAppearance="?android:attr/textAppearanceSmall"
@@ -119,7 +121,8 @@
                         android:layout_marginLeft="12dp"
                         android:background="@drawable/BackgroundLine"
                         android:textColor="@color/material_black"
-                        android:text="12:59 AM" />
+                        android:text="12:59 AM"
+                        android:drawableRight="@drawable/IcSelectArrowSmallDown" />
                 </LinearLayout>
             </LinearLayout>
             <Toggl.Joey.UI.Views.EditTimeEntryBit
@@ -138,12 +141,12 @@
                 android:id="@+id/Description"
                 android:layout_marginTop="10dp" />
             <TextView
-                android:id="@+id/EditTimeEntryBitTitle"
+                android:id="@+id/EditTimeEntryTagsTitle"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
                 android:layout_marginBottom="5dp"
-                android:textSize="12dp"
+                android:textSize="12sp"
                 android:lines="1"
                 android:text="Tags"
                 android:textColor="@color/MaterialPlaceholderColor" />
@@ -158,7 +161,8 @@
                 android:hint="@string/CurrentTimeEntryEditTagsHint"
                 android:background="@drawable/BackgroundLine"
                 android:paddingBottom="10dp"
-                android:layout_marginBottom="5dp" />
+                android:layout_marginBottom="5dp"
+                android:drawableRight="@drawable/IcSelectArrowBigDown" />
             <CheckBox
                 android:id="@+id/BillableCheckBox"
                 android:layout_width="wrap_content"

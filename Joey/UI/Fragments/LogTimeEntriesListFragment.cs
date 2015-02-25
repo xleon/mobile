@@ -52,10 +52,12 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            var model = adapter.GetEntry (position);
+            var model = (TimeEntryData)adapter.GetEntry (position);
             if (model == null) {
                 return;
             }
+            OpenTimeEntryEdit (new TimeEntryModel(model));
+
         }
 
         private async void ContinueTimeEntry (TimeEntryModel model)

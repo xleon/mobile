@@ -11,8 +11,10 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
 using ListFragment = Android.Support.V4.App.ListFragment;
 
@@ -21,6 +23,7 @@ namespace Toggl.Joey.UI.Fragments
     public class LogTimeEntriesListFragment : ListFragment, AbsListView.IMultiChoiceModeListener
     {
         private ActionMode actionMode;
+        private Subscription<SettingChangedMessage> subscriptionSettingChanged;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -37,6 +40,9 @@ namespace Toggl.Joey.UI.Fragments
             ListView.SetClipToPadding (false);
             ListView.ChoiceMode = (ChoiceMode)AbsListViewChoiceMode.MultipleModal;
             ListView.SetMultiChoiceModeListener (this);
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
         }
 
         public override void OnResume ()
@@ -60,6 +66,16 @@ namespace Toggl.Joey.UI.Fragments
 
         }
 
+        public override bool UserVisibleHint
+        {
+            get { return base.UserVisibleHint; }
+            set {
+                base.UserVisibleHint = value;
+                EnsureAdapter ();
+            }
+        }
+
+        #region TimeEntry handlers
         private async void ContinueTimeEntry (TimeEntryModel model)
         {
             DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
@@ -81,27 +97,6 @@ namespace Toggl.Joey.UI.Fragments
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
         }
 
-        public override bool UserVisibleHint
-        {
-            get { return base.UserVisibleHint; }
-            set {
-                base.UserVisibleHint = value;
-                EnsureAdapter ();
-            }
-        }
-
-        private void EnsureAdapter ()
-        {
-            if (ListAdapter == null && UserVisibleHint) {
-                var adapter = new LogTimeEntriesAdapter ();
-                adapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
-                adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
-                adapter.HandleTimeEntryContinue = ContinueTimeEntry;
-                adapter.HandleTimeEntryStop = StopTimeEntry;
-                ListAdapter = adapter;
-            }
-        }
-
         private void ConfirmTimeEntryDeletion (TimeEntryModel model)
         {
             var dia = new DeleteTimeEntriesPromptDialogFragment (new List<TimeEntryModel> () { model });
@@ -114,13 +109,71 @@ namespace Toggl.Joey.UI.Fragments
             i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
             StartActivity (i);
         }
+        #endregion
+
+        #region TimeEntryGroup handlers
+        private async void ContinueTimeEntryGroup (TimeEntryGroup entryGroup)
+        {
+            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
+
+            var entry = await entryGroup.Model.ContinueAsync ();
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
+        }
+
+        private async void StopTimeEntryGroup (TimeEntryGroup entryGroup)
+        {
+            await entryGroup.Model.StopAsync ();
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
+        }
+
+        private void ConfirmTimeEntryGroupDeletion (TimeEntryGroup entryGroup)
+        {
+            var dia = new DeleteTimeEntriesPromptDialogFragment (entryGroup.TimeEntryList);
+            dia.Show (FragmentManager, "confirm_delete");
+        }
+
+        private void OpenTimeEntryGroupEdit (TimeEntryGroup entryGroup)
+        {
+            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
+            i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, entryGroup.Model.Id.ToString ());
+            StartActivity (i);
+        }
+        #endregion
+
+        private void EnsureAdapter ()
+        {
+            if (ListAdapter == null) {
+                var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
+                if (isGrouped) {
+                    var groupedAdapter = new GroupedTimeEntriesAdapter ();
+                    groupedAdapter.HandleGroupDeletion = ConfirmTimeEntryGroupDeletion;
+                    groupedAdapter.HandleGroupEditing = OpenTimeEntryGroupEdit;
+                    groupedAdapter.HandleGroupContinue = ContinueTimeEntryGroup;
+                    groupedAdapter.HandleGroupStop = StopTimeEntryGroup;
+                    ListAdapter = groupedAdapter;
+                } else {
+                    var continuosAdapter = new LogTimeEntriesAdapter ();
+                    continuosAdapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
+                    continuosAdapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
+                    continuosAdapter.HandleTimeEntryContinue = ContinueTimeEntry;
+                    continuosAdapter.HandleTimeEntryStop = StopTimeEntry;
+                    ListAdapter = continuosAdapter;
+                }
+            }
+        }
 
         void AbsListView.IMultiChoiceModeListener.OnItemCheckedStateChanged (ActionMode mode, int position, long id, bool @checked)
         {
             var checkedCount = ListView.CheckedItemCount;
             mode.Title = String.Format ("{0} selected", checkedCount);
             actionMode = mode;
-//            mode.Menu.FindItem (Resource.Id.EditMenuItem).SetEnabled (checkedCount == 1);
         }
 
         bool ActionMode.ICallback.OnCreateActionMode (ActionMode mode, IMenu menu)
@@ -141,9 +194,6 @@ namespace Toggl.Joey.UI.Fragments
                 DeleteCheckedTimeEntries ();
                 mode.Finish ();
                 return true;
-//            case Resource.Id.EditMenuItem:
-            // TODO: Show time entry editing
-//                return true;
             default:
                 return false;
             }
@@ -195,6 +245,31 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnStop ();
             CloseActionMode ();
+        }
+
+        protected override void Dispose (bool disposing)
+        {
+            if (disposing) {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                if (subscriptionSettingChanged != null) {
+                    bus.Unsubscribe (subscriptionSettingChanged);
+                    subscriptionSettingChanged = null;
+                }
+            }
+            base.Dispose (disposing);
+        }
+
+        private void OnSettingChanged (SettingChangedMessage msg)
+        {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero) {
+                return;
+            }
+
+            if (msg.Name == SettingsStore.PropertyGroupedTimeEntries) {
+                ListAdapter = null;
+                EnsureAdapter();
+            }
         }
     }
 }

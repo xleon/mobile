@@ -5,10 +5,9 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
-using Toggl.Phoebe.Data.DataObjects;
-using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -16,7 +15,7 @@ namespace Toggl.Joey.UI.Fragments
     {
         private static readonly string TimeEntryIdsArgument = "com.toggl.timer.time_entry_ids";
 
-        public DeleteTimeEntriesPromptDialogFragment () : base ()
+        public DeleteTimeEntriesPromptDialogFragment ()
         {
         }
 
@@ -29,6 +28,19 @@ namespace Toggl.Joey.UI.Fragments
         {
             var ids = new List<string> ();
             foreach (var model in models) {
+                ids.Add (model.Id.ToString ());
+            }
+
+            var args = new Bundle ();
+            args.PutStringArrayList (TimeEntryIdsArgument, ids);
+
+            Arguments = args;
+        }
+
+        public DeleteTimeEntriesPromptDialogFragment (IEnumerable<TimeEntryData> dataObjects)
+        {
+            var ids = new List<string> ();
+            foreach (var model in dataObjects) {
                 ids.Add (model.Id.ToString ());
             }
 

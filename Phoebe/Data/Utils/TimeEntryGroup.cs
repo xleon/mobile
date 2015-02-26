@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public TimeEntryGroup (TimeEntryData data)
         {
-            dataObjects.Add (data);
+            Add (data);
         }
 
         public TimeEntryModel Model
@@ -62,14 +62,18 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeSpan Duration
         {
             get {
-                return (TimeSpan) (dataObjects.Last ().StopTime - dataObjects.First ().StartTime);
+                TimeSpan duration = TimeSpan.Zero;
+                foreach (var item in dataObjects) {
+                    duration += GetDuration (item, Time.UtcNow);
+                }
+                return duration;
             }
         }
 
-        public DateTime StartTime
+        public DateTime LastStartTime
         {
             get {
-                return dataObjects.First ().StartTime;
+                return dataObjects.Last ().StartTime;
             }
         }
 
@@ -87,14 +91,54 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public bool Contains (TimeEntryData data)
+        public void InitModel()
+        {
+            if (model == null) {
+                model = (TimeEntryModel)dataObjects.Last();
+            } else {
+                model.Data = dataObjects.Last();
+            }
+        }
+
+        public void Add (TimeEntryData data)
+        {
+            dataObjects.Add (data);
+        }
+
+        public void Update (TimeEntryData data)
+        {
+            dataObjects.UpdateData (data);
+            Sort();
+        }
+
+        public void Delete (TimeEntryData data)
+        {
+            if (dataObjects.Contains<TimeEntryData> (data)) {
+                dataObjects.Remove (data);
+            } else {
+                dataObjects.RemoveAll (d => d.Id == data.Id);
+            }
+        }
+
+        public void Sort()
+        {
+            dataObjects.Sort ((a, b) => a.StartTime.CompareTo (b.StartTime));
+        }
+
+        public bool CanContains (TimeEntryData data)
         {
             return dataObjects.Last().IsGroupableWith (data);
         }
 
-        public void InitModel()
+        public void Dispose()
         {
-            model = (TimeEntryModel)dataObjects.Last();
+            if (model != null) {
+                model = null;
+            }
+
+            if (dataObjects.Count > 0) {
+                dataObjects.Clear();
+            }
         }
 
         public string GetFormattedDuration ()
@@ -119,6 +163,20 @@ namespace Toggl.Phoebe.Data.Utils
                 formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
             }
             return formattedString;
+        }
+
+        private static TimeSpan GetDuration (TimeEntryData entryData, DateTime now)
+        {
+            if (entryData.StartTime == DateTime.MinValue) {
+                return TimeSpan.Zero;
+            }
+
+            var duration = (entryData.StopTime ?? now) - entryData.StartTime;
+            if (duration < TimeSpan.Zero) {
+                duration = TimeSpan.Zero;
+            }
+
+            return duration;
         }
     }
 }

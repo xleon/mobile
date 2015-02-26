@@ -24,12 +24,14 @@ namespace Toggl.Phoebe.Data.Views
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private bool reloadScheduled;
+        private bool isGrouped;
 
         public AllTimeEntriesView ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
 
+            isGrouped = ServiceContainer.Resolve<ISettingsStore>().GroupedTimeEntries;
             HasMore = true;
             Reload ();
         }
@@ -318,16 +320,24 @@ namespace Toggl.Phoebe.Data.Views
             get {
                 foreach (var grp in dateGroups) {
                     yield return grp;
-                    foreach (var data in grp.DataObjects) {
-                        yield return data;
-                    }
+                    if (isGrouped)
+                        foreach (var data in grp.GroupedObjects) {
+                            yield return data;
+                        }
+                    else
+                        foreach (var data in grp.DataObjects) {
+                            yield return data;
+                        }
                 }
             }
         }
 
         public long Count
         {
-            get { return dateGroups.Count + dateGroups.Sum (g => g.DataObjects.Count); }
+            get {
+                var itemsCount = (isGrouped) ? dateGroups.Sum (g => g.GroupedObjects.Count) : dateGroups.Sum (g => g.DataObjects.Count);
+                return dateGroups.Count + itemsCount;
+            }
         }
 
         public bool HasMore { get; private set; }
@@ -376,8 +386,8 @@ namespace Toggl.Phoebe.Data.Views
             {
                 bool existGrouped = false;
                 foreach (var entryGroup in groupedObjects)
-                    if (entryGroup.Contains (dataObject)) {
-                        entryGroup.TimeEntryList.Add (dataObject);
+                    if (entryGroup.CanContains (dataObject)) {
+                        entryGroup.Add (dataObject);
                         existGrouped = true;
                     }
 
@@ -389,87 +399,110 @@ namespace Toggl.Phoebe.Data.Views
                 OnUpdated ();
             }
 
-            public void UpdateEntryData ( TimeEntryData dataObject)
+            public void UpdateEntryData (TimeEntryData dataObject)
             {
                 dataObjects.UpdateData (dataObject);
 
-                RemoveGroupedTimeEntry (dataObject);
-                bool existGrouped = false;
+                var previousGroup = GetContainerGroup (dataObject);
 
-                foreach (var entryGroup in groupedObjects)
-                    if (entryGroup.Contains (dataObject)) {
-                        entryGroup.TimeEntryList.Add (dataObject);
-                        entryGroup.TimeEntryList.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                        existGrouped = true;
+                if (previousGroup == null) {
+
+                    // new TimeEntry
+                    groupedObjects.Add (new TimeEntryGroup (dataObject));
+                } else {
+
+                    bool matchGroup = false;
+                    var count = 0;
+
+                    // Match exiting group,
+                    while (count < groupedObjects.Count) {
+
+                        var entryGroup = groupedObjects[count];
+                        if (entryGroup.CanContains (dataObject)) {
+                            if (entryGroup == previousGroup) {
+                                entryGroup.Update (dataObject);
+                            } else {
+                                previousGroup.Delete (dataObject);
+                                entryGroup.Add (dataObject);
+                            }
+                            matchGroup = true;
+                            count = groupedObjects.Count;
+                        }
+                        count++;
                     }
 
-                if (!existGrouped) {
-                    groupedObjects.Add (new TimeEntryGroup (dataObject));
+                    // Clean empty groups
+                    CleanEmptyGroups();
+
+                    if (!matchGroup) {
+
+                        // Condition for unitary groups
+                        if (previousGroup.Count == 1) {
+                            previousGroup.Update (dataObject);
+                        } else {
+                            previousGroup.Delete (dataObject);
+                            groupedObjects.Add (new TimeEntryGroup (dataObject));
+                        }
+                    }
                 }
 
-                groupedObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                groupedObjects.Sort ((a, b) => b.LastStartTime.CompareTo (a.LastStartTime));
                 OnUpdated ();
             }
 
             public void Remove (TimeEntryData dataObject)
             {
-                var count = 0;
-
-                while (count < groupedObjects.Count) {
-                    var entryGroup = groupedObjects[count];
-                    if (entryGroup.Contains (dataObject)) {
-                        entryGroup.TimeEntryList.Remove (dataObject);
-                        if (entryGroup.Count == 0) {
-                            groupedObjects.Remove (entryGroup);
-                        }
-
-                        count = groupedObjects.Count;
-                    }
-                    count++;
-                }
                 dataObjects.Remove (dataObject);
+
+                var currentGroup = GetContainerGroup (dataObject);
+                if (currentGroup != null) {
+                    currentGroup.Delete (dataObject);
+                    CleanEmptyGroups();
+                }
+
                 OnUpdated ();
             }
 
             public void Sort ()
             {
                 dataObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                groupedObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                groupedObjects.Sort ((a, b) => b.LastStartTime.CompareTo (a.LastStartTime));
+                foreach (var item in groupedObjects) {
+                    item.Sort();
+                }
                 OnUpdated ();
             }
 
             public void RemoveGroup (TimeEntryGroup dataGroup)
             {
                 foreach (var item in dataGroup.TimeEntryList) {
-                    dataObjects.Remove (item);
+                    dataObjects.RemoveAll (te => te.Id == item.Id);
                 }
+
+                dataGroup.Dispose();
                 groupedObjects.Remove (dataGroup);
                 OnUpdated();
-            }
-
-            private void RemoveGroupedTimeEntry (TimeEntryData dataObject)
-            {
-                var currentGroup = GetContainerGroup (dataObject);
-                if (currentGroup != null) {
-                    currentGroup.TimeEntryList.RemoveAll ( d => d.Id == dataObject.Id);
-                }
-
-                if (currentGroup.Count == 0) {
-                    groupedObjects.Remove (currentGroup);
-                }
             }
 
             private TimeEntryGroup GetContainerGroup (TimeEntryData data)
             {
                 TimeEntryGroup result = null;
-                foreach (var entryGroup in groupedObjects) {
-                    foreach (var entry in entryGroup.TimeEntryList) {
-                        if ( entry.Id == data.Id) {
+                foreach (var entryGroup in groupedObjects)
+                    foreach (var entry in entryGroup.TimeEntryList)
+                        if (entry.Id == data.Id) {
                             result = entryGroup;
                         }
-                    }
-                }
+
                 return result;
+            }
+
+            private void CleanEmptyGroups()
+            {
+                foreach (var item in groupedObjects)
+                    if (item.Count == 0) {
+                        item.Dispose();
+                    }
+                groupedObjects.RemoveAll (g => g.Count == 0);
             }
         }
 

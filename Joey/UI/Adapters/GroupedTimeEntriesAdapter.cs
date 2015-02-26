@@ -345,7 +345,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (DataSource.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
-                    handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
+                    handler.PostDelayed (RebindDuration, 1000 - DataSource.Model.GetDuration().Milliseconds);
                 }
                 ShowStopButton ();
             }

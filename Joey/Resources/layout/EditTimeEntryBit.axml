@@ -24,6 +24,9 @@
                         android:layout_alignParentLeft="true"
                         android:background="@null"
                         android:lines="1"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:ellipsize="start"
                         android:textColor="@color/material_black"
                         android:textSize="18dp"
                         android:layout_below="@id/EditTimeEntryBitTitle" />

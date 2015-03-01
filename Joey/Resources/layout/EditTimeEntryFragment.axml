@@ -156,14 +156,15 @@
                 android:id="@+id/TagsEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
                 android:editable="false"
                 android:cursorVisible="false"
                 android:focusableInTouchMode="false"
                 android:hint="@string/CurrentTimeEntryEditTagsHint"
                 android:background="@drawable/BackgroundLine"
                 android:paddingBottom="10dp"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="2dp"
+                android:textColor="@color/material_black"
+               	android:textSize="18dp"
                 android:drawableRight="@drawable/IcSelectArrowBigDown" />
             <CheckBox
                 android:id="@+id/BillableCheckBox"

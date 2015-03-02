@@ -47,6 +47,15 @@ namespace Toggl.Joey.UI.Views
             return this;
         }
 
+        public EditTimeEntryBit SetName (int resourceId)
+        {
+            TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
+            title.SetText(resourceId);
+            EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
+            text.SetText (resourceId);
+            return this;
+        }
+
         public EditTimeEntryBit DestroyAssistView()
         {
             TextView assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);

@@ -336,13 +336,13 @@ namespace Toggl.Joey.UI.Fragments
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
 
-            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName ("Description");
+            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
             DescriptionEditText = DescriptionBit.TextField;
 
-            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Project).SetName ("Project").SimulateButton();
+            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Project).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
             ProjectEditText = ProjectBit.TextField;
 
-            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task).DestroyAssistView ().SetName ("Task").SimulateButton();
+            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
 
             var tagsTitle = view.FindViewById<TextView> (Resource.Id.EditTimeEntryTagsTitle);
             TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText);

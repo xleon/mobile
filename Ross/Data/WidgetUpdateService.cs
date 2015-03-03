@@ -110,8 +110,10 @@ namespace Toggl.Ross.Data
 
         public void UpdateWidgetContent()
         {
-            var controller = NCWidgetController.GetWidgetController ();
-            controller.SetHasContent (true, NSBundle.MainBundle.BundleIdentifier + ".today");
+            if (ServiceContainer.Resolve<IPlatformInfo> ().IsWidgetAvailable) {
+                var controller = NCWidgetController.GetWidgetController ();
+                controller.SetHasContent (true, NSBundle.MainBundle.BundleIdentifier + ".today");
+            }
         }
 
         #endregion

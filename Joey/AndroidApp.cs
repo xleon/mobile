@@ -124,6 +124,11 @@ namespace Toggl.Joey
             get { return PackageManager.GetPackageInfo (PackageName, 0).VersionName; }
         }
 
+        public bool IsWidgetAvailable
+        {
+            get { return true; }
+        }
+
         public bool ComponentsInitialized
         {
             get { return componentsInitialized; }

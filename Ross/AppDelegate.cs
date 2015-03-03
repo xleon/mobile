@@ -24,9 +24,14 @@ namespace Toggl.Ross
     public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
         private TogglWindow window;
+        private int systemVersion;
+        private const int minVersionWidget = 7;
 
         public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
+            var versionString = UIDevice.CurrentDevice.SystemVersion;
+            systemVersion = System.Convert.ToInt32 ( versionString.Split ( new [] {"."}, System.StringSplitOptions.None)[0]);
+
             RegisterComponents ();
 
             var signIn = Google.Plus.SignIn.SharedInstance;
@@ -47,7 +52,6 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<IBugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
-
             ServiceContainer.Resolve<ITracker> ();
 
             return true;
@@ -58,51 +62,65 @@ namespace Toggl.Ross
             // Make sure the user data is refreshed when the application becomes active
             ServiceContainer.Resolve<ISyncManager> ().Run ();
             ServiceContainer.Resolve<NetworkIndicatorManager> ();
-            ServiceContainer.Resolve<WidgetSyncManager>();
 
-            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
-            widgetService.SetAppOnBackground (false);
+            if (systemVersion > minVersionWidget) {
+                ServiceContainer.Resolve<WidgetSyncManager>();
+                var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+                widgetService.SetAppOnBackground (false);
+            }
         }
 
         public override bool OpenUrl (UIApplication application, NSUrl url, string sourceApplication, NSObject annotation)
         {
-            if (url.AbsoluteString.Contains (WidgetUpdateService.TodayUrlPrefix)) {
-                var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
-                if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
-                    widgetManager.StartStopTimeEntry();
-                } else {
-                    widgetManager.ContinueTimeEntry();
+            if (systemVersion > minVersionWidget) {
+                if (url.AbsoluteString.Contains (WidgetUpdateService.TodayUrlPrefix)) {
+                    var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
+                    if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
+                        widgetManager.StartStopTimeEntry();
+                    } else {
+                        widgetManager.ContinueTimeEntry();
+                    }
+                    return true;
                 }
-                return true;
             }
             return Google.Plus.UrlHandler.HandleUrl (url, sourceApplication, annotation);
         }
 
         public override void DidEnterBackground (UIApplication application)
         {
-            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
-            widgetService.SetAppOnBackground (true);
+            if (systemVersion > minVersionWidget) {
+                var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+                widgetService.SetAppOnBackground (true);
+            }
         }
 
         public override void WillTerminate (UIApplication application)
         {
-            var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
-            widgetService.SetAppActivated (false);
+            if (systemVersion > minVersionWidget) {
+                var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+                widgetService.SetAppActivated (false);
+            }
         }
 
         private void RegisterComponents ()
         {
+            // Register platform info first.
+            ServiceContainer.Register<IPlatformInfo> (this);
+
             Services.Register ();
 
             // Override default implementation
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider ());
 
             // Register Ross components:
-            ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<SettingsStore> ();
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
-            ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService());
+
+            if (systemVersion > minVersionWidget) {
+                ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService());
+            }
+
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));
@@ -146,6 +164,14 @@ namespace Toggl.Ross
                                      new NSString ("CFBundleShortVersionString")).ToString ();
                 }
                 return appVersion;
+            }
+        }
+
+        bool IPlatformInfo.IsWidgetAvailable
+        {
+            get {
+                // iOS 8 is the version where Today Widgets are availables.
+                return systemVersion > minVersionWidget;
             }
         }
     }

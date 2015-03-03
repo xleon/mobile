@@ -92,6 +92,9 @@ namespace Toggl.Phoebe.Tests
             public string AppIdentifier { get; set; }
 
             public string AppVersion { get; set; }
+
+            public bool IsWidgetAvailable { get; set; }
+
         }
 
         private class SettingStore : ISettingsStore

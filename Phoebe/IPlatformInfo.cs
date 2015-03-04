@@ -16,5 +16,12 @@ namespace Toggl.Phoebe
         /// </summary>
         /// <value>The app version.</value>
         string AppVersion { get; }
+
+        /// <summary>
+        /// Detect if widgets are availables or not in current device system.
+        /// </summary>
+        /// <value>Detect if widget is available or not</value>
+        bool IsWidgetAvailable { get; }
+
     }
 }

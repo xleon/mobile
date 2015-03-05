@@ -1,18 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Timers;
 using Android.App;
-using Android.Appwidget;
 using Android.Content;
-using Android.Graphics;
 using Android.OS;
-using Android.Views;
-using Android.Widget;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -20,13 +10,13 @@ namespace Toggl.Joey.Widget
 {
 
     [Service (Exported = false)]
-    public class WidgetService : Service
+    public class InitWidgetService : Service
     {
-        public WidgetService () : base ()
+        public InitWidgetService ()
         {
         }
 
-        public WidgetService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
+        public InitWidgetService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
         : base (javaRef, transfer)
         {
         }

@@ -78,7 +78,7 @@ namespace Toggl.Phoebe
         public async void ContinueTimeEntry ()
         {
             TimeEntryModel entryModel;
-            Guid stringGuid = widgetUpdateService.GetEntryIdStarted();
+            Guid stringGuid = widgetUpdateService.EntryIdStarted;
 
             // Query local data:
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -169,7 +169,7 @@ namespace Toggl.Phoebe
                         Color = ProjectModel.HexColors [ project.Color % ProjectModel.HexColors.Length],
                         IsRunning = entry.State == TimeEntryState.Running,
                         TimeValue = (entry.StopTime - entry.StartTime).ToString(),
-                        StartTime = entry.StartTime,
+                        Duration = (entry.StopTime.HasValue ? entry.StopTime.Value : Time.UtcNow) - entry.StartTime,
                     });
 
                 }
@@ -195,6 +195,7 @@ namespace Toggl.Phoebe
         {
             if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
                 ResetModelToRunning ();
+                OnSync (null);
                 Rebind ();
             }
         }
@@ -249,7 +250,7 @@ namespace Toggl.Phoebe
 
             public bool IsRunning { get; set; }
 
-            public DateTime StartTime { get; set; }
+            public TimeSpan Duration { get; set; }
         }
     }
 }

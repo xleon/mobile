@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
-using Android.OS;
 using Android.Widget;
 using Toggl.Phoebe;
 using XPlatUtils;
@@ -11,17 +10,16 @@ using XPlatUtils;
 namespace Toggl.Joey.Widget
 {
     [Service (Exported = false, Permission = Android.Manifest.Permission.BindRemoteviews)]
-    public class WidgetListViewService : RemoteViewsService
+    public class RemotesViewsFactoryService : RemoteViewsService
     {
         public override IRemoteViewsFactory OnGetViewFactory (Intent intent)
         {
-            return new WidgetListService (ApplicationContext);
+            return new RemotesViewsFactory (ApplicationContext);
         }
     }
 
-    public class WidgetListService : Java.Lang.Object, RemoteViewsService.IRemoteViewsFactory
+    public class RemotesViewsFactory : Java.Lang.Object, RemoteViewsService.IRemoteViewsFactory
     {
-        public const string FillIntentExtraKey = "listItemAction";
         private readonly List<WidgetSyncManager.WidgetEntryData> itemList = new  List<WidgetSyncManager.WidgetEntryData> ();
         private Context context;
 
@@ -37,7 +35,7 @@ namespace Toggl.Joey.Widget
             }
         }
 
-        public WidgetListService (Context ctx)
+        public RemotesViewsFactory (Context ctx)
         {
             context = ctx;
         }
@@ -86,9 +84,16 @@ namespace Toggl.Joey.Widget
 
         private Intent ConstructFillIntent (WidgetSyncManager.WidgetEntryData entryData)
         {
-            var intentBundle = new Bundle();
-            intentBundle.PutString ("EntryId", entryData.Id);
-            return new Intent().PutExtra (FillIntentExtraKey, intentBundle);
+            var intent = new Intent ();
+
+            if (entryData.IsRunning) {
+                intent.SetAction (WidgetProvider.StartStopAction);
+            } else {
+                intent.SetAction (WidgetProvider.ContiueAction);
+                intent.PutExtra (WidgetProvider.EntryIdParameter, entryData.Id);
+            }
+
+            return intent;
         }
 
         public void OnDataSetChanged ()

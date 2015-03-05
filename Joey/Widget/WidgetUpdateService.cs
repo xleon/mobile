@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Android.Appwidget;
 using Android.Content;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Models;
@@ -15,7 +14,7 @@ namespace Toggl.Joey.Widget
 
         public WidgetUpdateService (Context ctx)
         {
-            this.context = ctx;
+            context = ctx;
 
             // Update auth state from platform service.
             //
@@ -28,10 +27,6 @@ namespace Toggl.Joey.Widget
         }
 
         #region IWidgetUpdateService implementation
-
-        public bool AppActivated { get; set; }
-
-        public bool AppOnBackground { get;  set; }
 
         public string RunningEntryDuration { get; set; }
 
@@ -65,15 +60,23 @@ namespace Toggl.Joey.Widget
             }
         }
 
-        public void ShowNewTimeEntryScreen ( TimeEntryModel currentTimeEntry)
+        private Guid entryIdStarted;
+
+        public Guid EntryIdStarted
         {
+            get {
+                return entryIdStarted;
+            } set {
+                if (entryIdStarted == value) {
+                    return;
+                }
+                entryIdStarted = value;
+            }
         }
 
-        public Guid GetEntryIdStarted ()
+        public void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry)
         {
-            return new Guid();
         }
-
         #endregion
     }
 }

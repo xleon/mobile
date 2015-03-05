@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Appwidget;
 using Android.Content;
@@ -18,10 +17,12 @@ namespace Toggl.Joey.Widget
 
     public class WidgetProvider : AppWidgetProvider
     {
-        public const string OpenAction = "com.toggl.timer.widget.OPEN_ENTRY";
+        public const string EntryIdParameter = "entryId";
+        public const string StartStopAction = "com.toggl.timer.widget.START_ENTRY";
+        public const string ContiueAction = "com.toggl.timer.widget.CONTINUE_ENTRY";
         public const string RefreshListAction = "com.toggl.timer.widget.REFRESH_CONTENT";
         public const string RefreshCompleteAction = "com.toggl.timer.widget.REFRESH_COMPLETE";
-        public static readonly string ExtraAppWidgetIds = "appWidgetIds";
+        private const string ThreadWorkerName = "com.toggl.timer.widgetprovider";
 
         private Context context;
         private int[] appWidgetIds;
@@ -56,7 +57,7 @@ namespace Toggl.Joey.Widget
         {
             get {
                 if (appWidgetIds == null) {
-                    var cn = new ComponentName ( context, Java.Lang.Class.FromType (typeof (WidgetProvider)));
+                    var cn = new ComponentName (context, Java.Lang.Class.FromType (typeof (WidgetProvider)));
                     appWidgetIds = WidgetManager.GetAppWidgetIds (cn);
                 }
                 return appWidgetIds;
@@ -78,14 +79,14 @@ namespace Toggl.Joey.Widget
         public WidgetProvider()
         {
             // Start the worker thread
-            workerThread = new HandlerThread ("com.toggl.timer.widgetprovider");
+            workerThread = new HandlerThread (ThreadWorkerName);
             workerThread.Start();
             workerQueue = new Handler (workerThread.Looper);
         }
 
         public override void OnEnabled (Context context)
         {
-            var serviceIntent = new Intent (context, typeof (WidgetService));
+            var serviceIntent = new Intent (context, typeof (InitWidgetService));
             context.StartService (serviceIntent);
         }
 
@@ -121,7 +122,7 @@ namespace Toggl.Joey.Widget
 
                 SetupRunningBtn (context, views, IsRunning);
 
-                var adapterServiceIntent = new Intent (context, typeof (WidgetListViewService));
+                var adapterServiceIntent = new Intent (context, typeof (RemotesViewsFactoryService));
                 adapterServiceIntent.PutExtra (AppWidgetManager.ExtraAppwidgetIds, appWidgetIds);
                 adapterServiceIntent.SetData (Android.Net.Uri.Parse (adapterServiceIntent.ToUri (IntentUriType.Scheme)));
 
@@ -129,11 +130,11 @@ namespace Toggl.Joey.Widget
                     views.SetRemoteAdapter (appWidgetIds[i], Resource.Id.WidgetRecentEntriesListView, adapterServiceIntent);
                 }
 
-                var listItemIntent = new Intent (context, typeof (StartNewTimeEntryService.Receiver));
+                var listItemIntent = new Intent (context, typeof (WidgetStartStopService.Receiver));
                 listItemIntent.SetData (Android.Net.Uri.Parse (listItemIntent.ToUri (IntentUriType.Scheme)));
                 var pendingIntent = PendingIntent.GetBroadcast (context, 0, listItemIntent, PendingIntentFlags.UpdateCurrent);
                 views.SetPendingIntentTemplate (Resource.Id.WidgetRecentEntriesListView, pendingIntent);
-                views.SetOnClickPendingIntent (Resource.Id.WidgetActionButton, ActionButtonIntent());
+                views.SetOnClickPendingIntent (Resource.Id.WidgetActionButton, StartStopButtonIntent());
 
             } else {
                 views = new RemoteViews (context.PackageName, Resource.Layout.widget_login);
@@ -144,40 +145,51 @@ namespace Toggl.Joey.Widget
             WidgetManager.UpdateAppWidget (appWidgetIds, views);
         }
 
-        private void SetupRunningBtn (Context context, RemoteViews views, bool isRunning)
+        private void SetupRunningBtn (Context ctx, RemoteViews views, bool isRunning)
         {
             var entry = new WidgetSyncManager.WidgetEntryData();
 
             // Check if an entry is running.
             foreach (var item in UpdateService.LastEntries)
-                if ( item.IsRunning) {
+                if (item.IsRunning) {
                     entry = item;
                 }
 
+            var baseTime = SystemClock.ElapsedRealtime ();
+
             if (isRunning) {
-                views.SetInt (Resource.Id.WidgetActionButton, "setBackgroundColor", context.Resources.GetColor (Resource.Color.bright_red));
+                views.SetInt (Resource.Id.WidgetActionButton, "setBackgroundColor", ctx.Resources.GetColor (Resource.Color.bright_red));
                 views.SetInt (Resource.Id.WidgetActionButton, "setText", Resource.String.TimerStopButtonText);
                 views.SetInt (Resource.Id.WidgetColorView, "setColorFilter", Color.ParseColor (entry.Color));
                 views.SetViewVisibility (Resource.Id.WidgetRunningEntry, ViewStates.Visible);
                 views.SetTextViewText (
                     Resource.Id.WidgetRunningDescriptionTextView,
                     String.IsNullOrWhiteSpace (entry.Description) ? "(no description)" : entry.Description);
-                views.SetTextViewText (Resource.Id.WidgetDuration, entry.TimeValue);
+
+                var time = (long)entry.Duration.TotalMilliseconds;
+
+                // Format chronometer correctly.
+                string format = "00:%s";
+                if (time >= 3600000 && time < 36000000) {
+                    format = "0%s";
+                } else if (time >= 36000000) {
+                    format = "%s";
+                }
+
+                views.SetChronometer (Resource.Id.Chronometer, baseTime - (long)entry.Duration.TotalMilliseconds, format, true);
             } else {
-                views.SetInt (Resource.Id.WidgetActionButton, "setBackgroundColor", context.Resources.GetColor (Resource.Color.bright_green));
+                views.SetInt (Resource.Id.WidgetActionButton, "setBackgroundColor", ctx.Resources.GetColor (Resource.Color.bright_green));
                 views.SetInt (Resource.Id.WidgetActionButton, "setText", Resource.String.TimerStartButtonText);
                 views.SetViewVisibility (Resource.Id.WidgetRunningEntry, ViewStates.Invisible);
+                views.SetChronometer (Resource.Id.Chronometer, baseTime, "00:%s", false);
             }
         }
 
-        private PendingIntent ActionButtonIntent()
+        private PendingIntent StartStopButtonIntent()
         {
-            var actionButtonIntent = new Intent (context, typeof (StartNewTimeEntryService.Receiver));
-
-            if (IsRunning) {
-                actionButtonIntent = new Intent (context, typeof (StopRunningTimeEntryService.Receiver));
-            }
-            return PendingIntent.GetBroadcast (context, 0, actionButtonIntent, PendingIntentFlags.UpdateCurrent);
+            var intent = new Intent (context, typeof (WidgetStartStopService.Receiver));
+            intent.SetAction (WidgetProvider.StartStopAction);
+            return PendingIntent.GetBroadcast (context, 0, intent, PendingIntentFlags.UpdateCurrent);
         }
 
         private PendingIntent LogInButtonIntent()
@@ -185,58 +197,47 @@ namespace Toggl.Joey.Widget
             var loginIntent = new Intent (Intent.ActionMain)
             .AddCategory (Intent.CategoryLauncher)
             .AddFlags (ActivityFlags.NewTask)
-            .SetComponent ( new ComponentName (context.PackageName, typeof (Toggl.Joey.UI.Activities.LoginActivity).FullName));
-
+            .SetComponent (new ComponentName (context.PackageName, typeof (Toggl.Joey.UI.Activities.LoginActivity).FullName));
             return PendingIntent.GetActivity (context, 0, loginIntent, PendingIntentFlags.UpdateCurrent);
         }
 
-        /*
-         * Adds a runnable to update the widgets in the worker queue
-         * @param context used for creating layouts
-         */
-        private void ScheduleUpdate (Context context, string action)
-        {
 
+        private void ScheduleUpdate (Context ctx, string action)
+        {
+            // Adds a runnable to update the widgets in the worker queue.
             workerQueue.RemoveMessages (0);
             workerQueue.Post (() => {
 
-                var widgetManager = AppWidgetManager.GetInstance (context);
-                var cn = new ComponentName ( context, Java.Lang.Class.FromType (typeof (WidgetProvider)));
-                var appWidgetIds = widgetManager.GetAppWidgetIds (cn);
+                var wm = AppWidgetManager.GetInstance (ctx);
+                var cn = new ComponentName (ctx, Java.Lang.Class.FromType (typeof (WidgetProvider)));
+                var ids = wm.GetAppWidgetIds (cn);
 
                 if (action == RefreshCompleteAction) {
-                    OnUpdate (context, widgetManager, appWidgetIds);
+                    OnUpdate (ctx, wm, ids);
                 } else {
-                    var views = new RemoteViews (context.PackageName, Resource.Layout.keyguard_widget);
-                    SetupRunningBtn (context, views, IsRunning);
-                    widgetManager.NotifyAppWidgetViewDataChanged (appWidgetIds, Resource.Id.WidgetRecentEntriesListView);
-                    widgetManager.PartiallyUpdateAppWidget (appWidgetIds, views);
+                    var views = new RemoteViews (ctx.PackageName, Resource.Layout.keyguard_widget);
+                    SetupRunningBtn (ctx, views, IsRunning);
+                    wm.NotifyAppWidgetViewDataChanged (ids, Resource.Id.WidgetRecentEntriesListView);
+                    wm.PartiallyUpdateAppWidget (ids, views);
                 }
             });
         }
 
-        /**
-        * Sends a request to the rich push message to refresh
-        * @param context Application context
-        */
         public static void RefreshWidget (Context context, string action)
         {
+            // Sends a request to the rich push message to refresh.
             RefreshWidget (context, action, 0);
         }
 
-        /**
-        * Sends a request to the rich push message to refresh with a delay
-        * @param context Application context
-        * @param delayInMs Delay to wait in milliseconds before sending the request
-        */
         public static void RefreshWidget (Context context, string action, long delayInMs)
         {
-            Intent refreshIntent = new Intent (context, typeof (WidgetProvider));
+            //Sends a request to the rich push message to refresh with a delay.
+            var refreshIntent = new Intent (context, typeof (WidgetProvider));
             refreshIntent.SetAction (action);
 
             if (delayInMs > 0) {
                 PendingIntent pendingIntent = PendingIntent.GetBroadcast (context, 0, refreshIntent, 0);
-                AlarmManager am = (AlarmManager) context.GetSystemService (Context.AlarmService);
+                var am = (AlarmManager) context.GetSystemService (Context.AlarmService);
                 am.Set (AlarmType.RtcWakeup, (long) new TimeSpan (DateTime.Now.Ticks).TotalMilliseconds + delayInMs, pendingIntent);
             } else {
                 context.SendBroadcast (refreshIntent);

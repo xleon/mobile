@@ -12,12 +12,8 @@ namespace Toggl.Phoebe
 
         bool IsUserLogged { get; set; }
 
-        bool AppActivated { get; set; }
-
-        bool AppOnBackground { get; set; }
+        Guid EntryIdStarted { get; set; }
 
         void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry);
-
-        Guid GetEntryIdStarted();
     }
 }

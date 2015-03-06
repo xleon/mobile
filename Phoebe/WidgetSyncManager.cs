@@ -28,6 +28,7 @@ namespace Toggl.Phoebe
         private bool isActing;
         private bool isLoading;
         private int rebindCounter;
+        private MessageBus messageBus;
 
         public WidgetSyncManager ()
         {
@@ -39,9 +40,9 @@ namespace Toggl.Phoebe
             timeEntryManager.PropertyChanged += OnTimeEntryManagerPropertyChanged;
             ResetModelToRunning ();
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSync);
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSync);
+            messageBus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionSyncStarted = messageBus.Subscribe<SyncStartedMessage> (OnSync);
+            subscriptionSyncFinished = messageBus.Subscribe<SyncFinishedMessage> (OnSync);
         }
 
         public async void StartStopTimeEntry()
@@ -121,6 +122,11 @@ namespace Toggl.Phoebe
             }
         }
 
+        public void SyncWidgetData()
+        {
+            OnSync (null);
+        }
+
         private async void OnSync (Message msg)
         {
             if (isLoading) {
@@ -130,6 +136,9 @@ namespace Toggl.Phoebe
             isLoading = true;
 
             try {
+                // Dispathc started message.
+                messageBus.Send<SyncWidgetMessage> ( new SyncWidgetMessage (this,true));
+
                 var queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
 
                 // Query local data:
@@ -181,6 +190,9 @@ namespace Toggl.Phoebe
                 log.Error (Tag, exc, "Failed to fetch time entries");
             } finally {
                 isLoading = false;
+
+                // Dispathc ended message.
+                messageBus.Send<SyncWidgetMessage> ( new SyncWidgetMessage (this));
             }
         }
 
@@ -195,7 +207,7 @@ namespace Toggl.Phoebe
         {
             if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
                 ResetModelToRunning ();
-                OnSync (null);
+                SyncWidgetData ();
                 Rebind ();
             }
         }

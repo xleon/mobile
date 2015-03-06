@@ -21,11 +21,11 @@ namespace Toggl.Joey.Widget
         {
         }
 
-        private Subscription<SyncFinishedMessage> subscriptionSyncFinishedMessage;
+        private Subscription<SyncWidgetMessage> subscriptionSyncFinishedMessage;
 
         public override void OnStart (Intent intent, int startId)
         {
-            SyncOrStop();
+            StartSync();
             base.OnStart (intent, startId);
         }
 
@@ -42,7 +42,7 @@ namespace Toggl.Joey.Widget
             ((AndroidApp)Application).InitializeComponents ();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSyncFinishedMessage = bus.Subscribe<SyncFinishedMessage> (OnSyncFinishedMessage);
+            subscriptionSyncFinishedMessage = bus.Subscribe<SyncWidgetMessage> (OnSyncFinishedMessage);
         }
 
         public override void OnDestroy ()
@@ -56,28 +56,23 @@ namespace Toggl.Joey.Widget
             base.OnDestroy ();
         }
 
+        private void StartSync ()
+        {
+            var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
+            widgetManager.SyncWidgetData ();
+        }
+
+        private void OnSyncFinishedMessage (SyncWidgetMessage msg)
+        {
+            if (!msg.IsStarted) {
+                WidgetProvider.RefreshWidget (this, WidgetProvider.RefreshListAction);
+                StopSelf();
+            }
+        }
+
         public override IBinder OnBind (Intent intent)
         {
             return null;
-        }
-
-        private void SyncOrStop (bool checkRunning = true)
-        {
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-
-            // Need to check IsRunning, as it will tell us if the sync actually has finished
-            if (checkRunning && syncManager.IsRunning) {
-                return;
-            }
-
-            syncManager.Run (SyncMode.Pull);
-        }
-
-        private void OnSyncFinishedMessage (SyncFinishedMessage msg)
-        {
-            SyncOrStop (false);
-            WidgetProvider.RefreshWidget (this, WidgetProvider.RefreshCompleteAction);
-            StopSelf();
         }
     }
 }

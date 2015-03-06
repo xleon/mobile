@@ -73,10 +73,10 @@ namespace Toggl.Joey.Widget
             // set content
             remoteView.SetTextViewText (
                 Resource.Id.DescriptionTextView,
-                String.IsNullOrWhiteSpace (rowData.Description) ?  "(no description)" : rowData.Description);
+                String.IsNullOrWhiteSpace (rowData.Description) ? context.Resources.GetString (Resource.String.RunningWidgetNoDescription) : rowData.Description);
             remoteView.SetTextViewText (
                 Resource.Id.ProjectTextView,
-                String.IsNullOrWhiteSpace (rowData.ProjectName) ?  "(no project)" : rowData.ProjectName);
+                String.IsNullOrWhiteSpace (rowData.ProjectName) ? context.Resources.GetString (Resource.String.RunningWidgetNoProject) : rowData.ProjectName);
             remoteView.SetTextViewText (Resource.Id.DurationTextView, rowData.TimeValue);
 
             return remoteView;

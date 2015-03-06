@@ -84,16 +84,14 @@ namespace Toggl.Joey.Widget
             workerQueue = new Handler (workerThread.Looper);
         }
 
-        public override void OnEnabled (Context context)
-        {
-            var serviceIntent = new Intent (context, typeof (InitWidgetService));
-            context.StartService (serviceIntent);
-        }
-
         public override void OnUpdate (Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds)
         {
             this.context = context;
             this.appWidgetIds = appWidgetIds;
+
+            // Request widget update.
+            var serviceIntent = new Intent (context, typeof (InitWidgetService));
+            context.StartService (serviceIntent);
 
             // Setup widget UI.
             SetupWidget ();
@@ -164,7 +162,7 @@ namespace Toggl.Joey.Widget
                 views.SetViewVisibility (Resource.Id.WidgetRunningEntry, ViewStates.Visible);
                 views.SetTextViewText (
                     Resource.Id.WidgetRunningDescriptionTextView,
-                    String.IsNullOrWhiteSpace (entry.Description) ? "(no description)" : entry.Description);
+                    String.IsNullOrWhiteSpace (entry.Description) ? ctx.Resources.GetString (Resource.String.RunningWidgetNoDescription) : entry.Description);
 
                 var time = (long)entry.Duration.TotalMilliseconds;
 
@@ -182,6 +180,7 @@ namespace Toggl.Joey.Widget
                 views.SetInt (Resource.Id.WidgetActionButton, "setText", Resource.String.TimerStartButtonText);
                 views.SetViewVisibility (Resource.Id.WidgetRunningEntry, ViewStates.Invisible);
                 views.SetChronometer (Resource.Id.Chronometer, baseTime, "00:%s", false);
+                views.SetTextViewText (Resource.Id.Chronometer, "00:00:00");
             }
         }
 

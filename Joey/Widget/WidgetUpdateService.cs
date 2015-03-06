@@ -76,6 +76,16 @@ namespace Toggl.Joey.Widget
 
         public void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry)
         {
+            var startAppIntent = new Intent (Intent.ActionMain)
+            .AddCategory (Intent.CategoryLauncher)
+            .AddFlags (ActivityFlags.NewTask)
+            .SetComponent (
+                new ComponentName (
+                    context.ApplicationContext.PackageName,
+                    "toggl.joey.ui.activities.MainDrawerActivity"
+                )
+            );
+            context.StartActivity (startAppIntent);
         }
         #endregion
     }

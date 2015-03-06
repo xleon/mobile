@@ -48,20 +48,6 @@ namespace Toggl.Joey.Widget
             }
         }
 
-        private void LaunchApp()
-        {
-            var startAppIntent = new Intent (Intent.ActionMain)
-            .AddCategory (Intent.CategoryLauncher)
-            .AddFlags (ActivityFlags.NewTask)
-            .SetComponent (
-                new ComponentName (
-                    ApplicationContext.PackageName,
-                    typeof (Toggl.Joey.UI.Activities.MainDrawerActivity).FullName
-                )
-            );
-            StartActivity (startAppIntent);
-        }
-
         public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
         {
             OnStart (intent, startId);

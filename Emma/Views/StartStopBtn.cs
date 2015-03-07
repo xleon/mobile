@@ -57,8 +57,8 @@ namespace Toggl.Emma.Views
                 UIBezierPath ovalPath;
                 UIBezierPath bezierPath;
 
-                if ( isActive) {
-                    if ( isRunning) {
+                if (isActive) {
+                    if (isRunning) {
 
                         // Oval Drawing
                         ovalPath = UIBezierPath.FromOval (new CGRect (posX, posY, radius, radius));
@@ -66,22 +66,22 @@ namespace Toggl.Emma.Views
                         ovalPath.Fill();
 
                         // Rectangle Drawing
-                        var rectanglePath = UIBezierPath.FromRect (new CGRect ( posX + 12.0f, posY + 12.0f, 8.0f, 8.0f));
+                        var rectanglePath = UIBezierPath.FromRect (new CGRect (posX + 12.0f, posY + 12.0f, 8.0f, 8.0f));
                         UIColor.White.SetFill();
                         rectanglePath.Fill();
 
                     } else {
 
                         // Oval Drawing
-                        ovalPath = UIBezierPath.FromOval (new CGRect ( posX, posY, radius, radius));
+                        ovalPath = UIBezierPath.FromOval (new CGRect (posX, posY, radius, radius));
                         greenColor.SetFill ();
                         ovalPath.Fill ();
 
                         // Bezier Drawing
                         bezierPath = new UIBezierPath ();
-                        bezierPath.MoveTo (new CGPoint ( posX + 13.0f, posY + 8.0f));
+                        bezierPath.MoveTo (new CGPoint (posX + 13.0f, posY + 8.0f));
                         bezierPath.AddLineTo (new CGPoint (posX + 20.0f, posY + 16.47f));
-                        bezierPath.AddLineTo (new CGPoint ( posX + 13.0f, posY + 24.0f));
+                        bezierPath.AddLineTo (new CGPoint (posX + 13.0f, posY + 24.0f));
                         UIColor.White.SetStroke ();
                         bezierPath.LineWidth = 1.0f;
                         bezierPath.Stroke ();
@@ -90,19 +90,19 @@ namespace Toggl.Emma.Views
                     // Oval Drawing
                     UIColor.White.SetStroke ();
 
-                    ovalPath = UIBezierPath.FromOval (new CGRect ( posX, posY, radius, radius));
+                    ovalPath = UIBezierPath.FromOval (new CGRect (posX, posY, radius, radius));
                     ovalPath.LineWidth = 1.0f;
                     ovalPath.Stroke ();
-                    context.AddPath ( ovalPath.CGPath);
+                    context.AddPath (ovalPath.CGPath);
 
                     // Bezier Drawing
                     bezierPath = new UIBezierPath ();
-                    bezierPath.MoveTo (new CGPoint ( posX + 13.0f, posY + 8.0f));
+                    bezierPath.MoveTo (new CGPoint (posX + 13.0f, posY + 8.0f));
                     bezierPath.AddLineTo (new CGPoint (posX + 20.0f, posY + 16.47f));
-                    bezierPath.AddLineTo (new CGPoint ( posX + 13.0f, posY + 24.0f));
+                    bezierPath.AddLineTo (new CGPoint (posX + 13.0f, posY + 24.0f));
                     bezierPath.LineWidth = 1.0f;
                     bezierPath.Stroke ();
-                    context.AddPath ( bezierPath.CGPath);
+                    context.AddPath (bezierPath.CGPath);
                 }
             }
         }

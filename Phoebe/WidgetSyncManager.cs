@@ -137,7 +137,7 @@ namespace Toggl.Phoebe
 
             try {
                 // Dispathc started message.
-                messageBus.Send<SyncWidgetMessage> ( new SyncWidgetMessage (this,true));
+                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage (this,true));
 
                 var queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
 
@@ -192,7 +192,7 @@ namespace Toggl.Phoebe
                 isLoading = false;
 
                 // Dispathc ended message.
-                messageBus.Send<SyncWidgetMessage> ( new SyncWidgetMessage (this));
+                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage (this));
             }
         }
 

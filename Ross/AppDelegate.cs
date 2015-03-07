@@ -65,7 +65,7 @@ namespace Toggl.Ross
 
             if (systemVersion > minVersionWidget) {
                 ServiceContainer.Resolve<WidgetSyncManager>();
-                var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+                var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
                 widgetService.SetAppOnBackground (false);
             }
         }
@@ -89,7 +89,7 @@ namespace Toggl.Ross
         public override void DidEnterBackground (UIApplication application)
         {
             if (systemVersion > minVersionWidget) {
-                var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+                var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
                 widgetService.SetAppOnBackground (true);
             }
         }
@@ -97,7 +97,7 @@ namespace Toggl.Ross
         public override void WillTerminate (UIApplication application)
         {
             if (systemVersion > minVersionWidget) {
-                var widgetService = ServiceContainer.Resolve<IWidgetUpdateService>();
+                var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
                 widgetService.SetAppActivated (false);
             }
         }
@@ -116,11 +116,10 @@ namespace Toggl.Ross
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<SettingsStore> ();
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
-
             if (systemVersion > minVersionWidget) {
-                ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService());
+                ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
+                ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());
             }
-
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));

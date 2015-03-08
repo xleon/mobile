@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Android.App;
 using Android.OS;
 using Android.Views;
@@ -10,6 +12,7 @@ using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
 using Android.Graphics.Drawables;
+using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -19,10 +22,13 @@ namespace Toggl.Joey.UI.Activities
     public class EditTimeEntryActivity : BaseActivity
     {
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
+        public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";
+
 
         private FrameLayout DoneFrameLayout { get; set; }
 
         private TimeEntryModel model;
+        private TimeEntryGroup group;
 
         protected override void OnCreateActivity (Bundle state)
         {
@@ -35,12 +41,16 @@ namespace Toggl.Joey.UI.Activities
             CreateModelFromIntent ();
 
             if (state == null) {
-                if (model == null) {
+                if (model == null && group == null) {
                     Finish ();
-                } else {
+                } else if (model != null) {
                     FragmentManager.BeginTransaction ()
                     .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (model))
                     .Commit ();
+                } else if (group != null) {
+                    FragmentManager.BeginTransaction ()
+                        .Add (Resource.Id.FrameLayout, new GroupedEditTimeEntryFragment(group))
+                        .Commit ();
                 }
             }
         }
@@ -55,6 +65,18 @@ namespace Toggl.Joey.UI.Activities
             var extraIdStr = extras.GetString (ExtraTimeEntryId);
             Guid extraId;
             if (!Guid.TryParse (extraIdStr, out extraId)) {
+                var extraGuids = extras.GetStringArray (ExtraGroupedTimeEntriesGuids);
+                var entriesToGroup = new List<TimeEntryModel> ();
+                foreach (string guidString in extraGuids) {
+                    var entry = new TimeEntryModel(new Guid (guidString));
+                    await entry.LoadAsync ();
+                    entriesToGroup.Add (entry);
+                }
+                group = new TimeEntryGroup (entriesToGroup [0].Data);
+               
+                foreach (var entry in entriesToGroup.Skip(1)) {
+                    group.UpdateIfPossible (entry.Data);
+                }
                 return;
             }
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="80dp">
+    <View 
+        android:id="@+id/GroupedEditTimeEntryItemTimeColorView"
+    	android:layout_width="5dp"
+    	android:layout_height="fill_parent"
+    	android:background="#000000" />
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:src="@drawable/icClock"
+        android:layout_marginRight="30dp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="yooooooo 1"
+        android:id="@+id/GroupedEditTimeEntryItemTimePeriodTextView"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="yooooooo 1"
+        android:id="@+id/GroupedEditTimeEntryItemDurationTextView"
+        android:gravity="right|center_vertical" />
+</LinearLayout>

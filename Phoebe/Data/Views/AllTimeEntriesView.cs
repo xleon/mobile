@@ -386,7 +386,7 @@ namespace Toggl.Phoebe.Data.Views
             {
                 bool existGrouped = false;
                 foreach (var entryGroup in groupedObjects)
-                    if (entryGroup.CanContains (dataObject)) {
+                    if (entryGroup.CanContain (dataObject)) {
                         entryGroup.Add (dataObject);
                         existGrouped = true;
                     }
@@ -418,7 +418,7 @@ namespace Toggl.Phoebe.Data.Views
                     while (count < groupedObjects.Count) {
 
                         var entryGroup = groupedObjects[count];
-                        if (entryGroup.CanContains (dataObject)) {
+                        if (entryGroup.CanContain (dataObject)) {
                             if (entryGroup == previousGroup) {
                                 entryGroup.Update (dataObject);
                             } else {

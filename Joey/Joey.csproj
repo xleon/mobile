@@ -50,12 +50,6 @@
       <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http" />
-    <Reference Include="Xamarin.Android.Support.v13">
-      <HintPath>..\packages\Xamarin.Android.Support.v13.20.0.0.4\lib\MonoAndroid32\Xamarin.Android.Support.v13.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v4">
-      <HintPath>..\packages\Xamarin.Android.Support.v4.20.0.0.4\lib\MonoAndroid32\Xamarin.Android.Support.v4.dll</HintPath>
-    </Reference>
     <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
       <HintPath>..\packages\Xamarin.Android.Support.v7.MediaRouter.20.0.0\lib\MonoAndroid10\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
     </Reference>
@@ -73,6 +67,11 @@
     </Reference>
     <Reference Include="Xamarin.Insights">
       <HintPath>..\packages\Xamarin.Insights.1.9.1.107\lib\MonoAndroid10\Xamarin.Insights.dll</HintPath>
+    <Reference Include="Xamarin.Android.Support.v4">
+      <HintPath>..\packages\Xamarin.Android.Support.v4.21.0.3.0\lib\MonoAndroid10\Xamarin.Android.Support.v4.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.RecyclerView">
+      <HintPath>..\packages\Xamarin.Android.Support.v7.RecyclerView.21.0.3.0\lib\MonoAndroid403\Xamarin.Android.Support.v7.RecyclerView.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +150,9 @@
     <Compile Include="Logging\LogClient.cs" />
     <Compile Include="UI\Adapters\GroupedTimeEntriesAdapter.cs" />
     <Compile Include="UI\Views\EditTimeEntryBit.cs" />
+    <Compile Include="UI\Fragments\GroupedEditTimeEntryFragment.cs" />
+    <Compile Include="UI\Adapters\GroupTimeEntriesAdapter.cs" />
+    <Compile Include="UI\Decorations\ItemDividerDecoration.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -644,6 +646,13 @@
     <AndroidResource Include="Resources\color\MaterialPlaceholderColor.xml" />
     <AndroidResource Include="Resources\drawable\RoundedGrayBackground.xml" />
     <AndroidResource Include="Resources\color\MaterialTransparentPlaceholderColor.xml" />
+    <AndroidResource Include="Resources\layout\GroupedEditTimeEntryFragment.axml" />
+    <AndroidResource Include="Resources\layout\GroupedEditTimeEntryItem.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\icClock.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\icClock.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\icClock.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\icClock.png" />
+    <AndroidResource Include="Resources\drawable\LineDivider.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />
@@ -676,6 +685,7 @@
     <Folder Include="Logging\" />
     <Folder Include="Resources\xml\" />
     <Folder Include="Widget\" />
+    <Folder Include="UI\Decorations\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

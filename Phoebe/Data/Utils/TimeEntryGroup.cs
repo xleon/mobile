@@ -38,6 +38,13 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
+        public string[] TimeEntryGuids
+        {
+            get {
+                return dataObjects.AsEnumerable ().Select (r => (string)r.Id.ToString()).ToArray ();
+            }
+        }
+
         public int Count
         {
             get {
@@ -87,7 +94,14 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeEntryState State
         {
             get {
-                return dataObjects.Last().State;
+                    return dataObjects.Last().State;
+            }
+        }
+
+        public int DistinctDays
+        {
+            get {
+                return dataObjects.GroupBy (e => e.StartTime.Date).Count();
             }
         }
 
@@ -111,6 +125,13 @@ namespace Toggl.Phoebe.Data.Utils
             Sort();
         }
 
+        public void UpdateIfPossible(TimeEntryData data)
+        {
+            if (CanContain (data)) {
+                Add (data);
+            }
+        }
+
         public void Delete (TimeEntryData data)
         {
             if (dataObjects.Contains<TimeEntryData> (data)) {
@@ -125,7 +146,7 @@ namespace Toggl.Phoebe.Data.Utils
             dataObjects.Sort ((a, b) => a.StartTime.CompareTo (b.StartTime));
         }
 
-        public bool CanContains (TimeEntryData data)
+        public bool CanContain (TimeEntryData data)
         {
             return dataObjects.Last().IsGroupableWith (data);
         }

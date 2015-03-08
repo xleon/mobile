@@ -55,6 +55,13 @@ namespace Toggl.Joey.UI.Fragments
         {
             var adapter = ListView.Adapter as LogTimeEntriesAdapter;
             if (adapter == null) {
+                var groupedAdapter = ListView.Adapter as GroupedTimeEntriesAdapter;
+                if (groupedAdapter != null) {
+                    var group = (TimeEntryGroup)groupedAdapter.GetEntry (position);
+                    if (group != null) {
+                        OpenTimeEntryGroupEdit (group);
+                    }
+                }
                 return;
             }
 
@@ -142,7 +149,8 @@ namespace Toggl.Joey.UI.Fragments
         private void OpenTimeEntryGroupEdit (TimeEntryGroup entryGroup)
         {
             var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, entryGroup.Model.Id.ToString ());
+            string[] guids = entryGroup.TimeEntryGuids;
+            i.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
             StartActivity (i);
         }
         #endregion

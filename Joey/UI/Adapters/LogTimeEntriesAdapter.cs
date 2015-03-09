@@ -191,7 +191,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView DescriptionTextView { get; private set; }
 
-            public View TagsView { get; private set; }
+            public NotificationImageView TagsView { get; private set; }
 
             public View BillableView { get; private set; }
 
@@ -209,7 +209,7 @@ namespace Toggl.Joey.UI.Adapters
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
                 TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.Roboto);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.RobotoLight);
-                TagsView = root.FindViewById<View> (Resource.Id.TagsIcon);
+                TagsView = root.FindViewById<NotificationImageView> (Resource.Id.TagsIcon);
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
@@ -335,7 +335,6 @@ namespace Toggl.Joey.UI.Adapters
                 if (DataSource == null) {
                     return;
                 }
-
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 if (DataSource.Project != null && DataSource.Project.Client != null) {
@@ -427,6 +426,9 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var showTags = tagsView != null && tagsView.HasNonDefault;
+                if (showTags) {
+                    TagsView.BubbleCount = (int)tagsView.Count;
+                }
                 TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
             }
         }

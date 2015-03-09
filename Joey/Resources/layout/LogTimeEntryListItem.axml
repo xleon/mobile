@@ -34,7 +34,7 @@
         android:layout_width="wrap_content"
         android:text="@string/RecentTimeEntryNoDescription"
         android:paddingTop="36dp" />
-    <ImageView
+    <Toggl.Joey.UI.Views.NotificationImageView
         android:id="@+id/TagsIcon"
         android:layout_width="wrap_content"
         android:layout_height="72dp"

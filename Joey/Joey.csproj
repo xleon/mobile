@@ -653,6 +653,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable\LineDivider.xml" />
+    <AndroidResource Include="Resources\drawable\DropShadow.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

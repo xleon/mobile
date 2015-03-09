@@ -44,7 +44,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public ViewHolder(View v) : base(v)
             {
-                color = (View)v.FindViewById(Resource.Id.GroupedEditTimeEntryItemTimeColorView);
+                color = v.FindViewById(Resource.Id.GroupedEditTimeEntryItemTimeColorView);
                 period = (TextView)v.FindViewById(Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
                 duration = (TextView)v.FindViewById(Resource.Id.GroupedEditTimeEntryItemDurationTextView);
             }
@@ -61,15 +61,14 @@ namespace Toggl.Joey.UI.Adapters
         // Replace the contents of a view (invoked by the layout manager)
         public override void OnBindViewHolder(RecyclerView.ViewHolder viewHolder, int position)
         {
-            Console.WriteLine("\tElement " + position + " set.");
-
             var vh = viewHolder as ViewHolder;
             var entry = entryGroup.TimeEntryList [position];
 
+            if (entryGroup.Model.Project != null) {
+                var color = Color.ParseColor (entryGroup.Model.Project.GetHexColor ());
+                vh.ColorView.SetBackgroundColor (color);
+            }
 
-            var color = Color.ParseColor (entryGroup.Model.Project.GetHexColor ());
-
-            vh.ColorView.SetBackgroundColor (color);
             vh.PeriodTextView.SetText (entry.StartTime.ToShortTimeString () + " – " + entry.StopTime.Value.ToShortTimeString (), TextView.BufferType.Normal);
             vh.DurationTextView.SetText ("00:50", TextView.BufferType.Normal);
         }

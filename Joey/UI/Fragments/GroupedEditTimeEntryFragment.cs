@@ -18,6 +18,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Joey.UI.Decorations;
+using Toggl.Joey.UI.Views;
 
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
@@ -40,6 +41,15 @@ namespace Toggl.Joey.UI.Fragments
             this.entryGroup = entryGroup;
         }
 
+        protected TextView DurationTextView { get; private set; }
+
+        protected EditTimeEntryBit ProjectBit { get; private set; }
+
+        protected EditTimeEntryBit TaskBit { get; private set; }
+
+        protected EditTimeEntryBit DescriptionBit { get; private set; }
+
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.GroupedEditTimeEntryFragment, container, false);
@@ -55,9 +65,28 @@ namespace Toggl.Joey.UI.Fragments
             var decoration = new ItemDividerDecoration (Activity.ApplicationContext);
             recyclerView.AddItemDecoration (decoration);
 
-            //recyclerView.AddItemDecoration(new RecyclerView.divi
+            DurationTextView = view.FindViewById<TextView> (Resource.Id.GroupedEditTimeEntryFragmentDurationTextView);
+
+            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
+            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentTask).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
+            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentDescription).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+
+            Rebind ();
 
             return view;
+        }
+
+        protected virtual void Rebind() 
+        {
+            // Reset tracked Observables
+
+            if (entryGroup == null) {
+                return;
+            }
+
+            DurationTextView.Text = entryGroup.Duration.ToString ();
+
+
         }
 
         public override void OnCreate (Bundle savedInstanceState)

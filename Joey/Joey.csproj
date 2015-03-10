@@ -153,6 +153,7 @@
     <Compile Include="UI\Fragments\GroupedEditTimeEntryFragment.cs" />
     <Compile Include="UI\Adapters\GroupTimeEntriesAdapter.cs" />
     <Compile Include="UI\Decorations\ItemDividerDecoration.cs" />
+    <Compile Include="UI\Views\EditTimeEntryTagsBit.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -654,6 +655,7 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable\LineDivider.xml" />
     <AndroidResource Include="Resources\drawable\DropShadow.xml" />
+    <AndroidResource Include="Resources\layout\EditTimeEntryTagsBit.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

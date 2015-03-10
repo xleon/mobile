@@ -25,7 +25,6 @@ namespace Toggl.Joey.UI.Fragments
     public abstract class BaseEditTimeEntryFragment : Fragment
     {
         private static readonly string Tag = "BaseEditTimeEntryFragment";
-        private const int TagMaxLength = 30;
 
         private readonly Handler handler = new Handler ();
         private PropertyChangeTracker propertyTracker;
@@ -246,63 +245,12 @@ namespace Toggl.Joey.UI.Fragments
             RebindTags ();
         }
 
-        protected virtual void RebindTags ()
+        private void RebindTags()
         {
-            List<String> tagList = new List<String> ();
-            String t;
-
-            if (tagsView == null || !canRebind) {
+            if (TagsBit == null) {
                 return;
             }
-            if (tagsView.Count == 0) {
-                TagsEditText.Text = String.Empty;
-                return;
-            }
-
-            foreach (String tagText in tagsView.Data) {
-                if (tagText.Length > TagMaxLength) {
-                    t = tagText.Substring (0, TagMaxLength - 1).Trim () + "…";
-                } else {
-                    t = tagText;
-                }
-                tagList.Add (t);
-            }
-            // The extra whitespace prevents the ImageSpans and the text they are over
-            // to break at different positions, leaving zero linespacing on edge cases.
-            var tags = new SpannableStringBuilder (String.Join (" ", tagList) + " ");
-
-            int x = 0;
-            foreach (String tagText in tagList) {
-                tags.SetSpan (new ImageSpan (MakeTagChip (tagText)), x, x + tagText.Length, SpanTypes.ExclusiveExclusive);
-                x = x + tagText.Length + 1;
-            }
-            TagsEditText.SetText (tags, EditText.BufferType.Spannable);
-        }
-
-        private BitmapDrawable MakeTagChip (String tagText)
-        {
-            var ctx = ServiceContainer.Resolve<Context> ();
-            var Inflater = LayoutInflater.FromContext (ctx);
-            var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, cont, false);
-
-            tagChipView.Text = tagText.ToUpper ();
-            int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
-            tagChipView.Measure (spec, spec);
-            tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
-
-            var b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
-
-            var canvas = new Canvas (b);
-            canvas.Translate (-tagChipView.ScrollX, -tagChipView.ScrollY);
-            tagChipView.Draw (canvas);
-            tagChipView.DrawingCacheEnabled = true;
-
-            var cacheBmp = tagChipView.DrawingCache;
-            var viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
-            tagChipView.DestroyDrawingCache ();
-            var bmpDrawable = new BitmapDrawable (Resources, viewBmp);
-            bmpDrawable.SetBounds (0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
-            return bmpDrawable;
+            TagsBit.RebindTags (tagsView);
         }
 
         protected TextView DurationTextView { get; private set; }
@@ -315,8 +263,6 @@ namespace Toggl.Joey.UI.Fragments
 
         protected EditText ProjectEditText { get; private set; }
 
-        protected EditText TagsEditText { get; private set; }
-
         protected CheckBox BillableCheckBox { get; private set; }
 
         protected ImageButton DeleteImageButton { get; private set; }
@@ -326,6 +272,8 @@ namespace Toggl.Joey.UI.Fragments
         protected EditTimeEntryBit DescriptionBit { get; private set; }
 
         protected EditTimeEntryBit TaskBit { get; private set; }
+
+        protected EditTimeEntryTagsBit TagsBit { get; private set; }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle state)
         {
@@ -344,14 +292,10 @@ namespace Toggl.Joey.UI.Fragments
 
             TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
 
-            var tagsTitle = view.FindViewById<TextView> (Resource.Id.EditTimeEntryTagsTitle);
-            TagsEditText = view.FindViewById<EditText> (Resource.Id.TagsEditText);
+            TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.TagsBit);
 
 
-            TagsEditText.Touch += (object sender, View.TouchEventArgs e) => {
-                e.Handled = false;
-                tagsTitle.Pressed = e.Event.Action != MotionEventActions.Up;
-            };
+
 
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
             DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.TrashButton);
@@ -364,7 +308,7 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
             ProjectBit.Click += OnProjectClick;
             ProjectEditText.Click += OnProjectClick;
-            TagsEditText.Click += OnTagsEditTextClick;
+            TagsBit.FullClick += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
             DeleteImageButton.Click += OnDeleteImageButtonClick;
 

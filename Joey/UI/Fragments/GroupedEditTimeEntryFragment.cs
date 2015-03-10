@@ -49,6 +49,7 @@ namespace Toggl.Joey.UI.Fragments
 
         protected EditTimeEntryBit DescriptionBit { get; private set; }
 
+        protected EditTimeEntryTagsBit TagsBit { get; private set; }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -70,10 +71,23 @@ namespace Toggl.Joey.UI.Fragments
             ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
             TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentTask).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
             DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentDescription).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+            TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.GroupedEditTimeEntryFragmentTags);
+
+            TagsBit.FullClick += OnTagsEditTextClick;
 
             Rebind ();
 
             return view;
+        }
+
+
+        private void OnTagsEditTextClick (object sender, EventArgs e)
+        {
+            if (entryGroup == null) {
+                return;
+            }
+
+            new ChooseTimeEntryTagsDialogFragment (entryGroup.Model).Show (FragmentManager, "tags_dialog");
         }
 
         protected virtual void Rebind() 

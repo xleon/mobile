@@ -142,30 +142,11 @@
                 android:layout_height="match_parent"
                 android:id="@+id/Description"
                 android:layout_marginTop="10dp" />
-            <TextView
-                android:id="@+id/EditTimeEntryTagsTitle"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginBottom="5dp"
-                android:textSize="12sp"
-                android:lines="1"
-                android:text="Tags"
-                android:textColor="@color/MaterialPlaceholderColor" />
-            <EditText
-                android:id="@+id/TagsEditText"
+            <Toggl.Joey.UI.Views.EditTimeEntryTagsBit
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:editable="false"
-                android:cursorVisible="false"
-                android:focusableInTouchMode="false"
-                android:hint="@string/CurrentTimeEntryEditTagsHint"
-                android:background="@drawable/BackgroundLine"
-                android:paddingBottom="10dp"
-                android:layout_marginBottom="2dp"
-                android:textColor="@color/material_black"
-               	android:textSize="18dp"
-                android:drawableRight="@drawable/IcSelectArrowBigDown" />
+                android:layout_height="match_parent"
+                android:id="@+id/TagsBit"
+                android:layout_marginTop="10dp" />
             <CheckBox
                 android:id="@+id/BillableCheckBox"
                 android:layout_width="wrap_content"

@@ -72,30 +72,11 @@
                 android:layout_height="56dp"
                 android:id="@+id/GroupedEditTimeEntryFragmentDescription"
                 android:layout_marginTop="10dp" />
-            <TextView
-                android:id="@+id/GroupedEditTimeEntryFragmentTagsTitle"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginBottom="4dp"
-                android:textSize="12sp"
-                android:lines="1"
-                android:text="Tags"
-                android:textColor="@color/MaterialPlaceholderColor" />
-            <EditText
-                android:id="@+id/GroupedEditTimeEntryFragmentTagsEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:editable="false"
-                android:cursorVisible="false"
-                android:focusableInTouchMode="false"
-                android:hint="@string/CurrentTimeEntryEditTagsHint"
-                android:background="@drawable/BackgroundLine"
-                android:paddingBottom="6dp"
-                android:layout_marginBottom="2dp"
-                android:textColor="@color/material_black"
-                android:textSize="18dp"
-                android:drawableRight="@drawable/IcSelectArrowBigDown" />
+			<Toggl.Joey.UI.Views.EditTimeEntryTagsBit
+				android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/GroupedEditTimeEntryFragmentTags" />          
+
             <CheckBox
                 android:id="@+id/GroupedEditTimeEntryFragmentBillableCheckBox"
                 android:layout_width="wrap_content"

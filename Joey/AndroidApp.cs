@@ -49,12 +49,15 @@ namespace Toggl.Joey
 
         private void RegisterComponents ()
         {
+            // Register platform service.
+            ServiceContainer.Register<IPlatformInfo> (this);
+
+            // Register Phoebe services.
             Services.Register ();
 
             // Register Joey components:
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<Context> (this);
-            ServiceContainer.Register<IPlatformInfo> (this);
             ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService (Context));
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());

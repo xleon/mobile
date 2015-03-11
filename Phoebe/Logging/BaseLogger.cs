@@ -73,6 +73,7 @@ namespace Toggl.Phoebe.Logging
                 AddExtraMetadata (md);
 
                 var bugsnagClient = ServiceContainer.Resolve<IBugsnagClient> ();
+
                 if (bugsnagClient != null) {
                     bugsnagClient.Notify (exc, severity, md);
                 }

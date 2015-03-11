@@ -44,7 +44,13 @@ namespace Toggl.Joey.Logging
             if (severity == Bugsnag.Data.ErrorSeverity.Warning) {
                 reportSeverity = ReportSeverity.Warning;
             }
-            var extraData = extraMetadata.ToObject<Dictionary<string, string>>();
+
+            var extraData = new Dictionary<string, string> ();
+            foreach (var item in extraMetadata) {
+                if (item.Value != null) {
+                    extraData = item.Value.ToObject<Dictionary<string, string>>();
+                }
+            }
 
             if (severity == Bugsnag.Data.ErrorSeverity.Info) {
                 Insights.Track ("Info", extraData);

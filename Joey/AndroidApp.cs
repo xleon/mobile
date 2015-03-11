@@ -68,7 +68,7 @@ namespace Toggl.Joey
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
             ServiceContainer.Register<IBugsnagClient> (delegate {
-                return new BugsnagClient (this, Build.BugsnagApiKey) {
+                return new LogClient (this, Build.XamInsightsApiKey, Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };

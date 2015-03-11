@@ -3,10 +3,11 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Bugsnag;
+using Toggl.Joey.Logging;
+using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.UI.Fragments;
 using Activity = Android.Support.V4.App.FragmentActivity;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
@@ -80,9 +81,9 @@ namespace Toggl.Joey.UI.Activities
             return false;
         }
 
-        private BugsnagClient BugsnagClient
+        private LogClient BugsnagClient
         {
-            get { return (BugsnagClient)ServiceContainer.Resolve<IBugsnagClient> (); }
+            get { return (LogClient)ServiceContainer.Resolve<IBugsnagClient> (); }
         }
 
         protected sealed override void OnCreate (Bundle state)

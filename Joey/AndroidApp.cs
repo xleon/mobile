@@ -5,16 +5,17 @@ using Android.App;
 using Android.Content;
 using Android.Net;
 using Bugsnag;
+using Toggl.Joey.Analytics;
+using Toggl.Joey.Data;
+using Toggl.Joey.Logging;
+using Toggl.Joey.Net;
+using Toggl.Joey.Widget;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.Analytics;
-using Toggl.Joey.Data;
-using Toggl.Joey.Logging;
-using Toggl.Joey.Net;
 
 namespace Toggl.Joey
 {
@@ -48,12 +49,16 @@ namespace Toggl.Joey
 
         private void RegisterComponents ()
         {
+            // Register platform service.
+            ServiceContainer.Register<IPlatformInfo> (this);
+
+            // Register Phoebe services.
             Services.Register ();
 
             // Register Joey components:
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<Context> (this);
-            ServiceContainer.Register<IPlatformInfo> (this);
+            ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService (Context));
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
             ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
@@ -77,6 +82,7 @@ namespace Toggl.Joey
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<IBugsnagClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
+            ServiceContainer.Resolve<WidgetSyncManager>();
         }
 
         public void InitializeComponents ()

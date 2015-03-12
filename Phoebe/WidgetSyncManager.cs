@@ -28,6 +28,7 @@ namespace Toggl.Phoebe
         private bool isActing;
         private bool isLoading;
         private int rebindCounter;
+        private MessageBus messageBus;
 
         public WidgetSyncManager ()
         {
@@ -39,9 +40,9 @@ namespace Toggl.Phoebe
             timeEntryManager.PropertyChanged += OnTimeEntryManagerPropertyChanged;
             ResetModelToRunning ();
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSync);
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSync);
+            messageBus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionSyncStarted = messageBus.Subscribe<SyncStartedMessage> (OnSync);
+            subscriptionSyncFinished = messageBus.Subscribe<SyncFinishedMessage> (OnSync);
         }
 
         public async void StartStopTimeEntry()
@@ -78,7 +79,7 @@ namespace Toggl.Phoebe
         public async void ContinueTimeEntry ()
         {
             TimeEntryModel entryModel;
-            Guid stringGuid = widgetUpdateService.GetEntryIdStarted();
+            Guid stringGuid = widgetUpdateService.EntryIdStarted;
 
             // Query local data:
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -121,6 +122,11 @@ namespace Toggl.Phoebe
             }
         }
 
+        public void SyncWidgetData()
+        {
+            OnSync (null);
+        }
+
         private async void OnSync (Message msg)
         {
             if (isLoading) {
@@ -130,6 +136,9 @@ namespace Toggl.Phoebe
             isLoading = true;
 
             try {
+                // Dispathc started message.
+                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage (this,true));
+
                 var queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
 
                 // Query local data:
@@ -169,24 +178,28 @@ namespace Toggl.Phoebe
                         Color = ProjectModel.HexColors [ project.Color % ProjectModel.HexColors.Length],
                         IsRunning = entry.State == TimeEntryState.Running,
                         TimeValue = (entry.StopTime - entry.StartTime).ToString(),
+                        Duration = (entry.StopTime.HasValue ? entry.StopTime.Value : Time.UtcNow) - entry.StartTime,
                     });
 
                 }
 
-                widgetUpdateService.SetLastEntries (widgetEntries);
+                widgetUpdateService.LastEntries = widgetEntries;
 
             } catch (Exception exc) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (Tag, exc, "Failed to fetch time entries");
             } finally {
                 isLoading = false;
+
+                // Dispathc ended message.
+                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage (this));
             }
         }
 
         private void OnAuthPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
             if (args.PropertyName == AuthManager.PropertyIsAuthenticated) {
-                widgetUpdateService.SetUserLogged (authManager.IsAuthenticated);
+                widgetUpdateService.IsUserLogged = authManager.IsAuthenticated;
             }
         }
 
@@ -194,6 +207,7 @@ namespace Toggl.Phoebe
         {
             if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
                 ResetModelToRunning ();
+                SyncWidgetData ();
                 Rebind ();
             }
         }
@@ -218,10 +232,10 @@ namespace Toggl.Phoebe
             rebindCounter++;
 
             if (currentTimeEntry == null) {
-                widgetUpdateService.SetRunningEntryDuration (DefaultDurationText);
+                widgetUpdateService.RunningEntryDuration = DefaultDurationText;
             } else {
                 var duration = currentTimeEntry.GetDuration ();
-                widgetUpdateService.SetRunningEntryDuration (duration.ToString (@"hh\:mm\:ss"));
+                widgetUpdateService.RunningEntryDuration = duration.ToString (@"hh\:mm\:ss");
 
                 var counter = rebindCounter;
                 var timer = new Timer (1000 - duration.Milliseconds);
@@ -247,6 +261,8 @@ namespace Toggl.Phoebe
             public string Color { get; set; }
 
             public bool IsRunning { get; set; }
+
+            public TimeSpan Duration { get; set; }
         }
     }
 }

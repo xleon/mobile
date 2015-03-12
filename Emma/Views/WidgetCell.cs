@@ -29,25 +29,25 @@ namespace Toggl.Emma.Views
                 data = value;
 
                 // Set state
-                if ( data.IsEmpty) {
+                if (data.IsEmpty) {
                     projectLabel.Text = (startBtn.IsRunning) ? "StopTogglLabel".Tr () : "StartTogglLabel".Tr ();
                 } else {
-                    projectLabel.Text = string.IsNullOrEmpty ( data.ProjectName) ? "CellNoProject".Tr() : data.ProjectName;
-                    descriptionLabel.Text = string.IsNullOrEmpty ( data.Description) ? "CellNoDescription".Tr() : data.Description;
+                    projectLabel.Text = string.IsNullOrEmpty (data.ProjectName) ? "CellNoProject".Tr() : data.ProjectName;
+                    descriptionLabel.Text = string.IsNullOrEmpty (data.Description) ? "CellNoDescription".Tr() : data.Description;
                 }
                 startBtn.IsRunning = data.IsRunning;
                 startBtn.IsActive = data.IsEmpty || data.IsRunning;
                 descriptionLabel.Hidden = data.IsEmpty;
 
                 // Set time size
-                var nsString = new NSString ( defaultTimeValue);
+                var nsString = new NSString (defaultTimeValue);
                 var attribs = new UIStringAttributes { Font = timeLabel.Font };
-                timeLabel.Bounds = new CGRect ( CGPoint.Empty, nsString.GetSizeUsingAttributes (attribs));
+                timeLabel.Bounds = new CGRect (CGPoint.Empty, nsString.GetSizeUsingAttributes (attribs));
 
-                timeLabel.Text = string.IsNullOrEmpty ( value.TimeValue) ? defaultTimeValue : value.TimeValue;
+                timeLabel.Text = string.IsNullOrEmpty (value.TimeValue) ? defaultTimeValue : value.TimeValue;
 
                 // Set color
-                colorBox.BackgroundColor = ( data.IsEmpty) ? UIColor.Clear : UIColorFromHex ( data.Color);
+                colorBox.BackgroundColor = (data.IsEmpty) ? UIColor.Clear : UIColorFromHex (data.Color);
             }
         }
 
@@ -77,41 +77,41 @@ namespace Toggl.Emma.Views
 
             textContentView.Add (projectLabel = new UILabel {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Font = UIFont.FromName ( "Helvetica", 16f),
+                Font = UIFont.FromName ("Helvetica", 16f),
                 Text = "Project",
                 TextColor = UIColor.White,
             });
 
             textContentView.Add (descriptionLabel = new UILabel {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Font = UIFont.FromName ( "Helvetica", 13f),
+                Font = UIFont.FromName ("Helvetica", 13f),
                 Text = "Description",
                 TextColor = UIColor.White,
             });
 
-            ContentView.Add ( colorBox = new UIView() {
+            ContentView.Add (colorBox = new UIView() {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
             ContentView.Add (timeLabel = new UILabel {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = defaultTimeValue,
-                Font = UIFont.FromName ( "Helvetica", 13f),
+                Font = UIFont.FromName ("Helvetica", 13f),
                 TextAlignment = UITextAlignment.Right,
                 TextColor = UIColor.White,
             });
 
-            ContentView.Add ( startBtn = new StartStopBtn {
+            ContentView.Add (startBtn = new StartStopBtn {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
-            ContentView.Add ( textContentView);
+            ContentView.Add (textContentView);
 
             startBtn.TouchUpInside += (sender, e) => {
                 startBtn.IsActive = true;
                 startBtn.IsRunning = !startBtn.IsRunning;
-                if ( StartBtnPressed != null) {
-                    StartBtnPressed.Invoke ( this, e);
+                if (StartBtnPressed != null) {
+                    StartBtnPressed.Invoke (this, e);
                 }
             };
 
@@ -137,7 +137,7 @@ namespace Toggl.Emma.Views
 
         public override void UpdateConstraints ()
         {
-            if ( ContentView.Constraints.Length > 0) {
+            if (ContentView.Constraints.Length > 0) {
                 base.UpdateConstraints ();
                 return;
             }
@@ -147,28 +147,28 @@ namespace Toggl.Emma.Views
                 colorBox.AtLeftOf (ContentView, 0f),
                 colorBox.AtTopOf (ContentView, 10f),
                 colorBox.AtBottomOf (ContentView, 10f),
-                colorBox.Width().EqualTo ( 3f),
+                colorBox.Width().EqualTo (3f),
 
                 startBtn.AtRightOf (ContentView, 15f),
                 startBtn.WithSameCenterY (ContentView),
-                startBtn.Height().EqualTo ( 35f),
-                startBtn.Width().EqualTo ( 35f),
+                startBtn.Height().EqualTo (35f),
+                startBtn.Width().EqualTo (35f),
 
                 timeLabel.WithSameCenterY (ContentView),
-                timeLabel.ToLeftOf ( startBtn, 10f),
-                timeLabel.Width().EqualTo ( timeLabel.Bounds.Width),
+                timeLabel.ToLeftOf (startBtn, 10f),
+                timeLabel.Width().EqualTo (timeLabel.Bounds.Width),
 
                 textContentView.AtLeftOf (ContentView, 50f),
-                textContentView.ToLeftOf ( timeLabel, 5f),
-                textContentView.WithSameCenterY ( ContentView),
-                textContentView.WithSameHeight ( ContentView)
+                textContentView.ToLeftOf (timeLabel, 5f),
+                textContentView.WithSameCenterY (ContentView),
+                textContentView.WithSameHeight (ContentView)
             );
 
             textContentView.AddConstraints (
                 projectLabel.AtLeftOf (textContentView, 0f)
             );
 
-            if ( data.IsEmpty) {
+            if (data.IsEmpty) {
                 textContentView.AddConstraints (
                     projectLabel.WithSameCenterY (textContentView),
                     null
@@ -176,8 +176,8 @@ namespace Toggl.Emma.Views
             } else {
                 textContentView.AddConstraints (
                     projectLabel.AtTopOf (textContentView, 10f),
-                    descriptionLabel.WithSameLeft ( projectLabel),
-                    descriptionLabel.Below ( projectLabel, 0f),
+                    descriptionLabel.WithSameLeft (projectLabel),
+                    descriptionLabel.Below (projectLabel, 0f),
                     descriptionLabel.AtBottomOf (textContentView, 10f),
                     null
                 );
@@ -195,7 +195,7 @@ namespace Toggl.Emma.Views
             base.LayoutSubviews ();
         }
 
-        private UIColor UIColorFromHex ( string hexValue, float alpha = 1f)
+        private UIColor UIColorFromHex (string hexValue, float alpha = 1f)
         {
             hexValue = hexValue.TrimStart ('#');
 

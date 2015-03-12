@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    <Chronometer
+        android:id="@+id/Chronometer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:gravity="center_horizontal" />
+    <LinearLayout
+        android:id="@+id/WidgetRunningEntry"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_marginBottom="7dp"
+        android:visibility="invisible"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+        <ImageView
+            android:id="@+id/WidgetColorView"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:paddingTop="5dp"
+            android:paddingRight="6dp"
+            android:src="@drawable/widget_color_shape" />
+        <TextView
+            android:id="@+id/WidgetRunningDescriptionTextView"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"
+            android:layout_width="wrap_content"
+            android:text="Description"
+            android:textColor="#ffffffff" />
+    </LinearLayout>
+    <Button
+        android:text="@string/TimerStartButtonText"
+        android:layout_width="90dp"
+        android:layout_height="34dp"
+        android:textSize="12dp"
+        android:id="@+id/WidgetActionButton"
+        android:background="@color/bright_green"
+        android:textColor="@android:color/white"
+        android:layout_gravity="center" />
+    <ListView
+        android:id="@+id/WidgetRecentEntriesListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:dividerHeight="6dp"
+        android:divider="@android:color/transparent"
+        android:minHeight="40dp" />
+</LinearLayout>

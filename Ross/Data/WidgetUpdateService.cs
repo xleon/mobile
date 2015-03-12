@@ -47,7 +47,8 @@ namespace Toggl.Ross.Data
             // WidgetUpdateService still doesn't exists.
 
             var authManager = ServiceContainer.Resolve<AuthManager>();
-            SetUserLogged (authManager.IsAuthenticated);
+
+            IsUserLogged = authManager.IsAuthenticated;
             SetAppActivated (true);
             SetAppOnBackground (false);
             rootController = UIApplication.SharedApplication.KeyWindow.RootViewController;
@@ -55,25 +56,61 @@ namespace Toggl.Ross.Data
 
         #region IWidgetUpdateService implementation
 
-        public void SetLastEntries (List<WidgetSyncManager.WidgetEntryData> lastEntries)
+        List<WidgetSyncManager.WidgetEntryData> lastEntries;
+
+        public List<WidgetSyncManager.WidgetEntryData> LastEntries
         {
-            if (lastEntries != null) {
-                var json = JsonConvert.SerializeObject (lastEntries);
-                UserDefaults.SetString (json, TimeEntriesKey);
+            get {
+                return lastEntries;
+            } set {
+                if (value != null) {
+                    lastEntries = value;
+                    var json = JsonConvert.SerializeObject (lastEntries);
+                    UserDefaults.SetString (json, TimeEntriesKey);
+                    UpdateWidgetContent();
+                }
+            }
+        }
+
+        private string duration;
+
+        public string RunningEntryDuration
+        {
+            get {
+                return duration;
+            } set {
+                duration = value;
+                UserDefaults.SetString (duration, MillisecondsKey);
+            }
+        }
+
+        private bool isLogged;
+
+        public bool IsUserLogged
+        {
+            get {
+                return isLogged;
+            } set {
+                isLogged = value;
+                UserDefaults.SetBool (isLogged, IsUserLoggedKey);
                 UpdateWidgetContent();
             }
         }
 
-        public void SetRunningEntryDuration (string duration)
+        private Guid entryIdStarted;
+
+        public Guid EntryIdStarted
         {
-            UserDefaults.SetString (duration, MillisecondsKey);
+            get {
+                Guid entryId;
+                Guid.TryParse (UserDefaults.StringForKey (StartedEntryKey), out entryId);
+                return entryId;
+            } set {
+                entryIdStarted = value;
+            }
         }
 
-        public void SetUserLogged (bool isLogged)
-        {
-            UserDefaults.SetBool (isLogged, IsUserLoggedKey);
-            UpdateWidgetContent();
-        }
+        #endregion
 
         public void SetAppActivated (bool isActivated)
         {
@@ -101,13 +138,6 @@ namespace Toggl.Ross.Data
             }
         }
 
-        public Guid GetEntryIdStarted ()
-        {
-            Guid entryId;
-            Guid.TryParse (UserDefaults.StringForKey (StartedEntryKey), out entryId);
-            return entryId;
-        }
-
         public void UpdateWidgetContent()
         {
             if (ServiceContainer.Resolve<IPlatformInfo> ().IsWidgetAvailable) {
@@ -115,8 +145,5 @@ namespace Toggl.Ross.Data
                 controller.SetHasContent (true, NSBundle.MainBundle.BundleIdentifier + ".today");
             }
         }
-
-        #endregion
     }
 }
-

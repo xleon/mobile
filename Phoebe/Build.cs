@@ -23,6 +23,7 @@ namespace Toggl.Phoebe
         public static readonly string AppIdentifier = "TogglJoey";
         public static readonly string GcmSenderId = "";
         public static readonly string BugsnagApiKey = "";
+        public static readonly string XamInsightsApiKey = "";
         public static readonly string GooglePlayUrl = "https://play.google.com/store/apps/details?id=com.toggl.timer";
         #endif
         #endregion

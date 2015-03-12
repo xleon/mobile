@@ -12,7 +12,11 @@ namespace Toggl.Joey.Logging
 
         public LogClient (Context context, string xamApiKey, string bugsnagApiKey, bool enableMetrics = true)
         {
+            #if DEBUG
+            Insights.Initialize (Insights.DebugModeKey, context);
+            #else
             Insights.Initialize (xamApiKey, context);
+            #endif
             bugsnagClient = new BugsnagClient (context, bugsnagApiKey, enableMetrics);
         }
 

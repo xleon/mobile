@@ -39,7 +39,12 @@ namespace Toggl.Joey.Widget
         {
             base.OnCreate ();
 
+            // Track startup time.
+            var handler = Xamarin.Insights.TrackTime ("TimeToStartWidget");
+
+            handler.Start ();
             ((AndroidApp)Application).InitializeComponents ();
+            handler.Stop ();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncFinishedMessage = bus.Subscribe<SyncWidgetMessage> (OnSyncFinishedMessage);

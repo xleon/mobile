@@ -71,6 +71,9 @@
     <Reference Include="Bugsnag.Android">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.1\lib\MonoAndroid10\Bugsnag.Android.dll</HintPath>
     </Reference>
+    <Reference Include="Xamarin.Insights">
+      <HintPath>..\packages\Xamarin.Insights.1.9.1.107\lib\MonoAndroid10\Xamarin.Insights.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -145,6 +148,7 @@
     <Compile Include="Widget\InitWidgetService.cs" />
     <Compile Include="Widget\RemotesViewsFactory.cs" />
     <Compile Include="Widget\WidgetStartStopService.cs" />
+    <Compile Include="Logging\LogClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

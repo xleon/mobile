@@ -4,6 +4,7 @@ using Android.Content;
 using Android.Gms.Analytics;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Xamarin;
 
 namespace Toggl.Joey.Analytics
 {
@@ -42,6 +43,12 @@ namespace Toggl.Joey.Analytics
                      .SetCategory (category)
                      .SetVariable (variable)
                      .SetLabel (label));
+
+            // Simple test of Xamarin Insights to get events.
+            if (Insights.IsInitialized)
+                Insights.Track ("AppStartupTime", new Dictionary<string, string> {
+                {"ElapsedTime", elapsedMilliseconds.ToString() + "ms"},
+            });
         }
 
         protected override void SendEvent (string category, string action, string label, long value)
@@ -51,6 +58,7 @@ namespace Toggl.Joey.Analytics
                      .SetAction (action)
                      .SetLabel (label)
                      .SetValue (value));
+
         }
 
         protected override void SetCustomDimension (int idx, string value)

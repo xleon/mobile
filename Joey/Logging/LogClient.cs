@@ -24,9 +24,7 @@ namespace Toggl.Joey.Logging
 
         void IBugsnagClient.SetUser (string id, string email, string name)
         {
-            if (id == null) {
-                Insights.Identify (Insights.Traits.GuestIdentifier, null);
-            } else {
+            if (id != null) {
                 var traits = new Dictionary<string, string> {
                     { Insights.Traits.Email, email },
                     { Insights.Traits.Name, name }

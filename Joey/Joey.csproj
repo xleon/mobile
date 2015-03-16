@@ -643,7 +643,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcSelectArrowSmallDown.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcStopWhite.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTag.png" />
-<<<<<<< HEAD
     <AndroidResource Include="Resources\layout\EditTimeEntryBit.axml" />
     <AndroidResource Include="Resources\drawable\BackgroundLine.xml" />
     <AndroidResource Include="Resources\color\MaterialPlaceholderColor.xml" />
@@ -658,9 +657,7 @@
     <AndroidResource Include="Resources\drawable\LineDivider.xml" />
     <AndroidResource Include="Resources\drawable\DropShadow.xml" />
     <AndroidResource Include="Resources\layout\EditTimeEntryTagsBit.axml" />
-=======
     <AndroidResource Include="Resources\drawable\NotificationBubble.xml" />
->>>>>>> NotificationBubble implementation.
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

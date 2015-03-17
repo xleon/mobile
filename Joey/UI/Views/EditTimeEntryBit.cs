@@ -19,7 +19,7 @@ namespace Toggl.Joey.UI.Views
         {
             Initialize ();
         }
-           
+
         void Initialize ()
         {
             LayoutInflater inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
@@ -50,7 +50,7 @@ namespace Toggl.Joey.UI.Views
         public EditTimeEntryBit SetName (int resourceId)
         {
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            title.SetText(resourceId);
+            title.SetText (resourceId);
             EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
             text.SetText (resourceId);
             return this;

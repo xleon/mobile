@@ -69,7 +69,7 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null) {
                 return;
             }
-            OpenTimeEntryEdit (new TimeEntryModel(model));
+            OpenTimeEntryEdit (new TimeEntryModel (model));
 
         }
 

@@ -1,9 +1,8 @@
 ﻿using System;
+using Android.Graphics;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Android.Graphics;
-
 using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Adapters
@@ -25,13 +24,13 @@ namespace Toggl.Joey.UI.Adapters
             private View color;
             private TextView period;
             private TextView duration;
-          
+
             public View ColorView
             {
                 get { return color; }
             }
 
-            public TextView PeriodTextView 
+            public TextView PeriodTextView
             {
                 get { return period; }
             }
@@ -42,16 +41,16 @@ namespace Toggl.Joey.UI.Adapters
             }
 
 
-            public ViewHolder(View v) : base(v)
+            public ViewHolder (View v) : base (v)
             {
-                color = v.FindViewById(Resource.Id.GroupedEditTimeEntryItemTimeColorView);
-                period = (TextView)v.FindViewById(Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
-                duration = (TextView)v.FindViewById(Resource.Id.GroupedEditTimeEntryItemDurationTextView);
+                color = v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimeColorView);
+                period = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
+                duration = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemDurationTextView);
             }
         }
 
         // Create new views (invoked by the layout manager)
-        public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup viewGroup, int position)
+        public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup viewGroup, int position)
         {
             View v = LayoutInflater.From (viewGroup.Context).Inflate (Resource.Layout.GroupedEditTimeEntryItem, viewGroup, false);
             ViewHolder vh = new ViewHolder (v);
@@ -59,7 +58,7 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         // Replace the contents of a view (invoked by the layout manager)
-        public override void OnBindViewHolder(RecyclerView.ViewHolder viewHolder, int position)
+        public override void OnBindViewHolder (RecyclerView.ViewHolder viewHolder, int position)
         {
             var vh = viewHolder as ViewHolder;
             var entry = entryGroup.TimeEntryList [position];
@@ -76,7 +75,7 @@ namespace Toggl.Joey.UI.Adapters
         // Return the size of your dataset (invoked by the layout manager)
         public override int ItemCount
         {
-            get{ return  entryGroup.TimeEntryList.Count; }
+            get { return  entryGroup.TimeEntryList.Count; }
         }
 
 

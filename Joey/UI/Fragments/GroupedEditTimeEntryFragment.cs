@@ -1,28 +1,23 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.V4.App;
+using Android.Support.V7.Widget;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Decorations;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Joey.UI.Decorations;
-using Toggl.Joey.UI.Views;
-
-using Android.Support.V4.App;
-using Android.Support.V7.Widget;
-
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
 
@@ -37,7 +32,8 @@ namespace Toggl.Joey.UI.Fragments
         public RecyclerView.LayoutManager layoutManager;
 
 
-        public GroupedEditTimeEntryFragment(TimeEntryGroup entryGroup) {
+        public GroupedEditTimeEntryFragment (TimeEntryGroup entryGroup)
+        {
             this.entryGroup = entryGroup;
         }
 
@@ -60,7 +56,7 @@ namespace Toggl.Joey.UI.Fragments
             layoutManager = new LinearLayoutManager (Activity);
             recyclerView.SetLayoutManager (layoutManager);
 
-            adapter = new GroupTimeEntriesAdapter(entryGroup); 
+            adapter = new GroupTimeEntriesAdapter (entryGroup);
             recyclerView.SetAdapter (adapter);
 
             var decoration = new ItemDividerDecoration (Activity.ApplicationContext);
@@ -90,7 +86,7 @@ namespace Toggl.Joey.UI.Fragments
             new ChooseTimeEntryTagsDialogFragment (entryGroup.Model).Show (FragmentManager, "tags_dialog");
         }
 
-        protected virtual void Rebind() 
+        protected virtual void Rebind()
         {
             // Reset tracked Observables
 

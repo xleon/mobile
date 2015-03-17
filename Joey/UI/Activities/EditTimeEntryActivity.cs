@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using Android.App;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
-using Toggl.Joey.UI.Fragments;
-using Android.Graphics.Drawables;
 using Toggl.Phoebe.Data.Utils;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -49,8 +49,8 @@ namespace Toggl.Joey.UI.Activities
                     .Commit ();
                 } else if (group != null) {
                     FragmentManager.BeginTransaction ()
-                        .Add (Resource.Id.FrameLayout, new GroupedEditTimeEntryFragment(group))
-                        .Commit ();
+                    .Add (Resource.Id.FrameLayout, new GroupedEditTimeEntryFragment (group))
+                    .Commit ();
                 }
             }
         }
@@ -68,13 +68,13 @@ namespace Toggl.Joey.UI.Activities
                 var extraGuids = extras.GetStringArray (ExtraGroupedTimeEntriesGuids);
                 var entriesToGroup = new List<TimeEntryModel> ();
                 foreach (string guidString in extraGuids) {
-                    var entry = new TimeEntryModel(new Guid (guidString));
+                    var entry = new TimeEntryModel (new Guid (guidString));
                     await entry.LoadAsync ();
                     entriesToGroup.Add (entry);
                 }
                 group = new TimeEntryGroup (entriesToGroup [0].Data);
-               
-                foreach (var entry in entriesToGroup.Skip(1)) {
+
+                foreach (var entry in entriesToGroup.Skip (1)) {
                     group.UpdateIfPossible (entry.Data);
                 }
                 return;

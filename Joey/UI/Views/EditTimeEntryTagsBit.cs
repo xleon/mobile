@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using Android.Content;
+using Android.Graphics;
+using Android.Graphics.Drawables;
+using Android.Text;
+using Android.Text.Style;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using Android.Graphics;
-using Android.Graphics.Drawables;
-
-using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Data.Models;
-
-using Android.Text;
-using Android.Text.Style;
-
+using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Joey.UI.Views
 {
@@ -40,7 +36,7 @@ namespace Toggl.Joey.UI.Views
 
         public TextView TextView { get; private set; }
 
-        protected virtual void OnClick(object obj, EventArgs args)
+        protected virtual void OnClick (object obj, EventArgs args)
         {
             EventHandler handler = FullClick;
             if (handler != null) {
@@ -51,9 +47,9 @@ namespace Toggl.Joey.UI.Views
         void Initialize()
         {
             LayoutInflater inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
-            inflater.Inflate(Resource.Layout.EditTimeEntryTagsBit, this);
+            inflater.Inflate (Resource.Layout.EditTimeEntryTagsBit, this);
 
-            EditText = FindViewById<EditText> (Resource.Id.EditTimeEntryTagsBitEditText); 
+            EditText = FindViewById<EditText> (Resource.Id.EditTimeEntryTagsBitEditText);
             TextView = (TextView)FindViewById<TextView> (Resource.Id.EditTimeEntryTagsBitTitle);
 
             EditText.Touch += (object sender, View.TouchEventArgs e) => {
@@ -64,7 +60,7 @@ namespace Toggl.Joey.UI.Views
             Click += OnClick;
             EditText.Click += OnClick;
         }
-            
+
 
         public virtual void RebindTags (TimeEntryTagsView tagsView)
         {

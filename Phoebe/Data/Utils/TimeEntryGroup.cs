@@ -94,7 +94,7 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeEntryState State
         {
             get {
-                    return dataObjects.Last().State;
+                return dataObjects.Last().State;
             }
         }
 
@@ -125,7 +125,7 @@ namespace Toggl.Phoebe.Data.Utils
             Sort();
         }
 
-        public void UpdateIfPossible(TimeEntryData data)
+        public void UpdateIfPossible (TimeEntryData data)
         {
             if (CanContain (data)) {
                 Add (data);

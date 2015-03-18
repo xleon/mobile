@@ -338,7 +338,7 @@ namespace Toggl.Joey.UI.Adapters
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 if (DataSource.Project != null && DataSource.Project.Client != null) {
-                    ClientTextView.Text = DataSource.Project.Client.Name;
+                    ClientTextView.Text = String.Format ("{0} • ", DataSource.Project.Client.Name);
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
                     ClientTextView.Text = String.Empty;
@@ -346,7 +346,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 if (DataSource.Task != null) {
-                    TaskTextView.Text = DataSource.Task.Name;
+                    TaskTextView.Text = String.Format ("{0} • ", DataSource.Task.Name);
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
                     TaskTextView.Text = String.Empty;

@@ -284,14 +284,15 @@ namespace Toggl.Joey.UI.Adapters
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 if (DataSource.Model.Project != null && DataSource.Model.Project.Client != null) {
-                    ClientTextView.Text = DataSource.Model.Project.Client.Name;
+                    ClientTextView.Text = String.Format ("{0} • ", DataSource.Model.Project.Client.Name);
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
                     ClientTextView.Visibility = ViewStates.Gone;
+                    ClientTextView.Text = String.Empty;
                 }
 
                 if (DataSource.Model.Task != null) {
-                    TaskTextView.Text = DataSource.Model.Task.Name;
+                    TaskTextView.Text = String.Format ("{0} • ", DataSource.Model.Task.Name);
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
                     TaskTextView.Text = String.Empty;
@@ -307,6 +308,7 @@ namespace Toggl.Joey.UI.Adapters
                     } else {
                         ProjectTextView.Text = DataSource.Model.Project.Name;
                     }
+
                 } else {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));

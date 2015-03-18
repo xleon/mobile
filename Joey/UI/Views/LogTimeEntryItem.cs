@@ -46,12 +46,12 @@ namespace Toggl.Joey.UI.Views
             this.DescendantFocusability = DescendantFocusability.BlockDescendants;
             view.SetBackgroundColor (Android.Graphics.Color.White);
             colorView = FindViewById (Resource.Id.ColorView);
-            projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.RobotoMedium);
-            clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoMedium);
-            taskTextView = view.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoMedium);
+            projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
+            clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView);
+            taskTextView = view.FindViewById<TextView> (Resource.Id.TaskTextView);
             descriptionTextView = view.FindViewById<TextView> (Resource.Id.DescriptionTextView);
             continueImageButton = view.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
-            durationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
+            durationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
             billableIcon = view.FindViewById<ImageView> (Resource.Id.BillableIcon);
             tagsIcon = view.FindViewById<NotificationImageView> (Resource.Id.TagsIcon);
 
@@ -116,12 +116,11 @@ namespace Toggl.Joey.UI.Views
             int firstWidth = 0;
 
             if (clientTextView.Text != String.Empty) {
-                projectTextView.Text = String.Format (" • {0}", projectTextView.Text);
-                projectTextView.Measure (0, 0);
                 firstWidth = GetFirstElementWidth (usableWidthFirstLine, clientTextView.MeasuredWidth);
                 LayoutView (clientTextView, paddingLeft, currentTop, firstWidth, clientTextView.MeasuredHeight);
             }
             LayoutView (projectTextView, paddingLeft + firstWidth, currentTop, GetSecondElementWidth (usableWidthFirstLine, firstWidth, projectTextView.MeasuredWidth), projectTextView.MeasuredHeight);
+
             fadeRect = new Rectangle (
                 usableWidthFirstLine + paddingLeft, currentTop,
                 0, projectTextView.MeasuredHeight + descriptionTextView.MeasuredHeight
@@ -135,7 +134,7 @@ namespace Toggl.Joey.UI.Views
                     GetFirstElementWidth (usableWidthFirstLine, taskTextView.MeasuredWidth),
                     taskTextView.MeasuredHeight
                 );
-                descriptionTextView.Text = String.Format (" • {0}", descriptionTextView.Text);
+
                 descriptionTextView.Measure (0, 0);
                 LayoutView (
                     descriptionTextView,

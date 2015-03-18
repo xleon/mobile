@@ -17,6 +17,7 @@ using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
+using Toggl.Joey.UI.Activities;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
 
@@ -378,8 +379,10 @@ namespace Toggl.Joey.UI.Fragments
             if (TimeEntry == null) {
                 return;
             }
+            // var newFragment = FragmentManager.FindFragmentById(;
 
-            new ChooseTimeEntryProjectDialogFragment (TimeEntry).Show (FragmentManager, "projects_dialog");
+            var intent = new Intent (Activity, typeof (ProjectsActivity));
+            StartActivity (intent);
         }
 
         private void OnTagsEditTextClick (object sender, EventArgs e)

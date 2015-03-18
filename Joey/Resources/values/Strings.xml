@@ -72,6 +72,7 @@
     <string name="ProjectsNoProject">Without project</string>
     <string name="ProjectsNewProject">Create new project&#8230;</string>
     <string name="ProjectsTasks">TASKS</string>
+    <string name="ProjectsTitle">Projects</string>
     <string name="DeleteTimeEntriesDialogTitle">Delete?</string>
     <string name="DeleteTimeEntriesDialogDeleteButton">Delete</string>
     <string name="DeleteTimeEntriesDialogCancelButton">Cancel</string>

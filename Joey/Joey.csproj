@@ -155,6 +155,9 @@
     <Compile Include="UI\Decorations\ItemDividerDecoration.cs" />
     <Compile Include="UI\Views\EditTimeEntryTagsBit.cs" />
     <Compile Include="UI\Views\NotificationImageView.cs" />
+    <Compile Include="UI\Fragments\ProjectsFragment.cs" />
+    <Compile Include="UI\Activities\ProjectsActivity.cs" />
+    <Compile Include="UI\Adapters\ProjectsRecyclerAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -658,6 +661,11 @@
     <AndroidResource Include="Resources\drawable\DropShadow.xml" />
     <AndroidResource Include="Resources\layout\EditTimeEntryTagsBit.axml" />
     <AndroidResource Include="Resources\drawable\NotificationBubble.xml" />
+    <AndroidResource Include="Resources\layout\ProjectsFragment.axml" />
+    <AndroidResource Include="Resources\layout\ProjectActivity.axml" />
+    <AndroidResource Include="Resources\menu\ProjectToolbarHome.axml" />
+    <AndroidResource Include="Resources\layout\ProjectFragmenItem.axml" />
+    <AndroidResource Include="Resources\layout\ProjectFragmentClientItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

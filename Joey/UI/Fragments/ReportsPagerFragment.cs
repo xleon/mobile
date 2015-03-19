@@ -5,14 +5,15 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.Data;
+using Toggl.Joey.UI.Fragments;
+using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.UI.Fragments;
-using Toggl.Joey.UI.Utils;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
@@ -131,9 +132,11 @@ namespace Toggl.Joey.UI.Fragments
             ResetAdapter ();
             UpdatePeriod ();
 
-            if (savedInstanceState != null) {
-                viewPager.CurrentItem = savedInstanceState.GetInt (ExtraCurrentItem, viewPager.CurrentItem);
+            var settings = ServiceContainer.Resolve<SettingsStore> ();
+            if (settings.ReportsCurrentItem.HasValue) {
+                viewPager.CurrentItem = settings.ReportsCurrentItem.Value;
             }
+
             return view;
         }
 
@@ -145,10 +148,11 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroyView ();
         }
 
-        public override void OnSaveInstanceState (Bundle outState)
+        public override void OnPause()
         {
-            base.OnSaveInstanceState (outState);
-            outState.PutInt (ExtraCurrentItem, viewPager.CurrentItem);
+            var settings = ServiceContainer.Resolve<SettingsStore> ();
+            settings.ReportsCurrentItem = viewPager.CurrentItem;
+            base.OnPause();
         }
 
         public override void OnStart ()

@@ -30,6 +30,7 @@ namespace Toggl.Joey.Data
         private const string IdleNotificationKey = "idleNotification";
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
         private const string ReadContinueDialogKey = "readContinueDialog";
+        private const string ReportsCurrentItemKey = "reportsCurrentItem";
 
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
@@ -281,6 +282,17 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (PhoebeLastReportZoomKey, value);
                 OnSettingChanged (PropertyLastReportZoomViewed);
+            }
+        }
+
+        public static readonly string PropertyReportsCurrentItem = GetPropertyName (s => s.ReportsCurrentItem);
+
+        public int? ReportsCurrentItem
+        {
+            get { return GetInt (ReportsCurrentItemKey); }
+            set {
+                SetInt (ReportsCurrentItemKey, value);
+                OnSettingChanged (PropertyReportsCurrentItem);
             }
         }
     }

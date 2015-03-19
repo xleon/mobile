@@ -38,18 +38,6 @@ namespace Toggl.Joey.Widget
             }
         }
 
-        private bool IsRunning
-        {
-            get {
-                // Check if an entry is running.
-                var isRunning = false;
-                foreach (var item in UpdateService.LastEntries) {
-                    isRunning = isRunning || item.IsRunning;
-                }
-                return isRunning;
-            }
-        }
-
         public WidgetProvider()
         {
             // Start the worker thread
@@ -97,7 +85,7 @@ namespace Toggl.Joey.Widget
 
                 views = new RemoteViews (ctx.PackageName, Resource.Layout.keyguard_widget);
 
-                SetupRunningBtn (ctx, views, IsRunning);
+                SetupRunningBtn (ctx, views);
 
                 var adapterServiceIntent = new Intent (ctx, typeof (RemotesViewsFactoryService));
                 adapterServiceIntent.PutExtra (AppWidgetManager.ExtraAppwidgetIds, ids);
@@ -122,14 +110,16 @@ namespace Toggl.Joey.Widget
             wm.UpdateAppWidget (ids, views);
         }
 
-        private void SetupRunningBtn (Context ctx, RemoteViews views, bool isRunning)
+        private void SetupRunningBtn (Context ctx, RemoteViews views)
         {
             var entry = new WidgetSyncManager.WidgetEntryData();
+            var isRunning = false;
 
             // Check if an entry is running.
             foreach (var item in UpdateService.LastEntries)
                 if (item.IsRunning) {
                     entry = item;
+                    isRunning = true;
                 }
 
             var baseTime = SystemClock.ElapsedRealtime ();
@@ -194,9 +184,9 @@ namespace Toggl.Joey.Widget
                     OnUpdate (ctx, wm, ids);
                 } else {
                     var views = new RemoteViews (ctx.PackageName, Resource.Layout.keyguard_widget);
-                    SetupRunningBtn (ctx, views, IsRunning);
-                    wm.NotifyAppWidgetViewDataChanged (ids, Resource.Id.WidgetRecentEntriesListView);
+                    SetupRunningBtn (ctx, views);
                     wm.PartiallyUpdateAppWidget (ids, views);
+                    wm.NotifyAppWidgetViewDataChanged (ids, Resource.Id.WidgetRecentEntriesListView);
                 }
             });
         }

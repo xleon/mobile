@@ -13,7 +13,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe
 {
-    public class WidgetSyncManager
+    public class WidgetSyncManager : IDisposable
     {
         private const string Tag = "WidgetSyncManager";
         private const string DefaultDurationText = " 00:00:00 ";
@@ -120,6 +120,9 @@ namespace Toggl.Phoebe
                 bus.Unsubscribe (subscriptionSyncFinished);
                 subscriptionSyncFinished = null;
             }
+
+            authManager.PropertyChanged -= OnAuthPropertyChanged;
+            timeEntryManager.PropertyChanged -= OnTimeEntryManagerPropertyChanged;
         }
 
         public void SyncWidgetData()
@@ -208,7 +211,6 @@ namespace Toggl.Phoebe
             if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
                 ResetModelToRunning ();
                 SyncWidgetData ();
-                Rebind ();
             }
         }
 
@@ -224,27 +226,6 @@ namespace Toggl.Phoebe
                 currentTimeEntry.Data = timeEntryManager.Running;
             } else {
                 currentTimeEntry = null;
-            }
-        }
-
-        private void Rebind ()
-        {
-            rebindCounter++;
-
-            if (currentTimeEntry == null) {
-                widgetUpdateService.RunningEntryDuration = DefaultDurationText;
-            } else {
-                var duration = currentTimeEntry.GetDuration ();
-                widgetUpdateService.RunningEntryDuration = duration.ToString (@"hh\:mm\:ss");
-
-                var counter = rebindCounter;
-                var timer = new Timer (1000 - duration.Milliseconds);
-                timer.Elapsed += (sender, e) => {
-                    if (counter == rebindCounter) {
-                        Rebind ();
-                    }
-                };
-                timer.Start();
             }
         }
 

@@ -19,76 +19,26 @@ namespace Toggl.Joey.UI.Adapters
     {
         private readonly ProjectsClientDataView dataView;
 
-        static int TYPE_PROJECTS = 0;
-        static int TYPE_CLIENT_SECTION = 1;
+        const int TYPE_PROJECTS = 0;
+        const int TYPE_CLIENT_SECTION = 1;
 
-
-        List<DataHolder> datas = new List<DataHolder> ();
+        public IEnumerable<object> CachedData;
 
         public ProjectsRecyclerAdapter () : this(new ProjectsClientDataView())
         {
             
         }
-
-        public class DataHolder
-        {
-            public ProjectModel Project { get; private set; }
-            public bool ClientHeader { get; private set; }
-            public string ClientName { get; private set; }
-
-            public int ViewType { get { return ClientHeader ? TYPE_CLIENT_SECTION : TYPE_PROJECTS; } }
-
-            public DataHolder(ProjectModel project, bool clientHandler = false)
-            {
-                Project = project;
-                ClientHeader = clientHandler;
-
-                var client = Project.Client;
-                ClientName = client == null ? "No client" : client.Name;
-            }
-        }
-
+            
         private ProjectsRecyclerAdapter(ProjectsClientDataView dataView)
         {
             this.dataView = dataView;
             this.dataView.Updated += OnDataViewUpdated;
             dataView.Reload ();
         }
-
-        bool pass = true;
-
+            
         void OnDataViewUpdated (object sender, EventArgs e)
         {
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-
-            if (!pass) {
-                return;
-            }
-
-            pass = false;
-
-            var guid = Guid.Empty;
-            bool emptyClientEntered = false;
-
-            foreach (ProjectData proj in dataView.Data) {
-                if (proj == null) {
-                    continue;
-                }
-
-                var model = (ProjectModel)proj;
-
-                if (model.Client == null && !emptyClientEntered) {
-                    datas.Add (new DataHolder (model, true));
-                    emptyClientEntered = true;
-                } else if (model.Client != null && (guid == Guid.Empty || model.Client.Id != guid)) {
-                    datas.Add (new DataHolder (model, true));
-                    guid = model.Client.Id;
-                }
-                datas.Add (new DataHolder (model));
-            }
-
+            CachedData = dataView.Data.ToList();
             NotifyDataSetChanged ();
         }
 
@@ -100,22 +50,23 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            return datas [position].ViewType;
+            var dataholder = CachedData.ElementAt (position) as ProjectsClientDataView.DataHolder;
+            return dataholder.ClientHeader ? TYPE_CLIENT_SECTION : TYPE_PROJECTS;;
         }
 
         public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
-            var dataHolderEntity = datas [position];
+            var dataholder = CachedData.ElementAt (position) as ProjectsClientDataView.DataHolder;
             if (holder is ItemViewHolder) {
-                (holder as ItemViewHolder).BindFromDataHolder (dataHolderEntity);
+                (holder as ItemViewHolder).BindFromDataHolder (dataholder);
             } else if (holder is ClientItemViewHolder) {
-                (holder as ClientItemViewHolder).BindFromDataHolder (dataHolderEntity);
+                (holder as ClientItemViewHolder).BindFromDataHolder (dataholder);
             }
         }
 
         public override int ItemCount {
             get {
-                return datas.Count;
+                return CachedData == null ? 0 : CachedData.Count();
             }
         }
 
@@ -128,9 +79,9 @@ namespace Toggl.Joey.UI.Adapters
                 Text = v.FindViewById<TextView>(Resource.Id.ProjectFragmentClientItemTextView);
             }
 
-            public void BindFromDataHolder(DataHolder holder)
+            public void BindFromDataHolder(ProjectsClientDataView.DataHolder holder)
             {
-                Text.Text = holder.ClientName;
+                Text.Text = holder.Project.Client == null ? "No project" : holder.Project.Client.Name;
             }
         }
 
@@ -145,24 +96,24 @@ namespace Toggl.Joey.UI.Adapters
                 Text = v.FindViewById<TextView>(Resource.Id.ProjectFragmentItemTimePeriodTextView);
             }
 
-            public void BindFromDataHolder(DataHolder holder)
+            public void BindFromDataHolder(ProjectsClientDataView.DataHolder holder)
             {
                 var proj = holder.Project;
-               // var color = Color.ParseColor (proj.GetHexColor ());
-                //Color.SetBackgroundColor (color);
+                var color = Android.Graphics.Color.ParseColor (proj.GetHexColor ());
+                Color.SetBackgroundColor (color);
                 Text.Text = proj.Name;
             }
 
         }
     }
 
-    class ProjectsClientDataView : IDataView<object>, IDisposable
+    public class ProjectsClientDataView : IDataView<object>, IDisposable
     {
         private ProjectAndTaskView dataView;
 
         public ProjectsClientDataView ()
         {
-            dataView = new ProjectAndTaskView ();
+            dataView = new ProjectAndTaskView (sortByClients: true);
             dataView.Updated += OnProjectTaskViewUpdated;
         }
 
@@ -203,23 +154,43 @@ namespace Toggl.Joey.UI.Adapters
                 dataView.LoadMore ();
             }
         }
-
+            
         public IEnumerable<object> Data
         {
-            get { 
+            get {
                 if (!dataView.Workspaces.Any ()) {
-                    return Enumerable.Empty<object>();
+                    yield break;
                 }
 
                 var workspace = dataView.Workspaces.ElementAt (0);
                 var projects = workspace.Projects;
 
-                List<ProjectData> dd = new List<ProjectData> ();
+                var emptyClientEntered = false;
+                var guid = Guid.Empty;
 
-                foreach (var data in projects) {
-                    dd.Add (data.Data);
+                foreach (var proj in projects.Select (x => x.Data).ToList ()) {
+                    if (proj == null) {
+                        continue;
+                    }
+
+                    var model = (ProjectModel)proj;
+                    var addClientHeader = true;
+
+                    if (model.Client == null && !emptyClientEntered) {
+                        emptyClientEntered = true;
+                    } else if (model.Client != null && (guid == Guid.Empty || model.Client.Id != guid)) {
+                        model.Client.LoadAsync ();
+                        guid = model.Client.Id;
+                    } else {
+                        addClientHeader = false;
+                    }
+
+                    if (addClientHeader) {
+                        yield return new DataHolder (model, true);
+                    }
+
+                    yield return new DataHolder (model);
                 }
-                return dd;
             }
         }
 
@@ -247,6 +218,19 @@ namespace Toggl.Joey.UI.Adapters
                 return false;
             }
         }
+
+        public class DataHolder
+        {
+            public ProjectModel Project { get; private set; }
+            public bool ClientHeader { get; private set; }
+
+            public DataHolder(ProjectModel project, bool clientHandler = false)
+            {
+                Project = project;
+                ClientHeader = clientHandler;
+            }
+        }
+
     }
 }
 

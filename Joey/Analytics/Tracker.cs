@@ -43,12 +43,6 @@ namespace Toggl.Joey.Analytics
                      .SetCategory (category)
                      .SetVariable (variable)
                      .SetLabel (label));
-
-            // Simple test of Xamarin Insights to get events.
-            if (Insights.IsInitialized)
-                Insights.Track ("AppStartupTime", new Dictionary<string, string> {
-                {"ElapsedTime", elapsedMilliseconds.ToString() + "ms"},
-            });
         }
 
         protected override void SendEvent (string category, string action, string label, long value)

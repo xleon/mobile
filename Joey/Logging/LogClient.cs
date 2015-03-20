@@ -50,7 +50,10 @@ namespace Toggl.Joey.Logging
             var extraData = new Dictionary<string, string> ();
             foreach (var item in extraMetadata) {
                 if (item.Value != null) {
-                    extraData = item.Value.ToObject<Dictionary<string, string>>();
+                    var data = item.Value.ToObject<Dictionary<string, string>>();
+                    foreach (var i in data) {
+                        extraData.Add ( item.Key + ":" + i.Key, i.Value);
+                    }
                 }
             }
 

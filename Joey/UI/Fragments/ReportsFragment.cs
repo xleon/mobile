@@ -203,7 +203,6 @@ namespace Toggl.Joey.UI.Fragments
 
                 pieChart.ActiveSliceChanged += OnPieActiveSliceChanged;
 
-                listView.LayoutMode = ViewLayoutMode.ClipBounds;
                 listView.SetClipToPadding (false);
                 listView.ItemClick += OnListItemClick;
                 listView.Touch += OnListTouch;

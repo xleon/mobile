@@ -1,21 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Android.App;
+﻿using Android.App;
 using Android.OS;
-using Android.Support.V4.App;
-using Android.Support.V4.Widget;
-using Android.Text.Format;
-using Android.Views;
-using Android.Widget;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
-using Toggl.Joey.UI.Adapters;
-using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
-using Fragment = Android.Support.V4.App.Fragment;
 using Activity = Android.Support.V7.App.ActionBarActivity;
+using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -34,11 +21,6 @@ namespace Toggl.Joey.UI.Activities
             SupportFragmentManager.BeginTransaction ()
             .Add (Resource.Id.ProjectActivityLayout, new ProjectsFragment())
             .Commit ();
-
-            // FragmentManager.BeginTransaction ().Add (fragment, "123");
-
-
-            // Create your application here
         }
     }
 }

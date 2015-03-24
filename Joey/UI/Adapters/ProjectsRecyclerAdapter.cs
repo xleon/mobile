@@ -24,18 +24,18 @@ namespace Toggl.Joey.UI.Adapters
 
         public IEnumerable<object> CachedData;
 
-        public ProjectsRecyclerAdapter () : this(new ProjectsClientDataView())
+        public ProjectsRecyclerAdapter () : this (new ProjectsClientDataView())
         {
-            
+
         }
-            
-        private ProjectsRecyclerAdapter(ProjectsClientDataView dataView)
+
+        private ProjectsRecyclerAdapter (ProjectsClientDataView dataView)
         {
             this.dataView = dataView;
             this.dataView.Updated += OnDataViewUpdated;
             dataView.Reload ();
         }
-            
+
         void OnDataViewUpdated (object sender, EventArgs e)
         {
             CachedData = dataView.Data.ToList();
@@ -45,7 +45,7 @@ namespace Toggl.Joey.UI.Adapters
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
             var v = LayoutInflater.From (parent.Context).Inflate (viewType == TYPE_PROJECTS ?  Resource.Layout.ProjectFragmenItem : Resource.Layout.ProjectFragmentClientItem, parent, false);
-            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : (RecyclerView.ViewHolder)new ClientItemViewHolder(v);
+            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : (RecyclerView.ViewHolder)new ClientItemViewHolder (v);
         }
 
         public override int GetItemViewType (int position)
@@ -64,7 +64,8 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        public override int ItemCount {
+        public override int ItemCount
+        {
             get {
                 return CachedData == null ? 0 : CachedData.Count();
             }
@@ -74,12 +75,12 @@ namespace Toggl.Joey.UI.Adapters
         {
             public TextView Text { get; private set; }
 
-            public ClientItemViewHolder(View v) : base(v)
+            public ClientItemViewHolder (View v) : base (v)
             {
-                Text = v.FindViewById<TextView>(Resource.Id.ProjectFragmentClientItemTextView);
+                Text = v.FindViewById<TextView> (Resource.Id.ProjectFragmentClientItemTextView);
             }
 
-            public void BindFromDataHolder(ProjectsClientDataView.DataHolder holder)
+            public void BindFromDataHolder (ProjectsClientDataView.DataHolder holder)
             {
                 Text.Text = holder.Project.Client == null ? "No project" : holder.Project.Client.Name;
             }
@@ -90,13 +91,13 @@ namespace Toggl.Joey.UI.Adapters
             public View Color { get; private set; }
             public TextView Text { get; private set; }
 
-            public ItemViewHolder(View v) : base(v)
+            public ItemViewHolder (View v) : base (v)
             {
-                Color = v.FindViewById(Resource.Id.ProjectFragmentItemColorView);
-                Text = v.FindViewById<TextView>(Resource.Id.ProjectFragmentItemTimePeriodTextView);
+                Color = v.FindViewById (Resource.Id.ProjectFragmentItemColorView);
+                Text = v.FindViewById<TextView> (Resource.Id.ProjectFragmentItemTimePeriodTextView);
             }
 
-            public void BindFromDataHolder(ProjectsClientDataView.DataHolder holder)
+            public void BindFromDataHolder (ProjectsClientDataView.DataHolder holder)
             {
                 var proj = holder.Project;
                 var color = Android.Graphics.Color.ParseColor (proj.GetHexColor ());
@@ -133,7 +134,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public event EventHandler Updated;
 
-        private void OnUpdated() 
+        private void OnUpdated()
         {
             var handler = Updated;
             if (handler != null) {
@@ -154,7 +155,7 @@ namespace Toggl.Joey.UI.Adapters
                 dataView.LoadMore ();
             }
         }
-            
+
         public IEnumerable<object> Data
         {
             get {
@@ -194,7 +195,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        public long Count 
+        public long Count
         {
             get { return Data.Count(); }
         }
@@ -224,7 +225,7 @@ namespace Toggl.Joey.UI.Adapters
             public ProjectModel Project { get; private set; }
             public bool ClientHeader { get; private set; }
 
-            public DataHolder(ProjectModel project, bool clientHandler = false)
+            public DataHolder (ProjectModel project, bool clientHandler = false)
             {
                 Project = project;
                 ClientHeader = clientHandler;

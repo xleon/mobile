@@ -383,7 +383,7 @@ namespace Toggl.Phoebe.Data.Views
                 if (a.IsNewProject != b.IsNewProject) {
                     return a.IsNewProject ? 1 : -1;
                 }
-                    
+
                 var res = 0;
 
                 if (!sortByClients) {
@@ -391,7 +391,7 @@ namespace Toggl.Phoebe.Data.Views
                     var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
                     res = String.Compare (aName, bName, StringComparison.Ordinal);
                 }
-               
+
                 // Try to order by client name when same project name
                 if (res == 0) {
                     var aClient = a.Data != null ? clients.FirstOrDefault (r => r.Id == a.Data.ClientId) : null;
@@ -418,7 +418,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public void LoadMore ()
         {
-            
+
         }
 
         public IEnumerable<object> Data

@@ -379,7 +379,6 @@ namespace Toggl.Joey.UI.Fragments
             if (TimeEntry == null) {
                 return;
             }
-            // var newFragment = FragmentManager.FindFragmentById(;
 
             var intent = new Intent (Activity, typeof (ProjectsActivity));
             StartActivity (intent);

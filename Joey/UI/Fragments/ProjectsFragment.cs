@@ -24,14 +24,6 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ProjectsFragment : Fragment
     {
-        public override void OnCreate (Bundle savedInstanceState)
-        {
-            base.OnCreate (savedInstanceState);
-
-
-            // Create your fragment here
-        }
-
         protected RecyclerView RecyclerView { get; private set; }
         protected RecyclerView.Adapter Adapter { get; private set; }
         protected RecyclerView.LayoutManager LayoutManager { get; private set; }
@@ -40,9 +32,6 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-
-         //   ProjectsFragmentToolbarRecyclerView
-
             var view = inflater.Inflate (Resource.Layout.ProjectsFragment, container, false);
 
             RecyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectsFragmentToolbarRecyclerView);
@@ -57,7 +46,6 @@ namespace Toggl.Joey.UI.Fragments
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectsFragmentToolbar);
             activity.SetSupportActionBar (toolbar);
             Toolbar = activity.SupportActionBar;
-            //Toolbar.SetHomeButtonEnabled (true);
             Toolbar.SetDisplayHomeAsUpEnabled (true);
             Toolbar.SetTitle (Resource.String.ProjectsTitle);
 
@@ -65,9 +53,6 @@ namespace Toggl.Joey.UI.Fragments
             HasOptionsMenu = true;
 
             return view;
-
-
-
         }
 
 

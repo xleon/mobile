@@ -161,6 +161,8 @@
     <Compile Include="UI\Views\ColorPickerRecyclerView.cs" />
     <Compile Include="UI\Views\TogglField.cs" />
     <Compile Include="UI\Adapters\GroupedEditAdapter.cs" />
+    <Compile Include="UI\Fragments\TimeEntriesListFragment.cs" />
+    <Compile Include="UI\Adapters\TimeEntriesAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -654,6 +656,7 @@
     <AndroidResource Include="Resources\layout\ColorPicker.axml" />
     <AndroidResource Include="Resources\layout\TogglField.axml" />
     <AndroidResource Include="Resources\layout\DurationTextView.axml" />
+    <AndroidResource Include="Resources\layout\TimeEntriesListFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

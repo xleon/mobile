@@ -13,6 +13,7 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
@@ -78,6 +79,9 @@ namespace Toggl.Joey.UI.Fragments
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
+
+            var swipeTouchListener = new SwipeDeleteTouchListener (ListView, new SwipeDismissCallBacks (this));
+            ListView.SetOnTouchListener (swipeTouchListener);
         }
 
         public override void OnResume ()
@@ -95,7 +99,6 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        #region TimeEntry handlers
         private async void ContinueTimeEntry (TimeEntryModel model)
         {
             DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
@@ -207,6 +210,34 @@ namespace Toggl.Joey.UI.Fragments
 
             if (msg.Name == SettingsStore.PropertyGroupedTimeEntries) {
                 EnsureAdapter();
+            }
+        }
+
+        public bool CanDismiss (int position)
+        {
+            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
+            if (adapter == null) {
+                return false;
+            }
+            return adapter.GetItemViewType (position) == 1;
+        }
+
+        public class SwipeDismissCallBacks : SwipeDeleteTouchListener.IDismissCallbacks
+        {
+            private LogTimeEntriesListFragment listView;
+
+            public SwipeDismissCallBacks (LogTimeEntriesListFragment lv)
+            {
+                listView = lv;
+            }
+
+            public bool CanDismiss (int position)
+            {
+                return listView.CanDismiss (position);
+            }
+
+            public void OnDismiss (int position)
+            {
             }
         }
 

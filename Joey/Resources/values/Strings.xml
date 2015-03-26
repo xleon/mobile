@@ -196,4 +196,5 @@
     <string name="BaseEditTimeEntryFragmentTask">Task</string>
     <string name="BaseEditTimeEntryFragmentDescription">Description</string>
     <string name="BaseEditTimeEntryFragmentSaveButtonText">Save</string>
+    <string name="SwipeDeleteQuestion">Delete?</string>
 </resources>

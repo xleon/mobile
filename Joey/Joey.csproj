@@ -164,6 +164,8 @@
     <Compile Include="UI\Activities\ProjectListActivity.cs" />
     <Compile Include="UI\Fragments\ProjectListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectListAdapter.cs" />
+    <Compile Include="UI\Views\ListItemSwipeable.cs" />
+    <Compile Include="UI\Utils\SwipeDeleteTouchListener.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

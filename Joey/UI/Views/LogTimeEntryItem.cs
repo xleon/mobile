@@ -11,7 +11,7 @@ using Toggl.Joey.UI.Utils;
 
 namespace Toggl.Joey.UI.Views
 {
-    public class LogTimeEntryItem : ViewGroup
+    public class LogTimeEntryItem : ListItemSwipeable
     {
         private View colorView;
         private TextView projectTextView;
@@ -22,6 +22,8 @@ namespace Toggl.Joey.UI.Views
         private TextView durationTextView;
         private ImageView billableIcon;
         private NotificationImageView tagsIcon;
+        private TextView deleteDialogTextView;
+        private View backgroundView;
 
         private Drawable fadeDrawable;
         private int fadeWidth;
@@ -49,6 +51,7 @@ namespace Toggl.Joey.UI.Views
             projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
             clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView);
             taskTextView = view.FindViewById<TextView> (Resource.Id.TaskTextView);
+            backgroundView = FindViewById (Resource.Id.BackgroundSeparator);
             descriptionTextView = view.FindViewById<TextView> (Resource.Id.DescriptionTextView);
             continueImageButton = view.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
             durationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
@@ -75,7 +78,9 @@ namespace Toggl.Joey.UI.Views
 
             MeasureChildWithMargins (colorView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             heightUsed += GetMeasuredHeightWithMargins (colorView);
+            MeasureChildWithMargins (deleteTextDialog, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
 
+            MeasureChildWithMargins (backgroundView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (projectTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (descriptionTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (clientTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
@@ -93,6 +98,9 @@ namespace Toggl.Joey.UI.Views
         {
             int paddingLeft = PaddingLeft;
             int currentTop = PaddingTop;
+
+            LayoutView (deleteTextDialog, PaddingLeft, PaddingTop, deleteTextDialog.MeasuredWidth, deleteTextDialog.MeasuredHeight);
+            LayoutView (backgroundView, PaddingLeft, PaddingTop, backgroundView.MeasuredWidth, backgroundView.MeasuredHeight);
 
             LayoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
             paddingLeft += GetWidthWithMargins (colorView);

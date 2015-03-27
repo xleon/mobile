@@ -11,21 +11,20 @@
 <!-- The navigation drawer -->
     <FrameLayout
         android:id="@+id/DrawerFrameLayout"
-        android:layout_width="240dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="start">
+        android:layout_gravity="start"
+        android:background="@drawable/BgArrowsFull">
         <ListView
             android:id="@+id/DrawerListView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:choiceMode="singleChoice"
-            android:divider="@color/drawer_serparator_gray"
+            android:layout_height="wrap_content"
+            android:divider="@drawable/DrawerListDivider"
+            android:footerDividersEnabled="false"
+            android:headerDividersEnabled="false"
             android:dividerHeight="1dp"
-            android:paddingTop="0dp"
-            android:paddingLeft="0dp"
-            android:paddingRight="0dp"
-            android:paddingBottom="48dp"
-            android:background="@android:color/white" />
+            android:choiceMode="singleChoice"
+            android:paddingBottom="48dp" />
         <include
             layout="@layout/MainDrawerSyncStatus" />
     </FrameLayout>

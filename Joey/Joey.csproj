@@ -666,6 +666,7 @@
     <AndroidResource Include="Resources\menu\ProjectToolbarHome.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmenItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmentClientItem.axml" />
+    <AndroidResource Include="Resources\drawable\DrawerListDivider.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

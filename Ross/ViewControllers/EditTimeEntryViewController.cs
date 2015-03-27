@@ -68,7 +68,7 @@ namespace Toggl.Ross.ViewControllers
             this.model = model;
 
             tagsView = new TimeEntryTagsView (model.Id);
-             
+
             timerController = new TimerNavigationController (model);
         }
 

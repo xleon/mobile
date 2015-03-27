@@ -3,18 +3,19 @@
     android:layout_width="fill_parent"
     android:layout_height="48dp"
     android:orientation="horizontal"
-    android:background="@android:color/black">
+    android:gravity="right">
+    <TextView
+        android:id="@+id/TitleTextView"
+        android:text="John PlaceHolder"
+        android:gravity="right|center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:textSize="16sp"
+        android:textColor="#8f8f8f" />
     <Toggl.Joey.UI.Views.ProfileImageView
         android:id="@+id/IconProfileImageView"
         android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp" />
-    <TextView
-        android:id="@+id/TitleTextView"
-        android:text="John Smith"
-        android:gravity="left|center_vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="match_parent"
-        android:textColor="@android:color/white" />
 </LinearLayout>

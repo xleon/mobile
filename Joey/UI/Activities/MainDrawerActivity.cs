@@ -15,6 +15,9 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Fragment = Android.Support.V4.App.Fragment;
+using Toggl.Joey.UI.Views;
+using Toggl.Joey.UI.Utils;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -53,6 +56,11 @@ namespace Toggl.Joey.UI.Activities
 
         private ListView DrawerListView { get; set; }
 
+        private TextView DrawerUserName { get; set; }
+
+        private ProfileImageView DrawerImage { get; set; }
+        private View DrawerUserView { get; set; }
+
         private DrawerLayout DrawerLayout { get; set; }
 
         protected ActionBarDrawerToggle DrawerToggle { get; private set; }
@@ -68,6 +76,14 @@ namespace Toggl.Joey.UI.Activities
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
+
+            DrawerUserView = this.LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
+            DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
+            DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
+            DrawerListView.AddHeaderView (DrawerUserView);
+
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            authManager.PropertyChanged += OnUserChangedEvent;
 
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
             DrawerToggle = new ActionBarDrawerToggle (this, DrawerLayout, Resource.Drawable.IcDrawer, Resource.String.EntryName, Resource.String.EntryName);
@@ -105,6 +121,16 @@ namespace Toggl.Joey.UI.Activities
                     pageStack.AddRange (arr);
                 }
             }
+        }
+
+        private void OnUserChangedEvent (object sender, System.ComponentModel.PropertyChangedEventArgs args)
+        {
+            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            if (userData == null) {
+                return;
+            }
+            DrawerUserName.Text = userData.Name;
+            DrawerImage.ImageUrl = userData.ImageUrl;
         }
 
         protected override void OnSaveInstanceState (Bundle outState)

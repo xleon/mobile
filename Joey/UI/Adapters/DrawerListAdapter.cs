@@ -103,9 +103,10 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position == 0) {
-                return ViewTypeDrawerHeader;
-            } else if (rowItems [position - 1].ChildOf > 0) {
+//            if (position == 0) {
+//                return ViewTypeDrawerHeader;
+//            } else
+            if (rowItems [position].ChildOf > 0) {
                 return ViewTypeDrawerSubItem;
             } else {
                 return ViewTypeDrawerItem;
@@ -121,6 +122,7 @@ namespace Toggl.Joey.UI.Adapters
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
                                Resource.Layout.MainDrawerListHeader, parent, false);
                     view.Tag = new HeaderViewHolder (view);
+
                 }
 
                 var holder = (HeaderViewHolder)view.Tag;
@@ -152,7 +154,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int Count
         {
-            get { return rowItems.Count + 1; } // + 1 is for header
+            get { return rowItems.Count; } // + 1 is for header
         }
 
         public override Java.Lang.Object GetItem (int position)
@@ -168,10 +170,10 @@ namespace Toggl.Joey.UI.Adapters
 
         private DrawerItem GetDrawerItem (int position)
         {
-            if (position == 0) {
-                return null;
-            }
-            return rowItems [position - 1]; //Header is 0
+//            if (position == 0) {
+//                return null;
+//            }
+            return rowItems [position]; //Header is 0
         }
 
         public override long GetItemId (int position)
@@ -231,7 +233,7 @@ namespace Toggl.Joey.UI.Adapters
             public HeaderViewHolder (View root) : base (root)
             {
                 IconProfileImageView = root.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.RobotoLight);
             }
 
             protected override void ResetTrackedObservables ()
@@ -281,7 +283,7 @@ namespace Toggl.Joey.UI.Adapters
             public DrawerItemViewHolder (View root) : base (root)
             {
                 IconImageView = root.FindViewById<ImageView> (Resource.Id.IconImageView);
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.RobotoLight);
             }
 
             protected override void Rebind ()

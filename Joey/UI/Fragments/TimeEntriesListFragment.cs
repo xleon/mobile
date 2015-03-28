@@ -24,6 +24,7 @@ namespace Toggl.Joey.UI.Fragments
     {
         private RecyclerView recyclerView;
         private AllTimeEntriesViewModel viewModel;
+        private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -31,6 +32,11 @@ namespace Toggl.Joey.UI.Fragments
             var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
             view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
+
+            emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
+            emptyMessageView.Visibility = ViewStates.Gone;
+            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
+
             return view;
         }
 
@@ -38,9 +44,13 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
-            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
+            // Create view model.
             viewModel = new AllTimeEntriesViewModel();
+            var linearLayout = new LinearLayoutManager (Activity);
+
+            recyclerView.SetLayoutManager (linearLayout);
+            recyclerView.SetOnScrollListener (new RecyclerViewScrollDetector (viewModel, linearLayout));
+            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -159,6 +169,66 @@ namespace Toggl.Joey.UI.Fragments
 
             if (msg.Name == SettingsStore.PropertyGroupedTimeEntries) {
                 EnsureAdapter();
+            }
+        }
+
+        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        {
+            private AllTimeEntriesViewModel viewModel;
+            private LinearLayoutManager layoutManager;
+
+            public RecyclerViewScrollDetector (AllTimeEntriesViewModel viewModel, LinearLayoutManager layoutManager)
+            {
+                this.viewModel = viewModel;
+                this.layoutManager = layoutManager;
+                LoadMoreThreshold = 1;
+            }
+
+            public int LoadMoreThreshold { get; set; }
+
+            public int ScrollThreshold { get; set; }
+
+            public RecyclerView.OnScrollListener OnScrollListener { get; set; }
+
+            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrolled (recyclerView, dx, dy);
+                }
+
+                var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
+                if (isSignificantDelta) {
+                    if (dy > 0) {
+                        OnScrollUp();
+                    } else {
+                        OnScrollDown();
+                    }
+                }
+
+                var visibleItemCount = recyclerView.ChildCount;
+                var totalItemCount = layoutManager.ItemCount;
+                var firstVisibleItem = layoutManager.FindFirstVisibleItemPosition();
+
+                if (!viewModel.IsLoading  && (totalItemCount - visibleItemCount) <= (firstVisibleItem + LoadMoreThreshold)) {
+                    viewModel.LoadMore();
+                }
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrollStateChanged (recyclerView, newState);
+                }
+
+                base.OnScrollStateChanged (recyclerView, newState);
+            }
+
+            private void OnScrollUp()
+            {
+            }
+
+            private void OnScrollDown()
+            {
             }
         }
     }

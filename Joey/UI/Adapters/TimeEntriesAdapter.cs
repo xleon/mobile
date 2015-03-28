@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using Android.Content;
 using Android.Graphics;
 using Android.OS;
@@ -10,8 +11,11 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
+using Android.Views.Animations;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -21,29 +25,51 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = 2;
 
-        private static readonly int LoadMoreOffset = 3;
-
         private readonly Handler handler = new Handler ();
         private AllTimeEntriesViewModel viewModel;
-        private AllTimeEntriesViewModel.ObservableRangeCollection<AllTimeEntriesViewModel.DataHolder> items;
+        private ObservableRangeCollection<object> items;
 
         public TimeEntriesAdapter (AllTimeEntriesViewModel viewModel)
         {
             this.viewModel = viewModel;
-            items = viewModel.Items;
+            items = viewModel.CollectionData;
+        }
+
+        public override void OnAttachedToRecyclerView (RecyclerView p0)
+        {
             items.CollectionChanged += OnCollectionChanged;
         }
 
-        private void OnCollectionChanged (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void OnCollectionChanged (object sender, NotifyCollectionChangedEventArgs e)
         {
-        }
-
-        public override int GetItemViewType (int position)
-        {
-            if (position == viewModel.Count && viewModel.IsLoading) {
-                return ViewTypeLoaderPlaceholder;
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero) {
+                return;
             }
-            return items [position].IsHeader ? ViewTypeDateHeader : ViewTypeContent;
+
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                NotifyDataSetChanged();
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Add) {
+                if (e.NewItems.Count > 1) {
+                    NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                } else {
+                    NotifyItemInserted (e.NewStartingIndex);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                NotifyItemChanged (e.NewStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                NotifyItemRemoved (e.OldStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                NotifyItemMoved (e.OldStartingIndex, e.NewStartingIndex);
+            }
         }
 
         private void OnDeleteTimeEntry (TimeEntryModel model)
@@ -91,7 +117,10 @@ namespace Toggl.Joey.UI.Adapters
             View view;
             RecyclerView.ViewHolder holder;
 
-            if (viewType == ViewTypeDateHeader) {
+            if (viewType == ViewTypeLoaderPlaceholder) {
+                view = GetLoadIndicatorView (parent);
+                holder = new SpinnerHolder (view);
+            } else if (viewType == ViewTypeDateHeader) {
                 view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
                 holder = new HeaderListItemHolder (view);
             } else {
@@ -103,17 +132,41 @@ namespace Toggl.Joey.UI.Adapters
 
         public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
-            if (items [position].IsHeader) {
+            if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {
+                return;
+            }
+
+            if (GetItemViewType (position) == ViewTypeDateHeader) {
                 var headerHolder = (HeaderListItemHolder)holder;
-                headerHolder.Bind (items[position].DateGroup);
+                headerHolder.Bind ((AllTimeEntriesViewModel.DateGroup)items[position]);
+            } else {
+                var entryHolder = (TimeEntryListItemHolder)holder;
+                var model = new TimeEntryModel ((TimeEntryData)items[position]);
+                entryHolder.Bind (model);
             }
         }
 
         public override int ItemCount
         {
             get {
+                if (viewModel.IsLoading) {
+                    return items.Count + 1;
+                }
                 return items.Count;
             }
+        }
+
+        public override int GetItemViewType (int position)
+        {
+            if (position == items.Count && viewModel.IsLoading) {
+                return ViewTypeLoaderPlaceholder;
+            }
+
+            var obj = items[position];
+            if (obj is AllTimeEntriesViewModel.DateGroup) {
+                return ViewTypeDateHeader;
+            }
+            return ViewTypeContent;
         }
 
         public class HeaderListItemHolder : RecyclerView.ViewHolder
@@ -131,7 +184,7 @@ namespace Toggl.Joey.UI.Adapters
             public void Bind (AllTimeEntriesViewModel.DateGroup dateGroup)
             {
                 DateGroupTitleTextView.Text = GetRelativeDateString (dateGroup.Date);
-                DateGroupDurationTextView.Text = dateGroup.Duration.ToString (@"hh\:mm\:ss");
+                //DateGroupDurationTextView.Text = dateGroup.Duration.ToString (@"hh\:mm\:ss");
             }
 
             private static string GetRelativeDateString (DateTime dateTime)
@@ -274,17 +327,29 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            private void RebindTags (TimeEntryModel model)
-            {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
-                    return;
-                }
-            }
-
             private void OnContinueButtonClicked (object sender, EventArgs e)
             {
+
             }
+        }
+
+        private class SpinnerHolder : RecyclerView.ViewHolder
+        {
+            public SpinnerHolder (View root) : base (root)
+            {
+            }
+        }
+
+        private View GetLoadIndicatorView (ViewGroup parent)
+        {
+            var view = LayoutInflater.FromContext (parent.Context).Inflate (
+                           Resource.Layout.TimeEntryListLoadingItem, parent, false);
+
+            ImageView spinningImage = view.FindViewById<ImageView> (Resource.Id.LoadingImageView);
+            Animation spinningImageAnimation = AnimationUtils.LoadAnimation (parent.Context, Resource.Animation.SpinningAnimation);
+            spinningImage.StartAnimation (spinningImageAnimation);
+
+            return view;
         }
     }
 }

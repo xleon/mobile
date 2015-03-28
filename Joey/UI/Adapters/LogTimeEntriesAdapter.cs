@@ -23,7 +23,7 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         private readonly Handler handler = new Handler ();
 
-        public LogTimeEntriesAdapter () : base (new AllTimeEntriesView ())
+        public LogTimeEntriesAdapter () : base (new AllTimeEntriesViewModel ())
         {
         }
 
@@ -39,7 +39,7 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             var obj = GetEntry (position);
-            if (obj is AllTimeEntriesView.DateGroup) {
+            if (obj is AllTimeEntriesViewModel.DateGroup) {
                 return ViewTypeDateHeader;
             }
             return ViewTypeContent;
@@ -98,7 +98,7 @@ namespace Toggl.Joey.UI.Adapters
             var viewType = GetItemViewType (position);
 
             if (viewType == ViewTypeDateHeader) {
-                var dateGroup = (AllTimeEntriesView.DateGroup)entry;
+                var dateGroup = (AllTimeEntriesViewModel.DateGroup)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
                                Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
@@ -120,7 +120,7 @@ namespace Toggl.Joey.UI.Adapters
             return view;
         }
 
-        public class HeaderListItemHolder : BindableViewHolder<AllTimeEntriesView.DateGroup>
+        public class HeaderListItemHolder : BindableViewHolder<AllTimeEntriesViewModel.DateGroup>
         {
             private readonly Handler handler;
 

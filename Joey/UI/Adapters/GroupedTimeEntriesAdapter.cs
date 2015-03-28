@@ -22,7 +22,7 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeExpanded = ViewTypeContent + 2;
         private readonly Handler handler = new Handler ();
 
-        public GroupedTimeEntriesAdapter () : base (new AllTimeEntriesView ())
+        public GroupedTimeEntriesAdapter () : base (new AllTimeEntriesViewModel ())
         {
         }
 
@@ -38,7 +38,7 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             var obj = GetEntry (position);
-            if (obj is AllTimeEntriesView.DateGroup) {
+            if (obj is AllTimeEntriesViewModel.DateGroup) {
                 return ViewTypeDateHeader;
             }
             return ViewTypeContent;
@@ -97,7 +97,7 @@ namespace Toggl.Joey.UI.Adapters
             var viewType = GetItemViewType (position);
 
             if (viewType == ViewTypeDateHeader) {
-                var dateGroup = (AllTimeEntriesView.DateGroup)entry;
+                var dateGroup = (AllTimeEntriesViewModel.DateGroup)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
                                Resource.Layout.LogTimeEntryListSectionHeader, parent, false);

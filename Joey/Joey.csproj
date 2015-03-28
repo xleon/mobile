@@ -162,6 +162,7 @@
     <Compile Include="UI\Views\TogglField.cs" />
     <Compile Include="UI\Adapters\GroupedEditAdapter.cs" />
     <Compile Include="UI\Fragments\TimeEntriesListFragment.cs" />
+    <Compile Include="UI\Views\DividerItemDecoration.cs" />
     <Compile Include="UI\Adapters\TimeEntriesAdapter.cs" />
   </ItemGroup>
   <ItemGroup>

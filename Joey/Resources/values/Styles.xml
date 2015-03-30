@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
+
     <style name="Theme.Toggl.Base" parent="@android:style/Theme.Holo.Light.DarkActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">true</item>
     </style>
+
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
         <item name="android:actionBarStyle">@style/Theme.Toggl.ActionBar</item>
         <item name="android:listViewStyle">@style/Theme.Toggl.ListView</item>
         <item name="android:listChoiceIndicatorMultiple">@drawable/androidbtncheckhololight</item>
-        <item name="android:windowBackground">@color/background_light_gray</item>
+        <item name="android:windowBackground">@android:color/black</item>
     </style>
     <style name="Theme.Toggl.Login" parent="Theme.Toggl.Base">
         <item name="android:windowNoTitle">true</item>

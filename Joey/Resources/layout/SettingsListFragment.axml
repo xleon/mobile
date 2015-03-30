@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:drawSelectorOnTop="false"
+    android:layout_marginTop="?android:attr/actionBarSize"
     android:divider="?android:attr/listDivider"
     android:paddingLeft="16dp"
     android:paddingRight="16dp"

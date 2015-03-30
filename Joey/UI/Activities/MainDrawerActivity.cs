@@ -59,6 +59,7 @@ namespace Toggl.Joey.UI.Activities
         private TextView DrawerUserName { get; set; }
 
         private ProfileImageView DrawerImage { get; set; }
+
         private View DrawerUserView { get; set; }
 
         private DrawerLayout DrawerLayout { get; set; }
@@ -67,25 +68,35 @@ namespace Toggl.Joey.UI.Activities
 
         private FrameLayout DrawerSyncView { get; set; }
 
+
         protected override void OnCreateActivity (Bundle bundle)
         {
             base.OnCreateActivity (bundle);
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
-            DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
-            DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
-            DrawerListView.ItemClick += OnDrawerListViewItemClick;
+            //Lift drawer on top of ActionBar
+            var drawer = this.LayoutInflater.Inflate (Resource.Layout.Decor, null);
+            var decor = (ViewGroup) Window.DecorView;
+            var child = decor.GetChildAt (0);
+            decor.RemoveView (child);
+            var container = (FrameLayout) drawer.FindViewById (Resource.Id.ContentFrameLayout);
+            container.AddView (child);
+            decor.AddView (drawer);
 
+            DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
             DrawerUserView = this.LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
             DrawerListView.AddHeaderView (DrawerUserView);
+            DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
+            DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             authManager.PropertyChanged += OnUserChangedEvent;
 
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
+
             DrawerToggle = new ActionBarDrawerToggle (this, DrawerLayout, Resource.Drawable.IcDrawer, Resource.String.EntryName, Resource.String.EntryName);
 
             DrawerLayout.SetDrawerShadow (Resource.Drawable.drawershadow, (int)GravityFlags.Start);

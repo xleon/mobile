@@ -233,7 +233,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public DrawerSubItemViewHolder (View root) : base (root)
             {
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.RobotoLight);
             }
 
             protected override void Rebind ()

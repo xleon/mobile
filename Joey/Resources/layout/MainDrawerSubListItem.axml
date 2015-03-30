@@ -2,14 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="48dp"
-    android:orientation="horizontal"
-    android:background="#fff9f9f9">
+    android:orientation="horizontal">
     <TextView
         android:id="@+id/TitleTextView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:text="Settings"
-        android:textColor="@color/drawertextcolor"
+        android:textColor="@color/drawer_text_subitem"
         android:gravity="left|center_vertical"
-        android:layout_marginLeft="70dp" />
+        android:textSize="16sp"
+        android:layout_marginLeft="72dp" />
 </LinearLayout>

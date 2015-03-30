@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Android.Content;
 using Android.Graphics;
 using Android.Views;
 using Android.Widget;
@@ -12,6 +13,8 @@ using Toggl.Joey.UI.Views;
 
 using Android.Support.V7.App;
 using Android.Support.V7.Widget;
+
+using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -45,13 +48,13 @@ namespace Toggl.Joey.UI.Adapters
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
             var v = LayoutInflater.From (parent.Context).Inflate (viewType == TYPE_PROJECTS ?  Resource.Layout.ProjectFragmenItem : Resource.Layout.ProjectFragmentClientItem, parent, false);
-            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : (RecyclerView.ViewHolder)new ClientItemViewHolder (v);
+            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : (RecyclerView.ViewHolder)new ClientItemViewHolder (v, parent.Context, null);
         }
 
         public override int GetItemViewType (int position)
         {
             var dataholder = CachedData.ElementAt (position) as ProjectsClientDataView.DataHolder;
-            return dataholder.ClientHeader ? TYPE_CLIENT_SECTION : TYPE_PROJECTS;;
+            return dataholder.ClientHeader ? TYPE_CLIENT_SECTION : TYPE_PROJECTS;
         }
 
         public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
@@ -74,10 +77,18 @@ namespace Toggl.Joey.UI.Adapters
         public class ClientItemViewHolder : RecyclerView.ViewHolder
         {
             public TextView Text { get; private set; }
+            public ImageButton Button { get; private set; }
 
-            public ClientItemViewHolder (View v) : base (v)
+            public ClientItemViewHolder (View v, Context ctx, EventHandler<PopupArgs> popupMenuHandler) : base (v)
             {
                 Text = v.FindViewById<TextView> (Resource.Id.ProjectFragmentClientItemTextView);
+                Button = v.FindViewById<ImageButton> (Resource.Id.ProjectFragmentClientItemButton);
+                Button.Click += (object sender, EventArgs e) => {
+                    var popup = new Android.Widget.PopupMenu (ctx, Button);
+                    popup.MenuItemClick += popupMenuHandler;
+                    popup.Inflate (Resource.Menu.ProjectFragmentClientItemMenu);
+                    popup.Show();
+                };
             }
 
             public void BindFromDataHolder (ProjectsClientDataView.DataHolder holder)

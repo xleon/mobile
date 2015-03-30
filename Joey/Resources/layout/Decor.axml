@@ -20,7 +20,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
-        android:paddingTop="35dp"
+        android:paddingTop="16dp"
         android:background="@drawable/BgArrowsFull">
         <ListView
             android:id="@+id/DrawerListView"

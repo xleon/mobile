@@ -388,14 +388,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListFocusedHolo.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListSelectorDisabledHoloLight.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListFocusedHolo.9.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavLogoutActive.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavLogoutDefault.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavReportsActive.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavReportsDefault.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavSettingsActive.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavSettingsDefault.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavTimerActive.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavTimerDefault.png" />
     <AndroidResource Include="Resources\color\DrawerTextColor.xml" />
     <AndroidResource Include="Resources\layout\SettingsListHeaderItem.axml" />
     <AndroidResource Include="Resources\layout\SettingsListCheckboxItem.axml" />
@@ -511,8 +503,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcFeedbackNeutralActive.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcFeedbackPositive.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcFeedbackPositiveActive.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavFeedbackActive.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavFeedbackDefault.png" />
     <AndroidResource Include="Resources\layout\FeedbackFragment.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\FeedbackButtonDisabled.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\FeedbackButtonDisabled.9.png" />
@@ -650,6 +640,11 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcNavReports.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcNavSettings.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcNavTimer.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavFeedback.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavLogout.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavReports.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavSettings.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcNavTimer.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

@@ -6,17 +6,17 @@ using Android.Content;
 using Android.Graphics;
 using Android.Util;
 using Android.Widget;
+using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
-using Toggl.Joey.UI.Utils;
 
 namespace Toggl.Joey.UI.Views
 {
     class ProfileImageView : ImageView
     {
         private static readonly string LogTag = "ProfileImageView";
-        private static readonly int RectSize = 30;
+        private static readonly int RectSize = 40;
         //In DP!
         public ProfileImageView (Context context) : base (context)
         {

@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {

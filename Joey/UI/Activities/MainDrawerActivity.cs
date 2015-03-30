@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Android.App;
 using Android.OS;
 using Android.Support.V4.App;
@@ -132,7 +133,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void OnUserChangedEvent (object sender, System.ComponentModel.PropertyChangedEventArgs args)
+        private void OnUserChangedEvent (object sender, PropertyChangedEventArgs args)
         {
             var userData = ServiceContainer.Resolve<AuthManager> ().User;
             if (userData == null) {

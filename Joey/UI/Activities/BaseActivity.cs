@@ -1,7 +1,6 @@
 ﻿using System;
 using Android.Content;
 using Android.OS;
-using Android.Views;
 using Bugsnag;
 using Toggl.Joey.Logging;
 using Toggl.Joey.UI.Fragments;
@@ -106,7 +105,6 @@ namespace Toggl.Joey.UI.Activities
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             subscriptionTogglHttpResponse = bus.Subscribe<TogglHttpResponseMessage> (OnTogglHttpResponse);
 
-            RequestWindowFeature (WindowFeatures.Progress);
         }
 
         protected sealed override void OnResume ()

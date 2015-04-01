@@ -643,6 +643,8 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNavReports.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNavSettings.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNavTimer.png" />
+    <AndroidResource Include="Resources\values-v21\Styles.xml" />
+    <AndroidResource Include="Resources\layout\MainToolbar.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />
@@ -676,6 +678,7 @@
     <Folder Include="Resources\xml\" />
     <Folder Include="Widget\" />
     <Folder Include="UI\Decorations\" />
+    <Folder Include="Resources\values-v21\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

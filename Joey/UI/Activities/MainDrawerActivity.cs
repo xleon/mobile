@@ -74,15 +74,6 @@ namespace Toggl.Joey.UI.Activities
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
-            //Lift drawer on top of ActionBar
-            var drawer = this.LayoutInflater.Inflate (Resource.Layout.Decor, null);
-            var decor = (ViewGroup) Window.DecorView;
-            var child = decor.GetChildAt (0);
-            decor.RemoveView (child);
-            var container = (FrameLayout) drawer.FindViewById (Resource.Id.ContentFrameLayout);
-            container.AddView (child);
-            decor.AddView (drawer);
-
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
             DrawerUserView = this.LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);

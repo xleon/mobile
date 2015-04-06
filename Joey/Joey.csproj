@@ -622,7 +622,6 @@
     <AndroidResource Include="Resources\layout\ProjectFragmenItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmentClientItem.axml" />
     <AndroidResource Include="Resources\drawable\DrawerListDivider.xml" />
-    <AndroidResource Include="Resources\layout\Decor.axml" />
     <AndroidResource Include="Resources\drawable\DrawerItemSideShape.axml" />
     <AndroidResource Include="Resources\drawable\DrawerColorShape.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcNavFeedback.png" />

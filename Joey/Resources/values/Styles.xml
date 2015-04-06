@@ -2,8 +2,6 @@
 <resources>
 
     <style name="Theme.Toggl.Base" parent="@android:style/Theme.Holo.Light.DarkActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowTranslucentStatus">true</item>
     </style>
 
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">

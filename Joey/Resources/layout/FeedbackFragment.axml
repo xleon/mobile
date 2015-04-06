@@ -3,8 +3,7 @@
     android:id="@+id/ScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:layout_marginTop="?android:attr/actionBarSize">
+    android:fillViewport="true">
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"

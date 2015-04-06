@@ -1,19 +1,10 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
+﻿using Android.Content;
 using Android.OS;
-using Android.Runtime;
-using Android.Util;
 using Android.Views;
-using Android.Widget;
 using Android.Support.V7.App;
 using Android.Support.V7.Widget;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Activities;
 
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -49,22 +40,25 @@ namespace Toggl.Joey.UI.Fragments
             Toolbar.SetDisplayHomeAsUpEnabled (true);
             Toolbar.SetTitle (Resource.String.ProjectsTitle);
 
-
             HasOptionsMenu = true;
 
             return view;
         }
 
-
-        public override void OnOptionsMenuClosed (IMenu menu)
+        void StartNewProjectActivity ()
         {
-            base.OnOptionsMenuClosed (menu);
+            var intent = new Intent (Activity, typeof (NewProjectActivity));
+            intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, (Adapter as ProjectsRecyclerAdapter).Workspace.Id.ToString ());
+            StartActivity (intent);
         }
+
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             if (item.ItemId == Android.Resource.Id.Home) {
                 Activity.OnBackPressed ();
+            } else {
+                StartNewProjectActivity ();
             }
             return base.OnOptionsItemSelected (item);
         }

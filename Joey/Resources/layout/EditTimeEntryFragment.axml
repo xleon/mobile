@@ -127,17 +127,17 @@
                         android:drawablePadding="3dp" />
                 </LinearLayout>
             </LinearLayout>
-            <Toggl.Joey.UI.Views.EditTimeEntryBit
+            <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/Project"
                 android:layout_marginTop="15dp" />
-            <Toggl.Joey.UI.Views.EditTimeEntryBit
+            <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/Task"
                 android:layout_marginTop="10dp" />
-            <Toggl.Joey.UI.Views.EditTimeEntryBit
+            <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/Description"

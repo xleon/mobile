@@ -149,7 +149,6 @@
     <Compile Include="Widget\WidgetStartStopService.cs" />
     <Compile Include="Logging\LogClient.cs" />
     <Compile Include="UI\Adapters\GroupedTimeEntriesAdapter.cs" />
-    <Compile Include="UI\Views\EditTimeEntryBit.cs" />
     <Compile Include="UI\Fragments\GroupedEditTimeEntryFragment.cs" />
     <Compile Include="UI\Adapters\GroupTimeEntriesAdapter.cs" />
     <Compile Include="UI\Decorations\ItemDividerDecoration.cs" />
@@ -158,6 +157,10 @@
     <Compile Include="UI\Fragments\ProjectsFragment.cs" />
     <Compile Include="UI\Activities\ProjectsActivity.cs" />
     <Compile Include="UI\Adapters\ProjectsRecyclerAdapter.cs" />
+    <Compile Include="UI\Activities\NewProjectActivity.cs" />
+    <Compile Include="UI\Fragments\NewProjectFragment.cs" />
+    <Compile Include="UI\Views\ColorPickerRecyclerView.cs" />
+    <Compile Include="UI\Views\TogglField.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -600,7 +603,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcSelectArrowSmallDown.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcStopWhite.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcTag.png" />
-    <AndroidResource Include="Resources\layout\EditTimeEntryBit.axml" />
     <AndroidResource Include="Resources\drawable\BackgroundLine.xml" />
     <AndroidResource Include="Resources\color\MaterialPlaceholderColor.xml" />
     <AndroidResource Include="Resources\drawable\RoundedGrayBackground.xml" />
@@ -646,6 +648,12 @@
     <AndroidResource Include="Resources\values-v21\Styles.xml" />
     <AndroidResource Include="Resources\layout\MainToolbar.axml" />
     <AndroidResource Include="Resources\drawable\BgArrowsPattern.xml" />
+    <AndroidResource Include="Resources\menu\ProjectFragmentClientItemMenu.xml" />
+    <AndroidResource Include="Resources\layout\NewProjectActivity.axml" />
+    <AndroidResource Include="Resources\layout\NewProjectFragment.axml" />
+    <AndroidResource Include="Resources\layout\ColorPickerItem.axml" />
+    <AndroidResource Include="Resources\layout\ColorPicker.axml" />
+    <AndroidResource Include="Resources\layout\TogglField.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

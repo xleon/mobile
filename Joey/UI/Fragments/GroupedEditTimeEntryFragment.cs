@@ -39,11 +39,11 @@ namespace Toggl.Joey.UI.Fragments
 
         protected TextView DurationTextView { get; private set; }
 
-        protected EditTimeEntryBit ProjectBit { get; private set; }
+        protected TogglField ProjectBit { get; private set; }
 
-        protected EditTimeEntryBit TaskBit { get; private set; }
+        protected TogglField TaskBit { get; private set; }
 
-        protected EditTimeEntryBit DescriptionBit { get; private set; }
+        protected TogglField DescriptionBit { get; private set; }
 
         protected EditTimeEntryTagsBit TagsBit { get; private set; }
 
@@ -64,9 +64,9 @@ namespace Toggl.Joey.UI.Fragments
 
             DurationTextView = view.FindViewById<TextView> (Resource.Id.GroupedEditTimeEntryFragmentDurationTextView);
 
-            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
-            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentTask).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
-            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.GroupedEditTimeEntryFragmentDescription).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+            ProjectBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
+            TaskBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentTask).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
+            DescriptionBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentDescription).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
             TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.GroupedEditTimeEntryFragmentTags);
 
             TagsBit.FullClick += OnTagsEditTextClick;

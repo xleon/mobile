@@ -268,11 +268,11 @@ namespace Toggl.Joey.UI.Fragments
 
         protected ImageButton DeleteImageButton { get; private set; }
 
-        protected EditTimeEntryBit ProjectBit { get; private set; }
+        protected TogglField ProjectBit { get; private set; }
 
-        protected EditTimeEntryBit DescriptionBit { get; private set; }
+        protected TogglField DescriptionBit { get; private set; }
 
-        protected EditTimeEntryBit TaskBit { get; private set; }
+        protected TogglField TaskBit { get; private set; }
 
         protected EditTimeEntryTagsBit TagsBit { get; private set; }
 
@@ -285,13 +285,13 @@ namespace Toggl.Joey.UI.Fragments
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
 
-            DescriptionBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+            DescriptionBit = view.FindViewById<TogglField> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
             DescriptionEditText = DescriptionBit.TextField;
 
-            ProjectBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Project).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
+            ProjectBit = view.FindViewById<TogglField> (Resource.Id.Project).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
             ProjectEditText = ProjectBit.TextField;
 
-            TaskBit = view.FindViewById<EditTimeEntryBit> (Resource.Id.Task).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
+            TaskBit = view.FindViewById<TogglField> (Resource.Id.Task).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
 
             TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.TagsBit);
 

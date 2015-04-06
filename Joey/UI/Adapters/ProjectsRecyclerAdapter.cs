@@ -27,6 +27,11 @@ namespace Toggl.Joey.UI.Adapters
 
         public IEnumerable<object> CachedData;
 
+        public WorkspaceData Workspace
+        {
+            get { return dataView.Workspace; }
+        }
+
         public ProjectsRecyclerAdapter () : this (new ProjectsClientDataView())
         {
 
@@ -48,7 +53,7 @@ namespace Toggl.Joey.UI.Adapters
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
             var v = LayoutInflater.From (parent.Context).Inflate (viewType == TYPE_PROJECTS ?  Resource.Layout.ProjectFragmenItem : Resource.Layout.ProjectFragmentClientItem, parent, false);
-            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : (RecyclerView.ViewHolder)new ClientItemViewHolder (v, parent.Context, null);
+            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : (RecyclerView.ViewHolder)new ClientItemViewHolder (v);
         }
 
         public override int GetItemViewType (int position)
@@ -77,23 +82,15 @@ namespace Toggl.Joey.UI.Adapters
         public class ClientItemViewHolder : RecyclerView.ViewHolder
         {
             public TextView Text { get; private set; }
-            public ImageButton Button { get; private set; }
 
-            public ClientItemViewHolder (View v, Context ctx, EventHandler<PopupArgs> popupMenuHandler) : base (v)
+            public ClientItemViewHolder (View v) : base (v)
             {
                 Text = v.FindViewById<TextView> (Resource.Id.ProjectFragmentClientItemTextView);
-                Button = v.FindViewById<ImageButton> (Resource.Id.ProjectFragmentClientItemButton);
-                Button.Click += (object sender, EventArgs e) => {
-                    var popup = new Android.Widget.PopupMenu (ctx, Button);
-                    popup.MenuItemClick += popupMenuHandler;
-                    popup.Inflate (Resource.Menu.ProjectFragmentClientItemMenu);
-                    popup.Show();
-                };
             }
 
             public void BindFromDataHolder (ProjectsClientDataView.DataHolder holder)
             {
-                Text.Text = holder.Project.Client == null ? "No project" : holder.Project.Client.Name;
+                Text.Text = holder.Project.Client == null ? ItemView.Context.Resources.GetString (Resource.String.ProjectsNoClient) : holder.Project.Client.Name;
             }
         }
 
@@ -165,6 +162,11 @@ namespace Toggl.Joey.UI.Adapters
             if (dataView != null) {
                 dataView.LoadMore ();
             }
+        }
+
+        public WorkspaceData Workspace
+        {
+            get { return dataView.Workspaces.ElementAt (0).Data; }
         }
 
         public IEnumerable<object> Data

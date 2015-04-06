@@ -5,16 +5,15 @@ using Android.Widget;
 
 namespace Toggl.Joey.UI.Views
 {
-    public class EditTimeEntryBit : RelativeLayout
+    public class TogglField : RelativeLayout
     {
-        public EditTimeEntryBit (Context context) :
+        public TogglField (Context context) :
         base (context)
         {
-
             Initialize ();
         }
 
-        public EditTimeEntryBit (Context context, IAttributeSet attrs) :
+        public TogglField (Context context, IAttributeSet attrs) :
         base (context, attrs)
         {
             Initialize ();
@@ -23,7 +22,7 @@ namespace Toggl.Joey.UI.Views
         void Initialize ()
         {
             LayoutInflater inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
-            inflater.Inflate (Resource.Layout.EditTimeEntryBit, this);
+            inflater.Inflate (Resource.Layout.TogglField, this);
 
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
@@ -38,7 +37,7 @@ namespace Toggl.Joey.UI.Views
             get { return (EditText)FindViewById (Resource.Id.EditTimeEntryBitText); }
         }
 
-        public EditTimeEntryBit SetName (string name)
+        public TogglField SetName (string name)
         {
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             title.Text = name;
@@ -47,7 +46,7 @@ namespace Toggl.Joey.UI.Views
             return this;
         }
 
-        public EditTimeEntryBit SetName (int resourceId)
+        public TogglField SetName (int resourceId)
         {
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             title.SetText (resourceId);
@@ -56,21 +55,21 @@ namespace Toggl.Joey.UI.Views
             return this;
         }
 
-        public EditTimeEntryBit DestroyAssistView()
+        public TogglField DestroyAssistView()
         {
             TextView assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
             assistView.Visibility = ViewStates.Gone;
             return this;
         }
 
-        public EditTimeEntryBit DestroyArrow()
+        public TogglField DestroyArrow()
         {
             ImageView arrow = (ImageView)FindViewById (Resource.Id.EditTimeEntryBitArrow);
             arrow.Visibility = ViewStates.Gone;
             return this;
         }
 
-        public EditTimeEntryBit SimulateButton()
+        public TogglField SimulateButton()
         {
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);

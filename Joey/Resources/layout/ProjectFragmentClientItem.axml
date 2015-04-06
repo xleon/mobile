@@ -15,12 +15,4 @@
         android:gravity="center_vertical"
         android:text="client"
         android:layout_weight="1" />
-    <ImageButton
-        android:id="@+id/ProjectFragmentClientItemButton"
-        android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
-        android:src="@drawable/IcAddGrey"
-        android:background="@null"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp" />
 </LinearLayout>

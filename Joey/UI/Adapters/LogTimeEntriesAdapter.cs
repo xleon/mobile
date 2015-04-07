@@ -23,7 +23,7 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         private readonly Handler handler = new Handler ();
 
-        public LogTimeEntriesAdapter () : base (new AllTimeEntriesViewModel ())
+        public LogTimeEntriesAdapter () : base (new AllTimeEntriesView ())
         {
         }
 

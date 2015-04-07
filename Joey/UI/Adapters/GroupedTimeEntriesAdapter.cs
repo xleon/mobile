@@ -22,7 +22,7 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeExpanded = ViewTypeContent + 2;
         private readonly Handler handler = new Handler ();
 
-        public GroupedTimeEntriesAdapter () : base (new AllTimeEntriesViewModel ())
+        public GroupedTimeEntriesAdapter () : base (new AllTimeEntriesView ())
         {
         }
 

@@ -61,6 +61,7 @@
     <Compile Include="Logging\**\*.cs" />
     <Compile Include="Data\Views\AllTimeEntriesViewModel.cs" />
     <Compile Include="Data\Utils\ObservableRangeCollection.cs" />
+    <Compile Include="Data\Views\CachingDataView.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

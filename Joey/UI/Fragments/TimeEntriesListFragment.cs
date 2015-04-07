@@ -23,7 +23,6 @@ namespace Toggl.Joey.UI.Fragments
     public class TimeEntriesListFragment : Fragment
     {
         private RecyclerView recyclerView;
-        private AllTimeEntriesViewModel viewModel;
         private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
 
@@ -45,11 +44,9 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             // Create view model.
-            viewModel = new AllTimeEntriesViewModel();
             var linearLayout = new LinearLayoutManager (Activity);
 
             recyclerView.SetLayoutManager (linearLayout);
-            recyclerView.SetOnScrollListener (new RecyclerViewScrollDetector (viewModel, linearLayout));
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -143,7 +140,7 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureAdapter ()
         {
             if (recyclerView.GetAdapter() == null) {
-                recyclerView.SetAdapter (new TimeEntriesAdapter (viewModel));
+                recyclerView.SetAdapter (new TimeEntriesAdapter ());
                 var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
             }
         }
@@ -174,14 +171,14 @@ namespace Toggl.Joey.UI.Fragments
 
         private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
         {
-            private AllTimeEntriesViewModel viewModel;
+            private ICollectionDataView<object> viewModel;
             private LinearLayoutManager layoutManager;
 
-            public RecyclerViewScrollDetector (AllTimeEntriesViewModel viewModel, LinearLayoutManager layoutManager)
+            public RecyclerViewScrollDetector (ICollectionDataView<object> viewModel, LinearLayoutManager layoutManager)
             {
                 this.viewModel = viewModel;
                 this.layoutManager = layoutManager;
-                LoadMoreThreshold = 1;
+                LoadMoreThreshold = 3;
             }
 
             public int LoadMoreThreshold { get; set; }
@@ -210,7 +207,7 @@ namespace Toggl.Joey.UI.Fragments
                 var firstVisibleItem = layoutManager.FindFirstVisibleItemPosition();
 
                 if (!viewModel.IsLoading  && (totalItemCount - visibleItemCount) <= (firstVisibleItem + LoadMoreThreshold)) {
-                    viewModel.LoadMore();
+                    //viewModel.LoadMore();
                 }
             }
 

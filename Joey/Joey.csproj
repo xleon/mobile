@@ -164,6 +164,9 @@
     <Compile Include="UI\Fragments\TimeEntriesListFragment.cs" />
     <Compile Include="UI\Views\DividerItemDecoration.cs" />
     <Compile Include="UI\Adapters\TimeEntriesAdapter.cs" />
+    <Compile Include="UI\Adapters\RecycledDataViewAdapter.cs" />
+    <Compile Include="UI\Utils\RecycledModelViewHolder.cs" />
+    <Compile Include="UI\Utils\RecycledBindableViewHolder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

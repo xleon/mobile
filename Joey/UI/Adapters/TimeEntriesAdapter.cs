@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Linq;
 using Android.Content;
 using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Util;
@@ -10,43 +12,33 @@ using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using Android.Views.Animations;
-using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class TimeEntriesAdapter : RecyclerView.Adapter
+    public class TimeEntriesAdapter : RecycledDataViewAdapter<object>
     {
-        protected static readonly int ViewTypeLoaderPlaceholder = 0;
-        protected static readonly int ViewTypeContent = 1;
-        protected static readonly int ViewTypeDateHeader = 2;
-
+        protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         private readonly Handler handler = new Handler ();
-        private AllTimeEntriesViewModel viewModel;
-        private ObservableRangeCollection<object> items;
 
-        public TimeEntriesAdapter (AllTimeEntriesViewModel viewModel)
+        public TimeEntriesAdapter () : base (new AllTimeEntriesViewModel())
         {
-            this.viewModel = viewModel;
-            items = viewModel.CollectionData;
         }
 
-        public override void OnAttachedToRecyclerView (RecyclerView p0)
-        {
-            items.CollectionChanged += OnCollectionChanged;
-        }
+        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
 
-        private void OnCollectionChanged (object sender, NotifyCollectionChangedEventArgs e)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
+        public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
 
+        public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
+
+        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
+
+        protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
+        {
             if (e.Action == NotifyCollectionChangedAction.Reset) {
                 NotifyDataSetChanged();
             }
@@ -104,87 +96,82 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
-
-        public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
+        protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
         {
             View view;
             RecyclerView.ViewHolder holder;
 
-            if (viewType == ViewTypeLoaderPlaceholder) {
-                view = GetLoadIndicatorView (parent);
-                holder = new SpinnerHolder (view);
-            } else if (viewType == ViewTypeDateHeader) {
+            if (viewType == ViewTypeDateHeader) {
                 view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
-                holder = new HeaderListItemHolder (view);
+                holder = new HeaderListItemHolder (handler, view);
             } else {
                 view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
-                holder = new TimeEntryListItemHolder (this, view);
+                holder = new TimeEntryListItemHolder (handler, this, view);
             }
             return holder;
         }
 
-        public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
         {
-            if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {
-                return;
-            }
-
             if (GetItemViewType (position) == ViewTypeDateHeader) {
                 var headerHolder = (HeaderListItemHolder)holder;
-                headerHolder.Bind ((AllTimeEntriesViewModel.DateGroup)items[position]);
+                headerHolder.Bind ((AllTimeEntriesViewModel.DateGroup) GetEntry (position));
             } else {
                 var entryHolder = (TimeEntryListItemHolder)holder;
-                var model = new TimeEntryModel ((TimeEntryData)items[position]);
+                var model = new TimeEntryModel ((TimeEntryData) GetEntry (position));
                 entryHolder.Bind (model);
-            }
-        }
-
-        public override int ItemCount
-        {
-            get {
-                if (viewModel.IsLoading) {
-                    return items.Count + 1;
-                }
-                return items.Count;
             }
         }
 
         public override int GetItemViewType (int position)
         {
-            if (position == items.Count && viewModel.IsLoading) {
+            if (position == DataView.Count && DataView.IsLoading) {
                 return ViewTypeLoaderPlaceholder;
             }
 
-            var obj = items[position];
+            var obj = GetEntry (position);
             if (obj is AllTimeEntriesViewModel.DateGroup) {
                 return ViewTypeDateHeader;
             }
             return ViewTypeContent;
         }
 
-        public class HeaderListItemHolder : RecyclerView.ViewHolder
+        private class HeaderListItemHolder : RecycledBindableViewHolder<AllTimeEntriesViewModel.DateGroup>
         {
+            private readonly Handler handler;
+
             public TextView DateGroupTitleTextView { get; private set; }
 
             public TextView DateGroupDurationTextView { get; private set; }
 
-            public HeaderListItemHolder (View root) : base (root)
+            public HeaderListItemHolder (Handler handler, View root) : base (root)
             {
+                this.handler = handler;
                 DateGroupTitleTextView = root.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoLight);
                 DateGroupDurationTextView = root.FindViewById<TextView> (Resource.Id.DateGroupDurationTextView).SetFont (Font.RobotoLight);
             }
 
-            public void Bind (AllTimeEntriesViewModel.DateGroup dateGroup)
+            protected override void Rebind ()
             {
-                DateGroupTitleTextView.Text = GetRelativeDateString (dateGroup.Date);
-                //DateGroupDurationTextView.Text = dateGroup.Duration.ToString (@"hh\:mm\:ss");
+                DateGroupTitleTextView.Text = GetRelativeDateString (DataSource.Date);
+                RebindDuration ();
+            }
+
+            private void RebindDuration ()
+            {
+                if (DataSource == null || Handle == IntPtr.Zero) {
+                    return;
+                }
+
+                var models = DataSource.DataObjects.Select (data => new TimeEntryModel (data)).ToList ();
+                var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
+                DateGroupDurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
+
+                var runningModel = models.FirstOrDefault (m => m.State == TimeEntryState.Running);
+                if (runningModel != null) {
+                    handler.RemoveCallbacks (RebindDuration);
+                    handler.PostDelayed (RebindDuration, 1000 - runningModel.GetDuration ().Milliseconds);
+                }
             }
 
             private static string GetRelativeDateString (DateTime dateTime)
@@ -204,8 +191,9 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecyclerView.ViewHolder
+        private class TimeEntryListItemHolder : RecycledModelViewHolder<TimeEntryModel>
         {
+            private readonly Handler handler;
             private readonly TimeEntriesAdapter adapter;
 
             public View ColorView { get; private set; }
@@ -226,8 +214,9 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton ContinueImageButton { get; private set; }
 
-            public TimeEntryListItemHolder (TimeEntriesAdapter adapter, View root) : base (root)
+            public TimeEntryListItemHolder (Handler handler, TimeEntriesAdapter adapter, View root) : base (root)
             {
+                this.handler = handler;
                 this.adapter = adapter;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
@@ -243,28 +232,102 @@ namespace Toggl.Joey.UI.Adapters
                 ContinueImageButton.Click += OnContinueButtonClicked;
             }
 
-            public void Bind (TimeEntryModel model)
+            private void OnContinueButtonClicked (object sender, EventArgs e)
+            {
+                if (DataSource == null) {
+                    return;
+                }
+
+                if (DataSource.State == TimeEntryState.Running) {
+                    adapter.OnStopTimeEntry (DataSource);
+                    return;
+                }
+                adapter.OnContinueTimeEntry (DataSource);
+            }
+
+            protected override void ResetTrackedObservables ()
+            {
+                Tracker.MarkAllStale ();
+
+                if (DataSource != null) {
+                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
+
+                    if (DataSource.Project != null) {
+                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
+
+                        if (DataSource.Project.Client != null) {
+                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
+                        }
+                    }
+
+                    if (DataSource.Task != null) {
+                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
+                    }
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleTimeEntryPropertyChanged (string prop)
+            {
+                if (prop == TimeEntryModel.PropertyProject
+                        || prop == TimeEntryModel.PropertyTask
+                        || prop == TimeEntryModel.PropertyState
+                        || prop == TimeEntryModel.PropertyStartTime
+                        || prop == TimeEntryModel.PropertyStopTime
+                        || prop == TimeEntryModel.PropertyDescription
+                        || prop == TimeEntryModel.PropertyIsBillable) {
+                    Rebind ();
+                }
+            }
+
+            private void HandleProjectPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyClient
+                        || prop == ProjectModel.PropertyColor
+                        || prop == ProjectModel.PropertyName) {
+                    Rebind ();
+                }
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyName) {
+                    Rebind ();
+                }
+            }
+
+            private void HandleTaskPropertyChanged (string prop)
+            {
+                if (prop == TaskModel.PropertyName) {
+                    Rebind ();
+                }
+            }
+
+            protected override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
 
-                if (model == null) {
+                ResetTrackedObservables ();
+
+                if (DataSource == null) {
                     return;
                 }
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (model.Project != null && model.Project.Client != null) {
-                    ClientTextView.Text = String.Format ("{0} • ", model.Project.Client.Name);
+                if (DataSource.Project != null && DataSource.Project.Client != null) {
+                    ClientTextView.Text = String.Format ("{0} • ", DataSource.Project.Client.Name);
                     ClientTextView.Visibility = ViewStates.Visible;
                 } else {
                     ClientTextView.Text = String.Empty;
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
-                if (model.Task != null) {
-                    TaskTextView.Text = String.Format ("{0} • ", model.Task.Name);
+                if (DataSource.Task != null) {
+                    TaskTextView.Text = String.Format ("{0} • ", DataSource.Task.Name);
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
                     TaskTextView.Text = String.Empty;
@@ -272,84 +335,69 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var color = Color.Transparent;
-                if (model.Project != null) {
-                    color = Color.ParseColor (model.Project.GetHexColor ());
+                if (DataSource.Project != null) {
+                    color = Color.ParseColor (DataSource.Project.GetHexColor ());
                     ProjectTextView.SetTextColor (color);
-                    if (String.IsNullOrWhiteSpace (model.Project.Name)) {
+                    if (String.IsNullOrWhiteSpace (DataSource.Project.Name)) {
                         ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
                     } else {
-                        ProjectTextView.Text = model.Project.Name;
+                        ProjectTextView.Text = DataSource.Project.Name;
                     }
                 } else {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
 
-                var shape = ColorView.Background as Android.Graphics.Drawables.GradientDrawable;
+                var shape = ColorView.Background as GradientDrawable;
                 if (shape != null) {
                     shape.SetColor (color);
                 }
 
-                if (String.IsNullOrWhiteSpace (model.Description)) {
-                    if (model.Task == null) {
+                if (String.IsNullOrWhiteSpace (DataSource.Description)) {
+                    if (DataSource.Task == null) {
                         DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                         DescriptionTextView.Visibility = ViewStates.Visible;
                     } else {
                         DescriptionTextView.Visibility = ViewStates.Gone;
                     }
                 } else {
-                    DescriptionTextView.Text = model.Description;
+                    DescriptionTextView.Text = DataSource.Description;
                     DescriptionTextView.Visibility = ViewStates.Visible;
                 }
 
-                BillableView.Visibility = model.IsBillable ? ViewStates.Visible : ViewStates.Gone;
+                BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
-                RebindDuration (model);
+                RebindDuration ();
             }
 
-            private void RebindDuration (TimeEntryModel model)
+            private void RebindDuration ()
             {
-                if (model == null || Handle == IntPtr.Zero) {
+                if (DataSource == null || Handle == IntPtr.Zero) {
                     return;
                 }
 
-                var duration = model.GetDuration ();
-                DurationTextView.Text = model.GetFormattedDuration ();
-                ShowStopButton (model);
+                var duration = DataSource.GetDuration ();
+                DurationTextView.Text = DataSource.GetFormattedDuration ();
+
+                if (DataSource.State == TimeEntryState.Running) {
+                    handler.RemoveCallbacks (RebindDuration);
+                    handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
+                }
+                ShowStopButton ();
             }
 
-            private void ShowStopButton (TimeEntryModel model)
+            private void ShowStopButton ()
             {
-                if (model.State == Toggl.Phoebe.Data.TimeEntryState.Running) {
+                if (DataSource == null || Handle == IntPtr.Zero) {
+                    return;
+                }
+
+                if (DataSource.State == TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
                 } else {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
                 }
             }
-
-            private void OnContinueButtonClicked (object sender, EventArgs e)
-            {
-
-            }
-        }
-
-        private class SpinnerHolder : RecyclerView.ViewHolder
-        {
-            public SpinnerHolder (View root) : base (root)
-            {
-            }
-        }
-
-        private View GetLoadIndicatorView (ViewGroup parent)
-        {
-            var view = LayoutInflater.FromContext (parent.Context).Inflate (
-                           Resource.Layout.TimeEntryListLoadingItem, parent, false);
-
-            ImageView spinningImage = view.FindViewById<ImageView> (Resource.Id.LoadingImageView);
-            Animation spinningImageAnimation = AnimationUtils.LoadAnimation (parent.Context, Resource.Animation.SpinningAnimation);
-            spinningImage.StartAnimation (spinningImageAnimation);
-
-            return view;
         }
     }
 }

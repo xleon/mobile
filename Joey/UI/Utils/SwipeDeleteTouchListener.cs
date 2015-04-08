@@ -1,7 +1,5 @@
 ﻿using System;
 using Android.Graphics;
-using Android.OS;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Views;
@@ -21,7 +19,6 @@ namespace Toggl.Joey.UI.Utils
         private int minFlingVelocity;
         private int maxFlingVelocity;
         private VelocityTracker velocityTracker;
-
 
         public SwipeDeleteTouchListener (ListView listView, IDismissCallbacks callbacks)
         {
@@ -85,16 +82,13 @@ namespace Toggl.Joey.UI.Utils
                         minFlingVelocity <= absVelocityX && absVelocityX <= maxFlingVelocity && absVelocityY < absVelocityX ) {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Delete);
-
+                    swipeView.SwipeAnimationEnd += DeleteItem;
                 } else {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Cancel);
-
                 }
                 downX = 0;
                 downY = 0;
-                downView = null;
-                downPosition = ListView.InvalidPosition;
                 swiping = false;
                 velocityTracker.Recycle();
                 velocityTracker = null;
@@ -133,6 +127,15 @@ namespace Toggl.Joey.UI.Utils
 
             }
             return false;
+        }
+
+        private void DeleteItem (object sender, EventArgs e)
+        {
+            if (downPosition != -1) {
+                callbacks.OnDismiss (downPosition);
+            }
+            downPosition = ListView.InvalidPosition;
+            downView = null;
         }
 
         public interface IDismissCallbacks

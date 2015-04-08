@@ -37,19 +37,6 @@ namespace Toggl.Joey.UI.Fragments
             Arguments = args;
         }
 
-        public DeleteTimeEntriesPromptDialogFragment (IEnumerable<TimeEntryData> dataObjects)
-        {
-            var ids = new List<string> ();
-            foreach (var model in dataObjects) {
-                ids.Add (model.Id.ToString ());
-            }
-
-            var args = new Bundle ();
-            args.PutStringArrayList (TimeEntryIdsArgument, ids);
-
-            Arguments = args;
-        }
-
         private IEnumerable<string> TimeEntryIds
         {
             get {
@@ -64,14 +51,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (savedInstanceState);
 
-            // TODO: Really shouldn't use synchronous here, but ...
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var ids = TimeEntryIds.Select (id => Guid.Parse (id)).ToList ();
-            models = dataStore.Table<TimeEntryData> ()
-                     .QueryAsync (r => r.DeletedAt == null && ids.Contains (r.Id))
-                     .Result
-                     .Select (data => new TimeEntryModel (data))
-                     .ToList ();
+            FetchModels();
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -97,6 +77,25 @@ namespace Toggl.Joey.UI.Fragments
             if (models.Count == 0) {
                 Dismiss ();
             }
+        }
+
+        public void DeleteSilently()
+        {
+            FetchModels();
+            models.Select (m => m.DeleteAsync ()).ToList ();
+            models.Clear ();
+        }
+
+        private void FetchModels()
+        {
+            // TODO: Really shouldn't use synchronous here, but ...
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var ids = TimeEntryIds.Select (id => Guid.Parse (id)).ToList ();
+            models = dataStore.Table<TimeEntryData> ()
+                     .QueryAsync (r => r.DeletedAt == null && ids.Contains (r.Id))
+                     .Result
+                     .Select (data => new TimeEntryModel (data))
+                     .ToList ();
         }
 
         private void OnDeleteButtonClicked (object sender, DialogClickEventArgs args)

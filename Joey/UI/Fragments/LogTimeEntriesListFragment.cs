@@ -99,6 +99,24 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        private void DeleteTimeEntry (int position)
+        {
+            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
+            if (adapter == null) {
+                return;
+            }
+
+            var deleteList = new List<TimeEntryModel>();
+            var data = adapter.GetEntry (position) as TimeEntryData;
+
+            deleteList.Add ((TimeEntryModel)data);
+
+            var deleteDialog = new DeleteTimeEntriesPromptDialogFragment (deleteList);
+            deleteDialog.DeleteSilently();
+            adapter.NotifyDataSetChanged();
+            ListView.Invalidate();
+        }
+
         private async void ContinueTimeEntry (TimeEntryModel model)
         {
             DurOnlyNoticeDialogFragment.TryShow (FragmentManager);

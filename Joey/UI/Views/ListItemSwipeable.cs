@@ -1,10 +1,9 @@
-﻿using Android.Content;
+﻿using System;
+using Android.Animation;
+using Android.Content;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using Android.Graphics.Drawables;
-using System;
-using Android.Animation;
 
 namespace Toggl.Joey.UI.Views
 {
@@ -71,8 +70,27 @@ namespace Toggl.Joey.UI.Views
         {
             var anim = ValueAnimator.OfFloat (ScrollX, a == SwipeAction.Delete ? -Width : 0);
             anim.Update += OnScrollAnimationUpdate;
-            anim.SetDuration (250);
-            anim.Start ();
+            if (a == SwipeAction.Delete) {
+                anim.AnimationEnd += OnScrollAnimationEnd;
+            }
+            anim.SetDuration (250)
+            .Start ();
+        }
+
+        private void OnScrollAnimationEnd (object sender, EventArgs e)
+        {
+            OnAnimationEnd (sender, e);
+            OnScrollEvent (0);
+            ScrollX = 0;
+        }
+
+        public event EventHandler SwipeAnimationEnd;
+
+        private void OnAnimationEnd (object sender, EventArgs e)
+        {
+            if (SwipeAnimationEnd != null) {
+                SwipeAnimationEnd (this, EventArgs.Empty);
+            }
         }
 
         private void OnScrollAnimationUpdate (object sender, ValueAnimator.AnimatorUpdateEventArgs e)

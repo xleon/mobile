@@ -38,7 +38,7 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             var obj = GetEntry (position);
-            if (obj is AllTimeEntriesViewModel.DateGroup) {
+            if (obj is AllTimeEntriesView.DateGroup) {
                 return ViewTypeDateHeader;
             }
             return ViewTypeContent;
@@ -97,7 +97,7 @@ namespace Toggl.Joey.UI.Adapters
             var viewType = GetItemViewType (position);
 
             if (viewType == ViewTypeDateHeader) {
-                var dateGroup = (AllTimeEntriesViewModel.DateGroup)entry;
+                var dateGroup = (AllTimeEntriesView.DateGroup)entry;
                 if (view == null) {
                     view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
                                Resource.Layout.LogTimeEntryListSectionHeader, parent, false);

@@ -44,11 +44,12 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             if (e.Action == NotifyCollectionChangedAction.Add) {
-                if (e.NewItems.Count > 1) {
-                    NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
-                } else {
-                    NotifyItemInserted (e.NewStartingIndex);
+
+                if (e.NewItems.Count == 0) {
+                    return;
                 }
+
+                NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
             }
 
             if (e.Action == NotifyCollectionChangedAction.Replace) {
@@ -195,6 +196,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             private readonly Handler handler;
             private readonly TimeEntriesAdapter adapter;
+            private TimeEntryTagsView tagsView;
 
             public View ColorView { get; private set; }
 
@@ -243,6 +245,40 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
                 adapter.OnContinueTimeEntry (DataSource);
+            }
+
+            protected override void OnDataSourceChanged ()
+            {
+                // Clear out old
+                if (tagsView != null) {
+                    tagsView.Updated -= OnTagsUpdated;
+                    tagsView = null;
+                }
+
+                if (DataSource != null) {
+                    tagsView = new TimeEntryTagsView (DataSource.Id);
+                    tagsView.Updated += OnTagsUpdated;
+                }
+
+                RebindTags ();
+
+                base.OnDataSourceChanged ();
+            }
+
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (tagsView != null) {
+                        tagsView.Updated -= OnTagsUpdated;
+                        tagsView = null;
+                    }
+                }
+                base.Dispose (disposing);
+            }
+
+            private void OnTagsUpdated (object sender, EventArgs args)
+            {
+                RebindTags ();
             }
 
             protected override void ResetTrackedObservables ()
@@ -397,6 +433,20 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
                 }
+            }
+
+            private void RebindTags ()
+            {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero) {
+                    return;
+                }
+
+                var showTags = tagsView != null && tagsView.HasNonDefault;
+                if (showTags) {
+                    TagsView.BubbleCount = (int)tagsView.Count;
+                }
+                TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
             }
         }
     }

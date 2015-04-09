@@ -9,9 +9,6 @@ namespace Toggl.Phoebe.Data.Views
     {
         private readonly ICollectionDataView<T> source;
         private IList<T> data;
-        private long? count;
-        private bool? hasMore;
-        private bool? isLoading;
 
         public CollectionCachingDataView (ICollectionDataView<T> source)
         {
@@ -20,14 +17,18 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             this.source = source;
-            source.Updated += OnSourceUpdated;
-            source.CollectionChanged += OnCollectionUpdated;
+            this.source.Updated += OnSourceUpdated;
+            this.source.CollectionChanged += OnCollectionUpdated;
+            this.source.OnIsLoadingChanged += OnLoading;
+            this.source.OnHasMoreChanged += OnHasMore;
         }
 
         public void Dispose ()
         {
             source.Updated -= OnSourceUpdated;
             source.CollectionChanged -= OnCollectionUpdated;
+            source.OnIsLoadingChanged -= OnLoading;
+            source.OnHasMoreChanged -= OnHasMore;
         }
 
         public ICollectionDataView<T> Source
@@ -39,9 +40,6 @@ namespace Toggl.Phoebe.Data.Views
         {
             // Invalidate cached data
             data = null;
-            count = null;
-            hasMore = null;
-            isLoading = null;
 
             // Notify our listeners
             var handler = Updated;
@@ -52,8 +50,23 @@ namespace Toggl.Phoebe.Data.Views
 
         private void OnCollectionUpdated (object sender, NotifyCollectionChangedEventArgs e)
         {
-            // Notify our listeners
             var handler = CollectionChanged;
+            if (handler != null) {
+                handler (this, e);
+            }
+        }
+
+        private void OnLoading (object sender, EventArgs e)
+        {
+            var handler = OnIsLoadingChanged;
+            if (handler != null) {
+                handler (this, e);
+            }
+        }
+
+        private void OnHasMore (object sender, EventArgs e)
+        {
+            var handler = OnHasMoreChanged;
             if (handler != null) {
                 handler (this, e);
             }
@@ -62,6 +75,10 @@ namespace Toggl.Phoebe.Data.Views
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
         public event EventHandler Updated;
+
+        public event EventHandler OnIsLoadingChanged;
+
+        public event EventHandler OnHasMoreChanged;
 
         public void Reload ()
         {
@@ -87,33 +104,24 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public long Count
+        public int Count
         {
             get {
-                if (count == null) {
-                    count = source.Count;
-                }
-                return count.Value;
+                return source.Count;
             }
         }
 
         public bool HasMore
         {
             get {
-                if (hasMore == null) {
-                    hasMore = source.HasMore;
-                }
-                return hasMore.Value;
+                return source.HasMore;
             }
         }
 
         public bool IsLoading
         {
             get {
-                if (isLoading == null) {
-                    isLoading = source.IsLoading;
-                }
-                return isLoading.Value;
+                return source.IsLoading;
             }
         }
     }

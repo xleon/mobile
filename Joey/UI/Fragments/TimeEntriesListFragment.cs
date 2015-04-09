@@ -25,6 +25,17 @@ namespace Toggl.Joey.UI.Fragments
         private RecyclerView recyclerView;
         private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
+        private TimeEntriesAdapter adapter;
+
+        private TimeEntriesAdapter Adapter
+        {
+            get {
+                if (adapter == null) {
+                    adapter = new TimeEntriesAdapter();
+                }
+                return adapter;
+            }
+        }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -45,9 +56,9 @@ namespace Toggl.Joey.UI.Fragments
 
             // Create view model.
             var linearLayout = new LinearLayoutManager (Activity);
-
             recyclerView.SetLayoutManager (linearLayout);
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+            recyclerView.SetOnScrollListener (new RecyclerViewScrollDetector (Adapter.DataView, linearLayout));
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -140,7 +151,7 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureAdapter ()
         {
             if (recyclerView.GetAdapter() == null) {
-                recyclerView.SetAdapter (new TimeEntriesAdapter ());
+                recyclerView.SetAdapter (Adapter);
                 var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
             }
         }
@@ -171,12 +182,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
         {
-            private ICollectionDataView<object> viewModel;
+            private ICollectionDataView<object> dataSource;
             private LinearLayoutManager layoutManager;
 
-            public RecyclerViewScrollDetector (ICollectionDataView<object> viewModel, LinearLayoutManager layoutManager)
+            public RecyclerViewScrollDetector (ICollectionDataView<object> dataSource, LinearLayoutManager layoutManager)
             {
-                this.viewModel = viewModel;
+                this.dataSource = dataSource;
                 this.layoutManager = layoutManager;
                 LoadMoreThreshold = 3;
             }
@@ -206,8 +217,8 @@ namespace Toggl.Joey.UI.Fragments
                 var totalItemCount = layoutManager.ItemCount;
                 var firstVisibleItem = layoutManager.FindFirstVisibleItemPosition();
 
-                if (!viewModel.IsLoading  && (totalItemCount - visibleItemCount) <= (firstVisibleItem + LoadMoreThreshold)) {
-                    //viewModel.LoadMore();
+                if (!dataSource.IsLoading && dataSource.HasMore && (totalItemCount - visibleItemCount) <= (firstVisibleItem + LoadMoreThreshold)) {
+                    //dataSource.LoadMore ();
                 }
             }
 

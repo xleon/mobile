@@ -55,5 +55,43 @@ namespace Toggl.Phoebe.Data.Utils
 
         public ObservableRangeCollection (IEnumerable<T> collection) : base (collection) { }
     }
+
+    public static class CollectionEventBuilder
+    {
+
+        public static NotifyCollectionChangedEventArgs GetEvent (NotifyCollectionChangedAction action, int newIndex, int oldIndex)
+        {
+            NotifyCollectionChangedEventArgs args;
+            switch (action) {
+            case NotifyCollectionChangedAction.Move:
+                args = new NotifyCollectionChangedEventArgs (action, new Object(), newIndex, oldIndex);
+                break;
+            case NotifyCollectionChangedAction.Replace:
+                args = new NotifyCollectionChangedEventArgs (action, new Object(), new Object(), newIndex);
+                break;
+            case NotifyCollectionChangedAction.Reset:
+                args = new NotifyCollectionChangedEventArgs (action);
+                break;
+            default:
+                args = new NotifyCollectionChangedEventArgs (action, new Object(), newIndex);
+                break;
+            }
+            return args;
+        }
+
+        public static NotifyCollectionChangedEventArgs GetRangeEvent (NotifyCollectionChangedAction action, int newIndex, int numberOfItems)
+        {
+            NotifyCollectionChangedEventArgs args;
+            switch (action) {
+            case NotifyCollectionChangedAction.Add:
+                args = new NotifyCollectionChangedEventArgs (action, new List<object> (new string[numberOfItems]), newIndex);
+                break;
+            default:
+                args = new NotifyCollectionChangedEventArgs (action, new Object(), newIndex);
+                break;
+            }
+            return args;
+        }
+    }
 }
 

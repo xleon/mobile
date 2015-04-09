@@ -8,7 +8,7 @@ namespace Toggl.Phoebe.Data.Views
     {
         IEnumerable<T> Data { get; }
 
-        long Count { get; }
+        int Count { get; }
 
         bool HasMore { get; }
 
@@ -19,6 +19,10 @@ namespace Toggl.Phoebe.Data.Views
         bool IsLoading { get; }
 
         event EventHandler Updated;
+
+        event EventHandler OnIsLoadingChanged;
+
+        event EventHandler OnHasMoreChanged;
     }
 }
 

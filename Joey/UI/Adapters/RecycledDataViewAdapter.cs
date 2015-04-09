@@ -11,16 +11,18 @@ namespace Toggl.Joey.UI.Adapters
 {
     public abstract class RecycledDataViewAdapter<T> : RecyclerView.Adapter
     {
-        private readonly int LoadMoreOffset = 3;
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
         protected static readonly int ViewTypeContent = 1;
+        private readonly int LoadMoreOffset = 3;
         private CollectionCachingDataView<T> dataView;
+        private int lastLoadingPosition;
 
         protected RecycledDataViewAdapter (ICollectionDataView<T> dataView)
         {
             this.dataView = new CollectionCachingDataView<T> (dataView);
-            this.dataView.Updated += OnDataViewUpdated;
             this.dataView.CollectionChanged += OnCollectionChanged;
+            this.dataView.OnIsLoadingChanged += OnLoading;
+            this.dataView.OnHasMoreChanged += OnHasMore;
             HasStableIds = false;
         }
 
@@ -40,12 +42,28 @@ namespace Toggl.Joey.UI.Adapters
             base.Dispose (disposing);
         }
 
-        private void OnDataViewUpdated (object sender, EventArgs e)
+        private void OnLoading (object sender, EventArgs e)
         {
             // Need to access the Handle property, else mono optimises/loses the context and we get a weird
             // low-level exception about "'jobject' must not be IntPtr.Zero".
             if (Handle == IntPtr.Zero) {
                 return;
+            }
+
+            // Sometimes a new call to LoadMore is needed.
+            if (lastLoadingPosition + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
+                dataView.LoadMore();
+            }
+        }
+
+        private void OnHasMore (object sender, EventArgs e)
+        {
+            if (Handle == IntPtr.Zero) {
+                return;
+            }
+
+            if (!dataView.HasMore) {
+                NotifyItemRemoved (dataView.Count);
             }
         }
 
@@ -54,16 +72,13 @@ namespace Toggl.Joey.UI.Adapters
             if (Handle == IntPtr.Zero) {
                 return;
             }
-            CollectionChanged (e);
-        }
 
-        protected virtual void CollectionChanged (NotifyCollectionChangedEventArgs e)
-        {
+            CollectionChanged (e);
         }
 
         public virtual T GetEntry (int position)
         {
-            if (dataView.IsLoading && position == dataView.Count) {
+            if (position == dataView.Count && dataView.IsLoading) {
                 return default (T);
             }
             return dataView.Data.ElementAt (position);
@@ -71,7 +86,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override long GetItemId (int position)
         {
-            return position;
+            return -1;
         }
 
         public override int GetItemViewType (int position)
@@ -79,7 +94,6 @@ namespace Toggl.Joey.UI.Adapters
             if (position == dataView.Count && dataView.IsLoading) {
                 return ViewTypeLoaderPlaceholder;
             }
-
             return ViewTypeContent;
         }
 
@@ -91,16 +105,13 @@ namespace Toggl.Joey.UI.Adapters
         public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
             if (position + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
-                //dataView.LoadMore ();
-                /*
-                Console.WriteLine ( "load More! " + position);
-                Console.WriteLine ( "ItemCount! " + ItemCount);
-                Console.WriteLine ( "Has More! " + dataView.HasMore);
-                Console.WriteLine ( "Loading! " + dataView.IsLoading);
-                */
+                lastLoadingPosition = position;
+                dataView.LoadMore ();
             }
 
-            if (holder is SpinnerHolder) {
+            if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {
+                var spinnerHolder = (SpinnerHolder)holder;
+                spinnerHolder.StartAnimation ();
                 return;
             }
 
@@ -111,17 +122,19 @@ namespace Toggl.Joey.UI.Adapters
 
         protected abstract void BindHolder (RecyclerView.ViewHolder holder, int position);
 
+        protected abstract void CollectionChanged (NotifyCollectionChangedEventArgs e);
+
         public override int ItemCount
         {
             get {
-                if (dataView.IsLoading) {
-                    return (int)dataView.Count + 1;
+                if (dataView.HasMore) {
+                    return dataView.Count + 1;
                 }
-                return (int)dataView.Count;
+                return dataView.Count;
             }
         }
 
-        protected CollectionCachingDataView<T> DataView
+        public CollectionCachingDataView<T> DataView
         {
             get { return dataView; }
         }
@@ -130,18 +143,23 @@ namespace Toggl.Joey.UI.Adapters
         {
             var view = LayoutInflater.FromContext (parent.Context).Inflate (
                            Resource.Layout.TimeEntryListLoadingItem, parent, false);
-
-            ImageView spinningImage = view.FindViewById<ImageView> (Resource.Id.LoadingImageView);
-            Animation spinningImageAnimation = AnimationUtils.LoadAnimation (parent.Context, Resource.Animation.SpinningAnimation);
-            spinningImage.StartAnimation (spinningImageAnimation);
-
             return view;
         }
 
         protected class SpinnerHolder : RecyclerView.ViewHolder
         {
+            public ImageView SpinningImage { get; set; }
+
             public SpinnerHolder (View root) : base (root)
             {
+                SpinningImage = ItemView.FindViewById<ImageView> (Resource.Id.LoadingImageView);
+                IsRecyclable  = false;
+            }
+
+            public virtual void StartAnimation()
+            {
+                Animation spinningImageAnimation = AnimationUtils.LoadAnimation (ItemView.Context, Resource.Animation.SpinningAnimation);
+                SpinningImage.StartAnimation (spinningImageAnimation);
             }
         }
     }

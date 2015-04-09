@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -24,6 +25,9 @@ namespace Toggl.Phoebe.Data.Views
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private bool reloadScheduled;
+        private bool isLoading;
+        private bool hasMore;
+        private int lastItemNumber;
 
         public AllTimeEntriesViewModel ()
         {
@@ -82,7 +86,7 @@ namespace Toggl.Phoebe.Data.Views
                     if (grp.Date != date) {
                         // Need to move entry:
                         grp.Remove (existingEntry);
-                        DispatchCollectionEvent (BuildCollectionEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (grp), -1));
+                        DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (grp), -1));
 
                         grp = GetGroupFor (entry, out isNewGroup);
                         grp.Add (entry);
@@ -94,7 +98,7 @@ namespace Toggl.Phoebe.Data.Views
                         newIndex = GetTimeEntryIndex (entry);
                         if (newIndex != oldIndex) {
                             OnUpdated();
-                            DispatchCollectionEvent (BuildCollectionEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
+                            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
                         }
                         entryAction = NotifyCollectionChangedAction.Replace;
                     }
@@ -115,11 +119,11 @@ namespace Toggl.Phoebe.Data.Views
             // Update group.
             groupIndex = GetDateGroupIndex (grp);
             var groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-            DispatchCollectionEvent (BuildCollectionEvent (groupAction, groupIndex, oldIndex));
+            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (groupAction, groupIndex, oldIndex));
 
             // Updated entry.
             newIndex = GetTimeEntryIndex (entry);
-            DispatchCollectionEvent (BuildCollectionEvent (entryAction, newIndex, oldIndex));
+            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (entryAction, newIndex, oldIndex));
         }
 
         private void RemoveEntry (TimeEntryData entry)
@@ -141,8 +145,8 @@ namespace Toggl.Phoebe.Data.Views
                 }
 
                 OnUpdated ();
-                DispatchCollectionEvent (BuildCollectionEvent (groupAction, groupIndex, -1));
-                DispatchCollectionEvent (BuildCollectionEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
+                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
             }
         }
 
@@ -234,7 +238,6 @@ namespace Toggl.Phoebe.Data.Views
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
-
             var handler = Updated;
             if (handler != null) {
                 handler (this, EventArgs.Empty);
@@ -243,32 +246,11 @@ namespace Toggl.Phoebe.Data.Views
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private static NotifyCollectionChangedEventArgs BuildCollectionEvent (NotifyCollectionChangedAction action, int newIndex, int oldIndex)
-        {
-            NotifyCollectionChangedEventArgs args;
-            switch (action) {
-            case NotifyCollectionChangedAction.Move:
-                args = new NotifyCollectionChangedEventArgs (action, new Object(), newIndex, oldIndex);
-                break;
-            case NotifyCollectionChangedAction.Replace:
-                args = new NotifyCollectionChangedEventArgs (action, new Object(), new Object(), newIndex);
-                break;
-            case NotifyCollectionChangedAction.Reset:
-                args = new NotifyCollectionChangedEventArgs (action);
-                break;
-            default:
-                args = new NotifyCollectionChangedEventArgs (action, new Object(), newIndex);
-                break;
-            }
-            return args;
-        }
-
         private void DispatchCollectionEvent (NotifyCollectionChangedEventArgs args)
         {
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
-            Console.WriteLine ( "Action :" + args.Action + " " + "Start index :" + args.NewStartingIndex + " " + "End index :" + args.OldStartingIndex);
             var handler = CollectionChanged;
             if (handler != null) {
                 handler (this, args);
@@ -280,6 +262,7 @@ namespace Toggl.Phoebe.Data.Views
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
+            lastItemNumber = Count;
             updateMode = UpdateMode.Batch;
         }
 
@@ -287,6 +270,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             updateMode = UpdateMode.Immediate;
             OnUpdated ();
+            DispatchCollectionEvent (CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, Count, Count - lastItemNumber));
         }
 
         public void Reload ()
@@ -362,8 +346,6 @@ namespace Toggl.Phoebe.Data.Views
                             }
                         }
 
-                        // Update as range!
-
                         startTime = minStart;
                         HasMore = (endTime.Date - minStart.Date).Days > 0;
                     } catch (Exception exc) {
@@ -397,8 +379,6 @@ namespace Toggl.Phoebe.Data.Views
                         AddOrUpdateEntry (entry);
                     }
 
-                    // Update as range!
-
                     if (!initialLoad) {
                         var count = await baseQuery
                                     .CountAsync (r => r.StartTime <= startTime);
@@ -431,7 +411,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public long Count
+        public int Count
         {
             get {
                 var itemsCount = dateGroups.Sum (g => g.DataObjects.Count);
@@ -439,9 +419,35 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public bool HasMore { get; private set; }
+        public event EventHandler OnHasMoreChanged;
 
-        public bool IsLoading { get; private set; }
+        public bool HasMore
+        {
+            get {
+                return hasMore;
+            }
+            private set {
+                hasMore = value;
+                if (OnHasMoreChanged != null) {
+                    OnHasMoreChanged (this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public event EventHandler OnIsLoadingChanged;
+
+        public bool IsLoading
+        {
+            get {
+                return isLoading;
+            }
+            private set {
+                isLoading = value;
+                if (OnIsLoadingChanged != null) {
+                    OnIsLoadingChanged (this, EventArgs.Empty);
+                }
+            }
+        }
 
         public class DateGroup
         {

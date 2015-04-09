@@ -30,8 +30,6 @@ namespace Toggl.Joey.UI.Fragments
         private bool isSaving;
 
         public TogglField ProjectBit { get; private set; }
-        public TogglField ClientBit { get; private set; }
-        public Button SaveButton { get; private set; }
         public ColorPickerRecyclerView ColorPicker { get; private set; }
 
         public NewProjectFragment (WorkspaceModel workspace)
@@ -57,11 +55,6 @@ namespace Toggl.Joey.UI.Fragments
 
             ProjectBit = view.FindViewById<TogglField> (Resource.Id.NewProjectProjectNameBit).DestroyAssistView().DestroyArrow().SetName (Resource.String.NewProjectProjectFieldName);
             ProjectBit.TextField.TextChanged += ProjectBitTextChangedHandler;
-
-            ClientBit = view.FindViewById<TogglField> (Resource.Id.NewProjectClientBit).DestroyAssistView ().SetName (Resource.String.NewProjectClientFieldName).SimulateButton();
-
-            SaveButton = view.FindViewById<Button> (Resource.Id.NewProjectsFragmentSaveButton);
-            SaveButton.Click += SaveButtonHandler;
 
             ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
             ColorPicker.SelectedColorChanged += (object sender, int e) => {
@@ -127,10 +120,17 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            menu.Add (Resource.String.NewProjectSaveButtonText).SetShowAsAction (ShowAsAction.Always);
+        }
+
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             if (item.ItemId == Android.Resource.Id.Home) {
                 Activity.OnBackPressed ();
+            } else {
+                SaveButtonHandler (this, null);
             }
             return base.OnOptionsItemSelected (item);
         }

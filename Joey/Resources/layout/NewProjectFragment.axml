@@ -7,17 +7,10 @@
 	<android.support.v7.widget.Toolbar
         android:id="@+id/NewProjectsFragmentToolbar"
         android:layout_width="match_parent"
-        android:layout_height="?android:attr/actionBarSize"
+        android:layout_height="?attr/actionBarSize"
         android:background="@null"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         android:popupTheme="@style/ThemeOverlay.AppCompat.Dark">
-        <Button 
-        android:id="@+id/NewProjectsFragmentSaveButton"
-        android:text="@string/NewProjectSaveButtonText"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:layout_width="wrap_content"
-       	android:layout_height="wrap_content"
-        android:layout_gravity="end"/>
     </android.support.v7.widget.Toolbar>
     <LinearLayout
             android:orientation="vertical"
@@ -30,11 +23,6 @@
 		   		android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:id="@+id/NewProjectProjectNameBit"/>
-			<Toggl.Joey.UI.Views.TogglField
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:id="@+id/NewProjectClientBit"
-				android:layout_marginTop="15dp" />
 			 <TextView
         		android:id="@+id/NewProjectProjectColorTitleTextView"
                 android:layout_width="fill_parent"
@@ -53,6 +41,5 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:id="@+id/NewProjectColorPickerRecyclerView" />
-			
 </LinearLayout>
 

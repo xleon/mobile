@@ -1,6 +1,7 @@
 ﻿using System;
 using Android.App;
 using Android.OS;
+using Android.Content.PM;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe.Data.Models;
 
@@ -9,7 +10,7 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Activities
 {
-    [Activity (Label = "NewProjectActivity")]
+    [Activity (Label = "NewProjectActivity", ScreenOrientation = ScreenOrientation.Portrait)]
     public class NewProjectActivity : Activity
     {
         public static readonly string ExtraWorkspaceId = "com.toggl.timer.workspace_id";

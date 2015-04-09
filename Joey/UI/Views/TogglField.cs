@@ -51,7 +51,7 @@ namespace Toggl.Joey.UI.Views
             TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             title.SetText (resourceId);
             EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-            text.SetText (resourceId);
+            text.SetHint (resourceId);
             return this;
         }
 

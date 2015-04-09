@@ -82,7 +82,7 @@ namespace Toggl.Joey.UI.Fragments
             }, 100);
         }
 
-        async void SaveButtonHandler (object sender, EventArgs e)
+        private async void SaveButtonHandler (object sender, EventArgs e)
         {
             if (String.IsNullOrWhiteSpace (model.Name)) {
                 new AlertDialog.Builder (Activity)
@@ -119,7 +119,7 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        void ProjectBitTextChangedHandler (object sender, TextChangedEventArgs e)
+        private void ProjectBitTextChangedHandler (object sender, TextChangedEventArgs e)
         {
             var t = ProjectBit.TextField.Text;
             if (t != model.Name) {

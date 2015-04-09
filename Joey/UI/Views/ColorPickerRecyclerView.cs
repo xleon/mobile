@@ -47,7 +47,7 @@ namespace Toggl.Joey.UI.Views
         public static int ColumnsCount = 5;
         public static int RowsCount = 5;
 
-        void Initialize ()
+        private void Initialize ()
         {
             LayoutInflater inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
             inflater.Inflate (Resource.Layout.ColorPicker, this);
@@ -97,7 +97,7 @@ namespace Toggl.Joey.UI.Views
                 }
             }
 
-            void OnClick (int position)
+            private void OnClick (int position)
             {
                 SelectedColor = position;
                 NotifyDataSetChanged ();

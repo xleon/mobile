@@ -45,7 +45,7 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        void StartNewProjectActivity ()
+        private void StartNewProjectActivity ()
         {
             var intent = new Intent (Activity, typeof (NewProjectActivity));
             intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, (Adapter as ProjectsRecyclerAdapter).Workspace.Id.ToString ());

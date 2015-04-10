@@ -4,16 +4,17 @@
     android:id="@+id/DrawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    <include layout="@layout/MainToolbar" />
-
+    android:background="@color/windowBackground">
 <!-- The main content view -->
     <FrameLayout
         android:id="@+id/ContentFrameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:background="@color/windowBackground" />
-
+        android:background="@color/windowBackground">
+        <include
+            android:id="@+id/MainToolbar"
+            layout="@layout/MainToolbar" />
+    </FrameLayout>
 <!-- The navigation drawer -->
     <FrameLayout xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/DrawerFrameLayout"

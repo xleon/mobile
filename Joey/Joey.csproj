@@ -645,6 +645,7 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNavTimer.png" />
     <AndroidResource Include="Resources\values-v21\Styles.xml" />
     <AndroidResource Include="Resources\layout\MainToolbar.axml" />
+    <AndroidResource Include="Resources\drawable\BgArrowsPattern.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

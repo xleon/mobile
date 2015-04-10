@@ -10,13 +10,13 @@ using Android.Widget;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
-using Toggl.Phoebe;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
-using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -57,9 +57,9 @@ namespace Toggl.Joey.UI.Activities
 
         private Toolbar MainToolbar { get; set; }
 
-        protected override void OnCreateActivity (Bundle bundle)
+        protected override void OnCreateActivity (Bundle state)
         {
-            base.OnCreateActivity (bundle);
+            base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
@@ -81,30 +81,19 @@ namespace Toggl.Joey.UI.Activities
             DrawerLayout.SetDrawerListener (DrawerToggle);
 
             Timer.OnCreate (this);
-            var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
+            var lp = new ActionBar.LayoutParams (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
             lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            drawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
-            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
-
-            DrawerSyncView = FindViewById<FrameLayout> (Resource.Id.DrawerSyncStatus);
-
-            syncRetryButton = DrawerSyncView.FindViewById<ImageButton> (Resource.Id.SyncRetryButton);
-            syncRetryButton.Click += OnSyncRetryClick;
-
-            syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
 
             MainToolbar = FindViewById<Toolbar> (Resource.Id.MainToolbar);
             SetSupportActionBar (MainToolbar);
             SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
 
-            if (bundle == null) {
+            if (state == null) {
                 OpenPage (DrawerListAdapter.TimerPageId);
             } else {
                 // Restore page stack
                 pageStack.Clear ();
-                var arr = bundle.GetIntArray (PageStackExtra);
+                var arr = state.GetIntArray (PageStackExtra);
                 if (arr != null) {
                     pageStack.AddRange (arr);
                 }
@@ -141,18 +130,13 @@ namespace Toggl.Joey.UI.Activities
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (DrawerToggle.OnOptionsItemSelected (item)) {
-                return true;
-            }
-
-            return base.OnOptionsItemSelected (item);
+            return DrawerToggle.OnOptionsItemSelected (item) || base.OnOptionsItemSelected (item);
         }
 
         protected override void OnStart ()
         {
             base.OnStart ();
             Timer.OnStart ();
-
         }
 
         protected override void OnStop ()
@@ -190,6 +174,7 @@ namespace Toggl.Joey.UI.Activities
                 base.OnBackPressed ();
             }
         }
+
         private void SetMenuSelection (int pos)
         {
             int parentPos = drawerAdapter.GetParentPosition (pos -1);

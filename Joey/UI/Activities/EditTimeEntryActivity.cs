@@ -34,8 +34,6 @@ namespace Toggl.Joey.UI.Activities
         {
             base.OnCreateActivity (state);
 
-            ActionBar.Hide ();
-
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 
             CreateModelFromIntent ();

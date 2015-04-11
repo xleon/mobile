@@ -648,7 +648,6 @@
     <AndroidResource Include="Resources\values-v21\Styles.xml" />
     <AndroidResource Include="Resources\layout\MainToolbar.axml" />
     <AndroidResource Include="Resources\drawable\BgArrowsPattern.xml" />
-    <AndroidResource Include="Resources\menu\ProjectFragmentClientItemMenu.xml" />
     <AndroidResource Include="Resources\layout\NewProjectActivity.axml" />
     <AndroidResource Include="Resources\layout\NewProjectFragment.axml" />
     <AndroidResource Include="Resources\layout\ColorPickerItem.axml" />

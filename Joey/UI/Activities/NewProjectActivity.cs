@@ -10,18 +10,18 @@ using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Activities
 {
-    [Activity (Label = "NewProjectActivity", ScreenOrientation = ScreenOrientation.Portrait)]
-    public class NewProjectActivity : Activity
+    [Activity (Label = "NewProjectActivity",
+               ScreenOrientation = ScreenOrientation.Portrait,
+               Theme = "@style/Theme.Toggl.App")]
+    public class NewProjectActivity : BaseActivity
     {
         public static readonly string ExtraWorkspaceId = "com.toggl.timer.workspace_id";
 
         private WorkspaceModel workspace;
 
-        protected override void OnCreate (Bundle bundle)
+        protected override void OnCreateActivity (Bundle state)
         {
-            SetTheme (Resource.Style.Theme_AppCompat_Light_NoActionBar);
-
-            base.OnCreate (bundle);
+            base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.NewProjectActivity);
 

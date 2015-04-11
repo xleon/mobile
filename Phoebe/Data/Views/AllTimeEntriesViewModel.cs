@@ -20,7 +20,7 @@ namespace Toggl.Phoebe.Data.Views
     {
         private static readonly string Tag = "AllTimeEntriesView";
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
-        private UpdateMode updateMode = UpdateMode.Immediate;
+        private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
@@ -270,7 +270,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             updateMode = UpdateMode.Immediate;
             OnUpdated ();
-            DispatchCollectionEvent (CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, Count, Count - lastItemNumber));
+            DispatchCollectionEvent (CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastItemNumber, Count - lastItemNumber));
         }
 
         public void Reload ()

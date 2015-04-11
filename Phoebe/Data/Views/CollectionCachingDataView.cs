@@ -9,6 +9,7 @@ namespace Toggl.Phoebe.Data.Views
     {
         private readonly ICollectionDataView<T> source;
         private IList<T> data;
+        private int? count;
 
         public CollectionCachingDataView (ICollectionDataView<T> source)
         {
@@ -40,6 +41,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             // Invalidate cached data
             data = null;
+            count = null;
 
             // Notify our listeners
             var handler = Updated;
@@ -107,7 +109,10 @@ namespace Toggl.Phoebe.Data.Views
         public int Count
         {
             get {
-                return source.Count;
+                if (count == null) {
+                    count = source.Count;
+                }
+                return count.Value;
             }
         }
 

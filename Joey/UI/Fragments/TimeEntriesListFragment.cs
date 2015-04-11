@@ -164,6 +164,7 @@ namespace Toggl.Joey.UI.Fragments
                     bus.Unsubscribe (subscriptionSettingChanged);
                     subscriptionSettingChanged = null;
                 }
+                Adapter.Dispose ();
             }
             base.Dispose (disposing);
         }

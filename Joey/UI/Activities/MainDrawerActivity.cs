@@ -15,6 +15,8 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
+using Toggl.Phoebe;
+using XPlatUtils;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
@@ -34,8 +36,8 @@ namespace Toggl.Joey.UI.Activities
     {
         private const string PageStackExtra = "com.toggl.timer.page_stack";
         private readonly TimerComponent barTimer = new TimerComponent ();
-        private readonly Lazy<LogTimeEntriesListFragment> trackingFragment = new Lazy<LogTimeEntriesListFragment> ();
-        //private readonly Lazy<TimeEntriesListFragment> trackingFragment = new Lazy<TimeEntriesListFragment> ();
+        //private readonly Lazy<LogTimeEntriesListFragment> trackingFragment = new Lazy<LogTimeEntriesListFragment> ();
+        private readonly Lazy<TimeEntriesListFragment> trackingFragment = new Lazy<TimeEntriesListFragment> ();
         private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
         private readonly Lazy<ReportsPagerFragment> reportFragment = new Lazy<ReportsPagerFragment> ();
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();

@@ -122,10 +122,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnViewPagerPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
-            if (e.Position != MainPagerAdapter.LogPosition) {
-                ((MainPagerAdapter)viewPager.Adapter).LogFragment.CloseActionMode ();
-            }
-
             ToggleTimerDuration ();
             SyncCurrentScreen ();
         }

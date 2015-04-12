@@ -82,8 +82,6 @@
     <Compile Include="UI\Activities\BaseActivity.cs" />
     <Compile Include="UI\Adapters\RecentTimeEntriesAdapter.cs" />
     <Compile Include="UI\Fragments\RecentTimeEntriesListFragment.cs" />
-    <Compile Include="UI\Adapters\LogTimeEntriesAdapter.cs" />
-    <Compile Include="UI\Fragments\LogTimeEntriesListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
@@ -163,10 +161,11 @@
     <Compile Include="UI\Adapters\GroupedEditAdapter.cs" />
     <Compile Include="UI\Fragments\TimeEntriesListFragment.cs" />
     <Compile Include="UI\Views\DividerItemDecoration.cs" />
-    <Compile Include="UI\Adapters\TimeEntriesAdapter.cs" />
     <Compile Include="UI\Adapters\RecycledDataViewAdapter.cs" />
     <Compile Include="UI\Utils\RecycledModelViewHolder.cs" />
     <Compile Include="UI\Utils\RecycledBindableViewHolder.cs" />
+    <Compile Include="UI\Adapters\LogTimeEntriesAdapter.cs" />
+    <Compile Include="UI\Fragments\LogTimeEntriesListFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

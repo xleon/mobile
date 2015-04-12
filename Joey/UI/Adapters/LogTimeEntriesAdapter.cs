@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Linq;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
+using Android.Support.V7.Widget;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -18,36 +20,49 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : BaseDataViewAdapter<object>
+    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<object>
     {
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         private readonly Handler handler = new Handler ();
 
-        public LogTimeEntriesAdapter () : base (new AllTimeEntriesView ())
+        public LogTimeEntriesAdapter () : base (new AllTimeEntriesViewModel())
         {
         }
 
-        public override bool IsEnabled (int position)
-        {
-            return GetEntry (position) is TimeEntryData;
-        }
+        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
 
-        public override int GetItemViewType (int position)
+        public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
+
+        public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
+
+        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
+
+        protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
         {
-            if (position == DataView.Count && DataView.IsLoading) {
-                return ViewTypeLoaderPlaceholder;
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                NotifyDataSetChanged();
             }
 
-            var obj = GetEntry (position);
-            if (obj is AllTimeEntriesView.DateGroup) {
-                return ViewTypeDateHeader;
-            }
-            return ViewTypeContent;
-        }
+            if (e.Action == NotifyCollectionChangedAction.Add) {
 
-        public override int ViewTypeCount
-        {
-            get { return base.ViewTypeCount + 2; }
+                if (e.NewItems.Count == 0) {
+                    return;
+                }
+
+                NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                NotifyItemChanged (e.NewStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                NotifyItemRemoved (e.OldStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                NotifyItemMoved (e.OldStartingIndex, e.NewStartingIndex);
+            }
         }
 
         private void OnDeleteTimeEntry (TimeEntryModel model)
@@ -82,45 +97,47 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
-
-        protected override View GetModelView (int position, View convertView, ViewGroup parent)
+        protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
         {
-            View view = convertView;
-
-            var entry = GetEntry (position);
-            var viewType = GetItemViewType (position);
+            View view;
+            RecyclerView.ViewHolder holder;
 
             if (viewType == ViewTypeDateHeader) {
-                var dateGroup = (AllTimeEntriesView.DateGroup)entry;
-                if (view == null) {
-                    view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
-                               Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
-                    view.Tag = new HeaderListItemHolder (handler, view);
-                }
-                var holder = (HeaderListItemHolder)view.Tag;
-                holder.Bind (dateGroup);
+                view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
+                holder = new HeaderListItemHolder (handler, view);
             } else {
-                var data = (TimeEntryData)entry;
-                var model = (TimeEntryModel)data;
-                if (view == null) {
-                    view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
-                    view.Tag = new TimeEntryListItemHolder (handler, this, view);
-                }
-                var holder = (TimeEntryListItemHolder)view.Tag;
-                holder.Bind (model);
+                view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
+                holder = new TimeEntryListItemHolder (handler, this, view);
             }
-
-            return view;
+            return holder;
         }
 
-        public class HeaderListItemHolder : BindableViewHolder<AllTimeEntriesView.DateGroup>
+        protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
+        {
+            if (GetItemViewType (position) == ViewTypeDateHeader) {
+                var headerHolder = (HeaderListItemHolder)holder;
+                headerHolder.Bind ((AllTimeEntriesViewModel.DateGroup) GetEntry (position));
+            } else {
+                var entryHolder = (TimeEntryListItemHolder)holder;
+                var model = new TimeEntryModel ((TimeEntryData) GetEntry (position));
+                entryHolder.Bind (model);
+            }
+        }
+
+        public override int GetItemViewType (int position)
+        {
+            if (position == DataView.Count) {
+                return ViewTypeLoaderPlaceholder;
+            }
+
+            var obj = GetEntry (position);
+            if (obj is AllTimeEntriesViewModel.DateGroup) {
+                return ViewTypeDateHeader;
+            }
+            return ViewTypeContent;
+        }
+
+        private class HeaderListItemHolder : RecycledBindableViewHolder<AllTimeEntriesViewModel.DateGroup>
         {
             private readonly Handler handler;
 
@@ -175,7 +192,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : ModelViewHolder<TimeEntryModel>
+        private class TimeEntryListItemHolder : RecycledModelViewHolder<TimeEntryModel>, View.IOnClickListener
         {
             private readonly Handler handler;
             private readonly LogTimeEntriesAdapter adapter;
@@ -214,6 +231,7 @@ namespace Toggl.Joey.UI.Adapters
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
 
+                root.SetOnClickListener (this);
                 ContinueImageButton.Click += OnContinueButtonClicked;
             }
 
@@ -430,6 +448,12 @@ namespace Toggl.Joey.UI.Adapters
                     TagsView.BubbleCount = (int)tagsView.Count;
                 }
                 TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
+            }
+
+            public void OnClick (View v)
+            {
+                // Temporal solution
+                adapter.OnEditTimeEntry (DataSource);
             }
         }
     }

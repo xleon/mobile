@@ -36,8 +36,7 @@ namespace Toggl.Joey.UI.Activities
     {
         private const string PageStackExtra = "com.toggl.timer.page_stack";
         private readonly TimerComponent barTimer = new TimerComponent ();
-        //private readonly Lazy<LogTimeEntriesListFragment> trackingFragment = new Lazy<LogTimeEntriesListFragment> ();
-        private readonly Lazy<TimeEntriesListFragment> trackingFragment = new Lazy<TimeEntriesListFragment> ();
+        private readonly Lazy<LogTimeEntriesListFragment> trackingFragment = new Lazy<LogTimeEntriesListFragment> ();
         private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
         private readonly Lazy<ReportsPagerFragment> reportFragment = new Lazy<ReportsPagerFragment> ();
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();

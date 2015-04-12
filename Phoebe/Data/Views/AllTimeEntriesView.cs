@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
-using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -24,14 +23,12 @@ namespace Toggl.Phoebe.Data.Views
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private bool reloadScheduled;
-        private bool isGrouped;
 
         public AllTimeEntriesView ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
 
-            isGrouped = ServiceContainer.Resolve<ISettingsStore>().GroupedTimeEntries;
             HasMore = true;
             Reload ();
         }
@@ -82,11 +79,11 @@ namespace Toggl.Phoebe.Data.Views
                         grp = GetGroupFor (entry);
                         grp.Add (entry);
                     } else {
-                        grp.UpdateEntryData (entry);
+                        grp.DataObjects.UpdateData (entry);
                     }
                     Sort ();
                 } else {
-                    grp.UpdateEntryData (entry);
+                    grp.DataObjects.UpdateData (entry);
                 }
                 OnUpdated ();
             } else {
@@ -320,24 +317,16 @@ namespace Toggl.Phoebe.Data.Views
             get {
                 foreach (var grp in dateGroups) {
                     yield return grp;
-                    if (isGrouped)
-                        foreach (var data in grp.GroupedObjects) {
-                            yield return data;
-                        }
-                    else
-                        foreach (var data in grp.DataObjects) {
-                            yield return data;
-                        }
+                    foreach (var data in grp.DataObjects) {
+                        yield return data;
+                    }
                 }
             }
         }
 
         public long Count
         {
-            get {
-                var itemsCount = (isGrouped) ? dateGroups.Sum (g => g.GroupedObjects.Count) : dateGroups.Sum (g => g.DataObjects.Count);
-                return dateGroups.Count + itemsCount;
-            }
+            get { return dateGroups.Count + dateGroups.Sum (g => g.DataObjects.Count); }
         }
 
         public bool HasMore { get; private set; }
@@ -348,7 +337,6 @@ namespace Toggl.Phoebe.Data.Views
         {
             private readonly DateTime date;
             private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
-            private readonly List<TimeEntryGroup> groupedObjects = new List<TimeEntryGroup>();
 
             public DateGroup (DateTime date)
             {
@@ -365,13 +353,6 @@ namespace Toggl.Phoebe.Data.Views
                 get { return dataObjects; }
             }
 
-            public List<TimeEntryGroup> GroupedObjects
-            {
-                get {
-                    return groupedObjects;
-                }
-            }
-
             public event EventHandler Updated;
 
             private void OnUpdated ()
@@ -384,125 +365,20 @@ namespace Toggl.Phoebe.Data.Views
 
             public void Add (TimeEntryData dataObject)
             {
-                bool existGrouped = false;
-                foreach (var entryGroup in groupedObjects)
-                    if (entryGroup.CanContain (dataObject)) {
-                        entryGroup.Add (dataObject);
-                        existGrouped = true;
-                    }
-
-                if (!existGrouped) {
-                    groupedObjects.Add (new TimeEntryGroup (dataObject));
-                }
-
                 dataObjects.Add (dataObject);
-                OnUpdated ();
-            }
-
-            public void UpdateEntryData (TimeEntryData dataObject)
-            {
-                dataObjects.UpdateData (dataObject);
-
-                var previousGroup = GetContainerGroup (dataObject);
-
-                if (previousGroup == null) {
-
-                    // new TimeEntry
-                    groupedObjects.Add (new TimeEntryGroup (dataObject));
-                } else {
-
-                    bool matchGroup = false;
-                    var count = 0;
-
-                    // Match exiting group,
-                    while (count < groupedObjects.Count) {
-
-                        var entryGroup = groupedObjects[count];
-                        if (entryGroup.CanContain (dataObject)) {
-                            if (entryGroup == previousGroup) {
-                                entryGroup.Update (dataObject);
-                            } else {
-                                previousGroup.Delete (dataObject);
-                                entryGroup.Add (dataObject);
-                            }
-                            matchGroup = true;
-                            count = groupedObjects.Count;
-                        }
-                        count++;
-                    }
-
-                    // Clean empty groups
-                    CleanEmptyGroups();
-
-                    if (!matchGroup) {
-
-                        // Condition for unitary groups
-                        if (previousGroup.Count == 1) {
-                            previousGroup.Update (dataObject);
-                        } else {
-                            previousGroup.Delete (dataObject);
-                            groupedObjects.Add (new TimeEntryGroup (dataObject));
-                        }
-                    }
-                }
-
-                groupedObjects.Sort ((a, b) => b.LastStartTime.CompareTo (a.LastStartTime));
                 OnUpdated ();
             }
 
             public void Remove (TimeEntryData dataObject)
             {
                 dataObjects.Remove (dataObject);
-
-                var currentGroup = GetContainerGroup (dataObject);
-                if (currentGroup != null) {
-                    currentGroup.Delete (dataObject);
-                    CleanEmptyGroups();
-                }
-
                 OnUpdated ();
             }
 
             public void Sort ()
             {
                 dataObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
-                groupedObjects.Sort ((a, b) => b.LastStartTime.CompareTo (a.LastStartTime));
-                foreach (var item in groupedObjects) {
-                    item.Sort();
-                }
                 OnUpdated ();
-            }
-
-            public void RemoveGroup (TimeEntryGroup dataGroup)
-            {
-                foreach (var item in dataGroup.TimeEntryList) {
-                    dataObjects.RemoveAll (te => te.Id == item.Id);
-                }
-
-                dataGroup.Dispose();
-                groupedObjects.Remove (dataGroup);
-                OnUpdated();
-            }
-
-            private TimeEntryGroup GetContainerGroup (TimeEntryData data)
-            {
-                TimeEntryGroup result = null;
-                foreach (var entryGroup in groupedObjects)
-                    foreach (var entry in entryGroup.TimeEntryList)
-                        if (entry.Id == data.Id) {
-                            result = entryGroup;
-                        }
-
-                return result;
-            }
-
-            private void CleanEmptyGroups()
-            {
-                foreach (var item in groupedObjects)
-                    if (item.Count == 0) {
-                        item.Dispose();
-                    }
-                groupedObjects.RemoveAll (g => g.Count == 0);
             }
         }
 

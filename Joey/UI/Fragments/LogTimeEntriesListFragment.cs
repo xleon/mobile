@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using Android.Content;
 using Android.OS;
+using Android.Support.V4.App;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.Data;
@@ -12,24 +13,43 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using ListFragment = Android.Support.V4.App.ListFragment;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : ListFragment, AbsListView.IMultiChoiceModeListener
+    public class LogTimeEntriesListFragment : Fragment
     {
-        private ActionMode actionMode;
+        private RecyclerView recyclerView;
+        private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
+        private LogTimeEntriesAdapter adapter;
+
+        private LogTimeEntriesAdapter Adapter
+        {
+            get {
+                if (adapter == null) {
+                    adapter = new LogTimeEntriesAdapter();
+                    adapter.HandleTimeEntryContinue = ContinueTimeEntry;
+                    adapter.HandleTimeEntryStop = StopTimeEntry;
+                    adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
+                }
+                return adapter;
+            }
+        }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
+            var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
             view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
+
+            emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
+            emptyMessageView.Visibility = ViewStates.Gone;
+            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
+
             return view;
         }
 
@@ -37,9 +57,11 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            ListView.SetClipToPadding (false);
-            ListView.ChoiceMode = (ChoiceMode)AbsListViewChoiceMode.MultipleModal;
-            ListView.SetMultiChoiceModeListener (this);
+            // Create view model.
+            var linearLayout = new LinearLayoutManager (Activity);
+            recyclerView.SetLayoutManager (linearLayout);
+            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+            recyclerView.SetOnScrollListener (new RecyclerViewScrollDetector (Adapter.DataView, linearLayout));
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -49,28 +71,6 @@ namespace Toggl.Joey.UI.Fragments
         {
             EnsureAdapter ();
             base.OnResume ();
-        }
-
-        public override void OnListItemClick (ListView l, View v, int position, long id)
-        {
-            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
-            if (adapter == null) {
-                var groupedAdapter = ListView.Adapter as GroupedTimeEntriesAdapter;
-                if (groupedAdapter != null) {
-                    var group = (TimeEntryGroup)groupedAdapter.GetEntry (position);
-                    if (group != null) {
-                        OpenTimeEntryGroupEdit (group);
-                    }
-                }
-                return;
-            }
-
-            var model = (TimeEntryData)adapter.GetEntry (position);
-            if (model == null) {
-                return;
-            }
-            OpenTimeEntryEdit (new TimeEntryModel (model));
-
         }
 
         public override bool UserVisibleHint
@@ -106,8 +106,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ConfirmTimeEntryDeletion (TimeEntryModel model)
         {
-            var dia = new DeleteTimeEntriesPromptDialogFragment (new List<TimeEntryModel> () { model });
-            dia.Show (FragmentManager, "confirm_delete");
         }
 
         private void OpenTimeEntryEdit (TimeEntryModel model)
@@ -142,8 +140,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ConfirmTimeEntryGroupDeletion (TimeEntryGroup entryGroup)
         {
-            var dia = new DeleteTimeEntriesPromptDialogFragment (entryGroup.TimeEntryList);
-            dia.Show (FragmentManager, "confirm_delete");
         }
 
         private void OpenTimeEntryGroupEdit (TimeEntryGroup entryGroup)
@@ -157,102 +153,10 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureAdapter ()
         {
-            if (ListAdapter == null) {
+            if (recyclerView.GetAdapter() == null) {
+                recyclerView.SetAdapter (Adapter);
                 var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
-                if (isGrouped) {
-                    var groupedAdapter = new GroupedTimeEntriesAdapter ();
-                    groupedAdapter.HandleGroupDeletion = ConfirmTimeEntryGroupDeletion;
-                    groupedAdapter.HandleGroupEditing = OpenTimeEntryGroupEdit;
-                    groupedAdapter.HandleGroupContinue = ContinueTimeEntryGroup;
-                    groupedAdapter.HandleGroupStop = StopTimeEntryGroup;
-                    ListAdapter = groupedAdapter;
-                } else {
-                    var continuosAdapter = new LogTimeEntriesAdapter ();
-                    continuosAdapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
-                    continuosAdapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
-                    continuosAdapter.HandleTimeEntryContinue = ContinueTimeEntry;
-                    continuosAdapter.HandleTimeEntryStop = StopTimeEntry;
-                    ListAdapter = continuosAdapter;
-                }
             }
-        }
-
-        void AbsListView.IMultiChoiceModeListener.OnItemCheckedStateChanged (ActionMode mode, int position, long id, bool @checked)
-        {
-            var checkedCount = ListView.CheckedItemCount;
-            mode.Title = String.Format ("{0} selected", checkedCount);
-            actionMode = mode;
-        }
-
-        bool ActionMode.ICallback.OnCreateActionMode (ActionMode mode, IMenu menu)
-        {
-            mode.MenuInflater.Inflate (Resource.Menu.LogTimeEntriesContextMenu, menu);
-            return true;
-        }
-
-        bool ActionMode.ICallback.OnPrepareActionMode (ActionMode mode, IMenu menu)
-        {
-            return false;
-        }
-
-        bool ActionMode.ICallback.OnActionItemClicked (ActionMode mode, IMenuItem item)
-        {
-            switch (item.ItemId) {
-            case Resource.Id.DeleteMenuItem:
-                DeleteCheckedTimeEntries ();
-                mode.Finish ();
-                return true;
-            default:
-                return false;
-            }
-        }
-
-        void ActionMode.ICallback.OnDestroyActionMode (ActionMode mode)
-        {
-            actionMode = null;
-        }
-
-        private void DeleteCheckedTimeEntries ()
-        {
-            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
-            if (adapter == null) {
-                return;
-            }
-
-            // Find models to delete:
-            var checkedPositions = ListView.CheckedItemPositions;
-            var arrSize = checkedPositions.Size ();
-            var toDelete = new List<TimeEntryModel> (arrSize);
-
-            for (var i = 0; i < arrSize; i++) {
-                var position = checkedPositions.KeyAt (i);
-                var isChecked = checkedPositions.Get (position);
-                if (!isChecked) {
-                    continue;
-                }
-
-                var data = adapter.GetEntry (position) as TimeEntryData;
-                if (data != null) {
-                    toDelete.Add ((TimeEntryModel)data);
-                }
-            }
-
-            // Delete models:
-            var dia = new DeleteTimeEntriesPromptDialogFragment (toDelete);
-            dia.Show (FragmentManager, "confirm_delete");
-        }
-
-        public void CloseActionMode ()
-        {
-            if (actionMode != null) {
-                actionMode.Finish ();
-            }
-        }
-
-        public override void OnStop ()
-        {
-            base.OnStop ();
-            CloseActionMode ();
         }
 
         protected override void Dispose (bool disposing)
@@ -263,6 +167,7 @@ namespace Toggl.Joey.UI.Fragments
                     bus.Unsubscribe (subscriptionSettingChanged);
                     subscriptionSettingChanged = null;
                 }
+                Adapter.Dispose ();
             }
             base.Dispose (disposing);
         }
@@ -275,8 +180,82 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             if (msg.Name == SettingsStore.PropertyGroupedTimeEntries) {
-                ListAdapter = null;
                 EnsureAdapter();
+            }
+        }
+
+        private class ItemTouchListener : RecyclerView.IOnItemTouchListener
+        {
+            public bool OnInterceptTouchEvent (RecyclerView rv, MotionEvent e)
+            {
+                return false;
+            }
+
+            public void OnTouchEvent (RecyclerView rv, MotionEvent e)
+            {
+            }
+
+            public void Dispose ()
+            {
+            }
+
+            public IntPtr Handle
+            {
+                get {
+                    throw new NotImplementedException ();
+                }
+            }
+        }
+
+        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        {
+            private ICollectionDataView<object> dataSource;
+            private LinearLayoutManager layoutManager;
+
+            public RecyclerViewScrollDetector (ICollectionDataView<object> dataSource, LinearLayoutManager layoutManager)
+            {
+                this.dataSource = dataSource;
+                this.layoutManager = layoutManager;
+                LoadMoreThreshold = 3;
+            }
+
+            public int LoadMoreThreshold { get; set; }
+
+            public int ScrollThreshold { get; set; }
+
+            public RecyclerView.OnScrollListener OnScrollListener { get; set; }
+
+            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrolled (recyclerView, dx, dy);
+                }
+
+                var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
+                if (isSignificantDelta) {
+                    if (dy > 0) {
+                        OnScrollUp();
+                    } else {
+                        OnScrollDown();
+                    }
+                }
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrollStateChanged (recyclerView, newState);
+                }
+
+                base.OnScrollStateChanged (recyclerView, newState);
+            }
+
+            private void OnScrollUp()
+            {
+            }
+
+            private void OnScrollDown()
+            {
             }
         }
     }

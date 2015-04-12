@@ -32,6 +32,9 @@ namespace Toggl.Joey.UI.Fragments
             get {
                 if (adapter == null) {
                     adapter = new TimeEntriesAdapter();
+                    adapter.HandleTimeEntryContinue = ContinueTimeEntry;
+                    adapter.HandleTimeEntryStop = StopTimeEntry;
+                    adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
                 }
                 return adapter;
             }
@@ -178,6 +181,30 @@ namespace Toggl.Joey.UI.Fragments
 
             if (msg.Name == SettingsStore.PropertyGroupedTimeEntries) {
                 EnsureAdapter();
+            }
+        }
+
+        private class ItemTouchListener : RecyclerView.IOnItemTouchListener
+        {
+            public bool OnInterceptTouchEvent (RecyclerView rv, MotionEvent e)
+            {
+                return false;
+            }
+
+            public void OnTouchEvent (RecyclerView rv, MotionEvent e)
+            {
+                Console.WriteLine ( "here!!!");
+            }
+
+            public void Dispose ()
+            {
+            }
+
+            public IntPtr Handle
+            {
+                get {
+                    throw new NotImplementedException ();
+                }
             }
         }
 

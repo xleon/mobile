@@ -192,7 +192,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecycledModelViewHolder<TimeEntryModel>
+        private class TimeEntryListItemHolder : RecycledModelViewHolder<TimeEntryModel>, View.IOnClickListener
         {
             private readonly Handler handler;
             private readonly TimeEntriesAdapter adapter;
@@ -231,6 +231,7 @@ namespace Toggl.Joey.UI.Adapters
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
 
+                root.SetOnClickListener (this);
                 ContinueImageButton.Click += OnContinueButtonClicked;
             }
 
@@ -447,6 +448,12 @@ namespace Toggl.Joey.UI.Adapters
                     TagsView.BubbleCount = (int)tagsView.Count;
                 }
                 TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
+            }
+
+            public void OnClick (View v)
+            {
+                // Temporal solution
+                adapter.OnEditTimeEntry (DataSource);
             }
         }
     }

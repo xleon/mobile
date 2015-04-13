@@ -21,6 +21,10 @@ using Toggl.Joey.UI.Activities;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
 
+using Toolbar = Android.Support.V7.Widget.Toolbar;
+using Activity = Android.Support.V7.App.ActionBarActivity;
+using ActionBar = Android.Support.V7.App.ActionBar;
+
 namespace Toggl.Joey.UI.Fragments
 {
     public abstract class BaseEditTimeEntryFragment : Fragment
@@ -276,12 +280,29 @@ namespace Toggl.Joey.UI.Fragments
 
         protected EditTimeEntryTagsBit TagsBit { get; private set; }
 
+        protected ActionBar Toolbar { get; private set; }
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle state)
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
             cont = container;
 
-            DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
+            var toolbar = view.FindViewById<Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
+
+            var activity = (Activity)Activity;
+            activity.SetSupportActionBar (toolbar);
+            Toolbar = activity.SupportActionBar;
+            Toolbar.SetDisplayHomeAsUpEnabled (true);
+
+            var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
+            DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
+
+            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+            Toolbar.SetDisplayShowCustomEnabled (true);
+            Toolbar.SetDisplayShowTitleEnabled (false);
+
+            HasOptionsMenu = true;
+
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
 
@@ -295,11 +316,7 @@ namespace Toggl.Joey.UI.Fragments
 
             TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.TagsBit);
 
-
-
-
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
-            DeleteImageButton = view.FindViewById<ImageButton> (Resource.Id.TrashButton);
 
             DurationTextView.Click += OnDurationTextViewClick;
             StartTimeEditText.Click += OnStartTimeEditTextClick;
@@ -311,9 +328,23 @@ namespace Toggl.Joey.UI.Fragments
             ProjectEditText.Click += OnProjectClick;
             TagsBit.FullClick += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
-            DeleteImageButton.Click += OnDeleteImageButtonClick;
 
             return view;
+        }
+
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            menu.Add (Resource.String.BaseEditTimeEntryFragmentSaveButtonText).SetShowAsAction (ShowAsAction.Always);
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            if (item.ItemId != Android.Resource.Id.Home) {
+                SaveTimeEntry ();
+            }
+            Activity.OnBackPressed ();
+
+            return base.OnOptionsItemSelected (item);
         }
 
         private void OnDurationTextViewClick (object sender, EventArgs e)

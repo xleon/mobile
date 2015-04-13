@@ -20,6 +20,8 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
+using Activity = Android.Support.V7.App.ActionBarActivity;
+using ActionBar = Android.Support.V7.App.ActionBar;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -47,9 +49,28 @@ namespace Toggl.Joey.UI.Fragments
 
         protected EditTimeEntryTagsBit TagsBit { get; private set; }
 
+        protected ActionBar Toolbar { get; private set; }
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.GroupedEditTimeEntryFragment, container, false);
+
+            var toolbar = view.FindViewById<Toolbar> (Resource.Id.GroupedEditTimeEntryFragmentToolbar);
+
+            var activity = (Activity)Activity;
+            activity.SetSupportActionBar (toolbar);
+            Toolbar = activity.SupportActionBar;
+            Toolbar.SetDisplayHomeAsUpEnabled (true);
+
+            var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
+
+            DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
+
+            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+            Toolbar.SetDisplayShowCustomEnabled (true);
+            Toolbar.SetDisplayShowTitleEnabled (false);
+
+            HasOptionsMenu = true;
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.recyclerView);
 
@@ -61,8 +82,6 @@ namespace Toggl.Joey.UI.Fragments
 
             var decoration = new ItemDividerDecoration (Activity.ApplicationContext);
             recyclerView.AddItemDecoration (decoration);
-
-            DurationTextView = view.FindViewById<TextView> (Resource.Id.GroupedEditTimeEntryFragmentDurationTextView);
 
             ProjectBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
             TaskBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentTask).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
@@ -84,6 +103,19 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             new ChooseTimeEntryTagsDialogFragment (entryGroup.Model).Show (FragmentManager, "tags_dialog");
+        }
+
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            menu.Add (Resource.String.BaseEditTimeEntryFragmentSaveButtonText).SetShowAsAction (ShowAsAction.Always);
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            if (item.ItemId == Android.Resource.Id.Home) {
+                Activity.OnBackPressed ();
+            }
+            return base.OnOptionsItemSelected (item);
         }
 
         protected virtual void Rebind()

@@ -7,44 +7,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="10dp">
-        <LinearLayout
-            android:orientation="horizontal"
-            android:minWidth="25px"
-            android:minHeight="25px"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/linearLayout1">
-            <ImageButton
-                android:src="@drawable/IcCheck"
-                android:id="@+id/DoneButton"
-                android:background="@null"
-                android:maxHeight="1dp"
-                android:minHeight="0.5dp"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:layout_gravity="center_vertical" />
-            <TextView
-                android:id="@+id/DurationTextView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="00:00:00"
-                android:singleLine="true"
-                android:textSize="32dp"
-                android:textStyle="normal"
-                android:fontFamily="sans-serif-light" />
-            <ImageButton
-                android:src="@drawable/IcDeleteBig"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/TrashButton"
-                android:background="@null"
-                android:minHeight="1dp"
-                android:maxHeight="1dp"
-                android:maxWidth="1dp"
-                android:layout_gravity="center_vertical" />
-        </LinearLayout>
+        <android.support.v7.widget.Toolbar
+			android:id="@+id/EditTimeEntryFragmentToolbar"
+			android:layout_width="match_parent"
+			android:layout_height="?attr/actionBarSize"
+			android:background="@null">
+		</android.support.v7.widget.Toolbar>
         <LinearLayout
             android:orientation="vertical"
             android:minWidth="25px"

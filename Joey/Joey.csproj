@@ -159,7 +159,6 @@
     <Compile Include="UI\Views\ColorPickerRecyclerView.cs" />
     <Compile Include="UI\Views\TogglField.cs" />
     <Compile Include="UI\Adapters\GroupedEditAdapter.cs" />
-    <Compile Include="UI\Fragments\TimeEntriesListFragment.cs" />
     <Compile Include="UI\Views\DividerItemDecoration.cs" />
     <Compile Include="UI\Adapters\RecycledDataViewAdapter.cs" />
     <Compile Include="UI\Utils\RecycledModelViewHolder.cs" />
@@ -448,7 +447,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidBtnCheckOnHoloLight.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidBtnCheckOnPressedHoloLight.png" />
     <AndroidResource Include="Resources\drawable\AndroidBtnCheckHoloLight.xml" />
-    <AndroidResource Include="Resources\layout\LogTimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\RecentTimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\ProjectListNoProjectItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListNewProjectItem.axml" />
@@ -659,7 +657,7 @@
     <AndroidResource Include="Resources\layout\ColorPicker.axml" />
     <AndroidResource Include="Resources\layout\TogglField.axml" />
     <AndroidResource Include="Resources\layout\DurationTextView.axml" />
-    <AndroidResource Include="Resources\layout\TimeEntriesListFragment.axml" />
+    <AndroidResource Include="Resources\layout\LogTimeEntriesListFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

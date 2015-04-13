@@ -27,6 +27,13 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeEntryModel Model
         {
             get {
+                if (model == null) {
+                    model = (TimeEntryModel)dataObjects.Last();
+                } else {
+                    if (!model.Data.Matches (dataObjects.Last())) {
+                        model.Data = dataObjects.Last();
+                    }
+                }
                 return model;
             }
         }
@@ -41,7 +48,7 @@ namespace Toggl.Phoebe.Data.Utils
         public string[] TimeEntryGuids
         {
             get {
-                return dataObjects.AsEnumerable ().Select (r => (string)r.Id.ToString()).ToArray ();
+                return dataObjects.AsEnumerable ().Select (r => r.Id.ToString ()).ToArray ();
             }
         }
 
@@ -80,37 +87,15 @@ namespace Toggl.Phoebe.Data.Utils
         public DateTime LastStartTime
         {
             get {
-                return dataObjects.Last ().StartTime;
+                return dataObjects.Last().StartTime;
             }
         }
 
-        public DateTime? StopTime
-        {
-            get {
-                return dataObjects.Last ().StopTime;
-            }
-        }
-
-        public TimeEntryState State
-        {
-            get {
-                return dataObjects.Last().State;
-            }
-        }
 
         public int DistinctDays
         {
             get {
                 return dataObjects.GroupBy (e => e.StartTime.Date).Count();
-            }
-        }
-
-        public void InitModel()
-        {
-            if (model == null) {
-                model = (TimeEntryModel)dataObjects.Last();
-            } else {
-                model.Data = dataObjects.Last();
             }
         }
 
@@ -122,22 +107,22 @@ namespace Toggl.Phoebe.Data.Utils
         public void Update (TimeEntryData data)
         {
             dataObjects.UpdateData (data);
-            Sort();
+            Sort ();
         }
 
-        public void UpdateIfPossible (TimeEntryData data)
+        public void UpdateIfPossible (TimeEntryData entry)
         {
-            if (CanContain (data)) {
-                Add (data);
+            if (CanContains (entry)) {
+                Add (entry);
             }
         }
 
-        public void Delete (TimeEntryData data)
+        public void Remove (TimeEntryData entry)
         {
-            if (dataObjects.Contains<TimeEntryData> (data)) {
-                dataObjects.Remove (data);
+            if (dataObjects.Contains<TimeEntryData> (entry)) {
+                dataObjects.Remove (entry);
             } else {
-                dataObjects.RemoveAll (d => d.Id == data.Id);
+                dataObjects.RemoveAll (d => d.Id == entry.Id);
             }
         }
 
@@ -146,16 +131,26 @@ namespace Toggl.Phoebe.Data.Utils
             dataObjects.Sort ((a, b) => a.StartTime.CompareTo (b.StartTime));
         }
 
-        public bool CanContain (TimeEntryData data)
+        public bool CanContains (TimeEntryData data)
         {
             return dataObjects.Last().IsGroupableWith (data);
         }
 
+        public bool Contains (TimeEntryData entry, out TimeEntryData existingTimeEntry)
+        {
+            foreach (var item in dataObjects)
+                if (item.Matches (entry)) {
+                    existingTimeEntry = item;
+                    return true;
+                }
+
+            existingTimeEntry = null;
+            return false;
+        }
+
         public void Dispose()
         {
-            if (model != null) {
-                model = null;
-            }
+            model = null;
 
             if (dataObjects.Count > 0) {
                 dataObjects.Clear();

@@ -15,7 +15,6 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
@@ -25,24 +24,38 @@ namespace Toggl.Joey.UI.Fragments
         private RecyclerView recyclerView;
         private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
-        private LogTimeEntriesAdapter adapter;
+        private LogTimeEntriesAdapter logAdapter;
+        private GroupedTimeEntriesAdapter groupedAdapter;
 
-        private LogTimeEntriesAdapter Adapter
+        private LogTimeEntriesAdapter LogAdapter
         {
             get {
-                if (adapter == null) {
-                    adapter = new LogTimeEntriesAdapter();
-                    adapter.HandleTimeEntryContinue = ContinueTimeEntry;
-                    adapter.HandleTimeEntryStop = StopTimeEntry;
-                    adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
+                if (logAdapter == null) {
+                    logAdapter = new LogTimeEntriesAdapter();
+                    logAdapter.HandleTimeEntryContinue = ContinueTimeEntry;
+                    logAdapter.HandleTimeEntryStop = StopTimeEntry;
+                    logAdapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
                 }
-                return adapter;
+                return logAdapter;
+            }
+        }
+
+        private GroupedTimeEntriesAdapter GroupedAdapter
+        {
+            get {
+                if (groupedAdapter == null) {
+                    groupedAdapter = new GroupedTimeEntriesAdapter();
+                    groupedAdapter.HandleGroupContinue = ContinueTimeEntryGroup;
+                    groupedAdapter.HandleGroupStop = StopTimeEntryGroup;
+                    groupedAdapter.HandleGroupEditing = OpenTimeEntryGroupEdit;
+                }
+                return groupedAdapter;
             }
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.TimeEntriesListFragment, container, false);
+            var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
             view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
 
@@ -61,7 +74,7 @@ namespace Toggl.Joey.UI.Fragments
             var linearLayout = new LinearLayoutManager (Activity);
             recyclerView.SetLayoutManager (linearLayout);
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-            recyclerView.SetOnScrollListener (new RecyclerViewScrollDetector (Adapter.DataView, linearLayout));
+            recyclerView.SetOnScrollListener (new RecyclerViewScrollDetector (linearLayout));
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -154,8 +167,20 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureAdapter ()
         {
             if (recyclerView.GetAdapter() == null) {
-                recyclerView.SetAdapter (Adapter);
                 var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
+                if (isGrouped) {
+                    if (logAdapter != null) {
+                        logAdapter.Dispose ();
+                        logAdapter = null;
+                    }
+                    recyclerView.SetAdapter (GroupedAdapter);
+                } else {
+                    if (groupedAdapter != null) {
+                        groupedAdapter.Dispose ();
+                        groupedAdapter = null;
+                    }
+                    recyclerView.SetAdapter (LogAdapter);
+                }
             }
         }
 
@@ -167,7 +192,8 @@ namespace Toggl.Joey.UI.Fragments
                     bus.Unsubscribe (subscriptionSettingChanged);
                     subscriptionSettingChanged = null;
                 }
-                Adapter.Dispose ();
+                LogAdapter.Dispose ();
+                GroupedAdapter.Dispose ();
             }
             base.Dispose (disposing);
         }
@@ -209,12 +235,10 @@ namespace Toggl.Joey.UI.Fragments
 
         private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
         {
-            private ICollectionDataView<object> dataSource;
             private LinearLayoutManager layoutManager;
 
-            public RecyclerViewScrollDetector (ICollectionDataView<object> dataSource, LinearLayoutManager layoutManager)
+            public RecyclerViewScrollDetector (LinearLayoutManager layoutManager)
             {
-                this.dataSource = dataSource;
                 this.layoutManager = layoutManager;
                 LoadMoreThreshold = 3;
             }

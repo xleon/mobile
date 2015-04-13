@@ -16,7 +16,6 @@ namespace Toggl.Joey.UI.Adapters
         public GroupedEditAdapter (TimeEntryGroup entryGroup)
         {
             this.entryGroup = entryGroup;
-            entryGroup.InitModel ();
         }
 
         // Provide a reference to the type of views that you are using (custom ViewHolder)

@@ -197,4 +197,6 @@
     <string name="BaseEditTimeEntryFragmentDescription">Description</string>
     <string name="BaseEditTimeEntryFragmentSaveButtonText">Save</string>
     <string name="SwipeDeleteQuestion">Delete?</string>
+    <string name="UndoBarTimeEntryDeleted">Time entry deleted</string>
+    <string name="UndoBarButton">UNDO</string>
 </resources>

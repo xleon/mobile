@@ -2,14 +2,14 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/UndoBar"
     android:orientation="horizontal"
-    android:layout_width="fill_parent"
+    android:layout_width="match_parent"
     android:layout_height="32dp"
     android:layout_gravity="bottom"
     android:visibility="gone"
     android:background="@color/drawer_sync_status_box">
     <TextView
         android:id="@+id/SyncStatusText"
-        android:text="Oops! Sync failed"
+        android:text="@string/UndoBarTimeEntryDeleted"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:paddingLeft="15dp"
@@ -18,11 +18,11 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:id="@+id/SyncRetryButton"
+        android:id="@+id/UndoButton"
         android:layout_gravity="right"
         android:layout_marginRight="6dp"
         android:textColor="@android:color/holo_green_light"
         android:textSize="14dp"
-        android:text="TRY AGAIN"
+        android:text="@string/UndoBarButton"
         android:background="@drawable/ButtonNoFrame" />
 </FrameLayout>

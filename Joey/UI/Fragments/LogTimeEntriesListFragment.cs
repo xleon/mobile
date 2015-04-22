@@ -18,6 +18,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
 
+
 namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : Fragment
@@ -27,7 +28,10 @@ namespace Toggl.Joey.UI.Fragments
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private LogTimeEntriesAdapter logAdapter;
         private GroupedTimeEntriesAdapter groupedAdapter;
+        private readonly Handler handler = new Handler ();
         private FrameLayout undoBar;
+        private Button undoButton;
+        private TimeEntryModel undoItem;
         private Context ctx;
 
         private LogTimeEntriesAdapter LogAdapter
@@ -66,7 +70,10 @@ namespace Toggl.Joey.UI.Fragments
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
             emptyMessageView.Visibility = ViewStates.Gone;
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
+
             undoBar = view.FindViewById<FrameLayout> (Resource.Id.UndoBar);
+            undoButton = view.FindViewById<Button> (Resource.Id.UndoButton);
+            undoButton.Click += UndoClicked;
 
             return view;
         }
@@ -105,7 +112,32 @@ namespace Toggl.Joey.UI.Fragments
 
         public void ToggleUndoBar()
         {
-            if (undoBar.Visibility == ViewStates.Gone) {
+            ToggleUndo ();
+        }
+
+        private void ToggleUndo ()
+        {
+            if (showingUndoBar) {
+                showingUndoBar = false;
+            } else {
+                showingUndoBar = true;
+                handler.RemoveCallbacks (ToggleUndo);
+                handler.PostDelayed (ToggleUndo, 10000);
+            }
+        }
+
+        private bool showingUndoBar
+        {
+            get {
+                return undoBar.Visibility == ViewStates.Visible;
+            } set {
+                SetUndoBarVisibility (value);
+            }
+        }
+
+        public void SetUndoBarVisibility (bool visibility)
+        {
+            if (visibility) {
                 Animation bottomUp = AnimationUtils.LoadAnimation (ctx, Resource.Animation.BottomUpAnimation);
                 undoBar.Visibility = ViewStates.Visible;
                 undoBar.StartAnimation (bottomUp);
@@ -115,7 +147,7 @@ namespace Toggl.Joey.UI.Fragments
                 undoBar.Visibility = ViewStates.Gone;
             }
         }
-
+        
         #region TimeEntry handlers
         private async void ContinueTimeEntry (TimeEntryModel model)
         {
@@ -238,6 +270,15 @@ namespace Toggl.Joey.UI.Fragments
                 return false;
             }
             return adapter.GetItemViewType (position) == 1;
+        }
+
+        private async void UndoClicked (object sender, EventArgs e)
+        {
+            if (undoItem != null) {
+                await undoItem.SaveAsync ();
+            }
+            showingUndoBar = false;
+            handler.RemoveCallbacks (ToggleUndo);
         }
 
         public class SwipeDismissCallBacks : SwipeDeleteTouchListener.IDismissCallbacks

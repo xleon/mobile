@@ -34,5 +34,6 @@
     <color name="material_black">#4e4e4e</color>
     <color name="material_tag_background">#bfbfbf</color>
     <color name="material_tag_text">#ffffff</color>
-
+    <color name="material_green">#4DD965</color>
+    <color name="material_gray_bar">#4C4C4C</color>
 </resources>

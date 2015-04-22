@@ -3,10 +3,10 @@
     android:id="@+id/UndoBar"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="32dp"
+    android:layout_height="40dp"
     android:layout_gravity="bottom"
     android:visibility="gone"
-    android:background="@color/drawer_sync_status_box">
+    android:background="@color/material_gray_bar">
     <TextView
         android:id="@+id/SyncStatusText"
         android:text="@string/UndoBarTimeEntryDeleted"
@@ -21,7 +21,7 @@
         android:id="@+id/UndoButton"
         android:layout_gravity="right"
         android:layout_marginRight="6dp"
-        android:textColor="@android:color/holo_green_light"
+        android:textColor="@color/material_green"
         android:textSize="14dp"
         android:text="@string/UndoBarButton"
         android:background="@drawable/ButtonNoFrame" />

@@ -18,7 +18,6 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
 
-
 namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : Fragment
@@ -115,15 +114,18 @@ namespace Toggl.Joey.UI.Fragments
             ToggleUndo ();
         }
 
-        private void ToggleUndo ()
+        private void ShowUndo ()
         {
-            if (showingUndoBar) {
-                showingUndoBar = false;
-            } else {
+            if (!showingUndoBar) {
                 showingUndoBar = true;
-                handler.RemoveCallbacks (ToggleUndo);
-                handler.PostDelayed (ToggleUndo, 10000);
             }
+            handler.RemoveCallbacks (HideUndo);
+            handler.PostDelayed (HideUndo, 10000);
+        }
+
+        private void HideUndo ()
+        {
+            showingUndoBar = false;
         }
 
         private bool showingUndoBar
@@ -146,6 +148,15 @@ namespace Toggl.Joey.UI.Fragments
                 undoBar.StartAnimation (bottomDown);
                 undoBar.Visibility = ViewStates.Gone;
             }
+        }
+
+        private async void UndoClicked (object sender, EventArgs e)
+        {
+            if (undoItem != null) {
+                await undoItem.SaveAsync ();
+            }
+            showingUndoBar = false;
+            handler.RemoveCallbacks (ShowUndo);
         }
         
         #region TimeEntry handlers

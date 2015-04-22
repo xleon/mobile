@@ -297,7 +297,7 @@ namespace Toggl.Joey.UI.Fragments
             var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
             DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
 
-            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
             Toolbar.SetDisplayShowCustomEnabled (true);
             Toolbar.SetDisplayShowTitleEnabled (false);
 

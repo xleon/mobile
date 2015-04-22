@@ -21,6 +21,7 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
+         Name = "toggl.joey.ui.activities.MainDrawerActivity",
          Label = "@string/EntryName",
          Exported = true,
          #if DEBUG

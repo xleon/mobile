@@ -1,38 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Android.App;
-using Android.Content;
 using Android.OS;
-using Android.Runtime;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Decorations;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using ActionBar = Android.Support.V7.App.ActionBar;
+using Activity = Android.Support.V7.App.ActionBarActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
-using Activity = Android.Support.V7.App.ActionBarActivity;
-using ActionBar = Android.Support.V7.App.ActionBar;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class GroupedEditTimeEntryFragment : Fragment
     {
-        private TimeEntryGroup entryGroup;
-
-        public RecyclerView recyclerView;
-        public RecyclerView.Adapter adapter;
-        public RecyclerView.LayoutManager layoutManager;
-
+        private readonly TimeEntryGroup entryGroup;
+        private RecyclerView recyclerView;
+        private RecyclerView.Adapter adapter;
+        private RecyclerView.LayoutManager layoutManager;
 
         public GroupedEditTimeEntryFragment (TimeEntryGroup entryGroup)
         {
@@ -66,21 +54,19 @@ namespace Toggl.Joey.UI.Fragments
 
             DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
 
-            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
             Toolbar.SetDisplayShowCustomEnabled (true);
             Toolbar.SetDisplayShowTitleEnabled (false);
 
             HasOptionsMenu = true;
 
-            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.recyclerView);
-
+            adapter = new GroupedEditAdapter (entryGroup);
             layoutManager = new LinearLayoutManager (Activity);
-            recyclerView.SetLayoutManager (layoutManager);
-
-            adapter = new GroupTimeEntriesAdapter (entryGroup);
-            recyclerView.SetAdapter (adapter);
-
             var decoration = new ItemDividerDecoration (Activity.ApplicationContext);
+
+            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.recyclerView);
+            recyclerView.SetLayoutManager (layoutManager);
+            recyclerView.SetAdapter (adapter);
             recyclerView.AddItemDecoration (decoration);
 
             ProjectBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
@@ -94,7 +80,6 @@ namespace Toggl.Joey.UI.Fragments
 
             return view;
         }
-
 
         private void OnTagsEditTextClick (object sender, EventArgs e)
         {
@@ -126,20 +111,10 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            DurationTextView.Text = entryGroup.Duration.ToString ();
-
-
+            DurationTextView.Text = entryGroup.GetFormattedDuration ();
         }
 
-        public override void OnCreate (Bundle savedInstanceState)
-        {
-            base.OnCreate (savedInstanceState);
 
-            // Create your fragment here
-        }
     }
-
-
-
 }
 

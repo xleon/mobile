@@ -4,6 +4,7 @@ using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
 using Android.Views;
+using Android.Views.Animations;
 using Android.Widget;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
@@ -13,7 +14,6 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
@@ -27,6 +27,8 @@ namespace Toggl.Joey.UI.Fragments
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private LogTimeEntriesAdapter logAdapter;
         private GroupedTimeEntriesAdapter groupedAdapter;
+        private FrameLayout undoBar;
+        private Context ctx;
 
         private LogTimeEntriesAdapter LogAdapter
         {
@@ -56,6 +58,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
+            ctx = inflater.Context;
             var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
             view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
@@ -63,6 +66,7 @@ namespace Toggl.Joey.UI.Fragments
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
             emptyMessageView.Visibility = ViewStates.Gone;
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
+            undoBar = view.FindViewById<FrameLayout> (Resource.Id.UndoBar);
 
             return view;
         }
@@ -99,24 +103,20 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void DeleteTimeEntry (int position)
+        public void ToggleUndoBar()
         {
-            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
-            if (adapter == null) {
-                return;
+            if (undoBar.Visibility == ViewStates.Gone) {
+                Animation bottomUp = AnimationUtils.LoadAnimation (ctx, Resource.Animation.BottomUpAnimation);
+                undoBar.Visibility = ViewStates.Visible;
+                undoBar.StartAnimation (bottomUp);
+            } else {
+                Animation bottomDown = AnimationUtils.LoadAnimation (ctx, Resource.Animation.BottomDownAnimation);
+                undoBar.StartAnimation (bottomDown);
+                undoBar.Visibility = ViewStates.Gone;
             }
-
-            var deleteList = new List<TimeEntryModel>();
-            var data = adapter.GetEntry (position) as TimeEntryData;
-
-            deleteList.Add ((TimeEntryModel)data);
-
-            var deleteDialog = new DeleteTimeEntriesPromptDialogFragment (deleteList);
-            deleteDialog.DeleteSilently();
-            adapter.NotifyDataSetChanged();
-            ListView.Invalidate();
         }
 
+        #region TimeEntry handlers
         private async void ContinueTimeEntry (TimeEntryModel model)
         {
             DurOnlyNoticeDialogFragment.TryShow (FragmentManager);

@@ -28,4 +28,6 @@
             android:text="@string/NoItemsText"
             android:gravity="center" />
     </LinearLayout>
+    <include layout="@layout/UndoBar" />    
 </FrameLayout>
+

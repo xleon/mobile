@@ -10,7 +10,7 @@ namespace Toggl.Joey.UI.Views
     public class ListItemSwipeable : ViewGroup
     {
         public static int DeleteLine = 120;
-        protected TextView deleteTextDialog;
+        protected TextView DeleteTextDialog;
         private Context ctx;
 
         public ListItemSwipeable (Context context) : base (context)
@@ -33,12 +33,12 @@ namespace Toggl.Joey.UI.Views
 
         public void OnScrollEvent (int x)
         {
-            deleteTextDialog.Left = -x;
+            DeleteTextDialog.Left = -x;
         }
 
         protected override void OnLayout (bool changed, int l, int t, int r, int b)
         {
-            LayoutView (deleteTextDialog, PaddingLeft, PaddingTop, deleteTextDialog.MeasuredWidth, deleteTextDialog.MeasuredHeight);
+            LayoutView (DeleteTextDialog, PaddingLeft, PaddingTop, DeleteTextDialog.MeasuredWidth, DeleteTextDialog.MeasuredHeight);
         }
 
         protected void LayoutView (View view, int left, int top, int width, int height)
@@ -56,14 +56,16 @@ namespace Toggl.Joey.UI.Views
             var displayMetrics = ctx.Resources.DisplayMetrics;
             int height = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 72, displayMetrics);
             var mlp = new ViewGroup.MarginLayoutParams (LayoutParams.MatchParent, height);
-            deleteTextDialog = new TextView (ctx);
-            deleteTextDialog.LayoutParameters = mlp;
-            deleteTextDialog.Text = ctx.Resources.GetString (Resource.String.SwipeDeleteQuestion);
-            deleteTextDialog.Gravity = GravityFlags.CenterVertical;
-            deleteTextDialog.SetBackgroundColor (Android.Graphics.Color.ParseColor ("#333333"));
-            deleteTextDialog.SetPadding ((int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 35, displayMetrics), 0, 0, 0);
-            deleteTextDialog.SetTextColor (Android.Graphics.Color.White);
-            this.AddView (deleteTextDialog);
+
+            DeleteTextDialog = new TextView (ctx);
+            DeleteTextDialog.LayoutParameters = mlp;
+            DeleteTextDialog.Text = ctx.Resources.GetString (Resource.String.SwipeDeleteQuestion);
+            DeleteTextDialog.Gravity = GravityFlags.CenterVertical;
+            DeleteTextDialog.SetBackgroundColor (Resources.GetColor (Resource.Color.background_delete_item));
+            DeleteTextDialog.SetPadding ((int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 35, displayMetrics), 0, 0, 0);
+            DeleteTextDialog.SetTextColor (Android.Graphics.Color.White);
+
+            AddView (DeleteTextDialog);
         }
 
         public void SlideAnimation (SwipeAction a)
@@ -77,20 +79,15 @@ namespace Toggl.Joey.UI.Views
             .Start ();
         }
 
-        private void OnScrollAnimationEnd (object sender, EventArgs e)
-        {
-            OnAnimationEnd (sender, e);
-            OnScrollEvent (0);
-            ScrollX = 0;
-        }
-
         public event EventHandler SwipeAnimationEnd;
 
-        private void OnAnimationEnd (object sender, EventArgs e)
+        private void OnScrollAnimationEnd (object sender, EventArgs e)
         {
             if (SwipeAnimationEnd != null) {
                 SwipeAnimationEnd (this, EventArgs.Empty);
             }
+            OnScrollEvent (0);
+            ScrollX = 0;
         }
 
         private void OnScrollAnimationUpdate (object sender, ValueAnimator.AnimatorUpdateEventArgs e)

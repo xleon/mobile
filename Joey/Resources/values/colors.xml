@@ -36,4 +36,5 @@
     <color name="material_tag_text">#ffffff</color>
     <color name="material_green">#4DD965</color>
     <color name="material_gray_bar">#4C4C4C</color>
+    <color name="background_delete_item">#333333</color>
 </resources>

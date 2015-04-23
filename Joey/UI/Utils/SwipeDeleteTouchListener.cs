@@ -66,7 +66,6 @@ namespace Toggl.Joey.UI.Utils
                     }
                 }
                 return false;
-                break;
 
             case MotionEventActions.Up:
                 if (downView == null) {
@@ -134,7 +133,7 @@ namespace Toggl.Joey.UI.Utils
             if (downPosition != -1) {
                 callbacks.OnDismiss (downPosition);
             }
-            downPosition = ListView.InvalidPosition;
+            downPosition = AdapterView.InvalidPosition;
             downView = null;
         }
 

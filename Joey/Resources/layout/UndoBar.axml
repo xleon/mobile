@@ -9,7 +9,7 @@
     android:background="@color/material_gray_bar">
     <TextView
         android:id="@+id/SyncStatusText"
-        android:text="@string/UndoBarTimeEntryDeleted"
+        android:text="@string/UndoBarDeletedText"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:paddingLeft="15dp"
@@ -23,6 +23,6 @@
         android:layout_marginRight="6dp"
         android:textColor="@color/material_green"
         android:textSize="14dp"
-        android:text="@string/UndoBarButton"
+        android:text="@string/UndoBarButtonText"
         android:background="@drawable/ButtonNoFrame" />
 </FrameLayout>

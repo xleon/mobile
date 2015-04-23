@@ -294,7 +294,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public class SwipeDismissCallBacks : SwipeDeleteTouchListener.IDismissCallbacks
         {
-            private LogTimeEntriesListFragment listView;
+            private readonly LogTimeEntriesListFragment listView;
 
             public SwipeDismissCallBacks (LogTimeEntriesListFragment lv)
             {

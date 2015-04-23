@@ -67,33 +67,33 @@ namespace Toggl.Joey.UI.Adapters
 
         private void OnDeleteTimeEntryGroup (TimeEntryGroup entryGroup)
         {
-            var handler = HandleGroupDeletion;
-            if (handler != null) {
-                handler (entryGroup);
+            var aHandler = HandleGroupDeletion;
+            if (aHandler != null) {
+                aHandler (entryGroup);
             }
         }
 
         private void OnEditTimeEntryGroup (TimeEntryGroup entryGroup)
         {
-            var handler = HandleGroupEditing;
-            if (handler != null) {
-                handler (entryGroup);
+            var aHandler = HandleGroupEditing;
+            if (aHandler != null) {
+                aHandler (entryGroup);
             }
         }
 
         private void OnContinueTimeEntryGroup (TimeEntryGroup entryGroup)
         {
-            var handler = HandleGroupContinue;
-            if (handler != null) {
-                handler (entryGroup);
+            var aHandler = HandleGroupContinue;
+            if (aHandler != null) {
+                aHandler (entryGroup);
             }
         }
 
         private void OnStopTimeEntryGroup (TimeEntryGroup entryGroup)
         {
-            var handler = HandleGroupStop;
-            if (handler != null) {
-                handler (entryGroup);
+            var aHandler = HandleGroupStop;
+            if (aHandler != null) {
+                aHandler (entryGroup);
             }
         }
 

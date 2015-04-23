@@ -15,8 +15,6 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
-using Toggl.Phoebe;
-using XPlatUtils;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
@@ -67,7 +65,7 @@ namespace Toggl.Joey.UI.Activities
             SetContentView (Resource.Layout.MainDrawerActivity);
 
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
-            DrawerUserView = this.LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
+            DrawerUserView = LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
             DrawerListView.AddHeaderView (DrawerUserView);

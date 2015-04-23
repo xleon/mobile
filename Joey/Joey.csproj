@@ -95,7 +95,6 @@
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
-    <Compile Include="UI\Fragments\TimeTrackingFragment.cs" />
     <Compile Include="UI\Activities\MainDrawerActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="UI\Views\ProfileImageView.cs" />

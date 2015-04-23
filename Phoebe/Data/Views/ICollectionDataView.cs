@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -25,4 +25,3 @@ namespace Toggl.Phoebe.Data.Views
         event EventHandler OnHasMoreChanged;
     }
 }
-

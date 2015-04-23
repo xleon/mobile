@@ -1,5 +1,5 @@
-﻿using Android.Views;
-using Android.Support.V7.Widget;
+﻿using Android.Support.V7.Widget;
+using Android.Views;
 
 namespace Toggl.Joey.UI.Utils
 {
@@ -12,7 +12,7 @@ namespace Toggl.Joey.UI.Utils
 
         public T DataSource { get; private set; }
 
-        public RecycledBindableViewHolder (View root) : base (root)
+        protected RecycledBindableViewHolder (View root) : base (root)
         {
             this.root = root;
             root.ViewAttachedToWindow += OnRootAttachedToWindow;

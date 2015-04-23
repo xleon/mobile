@@ -30,8 +30,6 @@ namespace Toggl.Joey.UI.Fragments
         private readonly Handler handler = new Handler ();
         private FrameLayout undoBar;
         private Button undoButton;
-        private TimeEntryModel undoItem;
-        private Context ctx;
 
         private LogTimeEntriesAdapter LogAdapter
         {
@@ -61,7 +59,6 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            ctx = inflater.Context;
             var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
             view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
@@ -90,8 +87,8 @@ namespace Toggl.Joey.UI.Fragments
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
 
-            var swipeTouchListener = new SwipeDeleteTouchListener (ListView, new SwipeDismissCallBacks (this));
-            ListView.SetOnTouchListener (swipeTouchListener);
+            var swipeTouchListener = new SwipeDeleteTouchListener (recyclerView, new SwipeDismissCallBacks (this));
+            recyclerView.SetOnTouchListener (swipeTouchListener);
         }
 
         public override void OnResume ()
@@ -111,7 +108,6 @@ namespace Toggl.Joey.UI.Fragments
 
         public void ToggleUndoBar()
         {
-            ToggleUndo ();
         }
 
         private void ShowUndo ()
@@ -140,11 +136,11 @@ namespace Toggl.Joey.UI.Fragments
         public void SetUndoBarVisibility (bool visibility)
         {
             if (visibility) {
-                Animation bottomUp = AnimationUtils.LoadAnimation (ctx, Resource.Animation.BottomUpAnimation);
+                Animation bottomUp = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomUpAnimation);
                 undoBar.Visibility = ViewStates.Visible;
                 undoBar.StartAnimation (bottomUp);
             } else {
-                Animation bottomDown = AnimationUtils.LoadAnimation (ctx, Resource.Animation.BottomDownAnimation);
+                Animation bottomDown = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomDownAnimation);
                 undoBar.StartAnimation (bottomDown);
                 undoBar.Visibility = ViewStates.Gone;
             }
@@ -152,13 +148,10 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void UndoClicked (object sender, EventArgs e)
         {
-            if (undoItem != null) {
-                await undoItem.SaveAsync ();
-            }
             showingUndoBar = false;
             handler.RemoveCallbacks (ShowUndo);
         }
-        
+
         #region TimeEntry handlers
         private async void ContinueTimeEntry (TimeEntryModel model)
         {
@@ -276,20 +269,12 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool CanDismiss (int position)
         {
-            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
+            var adapter = (LogTimeEntriesAdapter)recyclerView.GetAdapter();
             if (adapter == null) {
                 return false;
             }
-            return adapter.GetItemViewType (position) == 1;
-        }
-
-        private async void UndoClicked (object sender, EventArgs e)
-        {
-            if (undoItem != null) {
-                await undoItem.SaveAsync ();
-            }
-            showingUndoBar = false;
-            handler.RemoveCallbacks (ToggleUndo);
+            // Replace 1 by corresponding static.
+            return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
         }
 
         public class SwipeDismissCallBacks : SwipeDeleteTouchListener.IDismissCallbacks
@@ -306,7 +291,7 @@ namespace Toggl.Joey.UI.Fragments
                 return listView.CanDismiss (position);
             }
 
-            public void OnDismiss (int position)
+            public void OnDismiss (RecyclerView view, int position)
             {
             }
         }

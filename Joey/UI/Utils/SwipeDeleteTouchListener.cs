@@ -1,5 +1,6 @@
 ﻿using System;
 using Android.Graphics;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Views;
@@ -8,9 +9,14 @@ namespace Toggl.Joey.UI.Utils
 {
     public class SwipeDeleteTouchListener : Java.Lang.Object, View.IOnTouchListener
     {
-        private ListView listView;
-        private IDismissCallbacks callbacks;
+        private int slop;
+
+        // Fixed properties
+        private readonly IDismissCallbacks callbacks;
+        private readonly RecyclerView recyclerView;
         private View downView;
+
+        // Transient properties
         private float downX;
         private float downY;
         private bool swiping;
@@ -18,46 +24,60 @@ namespace Toggl.Joey.UI.Utils
         private int downPosition;
         private int minFlingVelocity;
         private int maxFlingVelocity;
+        private bool isEnabled;
         private VelocityTracker velocityTracker;
 
-        public SwipeDeleteTouchListener (ListView listView, IDismissCallbacks callbacks)
+        public SwipeDeleteTouchListener (RecyclerView recyclerView, IDismissCallbacks callbacks)
         {
-            var viewConfiguration = ViewConfiguration.Get (listView.Context);
+            var viewConfiguration = ViewConfiguration.Get (recyclerView.Context);
             minFlingVelocity = viewConfiguration.ScaledMinimumFlingVelocity * 16;
             maxFlingVelocity = viewConfiguration.ScaledMaximumFlingVelocity;
             swipingSlop = viewConfiguration.ScaledTouchSlop;
-            this.listView = listView;
+            this.recyclerView = recyclerView;
             this.callbacks = callbacks;
+        }
+
+        public bool IsEnabled
+        {
+            get {
+                return isEnabled;
+            } set {
+                if (value == IsEnabled) {
+                    return;
+                }
+                isEnabled = value;
+            }
         }
 
         public bool OnTouch (View view, MotionEvent motionEvent)
         {
             switch (motionEvent.Action) {
             case MotionEventActions.Down:
+                if (!isEnabled) {
+                    return false;
+                }
 
                 var itemRect = new Rect();
                 var listViewCoords = new int[2];
-                listView.GetLocationOnScreen (listViewCoords);
+                recyclerView.GetLocationOnScreen (listViewCoords);
 
                 int x = (int) motionEvent.RawX - listViewCoords[0];
                 int y = (int) motionEvent.RawY - listViewCoords[1];
 
-                View listItem;
-                for (int i = 0; i < listView.ChildCount; i++) {
-                    listItem = listView.GetChildAt (i);
-                    listItem.GetHitRect (itemRect);
-
+                View item;
+                for (int i = 0; i < recyclerView.ChildCount; i++) {
+                    item = recyclerView.GetChildAt (i);
+                    item.GetHitRect (itemRect);
                     if (itemRect.Contains (x, y)) {
-                        downView = listItem;
+                        downView = item;
                         break;
                     }
                 }
 
                 if (downView != null) {
-
                     downX = motionEvent.RawX;
                     downY = motionEvent.RawY;
-                    downPosition = listView.GetPositionForView (downView);
+                    downPosition = recyclerView.GetChildPosition (downView);
                     if (callbacks.CanDismiss (downPosition)) {
                         velocityTracker = VelocityTracker.Obtain ();
                         velocityTracker.AddMovement (motionEvent);
@@ -68,15 +88,16 @@ namespace Toggl.Joey.UI.Utils
                 return false;
 
             case MotionEventActions.Up:
-                if (downView == null) {
+
+                if (downView == null || velocityTracker == null) {
                     return false;
                 }
+
                 velocityTracker.ComputeCurrentVelocity (1000);
-
                 float velocityX = velocityTracker.XVelocity;
-
                 float absVelocityX = Math.Abs (velocityX);
                 float absVelocityY = Math.Abs (velocityTracker.YVelocity);
+
                 if (Math.Abs (downView.ScrollX) > (downView.Width / 2) ||
                         minFlingVelocity <= absVelocityX && absVelocityX <= maxFlingVelocity && absVelocityY < absVelocityX ) {
                     var swipeView = (ListItemSwipeable)downView;
@@ -94,7 +115,7 @@ namespace Toggl.Joey.UI.Utils
                 break;
 
             case MotionEventActions.Move:
-                if (downView == null) {
+                if (downView == null || velocityTracker == null || !isEnabled) {
                     return false;
                 }
 
@@ -103,10 +124,12 @@ namespace Toggl.Joey.UI.Utils
                 float deltaY = motionEvent.RawY - downY;
                 if (Math.Abs (deltaX) > swipingSlop && Math.Abs (deltaY) < Math.Abs (deltaX) / 2) {
                     swiping = true;
-                    listView.RequestDisallowInterceptTouchEvent (true);
+                    slop = (deltaX > 0 ? swipingSlop : -swipingSlop);
+                    recyclerView.RequestDisallowInterceptTouchEvent (true);
                     MotionEvent cancelEvent = MotionEvent.Obtain (motionEvent);
+                    cancelEvent.Action = MotionEventActions.Cancel;
 
-                    listView.OnTouchEvent (cancelEvent);
+                    recyclerView.OnTouchEvent (cancelEvent);
                     cancelEvent.Recycle();
                 }
 
@@ -116,7 +139,7 @@ namespace Toggl.Joey.UI.Utils
                     }
 
                     downView.OverScrollMode = OverScrollMode.IfContentScrolls;
-                    downView.ScrollX = (int)-deltaX + swipingSlop;
+                    downView.ScrollX = (int)-deltaX + slop;
 
                     var swipeView = (LogTimeEntryItem)downView;
                     swipeView.OnScrollEvent ((int)deltaX - swipingSlop);
@@ -131,7 +154,7 @@ namespace Toggl.Joey.UI.Utils
         private void DeleteItem (object sender, EventArgs e)
         {
             if (downPosition != -1) {
-                callbacks.OnDismiss (downPosition);
+                callbacks.OnDismiss (recyclerView, downPosition);
             }
             downPosition = AdapterView.InvalidPosition;
             downView = null;
@@ -141,7 +164,7 @@ namespace Toggl.Joey.UI.Utils
         {
             bool CanDismiss (int position);
 
-            void OnDismiss (int position);
+            void OnDismiss (RecyclerView recyclerView, int position);
         }
     }
 }

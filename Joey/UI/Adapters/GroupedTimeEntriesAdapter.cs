@@ -25,6 +25,7 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
         protected static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
+
         private readonly Handler handler = new Handler ();
 
         public GroupedTimeEntriesAdapter () : base (new GroupedTimeEntriesView ())

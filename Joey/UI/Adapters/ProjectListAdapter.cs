@@ -1,244 +1,310 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Specialized;
+using Android.Content;
 using Android.Graphics;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class ProjectListAdapter : RecyclerView.Adapter
+    public class ProjectListAdapter : RecycledDataViewAdapter<object>
     {
-        private readonly ProjectsClientDataView dataView;
+        protected static readonly int ViewTypeContent = 1;
+        protected static readonly int ViewTypeWorkspace = ViewTypeContent;
+        protected static readonly int ViewTypeNoProject = ViewTypeContent + 1;
+        protected static readonly int ViewTypeProject = ViewTypeContent + 2;
+        protected static readonly int ViewTypeNewProject = ViewTypeContent + 3;
+        protected static readonly int ViewTypeLoaderPlaceholder = 0;
 
-        const int TYPE_PROJECTS = 0;
-        const int TYPE_CLIENT_SECTION = 1;
-
-        public IEnumerable<object> CachedData;
-
-        public WorkspaceData Workspace
+        public ProjectListAdapter () : base (new ProjectListView())
         {
-            get { return dataView.Workspace; }
         }
 
-        public ProjectListAdapter () : this (new ProjectsClientDataView())
+        protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
         {
-
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                NotifyDataSetChanged();
+            }
         }
 
-        private ProjectListAdapter (ProjectsClientDataView dataView)
+        protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
         {
-            this.dataView = dataView;
-            this.dataView.Updated += OnDataViewUpdated;
-            dataView.Reload ();
+            View view;
+            RecyclerView.ViewHolder holder;
+
+            if (viewType == ViewTypeWorkspace) {
+                // header
+                view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListWorkspaceItem, parent, false);
+                holder = new WorkspaceListItemHolder (view);
+            } else {
+                // projects
+                if (viewType == ViewTypeProject) {
+                    view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListProjectItem, parent, false);
+                    holder = new ProjectListItemHolder (view);
+                } else if (viewType == ViewTypeNewProject) {
+                    view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListNewProjectItem, parent, false);
+                    holder = new NewProjectListItemHolder (view);
+                } else {
+                    view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListNoProjectItem, parent, false);
+                    holder = new NoProjectListItemHolder (view);
+                }
+            }
+            return holder;
         }
 
-        void OnDataViewUpdated (object sender, EventArgs e)
+        protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
         {
-            CachedData = dataView.Data.ToList();
-            NotifyDataSetChanged ();
-        }
+            var viewType = GetItemViewType (position);
 
-        public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
-        {
-            var v = LayoutInflater.From (parent.Context).Inflate (viewType == TYPE_PROJECTS ?  Resource.Layout.ProjectFragmenItem : Resource.Layout.ProjectFragmentClientItem, parent, false);
-            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : new ClientItemViewHolder (v);
+            if (viewType == ViewTypeWorkspace) {
+                var workspaceHolder = (WorkspaceListItemHolder)holder;
+                workspaceHolder.Bind ((ProjectListView.Workspace) GetEntry (position));
+            } else {
+                var data = (ProjectListView.Project) GetEntry (position);
+                if (viewType == ViewTypeProject) {
+                    var projectHolder = (ProjectListItemHolder)holder;
+                    projectHolder.Bind (data);
+                } else if (viewType == ViewTypeNewProject) {
+                    var projectHolder = (NewProjectListItemHolder)holder;
+                    projectHolder.Bind (data);
+                } else {
+                    var projectHolder = (NoProjectListItemHolder)holder;
+                    projectHolder.Bind (data);
+                }
+            }
         }
 
         public override int GetItemViewType (int position)
         {
-            var dataholder = CachedData.ElementAt (position) as ProjectsClientDataView.DataHolder;
-            return dataholder.ClientHeader ? TYPE_CLIENT_SECTION : TYPE_PROJECTS;
-        }
-
-        public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
-        {
-            var dataholder = CachedData.ElementAt (position) as ProjectsClientDataView.DataHolder;
-            if (holder is ItemViewHolder) {
-                (holder as ItemViewHolder).BindFromDataHolder (dataholder);
-            } else if (holder is ClientItemViewHolder) {
-                (holder as ClientItemViewHolder).BindFromDataHolder (dataholder);
-            }
-        }
-
-        public override int ItemCount
-        {
-            get {
-                return CachedData == null ? 0 : CachedData.Count();
-            }
-        }
-
-        public class ClientItemViewHolder : RecyclerView.ViewHolder
-        {
-            public TextView Text { get; private set; }
-
-            public ClientItemViewHolder (View v) : base (v)
-            {
-                Text = v.FindViewById<TextView> (Resource.Id.ProjectFragmentClientItemTextView);
+            if (position == DataView.Count) {
+                return ViewTypeLoaderPlaceholder;
             }
 
-            public void BindFromDataHolder (ProjectsClientDataView.DataHolder holder)
-            {
-                Text.Text = holder.Project.Client == null ? ItemView.Context.Resources.GetString (Resource.String.ProjectsNoClient) : holder.Project.Client.Name;
-            }
-        }
-
-        public class ItemViewHolder : RecyclerView.ViewHolder
-        {
-            public View Color { get; private set; }
-            public TextView Text { get; private set; }
-
-            public ItemViewHolder (View v) : base (v)
-            {
-                Color = v.FindViewById (Resource.Id.ProjectFragmentItemColorView);
-                Text = v.FindViewById<TextView> (Resource.Id.ProjectFragmentItemTimePeriodTextView);
-            }
-
-            public void BindFromDataHolder (ProjectsClientDataView.DataHolder holder)
-            {
-                var proj = holder.Project;
-                var color = Android.Graphics.Color.ParseColor (proj.GetHexColor ());
-                Color.SetBackgroundColor (color);
-                Text.Text = proj.Name;
-            }
-
-        }
-    }
-
-    public class ProjectsClientDataView : IDataView<object>, IDisposable
-    {
-        private ProjectAndTaskView dataView;
-
-        public ProjectsClientDataView ()
-        {
-            dataView = new ProjectAndTaskView (sortByClients: true);
-            dataView.Updated += OnProjectTaskViewUpdated;
-        }
-
-        public void Dispose ()
-        {
-            if (dataView != null) {
-                dataView.Dispose ();
-                dataView.Updated -= OnProjectTaskViewUpdated;
-                dataView = null;
-            }
-        }
-
-        void OnProjectTaskViewUpdated (object sender, EventArgs e)
-        {
-            OnUpdated ();
-        }
-
-        public event EventHandler Updated;
-
-        private void OnUpdated()
-        {
-            var handler = Updated;
-            if (handler != null) {
-                handler (this, EventArgs.Empty);
-            }
-        }
-
-        public void Reload()
-        {
-            if (dataView != null) {
-                dataView.Reload ();
-            }
-        }
-
-        public void LoadMore ()
-        {
-            if (dataView != null) {
-                dataView.LoadMore ();
-            }
-        }
-
-        public WorkspaceData Workspace
-        {
-            get { return dataView.Workspaces.ElementAt (0).Data; }
-        }
-
-        public IEnumerable<object> Data
-        {
-            get {
-                if (!dataView.Workspaces.Any ()) {
-                    yield break;
+            var obj = GetEntry (position);
+            if (obj is ProjectListView.Project) {
+                var p = (ProjectListView.Project)obj;
+                if (p.IsNewProject) {
+                    return ViewTypeNewProject;
                 }
 
-                var workspace = dataView.Workspaces.ElementAt (0);
-                var projects = workspace.Projects;
+                return p.IsNoProject ? ViewTypeNoProject : ViewTypeProject;
+            }
 
-                var emptyClientEntered = false;
-                var guid = Guid.Empty;
+            return ViewTypeWorkspace;
+        }
 
-                foreach (var proj in projects.Select (x => x.Data).ToList ()) {
-                    if (proj == null) {
-                        continue;
+        #region View holders
+
+        private class WorkspaceListItemHolder : RecycledModelViewHolder<ProjectListView.Workspace>
+        {
+            private WorkspaceModel model;
+
+            public TextView WorkspaceTextView { get; private set; }
+
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null) {
+                    model = (WorkspaceModel)DataSource.Data;
+                }
+
+                base.OnDataSourceChanged ();
+            }
+
+            public WorkspaceListItemHolder (View root) : base (root)
+            {
+                WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView).SetFont (Font.RobotoMedium);
+            }
+
+            protected override void ResetTrackedObservables ()
+            {
+                Tracker.MarkAllStale ();
+
+                if (model != null) {
+                    Tracker.Add (model, HandleWorkspacePropertyChanged);
+                }
+
+                Tracker.ClearStale ();
+            }
+
+            private void HandleWorkspacePropertyChanged (string prop)
+            {
+                if (prop == WorkspaceModel.PropertyName) {
+                    Rebind ();
+                }
+            }
+
+            protected override void Rebind ()
+            {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero) {
+                    return;
+                }
+                ResetTrackedObservables ();
+                if (model == null) {
+                    return;
+                }
+
+                WorkspaceTextView.Text = (model.Name ?? String.Empty).ToUpper ();
+            }
+        }
+
+        private class ProjectListItemHolder : RecycledModelViewHolder<ProjectListView.Project>
+        {
+            private ProjectModel model;
+
+            public View ColorView { get; private set; }
+
+            public TextView ProjectTextView { get; private set; }
+
+            public TextView ClientTextView { get; private set; }
+
+            public FrameLayout TasksFrameLayout { get; private set; }
+
+            public TextView TasksTextView { get; private set; }
+
+            public ImageView TasksImageView { get; private set; }
+
+            public ProjectListItemHolder (View root) : base (root)
+            {
+                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
+                TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
+                TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView).SetFont (Font.RobotoMedium);
+                TasksImageView = root.FindViewById<ImageView> (Resource.Id.TasksImageView);
+            }
+
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null) {
+                    model = (ProjectModel)DataSource.Data;
+                }
+
+                base.OnDataSourceChanged ();
+            }
+
+            protected override void ResetTrackedObservables ()
+            {
+                Tracker.MarkAllStale ();
+
+                if (model != null) {
+                    Tracker.Add (model, HandleProjectPropertyChanged);
+
+                    if (model.Client != null) {
+                        Tracker.Add (model.Client, HandleClientPropertyChanged);
                     }
-
-                    var model = (ProjectModel)proj;
-                    var addClientHeader = true;
-
-                    if (model.Client == null && !emptyClientEntered) {
-                        emptyClientEntered = true;
-                    } else if (model.Client != null && (guid == Guid.Empty || model.Client.Id != guid)) {
-                        model.Client.LoadAsync ();
-                        guid = model.Client.Id;
-                    } else {
-                        addClientHeader = false;
-                    }
-
-                    if (addClientHeader) {
-                        yield return new DataHolder (model, true);
-                    }
-
-                    yield return new DataHolder (model);
                 }
+
+                Tracker.ClearStale ();
             }
-        }
 
-        public long Count
-        {
-            get { return Data.Count(); }
-        }
-
-        public bool HasMore
-        {
-            get {
-                if (dataView != null) {
-                    return dataView.HasMore;
-                }
-                return false;
-            }
-        }
-
-        public bool IsLoading
-        {
-            get {
-                if (dataView != null) {
-                    return dataView.IsLoading;
-                }
-                return false;
-            }
-        }
-
-        public class DataHolder
-        {
-            public ProjectModel Project { get; private set; }
-            public bool ClientHeader { get; private set; }
-
-            public DataHolder (ProjectModel project, bool clientHandler = false)
+            private void HandleProjectPropertyChanged (string prop)
             {
-                Project = project;
-                ClientHeader = clientHandler;
+                if (prop == ProjectModel.PropertyClient
+                        || prop == ProjectModel.PropertyColor
+                        || prop == ProjectModel.PropertyName) {
+                    Rebind ();
+                }
+            }
+
+            private void HandleClientPropertyChanged (string prop)
+            {
+                if (prop == ProjectModel.PropertyName) {
+                    Rebind ();
+                }
+            }
+
+            protected override void Rebind ()
+            {
+                // Protect against Java side being GCed
+                if (Handle == IntPtr.Zero) {
+                    return;
+                }
+
+                ResetTrackedObservables ();
+
+                if (model == null) {
+                    ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
+                    ProjectTextView.SetText (Resource.String.ProjectsNoProject);
+                    ClientTextView.Visibility = ViewStates.Gone;
+                    TasksFrameLayout.Visibility = ViewStates.Gone;
+                    return;
+                }
+
+                var color = Color.ParseColor (model.GetHexColor ());
+                ColorView.SetBackgroundColor (color);
+                ProjectTextView.Text = model.Name;
+                if (model.Client != null) {
+                    ClientTextView.Text = model.Client.Name;
+                    ClientTextView.Visibility = ViewStates.Visible;
+                } else {
+                    ClientTextView.Visibility = ViewStates.Gone;
+                }
+
+                TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
             }
         }
 
+        private class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>
+        {
+            public View ColorView { get; private set; }
+
+            public TextView ProjectTextView { get; private set; }
+
+            public NoProjectListItemHolder (View root) : base (root)
+            {
+                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+            }
+
+            protected override void Rebind ()
+            {
+                ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
+                ProjectTextView.SetText (Resource.String.ProjectsNoProject);
+            }
+        }
+
+        private class NewProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>
+        {
+            public View ColorView { get; private set; }
+
+            public TextView ProjectTextView { get; private set; }
+
+            public NewProjectListItemHolder (View root) : base (root)
+            {
+                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+            }
+
+            private ProjectModel model;
+
+            protected override void OnDataSourceChanged ()
+            {
+                model = null;
+                if (DataSource != null && DataSource.Data != null) {
+                    model = new ProjectModel (DataSource.Data);
+                }
+
+                base.OnDataSourceChanged ();
+            }
+
+            protected override void Rebind ()
+            {
+                var color = Color.ParseColor (model.GetHexColor ());
+                ColorView.SetBackgroundColor (color);
+                ProjectTextView.SetText (Resource.String.ProjectsNewProject);
+            }
+        }
+        #endregion
     }
 }
 

@@ -22,6 +22,8 @@ namespace Toggl.Joey.UI.Adapters
 {
     public class GroupedTimeEntriesAdapter : RecycledDataViewAdapter<object>
     {
+        protected static readonly int ViewTypeLoaderPlaceholder = 0;
+        protected static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
         private readonly Handler handler = new Handler ();
 

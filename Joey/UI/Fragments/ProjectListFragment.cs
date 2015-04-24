@@ -1,9 +1,7 @@
-﻿using Android.Content;
-using Android.OS;
+﻿using Android.OS;
 using Android.Support.V7.App;
 using Android.Support.V7.Widget;
 using Android.Views;
-using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.ActionBarActivity;
@@ -46,11 +44,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void StartNewProjectActivity ()
         {
+            /*
             var intent = new Intent (Activity, typeof (NewProjectActivity));
             intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, (Adapter as ProjectListAdapter).Workspace.Id.ToString ());
             StartActivity (intent);
+            */
         }
-
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {

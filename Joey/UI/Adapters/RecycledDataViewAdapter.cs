@@ -11,8 +11,8 @@ namespace Toggl.Joey.UI.Adapters
 {
     public abstract class RecycledDataViewAdapter<T> : RecyclerView.Adapter
     {
-        protected static readonly int ViewTypeLoaderPlaceholder = 0;
-        protected static readonly int ViewTypeContent = 1;
+        private readonly int ViewTypeLoaderPlaceholder = 0;
+        private readonly int ViewTypeContent = 1;
         private readonly int LoadMoreOffset = 3;
         private CollectionCachingDataView<T> dataView;
         private int lastLoadingPosition;

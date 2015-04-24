@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/ProjectsFragment"
+    android:id="@+id/ProjectListFragment"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
     <android.support.v7.widget.Toolbar
-        android:id="@+id/ProjectsFragmentToolbar"
+        android:id="@+id/ProjectListToolbar"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/actionBarSize"
-        android:background="@drawable/BgArrows"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        android:popupTheme="@style/ThemeOverlay.AppCompat.Dark" />
- 	<android.support.v7.widget.RecyclerView
-        android:id="@+id/ProjectsFragmentToolbarRecyclerView"
+        android:background="@drawable/BgArrowsPattern" />
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/ProjectListRecyclerView"
         android:background="#f8f8f8"
         android:layout_width="match_parent"
         android:layout_height="fill_parent" />

@@ -1,24 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Android.Content;
 using Android.Graphics;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
-using Toggl.Joey.UI.Utils;
-using Toggl.Joey.UI.Views;
-
-using Android.Support.V7.App;
-using Android.Support.V7.Widget;
-
 using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class ProjectsRecyclerAdapter : RecyclerView.Adapter
+    public class ProjectListAdapter : RecyclerView.Adapter
     {
         private readonly ProjectsClientDataView dataView;
 
@@ -32,12 +26,12 @@ namespace Toggl.Joey.UI.Adapters
             get { return dataView.Workspace; }
         }
 
-        public ProjectsRecyclerAdapter () : this (new ProjectsClientDataView())
+        public ProjectListAdapter () : this (new ProjectsClientDataView())
         {
 
         }
 
-        private ProjectsRecyclerAdapter (ProjectsClientDataView dataView)
+        private ProjectListAdapter (ProjectsClientDataView dataView)
         {
             this.dataView = dataView;
             this.dataView.Updated += OnDataViewUpdated;
@@ -53,7 +47,7 @@ namespace Toggl.Joey.UI.Adapters
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
             var v = LayoutInflater.From (parent.Context).Inflate (viewType == TYPE_PROJECTS ?  Resource.Layout.ProjectFragmenItem : Resource.Layout.ProjectFragmentClientItem, parent, false);
-            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : (RecyclerView.ViewHolder)new ClientItemViewHolder (v);
+            return viewType == TYPE_PROJECTS ? (RecyclerView.ViewHolder)new ItemViewHolder (v) : new ClientItemViewHolder (v);
         }
 
         public override int GetItemViewType (int position)

@@ -1,19 +1,18 @@
 ﻿using Android.Content;
 using Android.OS;
-using Android.Views;
 using Android.Support.V7.App;
 using Android.Support.V7.Widget;
-using Toggl.Joey.UI.Adapters;
+using Android.Views;
 using Toggl.Joey.UI.Activities;
-
-using Toolbar = Android.Support.V7.Widget.Toolbar;
-using Fragment = Android.Support.V4.App.Fragment;
-using Activity = Android.Support.V7.App.ActionBarActivity;
+using Toggl.Joey.UI.Adapters;
 using ActionBar = Android.Support.V7.App.ActionBar;
+using Activity = Android.Support.V7.App.ActionBarActivity;
+using Fragment = Android.Support.V4.App.Fragment;
+using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ProjectsFragment : Fragment
+    public class ProjectListFragment : Fragment
     {
         protected RecyclerView RecyclerView { get; private set; }
         protected RecyclerView.Adapter Adapter { get; private set; }
@@ -23,18 +22,18 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.ProjectsFragment, container, false);
+            var view = inflater.Inflate (Resource.Layout.ProjectListFragment, container, false);
 
-            RecyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectsFragmentToolbarRecyclerView);
+            RecyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
             LayoutManager = new LinearLayoutManager (Activity);
             RecyclerView.SetLayoutManager (LayoutManager);
 
-            Adapter = new ProjectsRecyclerAdapter ();
+            Adapter = new ProjectListAdapter ();
             RecyclerView.SetAdapter (Adapter);
 
-            var activity = (Android.Support.V7.App.ActionBarActivity)this.Activity;
+            var activity = (ActionBarActivity)Activity;
 
-            var toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectsFragmentToolbar);
+            var toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
             activity.SetSupportActionBar (toolbar);
             Toolbar = activity.SupportActionBar;
             Toolbar.SetDisplayHomeAsUpEnabled (true);
@@ -48,7 +47,7 @@ namespace Toggl.Joey.UI.Fragments
         private void StartNewProjectActivity ()
         {
             var intent = new Intent (Activity, typeof (NewProjectActivity));
-            intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, (Adapter as ProjectsRecyclerAdapter).Workspace.Id.ToString ());
+            intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, (Adapter as ProjectListAdapter).Workspace.Id.ToString ());
             StartActivity (intent);
         }
 

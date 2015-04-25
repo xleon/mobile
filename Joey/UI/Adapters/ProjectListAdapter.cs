@@ -23,6 +23,8 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeNewProject = ViewTypeContent + 3;
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
 
+        public Action<object> HandleProjectSelection { get; set; }
+
         public ProjectListAdapter () : base (new ProjectListView())
         {
         }
@@ -47,13 +49,13 @@ namespace Toggl.Joey.UI.Adapters
                 // projects
                 if (viewType == ViewTypeProject) {
                     view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListProjectItem, parent, false);
-                    holder = new ProjectListItemHolder (view);
+                    holder = new ProjectListItemHolder (this, view);
                 } else if (viewType == ViewTypeNewProject) {
                     view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListNewProjectItem, parent, false);
-                    holder = new NewProjectListItemHolder (view);
+                    holder = new NewProjectListItemHolder (this, view);
                 } else {
                     view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListNoProjectItem, parent, false);
-                    holder = new NoProjectListItemHolder (view);
+                    holder = new NoProjectListItemHolder (this, view);
                 }
             }
             return holder;
@@ -98,6 +100,14 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             return ViewTypeWorkspace;
+        }
+
+        private void OnDeleteTimeEntry (object item)
+        {
+            var handler = HandleProjectSelection;
+            if (handler != null) {
+                handler (item);
+            }
         }
 
         #region View holders
@@ -156,9 +166,10 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class ProjectListItemHolder : RecycledModelViewHolder<ProjectListView.Project>
+        private class ProjectListItemHolder : RecycledModelViewHolder<ProjectListView.Project>, View.IOnClickListener
         {
             private ProjectModel model;
+            private readonly ProjectListAdapter adapter;
 
             public View ColorView { get; private set; }
 
@@ -172,14 +183,17 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageView TasksImageView { get; private set; }
 
-            public ProjectListItemHolder (View root) : base (root)
+            public ProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
-                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                this.adapter = adapter;
+                ColorView = root; //root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
                 TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
                 TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView).SetFont (Font.RobotoMedium);
                 TasksImageView = root.FindViewById<ImageView> (Resource.Id.TasksImageView);
+
+                root.SetOnClickListener (this);
             }
 
             protected override void OnDataSourceChanged ()
@@ -250,39 +264,56 @@ namespace Toggl.Joey.UI.Adapters
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
-                TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TasksFrameLayout.Visibility = ViewStates.Gone;
+            }
+
+            public void OnClick (View v)
+            {
+                adapter.HandleProjectSelection (DataSource);
             }
         }
 
-        private class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>
+        private class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
         {
+            private readonly ProjectListAdapter adapter;
+
             public View ColorView { get; private set; }
 
             public TextView ProjectTextView { get; private set; }
 
-            public NoProjectListItemHolder (View root) : base (root)
+            public NoProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
-                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                this.adapter = adapter;
+                ColorView = root; //root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+
+                root.SetOnClickListener (this);
             }
 
             protected override void Rebind ()
             {
-                ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
+                ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.light_gray));
                 ProjectTextView.SetText (Resource.String.ProjectsNoProject);
+            }
+
+            public void OnClick (View v)
+            {
+                adapter.HandleProjectSelection (DataSource);
             }
         }
 
-        private class NewProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>
+        private class NewProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
         {
-            public View ColorView { get; private set; }
+            private readonly ProjectListAdapter adapter;
 
             public TextView ProjectTextView { get; private set; }
 
-            public NewProjectListItemHolder (View root) : base (root)
+            public NewProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
-                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                //ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                this.adapter = adapter;
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
+                root.SetOnClickListener (this);
             }
 
             private ProjectModel model;
@@ -300,8 +331,12 @@ namespace Toggl.Joey.UI.Adapters
             protected override void Rebind ()
             {
                 var color = Color.ParseColor (model.GetHexColor ());
-                ColorView.SetBackgroundColor (color);
                 ProjectTextView.SetText (Resource.String.ProjectsNewProject);
+            }
+
+            public void OnClick (View v)
+            {
+                adapter.HandleProjectSelection (DataSource);
             }
         }
         #endregion

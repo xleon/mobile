@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="64dp"
+    android:layout_height="70dp"
     android:gravity="center_vertical">
     <View
         android:layout_width="3dp"
@@ -31,12 +31,13 @@
         <TextView
             android:text="Client name"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textColor="@color/project_list_gray"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/ClientTextView"
             android:singleLine="true"
             android:ellipsize="none"
+            android:textColor="@android:color/white"
+            android:alpha=".8"
             android:layout_marginLeft="10dp" />
     </toggl.joey.ui.views.FadeLinearLayout>
     <FrameLayout

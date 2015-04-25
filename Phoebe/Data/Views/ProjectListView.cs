@@ -450,9 +450,6 @@ namespace Toggl.Phoebe.Data.Views
                     foreach (var proj in ws.Projects) {
                         yield return proj;
 
-                        foreach (var task in proj.Tasks) {
-                            yield return task;
-                        }
                     }
                 }
             }

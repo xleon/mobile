@@ -21,13 +21,13 @@ namespace Toggl.Joey.UI.Views
 
         void Initialize ()
         {
-            LayoutInflater inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
+            var inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
             inflater.Inflate (Resource.Layout.TogglField, this);
 
-            TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
+            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
+            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
 
-            text.FocusChange += (object sender, FocusChangeEventArgs e) => {
+            text.FocusChange += (sender, e) => {
                 title.Selected = text.HasFocus;
             };
         }
@@ -39,41 +39,56 @@ namespace Toggl.Joey.UI.Views
 
         public TogglField SetName (string name)
         {
-            TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
+            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             title.Text = name;
-            EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
+            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
             text.Hint = name;
             return this;
         }
 
         public TogglField SetName (int resourceId)
         {
-            TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
+            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             title.SetText (resourceId);
-            EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
+            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
             text.SetHint (resourceId);
+            return this;
+        }
+
+        public TogglField SetAssistViewTitle (string title)
+        {
+            var assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
+            assistView.Text = title;
+            assistView.Visibility = ViewStates.Visible;
             return this;
         }
 
         public TogglField DestroyAssistView()
         {
-            TextView assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
+            var assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
             assistView.Visibility = ViewStates.Gone;
+            return this;
+        }
+
+        public TogglField RestoreAssistView()
+        {
+            var assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
+            assistView.Visibility = ViewStates.Visible;
             return this;
         }
 
         public TogglField DestroyArrow()
         {
-            ImageView arrow = (ImageView)FindViewById (Resource.Id.EditTimeEntryBitArrow);
+            var arrow = (ImageView)FindViewById (Resource.Id.EditTimeEntryBitArrow);
             arrow.Visibility = ViewStates.Gone;
             return this;
         }
 
         public TogglField SimulateButton()
         {
-            TextView title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            EditText text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-            text.Touch += (object sender, TouchEventArgs e) => {
+            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
+            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
+            text.Touch += (sender, e) => {
                 e.Handled = false;
                 title.Pressed = e.Event.Action != MotionEventActions.Up;
             };

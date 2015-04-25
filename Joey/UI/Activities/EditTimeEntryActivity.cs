@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.Content.PM;
-using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Fragments;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
@@ -26,7 +23,6 @@ namespace Toggl.Joey.UI.Activities
     {
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
         public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";
-
 
         private FrameLayout DoneFrameLayout { get; set; }
 

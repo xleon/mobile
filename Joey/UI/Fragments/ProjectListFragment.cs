@@ -1,8 +1,14 @@
-﻿using Android.OS;
+﻿using System;
+using Android.Content;
+using Android.OS;
 using Android.Support.V7.App;
 using Android.Support.V7.Widget;
 using Android.Views;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.ActionBarActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -12,61 +18,108 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ProjectListFragment : Fragment
     {
-        protected RecyclerView RecyclerView { get; private set; }
-        protected RecyclerView.Adapter Adapter { get; private set; }
-        protected RecyclerView.LayoutManager LayoutManager { get; private set; }
+        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
 
-        protected ActionBar Toolbar { get; private set; }
+        private RecyclerView recyclerView;
+        private ProjectListAdapter adapter;
+        private TimeEntryModel model;
+
+        public ProjectListFragment ()
+        {
+        }
+
+        public ProjectListFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
+        public ProjectListFragment (TimeEntryModel model)
+        {
+            this.model = model;
+            var args = new Bundle ();
+            args.PutString (TimeEntryIdArgument, model.Id.ToString ());
+            Arguments = args;
+        }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.ProjectListFragment, container, false);
 
-            RecyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
-            LayoutManager = new LinearLayoutManager (Activity);
-            RecyclerView.SetLayoutManager (LayoutManager);
+            adapter = new ProjectListAdapter ();
 
-            Adapter = new ProjectListAdapter ();
-            RecyclerView.SetAdapter (Adapter);
+            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
+            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
+            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+            recyclerView.SetAdapter (adapter);
+            adapter.HandleProjectSelection = OnItemSelected;
 
             var activity = (ActionBarActivity)Activity;
-
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
             activity.SetSupportActionBar (toolbar);
-            Toolbar = activity.SupportActionBar;
-            Toolbar.SetDisplayHomeAsUpEnabled (true);
-            Toolbar.SetTitle (Resource.String.ProjectsTitle);
 
+            var actionBar = activity.SupportActionBar;
+            actionBar.SetDisplayHomeAsUpEnabled (true);
+            actionBar.SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle);
             HasOptionsMenu = true;
 
             return view;
         }
 
-        private void StartNewProjectActivity ()
+        private Guid TimeEntryId
         {
-            /*
-            var intent = new Intent (Activity, typeof (NewProjectActivity));
-            intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, (Adapter as ProjectListAdapter).Workspace.Id.ToString ());
-            StartActivity (intent);
-            */
+            get {
+                var id = Guid.Empty;
+                if (Arguments != null) {
+                    Guid.TryParse (Arguments.GetString (TimeEntryIdArgument), out id);
+                }
+                return id;
+            }
+        }
+
+        private async void OnItemSelected (object m)
+        {
+            if (model != null) {
+                TaskModel task = null;
+                ProjectModel project = null;
+                WorkspaceModel workspace = null;
+
+                if (m is ProjectListView.Project) {
+                    var wrap = (ProjectListView.Project)m;
+                    if (wrap.IsNoProject) {
+                        workspace = new WorkspaceModel (wrap.WorkspaceId);
+                    } else if (wrap.IsNewProject) {
+                        var data = wrap.Data;
+                        var ws = new WorkspaceModel (data.WorkspaceId);
+
+                        // Show create project activity instead
+                        var intent = new Intent (Activity, typeof (NewProjectActivity));
+                        intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, ws.Id.ToString());
+                        StartActivity (intent);
+                    } else {
+                        project = (ProjectModel)wrap.Data;
+                        workspace = project.Workspace;
+                    }
+                } else if (m is ProjectAndTaskView.Workspace) {
+                    var wrap = (ProjectAndTaskView.Workspace)m;
+                    workspace = (WorkspaceModel)wrap.Data;
+                }
+
+                if (project != null || task != null || workspace != null) {
+                    model.Workspace = workspace;
+                    model.Project = project;
+                    model.Task = task;
+                    await model.SaveAsync ();
+                    Activity.Finish ();
+                }
+            }
         }
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             if (item.ItemId == Android.Resource.Id.Home) {
                 Activity.OnBackPressed ();
-            } else {
-                StartNewProjectActivity ();
             }
             return base.OnOptionsItemSelected (item);
         }
-
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
-        {
-            inflater.Inflate (Resource.Menu.ProjectToolbarHome, menu);
-            base.OnCreateOptionsMenu (menu, inflater);
-        }
-
     }
 }
 

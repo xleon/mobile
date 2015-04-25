@@ -2,22 +2,20 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Views;
-using Android.Views.InputMethods;
-using Android.Widget;
-using Android.Text;
 using Android.Support.V7.App;
 using Android.Support.V7.Widget;
+using Android.Text;
+using Android.Views;
+using Android.Views.InputMethods;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Joey.UI.Views;
 using XPlatUtils;
-
-using Toolbar = Android.Support.V7.Widget.Toolbar;
-using Fragment = Android.Support.V4.App.Fragment;
-using ActionBarActivity = Android.Support.V7.App.ActionBarActivity;
 using ActionBar = Android.Support.V7.App.ActionBar;
+using ActionBarActivity = Android.Support.V7.App.ActionBarActivity;
+using Fragment = Android.Support.V4.App.Fragment;
+using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -57,7 +55,7 @@ namespace Toggl.Joey.UI.Fragments
             ProjectBit.TextField.TextChanged += ProjectBitTextChangedHandler;
 
             ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
-            ColorPicker.SelectedColorChanged += (object sender, int e) => {
+            ColorPicker.SelectedColorChanged += (sender, e) => {
                 model.Color = e;
             };
 

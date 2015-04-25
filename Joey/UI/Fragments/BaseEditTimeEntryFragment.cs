@@ -23,7 +23,6 @@ namespace Toggl.Joey.UI.Fragments
 {
     public abstract class BaseEditTimeEntryFragment : Fragment
     {
-        private static readonly string Tag = "BaseEditTimeEntryFragment";
 
         private readonly Handler handler = new Handler ();
         private PropertyChangeTracker propertyTracker;
@@ -32,7 +31,6 @@ namespace Toggl.Joey.UI.Fragments
         private bool canRebind;
         private bool descriptionChanging;
         private bool autoCommitScheduled;
-        private ViewGroup cont;
 
         protected BaseEditTimeEntryFragment ()
         {
@@ -180,7 +178,7 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            var startTime = TimeEntry.StartTime;
+            DateTime startTime;
             var useTimer = TimeEntry.StartTime == DateTime.MinValue;
             if (useTimer) {
                 startTime = Time.Now;
@@ -225,7 +223,18 @@ namespace Toggl.Joey.UI.Fragments
                 }
             }
 
-            ProjectEditText.Text = TimeEntry.Project != null ? TimeEntry.Project.Name : String.Empty;
+            if (TimeEntry.Project != null) {
+                ProjectEditText.Text = TimeEntry.Project.Name;
+                if (TimeEntry.Project.Client != null) {
+                    ProjectBit.SetAssistViewTitle (TimeEntry.Project.Client.Name);
+                } else {
+                    ProjectBit.DestroyAssistView ();
+                }
+            } else {
+                ProjectEditText.Text = String.Empty;
+                ProjectBit.DestroyAssistView ();
+            }
+
             BillableCheckBox.Checked = !TimeEntry.IsBillable;
             if (TimeEntry.IsBillable) {
                 BillableCheckBox.SetText (Resource.String.CurrentTimeEntryEditBillableChecked);
@@ -276,10 +285,9 @@ namespace Toggl.Joey.UI.Fragments
 
         protected ActionBar Toolbar { get; private set; }
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle state)
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
-            cont = container;
 
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
 
@@ -300,13 +308,19 @@ namespace Toggl.Joey.UI.Fragments
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
 
-            DescriptionBit = view.FindViewById<TogglField> (Resource.Id.Description).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+            DescriptionBit = view.FindViewById<TogglField> (Resource.Id.Description)
+                             .DestroyAssistView().DestroyArrow()
+                             .SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
             DescriptionEditText = DescriptionBit.TextField;
 
-            ProjectBit = view.FindViewById<TogglField> (Resource.Id.Project).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
+            ProjectBit = view.FindViewById<TogglField> (Resource.Id.Project)
+                         .SetName (Resource.String.BaseEditTimeEntryFragmentProject)
+                         .SimulateButton();
             ProjectEditText = ProjectBit.TextField;
 
-            TaskBit = view.FindViewById<TogglField> (Resource.Id.Task).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
+            TaskBit = view.FindViewById<TogglField> (Resource.Id.Task).DestroyAssistView ()
+                      .SetName (Resource.String.BaseEditTimeEntryFragmentTask)
+                      .SimulateButton();
 
             TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.TagsBit);
 
@@ -318,8 +332,8 @@ namespace Toggl.Joey.UI.Fragments
             DescriptionEditText.TextChanged += OnDescriptionTextChanged;
             DescriptionEditText.EditorAction += OnDescriptionEditorAction;
             DescriptionEditText.FocusChange += OnDescriptionFocusChange;
-            ProjectBit.Click += OnProjectClick;
-            ProjectEditText.Click += OnProjectClick;
+            ProjectBit.Click += OnProjectEditTextClick;
+            ProjectEditText.Click += OnProjectEditTextClick;
             TagsBit.FullClick += OnTagsEditTextClick;
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
 
@@ -399,13 +413,14 @@ namespace Toggl.Joey.UI.Fragments
             e.Handled = false;
         }
 
-        private void OnProjectClick (object sender, EventArgs e)
+        private void OnProjectEditTextClick (object sender, EventArgs e)
         {
             if (TimeEntry == null) {
                 return;
             }
 
             var intent = new Intent (Activity, typeof (ProjectListActivity));
+            intent.PutExtra (ProjectListActivity.ExtraTimeEntryId, TimeEntry.Id.ToString ());
             StartActivity (intent);
         }
 

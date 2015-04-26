@@ -7,10 +7,12 @@ using Android.Support.V7.Widget;
 using Android.Text;
 using Android.Views;
 using Android.Views.InputMethods;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using ActionBarActivity = Android.Support.V7.App.ActionBarActivity;
@@ -21,10 +23,8 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class NewProjectFragment : Fragment
     {
-        protected ActionBar Toolbar { get; private set; }
-
+        private ActionBar Toolbar;
         private readonly ProjectModel model;
-
         private bool isSaving;
 
         public TogglField ProjectBit { get; private set; }
@@ -42,16 +42,18 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.NewProjectFragment, container, false);
-
-            var activity = (ActionBarActivity)this.Activity;
+            var activity = (ActionBarActivity)Activity;
 
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.NewProjectsFragmentToolbar);
             activity.SetSupportActionBar (toolbar);
+
             Toolbar = activity.SupportActionBar;
             Toolbar.SetDisplayHomeAsUpEnabled (true);
             Toolbar.SetTitle (Resource.String.NewProjectTitle);
 
-            ProjectBit = view.FindViewById<TogglField> (Resource.Id.NewProjectProjectNameBit).DestroyAssistView().DestroyArrow().SetName (Resource.String.NewProjectProjectFieldName);
+            ProjectBit = view.FindViewById<TogglField> (Resource.Id.NewProjectProjectNameBit)
+                         .DestroyAssistView().DestroyArrow()
+                         .SetName (Resource.String.NewProjectProjectFieldName);
             ProjectBit.TextField.TextChanged += ProjectBitTextChangedHandler;
 
             ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
@@ -60,7 +62,6 @@ namespace Toggl.Joey.UI.Fragments
             };
 
             HasOptionsMenu = true;
-
             return view;
         }
 
@@ -103,7 +104,19 @@ namespace Toggl.Joey.UI.Fragments
                     .Show();
                 } else {
                     await model.SaveAsync();
-                    Activity.OnBackPressed();
+
+                    // Create an extra model for Project / User relationship
+                    var userData = ServiceContainer.Resolve<AuthManager> ().User;
+                    var userId = userData != null ? userData.Id : (Guid?)null;
+
+                    if (userId.HasValue) {
+                        var projectUserModel = new ProjectUserModel ();
+                        projectUserModel.Project = model;
+                        projectUserModel.User = new UserModel (userId.Value);
+                        await projectUserModel.SaveAsync ();
+                    }
+
+                    FinishActivity (true);
                 }
             } finally {
                 isSaving = false;
@@ -126,11 +139,22 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             if (item.ItemId == Android.Resource.Id.Home) {
-                Activity.OnBackPressed ();
+                FinishActivity (false);
             } else {
                 SaveButtonHandler (this, null);
             }
             return base.OnOptionsItemSelected (item);
+        }
+
+        private void FinishActivity (bool isProjectCreated)
+        {
+            var resultIntent = new Intent ();
+            if (isProjectCreated) {
+                resultIntent.PutExtra (NewProjectActivity.ExtraWorkspaceId, model.Workspace.Id.ToString());
+                resultIntent.PutExtra (NewProjectActivity.ExtraProjectId, model.Id.ToString());
+            }
+            Activity.SetResult (isProjectCreated ? Result.Ok : Result.Canceled, resultIntent);
+            Activity.Finish();;
         }
     }
 }

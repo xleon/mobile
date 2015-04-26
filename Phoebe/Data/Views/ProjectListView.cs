@@ -337,8 +337,8 @@ namespace Toggl.Phoebe.Data.Views
                 var workspaces = workspacesTask.Result;
                 foreach (var workspaceData in workspaces) {
                     var workspace = new Workspace (workspaceData);
-
                     var projects = projectsTask.Result.Where (r => r.WorkspaceId == workspaceData.Id);
+
                     foreach (var projectData in projects) {
                         var project = new Project (projectData);
 
@@ -363,6 +363,7 @@ namespace Toggl.Phoebe.Data.Views
             } finally {
                 IsLoading = false;
                 OnUpdated ();
+                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
 
                 if (shouldSubscribe) {
                     subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);

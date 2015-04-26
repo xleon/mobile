@@ -288,10 +288,9 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
-
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
-
             var activity = (Activity)Activity;
+
             activity.SetSupportActionBar (toolbar);
             Toolbar = activity.SupportActionBar;
             Toolbar.SetDisplayHomeAsUpEnabled (true);
@@ -299,7 +298,7 @@ namespace Toggl.Joey.UI.Fragments
             var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
             DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
 
-            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams ((int)GravityFlags.Center));
             Toolbar.SetDisplayShowCustomEnabled (true);
             Toolbar.SetDisplayShowTitleEnabled (false);
 
@@ -338,11 +337,6 @@ namespace Toggl.Joey.UI.Fragments
             BillableCheckBox.CheckedChange += OnBillableCheckBoxCheckedChange;
 
             return view;
-        }
-
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
-        {
-            menu.Add (Resource.String.BaseEditTimeEntryFragmentSaveButtonText).SetShowAsAction (ShowAsAction.Always);
         }
 
         public override bool OnOptionsItemSelected (IMenuItem item)

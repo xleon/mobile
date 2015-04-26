@@ -15,6 +15,7 @@ namespace Toggl.Joey.UI.Activities
     public class NewProjectActivity : BaseActivity
     {
         public static readonly string ExtraWorkspaceId = "com.toggl.timer.workspace_id";
+        public static readonly string ExtraProjectId = "com.toggl.timer.project_id";
 
         private WorkspaceModel workspace;
 

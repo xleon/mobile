@@ -1,4 +1,5 @@
 ﻿using System;
+using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Support.V7.App;
@@ -19,6 +20,7 @@ namespace Toggl.Joey.UI.Fragments
     public class ProjectListFragment : Fragment
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
+        private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
         private ProjectListAdapter adapter;
@@ -78,7 +80,6 @@ namespace Toggl.Joey.UI.Fragments
         private async void OnItemSelected (object m)
         {
             if (model != null) {
-                TaskModel task = null;
                 ProjectModel project = null;
                 WorkspaceModel workspace = null;
 
@@ -93,7 +94,7 @@ namespace Toggl.Joey.UI.Fragments
                         // Show create project activity instead
                         var intent = new Intent (Activity, typeof (NewProjectActivity));
                         intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, ws.Id.ToString());
-                        StartActivity (intent);
+                        StartActivityForResult (intent, ProjectCreatedRequestCode);
                     } else {
                         project = (ProjectModel)wrap.Data;
                         workspace = project.Workspace;
@@ -103,10 +104,9 @@ namespace Toggl.Joey.UI.Fragments
                     workspace = (WorkspaceModel)wrap.Data;
                 }
 
-                if (project != null || task != null || workspace != null) {
+                if (project != null || workspace != null) {
                     model.Workspace = workspace;
                     model.Project = project;
-                    model.Task = task;
                     await model.SaveAsync ();
                     Activity.Finish ();
                 }
@@ -119,6 +119,38 @@ namespace Toggl.Joey.UI.Fragments
                 Activity.OnBackPressed ();
             }
             return base.OnOptionsItemSelected (item);
+        }
+
+        public async override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        {
+            base.OnActivityResult (requestCode, resultCode, data);
+            if (requestCode == ProjectCreatedRequestCode) {
+                if (resultCode == (int)Result.Ok) {
+                    Guid extraGuid;
+                    Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraWorkspaceId), out extraGuid);
+                    model.Workspace = new WorkspaceModel (extraGuid);
+                    Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraProjectId), out extraGuid);
+                    model.Project = new ProjectModel (extraGuid);
+
+                    await model.SaveAsync ();
+                    Activity.Finish();
+                }
+
+            }
+        }
+
+        public override void OnDestroy ()
+        {
+            base.OnDestroy ();
+            Dispose (true);
+        }
+
+        protected override void Dispose (bool disposing)
+        {
+            if (disposing) {
+                adapter.Dispose ();
+            }
+            base.Dispose (disposing);
         }
     }
 }

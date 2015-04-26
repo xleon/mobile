@@ -9,6 +9,15 @@ namespace Toggl.Joey.UI.Utils
 {
     public class SwipeDeleteTouchListener : Java.Lang.Object, View.IOnTouchListener
     {
+        public interface IDismissCallbacks
+        {
+            bool CanDismiss (RecyclerView recyclerView, int position);
+
+            void OnDismiss (RecyclerView recyclerView, int position);
+
+            void OnItemTouch (RecyclerView recyclerView, int position);
+        }
+
         private int slop;
 
         // Fixed properties
@@ -34,7 +43,9 @@ namespace Toggl.Joey.UI.Utils
             maxFlingVelocity = viewConfiguration.ScaledMaximumFlingVelocity;
             swipingSlop = viewConfiguration.ScaledTouchSlop;
             this.recyclerView = recyclerView;
+            recyclerView.SetOnScrollListener ( new RecyclerViewScrollDetector (this));
             this.callbacks = callbacks;
+            isEnabled = true;
         }
 
         public bool IsEnabled
@@ -49,7 +60,7 @@ namespace Toggl.Joey.UI.Utils
             }
         }
 
-        public bool OnTouch (View view, MotionEvent motionEvent)
+        public bool OnTouch (View v, MotionEvent motionEvent)
         {
             switch (motionEvent.Action) {
             case MotionEventActions.Down:
@@ -78,7 +89,7 @@ namespace Toggl.Joey.UI.Utils
                     downX = motionEvent.RawX;
                     downY = motionEvent.RawY;
                     downPosition = recyclerView.GetChildPosition (downView);
-                    if (callbacks.CanDismiss (downPosition)) {
+                    if (callbacks.CanDismiss (recyclerView, downPosition)) {
                         velocityTracker = VelocityTracker.Obtain ();
                         velocityTracker.AddMovement (motionEvent);
                     } else {
@@ -102,10 +113,12 @@ namespace Toggl.Joey.UI.Utils
                         minFlingVelocity <= absVelocityX && absVelocityX <= maxFlingVelocity && absVelocityY < absVelocityX ) {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Delete);
-                    swipeView.SwipeAnimationEnd += DeleteItem;
-                } else {
+                    swipeView.SwipeAnimationEnd += OnItemDismissed;
+                } else if (absVelocityX > 10) {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Cancel);
+                } else {
+                    OnItemTouched();
                 }
                 downX = 0;
                 downY = 0;
@@ -151,7 +164,7 @@ namespace Toggl.Joey.UI.Utils
             return false;
         }
 
-        private void DeleteItem (object sender, EventArgs e)
+        private void OnItemDismissed (object sender, EventArgs e)
         {
             if (downPosition != -1) {
                 callbacks.OnDismiss (recyclerView, downPosition);
@@ -160,11 +173,29 @@ namespace Toggl.Joey.UI.Utils
             downView = null;
         }
 
-        public interface IDismissCallbacks
+        private void OnItemTouched ()
         {
-            bool CanDismiss (int position);
+            if (downPosition != -1) {
+                callbacks.OnItemTouch (recyclerView, downPosition);
+            }
+            downPosition = AdapterView.InvalidPosition;
+            downView = null;
+        }
 
-            void OnDismiss (RecyclerView recyclerView, int position);
+        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        {
+            private readonly SwipeDeleteTouchListener touchListener;
+
+            public RecyclerViewScrollDetector (SwipeDeleteTouchListener touchListener)
+            {
+                this.touchListener = touchListener;
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                base.OnScrollStateChanged (recyclerView, newState);
+                touchListener.IsEnabled = (newState != RecyclerView.ScrollStateDragging);
+            }
         }
     }
 }

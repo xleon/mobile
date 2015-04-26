@@ -34,8 +34,6 @@ namespace Toggl.Joey.UI.Adapters
 
         public Action<TimeEntryGroup> HandleGroupDeletion { get; set; }
 
-        public Action<TimeEntryGroup> HandleGroupEditing { get; set; }
-
         public Action<TimeEntryGroup> HandleGroupContinue { get; set; }
 
         public Action<TimeEntryGroup> HandleGroupStop { get; set; }
@@ -71,14 +69,6 @@ namespace Toggl.Joey.UI.Adapters
         private void OnDeleteTimeEntryGroup (TimeEntryGroup entryGroup)
         {
             var aHandler = HandleGroupDeletion;
-            if (aHandler != null) {
-                aHandler (entryGroup);
-            }
-        }
-
-        private void OnEditTimeEntryGroup (TimeEntryGroup entryGroup)
-        {
-            var aHandler = HandleGroupEditing;
             if (aHandler != null) {
                 aHandler (entryGroup);
             }
@@ -195,7 +185,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class GroupedListItemHolder :  RecycledModelViewHolder<TimeEntryGroup>, View.IOnClickListener
+        private class GroupedListItemHolder :  RecycledModelViewHolder<TimeEntryGroup>, View.IOnTouchListener
         {
             private readonly Handler handler;
             private readonly GroupedTimeEntriesAdapter adapter;
@@ -233,25 +223,30 @@ namespace Toggl.Joey.UI.Adapters
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
-
-                root.SetOnClickListener (this);
-                ContinueImageButton.Click += OnContinueButtonClicked;
+                ContinueImageButton.SetOnTouchListener (this);
                 ContinueImageButton.Enabled = false;
             }
 
-            private void OnContinueButtonClicked (object sender, EventArgs e)
+            public bool OnTouch (View v, MotionEvent e)
             {
-                if (DataSource == null) {
-                    return;
+                switch (e.Action) {
+                case MotionEventActions.Up:
+                    if (DataSource == null) {
+                        return false;
+                    }
+
+                    ContinueImageButton.Enabled = false;
+
+                    if (DataSource.Model.State == TimeEntryState.Running) {
+                        adapter.OnStopTimeEntryGroup (DataSource);
+                        return false;
+                    }
+
+                    adapter.OnContinueTimeEntryGroup (DataSource);
+                    return false;
                 }
 
-                ContinueImageButton.Enabled = false;
-
-                if (DataSource.Model.State == TimeEntryState.Running) {
-                    adapter.OnStopTimeEntryGroup (DataSource);
-                    return;
-                }
-                adapter.OnContinueTimeEntryGroup (DataSource);
+                return false;
             }
 
             protected override void OnDataSourceChanged ()
@@ -457,12 +452,6 @@ namespace Toggl.Joey.UI.Adapters
                     TagsView.BubbleCount = (int)tagsView.Count;
                 }
                 TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
-            }
-
-            public void OnClick (View v)
-            {
-                // Temporal solution
-                adapter.OnEditTimeEntryGroup (DataSource);
             }
         }
     }

@@ -17,10 +17,11 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : Fragment
+    public class LogTimeEntriesListFragment : Fragment, SwipeDeleteTouchListener.IDismissCallbacks
     {
         private RecyclerView recyclerView;
         private View emptyMessageView;
@@ -38,7 +39,6 @@ namespace Toggl.Joey.UI.Fragments
                     logAdapter = new LogTimeEntriesAdapter();
                     logAdapter.HandleTimeEntryContinue = ContinueTimeEntry;
                     logAdapter.HandleTimeEntryStop = StopTimeEntry;
-                    logAdapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
                 }
                 return logAdapter;
             }
@@ -51,7 +51,6 @@ namespace Toggl.Joey.UI.Fragments
                     groupedAdapter = new GroupedTimeEntriesAdapter();
                     groupedAdapter.HandleGroupContinue = ContinueTimeEntryGroup;
                     groupedAdapter.HandleGroupStop = StopTimeEntryGroup;
-                    groupedAdapter.HandleGroupEditing = OpenTimeEntryGroupEdit;
                 }
                 return groupedAdapter;
             }
@@ -82,13 +81,12 @@ namespace Toggl.Joey.UI.Fragments
             var linearLayout = new LinearLayoutManager (Activity);
             recyclerView.SetLayoutManager (linearLayout);
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-            recyclerView.SetOnScrollListener (new RecyclerViewScrollDetector (linearLayout));
+
+            var swipeTouchListener = new SwipeDeleteTouchListener (recyclerView, this);
+            recyclerView.SetOnTouchListener (swipeTouchListener);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-
-            var swipeTouchListener = new SwipeDeleteTouchListener (recyclerView, new SwipeDismissCallBacks (this));
-            recyclerView.SetOnTouchListener (swipeTouchListener);
         }
 
         public override void OnResume ()
@@ -106,51 +104,6 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public void ToggleUndoBar()
-        {
-        }
-
-        private void ShowUndo ()
-        {
-            if (!showingUndoBar) {
-                showingUndoBar = true;
-            }
-            handler.RemoveCallbacks (HideUndo);
-            handler.PostDelayed (HideUndo, 10000);
-        }
-
-        private void HideUndo ()
-        {
-            showingUndoBar = false;
-        }
-
-        private bool showingUndoBar
-        {
-            get {
-                return undoBar.Visibility == ViewStates.Visible;
-            } set {
-                SetUndoBarVisibility (value);
-            }
-        }
-
-        public void SetUndoBarVisibility (bool visibility)
-        {
-            if (visibility) {
-                Animation bottomUp = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomUpAnimation);
-                undoBar.Visibility = ViewStates.Visible;
-                undoBar.StartAnimation (bottomUp);
-            } else {
-                Animation bottomDown = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomDownAnimation);
-                undoBar.StartAnimation (bottomDown);
-                undoBar.Visibility = ViewStates.Gone;
-            }
-        }
-
-        private async void UndoClicked (object sender, EventArgs e)
-        {
-            showingUndoBar = false;
-            handler.RemoveCallbacks (ShowUndo);
-        }
 
         #region TimeEntry handlers
         private async void ContinueTimeEntry (TimeEntryModel model)
@@ -178,12 +131,6 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private void OpenTimeEntryEdit (TimeEntryModel model)
-        {
-            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
-            StartActivity (i);
-        }
         #endregion
 
         #region TimeEntryGroup handlers
@@ -212,13 +159,6 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private void OpenTimeEntryGroupEdit (TimeEntryGroup entryGroup)
-        {
-            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            string[] guids = entryGroup.TimeEntryGuids;
-            i.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
-            StartActivity (i);
-        }
         #endregion
 
         private void EnsureAdapter ()
@@ -267,106 +207,84 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public bool CanDismiss (int position)
+        #region IDismissCallbacks implementation
+
+        public bool CanDismiss (RecyclerView view, int position)
         {
-            var adapter = (LogTimeEntriesAdapter)recyclerView.GetAdapter();
-            if (adapter == null) {
-                return false;
-            }
-            // Replace 1 by corresponding static.
-            return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
-        }
-
-        public class SwipeDismissCallBacks : SwipeDeleteTouchListener.IDismissCallbacks
-        {
-            private readonly LogTimeEntriesListFragment listView;
-
-            public SwipeDismissCallBacks (LogTimeEntriesListFragment lv)
-            {
-                listView = lv;
-            }
-
-            public bool CanDismiss (int position)
-            {
-                return listView.CanDismiss (position);
-            }
-
-            public void OnDismiss (RecyclerView view, int position)
-            {
+            if (view.GetAdapter () is LogTimeEntriesAdapter) {
+                var adapter = (LogTimeEntriesAdapter)recyclerView.GetAdapter();
+                return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
+            } else {
+                var adapter = (GroupedTimeEntriesAdapter)recyclerView.GetAdapter();
+                return adapter.GetItemViewType (position) == GroupedTimeEntriesAdapter.ViewTypeContent;
             }
         }
 
-        private class ItemTouchListener : RecyclerView.IOnItemTouchListener
+        public void OnDismiss (RecyclerView view, int position)
         {
-            public bool OnInterceptTouchEvent (RecyclerView rv, MotionEvent e)
-            {
-                return false;
-            }
 
-            public void OnTouchEvent (RecyclerView rv, MotionEvent e)
-            {
-            }
+        }
 
-            public void Dispose ()
-            {
-            }
+        public void OnItemTouch (RecyclerView view, int position)
+        {
+            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
 
-            public IntPtr Handle
-            {
-                get {
-                    throw new NotImplementedException ();
-                }
+            if (view.GetAdapter () is LogTimeEntriesAdapter) {
+                string id = ((TimeEntryData)LogAdapter.GetEntry (position)).Id.ToString();
+                intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, id);
+            } else {
+                string[] guids = ((TimeEntryGroup)GroupedAdapter.GetEntry (position)).TimeEntryGuids;
+                intent.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+            }
+            StartActivity (intent);
+        }
+
+        #endregion
+
+        #region Undo bar
+
+        private void ShowUndo ()
+        {
+            if (!showingUndoBar) {
+                showingUndoBar = true;
+            }
+            handler.RemoveCallbacks (HideUndo);
+            handler.PostDelayed (HideUndo, 10000);
+        }
+
+        private void HideUndo ()
+        {
+            showingUndoBar = false;
+        }
+
+        private bool showingUndoBar
+        {
+            get {
+                return undoBar.Visibility == ViewStates.Visible;
+            } set {
+                SetUndoBarVisibility (value);
             }
         }
 
-        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        public void SetUndoBarVisibility (bool visibility)
         {
-            private LinearLayoutManager layoutManager;
-
-            public RecyclerViewScrollDetector (LinearLayoutManager layoutManager)
-            {
-                this.layoutManager = layoutManager;
-                LoadMoreThreshold = 3;
-            }
-
-            public int LoadMoreThreshold { get; set; }
-
-            public int ScrollThreshold { get; set; }
-
-            public RecyclerView.OnScrollListener OnScrollListener { get; set; }
-
-            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
-            {
-                if (OnScrollListener != null) {
-                    OnScrollListener.OnScrolled (recyclerView, dx, dy);
-                }
-
-                var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
-                if (isSignificantDelta) {
-                    if (dy > 0) {
-                        OnScrollUp();
-                    } else {
-                        OnScrollDown();
-                    }
-                }
-            }
-
-            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
-            {
-                if (OnScrollListener != null) {
-                    OnScrollListener.OnScrollStateChanged (recyclerView, newState);
-                }
-
-                base.OnScrollStateChanged (recyclerView, newState);
-            }
-
-            private void OnScrollUp()
-            {
-            }
-
-            private void OnScrollDown()
-            {
+            if (visibility) {
+                Animation bottomUp = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomUpAnimation);
+                undoBar.Visibility = ViewStates.Visible;
+                undoBar.StartAnimation (bottomUp);
+            } else {
+                Animation bottomDown = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomDownAnimation);
+                undoBar.StartAnimation (bottomDown);
+                undoBar.Visibility = ViewStates.Gone;
             }
         }
+
+        private async void UndoClicked (object sender, EventArgs e)
+        {
+            showingUndoBar = false;
+            handler.RemoveCallbacks (ShowUndo);
+        }
+
+        #endregion
     }
 }

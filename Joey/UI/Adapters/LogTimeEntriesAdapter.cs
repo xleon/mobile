@@ -76,14 +76,6 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private void OnEditTimeEntry (TimeEntryModel model)
-        {
-            var mHandler = HandleTimeEntryEditing;
-            if (mHandler != null) {
-                mHandler (model);
-            }
-        }
-
         private void OnContinueTimeEntry (TimeEntryModel model)
         {
             var mHandler = HandleTimeEntryContinue;
@@ -195,7 +187,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecycledModelViewHolder<TimeEntryModel>, View.IOnClickListener
+        private class TimeEntryListItemHolder : RecycledModelViewHolder<TimeEntryModel>, View.IOnTouchListener
         {
             private readonly Handler handler;
             private readonly LogTimeEntriesAdapter adapter;
@@ -233,22 +225,27 @@ namespace Toggl.Joey.UI.Adapters
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
-
-                root.SetOnClickListener (this);
-                ContinueImageButton.Click += OnContinueButtonClicked;
+                ContinueImageButton.SetOnTouchListener (this);
             }
 
-            private void OnContinueButtonClicked (object sender, EventArgs e)
+            public bool OnTouch (View v, MotionEvent e)
             {
-                if (DataSource == null) {
-                    return;
+                switch (e.Action) {
+                case MotionEventActions.Up:
+                    if (DataSource == null) {
+                        return false;
+                    }
+
+                    if (DataSource.State == TimeEntryState.Running) {
+                        adapter.OnStopTimeEntry (DataSource);
+                        return false;
+                    }
+
+                    adapter.OnContinueTimeEntry (DataSource);
+                    return false;
                 }
 
-                if (DataSource.State == TimeEntryState.Running) {
-                    adapter.OnStopTimeEntry (DataSource);
-                    return;
-                }
-                adapter.OnContinueTimeEntry (DataSource);
+                return false;
             }
 
             protected override void OnDataSourceChanged ()
@@ -451,12 +448,6 @@ namespace Toggl.Joey.UI.Adapters
                     TagsView.BubbleCount = (int)tagsView.Count;
                 }
                 TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
-            }
-
-            public void OnClick (View v)
-            {
-                // Temporal solution
-                adapter.OnEditTimeEntry (DataSource);
             }
         }
     }

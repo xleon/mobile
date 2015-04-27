@@ -96,12 +96,15 @@ namespace Toggl.Joey.UI.Activities
             DrawerLayout.SetDrawerListener (DrawerToggle);
 
             Timer.OnCreate (this);
-            var lp = new ActionBar.LayoutParams (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-            lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
+
+            var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);
 
             MainToolbar = FindViewById<Toolbar> (Resource.Id.MainToolbar);
             SetSupportActionBar (MainToolbar);
             SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
+            SupportActionBar.SetCustomView (Timer.Root, lp);
+            SupportActionBar.SetDisplayShowCustomEnabled (true);
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
             drawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
             drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);

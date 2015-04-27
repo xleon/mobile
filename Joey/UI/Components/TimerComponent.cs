@@ -1,9 +1,14 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
+using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.Data;
+using Toggl.Joey.UI.Activities;
+using Toggl.Joey.UI.Fragments;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
@@ -11,12 +16,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.Data;
-using Toggl.Joey.UI.Fragments;
-using Toggl.Joey.UI.Utils;
-using Toggl.Joey.UI.Views;
 using Activity = Android.Support.V4.App.FragmentActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 
@@ -54,6 +54,7 @@ namespace Toggl.Joey.UI.Components
         public void OnCreate (Activity activity)
         {
             this.activity = activity;
+
             propertyTracker = new PropertyChangeTracker ();
 
             Root = LayoutInflater.From (activity).Inflate (Resource.Layout.TimerComponent, null);
@@ -264,33 +265,15 @@ namespace Toggl.Joey.UI.Components
                         // Ping analytics
                         ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
                     } else {
-                        var startTask = entry.StartAsync ();
-
-                        var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-                        if (userId.HasValue && ChooseProjectForNew && entry.Project == null) {
-                            var store = ServiceContainer.Resolve<IDataStore> ();
-                            var countTask = store.CountUserAccessibleProjects (userId.Value);
-
-                            // Wait for the start and count to finish
-                            await Task.WhenAll (startTask, countTask);
-
-                            if (countTask.Result > 0) {
-                                showProjectSelection = true;
-                            }
-                        } else {
-                            await startTask;
-                        }
+                        await entry.StartAsync ();
 
                         // Ping analytics
                         ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppNew);
+                        OpenTimeEntryEdit (entry);
                     }
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<ILogger> ();
                     log.Warning (LogTag, ex, "Failed to change time entry state.");
-                }
-
-                if (showProjectSelection) {
-                    new ChooseTimeEntryProjectDialogFragment (entry).Show (activity.SupportFragmentManager, "projects_dialog");
                 }
 
                 var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -298,6 +281,13 @@ namespace Toggl.Joey.UI.Components
             } finally {
                 isProcessingAction = false;
             }
+        }
+
+        private void OpenTimeEntryEdit (TimeEntryModel model)
+        {
+            var i = new Intent (activity, typeof (EditTimeEntryActivity));
+            i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
+            activity.StartActivity (i);
         }
 
         private bool ChooseProjectForNew

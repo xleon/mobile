@@ -1,10 +1,10 @@
 ﻿using System;
+using Android.Animation;
 using Android.Content;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
 using Android.Views;
-using Android.Views.Animations;
 using Android.Widget;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
@@ -14,10 +14,11 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -31,14 +32,13 @@ namespace Toggl.Joey.UI.Fragments
         private readonly Handler handler = new Handler ();
         private FrameLayout undoBar;
         private Button undoButton;
+        private bool isUndoShowed;
 
         private LogTimeEntriesAdapter LogAdapter
         {
             get {
                 if (logAdapter == null) {
-                    logAdapter = new LogTimeEntriesAdapter();
-                    logAdapter.HandleTimeEntryContinue = ContinueTimeEntry;
-                    logAdapter.HandleTimeEntryStop = StopTimeEntry;
+                    logAdapter = new LogTimeEntriesAdapter (new LogTimeEntriesView());
                 }
                 return logAdapter;
             }
@@ -68,7 +68,7 @@ namespace Toggl.Joey.UI.Fragments
 
             undoBar = view.FindViewById<FrameLayout> (Resource.Id.UndoBar);
             undoButton = view.FindViewById<Button> (Resource.Id.UndoButton);
-            undoButton.Click += UndoClicked;
+            undoButton.Click += UndoBtnClicked;
 
             return view;
         }
@@ -104,36 +104,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-
-        #region TimeEntry handlers
-        private async void ContinueTimeEntry (TimeEntryModel model)
-        {
-            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
-
-            var entry = await model.ContinueAsync ();
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
-
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
-        }
-
-        private async void StopTimeEntry (TimeEntryModel model)
-        {
-            await model.StopAsync ();
-
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
-        }
-
-        private void ConfirmTimeEntryDeletion (TimeEntryModel model)
-        {
-        }
-
-        #endregion
-
         #region TimeEntryGroup handlers
+
         private async void ContinueTimeEntryGroup (TimeEntryGroup entryGroup)
         {
             DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
@@ -153,10 +125,6 @@ namespace Toggl.Joey.UI.Fragments
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
-        }
-
-        private void ConfirmTimeEntryGroupDeletion (TimeEntryGroup entryGroup)
-        {
         }
 
         #endregion
@@ -222,7 +190,9 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnDismiss (RecyclerView view, int position)
         {
-
+            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
+            undoAdapter.RemoveItemWithUndo (position);
+            ShowUndoBar ();
         }
 
         public void OnItemTouch (RecyclerView view, int position)
@@ -243,46 +213,53 @@ namespace Toggl.Joey.UI.Fragments
 
         #region Undo bar
 
-        private void ShowUndo ()
+        private void ShowUndoBar ()
         {
-            if (!showingUndoBar) {
-                showingUndoBar = true;
+            if (!UndoBarVisible) {
+                UndoBarVisible = true;
+                handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
+                handler.PostDelayed (RemoveItemAndHideUndoBar, 5000);
             }
-            handler.RemoveCallbacks (HideUndo);
-            handler.PostDelayed (HideUndo, 10000);
         }
 
-        private void HideUndo ()
+        private void RemoveItemAndHideUndoBar ()
         {
-            showingUndoBar = false;
+            // Remove item permanently
+            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
+            undoAdapter.ConfirmItemRemove ();
+
+            handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
+            UndoBarVisible = false;
         }
 
-        private bool showingUndoBar
+        private void UndoBtnClicked (object sender, EventArgs e)
+        {
+            // Undo remove item.
+            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
+            undoAdapter.RestoreItemFromUndo ();
+
+            handler.RemoveCallbacks (ShowUndoBar);
+            UndoBarVisible = false;
+        }
+
+        private bool UndoBarVisible
         {
             get {
-                return undoBar.Visibility == ViewStates.Visible;
+                return isUndoShowed;
             } set {
-                SetUndoBarVisibility (value);
-            }
-        }
+                if (isUndoShowed == value) {
+                    return;
+                }
+                isUndoShowed = value;
 
-        public void SetUndoBarVisibility (bool visibility)
-        {
-            if (visibility) {
-                Animation bottomUp = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomUpAnimation);
-                undoBar.Visibility = ViewStates.Visible;
-                undoBar.StartAnimation (bottomUp);
-            } else {
-                Animation bottomDown = AnimationUtils.LoadAnimation (Activity, Resource.Animation.BottomDownAnimation);
-                undoBar.StartAnimation (bottomDown);
-                undoBar.Visibility = ViewStates.Gone;
+                var targetTranY = isUndoShowed ? 0.0f : 100.0f;
+                ValueAnimator animator = ValueAnimator.OfFloat (undoBar.TranslationY, targetTranY);
+                animator.SetDuration (500);
+                animator.Update += (sender, e) => {
+                    undoBar.TranslationY = (float)animator.AnimatedValue;
+                };
+                animator.Start();
             }
-        }
-
-        private async void UndoClicked (object sender, EventArgs e)
-        {
-            showingUndoBar = false;
-            handler.RemoveCallbacks (ShowUndo);
         }
 
         #endregion

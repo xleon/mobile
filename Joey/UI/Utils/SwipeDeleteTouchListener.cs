@@ -117,7 +117,7 @@ namespace Toggl.Joey.UI.Utils
                 } else if (absVelocityX > 10) {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Cancel);
-                } else {
+                } else if (absVelocityX < 10 && absVelocityY < 10) {
                     OnItemTouched();
                 }
                 downX = 0;

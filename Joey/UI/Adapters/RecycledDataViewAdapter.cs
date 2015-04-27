@@ -72,7 +72,6 @@ namespace Toggl.Joey.UI.Adapters
             if (Handle == IntPtr.Zero) {
                 return;
             }
-
             CollectionChanged (e);
         }
 
@@ -162,5 +161,14 @@ namespace Toggl.Joey.UI.Adapters
                 SpinningImage.StartAnimation (spinningImageAnimation);
             }
         }
+    }
+
+    public interface IUndoCapabilities
+    {
+        void RemoveItemWithUndo (int index);
+
+        void RestoreItemFromUndo ();
+
+        void ConfirmItemRemove ();
     }
 }

@@ -661,8 +661,6 @@
     <AndroidResource Include="Resources\layout\ProjectListActivityLayout.axml" />
     <AndroidResource Include="Resources\layout\ProjectListFragment.axml" />
     <AndroidResource Include="Resources\layout\UndoBar.axml" />
-    <AndroidResource Include="Resources\anim\BottomUpAnimation.xml" />
-    <AndroidResource Include="Resources\anim\BottomDownAnimation.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <Import Project="../packages/XamGuard.1.0.3/Proguard.targets" Condition="'$(Configuration)' != 'Debug'" />

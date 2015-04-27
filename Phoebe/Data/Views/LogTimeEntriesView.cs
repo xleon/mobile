@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Threading.Tasks;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
@@ -29,6 +31,10 @@ namespace Toggl.Phoebe.Data.Views
         private bool hasMore;
         private int lastItemNumber;
 
+        // for Undo/Restore operations
+        private Guid previousRemovedId = Guid.Empty;
+        private TimeEntryData removedItem;
+
         public LogTimeEntriesView ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -48,6 +54,56 @@ namespace Toggl.Phoebe.Data.Views
                 bus.Unsubscribe (subscriptionSyncFinished);
                 subscriptionSyncFinished = null;
             }
+        }
+
+        public async void ContinueTimeEntry (TimeEntryModel model)
+        {
+            await model.ContinueAsync ();
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
+        }
+
+        public async void StopTimeEntry (TimeEntryModel model)
+        {
+            await model.StopAsync ();
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
+        }
+
+        public void RestoreItemFromUndo ()
+        {
+            if (removedItem != null) {
+                AddOrUpdateEntry (removedItem);
+                removedItem = null;
+                previousRemovedId = Guid.Empty;
+            }
+        }
+
+        public async void RemoveItemWithUndo (TimeEntryData data)
+        {
+            if (removedItem != null) {
+                previousRemovedId = removedItem.Id;
+                var model = new TimeEntryModel (removedItem);
+                await model.DeleteAsync();
+                removedItem = null;
+            }
+
+            removedItem = data;
+            RemoveEntry (data);
+        }
+
+        public async void ConfirmItemRemove ()
+        {
+            if (removedItem == null) {
+                return;
+            }
+
+            previousRemovedId = removedItem.Id;
+            var model = new TimeEntryModel (removedItem);
+            await model.DeleteAsync();
+            removedItem = null;
         }
 
         private void OnDataChange (DataChangeMessage msg)
@@ -131,6 +187,11 @@ namespace Toggl.Phoebe.Data.Views
             int groupIndex;
             int entryIndex;
             NotifyCollectionChangedAction groupAction = NotifyCollectionChangedAction.Replace;
+
+            // Don't remove a previous removed item with undo.
+            if (entry.Id == previousRemovedId) {
+                return;
+            }
 
             DateGroup grp;
             TimeEntryData oldEntry;

@@ -20,25 +20,19 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<object>
+    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<object>, IUndoCapabilities
     {
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
         protected static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
+        private LogTimeEntriesView modelView;
         private readonly Handler handler = new Handler ();
 
-        public LogTimeEntriesAdapter () : base (new LogTimeEntriesView())
+        public LogTimeEntriesAdapter (LogTimeEntriesView modelView) : base (modelView)
         {
+            this.modelView = modelView;
         }
-
-        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
 
         protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
         {
@@ -68,28 +62,30 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private void OnDeleteTimeEntry (TimeEntryModel model)
-        {
-            var mHandler = HandleTimeEntryDeletion;
-            if (mHandler != null) {
-                mHandler (model);
-            }
-        }
-
         private void OnContinueTimeEntry (TimeEntryModel model)
         {
-            var mHandler = HandleTimeEntryContinue;
-            if (mHandler != null) {
-                mHandler (model);
-            }
+            modelView.ContinueTimeEntry (model);
         }
 
         private void OnStopTimeEntry (TimeEntryModel model)
         {
-            var mHandler = HandleTimeEntryStop;
-            if (mHandler != null) {
-                mHandler (model);
-            }
+            modelView.StopTimeEntry (model);
+        }
+
+        public void RemoveItemWithUndo (int index)
+        {
+            var entry = (TimeEntryData)DataView.Data.ElementAt (index);
+            modelView.RemoveItemWithUndo (entry);
+        }
+
+        public void RestoreItemFromUndo ()
+        {
+            modelView.RestoreItemFromUndo ();
+        }
+
+        public void ConfirmItemRemove ()
+        {
+            modelView.ConfirmItemRemove ();
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -353,6 +349,10 @@ namespace Toggl.Joey.UI.Adapters
                 if (DataSource == null) {
                     return;
                 }
+
+                // Init swipe delete bg
+                ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
+
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 if (DataSource.Project != null && DataSource.Project.Client != null) {

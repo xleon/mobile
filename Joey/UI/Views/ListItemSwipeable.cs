@@ -36,6 +36,12 @@ namespace Toggl.Joey.UI.Views
             DeleteTextDialog.Left = -x;
         }
 
+        public void InitSwipeDeleteBg ()
+        {
+            OnScrollEvent (0);
+            ScrollX = 0;
+        }
+
         protected override void OnLayout (bool changed, int l, int t, int r, int b)
         {
             LayoutView (DeleteTextDialog, PaddingLeft, PaddingTop, DeleteTextDialog.MeasuredWidth, DeleteTextDialog.MeasuredHeight);
@@ -86,8 +92,6 @@ namespace Toggl.Joey.UI.Views
             if (SwipeAnimationEnd != null) {
                 SwipeAnimationEnd (this, EventArgs.Empty);
             }
-            OnScrollEvent (0);
-            ScrollX = 0;
         }
 
         private void OnScrollAnimationUpdate (object sender, ValueAnimator.AnimatorUpdateEventArgs e)

@@ -12,6 +12,7 @@ namespace Toggl.Joey.UI.Adapters
     public class GroupedEditAdapter : RecyclerView.Adapter
     {
         private readonly TimeEntryGroup entryGroup;
+        public event EventHandler<TimeEntryData> ItemClick;
 
         public GroupedEditAdapter (TimeEntryGroup entryGroup)
         {
@@ -40,12 +41,13 @@ namespace Toggl.Joey.UI.Adapters
                 get { return duration; }
             }
 
-
-            public ViewHolder (View v) : base (v)
+            public ViewHolder (View v, Action<int> listener) : base (v)
             {
                 color = v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimeColorView);
                 period = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
                 duration = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemDurationTextView);
+
+                v.Click += (object sender, EventArgs e) => listener (base.Position);
             }
         }
 
@@ -53,8 +55,16 @@ namespace Toggl.Joey.UI.Adapters
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
             View v = LayoutInflater.From (parent.Context).Inflate (Resource.Layout.GroupedEditTimeEntryItem, parent, false);
-            var vh = new ViewHolder (v);
+            var vh = new ViewHolder (v, OnClick);
             return vh;
+        }
+
+        void OnClick (int position)
+        {
+            var entry = entryGroup.TimeEntryList [position];
+            if (ItemClick != null && entry != null) {
+                ItemClick (this, entry);
+            }
         }
 
         // Replace the contents of a view (invoked by the layout manager)

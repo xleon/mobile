@@ -4,10 +4,13 @@ using Android.Support.V4.App;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
+using Android.Content;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Decorations;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.DataObjects;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.ActionBarActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -61,6 +64,7 @@ namespace Toggl.Joey.UI.Fragments
             HasOptionsMenu = true;
 
             adapter = new GroupedEditAdapter (entryGroup);
+            (adapter as GroupedEditAdapter).ItemClick += HandleTimeEntryClick;
             layoutManager = new LinearLayoutManager (Activity);
             var decoration = new ItemDividerDecoration (Activity.ApplicationContext);
 
@@ -79,6 +83,13 @@ namespace Toggl.Joey.UI.Fragments
             Rebind ();
 
             return view;
+        }
+
+        void HandleTimeEntryClick (object sender, TimeEntryData timeEntry)
+        {
+            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+            intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, timeEntry.Id.ToString());
+            StartActivity (intent);
         }
 
         private void OnTagsEditTextClick (object sender, EventArgs e)

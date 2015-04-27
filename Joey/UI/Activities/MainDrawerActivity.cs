@@ -43,6 +43,7 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<ReportsPagerFragment> reportFragment = new Lazy<ReportsPagerFragment> ();
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();
         private readonly List<int> pageStack = new List<int> ();
+        private readonly Handler handler = new Handler ();
         private DrawerListAdapter drawerAdapter;
         private ImageButton syncRetryButton;
         private TextView syncStatusText;
@@ -72,9 +73,9 @@ namespace Toggl.Joey.UI.Activities
         private Toolbar MainToolbar { get; set; }
 
 
-        protected override void OnCreateActivity (Bundle bundle)
+        protected override void OnCreateActivity (Bundle state)
         {
-            base.OnCreateActivity (bundle);
+            base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
@@ -116,12 +117,12 @@ namespace Toggl.Joey.UI.Activities
 
             syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
 
-            if (bundle == null) {
+            if (state == null) {
                 OpenPage (DrawerListAdapter.TimerPageId);
             } else {
                 // Restore page stack
                 pageStack.Clear ();
-                var arr = bundle.GetIntArray (PageStackExtra);
+                var arr = state.GetIntArray (PageStackExtra);
                 if (arr != null) {
                     pageStack.AddRange (arr);
                 }

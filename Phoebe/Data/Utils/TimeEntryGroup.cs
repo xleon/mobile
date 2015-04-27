@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
@@ -151,10 +152,17 @@ namespace Toggl.Phoebe.Data.Utils
         public void Dispose()
         {
             model = null;
+        }
 
-            if (dataObjects.Count > 0) {
-                dataObjects.Clear();
+        public async Task DeleteAsync ()
+        {
+            TimeEntryModel mModel;
+            for (int i = 0; i < dataObjects.Count; i++) {
+                mModel = new TimeEntryModel (dataObjects [i]);
+                await mModel.DeleteAsync ();
             }
+
+            Dispose ();
         }
 
         public string GetFormattedDuration ()

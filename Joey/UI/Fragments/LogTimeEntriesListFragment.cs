@@ -12,10 +12,8 @@ using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -48,9 +46,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             get {
                 if (groupedAdapter == null) {
-                    groupedAdapter = new GroupedTimeEntriesAdapter();
-                    groupedAdapter.HandleGroupContinue = ContinueTimeEntryGroup;
-                    groupedAdapter.HandleGroupStop = StopTimeEntryGroup;
+                    groupedAdapter = new GroupedTimeEntriesAdapter (new GroupedTimeEntriesView());
                 }
                 return groupedAdapter;
             }
@@ -104,31 +100,6 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        #region TimeEntryGroup handlers
-
-        private async void ContinueTimeEntryGroup (TimeEntryGroup entryGroup)
-        {
-            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
-
-            var entry = await entryGroup.Model.ContinueAsync ();
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
-
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
-        }
-
-        private async void StopTimeEntryGroup (TimeEntryGroup entryGroup)
-        {
-            await entryGroup.Model.StopAsync ();
-
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
-        }
-
-        #endregion
-
         private void EnsureAdapter ()
         {
             if (recyclerView.GetAdapter() == null) {
@@ -179,13 +150,9 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool CanDismiss (RecyclerView view, int position)
         {
-            if (view.GetAdapter () is LogTimeEntriesAdapter) {
-                var adapter = (LogTimeEntriesAdapter)recyclerView.GetAdapter();
-                return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
-            } else {
-                var adapter = (GroupedTimeEntriesAdapter)recyclerView.GetAdapter();
-                return adapter.GetItemViewType (position) == GroupedTimeEntriesAdapter.ViewTypeContent;
-            }
+            var adapter = view.GetAdapter ();
+            return (adapter.GetItemViewType (position) == GroupedTimeEntriesAdapter.ViewTypeContent ||
+                    adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent);
         }
 
         public void OnDismiss (RecyclerView view, int position)

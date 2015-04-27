@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
@@ -187,12 +187,6 @@ namespace Toggl.Phoebe.Data.Views
             int groupIndex;
             int entryIndex;
             NotifyCollectionChangedAction groupAction = NotifyCollectionChangedAction.Replace;
-
-            // Don't remove a previous removed item with undo.
-            if (entry.Id == previousRemovedId) {
-                return;
-            }
-
             DateGroup grp;
             TimeEntryData oldEntry;
 

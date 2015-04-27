@@ -20,23 +20,19 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class GroupedTimeEntriesAdapter : RecycledDataViewAdapter<object>
+    public class GroupedTimeEntriesAdapter : RecycledDataViewAdapter<object>, IUndoCapabilities
     {
-        protected static readonly int ViewTypeLoaderPlaceholder = 0;
-        protected static readonly int ViewTypeContent = 1;
+        public static readonly int ViewTypeLoaderPlaceholder = 0;
+        public static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
+        private GroupedTimeEntriesView modelView;
         private readonly Handler handler = new Handler ();
 
-        public GroupedTimeEntriesAdapter () : base (new GroupedTimeEntriesView ())
+        public GroupedTimeEntriesAdapter (GroupedTimeEntriesView modelView) : base (modelView)
         {
+            this.modelView = modelView;
         }
-
-        public Action<TimeEntryGroup> HandleGroupDeletion { get; set; }
-
-        public Action<TimeEntryGroup> HandleGroupContinue { get; set; }
-
-        public Action<TimeEntryGroup> HandleGroupStop { get; set; }
 
         protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
         {
@@ -66,28 +62,30 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private void OnDeleteTimeEntryGroup (TimeEntryGroup entryGroup)
-        {
-            var aHandler = HandleGroupDeletion;
-            if (aHandler != null) {
-                aHandler (entryGroup);
-            }
-        }
-
         private void OnContinueTimeEntryGroup (TimeEntryGroup entryGroup)
         {
-            var aHandler = HandleGroupContinue;
-            if (aHandler != null) {
-                aHandler (entryGroup);
-            }
+            modelView.ContinueTimeEntryGroup (entryGroup);
         }
 
         private void OnStopTimeEntryGroup (TimeEntryGroup entryGroup)
         {
-            var aHandler = HandleGroupStop;
-            if (aHandler != null) {
-                aHandler (entryGroup);
-            }
+            modelView.StopTimeEntryGroup (entryGroup);
+        }
+
+        public void RemoveItemWithUndo (int index)
+        {
+            var entry = (TimeEntryGroup)DataView.Data.ElementAt (index);
+            modelView.RemoveItemWithUndo (entry);
+        }
+
+        public void RestoreItemFromUndo ()
+        {
+            modelView.RestoreItemFromUndo ();
+        }
+
+        public void ConfirmItemRemove ()
+        {
+            modelView.ConfirmItemRemove ();
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -224,7 +222,6 @@ namespace Toggl.Joey.UI.Adapters
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
                 ContinueImageButton.SetOnTouchListener (this);
-                ContinueImageButton.Enabled = false;
             }
 
             public bool OnTouch (View v, MotionEvent e)
@@ -234,8 +231,6 @@ namespace Toggl.Joey.UI.Adapters
                     if (DataSource == null) {
                         return false;
                     }
-
-                    ContinueImageButton.Enabled = false;
 
                     if (DataSource.Model.State == TimeEntryState.Running) {
                         adapter.OnStopTimeEntryGroup (DataSource);
@@ -355,6 +350,9 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
+                // Init swipe delete bg
+                ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
+
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 if (DataSource.Model.Project != null && DataSource.Model.Project.Client != null) {
@@ -436,8 +434,6 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcContinue);
                 }
-
-                ContinueImageButton.Enabled = true;
             }
 
             private void RebindTags ()

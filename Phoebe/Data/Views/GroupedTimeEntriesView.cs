@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Data.Utils;
@@ -29,6 +30,9 @@ namespace Toggl.Phoebe.Data.Views
         private bool hasMore;
         private int lastItemNumber;
 
+        // for Undo/Restore operations
+        private TimeEntryGroup removedItem;
+
         public GroupedTimeEntriesView ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -48,6 +52,50 @@ namespace Toggl.Phoebe.Data.Views
                 bus.Unsubscribe (subscriptionSyncFinished);
                 subscriptionSyncFinished = null;
             }
+        }
+
+        public async void ContinueTimeEntryGroup (TimeEntryGroup entryGroup)
+        {
+            await entryGroup.Model.ContinueAsync ();
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
+        }
+
+        public async void StopTimeEntryGroup (TimeEntryGroup entryGroup)
+        {
+            await entryGroup.Model.StopAsync ();
+
+            // Ping analytics
+            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
+        }
+
+        public void RestoreItemFromUndo ()
+        {
+            if (removedItem != null) {
+                AddTimeEntryGroup (removedItem);
+                removedItem = null;
+            }
+        }
+
+        public async void RemoveItemWithUndo (TimeEntryGroup data)
+        {
+            if (removedItem != null) {
+                await data.DeleteAsync();
+                removedItem = null;
+            }
+
+            removedItem = data;
+            RemoveTimeEntryGroup (data);
+        }
+
+        public async void ConfirmItemRemove ()
+        {
+            if (removedItem == null) {
+                return;
+            }
+            await removedItem.DeleteAsync();
+            removedItem = null;
         }
 
         private void OnDataChange (DataChangeMessage msg)
@@ -187,6 +235,7 @@ namespace Toggl.Phoebe.Data.Views
                     dateGroupAction = NotifyCollectionChangedAction.Remove;
                 }
 
+                // Update datasource.
                 OnUpdated ();
 
                 DispatchCollectionEvent (CollectionEventBuilder.GetEvent (dateGroupAction, groupIndex, -1));
@@ -195,6 +244,58 @@ namespace Toggl.Phoebe.Data.Views
                 } else {
                     DispatchCollectionEvent (CollectionEventBuilder.GetEvent (entryGroupAction, oldIndex, -1));
                 }
+            }
+        }
+
+        private void AddTimeEntryGroup (TimeEntryGroup entryGroup)
+        {
+            const int oldIndex = -1;
+            int groupIndex;
+            int newIndex;
+            bool isNewGroup;
+            NotifyCollectionChangedAction entryAction;
+            DateGroup grp;
+
+            grp = GetDateGroupFor (entryGroup.Model.Data, out isNewGroup);
+            grp.Add (entryGroup);
+            Sort ();
+            entryAction = NotifyCollectionChangedAction.Add;
+
+            // Update datasource.
+            OnUpdated();
+
+            // Update group.
+            groupIndex = GetDateGroupIndex (grp);
+            var groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
+            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (groupAction, groupIndex, oldIndex));
+
+            // Updated entry.
+            newIndex = GetEntryGroupIndex (entryGroup);
+            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (entryAction, newIndex, oldIndex));
+        }
+
+        private void RemoveTimeEntryGroup (TimeEntryGroup entryGroup)
+        {
+            int entryIndex;
+            int groupIndex;
+
+            NotifyCollectionChangedAction groupAction = NotifyCollectionChangedAction.Replace;
+            DateGroup grp;
+            TimeEntryGroup oldEntryGroup;
+            TimeEntryData oldEntry;
+
+            if (FindExistingEntry (entryGroup.Model.Data, out grp, out oldEntryGroup, out oldEntry)) {
+                entryIndex = GetEntryGroupIndex (oldEntryGroup);
+                groupIndex = GetDateGroupIndex (grp);
+                grp.Remove (oldEntryGroup);
+                if (grp.DataObjects.Count == 0) {
+                    dateGroups.Remove (grp);
+                    groupAction = NotifyCollectionChangedAction.Remove;
+                }
+
+                OnUpdated ();
+                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
             }
         }
 

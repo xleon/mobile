@@ -309,6 +309,15 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnDrawerListViewItemClick (object sender, ListView.ItemClickEventArgs e)
         {
+
+            // Configure timer component for selected page:
+            if (e.Id != DrawerListAdapter.TimerPageId) {
+                Timer.HideAction = true;
+                Timer.HideDuration = false;
+            } else {
+                Timer.HideAction = false;
+            }
+
             if (e.Id == DrawerListAdapter.TimerPageId) {
                 OpenPage (DrawerListAdapter.TimerPageId);
 

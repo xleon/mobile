@@ -102,6 +102,7 @@ namespace Toggl.Joey.UI.Activities
 
             MainToolbar = FindViewById<Toolbar> (Resource.Id.MainToolbar);
             SetSupportActionBar (MainToolbar);
+            MainToolbar.SetNavigationIcon (Resource.Drawable.IcDrawer);
             SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
             SupportActionBar.SetCustomView (Timer.Root, lp);
             SupportActionBar.SetDisplayShowCustomEnabled (true);
@@ -155,7 +156,6 @@ namespace Toggl.Joey.UI.Activities
                 UpdateSyncStatus ();
             }
             base.OnPostCreate (savedInstanceState);
-            DrawerToggle.SyncState ();
         }
 
         public override void OnConfigurationChanged (Android.Content.Res.Configuration newConfig)

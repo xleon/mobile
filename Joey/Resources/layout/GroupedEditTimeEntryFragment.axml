@@ -9,14 +9,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:padding="10dp"
         android:background="@drawable/BgArrowsFull">
-		<android.support.v7.widget.Toolbar
-			android:id="@+id/GroupedEditTimeEntryFragmentToolbar"
-			android:layout_width="match_parent"
-			android:layout_height="?attr/actionBarSize"
-			android:background="@null">
-		</android.support.v7.widget.Toolbar>
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/GroupedEditTimeEntryFragmentToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@null" />
         <LinearLayout
             android:orientation="vertical"
             android:minWidth="25px"
@@ -40,11 +38,10 @@
                 android:layout_height="56dp"
                 android:id="@+id/GroupedEditTimeEntryFragmentDescription"
                 android:layout_marginTop="10dp" />
-			<Toggl.Joey.UI.Views.EditTimeEntryTagsBit
-				android:layout_width="match_parent"
+            <Toggl.Joey.UI.Views.EditTimeEntryTagsBit
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/GroupedEditTimeEntryFragmentTags" />          
-
+                android:id="@+id/GroupedEditTimeEntryFragmentTags" />
             <CheckBox
                 android:id="@+id/GroupedEditTimeEntryFragmentBillableCheckBox"
                 android:layout_width="wrap_content"
@@ -59,18 +56,19 @@
                 android:drawablePadding="5dp" />
         </LinearLayout>
     </LinearLayout>
-	<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_weight="2">
-        <android.support.v7.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_weight="2"
-        android:background="#f8f8f8"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="fill_parent" />
-       	<View android:layout_width="match_parent"
-    		android:layout_height="8dp"
-    		android:background="@drawable/DropShadow"></View>
+        android:layout_height="match_parent"
+        android:layout_weight="2">
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_weight="2"
+            android:background="#f8f8f8"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:background="@drawable/DropShadow" />
     </FrameLayout>
 </LinearLayout>

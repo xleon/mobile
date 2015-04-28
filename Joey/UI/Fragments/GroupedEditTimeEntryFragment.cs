@@ -236,7 +236,6 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             if (entryGroup.Project != null) {
-                Console.WriteLine (entryGroup.Project.Name);
                 ProjectBit.TextField.Text = entryGroup.Project.Name;
                 if (entryGroup.Project.Client != null) {
                     ProjectBit.SetAssistViewTitle (entryGroup.Project.Client.Name);

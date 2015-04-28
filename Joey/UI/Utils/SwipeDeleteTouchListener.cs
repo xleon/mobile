@@ -108,17 +108,16 @@ namespace Toggl.Joey.UI.Utils
                 float velocityX = velocityTracker.XVelocity;
                 float absVelocityX = Math.Abs (velocityX);
                 float absVelocityY = Math.Abs (velocityTracker.YVelocity);
-
                 if (Math.Abs (downView.ScrollX) > (downView.Width / 2) ||
-                        minFlingVelocity <= absVelocityX && absVelocityX <= maxFlingVelocity && absVelocityY < absVelocityX ) {
+                        minFlingVelocity <= absVelocityX && absVelocityX <= maxFlingVelocity && absVelocityY < absVelocityX) {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Delete);
                     swipeView.SwipeAnimationEnd += OnItemDismissed;
-                } else if (absVelocityX > 10) {
+                } else if (absVelocityX > 10 || Math.Abs (downView.ScrollX) > 1) {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Cancel);
-                } else if (absVelocityX < 10 && absVelocityY < 10) {
-                    OnItemTouched();
+                } else {
+                    OnItemTouched ();
                 }
                 downX = 0;
                 downY = 0;

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Utils
@@ -64,6 +65,22 @@ namespace Toggl.Phoebe.Data.Utils
         {
             get {
                 return dataObjects.Last().Description;
+            } set {
+                if (Description != value) {
+                    foreach (TimeEntryData data in dataObjects) {
+                        TimeEntryModel dataModel = (TimeEntryModel)data;
+                        dataModel.Description = value;
+                        dataModel.SaveAsync ();
+                    }
+                }
+            }
+        }
+
+        public ProjectModel Project
+        {
+            get {
+                var model = (TimeEntryModel)dataObjects.Last ();
+                return model.Project;
             }
         }
 
@@ -91,7 +108,6 @@ namespace Toggl.Phoebe.Data.Utils
                 return dataObjects.Last().StartTime;
             }
         }
-
 
         public int DistinctDays
         {

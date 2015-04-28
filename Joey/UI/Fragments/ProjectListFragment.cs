@@ -8,6 +8,7 @@ using Android.Views;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
@@ -25,6 +26,7 @@ namespace Toggl.Joey.UI.Fragments
         private RecyclerView recyclerView;
         private ProjectListAdapter adapter;
         private TimeEntryModel model;
+        private TimeEntryGroup group;
 
         public ProjectListFragment ()
         {
@@ -37,9 +39,11 @@ namespace Toggl.Joey.UI.Fragments
         public ProjectListFragment (TimeEntryModel model)
         {
             this.model = model;
-            var args = new Bundle ();
-            args.PutString (TimeEntryIdArgument, model.Id.ToString ());
-            Arguments = args;
+        }
+
+        public ProjectListFragment (TimeEntryGroup group)
+        {
+            this.group = group;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -66,20 +70,9 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        private Guid TimeEntryId
-        {
-            get {
-                var id = Guid.Empty;
-                if (Arguments != null) {
-                    Guid.TryParse (Arguments.GetString (TimeEntryIdArgument), out id);
-                }
-                return id;
-            }
-        }
-
         private async void OnItemSelected (object m)
         {
-            if (model != null) {
+            if (model != null || group != null) {
                 ProjectModel project = null;
                 WorkspaceModel workspace = null;
 
@@ -105,9 +98,18 @@ namespace Toggl.Joey.UI.Fragments
                 }
 
                 if (project != null || workspace != null) {
-                    model.Workspace = workspace;
-                    model.Project = project;
-                    await model.SaveAsync ();
+                    if (group != null) {
+                        foreach (var data in group.TimeEntryList) {
+                            var dataModel = (TimeEntryModel)data;
+                            dataModel.Workspace = workspace;
+                            dataModel.Project = project;
+                            await dataModel.SaveAsync ();
+                        }
+                    } else if (model != null) {
+                        model.Workspace = workspace;
+                        model.Project = project;
+                        await model.SaveAsync ();
+                    }
                     Activity.Finish ();
                 }
             }

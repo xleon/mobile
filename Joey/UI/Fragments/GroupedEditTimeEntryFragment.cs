@@ -138,16 +138,10 @@ namespace Toggl.Joey.UI.Fragments
             new ChooseTimeEntryTagsDialogFragment (entryGroup.Model).Show (FragmentManager, "tags_dialog");
         }
 
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
-        {
-            menu.Add (Resource.String.BaseEditTimeEntryFragmentSaveButtonText).SetShowAsAction (ShowAsAction.Always);
-        }
-
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (item.ItemId == Android.Resource.Id.Home) {
-                Activity.OnBackPressed ();
-            }
+            Activity.OnBackPressed ();
+
             return base.OnOptionsItemSelected (item);
         }
 

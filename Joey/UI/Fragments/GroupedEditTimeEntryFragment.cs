@@ -154,7 +154,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ResetTrackedObservables ()
         {
-            return; 
+            return;
 
             if (propertyTracker == null) {
                 return;

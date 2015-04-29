@@ -13,7 +13,7 @@ using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.DataObjects;
 using ActionBar = Android.Support.V7.App.ActionBar;
-using Activity = Android.Support.V7.App.ActionBarActivity;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
 

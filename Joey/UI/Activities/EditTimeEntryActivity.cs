@@ -114,5 +114,6 @@ namespace Toggl.Joey.UI.Activities
             base.OnStart ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
+
     }
 }

@@ -285,7 +285,7 @@ namespace Toggl.Joey.Data
                 OnSettingChanged (PropertyLastReportZoomViewed);
             }
         }
-            
+
         public static readonly string PropertyReportsCurrentItem = GetPropertyName (s => s.ReportsCurrentItem);
 
         public int? ReportsCurrentItem

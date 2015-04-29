@@ -184,7 +184,7 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnDestroy ()
         {
             Timer.OnDestroy (this);
-            
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
 
             if (drawerSyncStarted != null) {
@@ -198,18 +198,6 @@ namespace Toggl.Joey.UI.Activities
             }
 
             base.OnDestroy ();
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-
-            if (drawerSyncStarted != null) {
-                bus.Unsubscribe (drawerSyncStarted);
-                drawerSyncStarted = null;
-            }
-
-            if (drawerSyncFinished != null) {
-                bus.Unsubscribe (drawerSyncFinished);
-                drawerSyncFinished = null;
-            }
         }
 
         public override void OnBackPressed ()

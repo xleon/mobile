@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Views.Animations;
@@ -16,13 +18,27 @@ namespace Toggl.Joey.UI.Adapters
         private readonly int LoadMoreOffset = 3;
         private CollectionCachingDataView<T> dataView;
         private int lastLoadingPosition;
+        private RecyclerView owner;
+        private UpdateScheduler updateScheduler;
 
-        protected RecycledDataViewAdapter (ICollectionDataView<T> dataView)
+        private bool IsInLayout
+        {
+            get {
+                return owner.IsInLayout;
+            }
+        }
+
+        protected RecycledDataViewAdapter (RecyclerView owner, ICollectionDataView<T> dataView)
         {
             this.dataView = new CollectionCachingDataView<T> (dataView);
             this.dataView.CollectionChanged += OnCollectionChanged;
             this.dataView.OnIsLoadingChanged += OnLoading;
             this.dataView.OnHasMoreChanged += OnHasMore;
+            this.owner = owner;
+
+            updateScheduler = new UpdateScheduler (this);
+            updateScheduler.UpdateHandler = CollectionChanged;
+
             HasStableIds = false;
         }
 
@@ -62,7 +78,9 @@ namespace Toggl.Joey.UI.Adapters
                 return;
             }
 
-            if (!dataView.HasMore) {
+            if (dataView.HasMore) {
+                NotifyItemInserted (dataView.Count);
+            } else {
                 NotifyItemRemoved (dataView.Count);
             }
         }
@@ -72,7 +90,8 @@ namespace Toggl.Joey.UI.Adapters
             if (Handle == IntPtr.Zero) {
                 return;
             }
-            CollectionChanged (e);
+
+            updateScheduler.AddUpdate (e);
         }
 
         public virtual T GetEntry (int position)
@@ -161,6 +180,51 @@ namespace Toggl.Joey.UI.Adapters
                 SpinningImage.StartAnimation (spinningImageAnimation);
             }
         }
+
+        private class UpdateScheduler
+        {
+            private bool isStarted;
+            private RecycledDataViewAdapter<T> owner;
+            private readonly Handler handler = new Handler ();
+            private readonly List<NotifyCollectionChangedEventArgs> updateQueue = new List<NotifyCollectionChangedEventArgs>();
+
+            public UpdateScheduler (RecycledDataViewAdapter<T> owner)
+            {
+                this.owner = owner;
+            }
+
+            public void AddUpdate (NotifyCollectionChangedEventArgs eventInfo)
+            {
+                updateQueue.Add (eventInfo);
+                if (!isStarted) {
+                    isStarted = true;
+                    CheckQueue ();
+                }
+            }
+
+            public Action<NotifyCollectionChangedEventArgs> UpdateHandler;
+
+            private void RunUpdate (NotifyCollectionChangedEventArgs eventInfo)
+            {
+                UpdateHandler (eventInfo);
+                Console.WriteLine (eventInfo.Action);
+            }
+
+            private void CheckQueue()
+            {
+                if (updateQueue.Count > 0) {
+                    const int delay = 10;
+                    if (!owner.IsInLayout) {
+                        var evt = updateQueue.First ();
+                        RunUpdate (evt);
+                        updateQueue.Remove (evt);
+                    }
+                    handler.PostDelayed (CheckQueue, delay);
+                } else {
+                    isStarted = false;
+                }
+            }
+        }
     }
 
     public interface IUndoCapabilities
@@ -171,4 +235,6 @@ namespace Toggl.Joey.UI.Adapters
 
         void ConfirmItemRemove ();
     }
+
+
 }

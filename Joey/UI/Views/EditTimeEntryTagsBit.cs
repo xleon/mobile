@@ -70,6 +70,9 @@ namespace Toggl.Joey.UI.Views
             if (tagsView == null) {
                 return;
             }
+
+            return ;
+
             if (tagsView.Count == 0) {
                 EditText.Text = String.Empty;
                 return;

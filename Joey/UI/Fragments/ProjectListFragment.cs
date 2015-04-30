@@ -50,11 +50,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.ProjectListFragment, container, false);
 
-            adapter = new ProjectListAdapter ();
+
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+            adapter = new ProjectListAdapter (recyclerView);
             recyclerView.SetAdapter (adapter);
             adapter.HandleProjectSelection = OnItemSelected;
 

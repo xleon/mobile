@@ -29,7 +29,7 @@ namespace Toggl.Joey.UI.Adapters
         private LogTimeEntriesView modelView;
         private readonly Handler handler = new Handler ();
 
-        public LogTimeEntriesAdapter (LogTimeEntriesView modelView) : base (modelView)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesView modelView) : base (owner, modelView)
         {
             this.modelView = modelView;
         }

@@ -25,7 +25,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public Action<object> HandleProjectSelection { get; set; }
 
-        public ProjectListAdapter () : base (new ProjectListView())
+        public ProjectListAdapter (RecyclerView owner) : base (owner, new ProjectListView())
         {
         }
 

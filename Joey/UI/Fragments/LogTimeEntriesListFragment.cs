@@ -36,8 +36,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             get {
                 if (logAdapter == null) {
-                    logAdapter = new LogTimeEntriesAdapter (new LogTimeEntriesView());
+                    logAdapter = new LogTimeEntriesAdapter (recyclerView, new LogTimeEntriesView());
                 }
+
                 return logAdapter;
             }
         }
@@ -46,7 +47,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             get {
                 if (groupedAdapter == null) {
-                    groupedAdapter = new GroupedTimeEntriesAdapter (new GroupedTimeEntriesView());
+                    groupedAdapter = new GroupedTimeEntriesAdapter (recyclerView, new GroupedTimeEntriesView());
                 }
                 return groupedAdapter;
             }

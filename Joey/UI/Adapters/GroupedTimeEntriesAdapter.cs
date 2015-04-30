@@ -29,7 +29,7 @@ namespace Toggl.Joey.UI.Adapters
         private GroupedTimeEntriesView modelView;
         private readonly Handler handler = new Handler ();
 
-        public GroupedTimeEntriesAdapter (GroupedTimeEntriesView modelView) : base (modelView)
+        public GroupedTimeEntriesAdapter (RecyclerView owner, GroupedTimeEntriesView modelView) : base (owner, modelView)
         {
             this.modelView = modelView;
         }

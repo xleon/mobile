@@ -80,9 +80,12 @@ namespace Toggl.Joey.UI.Utils
 
         private View GetChildViewUnder (MotionEvent e)
         {
-            var view = recyclerView.FindChildViewUnder (e.GetX(), e.GetY());
+            var view = recyclerView.FindChildViewUnder (e.GetX (), e.GetY ());
             var playBtn = view.FindViewById<Android.Widget.ImageButton> (Resource.Id.ContinueImageButton);
-            return IsPointInsideView (e.GetX(), e.GetY(), playBtn) ? null : view;
+            if (playBtn != null) {
+                return IsPointInsideView (e.GetX (), e.GetY (), playBtn) ? null : view;
+            }
+            return view;
         }
 
         private bool IsPointInsideView (float x, float y, View view)

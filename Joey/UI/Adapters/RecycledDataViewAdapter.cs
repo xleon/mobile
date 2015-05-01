@@ -28,6 +28,10 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        protected RecycledDataViewAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
         protected RecycledDataViewAdapter (RecyclerView owner, ICollectionDataView<T> dataView)
         {
             this.dataView = new CollectionCachingDataView<T> (dataView);
@@ -47,6 +51,7 @@ namespace Toggl.Joey.UI.Adapters
             if (disposing) {
                 if (dataView != null) {
                     var sourceView = dataView.Source as IDisposable;
+
                     if (sourceView != null) {
                         sourceView.Dispose ();
                     }
@@ -207,13 +212,12 @@ namespace Toggl.Joey.UI.Adapters
             private void RunUpdate (NotifyCollectionChangedEventArgs eventInfo)
             {
                 UpdateHandler (eventInfo);
-                Console.WriteLine (eventInfo.Action);
             }
 
             private void CheckQueue()
             {
                 if (updateQueue.Count > 0) {
-                    const int delay = 10;
+                    const int delay = 5;
                     if (!owner.IsInLayout) {
                         var evt = updateQueue.First ();
                         RunUpdate (evt);

@@ -6,7 +6,7 @@ namespace Toggl.Phoebe
     {
         public ModelViewManager ()
         {
-
+            // subscribe
         }
 
         #region IDisposable implementation

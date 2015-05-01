@@ -20,7 +20,7 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : Fragment, SwipeDeleteTouchListener.IDismissCallbacks
+    public class LogTimeEntriesListFragment : Fragment, SwipeDismissTouchListener.IDismissCallbacks, ItemTouchListener.IItemTouchListener
     {
         private RecyclerView recyclerView;
         private View emptyMessageView;
@@ -79,8 +79,10 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.SetLayoutManager (linearLayout);
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
-            var swipeTouchListener = new SwipeDeleteTouchListener (recyclerView, this);
-            recyclerView.SetOnTouchListener (swipeTouchListener);
+            var swipeTouchListener = new SwipeDismissTouchListener (recyclerView, this);
+            var itemTouchListener = new ItemTouchListener (recyclerView, this);
+            recyclerView.AddOnItemTouchListener (swipeTouchListener);
+            recyclerView.AddOnItemTouchListener (itemTouchListener);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -163,20 +165,6 @@ namespace Toggl.Joey.UI.Fragments
             ShowUndoBar ();
         }
 
-        public void OnItemTouch (RecyclerView view, int position)
-        {
-            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-
-            if (view.GetAdapter () is LogTimeEntriesAdapter) {
-                string id = ((TimeEntryData)LogAdapter.GetEntry (position)).Id.ToString();
-                intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, id);
-            } else {
-                string[] guids = ((TimeEntryGroup)GroupedAdapter.GetEntry (position)).TimeEntryGuids;
-                intent.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
-            }
-            StartActivity (intent);
-        }
-
         #endregion
 
         #region Undo bar
@@ -228,6 +216,29 @@ namespace Toggl.Joey.UI.Fragments
                 };
                 animator.Start();
             }
+        }
+
+        #endregion
+
+        #region IRecyclerViewOnItemClickListener implementation
+
+        public void OnItemClick (RecyclerView parent, View clickedView, int position)
+        {
+            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+
+            if (parent.GetAdapter () is LogTimeEntriesAdapter) {
+                string id = ((TimeEntryData)LogAdapter.GetEntry (position)).Id.ToString();
+                intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, id);
+            } else {
+                string[] guids = ((TimeEntryGroup)GroupedAdapter.GetEntry (position)).TimeEntryGuids;
+                intent.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+            }
+            StartActivity (intent);
+        }
+
+        public void OnItemLongClick (RecyclerView parent, View clickedView, int position)
+        {
+            OnItemClick (parent, clickedView, position);
         }
 
         #endregion

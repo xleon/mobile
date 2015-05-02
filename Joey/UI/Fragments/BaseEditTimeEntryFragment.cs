@@ -341,9 +341,6 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (item.ItemId != Android.Resource.Id.Home) {
-                SaveTimeEntry ();
-            }
             Activity.OnBackPressed ();
 
             return base.OnOptionsItemSelected (item);

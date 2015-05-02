@@ -7,15 +7,13 @@ using Toggl.Joey.UI.Views;
 
 namespace Toggl.Joey.UI.Utils
 {
-    public class SwipeDeleteTouchListener : Java.Lang.Object, View.IOnTouchListener
+    public class SwipeDismissTouchListener : Java.Lang.Object, RecyclerView.IOnItemTouchListener
     {
         public interface IDismissCallbacks
         {
             bool CanDismiss (RecyclerView recyclerView, int position);
 
             void OnDismiss (RecyclerView recyclerView, int position);
-
-            void OnItemTouch (RecyclerView recyclerView, int position);
         }
 
         private int slop;
@@ -33,10 +31,10 @@ namespace Toggl.Joey.UI.Utils
         private int downPosition;
         private int minFlingVelocity;
         private int maxFlingVelocity;
-        private bool isEnabled;
+        private bool IsScrolling;
         private VelocityTracker velocityTracker;
 
-        public SwipeDeleteTouchListener (RecyclerView recyclerView, IDismissCallbacks callbacks)
+        public SwipeDismissTouchListener (RecyclerView recyclerView, IDismissCallbacks callbacks)
         {
             var viewConfiguration = ViewConfiguration.Get (recyclerView.Context);
             minFlingVelocity = viewConfiguration.ScaledMinimumFlingVelocity * 16;
@@ -45,26 +43,31 @@ namespace Toggl.Joey.UI.Utils
             this.recyclerView = recyclerView;
             recyclerView.SetOnScrollListener ( new RecyclerViewScrollDetector (this));
             this.callbacks = callbacks;
-            isEnabled = true;
+            IsScrolling = false;
         }
 
         public bool IsEnabled
         {
             get {
-                return isEnabled;
-            } set {
-                if (value == IsEnabled) {
-                    return;
-                }
-                isEnabled = value;
+                return ! (recyclerView.IsInLayout || IsScrolling);
             }
+        }
+
+        public bool OnInterceptTouchEvent (RecyclerView rv, MotionEvent e)
+        {
+            return OnTouch (rv, e);
+        }
+
+        public void OnTouchEvent (RecyclerView rv, MotionEvent e)
+        {
+            OnTouch (rv, e); ;
         }
 
         public bool OnTouch (View v, MotionEvent motionEvent)
         {
             switch (motionEvent.Action) {
             case MotionEventActions.Down:
-                if (!isEnabled) {
+                if (!IsEnabled) {
                     return false;
                 }
 
@@ -116,8 +119,6 @@ namespace Toggl.Joey.UI.Utils
                 } else if (absVelocityX > 10 || Math.Abs (downView.ScrollX) > 1) {
                     var swipeView = (ListItemSwipeable)downView;
                     swipeView.SlideAnimation (ListItemSwipeable.SwipeAction.Cancel);
-                } else {
-                    OnItemTouched ();
                 }
                 downX = 0;
                 downY = 0;
@@ -127,7 +128,7 @@ namespace Toggl.Joey.UI.Utils
                 break;
 
             case MotionEventActions.Move:
-                if (downView == null || velocityTracker == null || !isEnabled) {
+                if (downView == null || velocityTracker == null || !IsEnabled) {
                     return false;
                 }
 
@@ -172,20 +173,11 @@ namespace Toggl.Joey.UI.Utils
             downView = null;
         }
 
-        private void OnItemTouched ()
-        {
-            if (downPosition != -1) {
-                callbacks.OnItemTouch (recyclerView, downPosition);
-            }
-            downPosition = AdapterView.InvalidPosition;
-            downView = null;
-        }
-
         private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
         {
-            private readonly SwipeDeleteTouchListener touchListener;
+            private readonly SwipeDismissTouchListener touchListener;
 
-            public RecyclerViewScrollDetector (SwipeDeleteTouchListener touchListener)
+            public RecyclerViewScrollDetector (SwipeDismissTouchListener touchListener)
             {
                 this.touchListener = touchListener;
             }
@@ -193,7 +185,7 @@ namespace Toggl.Joey.UI.Utils
             public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
             {
                 base.OnScrollStateChanged (recyclerView, newState);
-                touchListener.IsEnabled = (newState != RecyclerView.ScrollStateDragging);
+                touchListener.IsScrolling = (newState == RecyclerView.ScrollStateDragging);
             }
         }
     }

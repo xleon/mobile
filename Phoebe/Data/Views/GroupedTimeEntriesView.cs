@@ -459,7 +459,9 @@ namespace Toggl.Phoebe.Data.Views
         {
             updateMode = UpdateMode.Immediate;
             OnUpdated ();
-            DispatchCollectionEvent (CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastItemNumber, Count - lastItemNumber));
+            if (Count > lastItemNumber) {
+                DispatchCollectionEvent (CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastItemNumber, Count - lastItemNumber));
+            }
         }
 
         public void Reload ()
@@ -616,7 +618,13 @@ namespace Toggl.Phoebe.Data.Views
                 return hasMore;
             }
             private set {
+
+                if (hasMore == value) {
+                    return;
+                }
+
                 hasMore = value;
+
                 if (OnHasMoreChanged != null) {
                     OnHasMoreChanged (this, EventArgs.Empty);
                 }
@@ -631,7 +639,13 @@ namespace Toggl.Phoebe.Data.Views
                 return isLoading;
             }
             private set {
+
+                if (isLoading  == value) {
+                    return;
+                }
+
                 isLoading = value;
+
                 if (OnIsLoadingChanged != null) {
                     OnIsLoadingChanged (this, EventArgs.Empty);
                 }

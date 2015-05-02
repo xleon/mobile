@@ -8,7 +8,7 @@ using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Activity = Android.Support.V7.App.ActionBarActivity;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Activities

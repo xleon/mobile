@@ -12,7 +12,7 @@ using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
-using Activity = Android.Support.V7.App.ActionBarActivity;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
@@ -50,15 +50,16 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.ProjectListFragment, container, false);
 
-            adapter = new ProjectListAdapter ();
+
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+            adapter = new ProjectListAdapter (recyclerView);
             recyclerView.SetAdapter (adapter);
             adapter.HandleProjectSelection = OnItemSelected;
 
-            var activity = (ActionBarActivity)Activity;
+            var activity = (AppCompatActivity)Activity;
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
             activity.SetSupportActionBar (toolbar);
 

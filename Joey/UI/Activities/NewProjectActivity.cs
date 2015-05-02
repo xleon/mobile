@@ -4,7 +4,7 @@ using Android.Content.PM;
 using Android.OS;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe.Data.Models;
-using Activity = Android.Support.V7.App.ActionBarActivity;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Activities

@@ -13,7 +13,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
-using ActionBarActivity = Android.Support.V7.App.ActionBarActivity;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using AlertDialog = Android.Support.V7.App.AlertDialog;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
@@ -42,7 +42,7 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.NewProjectFragment, container, false);
-            var activity = (ActionBarActivity)Activity;
+            var activity = (Activity)Activity;
 
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.NewProjectsFragmentToolbar);
             activity.SetSupportActionBar (toolbar);

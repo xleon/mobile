@@ -14,7 +14,7 @@
         android:layout_marginRight="2dp"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/ProjectsNewProject"
-        android:gravity="center_vertical"
+        android:gravity="center"
         android:singleLine="true"
         android:ellipsize="none" />
 </LinearLayout>

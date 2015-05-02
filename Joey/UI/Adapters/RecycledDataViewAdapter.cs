@@ -38,7 +38,7 @@ namespace Toggl.Joey.UI.Adapters
             this.dataView.CollectionChanged += OnCollectionChanged;
             this.dataView.OnIsLoadingChanged += OnLoading;
             this.dataView.OnHasMoreChanged += OnHasMore;
-            this.Owner = owner;
+            Owner = owner;
 
             updateScheduler = new UpdateScheduler (this);
             updateScheduler.UpdateHandler = CollectionChanged;
@@ -217,13 +217,17 @@ namespace Toggl.Joey.UI.Adapters
             private void CheckQueue()
             {
                 if (updateQueue.Count > 0) {
-                    const int delay = 5;
-                    if (!owner.IsInLayout) {
-                        var evt = updateQueue.First ();
-                        RunUpdate (evt);
-                        updateQueue.Remove (evt);
+                    if (owner.IsInLayout) {
+                        handler.RemoveCallbacks (CheckQueue);
+                        handler.PostDelayed (CheckQueue, 10);
+                        return;
                     }
-                    handler.PostDelayed (CheckQueue, delay);
+
+                    var evt = updateQueue.First ();
+                    RunUpdate (evt);
+                    updateQueue.Remove (evt);
+                    CheckQueue ();
+
                 } else {
                     isStarted = false;
                 }

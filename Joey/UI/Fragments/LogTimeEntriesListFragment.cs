@@ -165,9 +165,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (!UndoBarVisible) {
                 UndoBarVisible = true;
-                handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
-                handler.PostDelayed (RemoveItemAndHideUndoBar, 5000);
             }
+            handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
+            handler.PostDelayed (RemoveItemAndHideUndoBar, 5000);
         }
 
         private void RemoveItemAndHideUndoBar ()
@@ -175,8 +175,6 @@ namespace Toggl.Joey.UI.Fragments
             // Remove item permanently
             var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
             undoAdapter.ConfirmItemRemove ();
-
-            handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
             UndoBarVisible = false;
         }
 

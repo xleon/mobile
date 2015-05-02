@@ -79,27 +79,21 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public async void RemoveItemWithUndo (TimeEntryData data)
+        public void RemoveItemWithUndo (TimeEntryData data)
         {
-            if (removedItem != null) {
-                var model = new TimeEntryModel (removedItem);
-                await model.DeleteAsync();
-                removedItem = null;
-            }
-
+            // Remove previous if exists
+            ConfirmItemRemove ();
             removedItem = data;
             RemoveEntry (data);
         }
 
         public async void ConfirmItemRemove ()
         {
-            if (removedItem == null) {
-                return;
+            if (removedItem != null) {
+                var model = new TimeEntryModel (removedItem);
+                await model.DeleteAsync();
+                removedItem = null;
             }
-
-            var model = new TimeEntryModel (removedItem);
-            await model.DeleteAsync();
-            removedItem = null;
         }
 
         private void OnDataChange (DataChangeMessage msg)

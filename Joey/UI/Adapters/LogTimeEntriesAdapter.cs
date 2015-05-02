@@ -29,6 +29,10 @@ namespace Toggl.Joey.UI.Adapters
         private LogTimeEntriesView modelView;
         private readonly Handler handler = new Handler ();
 
+        public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
         public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesView modelView) : base (owner, modelView)
         {
             this.modelView = modelView;

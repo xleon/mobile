@@ -29,6 +29,10 @@ namespace Toggl.Joey.UI.Adapters
         private GroupedTimeEntriesView modelView;
         private readonly Handler handler = new Handler ();
 
+        public GroupedTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
         public GroupedTimeEntriesAdapter (RecyclerView owner, GroupedTimeEntriesView modelView) : base (owner, modelView)
         {
             this.modelView = modelView;

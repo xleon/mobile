@@ -46,7 +46,24 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                // First items inserterd are notified with a reset
+                // to fix the top scroll position movement
+                if (e.NewItems.Count == DataView.Count && e.NewStartingIndex == 0) {
+                    NotifyDataSetChanged();
+                    return;
+                }
+
+                if (e.NewItems.Count == 1) {
+                    // If new TE is started,
+                    // move scroll to top position
+                    if (e.NewStartingIndex == 1) {
+                        Owner.SmoothScrollToPosition (0);
+                    }
+
+                    NotifyItemInserted (e.NewStartingIndex);
+                } else {
+                    NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                }
             }
 
             if (e.Action == NotifyCollectionChangedAction.Replace) {

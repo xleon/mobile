@@ -18,13 +18,13 @@ namespace Toggl.Joey.UI.Adapters
         private readonly int LoadMoreOffset = 3;
         private CollectionCachingDataView<T> dataView;
         private int lastLoadingPosition;
-        private RecyclerView owner;
         private UpdateScheduler updateScheduler;
+        protected RecyclerView Owner;
 
         private bool IsInLayout
         {
             get {
-                return owner.IsInLayout;
+                return Owner.IsInLayout;
             }
         }
 
@@ -38,7 +38,7 @@ namespace Toggl.Joey.UI.Adapters
             this.dataView.CollectionChanged += OnCollectionChanged;
             this.dataView.OnIsLoadingChanged += OnLoading;
             this.dataView.OnHasMoreChanged += OnHasMore;
-            this.owner = owner;
+            this.Owner = owner;
 
             updateScheduler = new UpdateScheduler (this);
             updateScheduler.UpdateHandler = CollectionChanged;

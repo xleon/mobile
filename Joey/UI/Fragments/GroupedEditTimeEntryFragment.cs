@@ -42,8 +42,6 @@ namespace Toggl.Joey.UI.Fragments
 
         protected TogglField ProjectBit { get; private set; }
 
-        protected TogglField TaskBit { get; private set; }
-
         protected TogglField DescriptionBit { get; private set; }
 
         protected EditTimeEntryTagsBit TagsBit { get; private set; }
@@ -85,7 +83,6 @@ namespace Toggl.Joey.UI.Fragments
             ProjectBit.Click += OnProjectEditTextClick;
             ProjectBit.TextField.Click += OnProjectEditTextClick;
 
-            TaskBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentTask).DestroyAssistView ().SetName (Resource.String.BaseEditTimeEntryFragmentTask).SimulateButton();
             DescriptionBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentDescription).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
             DescriptionBit.TextField.TextChanged += OnDescriptionTextChanged;
             DescriptionBit.TextField.EditorAction += OnDescriptionEditorAction;
@@ -168,10 +165,6 @@ namespace Toggl.Joey.UI.Fragments
                             propertyTracker.Add (entry.Project.Client, HandleClientPropertyChanged);
                         }
                     }
-
-                    if (entry.Task != null) {
-                        propertyTracker.Add (entry.Task, HandleTaskPropertyChanged);
-                    }
                 }
             }
 
@@ -181,7 +174,6 @@ namespace Toggl.Joey.UI.Fragments
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
                     || prop == TimeEntryModel.PropertyState
                     || prop == TimeEntryModel.PropertyStartTime
                     || prop == TimeEntryModel.PropertyStopTime
@@ -196,13 +188,6 @@ namespace Toggl.Joey.UI.Fragments
             if (prop == ProjectModel.PropertyClient
                     || prop == ProjectModel.PropertyName
                     || prop == ProjectModel.PropertyColor) {
-                Rebind ();
-            }
-        }
-
-        private void HandleTaskPropertyChanged (string prop)
-        {
-            if (prop == TaskModel.PropertyName) {
                 Rebind ();
             }
         }

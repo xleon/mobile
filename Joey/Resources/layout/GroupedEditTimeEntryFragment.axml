@@ -32,11 +32,6 @@
             <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:id="@+id/GroupedEditTimeEntryFragmentTask"
-                android:layout_marginTop="10dp" />
-            <Toggl.Joey.UI.Views.TogglField
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
                 android:id="@+id/GroupedEditTimeEntryFragmentDescription"
                 android:layout_marginTop="10dp" />
             <Toggl.Joey.UI.Views.EditTimeEntryTagsBit

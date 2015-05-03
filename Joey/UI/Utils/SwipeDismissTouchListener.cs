@@ -60,7 +60,7 @@ namespace Toggl.Joey.UI.Utils
 
         public void OnTouchEvent (RecyclerView rv, MotionEvent e)
         {
-            OnTouch (rv, e); ;
+            OnTouch (rv, e);
         }
 
         public bool OnTouch (View v, MotionEvent motionEvent)

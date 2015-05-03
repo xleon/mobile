@@ -19,6 +19,8 @@ namespace Toggl.Joey.UI.Adapters
         private CollectionCachingDataView<T> dataView;
         private int lastLoadingPosition;
         private UpdateScheduler updateScheduler;
+        private int selectedItemIndex = -1;
+
         protected RecyclerView Owner;
 
         private bool IsInLayout
@@ -120,6 +122,16 @@ namespace Toggl.Joey.UI.Adapters
             return ViewTypeContent;
         }
 
+        public void SetSelectedItem (int itemIndex)
+        {
+            if (selectedItemIndex != -1) {
+                NotifyItemChanged (selectedItemIndex);
+            }
+
+            selectedItemIndex = itemIndex;
+            NotifyItemChanged (selectedItemIndex);
+        }
+
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
             return viewType == ViewTypeLoaderPlaceholder ? new SpinnerHolder (GetLoadIndicatorView (parent)) : GetViewHolder (parent, viewType);
@@ -137,6 +149,9 @@ namespace Toggl.Joey.UI.Adapters
                 spinnerHolder.StartAnimation ();
                 return;
             }
+
+            // Set item selected
+            holder.ItemView.Selected = selectedItemIndex == position;
 
             BindHolder (holder, position);
         }

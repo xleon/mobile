@@ -10,6 +10,8 @@ namespace Toggl.Joey.UI.Views
 {
     public class LogTimeEntryItem : ListItemSwipeable
     {
+        private Android.Graphics.Color normalColor = Android.Graphics.Color.White;
+        private Android.Graphics.Color selectedColor;
         private View colorView;
         private TextView projectTextView;
         private TextView clientTextView;
@@ -25,6 +27,22 @@ namespace Toggl.Joey.UI.Views
         private Rectangle fadeRect;
         private View view;
 
+        public override bool Selected
+        {
+            get {
+                return base.Selected;
+            } set {
+                if (value == base.Selected) {
+                    return;
+                }
+
+                base.Selected = value;
+                var color = (value) ? selectedColor : normalColor;
+                backgroundView.SetBackgroundColor (color);
+                ReplaceDrawable (ref fadeDrawable, ref fadeWidth, MakeFadeDrawable ());
+            }
+        }
+
         public LogTimeEntryItem (Context context, IAttributeSet attrs) : base (context, attrs)
         {
             view = LayoutInflater.FromContext (context).Inflate (Resource.Layout.LogTimeEntryListItem, this, true);
@@ -39,6 +57,7 @@ namespace Toggl.Joey.UI.Views
 
         private void Initialize ()
         {
+            selectedColor = Context.Resources.GetColor (Resource.Color.background_light_gray);
             DescendantFocusability = DescendantFocusability.BlockDescendants;
             view.SetBackgroundColor (Android.Graphics.Color.White);
             colorView = FindViewById (Resource.Id.ColorView);
@@ -58,9 +77,10 @@ namespace Toggl.Joey.UI.Views
         private FadeDrawable MakeFadeDrawable ()
         {
             var width = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 20, Resources.DisplayMetrics);
-
+            var color = (Selected) ? selectedColor : normalColor;
             var d = new FadeDrawable (width);
-            d.SetStateColor (new int[] { }, Android.Graphics.Color.White);
+
+            d.SetStateColor (new int[] { }, color);
             return d;
         }
 
@@ -178,11 +198,11 @@ namespace Toggl.Joey.UI.Views
             int firstActual = GetFirstElementWidth (usable, first);
             if (firstActual == usable) {
                 return 0;
-            } else if (usable < firstActual + second) {
-                return usable - firstActual;
-            } else {
-                return second;
             }
+            if (usable < firstActual + second) {
+                return usable - firstActual;
+            }
+            return second;
         }
 
         private void LayoutChildView (View childView, int left, int top, int width, int height)

@@ -159,6 +159,36 @@ namespace Toggl.Joey.UI.Fragments
 
         #endregion
 
+        #region IRecyclerViewOnItemClickListener implementation
+
+        public void OnItemClick (RecyclerView parent, View clickedView, int position)
+        {
+            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+
+            if (parent.GetAdapter () is LogTimeEntriesAdapter) {
+                logAdapter.SetSelectedItem (position);
+                string id = ((TimeEntryData)logAdapter.GetEntry (position)).Id.ToString();
+                intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, id);
+            } else {
+                groupedAdapter.SetSelectedItem (position);
+                string[] guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
+                intent.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+            }
+            StartActivity (intent);
+        }
+
+        public void OnItemLongClick (RecyclerView parent, View clickedView, int position)
+        {
+            OnItemClick (parent, clickedView, position);
+        }
+
+        public bool CanClick (RecyclerView view, int position)
+        {
+            return CanDismiss (view, position);
+        }
+
+        #endregion
+
         #region Undo bar
 
         private void ShowUndoBar ()
@@ -206,29 +236,6 @@ namespace Toggl.Joey.UI.Fragments
                 };
                 animator.Start();
             }
-        }
-
-        #endregion
-
-        #region IRecyclerViewOnItemClickListener implementation
-
-        public void OnItemClick (RecyclerView parent, View clickedView, int position)
-        {
-            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-
-            if (parent.GetAdapter () is LogTimeEntriesAdapter) {
-                string id = ((TimeEntryData)logAdapter.GetEntry (position)).Id.ToString();
-                intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, id);
-            } else {
-                string[] guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
-                intent.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
-            }
-            StartActivity (intent);
-        }
-
-        public void OnItemLongClick (RecyclerView parent, View clickedView, int position)
-        {
-            OnItemClick (parent, clickedView, position);
         }
 
         #endregion

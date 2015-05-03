@@ -11,6 +11,8 @@ namespace Toggl.Joey.UI.Utils
             void OnItemClick (RecyclerView parent, View clickedView, int position);
 
             void OnItemLongClick (RecyclerView parent, View clickedView, int position);
+
+            bool CanClick (RecyclerView parent, int position);
         }
 
         private IItemTouchListener listener;
@@ -58,12 +60,7 @@ namespace Toggl.Joey.UI.Utils
 
         public override void OnLongPress (MotionEvent e)
         {
-            View view = GetChildViewUnder (e);
-            if (view == null) { return; }
-
-            int position = recyclerView.GetChildPosition (view);
-            listener.OnItemLongClick (recyclerView, view, position);
-            view.Pressed = false;
+            OnSingleTapUp (e);
         }
 
         public override bool OnSingleTapUp (MotionEvent e)
@@ -71,11 +68,13 @@ namespace Toggl.Joey.UI.Utils
             View view = GetChildViewUnder (e);
             if (view == null) { return false; }
 
-            view.Pressed = false;
             int position = recyclerView.GetChildPosition (view);
-            listener.OnItemClick (recyclerView, view, position);
-
-            return true;
+            if ( listener.CanClick (recyclerView, position)) {
+                listener.OnItemClick (recyclerView, view, position);
+                view.Pressed = false;
+                return true;
+            }
+            return false;
         }
 
         private View GetChildViewUnder (MotionEvent e)

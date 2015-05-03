@@ -123,10 +123,6 @@ namespace Toggl.Joey.UI.Fragments
                         propertyTracker.Add (entry.Project.Client, HandleClientPropertyChanged);
                     }
                 }
-
-                if (entry.Task != null) {
-                    propertyTracker.Add (entry.Task, HandleTaskPropertyChanged);
-                }
             }
 
             propertyTracker.ClearStale ();
@@ -135,7 +131,6 @@ namespace Toggl.Joey.UI.Fragments
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
                     || prop == TimeEntryModel.PropertyState
                     || prop == TimeEntryModel.PropertyStartTime
                     || prop == TimeEntryModel.PropertyStopTime
@@ -152,13 +147,6 @@ namespace Toggl.Joey.UI.Fragments
             if (prop == ProjectModel.PropertyClient
                     || prop == ProjectModel.PropertyName
                     || prop == ProjectModel.PropertyColor) {
-                Rebind ();
-            }
-        }
-
-        private void HandleTaskPropertyChanged (string prop)
-        {
-            if (prop == TaskModel.PropertyName) {
                 Rebind ();
             }
         }
@@ -279,8 +267,6 @@ namespace Toggl.Joey.UI.Fragments
 
         protected TogglField DescriptionBit { get; private set; }
 
-        protected TogglField TaskBit { get; private set; }
-
         protected EditTimeEntryTagsBit TagsBit { get; private set; }
 
         protected ActionBar Toolbar { get; private set; }
@@ -316,10 +302,6 @@ namespace Toggl.Joey.UI.Fragments
                          .SetName (Resource.String.BaseEditTimeEntryFragmentProject)
                          .SimulateButton();
             ProjectEditText = ProjectBit.TextField;
-
-            TaskBit = view.FindViewById<TogglField> (Resource.Id.Task).DestroyAssistView ()
-                      .SetName (Resource.String.BaseEditTimeEntryFragmentTask)
-                      .SimulateButton();
 
             TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.TagsBit);
 

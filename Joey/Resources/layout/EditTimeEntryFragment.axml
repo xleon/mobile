@@ -101,11 +101,6 @@
             <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/Task"
-                android:layout_marginTop="10dp" />
-            <Toggl.Joey.UI.Views.TogglField
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
                 android:id="@+id/Description"
                 android:layout_marginTop="10dp" />
             <Toggl.Joey.UI.Views.EditTimeEntryTagsBit

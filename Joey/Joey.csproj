@@ -670,6 +670,7 @@
     <AndroidResource Include="Resources\drawable-mdpi\ToolbarBg.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\ToolbarBg.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ToolbarBg.png" />
+    <AndroidResource Include="Resources\values\Dimension.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

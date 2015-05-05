@@ -13,7 +13,7 @@
         android:id="@+id/DateGroupTitleTextView"
         android:layout_weight="1"
         android:gravity="center_vertical"
-        android:layout_marginLeft="26dp" />
+        android:layout_marginLeft="@dimen/leftMargin" />
     <TextView
         android:text="12:00"
         android:textColor="@color/group_title_gray"
@@ -22,5 +22,5 @@
         android:layout_height="match_parent"
         android:id="@+id/DateGroupDurationTextView"
         android:gravity="center_vertical"
-        android:layout_marginRight="10dp" />
+        android:layout_marginRight="@dimen/rightMargin" />
 </LinearLayout>

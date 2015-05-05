@@ -2,5 +2,7 @@
 <resources>
     <dimen name="leftMargin" >16dp</dimen>
     <dimen name="rightMargin" >16dp</dimen>
+    <dimen name="normalTextSize" >14sp</dimen>
+    <dimen name="largTextSize" >16sp</dimen>
 </resources>
 

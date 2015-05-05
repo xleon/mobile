@@ -97,17 +97,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/Project"
-                android:layout_marginTop="14dp" />
+                android:layout_marginTop="20dp" />
             <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/Description"
-                android:layout_marginTop="14dp" />
+                android:layout_marginTop="20dp" />
             <Toggl.Joey.UI.Views.EditTimeEntryTagsBit
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/TagsBit"
-                android:layout_marginTop="14dp" />
+                android:layout_marginTop="20dp" />
             <CheckBox
                 android:id="@+id/BillableCheckBox"
                 android:layout_width="wrap_content"

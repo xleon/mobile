@@ -27,27 +27,28 @@
             android:layout_marginTop="10dp">
             <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="match_parent"
                 android:id="@+id/GroupedEditTimeEntryFragmentProject" />
             <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+				android:layout_height="match_parent"
                 android:id="@+id/GroupedEditTimeEntryFragmentDescription"
-                android:layout_marginTop="10dp" />
+                android:layout_marginTop="14dp" />
             <Toggl.Joey.UI.Views.EditTimeEntryTagsBit
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/GroupedEditTimeEntryFragmentTags" />
+                android:id="@+id/GroupedEditTimeEntryFragmentTags"
+                android:layout_marginTop="14dp" />
             <CheckBox
                 android:id="@+id/GroupedEditTimeEntryFragmentBillableCheckBox"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:text="@string/CurrentTimeEntryEditBillableUnchecked"
-                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textSize="16sp"
                 android:textColor="@color/BillableTextColor"
                 android:gravity="center_vertical"
                 android:button="@null"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="24dp"
                 android:drawableLeft="@drawable/IcBillableGreen"
                 android:drawablePadding="5dp" />
         </LinearLayout>

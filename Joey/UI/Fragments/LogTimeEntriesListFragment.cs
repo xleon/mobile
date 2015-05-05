@@ -169,9 +169,11 @@ namespace Toggl.Joey.UI.Fragments
                 logAdapter.SetSelectedItem (position);
                 string id = ((TimeEntryData)logAdapter.GetEntry (position)).Id.ToString();
                 intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, id);
+                intent.PutExtra (EditTimeEntryActivity.IsGrouped, false);
             } else {
                 groupedAdapter.SetSelectedItem (position);
                 string[] guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
+                intent.PutExtra (EditTimeEntryActivity.IsGrouped, true);
                 intent.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
             }
             StartActivity (intent);

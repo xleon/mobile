@@ -1,17 +1,18 @@
 ﻿using System;
+using Android.Content;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Android.Content;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Decorations;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -21,78 +22,70 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class GroupedEditTimeEntryFragment : Fragment
     {
+        // logica objects
+        private EditTimeEntryGroupView viewModel;
         private readonly Handler handler = new Handler ();
-        private PropertyChangeTracker propertyTracker;
-        private readonly TimeEntryGroup entryGroup;
-        private RecyclerView recyclerView;
-        private RecyclerView.Adapter adapter;
-        private RecyclerView.LayoutManager layoutManager;
-
         private bool canRebind;
         private bool descriptionChanging;
         private bool autoCommitScheduled;
+        private TimeEntryGroup entryGroup;
+        private PropertyChangeTracker propertyTracker;
 
+        // visual objects
+        private RecyclerView recyclerView;
+        private RecyclerView.Adapter adapter;
+        private RecyclerView.LayoutManager layoutManager;
+        private TextView durationTextView;
+        private TogglField projectBit;
+        private TogglField descriptionBit;
+        private EditTimeEntryTagsBit tagsBit;
+        private ActionBar toolbar;
 
-        public GroupedEditTimeEntryFragment (TimeEntryGroup entryGroup)
+        public GroupedEditTimeEntryFragment ()
         {
-            this.entryGroup = entryGroup;
         }
 
-        protected TextView DurationTextView { get; private set; }
-
-        protected TogglField ProjectBit { get; private set; }
-
-        protected TogglField DescriptionBit { get; private set; }
-
-        protected EditTimeEntryTagsBit TagsBit { get; private set; }
-
-        protected ActionBar Toolbar { get; private set; }
+        public GroupedEditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.GroupedEditTimeEntryFragment, container, false);
-
-            var toolbar = view.FindViewById<Toolbar> (Resource.Id.GroupedEditTimeEntryFragmentToolbar);
-
+            var mToolbar = view.FindViewById<Toolbar> (Resource.Id.GroupedEditTimeEntryFragmentToolbar);
             var activity = (Activity)Activity;
-            activity.SetSupportActionBar (toolbar);
-            Toolbar = activity.SupportActionBar;
-            Toolbar.SetDisplayHomeAsUpEnabled (true);
+
+            activity.SetSupportActionBar (mToolbar);
+            toolbar = activity.SupportActionBar;
+            toolbar.SetDisplayHomeAsUpEnabled (true);
 
             var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
+            durationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
 
-            DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
-
-            Toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams ((int)GravityFlags.Center));
-            Toolbar.SetDisplayShowCustomEnabled (true);
-            Toolbar.SetDisplayShowTitleEnabled (false);
+            toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent));
+            toolbar.SetDisplayShowCustomEnabled (true);
+            toolbar.SetDisplayShowTitleEnabled (false);
 
             HasOptionsMenu = true;
 
-            adapter = new GroupedEditAdapter (entryGroup);
-            (adapter as GroupedEditAdapter).ItemClick += HandleTimeEntryClick;
             layoutManager = new LinearLayoutManager (Activity);
             var decoration = new ItemDividerDecoration (Activity.ApplicationContext);
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.recyclerView);
             recyclerView.SetLayoutManager (layoutManager);
-            recyclerView.SetAdapter (adapter);
             recyclerView.AddItemDecoration (decoration);
 
-            ProjectBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
-            ProjectBit.Click += OnProjectEditTextClick;
-            ProjectBit.TextField.Click += OnProjectEditTextClick;
+            projectBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentProject).SetName (Resource.String.BaseEditTimeEntryFragmentProject).SimulateButton();
+            projectBit.Click += OnProjectEditTextClick;
+            projectBit.TextField.Click += OnProjectEditTextClick;
 
-            DescriptionBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentDescription).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
-            DescriptionBit.TextField.TextChanged += OnDescriptionTextChanged;
-            DescriptionBit.TextField.EditorAction += OnDescriptionEditorAction;
-            DescriptionBit.TextField.FocusChange += OnDescriptionFocusChange;
+            descriptionBit = view.FindViewById<TogglField> (Resource.Id.GroupedEditTimeEntryFragmentDescription).DestroyAssistView().DestroyArrow().SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+            descriptionBit.TextField.TextChanged += OnDescriptionTextChanged;
+            descriptionBit.TextField.EditorAction += OnDescriptionEditorAction;
+            descriptionBit.TextField.FocusChange += OnDescriptionFocusChange;
 
-            TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.GroupedEditTimeEntryFragmentTags);
-
-            TagsBit.FullClick += OnTagsEditTextClick;
-
-            Rebind ();
+            tagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.GroupedEditTimeEntryFragmentTags);
+            tagsBit.FullClick += OnTagsEditTextClick;
 
             return view;
         }
@@ -101,11 +94,15 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnStart ();
 
-            propertyTracker = new PropertyChangeTracker ();
+            var extras = Activity.Intent.Extras;
+            if (extras == null) {
+                Activity.Finish ();
+            }
 
-            canRebind = true;
-
-            Rebind ();
+            var extraGuids = extras.GetStringArray (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids);
+            viewModel = new EditTimeEntryGroupView (extraGuids);
+            viewModel.OnIsLoadingChanged += OnModelLoaded;
+            viewModel.Init ();
         }
 
         public override void OnStop ()
@@ -117,9 +114,29 @@ namespace Toggl.Joey.UI.Fragments
                 propertyTracker.Dispose ();
                 propertyTracker = null;
             }
+
+            if (viewModel != null) {
+                viewModel.OnIsLoadingChanged -= OnModelLoaded;
+                viewModel.Dispose ();
+                viewModel = null;
+            }
         }
 
-        void HandleTimeEntryClick (object sender, TimeEntryData timeEntry)
+        private void OnModelLoaded (object sender, EventArgs e)
+        {
+            if (!viewModel.IsLoading) {
+                if (viewModel != null) {
+                    entryGroup = viewModel.Model;
+                    propertyTracker = new PropertyChangeTracker ();
+                    canRebind = true;
+                    Rebind ();
+                } else {
+                    Activity.Finish ();
+                }
+            }
+        }
+
+        private void HandleTimeEntryClick (TimeEntryData timeEntry)
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
             intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, timeEntry.Id.ToString());
@@ -207,19 +224,24 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            DurationTextView.Text = entryGroup.GetFormattedDuration ();
+            // Set adapter
+            adapter = new GroupedEditAdapter (entryGroup);
+            (adapter as GroupedEditAdapter).HandleTapTimeEntry = HandleTimeEntryClick;
+            recyclerView.SetAdapter (adapter);
 
-            if (!descriptionChanging && DescriptionBit.TextField.Text != entryGroup.Description) {
-                DescriptionBit.TextField.Text = entryGroup.Description;
-                DescriptionBit.TextField.SetSelection (DescriptionBit.TextField.Text.Length);
+            durationTextView.Text = entryGroup.GetFormattedDuration ();
+
+            if (!descriptionChanging && descriptionBit.TextField.Text != entryGroup.Description) {
+                descriptionBit.TextField.Text = entryGroup.Description;
+                descriptionBit.TextField.SetSelection (descriptionBit.TextField.Text.Length);
             }
 
             if (entryGroup.Project != null) {
-                ProjectBit.TextField.Text = entryGroup.Project.Name;
+                projectBit.TextField.Text = entryGroup.Project.Name;
                 if (entryGroup.Project.Client != null) {
-                    ProjectBit.SetAssistViewTitle (entryGroup.Project.Client.Name);
+                    projectBit.SetAssistViewTitle (entryGroup.Project.Client.Name);
                 } else {
-                    ProjectBit.DestroyAssistView ();
+                    projectBit.DestroyAssistView ();
                 }
             }
 
@@ -228,7 +250,7 @@ namespace Toggl.Joey.UI.Fragments
         private void CommitDescriptionChanges ()
         {
             if (entryGroup != null && descriptionChanging) {
-                entryGroup.Description = DescriptionBit.TextField.Text;
+                entryGroup.Description = descriptionBit.TextField.Text;
             }
             descriptionChanging = false;
             CancelDescriptionChangeAutoCommit ();
@@ -269,7 +291,7 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            descriptionChanging = entryGroup != null && DescriptionBit.TextField.Text != entryGroup.Description;
+            descriptionChanging = entryGroup != null && descriptionBit.TextField.Text != entryGroup.Description;
 
             CancelDescriptionChangeAutoCommit ();
             if (descriptionChanging) {

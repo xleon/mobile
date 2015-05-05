@@ -1,18 +1,18 @@
-﻿using Android.Graphics;
+﻿using System;
+using Android.Graphics;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.Utils;
-using System;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Adapters
 {
     public class GroupedEditAdapter : RecyclerView.Adapter
     {
         private readonly TimeEntryGroup entryGroup;
-        public event EventHandler<TimeEntryData> ItemClick;
+        public Action<TimeEntryData> HandleTapTimeEntry { get; set; }
 
         public GroupedEditAdapter (TimeEntryGroup entryGroup)
         {
@@ -62,8 +62,8 @@ namespace Toggl.Joey.UI.Adapters
         void OnClick (int position)
         {
             var entry = entryGroup.TimeEntryList [position];
-            if (ItemClick != null && entry != null) {
-                ItemClick (this, entry);
+            if (HandleTapTimeEntry != null && entry != null) {
+                HandleTapTimeEntry (entry);
             }
         }
 

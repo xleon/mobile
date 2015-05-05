@@ -247,17 +247,16 @@ namespace Toggl.Joey.UI.Adapters
 
             public bool OnTouch (View v, MotionEvent e)
             {
+                if (DataSource == null) {
+                    return false;
+                }
+
                 switch (e.Action) {
                 case MotionEventActions.Up:
-                    if (DataSource == null) {
-                        return false;
-                    }
-
                     if (DataSource.Model.State == TimeEntryState.Running) {
                         adapter.OnStopTimeEntryGroup (DataSource);
                         return false;
                     }
-
                     adapter.OnContinueTimeEntryGroup (DataSource);
                     return false;
                 }
@@ -453,7 +452,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (DataSource.Model.State == TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
                 } else {
-                    ContinueImageButton.SetImageResource (Resource.Drawable.IcContinue);
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
                 }
             }
 

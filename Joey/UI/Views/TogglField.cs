@@ -36,7 +36,7 @@ namespace Toggl.Joey.UI.Views
         }
 
 
-        private void OnTextFieldEditorActionListener(object sender, TextView.EditorActionEventArgs e)
+        private void OnTextFieldEditorActionListener (object sender, TextView.EditorActionEventArgs e)
         {
             if (e.ActionId == ImeAction.Done) {
                 TextField.ClearFocus ();

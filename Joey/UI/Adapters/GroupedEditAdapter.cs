@@ -54,7 +54,7 @@ namespace Toggl.Joey.UI.Adapters
         // Create new views (invoked by the layout manager)
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
-            View v = LayoutInflater.From (parent.Context).Inflate (Resource.Layout.GroupedEditTimeEntryItem, parent, false);
+            View v = LayoutInflater.From (parent.Context).Inflate (Resource.Layout.EditGroupedTimeEntryItem, parent, false);
             var vh = new ViewHolder (v, OnClick);
             return vh;
         }

@@ -27,7 +27,7 @@ namespace Toggl.Joey.UI.Fragments
         private bool tagsSelected;
         private bool hasStarted;
 
-        public ChooseTimeEntryTagsDialogFragment (TimeEntryModel model) : base ()
+        public ChooseTimeEntryTagsDialogFragment (ITimeEntryModel model)
         {
             var args = new Bundle ();
             args.PutString (TimeEntryIdArgument, model.Id.ToString ());

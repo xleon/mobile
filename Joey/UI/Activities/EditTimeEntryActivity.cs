@@ -25,7 +25,7 @@ namespace Toggl.Joey.UI.Activities
             var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);
             if (isGrouped)
                 FragmentManager.BeginTransaction ()
-                .Add (Resource.Id.FrameLayout, new GroupedEditTimeEntryFragment ())
+                .Add (Resource.Id.FrameLayout, new EditGroupedTimeEntryFragment ())
                 .Commit ();
             else
                 FragmentManager.BeginTransaction ()

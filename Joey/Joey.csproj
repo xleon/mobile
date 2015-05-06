@@ -94,7 +94,6 @@
     <Compile Include="StopRunningTimeEntryService.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
-    <Compile Include="UI\Fragments\EditCurrentTimeEntryFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
@@ -149,8 +148,6 @@
     <Compile Include="Widget\WidgetStartStopService.cs" />
     <Compile Include="Logging\LogClient.cs" />
     <Compile Include="UI\Adapters\GroupedTimeEntriesAdapter.cs" />
-    <Compile Include="UI\Fragments\GroupedEditTimeEntryFragment.cs" />
-    <Compile Include="UI\Decorations\ItemDividerDecoration.cs" />
     <Compile Include="UI\Views\EditTimeEntryTagsBit.cs" />
     <Compile Include="UI\Views\NotificationImageView.cs" />
     <Compile Include="UI\Activities\NewProjectActivity.cs" />
@@ -170,6 +167,7 @@
     <Compile Include="UI\Views\ListItemSwipeable.cs" />
     <Compile Include="UI\Utils\SwipeDismissTouchListener.cs" />
     <Compile Include="UI\Utils\ItemTouchListener.cs" />
+    <Compile Include="UI\Fragments\EditGroupedTimeEntryFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -616,8 +614,6 @@
     <AndroidResource Include="Resources\color\MaterialPlaceholderColor.xml" />
     <AndroidResource Include="Resources\drawable\RoundedGrayBackground.xml" />
     <AndroidResource Include="Resources\color\MaterialTransparentPlaceholderColor.xml" />
-    <AndroidResource Include="Resources\layout\GroupedEditTimeEntryFragment.axml" />
-    <AndroidResource Include="Resources\layout\GroupedEditTimeEntryItem.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable-mdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\icClock.png" />
@@ -671,6 +667,8 @@
     <AndroidResource Include="Resources\drawable-xhdpi\ToolbarBg.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ToolbarBg.png" />
     <AndroidResource Include="Resources\values\Dimension.xml" />
+    <AndroidResource Include="Resources\layout\EditGroupedTimeEntryFragment.axml" />
+    <AndroidResource Include="Resources\layout\EditGroupedTimeEntryItem.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -702,7 +700,6 @@
     <Folder Include="Logging\" />
     <Folder Include="Resources\xml\" />
     <Folder Include="Widget\" />
-    <Folder Include="UI\Decorations\" />
     <Folder Include="Resources\values-v21\" />
   </ItemGroup>
   <ItemGroup>

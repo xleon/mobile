@@ -23,7 +23,7 @@ namespace Toggl.Joey.UI.Fragments
         private const string NewDurationMinutesKey = "com.toggl.timer.new_duration_mins";
         private const string DigitsEnteredKey = "com.toggl.timer.digits_entered";
 
-        public ChangeTimeEntryDurationDialogFragment (TimeEntryModel model) : base ()
+        public ChangeTimeEntryDurationDialogFragment (ITimeEntryModel model)
         {
             var args = new Bundle ();
             args.PutString (TimeEntryIdArgument, model.Id.ToString ());

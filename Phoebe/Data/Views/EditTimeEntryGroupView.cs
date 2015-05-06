@@ -23,8 +23,7 @@ namespace Toggl.Phoebe.Data.Views
         public void Dispose ()
         {
             if (model != null) {
-                model.Model.PropertyChanged -= OnPropertyChange;
-                model.Dispose ();
+                model.PropertyChanged -= OnPropertyChange;
                 model = null;
             }
         }
@@ -94,9 +93,7 @@ namespace Toggl.Phoebe.Data.Views
 
         private void OnPropertyChange (object sender, EventArgs e)
         {
-            if (model.Id == Guid.Empty) {
-                Dispose ();
-            }
+
         }
 
     }

@@ -7,7 +7,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ChangeTimeEntryStartTimeDialogFragment : BaseDateTimeDialogFragment
     {
-        public ChangeTimeEntryStartTimeDialogFragment (TimeEntryModel model) : base (model)
+        public ChangeTimeEntryStartTimeDialogFragment (ITimeEntryModel model) : base (model)
         {
         }
 

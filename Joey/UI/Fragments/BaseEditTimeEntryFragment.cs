@@ -26,7 +26,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private readonly Handler handler = new Handler ();
         private PropertyChangeTracker propertyTracker;
-        private TimeEntryModel model;
+        private ITimeEntryModel model;
         private TimeEntryTagsView tagsView;
         private bool canRebind;
         private bool descriptionChanging;
@@ -40,7 +40,7 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        protected TimeEntryModel TimeEntry
+        public ITimeEntryModel TimeEntry
         {
             get { return model; }
             set {
@@ -491,6 +491,23 @@ namespace Toggl.Joey.UI.Fragments
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Warning (Tag, ex, "Failed to save model changes.");
             }
+        }
+    }
+
+    public class SimpleEditTimeEntryFragment : BaseEditTimeEntryFragment
+    {
+        public SimpleEditTimeEntryFragment ()
+        {
+        }
+
+        public SimpleEditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
+        protected override void ResetModel ()
+        {
+            // Need to be careful when updating model data as the logic in BaseEditTimeEntries uses
+            // Id changes to detect deletions. This would result in recursive loop with this function.
         }
     }
 }

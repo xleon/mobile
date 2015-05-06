@@ -1,6 +1,7 @@
 ﻿using System;
 using Android.OS;
 using Toggl.Joey.UI.Activities;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 
@@ -56,7 +57,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (!viewModel.IsLoading) {
                 if (viewModel != null) {
-                    TimeEntry = viewModel.Model;
+                    TimeEntry = (ITimeEntryModel)viewModel.Model;
                     viewModel.OnModelChanged += OnModelChanged;
                 } else {
                     Activity.Finish ();
@@ -66,7 +67,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnModelChanged (object sender, EventArgs e)
         {
-            TimeEntry = viewModel.Model;
+            TimeEntry = (ITimeEntryModel)viewModel.Model;
         }
 
         public override void OnDestroy ()

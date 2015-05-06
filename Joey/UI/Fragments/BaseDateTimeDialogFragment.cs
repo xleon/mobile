@@ -17,7 +17,7 @@ namespace Toggl.Joey.UI.Fragments
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
 
-        protected BaseDateTimeDialogFragment (TimeEntryModel model) : base ()
+        protected BaseDateTimeDialogFragment (ITimeEntryModel model)
         {
             var args = new Bundle ();
             args.PutString (TimeEntryIdArgument, model.Id.ToString ());

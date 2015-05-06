@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Utils
@@ -177,8 +176,20 @@ namespace Toggl.Phoebe.Data.Utils
                 mModel = new TimeEntryModel (dataObjects [i]);
                 await mModel.DeleteAsync ();
             }
-
             Dispose ();
+        }
+
+        public async Task SaveAsync ()
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            for (int i = 0; i < dataObjects.Count; i++) {
+                dataObjects [i] = await dataStore.PutAsync (dataObjects [i]);
+            }
+        }
+
+        public async Task SaveStartTime ()
+        {
+
         }
 
         public string GetFormattedDuration ()

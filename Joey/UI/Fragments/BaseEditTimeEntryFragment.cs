@@ -26,7 +26,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private readonly Handler handler = new Handler ();
         private PropertyChangeTracker propertyTracker;
-        private TimeEntryModel model;
+        private ITimeEntryModel model;
         private TimeEntryTagsView tagsView;
         private bool canRebind;
         private bool descriptionChanging;
@@ -40,7 +40,7 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public TimeEntryModel TimeEntry
+        public ITimeEntryModel TimeEntry
         {
             get { return model; }
             set {

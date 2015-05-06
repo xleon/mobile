@@ -5,22 +5,20 @@ using Android.Support.V4.App;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Toggl.Joey.UI.Activities;
+using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
-using Toggl.Joey.UI.Adapters;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class EditGroupedTimeEntryFragment : Fragment
     {
         // logica objects
-        private TimeEntryGroup entryGroup;
         private EditTimeEntryGroupView viewModel;
 
         // visual objects
@@ -79,11 +77,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (!viewModel.IsLoading) {
                 if (viewModel != null) {
-                    entryGroup = viewModel.Model;
-                    editTimeEntryFragment.TimeEntry = entryGroup.Model;
+                    editTimeEntryFragment.TimeEntry = viewModel.Model;
 
                     // Set adapter
-                    adapter = new GroupedEditAdapter (entryGroup);
+                    adapter = new GroupedEditAdapter (viewModel.Model);
                     (adapter as GroupedEditAdapter).HandleTapTimeEntry = HandleTimeEntryClick;
                     recyclerView.SetAdapter (adapter);
                 } else {
@@ -102,12 +99,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnProjectEditTextClick (object sender, EventArgs e)
         {
-            if (entryGroup == null) {
+            if (viewModel.Model == null) {
                 return;
             }
 
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (ProjectListActivity.ExtraTimeEntriesIds, entryGroup.TimeEntryGuids);
+            intent.PutExtra (ProjectListActivity.ExtraTimeEntriesIds, viewModel.Model.TimeEntryGuids);
             StartActivity (intent);
         }
 

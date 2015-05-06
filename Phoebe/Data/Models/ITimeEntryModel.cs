@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
     public interface ITimeEntryModel : IModel
     {
+        TimeEntryData Data { get; set; }
+
         TimeEntryState State { get; set; }
 
         string Description { get; set; }
@@ -31,11 +34,15 @@ namespace Toggl.Phoebe.Data.Models
 
         Task StartAsync ();
 
+        Task<TimeEntryModel> ContinueAsync ();
+
         Task StoreAsync ();
 
         Task StopAsync ();
 
-        Task<TimeEntryModel> ContinueAsync ();
+        Task SaveAsync ();
+
+        Task DeleteAsync ();
 
         Task MapTagsFromModel (TimeEntryModel model);
 

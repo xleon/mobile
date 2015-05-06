@@ -18,7 +18,6 @@ namespace Toggl.Phoebe.Data.Utils
     public class TimeEntryGroup : ITimeEntryModel
     {
         private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
-
         private TimeEntryModel model;
 
         public TimeEntryGroup (TimeEntryData data)
@@ -183,13 +182,25 @@ namespace Toggl.Phoebe.Data.Utils
             Dispose ();
         }
 
-        public async void SaveAsync ()
+        public async Task SaveAsync ()
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             for (int i = 0; i < dataObjects.Count; i++) {
                 Model<TimeEntryData>.MarkDirty (dataObjects [i]);
                 dataObjects [i] = await dataStore.PutAsync (dataObjects [i]);
+            }
+        }
+
+        public TimeEntryData Data
+        {
+
+            get {
+                return Model.Data;
+            }
+
+            set {
+                Model.Data = value;
             }
         }
 

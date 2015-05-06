@@ -28,7 +28,7 @@ namespace Toggl.Joey.UI.Components
         private readonly Handler handler = new Handler ();
         private PropertyChangeTracker propertyTracker;
         private ActiveTimeEntryManager timeEntryManager;
-        private TimeEntryModel backingActiveTimeEntry;
+        private ITimeEntryModel backingActiveTimeEntry;
         private bool canRebind;
         private bool isProcessingAction;
         private bool hideDuration;
@@ -109,7 +109,7 @@ namespace Toggl.Joey.UI.Components
             var data = ActiveTimeEntryData;
             if (data != null) {
                 if (backingActiveTimeEntry == null) {
-                    backingActiveTimeEntry = new TimeEntryModel (data);
+                    backingActiveTimeEntry = (ITimeEntryModel)new TimeEntryModel (data);
                 } else {
                     backingActiveTimeEntry.Data = data;
                     shouldRebind = false;
@@ -129,7 +129,7 @@ namespace Toggl.Joey.UI.Components
             }
         }
 
-        private TimeEntryModel ActiveTimeEntry
+        private ITimeEntryModel ActiveTimeEntry
         {
             get {
                 if (ActiveTimeEntryData == null) {
@@ -249,7 +249,7 @@ namespace Toggl.Joey.UI.Components
                 }
 
                 // Make sure that we work on the copy of the entry to not affect the rest of the logic.
-                entry = new TimeEntryModel (new TimeEntryData (entry.Data));
+                entry = (ITimeEntryModel)new TimeEntryModel (new TimeEntryData (entry.Data));
 
                 var showProjectSelection = false;
 
@@ -277,13 +277,13 @@ namespace Toggl.Joey.UI.Components
                 }
 
                 var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
+                bus.Send (new UserTimeEntryStateChangeMessage (this, entry.Data));
             } finally {
                 isProcessingAction = false;
             }
         }
 
-        private void OpenTimeEntryEdit (TimeEntryModel model)
+        private void OpenTimeEntryEdit (ITimeEntryModel model)
         {
             var i = new Intent (activity, typeof (EditTimeEntryActivity));
             i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());

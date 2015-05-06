@@ -24,6 +24,7 @@ namespace Toggl.Joey.UI.Fragments
         // visual objects
         private RecyclerView recyclerView;
         private SimpleEditTimeEntryFragment editTimeEntryFragment;
+
         private RecyclerView.Adapter adapter;
 
         public EditGroupedTimeEntryFragment ()
@@ -37,7 +38,7 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.EditGroupedTimeEntryFragment, container, false);
-            editTimeEntryFragment = (SimpleEditTimeEntryFragment) FragmentManager.FindFragmentById (Resource.Id.EditTimeEntryModelFragment);
+            editTimeEntryFragment = (SimpleEditTimeEntryFragment) ChildFragmentManager.FindFragmentById (Resource.Id.TimeEntryEditChildFragment);
             HasOptionsMenu = true;
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.recyclerView);

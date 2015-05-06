@@ -10,8 +10,8 @@
         android:layout_weight="1"
         android:background="@drawable/BgArrowsFull">
         <fragment
-            android:id="@+id/EditTimeEntryModelFragment"
-            android:name="toggl.joey.ui.fragments.EditCurrentTimeEntryFragment"
+            android:id="@+id/TimeEntryEditChildFragment"
+            android:name="toggl.joey.ui.fragments.SimpleEditTimeEntryFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
@@ -14,7 +15,7 @@ namespace Toggl.Phoebe.Data.Utils
     // The class presents a TimeEntryModel (the last time entry added) to work correclty with
     // the Views created but actually manage a list of TimeEntryData
     /// </summary>
-    public class TimeEntryGroup
+    public class TimeEntryGroup : ITimeEntryModel
     {
         private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
 
@@ -30,6 +31,11 @@ namespace Toggl.Phoebe.Data.Utils
             get {
                 if (model == null) {
                     model = (TimeEntryModel)dataObjects.Last();
+                    model.PropertyChanged += (sender, e) => {
+                        if (PropertyChanged != null) {
+                            PropertyChanged.Invoke (sender, e);
+                        }
+                    };
                 } else {
                     if (!model.Data.Matches (dataObjects.Last())) {
                         model.Data = dataObjects.Last();
@@ -57,36 +63,6 @@ namespace Toggl.Phoebe.Data.Utils
         {
             get {
                 return dataObjects.Count;
-            }
-        }
-
-        public string Description
-        {
-            get {
-                return dataObjects.Last().Description;
-            } set {
-                if (Description != value) {
-                    foreach (TimeEntryData data in dataObjects) {
-                        TimeEntryModel dataModel = (TimeEntryModel)data;
-                        dataModel.Description = value;
-                        dataModel.SaveAsync ();
-                    }
-                }
-            }
-        }
-
-        public ProjectModel Project
-        {
-            get {
-                var model = (TimeEntryModel)dataObjects.Last ();
-                return model.Project;
-            }
-        }
-
-        public Guid Id
-        {
-            get {
-                return dataObjects.Last().Id;
             }
         }
 
@@ -169,8 +145,36 @@ namespace Toggl.Phoebe.Data.Utils
             model = null;
         }
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public TimeSpan GetDuration ()
+        {
+            return Duration;
+        }
+
+        public void SetDuration (TimeSpan value)
+        {
+        }
+
+        public Task StartAsync ()
+        {
+            return Model.StartAsync ();
+        }
+
+        public Task StoreAsync ()
+        {
+            return Model.StoreAsync ();
+        }
+
+        public Task StopAsync ()
+        {
+            return Model.StopAsync ();
+        }
+
         public async Task DeleteAsync ()
         {
+            // Update to a more optimized way
+
             TimeEntryModel mModel;
             for (int i = 0; i < dataObjects.Count; i++) {
                 mModel = new TimeEntryModel (dataObjects [i]);
@@ -179,17 +183,158 @@ namespace Toggl.Phoebe.Data.Utils
             Dispose ();
         }
 
-        public async Task SaveAsync ()
+        public async void SaveAsync ()
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
+
             for (int i = 0; i < dataObjects.Count; i++) {
+                Model<TimeEntryData>.MarkDirty (dataObjects [i]);
                 dataObjects [i] = await dataStore.PutAsync (dataObjects [i]);
             }
         }
 
-        public async Task SaveStartTime ()
+        public Task<TimeEntryModel> ContinueAsync ()
         {
+            return Model.ContinueAsync ();
+        }
 
+        public Task MapTagsFromModel (TimeEntryModel model)
+        {
+            return Model.MapTagsFromModel (model);
+        }
+
+        public Task MapMinorsFromModel (TimeEntryModel model)
+        {
+            return Model.MapMinorsFromModel (model);
+        }
+
+        public TimeEntryState State
+        {
+            get {
+                return Model.State;
+            } set {
+                Model.State = value;
+            }
+        }
+
+        public DateTime StartTime
+        {
+            get {
+                return TimeEntryList.FirstOrDefault ().StartTime;
+            } set {
+                if (TimeEntryList.Count == 1) {
+                    Model.StartTime = value;
+                } else {
+                    var startModel = new TimeEntryModel (TimeEntryList.FirstOrDefault ());
+                    startModel.StartTime = value;
+                }
+            }
+        }
+
+        public DateTime? StopTime
+        {
+            get {
+                return Model.StopTime;
+            } set {
+                Model.StopTime = value;
+            }
+        }
+
+        public bool IsBillable
+        {
+            get {
+                return Model.IsBillable;
+            }
+
+            set {
+                foreach (var item in dataObjects) {
+                    item.IsBillable = value;
+                }
+
+                SaveAsync ();
+            }
+        }
+
+        public UserModel User
+        {
+            get {
+                return Model.User;
+            }
+
+            set {
+                foreach (var item in dataObjects) {
+                    item.UserId = value.Id;
+                }
+
+                SaveAsync ();
+            }
+        }
+
+        public WorkspaceModel Workspace
+        {
+            get {
+                return Model.Workspace;
+            } set {
+                foreach (var item in dataObjects) {
+                    item.WorkspaceId = value.Id;
+                }
+
+                SaveAsync ();
+            }
+        }
+
+        public string Description
+        {
+            get {
+                return dataObjects.Last().Description;
+            }
+
+            set {
+                if (Description != value) {
+                    foreach (var item in dataObjects) {
+                        item.Description = value;
+                    }
+
+                    SaveAsync ();
+                }
+            }
+        }
+
+        public ProjectModel Project
+        {
+            get {
+                return Model.Project;
+            }
+
+            set {
+                foreach (var item in dataObjects) {
+                    item.ProjectId = value.Id;
+                }
+
+                SaveAsync ();
+            }
+        }
+
+        public Guid Id
+        {
+            get {
+                return dataObjects.Last().Id;
+            }
+        }
+
+        public TaskModel Task
+        {
+            get {
+                return Model.Task;
+            }
+
+            set {
+                foreach (var item in dataObjects) {
+                    item.TaskId = value.Id;
+                }
+
+                SaveAsync ();
+            }
         }
 
         public string GetFormattedDuration ()

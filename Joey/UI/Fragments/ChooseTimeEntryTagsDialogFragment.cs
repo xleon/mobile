@@ -19,20 +19,16 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
-        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
         private WorkspaceTagsView workspaceTagsView;
         private ListView listView;
         private List<TimeEntryTagData> modelTags;
-        private TimeEntryModel model;
+        private ITimeEntryModel model;
         private bool tagsSelected;
         private bool hasStarted;
 
         public ChooseTimeEntryTagsDialogFragment (ITimeEntryModel model)
         {
-            var args = new Bundle ();
-            args.PutString (TimeEntryIdArgument, model.Id.ToString ());
-
-            Arguments = args;
+            this.model = model;
         }
 
         public ChooseTimeEntryTagsDialogFragment ()
@@ -43,22 +39,11 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private Guid TimeEntryId
-        {
-            get {
-                var id = Guid.Empty;
-                if (Arguments != null) {
-                    Guid.TryParse (Arguments.GetString (TimeEntryIdArgument), out id);
-                }
-                return id;
-            }
-        }
 
         public override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
 
-            model = new TimeEntryModel (TimeEntryId);
             model.PropertyChanged += OnModelPropertyChanged;
 
             workspaceTagsView = new WorkspaceTagsView (WorkspaceId);
@@ -85,7 +70,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void LoadModel ()
         {
-            await model.LoadAsync ();
             if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Dismiss ();
             }
@@ -204,26 +188,20 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private async static void ReplaceTags (TimeEntryModel model, List<TimeEntryTagData> modelTags, List<TagData> selectedTags)
+        private async static void ReplaceTags (ITimeEntryModel model, List<TimeEntryTagData> modelTags, List<TagData> selectedTags)
         {
-            // Delete unused tag relations:
-            var deleteTasks = modelTags
-                              .Where (oldTag => !selectedTags.Any (newTag => newTag.Id == oldTag.TagId))
-                              .Select (data => new TimeEntryTagModel (data).DeleteAsync ())
-                              .ToList();
-
-            // Create new tag relations:
-            var createTasks = selectedTags
-                              .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-            .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ())
-            .ToList();
-
-            await Task.WhenAll (deleteTasks.Concat (createTasks));
-
-            if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
-                model.Touch ();
-                await model.SaveAsync ();
-            }
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            await model.Apply (async delegate (TimeEntryModel m) {
+                var mTags = await dataStore.Table<TimeEntryTagData> ()
+                            .QueryAsync (r => r.TimeEntryId == m.Id && r.DeletedAt == null);
+                var deleteTasks =  mTags.Where (oldTag => selectedTags.All (newTag => newTag.Id != oldTag.TagId))
+                                   .Select (data => new TimeEntryTagModel (data).DeleteAsync()).ToList();
+                var createTasks = selectedTags
+                                  .Where (newTag => mTags.All (oldTag => oldTag.TagId != newTag.Id))
+                .Select (data => new TimeEntryTagModel () { TimeEntry = m, Tag = new TagModel (data) } .SaveAsync ())
+                .ToList();
+                await Task.WhenAll (deleteTasks.Concat (createTasks));
+            });
         }
     }
 }

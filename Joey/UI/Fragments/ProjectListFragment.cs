@@ -20,13 +20,11 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ProjectListFragment : Fragment
     {
-        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
         private ProjectListAdapter adapter;
-        private TimeEntryModel model;
-        private TimeEntryGroup group;
+        private ITimeEntryModel model;
 
         public ProjectListFragment ()
         {
@@ -36,14 +34,9 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ProjectListFragment (TimeEntryModel model)
+        public ProjectListFragment (ITimeEntryModel model)
         {
             this.model = model;
-        }
-
-        public ProjectListFragment (TimeEntryGroup group)
-        {
-            this.group = group;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -73,7 +66,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnItemSelected (object m)
         {
-            if (model != null || group != null) {
+            if (model != null) {
                 ProjectModel project = null;
                 WorkspaceModel workspace = null;
 
@@ -99,18 +92,9 @@ namespace Toggl.Joey.UI.Fragments
                 }
 
                 if (project != null || workspace != null) {
-                    if (group != null) {
-                        foreach (var data in group.TimeEntryList) {
-                            var dataModel = (TimeEntryModel)data;
-                            dataModel.Workspace = workspace;
-                            dataModel.Project = project;
-                            await dataModel.SaveAsync ();
-                        }
-                    } else if (model != null) {
-                        model.Workspace = workspace;
-                        model.Project = project;
-                        await model.SaveAsync ();
-                    }
+                    model.Workspace = workspace;
+                    model.Project = project;
+                    await model.SaveAsync ();
                     Activity.Finish ();
                 }
             }

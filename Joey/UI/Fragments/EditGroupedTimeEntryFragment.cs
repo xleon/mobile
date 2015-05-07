@@ -18,7 +18,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class EditGroupedTimeEntryFragment : Fragment
     {
-        // logica objects
+        // logic objects
         private EditTimeEntryGroupView viewModel;
 
         // visual objects
@@ -94,18 +94,6 @@ namespace Toggl.Joey.UI.Fragments
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
             intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, timeEntry.Id.ToString());
-            StartActivity (intent);
-        }
-
-
-        private void OnProjectEditTextClick (object sender, EventArgs e)
-        {
-            if (viewModel.Model == null) {
-                return;
-            }
-
-            var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (ProjectListActivity.ExtraTimeEntriesIds, viewModel.Model.TimeEntryGuids);
             StartActivity (intent);
         }
 

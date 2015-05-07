@@ -47,6 +47,8 @@ namespace Toggl.Phoebe.Data.Models
         Task MapTagsFromModel (TimeEntryModel model);
 
         Task MapMinorsFromModel (TimeEntryModel model);
+
+        Task Apply (Func<TimeEntryModel, Task> action);
     }
 }
 

@@ -19,11 +19,7 @@ namespace Toggl.Joey.UI.Activities
                Theme = "@style/Theme.Toggl.App")]
     public class ProjectListActivity : BaseActivity
     {
-        public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
-        public static readonly string ExtraTimeEntriesIds = "com.toggl.timer.time_entries_ids";
-
-        private TimeEntryModel model;
-        private TimeEntryGroup group;
+        public ITimeEntryModel Model { get; set; }
 
         protected override void OnCreateActivity (Bundle state)
         {
@@ -31,22 +27,16 @@ namespace Toggl.Joey.UI.Activities
 
             SetContentView (Resource.Layout.ProjectListActivityLayout);
 
-            CreateModelFromIntent ();
+            if (NavBridge.FinishedNav != null) {
+                NavBridge.FinishedNav (this);
+                NavBridge.FinishedNav = null;
+            }
 
-            if (state == null) {
-                if (model == null && group == null) {
-                    Finish ();
-                } else {
-                    ProjectListFragment fragment;
-                    if (model == null) {
-                        fragment = new ProjectListFragment (group);
-                    } else {
-                        fragment = new ProjectListFragment (model);
-                    }
-                    SupportFragmentManager.BeginTransaction ()
-                    .Add (Resource.Id.ProjectListActivityLayout, fragment)
-                    .Commit ();
-                }
+            if (Model != null) {
+                Model.PropertyChanged += OnPropertyChange;
+                SupportFragmentManager.BeginTransaction ()
+                .Add (Resource.Id.ProjectListActivityLayout, new ProjectListFragment (Model))
+                .Commit ();
             }
         }
 
@@ -56,47 +46,13 @@ namespace Toggl.Joey.UI.Activities
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
         }
 
-        private async void CreateModelFromIntent ()
-        {
-            var extras = Intent.Extras;
-            if (extras == null) {
-                return;
-            }
-
-            var extraIdStr = extras.GetString (ExtraTimeEntryId);
-            Guid extraId;
-            if (!Guid.TryParse (extraIdStr, out extraId)) {
-                var extraGuids = extras.GetStringArray (ExtraTimeEntriesIds);
-                var entriesToGroup = new List<TimeEntryModel> ();
-                foreach (string guidString in extraGuids) {
-                    var entry = new TimeEntryModel (new Guid (guidString));
-                    await entry.LoadAsync ();
-                    entriesToGroup.Add (entry);
-                }
-                group = new TimeEntryGroup (entriesToGroup [0].Data);
-                foreach (var entry in entriesToGroup.Skip (1)) {
-                    group.UpdateIfPossible (entry.Data);
-                }
-                return;
-            }
-
-            model = new TimeEntryModel (extraId);
-            model.PropertyChanged += OnPropertyChange;
-
-            // Ensure that the model exists
-            await model.LoadAsync ();
-            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
-                Finish ();
-            }
-        }
-
         private void OnPropertyChange (object sender, EventArgs e)
         {
             // Protect against Java side being GCed
             if (Handle == IntPtr.Zero) {
                 return;
             }
-            if (model.Id == Guid.Empty) {
+            if (Model.Id == Guid.Empty) {
                 Finish ();
             }
         }

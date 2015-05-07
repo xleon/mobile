@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -7,6 +9,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using TTask = System.Threading.Tasks.Task;
 
 namespace Toggl.Phoebe.Data.Utils
 {
@@ -172,26 +175,30 @@ namespace Toggl.Phoebe.Data.Utils
 
         public async Task DeleteAsync ()
         {
-            // Update to a more optimized way
-
-            TimeEntryModel mModel;
-            for (int i = 0; i < dataObjects.Count; i++) {
-                mModel = new TimeEntryModel (dataObjects [i]);
-                await mModel.DeleteAsync ();
-            }
+            await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {
+                var m = new TimeEntryModel (obj);
+                m.DeleteAsync();
+            }));
             Dispose ();
         }
 
         public async Task SaveAsync ()
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
-
-            for (int i = 0; i < dataObjects.Count; i++) {
-                Model<TimeEntryData>.MarkDirty (dataObjects [i]);
-                dataObjects [i] = await dataStore.PutAsync (dataObjects [i]);
-            }
+            await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {
+                Model<TimeEntryData>.MarkDirty (obj);
+                dataStore.PutAsync (obj);
+            }));
         }
 
+        public async Task Apply (Func<TimeEntryModel, Task> action)
+        {
+            foreach (var obj in dataObjects) {
+                await action (new TimeEntryModel (obj));
+            }
+            await SaveAsync();
+        }
+            
         public TimeEntryData Data
         {
 
@@ -321,8 +328,6 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.ProjectId = value.Id;
                 }
-
-                SaveAsync ();
             }
         }
 

@@ -398,7 +398,12 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (ProjectListActivity.ExtraTimeEntryId, TimeEntry.Id.ToString ());
+
+            NavBridge.FinishedNav = projectListActivity => {
+                ProjectListActivity activity = (ProjectListActivity)projectListActivity;
+                activity.Model = model;
+            };
+
             StartActivity (intent);
         }
 

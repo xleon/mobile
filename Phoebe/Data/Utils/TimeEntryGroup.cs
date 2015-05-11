@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
@@ -23,9 +22,27 @@ namespace Toggl.Phoebe.Data.Utils
         private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
         private TimeEntryModel model;
 
+
         public TimeEntryGroup (TimeEntryData data)
         {
             Add (data);
+        }
+
+        public TimeEntryGroup ()
+        {
+
+        }
+
+        public async Task BuildFromGuids (List<Guid> guids)
+        {
+            var first = new TimeEntryModel (guids.First ());
+            await first.LoadAsync ();
+            Add (first.Data);
+            foreach (var guid in guids.Skip (1)) {
+                var mdl = new TimeEntryModel (guid);
+                await mdl.LoadAsync ();
+                UpdateIfPossible (mdl.Data);
+            }
         }
 
         public TimeEntryModel Model
@@ -44,6 +61,13 @@ namespace Toggl.Phoebe.Data.Utils
                     }
                 }
                 return model;
+            }
+        }
+
+        public IList<string> Ids
+        {
+            get {
+                return TimeEntryGuids.ToList ();
             }
         }
 
@@ -106,7 +130,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public void UpdateIfPossible (TimeEntryData entry)
         {
-            if (CanContains (entry)) {
+            if (CanContain (entry)) {
                 Add (entry);
             }
         }
@@ -125,7 +149,7 @@ namespace Toggl.Phoebe.Data.Utils
             dataObjects.Sort ((a, b) => a.StartTime.CompareTo (b.StartTime));
         }
 
-        public bool CanContains (TimeEntryData data)
+        public bool CanContain (TimeEntryData data)
         {
             return dataObjects.Last().IsGroupableWith (data);
         }
@@ -198,7 +222,7 @@ namespace Toggl.Phoebe.Data.Utils
             }
             await SaveAsync();
         }
-            
+
         public TimeEntryData Data
         {
 

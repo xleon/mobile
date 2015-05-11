@@ -356,7 +356,7 @@ namespace Toggl.Phoebe.Data.Views
             isNewEntryGroup = false;
 
             foreach (var grp in dateGroup.DataObjects) {
-                if (grp.CanContains (dataObject)) {
+                if (grp.CanContain (dataObject)) {
                     return grp;
                 }
             }

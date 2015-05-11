@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 
@@ -6,6 +7,8 @@ namespace Toggl.Phoebe.Data.Models
 {
     public interface ITimeEntryModel : IModel
     {
+        IList<string> Ids { get; }
+
         TimeEntryData Data { get; set; }
 
         TimeEntryState State { get; set; }

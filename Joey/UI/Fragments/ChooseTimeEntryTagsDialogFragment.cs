@@ -7,18 +7,20 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Widget;
+using Toggl.Joey.UI.Adapters;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using Toggl.Joey.UI.Adapters;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
+        private static readonly string ModelIds = "com.toggl.timer.model_ids";
         private WorkspaceTagsView workspaceTagsView;
         private ListView listView;
         private List<TimeEntryTagData> modelTags;
@@ -28,6 +30,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public ChooseTimeEntryTagsDialogFragment (ITimeEntryModel model)
         {
+            var args = new Bundle ();
+
+            args.PutStringArrayList (ModelIds, model.Ids);
+            Arguments = args;
+
             this.model = model;
         }
 
@@ -39,10 +46,40 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
+        private List<Guid> Guids
+        {
+            get {
+                var ids = new List<Guid> ();
+                if (Arguments != null) {
+                    var list = Arguments.GetStringArrayList (ModelIds);
+                    if (list != null && list.Count > 0) {
+                        foreach (var guidEntity in list) {
+                            var guidParsing = Guid.Empty;
+                            Guid.TryParse (guidEntity, out guidParsing);
+                            if (guidParsing != Guid.Empty) {
+                                ids.Add (guidParsing);
+                            }
+                        }
+                    }
+                }
+                return ids;
+            }
+        }
 
-        public override void OnCreate (Bundle state)
+        public async override void OnCreate (Bundle state)
         {
             base.OnCreate (state);
+
+            if (model == null) {
+                var guids = Guids;
+                if (guids.Count <= 1) {
+                    model = new TimeEntryModel (guids.First ());
+                } else {
+                    var grp = new TimeEntryGroup ();
+                    await grp.BuildFromGuids (guids);
+                    model = grp;
+                }
+            }
 
             model.PropertyChanged += OnModelPropertyChanged;
 

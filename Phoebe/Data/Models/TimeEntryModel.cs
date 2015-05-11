@@ -104,6 +104,8 @@ namespace Toggl.Phoebe.Data.Models
             return String.IsNullOrEmpty (s) ? String.Empty : s;
         }
 
+        public IList<string> Ids { get { return new List<string> () { Id.ToString () }; } }
+
         public TimeEntryState State
         {
             get {

@@ -18,7 +18,7 @@ namespace Toggl.Joey.UI.Fragments
     public class CreateTagDialogFragment : BaseDialogFragment
     {
         private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
-        private static readonly string TimeEntryIdsArgument = "com.toggl.timer.time_entry_ids";
+        private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entry_ids";
 
         private EditText nameEditText;
         private Button positiveButton;
@@ -33,7 +33,7 @@ namespace Toggl.Joey.UI.Fragments
 
             args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
             if (model != null) {
-                args.PutStringArrayList (TimeEntryIdsArgument, model.Ids);
+                args.PutStringArrayList (TimeEntriesIdsArgument, model.Ids);
             }
 
             Arguments = args;
@@ -65,7 +65,7 @@ namespace Toggl.Joey.UI.Fragments
             workspace = new WorkspaceModel (WorkspaceId);
             await workspace.LoadAsync ();
             if (model == null) {
-                model = await TimeEntryFactory.Get (Arguments.GetStringArrayList (TimeEntryIdsArgument).TransformToGuids ());
+                model = await TimeEntryFactory.Get (Arguments.GetStringArrayList (TimeEntriesIdsArgument).TransformToGuids ());
             }
 
             ValidateTagName ();
@@ -101,7 +101,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            if (model == null || model.Workspace == null) {
+            if (model.Workspace == null) {
                 return;
             }
 

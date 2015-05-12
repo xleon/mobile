@@ -21,7 +21,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
-        private static readonly string ModelIds = "com.toggl.timer.model_ids";
+        private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entries_ids";
         private WorkspaceTagsView workspaceTagsView;
         private ListView listView;
         private List<TimeEntryTagData> modelTags;
@@ -33,7 +33,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var args = new Bundle ();
 
-            args.PutStringArrayList (ModelIds, model.Ids);
+            args.PutStringArrayList (TimeEntriesIdsArgument, model.Ids);
             Arguments = args;
 
             this.model = model;
@@ -51,7 +51,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             get {
                 if (Arguments != null) {
-                    return Arguments.GetStringArrayList (ModelIds).TransformToGuids ();
+                    return Arguments.GetStringArrayList (TimeEntriesIdsArgument).TransformToGuids ();
                 }
                 return null;
             }

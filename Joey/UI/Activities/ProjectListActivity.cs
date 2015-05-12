@@ -20,7 +20,7 @@ namespace Toggl.Joey.UI.Activities
                Theme = "@style/Theme.Toggl.App")]
     public class ProjectListActivity : BaseActivity
     {
-        
+
         public static readonly string ExtraTimeEntriesIds = "com.toggl.timer.time_entries_ids";
         private ITimeEntryModel model;
 
@@ -34,8 +34,8 @@ namespace Toggl.Joey.UI.Activities
             if (extras == null) {
                 return;
             }
-                
-            model = await TimeEntryFactory.Get(extras.GetStringArrayList (ExtraTimeEntriesIds).TransformToGuids ());
+
+            model = await TimeEntryFactory.Get (extras.GetStringArrayList (ExtraTimeEntriesIds).TransformToGuids ());
 
             if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Finish ();

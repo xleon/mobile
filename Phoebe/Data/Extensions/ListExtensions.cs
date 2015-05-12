@@ -5,7 +5,8 @@ namespace Toggl.Phoebe.Data.Extensions
 {
     public static class ListExtensions
     {
-        public static List<Guid> TransformToGuids(this IList<string> list) {
+        public static List<Guid> TransformToGuids (this IList<string> list)
+        {
             var ids = new List<Guid> ();
             if (list != null && list.Count > 0) {
                 foreach (var guidEntity in list) {
@@ -18,6 +19,6 @@ namespace Toggl.Phoebe.Data.Extensions
             }
             return ids;
         }
-    }   
+    }
 }
 

@@ -398,8 +398,8 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, model.Ids);     
-           
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, model.Ids);
+
             StartActivity (intent);
         }
 

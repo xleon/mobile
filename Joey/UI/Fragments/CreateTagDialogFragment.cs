@@ -7,6 +7,8 @@ using Android.Text;
 using Android.Widget;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Extensions;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
@@ -15,13 +17,37 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class CreateTagDialogFragment : BaseDialogFragment
     {
+        private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
+        private static readonly string TimeEntryIdsArgument = "com.toggl.timer.time_entry_ids";
+
         private EditText nameEditText;
         private Button positiveButton;
         private ITimeEntryModel model;
+        private WorkspaceModel workspace;
 
         public CreateTagDialogFragment (Guid workspaceId, ITimeEntryModel model)
         {
             this.model = model;
+
+            var args = new Bundle ();
+
+            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
+            if (model != null) {
+                args.PutStringArrayList (TimeEntryIdsArgument, model.Ids);
+            }
+
+            Arguments = args;
+        }
+
+        private Guid WorkspaceId
+        {
+            get {
+                var id = Guid.Empty;
+                if (Arguments != null) {
+                    Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                }
+                return id;
+            }
         }
 
         public CreateTagDialogFragment ()
@@ -30,6 +56,19 @@ namespace Toggl.Joey.UI.Fragments
 
         public CreateTagDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public override async void OnCreate (Bundle savedInstanceState)
+        {
+            base.OnCreate (savedInstanceState);
+
+            workspace = new WorkspaceModel (WorkspaceId);
+            await workspace.LoadAsync ();
+            if (model == null) {
+                model = await TimeEntryFactory.Get (Arguments.GetStringArrayList (TimeEntryIdsArgument).TransformToGuids ());
+            }
+
+            ValidateTagName ();
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -66,7 +105,7 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            await AssignTag (model.Workspace, nameEditText.Text, model);
+            await AssignTag (workspace, nameEditText.Text, model);
         }
 
         private static async Task AssignTag (WorkspaceModel workspace, string tagName, ITimeEntryModel model)
@@ -109,7 +148,7 @@ namespace Toggl.Joey.UI.Fragments
                             TimeEntry = m,
                             Tag = tag,
                         };
-                        await relationModel.SaveAsync ().ConfigureAwait (false);
+                        await relationModel.SaveAsync ();
                     }
                 });
             }

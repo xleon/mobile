@@ -9,12 +9,12 @@ namespace Toggl.Phoebe.Data.Utils
 {
     public static class TimeEntryFactory
     {
-        public async static Task<ITimeEntryModel> Get(List<Guid> guids) {
-            if (guids.Count <= 1) {
-                return new TimeEntryModel (guids.First ());
+        public async static Task<ITimeEntryModel> Get(List<Guid> ids) {
+            if (ids.Count <= 1) {
+                return new TimeEntryModel (ids.First ());
             } else {
                 var grp = new TimeEntryGroup ();
-                await grp.BuildFromGuids (guids);
+                await grp.BuildFromGuids (ids);
                 return grp;
             }
         }

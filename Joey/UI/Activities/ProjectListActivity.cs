@@ -8,6 +8,7 @@ using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.Extensions;
 using XPlatUtils;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -19,23 +20,31 @@ namespace Toggl.Joey.UI.Activities
                Theme = "@style/Theme.Toggl.App")]
     public class ProjectListActivity : BaseActivity
     {
-        public ITimeEntryModel Model { get; set; }
+        
+        public static readonly string ExtraTimeEntriesIds = "com.toggl.timer.time_entries_ids";
+        private ITimeEntryModel model;
 
-        protected override void OnCreateActivity (Bundle state)
+        protected override async void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.ProjectListActivityLayout);
 
-            if (NavBridge.FinishedNav != null) {
-                NavBridge.FinishedNav (this);
-                NavBridge.FinishedNav = null;
+            var extras = Intent.Extras;
+            if (extras == null) {
+                return;
+            }
+                
+            model = await TimeEntryFactory.Get(extras.GetStringArrayList (ExtraTimeEntriesIds).TransformToGuids ());
+
+            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
+                Finish ();
             }
 
-            if (Model != null) {
-                Model.PropertyChanged += OnPropertyChange;
+            if (model != null) {
+                model.PropertyChanged += OnPropertyChange;
                 SupportFragmentManager.BeginTransaction ()
-                .Add (Resource.Id.ProjectListActivityLayout, new ProjectListFragment (Model))
+                .Add (Resource.Id.ProjectListActivityLayout, new ProjectListFragment (model))
                 .Commit ();
             }
         }
@@ -52,7 +61,7 @@ namespace Toggl.Joey.UI.Activities
             if (Handle == IntPtr.Zero) {
                 return;
             }
-            if (Model.Id == Guid.Empty) {
+            if (model.Id == Guid.Empty) {
                 Finish ();
             }
         }

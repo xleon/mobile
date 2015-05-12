@@ -14,6 +14,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Data.Extensions;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
@@ -49,20 +50,10 @@ namespace Toggl.Joey.UI.Fragments
         private List<Guid> Guids
         {
             get {
-                var ids = new List<Guid> ();
                 if (Arguments != null) {
-                    var list = Arguments.GetStringArrayList (ModelIds);
-                    if (list != null && list.Count > 0) {
-                        foreach (var guidEntity in list) {
-                            var guidParsing = Guid.Empty;
-                            Guid.TryParse (guidEntity, out guidParsing);
-                            if (guidParsing != Guid.Empty) {
-                                ids.Add (guidParsing);
-                            }
-                        }
-                    }
+                    return Arguments.GetStringArrayList (ModelIds).TransformToGuids ();
                 }
-                return ids;
+                return null;
             }
         }
 

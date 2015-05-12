@@ -71,14 +71,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnCreate (state);
 
             if (model == null) {
-                var guids = Guids;
-                if (guids.Count <= 1) {
-                    model = new TimeEntryModel (guids.First ());
-                } else {
-                    var grp = new TimeEntryGroup ();
-                    await grp.BuildFromGuids (guids);
-                    model = grp;
-                }
+                model = await TimeEntryFactory.Get (Guids);
             }
 
             model.PropertyChanged += OnModelPropertyChanged;
@@ -105,7 +98,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroy ();
         }
 
-        private async void LoadModel ()
+        private void LoadModel ()
         {
             if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Dismiss ();

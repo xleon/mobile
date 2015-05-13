@@ -92,7 +92,9 @@ namespace Toggl.Phoebe.Data.Views
             if (removedItem != null) {
                 var model = new TimeEntryModel (removedItem);
                 await model.DeleteAsync();
-                removedItem = null;
+                if (removedItem.Id == model.Id) {
+                    removedItem = null;
+                }
             }
         }
 

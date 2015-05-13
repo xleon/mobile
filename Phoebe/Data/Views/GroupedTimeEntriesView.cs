@@ -89,8 +89,11 @@ namespace Toggl.Phoebe.Data.Views
         public async void ConfirmItemRemove ()
         {
             if (removedItem != null) {
+                var rememberId = removedItem.Id;
                 await removedItem.DeleteAsync();
-                removedItem = null;
+                if (rememberId == removedItem.Id) {
+                    removedItem = null;
+                }
             }
         }
 

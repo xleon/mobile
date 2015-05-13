@@ -6,15 +6,16 @@
     android:orientation="horizontal"
     android:gravity="center_vertical">
     <TextView
-    	android:textColor="@color/dark_gray_text"
         android:id="@+id/ProjectTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="12dp"
-        android:layout_marginRight="2dp"
+        android:text="@string/ProjectsNoProject"
+        android:textColor="@color/group_title_dark_gray"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/ProjectsNewProject"
-        android:gravity="center"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textSize="@dimen/normalTextSize"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="@dimen/leftMargin"
         android:singleLine="true"
         android:ellipsize="none" />
 </LinearLayout>

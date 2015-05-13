@@ -148,7 +148,6 @@
     <Compile Include="Widget\WidgetStartStopService.cs" />
     <Compile Include="Logging\LogClient.cs" />
     <Compile Include="UI\Adapters\GroupedTimeEntriesAdapter.cs" />
-    <Compile Include="UI\Views\EditTimeEntryTagsBit.cs" />
     <Compile Include="UI\Views\NotificationImageView.cs" />
     <Compile Include="UI\Activities\NewProjectActivity.cs" />
     <Compile Include="UI\Fragments\NewProjectFragment.cs" />
@@ -168,6 +167,7 @@
     <Compile Include="UI\Utils\SwipeDismissTouchListener.cs" />
     <Compile Include="UI\Utils\ItemTouchListener.cs" />
     <Compile Include="UI\Fragments\EditGroupedTimeEntryFragment.cs" />
+    <Compile Include="UI\Views\TogglTagsField.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -620,7 +620,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable\LineDivider.xml" />
     <AndroidResource Include="Resources\drawable\DropShadow.xml" />
-    <AndroidResource Include="Resources\layout\EditTimeEntryTagsBit.axml" />
     <AndroidResource Include="Resources\drawable\NotificationBubble.xml" />
     <AndroidResource Include="Resources\menu\ProjectToolbarHome.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmenItem.axml" />
@@ -669,6 +668,7 @@
     <AndroidResource Include="Resources\values\Dimension.xml" />
     <AndroidResource Include="Resources\layout\EditGroupedTimeEntryFragment.axml" />
     <AndroidResource Include="Resources\layout\EditGroupedTimeEntryItem.axml" />
+    <AndroidResource Include="Resources\layout\TogglTagsField.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

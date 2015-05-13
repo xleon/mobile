@@ -13,20 +13,20 @@ using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Joey.UI.Views
 {
-    public class EditTimeEntryTagsBit : RelativeLayout
+    public class TogglTagsField : RelativeLayout
     {
         const int TagMaxLength = 30;
 
         public event EventHandler FullClick;
 
-        public EditTimeEntryTagsBit (Context context) :
+        public TogglTagsField (Context context) :
         base (context)
         {
 
             Initialize ();
         }
 
-        public EditTimeEntryTagsBit (Context context, IAttributeSet attrs) :
+        public TogglTagsField (Context context, IAttributeSet attrs) :
         base (context, attrs)
         {
             Initialize ();
@@ -47,10 +47,10 @@ namespace Toggl.Joey.UI.Views
         void Initialize()
         {
             LayoutInflater inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
-            inflater.Inflate (Resource.Layout.EditTimeEntryTagsBit, this);
+            inflater.Inflate (Resource.Layout.TogglTagsField, this);
 
-            EditText = FindViewById<EditText> (Resource.Id.EditTimeEntryTagsBitEditText);
-            TextView = (TextView)FindViewById<TextView> (Resource.Id.EditTimeEntryTagsBitTitle);
+            EditText = FindViewById<EditText> (Resource.Id.TogglTagsFieldEditText);
+            TextView = (TextView)FindViewById<TextView> (Resource.Id.TogglTagsFieldTitle);
 
             EditText.Touch += (object sender, View.TouchEventArgs e) => {
                 e.Handled = false;
@@ -67,7 +67,7 @@ namespace Toggl.Joey.UI.Views
             List<String> tagList = new List<String> ();
             String t;
 
-            if (tagsView == null) {
+            if (tagsView == null || tagsView.IsLoading) {
                 return;
             }
 
@@ -77,12 +77,10 @@ namespace Toggl.Joey.UI.Views
             }
 
             foreach (String tagText in tagsView.Data) {
-                if (tagText.Length > TagMaxLength) {
-                    t = tagText.Substring (0, TagMaxLength - 1).Trim () + "…";
-                } else {
-                    t = tagText;
+                t = tagText.Length > TagMaxLength ? tagText.Substring (0, TagMaxLength - 1).Trim () + "…" : tagText;
+                if (tagText.Length > 0) {
+                    tagList.Add (t);
                 }
-                tagList.Add (t);
             }
             // The extra whitespace prevents the ImageSpans and the text they are over
             // to break at different positions, leaving zero linespacing on edge cases.

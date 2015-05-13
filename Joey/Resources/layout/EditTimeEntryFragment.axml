@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <LinearLayout
-    	android:background="@drawable/BgArrowsFull"
+        android:background="@drawable/BgArrowsFull"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -104,7 +104,7 @@
                 android:layout_height="match_parent"
                 android:id="@+id/Description"
                 android:layout_marginTop="20dp" />
-            <Toggl.Joey.UI.Views.EditTimeEntryTagsBit
+            <Toggl.Joey.UI.Views.TogglTagsField
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/TagsBit"

@@ -267,7 +267,7 @@ namespace Toggl.Joey.UI.Fragments
 
         protected TogglField DescriptionBit { get; private set; }
 
-        protected EditTimeEntryTagsBit TagsBit { get; private set; }
+        protected TogglTagsField TagsBit { get; private set; }
 
         protected ActionBar Toolbar { get; private set; }
 
@@ -303,7 +303,7 @@ namespace Toggl.Joey.UI.Fragments
                          .SimulateButton();
             ProjectEditText = ProjectBit.TextField;
 
-            TagsBit = view.FindViewById<EditTimeEntryTagsBit> (Resource.Id.TagsBit);
+            TagsBit = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);
 
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
 

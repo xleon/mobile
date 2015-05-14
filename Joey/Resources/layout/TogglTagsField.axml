@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    <TextView
+        android:id="@+id/TogglTagsFieldTitle"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:textSize="12sp"
+        android:lines="1"
+        android:text="Tags"
+        android:textColor="@color/MaterialPlaceholderColor" />
+    <EditText
+        android:id="@+id/TogglTagsFieldEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:editable="false"
+        android:cursorVisible="false"
+        android:focusableInTouchMode="false"
+        android:hint="@string/CurrentTimeEntryEditTagsHint"
+        android:background="@drawable/BackgroundLine"
+        android:paddingBottom="6dp"
+        android:layout_marginBottom="2dp"
+        android:textColor="@color/material_black"
+        android:textSize="18dp"
+        android:drawableRight="@drawable/IcSelectArrowBigDown" />
+</LinearLayout>

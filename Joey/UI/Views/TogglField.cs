@@ -1,6 +1,7 @@
 ﻿using Android.Content;
 using Android.Util;
 using Android.Views;
+using Android.Views.InputMethods;
 using Android.Widget;
 
 namespace Toggl.Joey.UI.Views
@@ -27,9 +28,19 @@ namespace Toggl.Joey.UI.Views
             var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
             var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
 
+            text.EditorAction += OnTextFieldEditorActionListener;
+
             text.FocusChange += (sender, e) => {
                 title.Selected = text.HasFocus;
             };
+        }
+
+
+        private void OnTextFieldEditorActionListener (object sender, TextView.EditorActionEventArgs e)
+        {
+            if (e.ActionId == ImeAction.Done) {
+                TextField.ClearFocus ();
+            }
         }
 
         public EditText TextField

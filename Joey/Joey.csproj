@@ -259,26 +259,14 @@
     <AndroidResource Include="Resources\drawable-mdpi\LogoBig.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\LogoBig.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\LogoBig.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\ButtonGreenDefault.9.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\ButtonGreenDisabled.9.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\ButtonGreenPressed.9.png" />
     <AndroidResource Include="Resources\drawable\ButtonGreen.xml" />
     <AndroidResource Include="Resources\drawable-mdpi\RadioButtonTabDefault.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\RadioButtonTabPressed.9.png" />
     <AndroidResource Include="Resources\color\ButtonGreenTextColor.xml" />
-    <AndroidResource Include="Resources\drawable-hdpi\ButtonGreenDefault.9.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\ButtonGreenDisabled.9.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\ButtonGreenPressed.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\RadioButtonTabDefault.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\RadioButtonTabPressed.9.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\ButtonGreenDefault.9.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\ButtonGreenDisabled.9.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\ButtonGreenPressed.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\RadioButtonTabDefault.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\RadioButtonTabPressed.9.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonGreenDefault.9.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonGreenDisabled.9.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\ButtonGreenPressed.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\RadioButtonTabDefault.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\RadioButtonTabPressed.9.png" />
     <AndroidResource Include="Resources\layout\TagListItem.axml" />
@@ -669,6 +657,9 @@
     <AndroidResource Include="Resources\layout\EditGroupedTimeEntryFragment.axml" />
     <AndroidResource Include="Resources\layout\EditGroupedTimeEntryItem.axml" />
     <AndroidResource Include="Resources\layout\TogglTagsField.axml" />
+    <AndroidResource Include="Resources\drawable\ButtonGreenDefault.xml" />
+    <AndroidResource Include="Resources\drawable\ButtonGreenDisabled.xml" />
+    <AndroidResource Include="Resources\drawable\ButtonGreenPressed.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

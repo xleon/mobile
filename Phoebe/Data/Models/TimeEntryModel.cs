@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
@@ -37,6 +39,18 @@ namespace Toggl.Phoebe.Data.Models
         public static readonly string PropertyProject = GetPropertyName (m => m.Project);
         public static readonly string PropertyTask = GetPropertyName (m => m.Task);
 
+        public static async Task<ITimeEntryModel> BuildModel (IList<string> ids)
+        {
+            var c = ids.Count;
+            if (c == 1) {
+                return new TimeEntryModel (ids.First ());
+            }
+            if (c > 1) {
+                return await TimeEntryGroup.BuildTimeEntryGroupAsync (ids);
+            }
+            return null;
+        }
+
         public TimeEntryModel ()
         {
         }
@@ -49,7 +63,7 @@ namespace Toggl.Phoebe.Data.Models
         {
         }
 
-        public TimeEntryModel (string id) : base(new Guid(id)) 
+        public TimeEntryModel (string id) : base (new Guid (id))
         {
         }
 

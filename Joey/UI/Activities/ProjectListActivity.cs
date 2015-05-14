@@ -35,11 +35,7 @@ namespace Toggl.Joey.UI.Activities
             }
 
             var args = extras.GetStringArrayList (ExtraTimeEntriesIds);
-            if (args.Count > 1) {
-                model = await TimeEntryGroup.BuildTimeEntryGroupAsync (args);
-            } else {
-                model = new TimeEntryModel (args.First ());
-            }
+            model = await TimeEntryModel.BuildModel (args);
 
             if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Finish ();

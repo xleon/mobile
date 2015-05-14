@@ -87,7 +87,7 @@ namespace Toggl.Phoebe.Data.Views
             RemoveEntry (data);
         }
 
-        public async void ConfirmItemRemove ()
+        public void ConfirmItemRemove ()
         {
             if (removedItem != null) {
                 DeleteTimeEntry (removedItem);

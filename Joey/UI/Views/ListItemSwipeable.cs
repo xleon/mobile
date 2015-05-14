@@ -89,6 +89,10 @@ namespace Toggl.Joey.UI.Views
 
         private void OnScrollAnimationEnd (object sender, EventArgs e)
         {
+            if (WindowVisibility == ViewStates.Gone) {
+                InitSwipeDeleteBg ();
+                return;
+            }
             if (SwipeAnimationEnd != null) {
                 SwipeAnimationEnd (this, EventArgs.Empty);
             }

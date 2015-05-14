@@ -87,13 +87,17 @@ namespace Toggl.Phoebe.Data.Views
             RemoveEntry (data);
         }
 
-        public async void ConfirmItemRemove ()
+        public void ConfirmItemRemove ()
         {
             if (removedItem != null) {
-                var model = new TimeEntryModel (removedItem);
-                await model.DeleteAsync();
+                DeleteTimeEntry (removedItem);
                 removedItem = null;
             }
+        }
+
+        private async void DeleteTimeEntry(TimeEntryData data) {
+            var model = new TimeEntryModel (removedItem);
+            await model.DeleteAsync ();
         }
 
         private void OnDataChange (DataChangeMessage msg)

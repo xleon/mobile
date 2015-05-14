@@ -14,7 +14,6 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
-using Toggl.Phoebe.Data.Extensions;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
@@ -47,11 +46,11 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        private List<Guid> Guids
+        private IList<string> Guids
         {
             get {
                 if (Arguments != null) {
-                    return Arguments.GetStringArrayList (TimeEntriesIdsArgument).TransformToGuids ();
+                    return Arguments.GetStringArrayList (TimeEntriesIdsArgument);
                 }
                 return null;
             }
@@ -62,7 +61,11 @@ namespace Toggl.Joey.UI.Fragments
             base.OnCreate (state);
 
             if (model == null) {
-                model = await TimeEntryFactory.Get (Guids);
+                if (Guids.Count > 1) {
+                    model = new TimeEntryGroup (Guids);
+                } else {
+                    model = new TimeEntryModel (Guids.First ());
+                }
             }
 
             model.PropertyChanged += OnModelPropertyChanged;

@@ -8,7 +8,6 @@ using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Extensions;
 using XPlatUtils;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -35,7 +34,12 @@ namespace Toggl.Joey.UI.Activities
                 return;
             }
 
-            model = await TimeEntryFactory.Get (extras.GetStringArrayList (ExtraTimeEntriesIds).TransformToGuids ());
+            var args = extras.GetStringArrayList (ExtraTimeEntriesIds);
+            if (args.Count > 1) {
+                model = new TimeEntryGroup (args);
+            } else {
+                model = new TimeEntryModel (args.First ());
+            }
 
             if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 Finish ();

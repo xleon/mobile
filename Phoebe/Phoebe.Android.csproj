@@ -59,8 +59,6 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
-    <Compile Include="Data\Utils\TimeEntryFactory.cs" />
-    <Compile Include="Data\Extensions\ListExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />
@@ -68,7 +66,6 @@
     <Folder Include="Contrib\XPlatUtils\" />
     <Folder Include="Data\Reports\" />
     <Folder Include="Assemblies\" />
-    <Folder Include="Data\Extensions\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

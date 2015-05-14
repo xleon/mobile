@@ -22,26 +22,26 @@ namespace Toggl.Phoebe.Data.Utils
         private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
         private TimeEntryModel model;
 
-
         public TimeEntryGroup (TimeEntryData data)
         {
             Add (data);
         }
 
-        public TimeEntryGroup ()
+        public TimeEntryGroup(IList<string> ids)
         {
-
+            LoadData (ids);
         }
 
-        public async Task BuildFromGuids (List<Guid> guids)
+        private async Task LoadData(IList<string> ids)
         {
-            var first = new TimeEntryModel (guids.First ());
-            await first.LoadAsync ();
-            Add (first.Data);
-            foreach (var guid in guids.Skip (1)) {
-                var mdl = new TimeEntryModel (guid);
-                await mdl.LoadAsync ();
-                UpdateIfPossible (mdl.Data);
+            var store = ServiceContainer.Resolve<IDataStore> ();
+
+            foreach (string guidString in ids) {
+                var guid = new Guid (guidString);
+                var rows = await store.Table<TimeEntryData> ()
+                    .QueryAsync (r => r.Id == guid && r.DeletedAt == null);
+                var data = rows.FirstOrDefault ();
+                Add (data);
             }
         }
 

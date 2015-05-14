@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
@@ -7,7 +8,6 @@ using Android.Text;
 using Android.Widget;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Extensions;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -65,7 +65,12 @@ namespace Toggl.Joey.UI.Fragments
             workspace = new WorkspaceModel (WorkspaceId);
             await workspace.LoadAsync ();
             if (model == null) {
-                model = await TimeEntryFactory.Get (Arguments.GetStringArrayList (TimeEntriesIdsArgument).TransformToGuids ());
+                var arrayList = Arguments.GetStringArrayList (TimeEntriesIdsArgument);
+                if (arrayList.Count > 1) {
+                    model = new TimeEntryGroup (arrayList);
+                } else {
+                    model = new TimeEntryModel (arrayList.First());
+                }
             }
 
             ValidateTagName ();

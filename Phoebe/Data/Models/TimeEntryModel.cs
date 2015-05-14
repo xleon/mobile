@@ -49,6 +49,10 @@ namespace Toggl.Phoebe.Data.Models
         {
         }
 
+        public TimeEntryModel (string id) : base(new Guid(id)) 
+        {
+        }
+
         protected override TimeEntryData Duplicate (TimeEntryData data)
         {
             return new TimeEntryData (data);

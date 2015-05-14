@@ -27,22 +27,31 @@ namespace Toggl.Phoebe.Data.Utils
             Add (data);
         }
 
-        public TimeEntryGroup(IList<string> ids)
+        private TimeEntryGroup(IList<TimeEntryData> dataList)
         {
-            LoadData (ids);
+            Add (dataList);
         }
 
-        private async Task LoadData(IList<string> ids)
+        public static async Task<TimeEntryGroup> BuildTimeEntryGroupAsync(IList<string> ids)
+        {
+            var tmpData = await GetData (ids);
+            return new TimeEntryGroup (tmpData);
+        }
+                
+        private static async Task<IList<TimeEntryData>> GetData(IList<string> ids)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
+            var list = new List<TimeEntryData> (ids.Count);
 
             foreach (string guidString in ids) {
                 var guid = new Guid (guidString);
                 var rows = await store.Table<TimeEntryData> ()
                     .QueryAsync (r => r.Id == guid && r.DeletedAt == null);
                 var data = rows.FirstOrDefault ();
-                Add (data);
+                list.Add (data);
             }
+
+            return list;
         }
 
         public TimeEntryModel Model
@@ -115,6 +124,11 @@ namespace Toggl.Phoebe.Data.Utils
             get {
                 return dataObjects.GroupBy (e => e.StartTime.Date).Count();
             }
+        }
+
+        public void Add (IList<TimeEntryData> dataList)
+        {
+            dataObjects.AddRange (dataList);
         }
 
         public void Add (TimeEntryData data)

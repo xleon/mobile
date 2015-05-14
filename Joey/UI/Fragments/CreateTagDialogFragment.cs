@@ -67,7 +67,7 @@ namespace Toggl.Joey.UI.Fragments
             if (model == null) {
                 var arrayList = Arguments.GetStringArrayList (TimeEntriesIdsArgument);
                 if (arrayList.Count > 1) {
-                    model = new TimeEntryGroup (arrayList);
+                    model = await TimeEntryGroup.BuildTimeEntryGroupAsync (arrayList);
                 } else {
                     model = new TimeEntryModel (arrayList.First());
                 }

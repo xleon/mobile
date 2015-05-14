@@ -62,7 +62,7 @@ namespace Toggl.Joey.UI.Fragments
 
             if (model == null) {
                 if (Guids.Count > 1) {
-                    model = new TimeEntryGroup (Guids);
+                    model = await TimeEntryGroup.BuildTimeEntryGroupAsync (Guids);
                 } else {
                     model = new TimeEntryModel (Guids.First ());
                 }

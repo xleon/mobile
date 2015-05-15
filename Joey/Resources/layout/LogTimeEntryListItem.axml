@@ -12,7 +12,7 @@
         android:layout_width="4dp"
         android:layout_height="72dp"
         android:background="@drawable/ColoredSideShape"
-        android:layout_marginRight="28dp" />
+        android:layout_marginRight="12dp" />
     <TextView
         android:id="@+id/ClientTextView"
         style="@style/TimeEntryListItem.Text.Client"
@@ -68,7 +68,7 @@
         android:layout_width="wrap_content"
         android:layout_height="72dp"
         android:paddingLeft="0dp"
-        android:paddingRight="14dp"
+        android:paddingRight="-14dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:id="@+id/ContinueImageButton"

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -8,7 +9,6 @@ using Android.Views;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
@@ -23,8 +23,7 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
-        private ProjectListAdapter adapter;
-        private ITimeEntryModel model;
+        private ProjectListView viewModel;
 
         public ProjectListFragment ()
         {
@@ -32,11 +31,6 @@ namespace Toggl.Joey.UI.Fragments
 
         public ProjectListFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
-        }
-
-        public ProjectListFragment (ITimeEntryModel model)
-        {
-            this.model = model;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -48,9 +42,6 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new ShadowItemDecoration<ProjectListAdapter.ProjectListItemHolder, ProjectListAdapter.NoProjectListItemHolder> (Activity, true));
 
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-            adapter = new ProjectListAdapter (recyclerView);
-            recyclerView.SetAdapter (adapter);
-            adapter.HandleProjectSelection = OnItemSelected;
 
             var activity = (AppCompatActivity)Activity;
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
@@ -64,9 +55,31 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        {
+            base.OnViewCreated (view, savedInstanceState);
+
+            var extras = Intent.Extras;
+            IList<string> extraGuids;
+
+            if (extras == null) {
+                Activity.Finish ();
+            } else {
+                extraGuids = extras.GetStringArrayList (ProjectListActivity.ExtraTimeEntriesIds);
+            }
+
+            viewModel = (extraGuids.Count > 0) ? new ProjectListView (extraGuids) : new ProjectListView (extraGuids[0]);
+            viewModel.Init ();
+
+            // set list adapter
+            var adapter = new ProjectListAdapter (recyclerView, viewModel);
+            recyclerView.SetAdapter (adapter);
+            adapter.HandleProjectSelection = OnItemSelected;
+        }
+
         private async void OnItemSelected (object m)
         {
-            if (model != null) {
+            if (viewModel.Model != null) {
                 ProjectModel project = null;
                 WorkspaceModel workspace = null;
 
@@ -92,9 +105,7 @@ namespace Toggl.Joey.UI.Fragments
                 }
 
                 if (project != null || workspace != null) {
-                    model.Workspace = workspace;
-                    model.Project = project;
-                    await model.SaveAsync ();
+                    await viewModel.SaveModelAsync (project, workspace);
                     Activity.Finish ();
                 }
             }
@@ -115,14 +126,11 @@ namespace Toggl.Joey.UI.Fragments
                 if (resultCode == (int)Result.Ok) {
                     Guid extraGuid;
                     Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraWorkspaceId), out extraGuid);
-                    model.Workspace = new WorkspaceModel (extraGuid);
                     Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraProjectId), out extraGuid);
-                    model.Project = new ProjectModel (extraGuid);
 
-                    await model.SaveAsync ();
+                    await viewModel.SaveModelAsync (new ProjectModel (extraGuid), new WorkspaceModel (extraGuid));
                     Activity.Finish();
                 }
-
             }
         }
 
@@ -135,7 +143,7 @@ namespace Toggl.Joey.UI.Fragments
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                adapter.Dispose ();
+                viewModel.Dispose ();
             }
             base.Dispose (disposing);
         }

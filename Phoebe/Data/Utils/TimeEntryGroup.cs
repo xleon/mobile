@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
@@ -27,30 +26,23 @@ namespace Toggl.Phoebe.Data.Utils
             Add (data);
         }
 
-        private TimeEntryGroup (IList<TimeEntryData> dataList)
+        public TimeEntryGroup (IList<TimeEntryData> dataList)
         {
             Add (dataList);
         }
 
-        public static async Task<TimeEntryGroup> BuildTimeEntryGroupAsync (IList<string> ids)
-        {
-            var tmpData = await GetData (ids);
-            return new TimeEntryGroup (tmpData);
-        }
-
-        private static async Task<IList<TimeEntryData>> GetData (IList<string> ids)
+        public static async Task<IList<TimeEntryData>> GetTimeEntryDataList (IList<string> ids)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var list = new List<TimeEntryData> (ids.Count);
 
-            foreach (string guidString in ids) {
-                var guid = new Guid (guidString);
+            foreach (var stringGuid in ids) {
+                var guid = new Guid (stringGuid);
                 var rows = await store.Table<TimeEntryData> ()
                            .QueryAsync (r => r.Id == guid && r.DeletedAt == null);
                 var data = rows.FirstOrDefault ();
                 list.Add (data);
             }
-
             return list;
         }
 

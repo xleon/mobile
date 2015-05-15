@@ -164,7 +164,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                WorkspaceTextView.Text = (model.Name ?? String.Empty).ToUpper ();
+                WorkspaceTextView.Text = (model.Name ?? String.Empty);
             }
         }
 

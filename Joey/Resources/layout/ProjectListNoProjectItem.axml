@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="56dp"
-    android:orientation="horizontal">
+    android:background="@android:color/white"
+    android:gravity="center_vertical">
+    <View
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:id="@+id/ColorView"
+        android:background="@android:color/black" />
     <TextView
         android:id="@+id/ProjectTextView"
         android:text="@string/ProjectsNoProject"
@@ -12,9 +19,8 @@
         android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textSize="@dimen/normalTextSize"
         android:gravity="center_vertical"
-        android:layout_marginLeft="@dimen/leftMargin"
+        android:layout_marginLeft="32dp"
         android:singleLine="true"
         android:ellipsize="none" />
 </LinearLayout>

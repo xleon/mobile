@@ -10,21 +10,21 @@ using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.Views
+namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class TagListView : IView<ITimeEntryModel>
+    public class TagListViewModel : IViewModel<ITimeEntryModel>
     {
         private ITimeEntryModel model;
         private WorkspaceTagsView tagList;
         private bool isLoading;
         private Guid workspaceId;
-        private IList<string> timeEntryIds;
+        private IList<TimeEntryData> timeEntryList;
         private List<TimeEntryTagData> modelTags;
 
-        public TagListView (string workspaceId, IList<string> timeEntryIds)
+        public TagListViewModel (Guid workspaceId, IList<TimeEntryData> timeEntryList)
         {
-            this.timeEntryIds = timeEntryIds;
-            this.workspaceId = new Guid (workspaceId);
+            this.timeEntryList = timeEntryList;
+            this.workspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";
         }
 
@@ -36,11 +36,10 @@ namespace Toggl.Phoebe.Data.Views
             tagList = new WorkspaceTagsView (workspaceId);
 
             // Create model.
-            if (timeEntryIds.Count > 0) {
-                var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (timeEntryIds);
+            if (timeEntryList.Count > 0) {
                 Model = new TimeEntryGroup (timeEntryList);
             } else {
-                Model = new TimeEntryModel (new Guid (timeEntryIds[0]));
+                Model = new TimeEntryModel (timeEntryList [0]);
             }
 
             // Create tag list.
@@ -64,7 +63,7 @@ namespace Toggl.Phoebe.Data.Views
             // Create new tag relations:
             var createTasks = selectedTags
                               .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-            .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ())
+            .Select (data => new TimeEntryTagModel () { TimeEntry = new TimeEntryModel (model.Data), Tag = new TagModel (data) } .SaveAsync ())
             .ToList();
 
             await Task.WhenAll (deleteTasks.Concat (createTasks));
@@ -83,14 +82,21 @@ namespace Toggl.Phoebe.Data.Views
             model = null;
         }
 
-        public IList<string> TimeEntryIds
+        public IList<TimeEntryData> TimeEntryList
         {
             get {
-                return timeEntryIds;
+                return timeEntryList;
             }
         }
 
-        public IDataView<TagData> TagList
+        public Guid WorkspaceId
+        {
+            get {
+                return workspaceId;
+            }
+        }
+
+        public IDataView<TagData> TagListDataView
         {
             get {
                 return tagList;
@@ -162,6 +168,7 @@ namespace Toggl.Phoebe.Data.Views
             if (args.PropertyName == TimeEntryModel.PropertyWorkspace) {
                 if (tagList != null) {
                     tagList.WorkspaceId = model.Workspace.Id;
+                    workspaceId = model.Workspace.Id;
                 }
             }
         }

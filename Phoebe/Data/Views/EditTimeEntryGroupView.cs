@@ -4,11 +4,12 @@ using System.Linq;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class EditTimeEntryGroupView : IView<TimeEntryGroup>
+    public class EditTimeEntryGroupView : IViewModel<TimeEntryGroup>
     {
         private TimeEntryGroup model;
         private bool isLoading;

@@ -7,7 +7,8 @@ using Android.OS;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -16,7 +17,7 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entries_ids";
         private static readonly string WorkspaceArgument = "com.toggl.timer.workspace_id";
         private ListView listView;
-        private TagListView viewModel;
+        private TagListViewModel viewModel;
 
         public ChooseTimeEntryTagsDialogFragment ()
         {
@@ -26,13 +27,15 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ChooseTimeEntryTagsDialogFragment (Guid workspaceId, IList<string> timeEntryIds)
+        public ChooseTimeEntryTagsDialogFragment (Guid workspaceId, IList<TimeEntryData> timeEntryList)
         {
             var args = new Bundle ();
             args.PutString (WorkspaceArgument, workspaceId.ToString ());
-            args.PutStringArrayList (TimeEntriesIdsArgument, timeEntryIds);
-
+            var ids = timeEntryList.Select ( t => t.Id.ToString ()).ToList ();
+            args.PutStringArrayList (TimeEntriesIdsArgument, ids);
             Arguments = args;
+
+            viewModel = new TagListViewModel (workspaceId, timeEntryList);
         }
 
         private IList<string> TimeEntryIds
@@ -54,10 +57,12 @@ namespace Toggl.Joey.UI.Fragments
             base.OnCreate (savedInstanceState);
 
             if (viewModel == null) {
-                viewModel = new TagListView (WorkspaceId, TimeEntryIds);
-                viewModel.OnIsLoadingChanged += OnModelLoaded;
-                viewModel.Init ();
+                var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (TimeEntryIds);
+                viewModel = new TagListViewModel (new Guid (WorkspaceId), timeEntryList);
             }
+
+            viewModel.OnIsLoadingChanged += OnModelLoaded;
+            viewModel.Init ();
 
             if (viewModel.Model.Workspace == null || viewModel.Model.Workspace.Id == Guid.Empty) {
                 Dismiss ();
@@ -68,17 +73,17 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (!viewModel.IsLoading) {
                 if (viewModel != null) {
-                    viewModel.TagList.Updated += OnWorkspaceTagsUpdated;
+                    viewModel.TagListDataView.Updated += OnWorkspaceTagsUpdated;
                     SelectInitialTags ();
                 } else {
-                    Activity.Finish ();
+                    Dismiss ();
                 }
             }
         }
 
         private void OnWorkspaceTagsUpdated (object sender, EventArgs args)
         {
-            if (!viewModel.TagList.IsLoading) {
+            if (!viewModel.TagListDataView.IsLoading) {
                 SelectInitialTags ();
             }
         }
@@ -86,7 +91,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroy ()
         {
             if (viewModel != null) {
-                viewModel.TagList.Updated -= OnWorkspaceTagsUpdated;
+                viewModel.TagListDataView.Updated -= OnWorkspaceTagsUpdated;
                 viewModel.Dispose ();
                 viewModel = null;
             }
@@ -104,7 +109,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var dia = new AlertDialog.Builder (Activity)
             .SetTitle (Resource.String.ChooseTimeEntryTagsDialogTitle)
-            .SetAdapter (new TagsAdapter (viewModel.TagList), (IDialogInterfaceOnClickListener)null)
+            .SetAdapter (new TagsAdapter (viewModel.TagListDataView), (IDialogInterfaceOnClickListener)null)
             .SetNegativeButton (Resource.String.ChooseTimeEntryTagsDialogCancel, OnCancelButtonClicked)
             .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, OnOkButtonClicked)
             .Create ();
@@ -123,7 +128,7 @@ namespace Toggl.Joey.UI.Fragments
                 // Commit changes the user has made thusfar
                 viewModel.SaveChanges (SelectedTags);
 
-                new CreateTagDialogFragment (WorkspaceId, viewModel.Model).Show (FragmentManager, "new_tag_dialog");
+                new CreateTagDialogFragment (viewModel.WorkspaceId, viewModel.TimeEntryList).Show (FragmentManager, "new_tag_dialog");
                 Dismiss ();
             }
         }
@@ -150,7 +155,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             get {
                 var selected = listView.CheckedItemPositions;
-                return viewModel.TagList.Data
+                return viewModel.TagListDataView.Data
                        .Where ((tag, idx) => selected.Get (idx, false))
                        .ToList ();
             }

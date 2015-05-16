@@ -7,12 +7,13 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class ProjectListView : ICollectionDataView<object>, IView<ITimeEntryModel>, IDisposable
+    public class ProjectListView : ICollectionDataView<object>, IViewModel<ITimeEntryModel>, IDisposable
     {
         private readonly List<Workspace> workspaceWrappers = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();

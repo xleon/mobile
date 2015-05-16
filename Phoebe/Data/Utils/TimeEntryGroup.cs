@@ -221,6 +221,15 @@ namespace Toggl.Phoebe.Data.Utils
             }));
         }
 
+        public void Touch ()
+        {
+            for (int i = 0; i < dataObjects.Count; i++) {
+                var newData = new TimeEntryData (dataObjects[i]);;
+                Model<TimeEntryData>.MarkDirty (newData);
+                dataObjects[i] = newData;
+            }
+        }
+
         public async Task Apply (Func<TimeEntryModel, Task> action)
         {
             foreach (var obj in dataObjects) {

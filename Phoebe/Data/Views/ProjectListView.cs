@@ -22,14 +22,8 @@ namespace Toggl.Phoebe.Data.Views
         private bool hasMore;
         private ITimeEntryModel model;
         private IList<string> timeEntryIds;
-        private string timeEntryId;
 
         public bool SortByClients { private set; get; }
-
-        public ProjectListView (string timeEntryId)
-        {
-            this.timeEntryId = timeEntryId;
-        }
 
         public ProjectListView (IList<string> timeEntryIds)
         {
@@ -71,11 +65,11 @@ namespace Toggl.Phoebe.Data.Views
 
             Reload ();
 
-            if (string.IsNullOrEmpty (timeEntryId)) {
+            if (timeEntryIds.Count > 0) {
                 var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (timeEntryIds);
                 Model = new TimeEntryGroup (timeEntryList);
             } else {
-                Model = new TimeEntryModel (new Guid (timeEntryId));
+                Model = new TimeEntryModel (new Guid (timeEntryIds[0]));
             }
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";

@@ -479,13 +479,6 @@ namespace Toggl.Phoebe.Data.Models
             });
         }
 
-        public async Task Apply (Func<TimeEntryModel, Task> action)
-        {
-            await action (this);
-            Touch ();
-            await SaveAsync ();
-        }
-
         /// <summary>
         /// Stores the draft time entry in model store as a finished time entry.
         /// </summary>

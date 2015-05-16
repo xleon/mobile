@@ -67,6 +67,7 @@
     <Folder Include="Contrib\XPlatUtils\" />
     <Folder Include="Data\Reports\" />
     <Folder Include="Assemblies\" />
+    <Folder Include="Data\ViewModels\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

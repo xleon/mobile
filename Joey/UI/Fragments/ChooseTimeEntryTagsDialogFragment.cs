@@ -15,7 +15,7 @@ namespace Toggl.Joey.UI.Fragments
     public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
         private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entries_ids";
-        private static readonly string WorkspaceArgument = "com.toggl.timer.workspace_id";
+        private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
         private ListView listView;
         private TagListViewModel viewModel;
 
@@ -29,9 +29,10 @@ namespace Toggl.Joey.UI.Fragments
 
         public ChooseTimeEntryTagsDialogFragment (Guid workspaceId, IList<TimeEntryData> timeEntryList)
         {
-            var args = new Bundle ();
-            args.PutString (WorkspaceArgument, workspaceId.ToString ());
             var ids = timeEntryList.Select ( t => t.Id.ToString ()).ToList ();
+
+            var args = new Bundle ();
+            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
             args.PutStringArrayList (TimeEntriesIdsArgument, ids);
             Arguments = args;
 
@@ -45,10 +46,14 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private string WorkspaceId
+        private Guid WorkspaceId
         {
             get {
-                return Arguments != null ? Arguments.GetString (WorkspaceArgument) : string.Empty;
+                var id = Guid.Empty;
+                if (Arguments != null) {
+                    Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                }
+                return id;
             }
         }
 
@@ -58,7 +63,7 @@ namespace Toggl.Joey.UI.Fragments
 
             if (viewModel == null) {
                 var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (TimeEntryIds);
-                viewModel = new TagListViewModel (new Guid (WorkspaceId), timeEntryList);
+                viewModel = new TagListViewModel (WorkspaceId, timeEntryList);
             }
 
             viewModel.OnIsLoadingChanged += OnModelLoaded;
@@ -72,12 +77,10 @@ namespace Toggl.Joey.UI.Fragments
         private void OnModelLoaded (object sender, EventArgs e)
         {
             if (!viewModel.IsLoading) {
-                if (viewModel != null) {
-                    viewModel.TagListDataView.Updated += OnWorkspaceTagsUpdated;
-                    SelectInitialTags ();
-                } else {
-                    Dismiss ();
-                }
+                viewModel.TagListDataView.Updated += OnWorkspaceTagsUpdated;
+                SelectInitialTags ();
+            } else {
+                Dismiss ();
             }
         }
 
@@ -91,6 +94,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroy ()
         {
             if (viewModel != null) {
+                viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.TagListDataView.Updated -= OnWorkspaceTagsUpdated;
                 viewModel.Dispose ();
                 viewModel = null;
@@ -128,7 +132,7 @@ namespace Toggl.Joey.UI.Fragments
                 // Commit changes the user has made thusfar
                 viewModel.SaveChanges (SelectedTags);
 
-                new CreateTagDialogFragment (viewModel.WorkspaceId, viewModel.TimeEntryList).Show (FragmentManager, "new_tag_dialog");
+                new CreateTagDialogFragment (WorkspaceId, viewModel.TimeEntryList).Show (FragmentManager, "new_tag_dialog");
                 Dismiss ();
             }
         }

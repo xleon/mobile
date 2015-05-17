@@ -36,9 +36,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             tagList = new WorkspaceTagsView (workspaceId);
 
             // Create model.
-            if (timeEntryList.Count > 0) {
+            if (timeEntryList.Count > 1) {
                 Model = new TimeEntryGroup (timeEntryList);
-            } else {
+            } else if (timeEntryList.Count == 1) {
                 Model = new TimeEntryModel (timeEntryList [0]);
             }
 

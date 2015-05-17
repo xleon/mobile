@@ -392,6 +392,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
+        public TTask LoadAsync ()
+        {
+            return Model.LoadAsync ();
+        }
+
         public string GetFormattedDuration ()
         {
             TimeSpan duration = Duration;

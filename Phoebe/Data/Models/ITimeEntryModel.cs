@@ -49,6 +49,8 @@ namespace Toggl.Phoebe.Data.Models
         Task MapMinorsFromModel (TimeEntryModel model);
 
         void Touch ();
+
+        Task LoadAsync ();
     }
 }
 

@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Text;
 using Android.Widget;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -20,20 +19,23 @@ namespace Toggl.Joey.UI.Fragments
 
         private EditText nameEditText;
         private Button positiveButton;
-        private ITimeEntryModel model;
-        private WorkspaceModel workspace;
+        private CreateTagViewModel viewModel;
 
-        public CreateTagDialogFragment (Guid workspaceId, ITimeEntryModel model)
+        public CreateTagDialogFragment ()
         {
-            this.model = model;
+        }
+
+        public CreateTagDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
+        public CreateTagDialogFragment (Guid workspaceId, IList<TimeEntryData> timeEntryList)
+        {
+            var ids = timeEntryList.Select ( t => t.Id.ToString ()).ToList ();
 
             var args = new Bundle ();
-
             args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
-            if (model != null) {
-                args.PutStringArrayList (TimeEntriesIdsArgument, model.Ids);
-            }
-
+            args.PutStringArrayList (TimeEntriesIdsArgument, ids);
             Arguments = args;
         }
 
@@ -48,26 +50,36 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public CreateTagDialogFragment ()
+        private IList<string> TimeEntryIds
         {
-        }
-
-        public CreateTagDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
-        {
+            get {
+                return Arguments != null ? Arguments.GetStringArrayList (TimeEntriesIdsArgument) : new List<string>();
+            }
         }
 
         public override async void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
 
-            workspace = new WorkspaceModel (WorkspaceId);
-            await workspace.LoadAsync ();
-            if (model == null) {
-                var arrayList = Arguments.GetStringArrayList (TimeEntriesIdsArgument);
-                model = await TimeEntryModel.BuildModel (arrayList);
+            if (viewModel == null) {
+                var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (TimeEntryIds);
+                viewModel = new CreateTagViewModel (WorkspaceId, timeEntryList);
             }
+            viewModel.OnIsLoadingChanged += OnModelLoaded;
+            viewModel.Init ();
 
             ValidateTagName ();
+        }
+
+        private void OnModelLoaded (object sender, EventArgs e)
+        {
+            if (!viewModel.IsLoading) {
+                if (viewModel != null) {
+                    positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
+                } else {
+                    Dismiss ();
+                }
+            }
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -87,10 +99,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnStart ()
         {
             base.OnStart ();
-            positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
             ValidateTagName ();
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
         private void OnNameEditTextTextChanged (object sender, TextChangedEventArgs e)
@@ -100,58 +109,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            if (model.Workspace == null) {
-                return;
-            }
-
-            await AssignTag (workspace, nameEditText.Text, model);
+            await viewModel.AssignTag (nameEditText.Text);
         }
 
-        private static async Task AssignTag (WorkspaceModel workspace, string tagName, ITimeEntryModel model)
-        {
-            var store = ServiceContainer.Resolve<IDataStore>();
-            var existing = await store.Table<TagData>()
-                           .QueryAsync (r => r.WorkspaceId == workspace.Id && r.Name == tagName)
-                           .ConfigureAwait (false);
-
-            var checkRelation = true;
-            TagModel tag;
-            if (existing.Count > 0) {
-                tag = new TagModel (existing [0]);
-            } else {
-                tag = new TagModel () {
-                    Name = tagName,
-                    Workspace = workspace,
-                };
-                await tag.SaveAsync ().ConfigureAwait (false);
-
-                checkRelation = false;
-            }
-
-            if (model != null) {
-                await model.Apply (async delegate (TimeEntryModel m) {
-                    var assignTag = true;
-
-                    if (checkRelation) {
-                        // Check if the relation already exists before adding it
-                        var relations = await store.Table<TimeEntryTagData> ()
-                                        .CountAsync (r => r.TimeEntryId == m.Id && r.TagId == tag.Id && r.DeletedAt == null)
-                                        .ConfigureAwait (false);
-                        if (relations < 1) {
-                            assignTag = false;
-                        }
-                    }
-
-                    if (assignTag) {
-                        var relationModel = new TimeEntryTagModel () {
-                            TimeEntry = m,
-                            Tag = tag,
-                        };
-                        await relationModel.SaveAsync ();
-                    }
-                });
-            }
-        }
 
         private void ValidateTagName ()
         {
@@ -167,6 +127,16 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             positiveButton.Enabled = valid;
+        }
+
+        public override void OnDestroy ()
+        {
+            if (viewModel != null) {
+                viewModel.Dispose ();
+                viewModel = null;
+            }
+
+            base.OnDestroy ();
         }
     }
 }

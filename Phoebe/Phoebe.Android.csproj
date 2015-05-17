@@ -60,6 +60,7 @@
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
     <Compile Include="Data\ViewModels\TagListViewModel.cs" />
+    <Compile Include="Data\ViewModels\CreateTagViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

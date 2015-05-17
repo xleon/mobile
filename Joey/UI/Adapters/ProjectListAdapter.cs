@@ -11,8 +11,6 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
-using Android.App;
-using Toggl.Joey.UI.Activities;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -27,7 +25,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public Action<object> HandleProjectSelection { get; set; }
 
-        public ProjectListAdapter (RecyclerView owner, ProjectListView collectionView) : base (owner, collectionView)
+        public ProjectListAdapter (RecyclerView owner, WorkspaceProjectsView collectionView) : base (owner, collectionView)
         {
         }
 
@@ -69,9 +67,9 @@ namespace Toggl.Joey.UI.Adapters
 
             if (viewType == ViewTypeWorkspace) {
                 var workspaceHolder = (WorkspaceListItemHolder)holder;
-                workspaceHolder.Bind ((ProjectListView.Workspace) GetEntry (position));
+                workspaceHolder.Bind ((WorkspaceProjectsView.Workspace) GetEntry (position));
             } else {
-                var data = (ProjectListView.Project) GetEntry (position);
+                var data = (WorkspaceProjectsView.Project) GetEntry (position);
                 if (viewType == ViewTypeProject) {
                     var projectHolder = (ProjectListItemHolder)holder;
                     projectHolder.Bind (data);
@@ -92,8 +90,8 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             var obj = GetEntry (position);
-            if (obj is ProjectListView.Project) {
-                var p = (ProjectListView.Project)obj;
+            if (obj is WorkspaceProjectsView.Project) {
+                var p = (WorkspaceProjectsView.Project)obj;
                 if (p.IsNewProject) {
                     return ViewTypeNewProject;
                 }
@@ -114,7 +112,7 @@ namespace Toggl.Joey.UI.Adapters
 
         #region View holders
 
-        public class WorkspaceListItemHolder : RecycledModelViewHolder<ProjectListView.Workspace>
+        public class WorkspaceListItemHolder : RecycledModelViewHolder<WorkspaceProjectsView.Workspace>
         {
             private WorkspaceModel model;
 
@@ -168,7 +166,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        public class ProjectListItemHolder : RecycledModelViewHolder<ProjectListView.Project>, View.IOnClickListener
+        public class ProjectListItemHolder : RecycledModelViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private ProjectModel model;
             private readonly ProjectListAdapter adapter;
@@ -277,8 +275,8 @@ namespace Toggl.Joey.UI.Adapters
                 adapter.HandleProjectSelection (DataSource);
             }
         }
-
-        public class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
+            
+        public class NoProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private readonly ProjectListAdapter adapter;
 
@@ -302,7 +300,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class NewProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
+        private class NewProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private readonly ProjectListAdapter adapter;
 

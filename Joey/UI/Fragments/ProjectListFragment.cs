@@ -9,7 +9,9 @@ using Android.Views;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
@@ -23,7 +25,7 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
-        private ProjectListView viewModel;
+        private ProjectListViewModel viewModel;
 
         public ProjectListFragment ()
         {
@@ -31,6 +33,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public ProjectListFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public ProjectListFragment (IList<TimeEntryData> timeEntryList)
+        {
+            viewModel = new ProjectListViewModel (timeEntryList);
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -55,59 +62,64 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            var extras = Intent.Extras;
-            IList<string> extraGuids;
-
-            if (extras == null) {
-                Activity.Finish ();
-            } else {
-                extraGuids = extras.GetStringArrayList (ProjectListActivity.ExtraTimeEntriesIds);
+            if (viewModel == null) {
+                var timeEntryList = await ProjectListActivity.GetIntentTimeEntryData (Activity.Intent);
+                if (timeEntryList.Count == 0) {
+                    Activity.Finish ();
+                    return;
+                }
+                viewModel = new ProjectListViewModel (timeEntryList);
             }
 
-            viewModel = (extraGuids.Count > 0) ? new ProjectListView (extraGuids) : new ProjectListView (extraGuids[0]);
+            viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.Init ();
+        }
 
-            // set list adapter
-            var adapter = new ProjectListAdapter (recyclerView, viewModel);
-            recyclerView.SetAdapter (adapter);
-            adapter.HandleProjectSelection = OnItemSelected;
+        private void OnModelLoaded (object sender, EventArgs e)
+        {
+            if (!viewModel.IsLoading && viewModel.Model != null) {
+                // set list adapter
+                var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
+                adapter.HandleProjectSelection = OnItemSelected;
+                recyclerView.SetAdapter (adapter);
+            } else {
+                Activity.Finish ();
+            }
         }
 
         private async void OnItemSelected (object m)
         {
-            if (viewModel.Model != null) {
-                ProjectModel project = null;
-                WorkspaceModel workspace = null;
+            ProjectModel project = null;
+            WorkspaceModel workspace = null;
 
-                if (m is ProjectListView.Project) {
-                    var wrap = (ProjectListView.Project)m;
-                    if (wrap.IsNoProject) {
-                        workspace = new WorkspaceModel (wrap.WorkspaceId);
-                    } else if (wrap.IsNewProject) {
-                        var data = wrap.Data;
-                        var ws = new WorkspaceModel (data.WorkspaceId);
+            if (m is WorkspaceProjectsView.Project) {
+                var wrap = (WorkspaceProjectsView.Project)m;
+                if (wrap.IsNoProject) {
+                    workspace = new WorkspaceModel (wrap.WorkspaceId);
+                } else if (wrap.IsNewProject) {
+                    var data = wrap.Data;
+                    var ws = new WorkspaceModel (data.WorkspaceId);
 
-                        // Show create project activity instead
-                        var intent = new Intent (Activity, typeof (NewProjectActivity));
-                        intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, ws.Id.ToString());
-                        StartActivityForResult (intent, ProjectCreatedRequestCode);
-                    } else {
-                        project = (ProjectModel)wrap.Data;
-                        workspace = project.Workspace;
-                    }
-                } else if (m is ProjectAndTaskView.Workspace) {
-                    var wrap = (ProjectAndTaskView.Workspace)m;
-                    workspace = (WorkspaceModel)wrap.Data;
+                    // Show create project activity instead
+                    var intent = new Intent (Activity, typeof (NewProjectActivity));
+                    intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, ws.Id.ToString());
+                    StartActivityForResult (intent, ProjectCreatedRequestCode);
+                } else {
+                    project = (ProjectModel)wrap.Data;
+                    workspace = project.Workspace;
                 }
+            } else if (m is ProjectAndTaskView.Workspace) {
+                var wrap = (ProjectAndTaskView.Workspace)m;
+                workspace = (WorkspaceModel)wrap.Data;
+            }
 
-                if (project != null || workspace != null) {
-                    await viewModel.SaveModelAsync (project, workspace);
-                    Activity.Finish ();
-                }
+            if (project != null || workspace != null) {
+                await viewModel.SaveModelAsync (project, workspace);
+                Activity.Finish ();
             }
         }
 
@@ -143,6 +155,7 @@ namespace Toggl.Joey.UI.Fragments
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
+                viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.Dispose ();
             }
             base.Dispose (disposing);

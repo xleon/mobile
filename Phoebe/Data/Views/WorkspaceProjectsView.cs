@@ -3,17 +3,14 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class ProjectListView : ICollectionDataView<object>, IViewModel<ITimeEntryModel>, IDisposable
+    public class WorkspaceProjectsView : ICollectionDataView<object>, IDisposable
     {
         private readonly List<Workspace> workspaceWrappers = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
@@ -21,14 +18,17 @@ namespace Toggl.Phoebe.Data.Views
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private bool isLoading;
         private bool hasMore;
-        private ITimeEntryModel model;
-        private IList<string> timeEntryIds;
 
         public bool SortByClients { private set; get; }
 
-        public ProjectListView (IList<string> timeEntryIds)
+        public WorkspaceProjectsView (bool sortByClients = false)
         {
-            this.timeEntryIds = timeEntryIds;
+            SortByClients = sortByClients;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+
+            Reload ();
         }
 
         public void Dispose ()
@@ -38,49 +38,6 @@ namespace Toggl.Phoebe.Data.Views
                 bus.Unsubscribe (subscriptionDataChange);
                 subscriptionDataChange = null;
             }
-        }
-
-        public event EventHandler OnModelChanged;
-
-        public ITimeEntryModel Model
-        {
-            get {
-                return model;
-            }
-
-            private set {
-
-                model = value;
-
-                if (OnModelChanged != null) {
-                    OnModelChanged (this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public async void Init ()
-        {
-            SortByClients = false;
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
-
-            Reload ();
-
-            if (timeEntryIds.Count > 0) {
-                var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (timeEntryIds);
-                Model = new TimeEntryGroup (timeEntryList);
-            } else {
-                Model = new TimeEntryModel (new Guid (timeEntryIds[0]));
-            }
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
-        }
-
-        public async Task SaveModelAsync (ProjectModel project, WorkspaceModel workspace)
-        {
-            model.Project = project;
-            model.Workspace = workspace;
-            await model.SaveAsync ();
         }
 
         private void OnDataChange (DataChangeMessage msg)

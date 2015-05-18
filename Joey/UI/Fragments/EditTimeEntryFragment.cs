@@ -3,6 +3,9 @@ using Android.OS;
 using Toggl.Joey.UI.Activities;
 using Toggl.Phoebe.Data.Views;
 using Fragment = Android.Support.V4.App.Fragment;
+using System.Collections.Generic;
+using Toggl.Phoebe.Data.DataObjects;
+using Android.Content;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -14,11 +17,16 @@ namespace Toggl.Joey.UI.Fragments
 
         public EditTimeEntryFragment ()
         {
-            Arguments = new Bundle ();
         }
 
         public EditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public EditTimeEntryFragment (TimeEntryData timeEntry)
+        {
+            Arguments = new Bundle ();
+            Arguments.PutString (TimeEntryIdArgument, timeEntry.Id.ToString ());
         }
 
         private Guid TimeEntryId
@@ -67,6 +75,17 @@ namespace Toggl.Joey.UI.Fragments
         private void OnModelChanged (object sender, EventArgs e)
         {
             TimeEntry = viewModel.Model;
+        }
+
+        protected override void OnProjectEditTextClick (object sender, EventArgs e)
+        {
+            if (TimeEntry == null) {
+                return;
+            }
+
+            var intent = new Intent (Activity, typeof (ProjectListActivity));
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, new List<string> {TimeEntryId.ToString ()});
+            StartActivity (intent);
         }
 
         public override void OnDestroy ()

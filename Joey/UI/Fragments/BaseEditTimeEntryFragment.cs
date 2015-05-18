@@ -391,25 +391,15 @@ namespace Toggl.Joey.UI.Fragments
             e.Handled = false;
         }
 
-        private void OnProjectEditTextClick (object sender, EventArgs e)
+        protected abstract void OnProjectEditTextClick (object sender, EventArgs e);
+
+
+        protected void OnTagsEditTextClick (object sender, EventArgs e)
         {
             if (TimeEntry == null) {
                 return;
             }
-
-            var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, model.Ids);
-
-            StartActivity (intent);
-        }
-
-        private void OnTagsEditTextClick (object sender, EventArgs e)
-        {
-            if (TimeEntry == null) {
-                return;
-            }
-
-            new ChooseTimeEntryTagsDialogFragment (TimeEntry).Show (FragmentManager, "tags_dialog");
+            new ChooseTimeEntryTagsDialogFragment (TimeEntry.Workspace.Id, TimeEntry).Show (FragmentManager, "tags_dialog");
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)

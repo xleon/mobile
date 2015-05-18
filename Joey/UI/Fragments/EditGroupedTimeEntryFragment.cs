@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Android.Content;
 using Android.OS;
 using Android.Support.V4.App;
@@ -8,7 +10,7 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Data.ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -18,13 +20,11 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class EditGroupedTimeEntryFragment : Fragment
     {
-        // logic objects
-        private EditTimeEntryGroupView viewModel;
+        private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entries_ids";
 
-        // visual objects
+        private EditTimeEntryViewModel viewModel;
         private RecyclerView recyclerView;
         private SimpleEditTimeEntryFragment editTimeEntryFragment;
-
         private RecyclerView.Adapter adapter;
 
         public EditGroupedTimeEntryFragment ()
@@ -33,6 +33,24 @@ namespace Toggl.Joey.UI.Fragments
 
         public EditGroupedTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public EditGroupedTimeEntryFragment (IList<TimeEntryData> timeEntryList)
+        {
+            var ids = timeEntryList.Select ( t => t.Id.ToString ()).ToList ();
+
+            var args = new Bundle ();
+            args.PutStringArrayList (TimeEntriesIdsArgument, ids);
+            Arguments = args;
+
+            viewModel = new EditTimeEntryViewModel (timeEntryList);
+        }
+
+        private IList<string> TimeEntryIds
+        {
+            get {
+                return Arguments != null ? Arguments.GetStringArrayList (TimeEntriesIdsArgument) : new List<string>();
+            }
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -58,7 +76,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             var extraGuids = extras.GetStringArray (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids);
-            viewModel = new EditTimeEntryGroupView (extraGuids);
+            viewModel = new EditTimeEntryViewModel (extraGuids);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.Init ();
         }
@@ -88,6 +106,17 @@ namespace Toggl.Joey.UI.Fragments
                     Activity.Finish ();
                 }
             }
+        }
+
+        protected override void OnProjectEditTextClick (object sender, EventArgs e)
+        {
+            if (viewModel.Model == null) {
+                return;
+            }
+
+            var intent = new Intent (Activity, typeof (ProjectListActivity));
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, TimeEntryIds);
+            StartActivity (intent);
         }
 
         private void HandleTimeEntryClick (TimeEntryData timeEntry)

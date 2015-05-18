@@ -18,11 +18,6 @@
 	        <include
 	            android:id="@+id/MainToolbar"
 	            layout="@layout/MainToolbar" />
-	        <View
-	       		android:id="@+id/MainToolbarShadow"
-	            android:layout_width="match_parent"
-	            android:layout_height="3dp"
-	            android:background="@drawable/DropShadowVertical" />
         </LinearLayout>
     </FrameLayout>
 <!-- The navigation drawer -->

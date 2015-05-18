@@ -658,13 +658,10 @@
     <AndroidResource Include="Resources\layout\EditGroupedTimeEntryFragment.axml" />
     <AndroidResource Include="Resources\layout\EditGroupedTimeEntryItem.axml" />
     <AndroidResource Include="Resources\layout\TogglTagsField.axml" />
-<<<<<<< HEAD
     <AndroidResource Include="Resources\drawable\ButtonGreenDefault.xml" />
     <AndroidResource Include="Resources\drawable\ButtonGreenDisabled.xml" />
     <AndroidResource Include="Resources\drawable\ButtonGreenPressed.xml" />
-=======
-    <AndroidResource Include="Resources\drawable\DropShadowNew.xml" />
->>>>>>> toolbar shadow, generic recycler view shadow decorator, make format
+    <AndroidResource Include="Resources\drawable\DropShadowVertical.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

@@ -21,7 +21,7 @@ namespace Toggl.Joey.UI.Views
 
         public ShadowItemDecoration (Context context)
         {
-            shadow = context.Resources.GetDrawable (Resource.Drawable.DropShadowNew);
+            shadow = context.Resources.GetDrawable (Resource.Drawable.DropShadowVertical);
         }
 
         public override void OnDraw (Canvas c, RecyclerView parent, RecyclerView.State state)
@@ -36,11 +36,11 @@ namespace Toggl.Joey.UI.Views
                 var child = parent.GetChildAt (i);
                 var childNext = parent.GetChildAt (i+1);
 
-                if (!ShouldDraw (child) || childNext.GetType () == typeof (T)) {
+                if (!ShouldDraw (child) || childNext is T) {
                     continue;
                 }
 
-                if (child.GetType () == typeof (T)) {
+                if (child is T) {
                     var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams> ();
                     var top = child.Bottom + layoutParams.BottomMargin;
 

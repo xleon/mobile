@@ -43,7 +43,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public Task SaveAsync ()
         {
-            model.SaveAsync ();
+            return model.SaveAsync ();
         }
 
         public event EventHandler OnIsLoadingChanged;

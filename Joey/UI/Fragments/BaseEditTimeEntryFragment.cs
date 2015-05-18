@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -8,6 +9,7 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
@@ -31,6 +33,10 @@ namespace Toggl.Joey.UI.Fragments
         private bool canRebind;
         private bool descriptionChanging;
         private bool autoCommitScheduled;
+
+        public event EventHandler OnPressedProjectSelector;
+
+        public event EventHandler OnPressedTagSelector;
 
         protected BaseEditTimeEntryFragment ()
         {
@@ -391,15 +397,34 @@ namespace Toggl.Joey.UI.Fragments
             e.Handled = false;
         }
 
-        protected abstract void OnProjectEditTextClick (object sender, EventArgs e);
-
-
-        protected void OnTagsEditTextClick (object sender, EventArgs e)
+        private void OnProjectEditTextClick (object sender, EventArgs e)
         {
+            if (OnPressedProjectSelector != null) {
+                OnPressedProjectSelector.Invoke (sender, e);
+            }
+            /*
             if (TimeEntry == null) {
                 return;
             }
-            new ChooseTimeEntryTagsDialogFragment (TimeEntry.Workspace.Id, TimeEntry).Show (FragmentManager, "tags_dialog");
+
+            var intent = new Intent (Activity, typeof (ProjectListActivity));
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, model.Ids);
+            StartActivity (intent);
+            */
+        }
+
+        private void OnTagsEditTextClick (object sender, EventArgs e)
+        {
+            if (OnPressedTagSelector != null) {
+                OnPressedTagSelector.Invoke (sender, e);
+            }
+
+            /*
+            if (TimeEntry == null) {
+                return;
+            }
+            new ChooseTimeEntryTagsDialogFragment (TimeEntry).Show (FragmentManager, "tags_dialog");
+            */
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)

@@ -66,17 +66,15 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnStart ()
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
-            base.OnStart ();
+            base.OnViewCreated (view, savedInstanceState);
 
-            var extras = Activity.Intent.Extras;
-            if (extras == null) {
-                Activity.Finish ();
+            if (viewModel == null) {
+                var timeEntryList = await EditTimeEntryActivity.GetIntentTimeEntryData (Activity.Intent);
+                viewModel = new EditTimeEntryViewModel (timeEntryList);
             }
 
-            var extraGuids = extras.GetStringArray (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids);
-            viewModel = new EditTimeEntryViewModel (extraGuids);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.Init ();
         }
@@ -97,6 +95,8 @@ namespace Toggl.Joey.UI.Fragments
             if (!viewModel.IsLoading) {
                 if (viewModel != null) {
                     editTimeEntryFragment.TimeEntry = viewModel.Model;
+                    editTimeEntryFragment.OnPressedProjectSelector += OnProjectSelected;
+                    editTimeEntryFragment.OnPressedTagSelector += OnTagSelected;
 
                     // Set adapter
                     adapter = new GroupedEditAdapter (viewModel.Model);
@@ -108,7 +108,14 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        protected override void OnProjectEditTextClick (object sender, EventArgs e)
+        private void HandleTimeEntryClick (TimeEntryData timeEntry)
+        {
+            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+            intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, timeEntry.Id.ToString());
+            StartActivity (intent);
+        }
+
+        private void OnProjectSelected (object sender, EventArgs e)
         {
             if (viewModel.Model == null) {
                 return;
@@ -119,13 +126,13 @@ namespace Toggl.Joey.UI.Fragments
             StartActivity (intent);
         }
 
-        private void HandleTimeEntryClick (TimeEntryData timeEntry)
+        private void OnTagSelected (object sender, EventArgs e)
         {
-            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-            intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, timeEntry.Id.ToString());
-            StartActivity (intent);
+            if (viewModel.Model == null) {
+                return;
+            }
+            new ChooseTimeEntryTagsDialogFragment (viewModel.Model.Workspace.Id, viewModel.Model.TimeEntryList).Show (FragmentManager, "tags_dialog");
         }
-
     }
 }
 

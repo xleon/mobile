@@ -66,6 +66,8 @@ namespace Toggl.Joey.UI.Fragments
                 if (viewModel != null) {
                     TimeEntry = viewModel.Model;
                     viewModel.OnModelChanged += OnModelChanged;
+                    OnPressedProjectSelector += OnProjectSelected;
+                    OnPressedTagSelector += OnTagSelected;
                 } else {
                     Activity.Finish ();
                 }
@@ -77,15 +79,23 @@ namespace Toggl.Joey.UI.Fragments
             TimeEntry = viewModel.Model;
         }
 
-        protected override void OnProjectEditTextClick (object sender, EventArgs e)
+        private void OnProjectSelected (object sender, EventArgs e)
         {
             if (TimeEntry == null) {
                 return;
             }
 
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, new List<string> {TimeEntryId.ToString ()});
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, new List<string> {TimeEntry.Id.ToString ()});
             StartActivity (intent);
+        }
+
+        private void OnTagSelected (object sender, EventArgs e)
+        {
+            if (TimeEntry == null) {
+                return;
+            }
+            new ChooseTimeEntryTagsDialogFragment (TimeEntry.Workspace.Id, new List<TimeEntryData> {TimeEntry.Data}).Show (FragmentManager, "tags_dialog");
         }
 
         public override void OnDestroy ()

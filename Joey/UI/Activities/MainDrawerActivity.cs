@@ -267,6 +267,7 @@ namespace Toggl.Joey.UI.Activities
                 SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
                 OpenFragment (trackingFragment.Value);
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.TimerPageId);
+                Timer.HideAction = false;
             }
             SetMenuSelection (drawerAdapter.GetItemPosition (id));
 

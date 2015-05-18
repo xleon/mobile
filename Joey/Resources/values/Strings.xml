@@ -69,7 +69,7 @@
     <string name="TimeTrackingWelcomeTab">WELCOME</string>
     <string name="TimeTrackingRecentTab">RECENT</string>
     <string name="TimeTrackingLogTab">LOG</string>
-    <string name="ProjectsNoProject">Without project</string>
+    <string name="ProjectsNoProject">No project</string>
     <string name="ProjectsNewProject">Create new project</string>
     <string name="ProjectsTasks">TASKS</string>
     <string name="ProjectsTitle">Projects</string>

@@ -11,6 +11,8 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
+using Android.App;
+using Toggl.Joey.UI.Activities;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -162,7 +164,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                WorkspaceTextView.Text = (model.Name ?? String.Empty).ToUpper ();
+                WorkspaceTextView.Text = (model.Name ?? String.Empty);
             }
         }
 
@@ -186,7 +188,7 @@ namespace Toggl.Joey.UI.Adapters
             public ProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
                 this.adapter = adapter;
-                ColorView = root; //root.FindViewById<View> (Resource.Id.ColorView);
+                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
                 TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
@@ -256,6 +258,9 @@ namespace Toggl.Joey.UI.Adapters
 
                 var color = Color.ParseColor (model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);
+                ProjectTextView.SetTextColor (color);
+                ClientTextView.SetTextColor (color);
+
                 ProjectTextView.Text = model.Name;
                 if (model.Client != null) {
                     ClientTextView.Text = model.Client.Name;
@@ -277,22 +282,17 @@ namespace Toggl.Joey.UI.Adapters
         {
             private readonly ProjectListAdapter adapter;
 
-            public View ColorView { get; private set; }
-
             public TextView ProjectTextView { get; private set; }
 
             public NoProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
                 this.adapter = adapter;
-                ColorView = root; //root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
-
                 root.SetOnClickListener (this);
             }
 
             protected override void Rebind ()
             {
-                ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.light_gray));
                 ProjectTextView.SetText (Resource.String.ProjectsNoProject);
             }
 
@@ -310,7 +310,6 @@ namespace Toggl.Joey.UI.Adapters
 
             public NewProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
-                //ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 this.adapter = adapter;
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 root.SetOnClickListener (this);

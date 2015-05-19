@@ -15,13 +15,15 @@ namespace Toggl.Joey.UI.Views
 
     public class ShadowItemDecoration<T> : RecyclerView.ItemDecoration
     {
-        private const int shadowHeight = 14;
+        private const int shadowHeightInDps = 2;
+        private readonly int shadowHeightInPixels;
 
         private readonly Drawable shadow;
 
         public ShadowItemDecoration (Context context)
         {
             shadow = context.Resources.GetDrawable (Resource.Drawable.DropShadowVertical);
+            shadowHeightInPixels = (int)(context.Resources.DisplayMetrics.Density * shadowHeightInDps + 0.5f);
         }
 
         public override void OnDraw (Canvas c, RecyclerView parent, RecyclerView.State state)
@@ -44,9 +46,11 @@ namespace Toggl.Joey.UI.Views
                     var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams> ();
                     var top = child.Bottom + layoutParams.BottomMargin;
 
-                    var bottom = top + shadowHeight;
-                    shadow.SetBounds (parent.PaddingLeft, top, child.Right+child.PaddingRight, bottom);
-                    shadow.Draw (c);
+                    if (shadowHeightInPixels > 0) {
+                        var bottom = top + shadowHeightInPixels;
+                        shadow.SetBounds (parent.PaddingLeft, top, child.Right+child.PaddingRight, bottom);
+                        shadow.Draw (c);
+                    }
                 }
             }
 

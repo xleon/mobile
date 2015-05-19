@@ -7,13 +7,29 @@
     android:background="@color/windowBackground">
 <!-- The main content view -->
     <FrameLayout
-        android:id="@+id/ContentFrameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/windowBackground">
-        <include
-            android:id="@+id/MainToolbar"
-            layout="@layout/MainToolbar" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <include
+                android:id="@+id/MainToolbar"
+                layout="@layout/MainToolbar" />
+            <FrameLayout
+		        android:layout_width="match_parent"
+		        android:layout_height="match_parent">
+	        	<FrameLayout 
+	                android:id="@+id/ContentFrameLayout"
+	                android:layout_width="match_parent"
+	                android:layout_height="match_parent"/>
+	        	<View
+	                android:layout_width="match_parent"
+	                android:layout_height="4dp"
+	                android:background="@drawable/DropShadowVertical" />
+	        </FrameLayout>
+        </LinearLayout>
     </FrameLayout>
 <!-- The navigation drawer -->
     <FrameLayout xmlns:app="http://schemas.android.com/apk/res-auto"

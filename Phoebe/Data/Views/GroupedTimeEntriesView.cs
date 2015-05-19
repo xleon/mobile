@@ -94,7 +94,8 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private async void DeleteTimeGroup (TimeEntryGroup grp) {
+        private async void DeleteTimeGroup (TimeEntryGroup grp)
+        {
             await grp.DeleteAsync ();
         }
 

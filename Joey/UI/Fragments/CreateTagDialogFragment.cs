@@ -111,7 +111,6 @@ namespace Toggl.Joey.UI.Fragments
             await viewModel.AssignTag (nameEditText.Text);
         }
 
-
         private void ValidateTagName ()
         {
             if (positiveButton == null || nameEditText == null) {
@@ -131,8 +130,8 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroy ()
         {
             if (viewModel != null) {
+                viewModel.OnIsLoadingChanged += OnModelLoaded;
                 viewModel.Dispose ();
-                viewModel = null;
             }
 
             base.OnDestroy ();

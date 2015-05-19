@@ -87,11 +87,13 @@ namespace Toggl.Phoebe.Data.ViewModels
                 }
 
                 if (assignTag) {
-                    var relationModel = new TimeEntryTagModel () {
-                        TimeEntry = new TimeEntryModel (model.Data),
-                        Tag = tag,
-                    };
-                    await relationModel.SaveAsync ().ConfigureAwait (false);
+                    foreach (var timeEntryData in timeEntryList) {
+                        var relationModel = new TimeEntryTagModel {
+                            TimeEntry = new TimeEntryModel (timeEntryData),
+                            Tag = tag,
+                        };
+                        await relationModel.SaveAsync ().ConfigureAwait (false);
+                    }
 
                     model.Touch ();
                     await model.SaveAsync ().ConfigureAwait (false);
@@ -101,8 +103,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public void Dispose ()
         {
-            model = null;
-            workspace = null;
+
         }
 
         public event EventHandler OnModelChanged;

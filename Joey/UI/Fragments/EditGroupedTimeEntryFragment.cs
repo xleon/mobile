@@ -25,7 +25,7 @@ namespace Toggl.Joey.UI.Fragments
         private EditTimeEntryViewModel viewModel;
         private RecyclerView recyclerView;
         private SimpleEditTimeEntryFragment editTimeEntryFragment;
-        private RecyclerView.Adapter adapter;
+        private RecyclerView.Adapter listAdapter;
 
         public EditGroupedTimeEntryFragment ()
         {
@@ -82,6 +82,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroyView ()
         {
             if (viewModel != null) {
+                viewModel.OnProjectListChanged -= OnProjectListChanged;
                 viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.Dispose ();
                 viewModel = null;
@@ -96,14 +97,23 @@ namespace Toggl.Joey.UI.Fragments
                     editTimeEntryFragment.TimeEntry = viewModel.Model;
                     editTimeEntryFragment.OnPressedProjectSelector += OnProjectSelected;
                     editTimeEntryFragment.OnPressedTagSelector += OnTagSelected;
+                    viewModel.OnProjectListChanged += OnProjectListChanged;
 
                     // Set adapter
-                    adapter = new GroupedEditAdapter (viewModel.Model);
-                    (adapter as GroupedEditAdapter).HandleTapTimeEntry = HandleTimeEntryClick;
-                    recyclerView.SetAdapter (adapter);
+                    listAdapter = new GroupedEditAdapter (viewModel.Model);
+                    (listAdapter as GroupedEditAdapter).HandleTapTimeEntry = HandleTimeEntryClick;
+                    recyclerView.SetAdapter (listAdapter);
                 } else {
                     Activity.Finish ();
                 }
+            }
+        }
+
+        private void OnProjectListChanged (object sender, EventArgs e)
+        {
+            if (listAdapter != null) {
+                // Refresh adapter
+                listAdapter.NotifyDataSetChanged ();
             }
         }
 

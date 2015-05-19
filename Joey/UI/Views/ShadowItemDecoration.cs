@@ -13,7 +13,7 @@ namespace Toggl.Joey.UI.Views
         Type LastItemTypeToApplyShadow { get; }
     }
 
-    public class ShadowItemDecoration<T> : RecyclerView.ItemDecoration
+    public class ShadowItemDecoration<T, TT> : RecyclerView.ItemDecoration
     {
         private const int shadowHeightInDps = 2;
         private readonly int shadowHeightInPixels;
@@ -44,11 +44,11 @@ namespace Toggl.Joey.UI.Views
                 var childNextType = detectHolder ? GetHolderType (parent, childNext) : childNext.GetType();
 
 
-                if (!ShouldDraw (child) || childNextType == typeof (T)) {
+                if (!ShouldDraw (child) || childNextType == typeof (T) || childNextType == typeof (TT)) {
                     continue;
                 }
 
-                if (childType == typeof (T)) {
+                if (childType == typeof (T) || childType == typeof(TT)) {
                     var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams> ();
                     var top = child.Bottom + layoutParams.BottomMargin;
 

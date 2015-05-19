@@ -278,7 +278,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
+        public class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
         {
             private readonly ProjectListAdapter adapter;
 

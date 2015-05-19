@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -14,20 +13,19 @@ namespace Toggl.Phoebe.Data.Views
         private ActiveTimeEntryManager timeEntryManager;
         private TimeEntryModel model;
         private bool isLoading;
-        private Guid modelId;
+        private TimeEntryData timeEntryData;
 
-        public EditTimeEntryView (Guid modelId, bool isDraft)
+        public EditTimeEntryView (TimeEntryData timeEntryData)
         {
-            this.modelId = modelId;
-            this.isDraft = isDraft;
+            this.timeEntryData = timeEntryData;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
 
         public void Dispose ()
         {
-            if (Model != null) {
-                Model.PropertyChanged -= OnPropertyChange;
-                Model = null;
+            if (model != null) {
+                model.PropertyChanged -= OnPropertyChange;
+                model = null;
             }
         }
 
@@ -80,23 +78,15 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public void Init ()
-        {
-            CreateModel (modelId);
-        }
-
-        private async void CreateModel (Guid id)
+        public async void Init (bool isDraft)
         {
             IsLoading  = true;
 
-            if (!isDraft && id != Guid.Empty) {
-                var store = ServiceContainer.Resolve<IDataStore> ();
-                var rows = await store.Table<TimeEntryData> ()
-                           .QueryAsync (r => r.Id == id && r.DeletedAt == null);
-                var data = rows.FirstOrDefault ();
+            this.isDraft = isDraft;
 
-                if (data != null) {
-                    Model = new TimeEntryModel (data);
+            if (!isDraft) {
+                if (timeEntryData != null) {
+                    Model = new TimeEntryModel (timeEntryData);
                 } else {
                     ResetModel ();
                 }

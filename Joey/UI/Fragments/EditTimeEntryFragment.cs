@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using Android.Content;
 using Android.OS;
+using Android.Views;
 using Toggl.Joey.UI.Activities;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
 using Fragment = Android.Support.V4.App.Fragment;
-using System.Collections.Generic;
-using Toggl.Phoebe.Data.DataObjects;
-using Android.Content;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -27,6 +28,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             Arguments = new Bundle ();
             Arguments.PutString (TimeEntryIdArgument, timeEntry.Id.ToString ());
+            viewModel = new EditTimeEntryView (timeEntry);
         }
 
         private Guid TimeEntryId
@@ -40,7 +42,7 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public override void OnViewCreated (Android.Views.View view, Bundle savedInstanceState)
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
@@ -49,15 +51,19 @@ namespace Toggl.Joey.UI.Fragments
                 useDraft = savedInstanceState.GetBoolean (UseDraftKey, useDraft);
             }
 
-            var extras = Activity.Intent.Extras;
-            if (extras != null) {
-                var extraGuid = extras.GetString (EditTimeEntryActivity.ExtraTimeEntryId);
-                Arguments.PutString (TimeEntryIdArgument, extraGuid);
+            if (viewModel == null) {
+                var timeEntryList = await EditTimeEntryActivity.GetIntentTimeEntryData (Activity.Intent);
+
+                TimeEntryData timeEntry = null;
+                if (timeEntryList.Count > 0) {
+                    timeEntry = timeEntryList[0];
+                }
+
+                viewModel = new EditTimeEntryView (timeEntry);
             }
 
-            viewModel = new EditTimeEntryView (TimeEntryId, useDraft);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.Init ();
+            viewModel.Init (useDraft);
         }
 
         private void OnModelLoaded (object sender, EventArgs e)

@@ -65,10 +65,10 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public IList<string> Ids
+        public IList<string> TimeEntryGuids
         {
             get {
-                return TimeEntryGuids.ToList ();
+                return dataObjects.AsEnumerable ().Select (r => r.Id.ToString ()).ToList ();
             }
         }
 
@@ -76,13 +76,6 @@ namespace Toggl.Phoebe.Data.Utils
         {
             get {
                 return dataObjects;
-            }
-        }
-
-        public string[] TimeEntryGuids
-        {
-            get {
-                return dataObjects.AsEnumerable ().Select (r => r.Id.ToString ()).ToArray ();
             }
         }
 

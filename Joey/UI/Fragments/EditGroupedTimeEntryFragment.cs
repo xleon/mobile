@@ -111,7 +111,7 @@ namespace Toggl.Joey.UI.Fragments
         private void HandleTimeEntryClick (TimeEntryData timeEntry)
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-            intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, timeEntry.Id.ToString());
+            intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {timeEntry.Id.ToString()});
             StartActivity (intent);
         }
 

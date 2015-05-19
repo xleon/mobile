@@ -28,8 +28,9 @@ namespace Toggl.Joey.UI.Activities
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 
             var timeEntryList = await GetIntentTimeEntryData (Intent);
-            if (timeEntryList.Count == 0) {
-                Finish ();
+            TimeEntryData timeEntry = null;
+            if (timeEntryList.Count > 0) {
+                timeEntry = timeEntryList[0];
             }
 
             var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);
@@ -39,7 +40,7 @@ namespace Toggl.Joey.UI.Activities
                 .Commit ();
             else
                 FragmentManager.BeginTransaction ()
-                .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (timeEntryList[0]))
+                .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (timeEntry))
                 .Commit ();
         }
 

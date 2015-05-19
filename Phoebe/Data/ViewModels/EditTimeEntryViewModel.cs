@@ -46,7 +46,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             return model.SaveAsync ();
         }
 
-        public event EventHandler OnIsLoadingChanged;
+
 
         public TimeEntryGroup Model
         {
@@ -54,6 +54,8 @@ namespace Toggl.Phoebe.Data.ViewModels
                 return model;
             }
         }
+
+        public event EventHandler OnIsLoadingChanged;
 
         public bool IsLoading
         {

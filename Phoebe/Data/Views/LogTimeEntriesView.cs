@@ -100,12 +100,6 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private async void DeleteTimeEntry (TimeEntryData data)
-        {
-            var model = new TimeEntryModel (removedItem);
-            await model.DeleteAsync ();
-        }
-
         private void OnDataChange (DataChangeMessage msg)
         {
             var entry = msg.Data as TimeEntryData;

@@ -232,7 +232,7 @@ namespace Toggl.Joey.UI.Fragments
                 }
                 isUndoShowed = value;
 
-                var targetTranY = isUndoShowed ? 0.0f : 100.0f;
+                var targetTranY = isUndoShowed ? 0.0f : 160.0f;
                 ValueAnimator animator = ValueAnimator.OfFloat (undoBar.TranslationY, targetTranY);
                 animator.SetDuration (500);
                 animator.Update += (sender, e) => {

@@ -77,6 +77,9 @@ namespace Toggl.Phoebe.Analytics
             case SettingName.GroupedTimeEntries:
                 label = "GroupedTimeEntries";
                 break;
+            case SettingName.ShowNotification:
+                label = "ShowNotification";
+                break;
             default:
                 #if DEBUG
                 throw new ArgumentException ("Invalid value", "settingName");

@@ -22,6 +22,13 @@ namespace Toggl.Joey.UI.Adapters
             listItems = new List<IListItem> () {
                 new HeaderListItem (Resource.String.SettingsGeneralHeader),
                     new CheckboxListItem (
+                        Resource.String.SettingsGeneralShowNotificationTitle,
+                        Resource.String.SettingsGeneralShowNotificationDesc,
+                        SettingsStore.PropertyShowNotification,
+                        s => s.ShowNotification,
+                        (s, v) => s.ShowNotification = v
+                    ),
+                    new CheckboxListItem (
                         Resource.String.SettingsGeneralNotifTitle,
                         Resource.String.SettingsGeneralNotifDesc,
                         SettingsStore.PropertyIdleNotification,
@@ -49,6 +56,7 @@ namespace Toggl.Joey.UI.Adapters
                         s => s.GroupedTimeEntries,
                         (s, v) => s.GroupedTimeEntries = v
                     ),
+
             };
         }
 

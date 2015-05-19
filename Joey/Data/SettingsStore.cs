@@ -32,6 +32,7 @@ namespace Toggl.Joey.Data
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
         private const string ReadContinueDialogKey = "readContinueDialog";
         private const string ReportsCurrentItemKey = "reportsCurrentItem";
+        private const string JoeyShowNotificationKey = "disableNotificationKey";
 
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
@@ -306,6 +307,18 @@ namespace Toggl.Joey.Data
                 SetInt (PhoebeGroupedEntriesKey, value ? 1 : 0);
                 OnSettingChanged (PropertyGroupedTimeEntries);
                 ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.GroupedTimeEntries);
+            }
+        }
+
+        public static readonly string PropertyShowNotification = GetPropertyName (s => s.ShowNotification);
+
+        public bool ShowNotification
+        {
+            get { return (GetInt (JoeyShowNotificationKey) ?? 1) == 1; }
+            set {
+                SetInt (JoeyShowNotificationKey, value ? 1 : 0);
+                OnSettingChanged (PropertyShowNotification);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.ShowNotification);
             }
         }
     }

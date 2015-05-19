@@ -23,8 +23,7 @@
             android:paddingRight="32dp"
             android:paddingLeft="32dp"
             android:layout_marginTop="20dp">
-            <LinearLayout
-                android:orientation="horizontal"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
@@ -32,8 +31,6 @@
                 android:id="@+id/linearLayout5">
                 <LinearLayout
                     android:orientation="horizontal"
-                    android:minWidth="25px"
-                    android:minHeight="25px"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:id="@+id/linearLayout2">
@@ -62,20 +59,23 @@
                         android:drawableRight="@drawable/IcSelectArrowSmallDown"
                         android:drawablePadding="3dp" />
                 </LinearLayout>
+                <View
+                    android:id="@+id/CenterMark"
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true" />
                 <LinearLayout
                     android:orientation="horizontal"
-                    android:minWidth="25px"
-                    android:minHeight="25px"
                     android:id="@+id/linearLayout3"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:paddingLeft="20dp">
+                    android:layout_toRightOf="@id/CenterMark">
                     <TextView
                         android:text="End"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:id="@+id/textView2"
+                        android:id="@+id/StopTimeEditLabel"
                         android:textSize="16sp"
                         android:textColor="@color/material_gray_transparent" />
                     <EditText
@@ -93,11 +93,13 @@
                         android:drawableRight="@drawable/IcSelectArrowSmallDown"
                         android:drawablePadding="3dp" />
                 </LinearLayout>
-            </LinearLayout>
-            <!-- Dummy item to prevent AutoCompleteTextView from receiving focus -->
-			<LinearLayout
-			    android:focusable="true" android:focusableInTouchMode="true"
-			    android:layout_width="0px" android:layout_height="0px"/>
+            </RelativeLayout>
+        <!-- Dummy item to prevent AutoCompleteTextView from receiving focus -->
+            <LinearLayout
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:layout_width="0px"
+                android:layout_height="0px" />
             <Toggl.Joey.UI.Views.TogglField
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

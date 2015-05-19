@@ -206,7 +206,9 @@ namespace Toggl.Joey.UI.Fragments
                 StopTimeEditText.Text = Time.Now.ToDeviceTimeString ();
                 if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
                     StopTimeEditText.Visibility = ViewStates.Invisible;
+                    StopTimeEditLabel.Visibility = ViewStates.Invisible;
                 } else {
+                    StopTimeEditLabel.Visibility = ViewStates.Visible;
                     StopTimeEditText.Visibility = ViewStates.Visible;
                 }
             }
@@ -255,6 +257,8 @@ namespace Toggl.Joey.UI.Fragments
 
         protected EditText StopTimeEditText { get; private set; }
 
+        protected TextView StopTimeEditLabel { get; private set; }
+
         protected EditText DescriptionEditText { get; private set; }
 
         protected EditText ProjectEditText { get; private set; }
@@ -292,6 +296,7 @@ namespace Toggl.Joey.UI.Fragments
 
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
+            StopTimeEditLabel = view.FindViewById<TextView> (Resource.Id.StopTimeEditLabel);
 
             DescriptionBit = view.FindViewById<TogglField> (Resource.Id.Description)
                              .DestroyAssistView().DestroyArrow()

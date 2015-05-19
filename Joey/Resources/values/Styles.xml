@@ -11,6 +11,7 @@
         <item name="colorAccent">@color/windowBackground</item>
         <item name="android:listViewStyle">@style/Theme.Toggl.ListView</item>
         <item name="android:listChoiceIndicatorMultiple">@drawable/androidbtncheckhololight</item>
+        <item name="toolbarNavigationButtonStyle">@style/ToolbarNavigation</item>
     </style>
     <style name="Theme.Toggl.Login" parent="Theme.Toggl.App">
         <item name="android:windowBackground">@android:color/white</item>
@@ -27,6 +28,13 @@
         <item name="android:scrollbarStyle">outsideOverlay</item>
         <item name="android:paddingTop">6dp</item>
         <item name="android:paddingBottom">6dp</item>
+    </style>
+
+    <style name="ToolbarNavigation" parent="@style/Widget.AppCompat.Toolbar.Button.Navigation">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:scaleType">centerInside</item>
     </style>
 
     <style name="RadioButtonTab">

@@ -139,6 +139,13 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
+            if (position > DataView.Count) {
+                // TODO: investigate why we are in this place
+                // Not updated DataView.Count?
+                // Wrong position?
+                return ViewTypeLoaderPlaceholder;
+            }
+
             if (position == DataView.Count) {
                 return ViewTypeLoaderPlaceholder;
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -8,8 +9,9 @@ using Android.Views;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
@@ -20,13 +22,10 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ProjectListFragment : Fragment
     {
-        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
-        private ProjectListAdapter adapter;
-        private TimeEntryModel model;
-        private TimeEntryGroup group;
+        private ProjectListViewModel viewModel;
 
         public ProjectListFragment ()
         {
@@ -36,14 +35,9 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ProjectListFragment (TimeEntryModel model)
+        public ProjectListFragment (IList<TimeEntryData> timeEntryList)
         {
-            this.model = model;
-        }
-
-        public ProjectListFragment (TimeEntryGroup group)
-        {
-            this.group = group;
+            viewModel = new ProjectListViewModel (timeEntryList);
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -55,9 +49,6 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new ShadowItemDecoration<ProjectListAdapter.ProjectListItemHolder, ProjectListAdapter.NoProjectListItemHolder> (Activity, true));
 
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-            adapter = new ProjectListAdapter (recyclerView);
-            recyclerView.SetAdapter (adapter);
-            adapter.HandleProjectSelection = OnItemSelected;
 
             var activity = (AppCompatActivity)Activity;
             var toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
@@ -71,48 +62,66 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        private async void OnItemSelected (object m)
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
-            if (model != null || group != null) {
-                ProjectModel project = null;
-                WorkspaceModel workspace = null;
+            base.OnViewCreated (view, savedInstanceState);
 
-                if (m is ProjectListView.Project) {
-                    var wrap = (ProjectListView.Project)m;
-                    if (wrap.IsNoProject) {
-                        workspace = new WorkspaceModel (wrap.WorkspaceId);
-                    } else if (wrap.IsNewProject) {
-                        var data = wrap.Data;
-                        var ws = new WorkspaceModel (data.WorkspaceId);
-
-                        // Show create project activity instead
-                        var intent = new Intent (Activity, typeof (NewProjectActivity));
-                        intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, ws.Id.ToString());
-                        StartActivityForResult (intent, ProjectCreatedRequestCode);
-                    } else {
-                        project = (ProjectModel)wrap.Data;
-                        workspace = project.Workspace;
-                    }
-                } else if (m is ProjectAndTaskView.Workspace) {
-                    var wrap = (ProjectAndTaskView.Workspace)m;
-                    workspace = (WorkspaceModel)wrap.Data;
+            if (viewModel == null) {
+                var timeEntryList = await ProjectListActivity.GetIntentTimeEntryData (Activity.Intent);
+                if (timeEntryList.Count == 0) {
+                    Activity.Finish ();
+                    return;
                 }
+                viewModel = new ProjectListViewModel (timeEntryList);
+            }
 
-                if (project != null || workspace != null) {
-                    if (group != null) {
-                        foreach (var data in group.TimeEntryList) {
-                            var dataModel = (TimeEntryModel)data;
-                            dataModel.Workspace = workspace;
-                            dataModel.Project = project;
-                            await dataModel.SaveAsync ();
-                        }
-                    } else if (model != null) {
-                        model.Workspace = workspace;
-                        model.Project = project;
-                        await model.SaveAsync ();
-                    }
+            viewModel.OnIsLoadingChanged += OnModelLoaded;
+            viewModel.Init ();
+        }
+
+        private void OnModelLoaded (object sender, EventArgs e)
+        {
+            if (!viewModel.IsLoading) {
+                if (viewModel.Model != null) {
+                    // set list adapter
+                    var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
+                    adapter.HandleProjectSelection = OnItemSelected;
+                    recyclerView.SetAdapter (adapter);
+                } else {
                     Activity.Finish ();
                 }
+            }
+        }
+
+        private async void OnItemSelected (object m)
+        {
+            ProjectModel project = null;
+            WorkspaceModel workspace = null;
+
+            if (m is WorkspaceProjectsView.Project) {
+                var wrap = (WorkspaceProjectsView.Project)m;
+                if (wrap.IsNoProject) {
+                    workspace = new WorkspaceModel (wrap.WorkspaceId);
+                } else if (wrap.IsNewProject) {
+                    var data = wrap.Data;
+                    var ws = new WorkspaceModel (data.WorkspaceId);
+
+                    // Show create project activity instead
+                    var intent = new Intent (Activity, typeof (NewProjectActivity));
+                    intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, ws.Id.ToString());
+                    StartActivityForResult (intent, ProjectCreatedRequestCode);
+                } else {
+                    project = (ProjectModel)wrap.Data;
+                    workspace = project.Workspace;
+                }
+            } else if (m is ProjectAndTaskView.Workspace) {
+                var wrap = (ProjectAndTaskView.Workspace)m;
+                workspace = (WorkspaceModel)wrap.Data;
+            }
+
+            if (project != null || workspace != null) {
+                await viewModel.SaveModelAsync (project, workspace);
+                Activity.Finish ();
             }
         }
 
@@ -129,29 +138,30 @@ namespace Toggl.Joey.UI.Fragments
             base.OnActivityResult (requestCode, resultCode, data);
             if (requestCode == ProjectCreatedRequestCode) {
                 if (resultCode == (int)Result.Ok) {
+
                     Guid extraGuid;
                     Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraWorkspaceId), out extraGuid);
-                    model.Workspace = new WorkspaceModel (extraGuid);
+                    var workspace = new WorkspaceModel (extraGuid);
                     Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraProjectId), out extraGuid);
-                    model.Project = new ProjectModel (extraGuid);
+                    var project = new ProjectModel (extraGuid);
 
-                    await model.SaveAsync ();
+                    await viewModel.SaveModelAsync (project, workspace);
                     Activity.Finish();
                 }
-
             }
         }
 
-        public override void OnDestroy ()
+        public override void OnDestroyView ()
         {
-            base.OnDestroy ();
             Dispose (true);
+            base.OnDestroyView ();
         }
 
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                adapter.Dispose ();
+                viewModel.OnIsLoadingChanged -= OnModelLoaded;
+                viewModel.Dispose ();
             }
             base.Dispose (disposing);
         }

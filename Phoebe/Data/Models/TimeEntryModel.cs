@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
@@ -46,6 +47,10 @@ namespace Toggl.Phoebe.Data.Models
         }
 
         public TimeEntryModel (Guid id) : base (id)
+        {
+        }
+
+        public TimeEntryModel (string id) : base (new Guid (id))
         {
         }
 
@@ -103,6 +108,8 @@ namespace Toggl.Phoebe.Data.Models
         {
             return String.IsNullOrEmpty (s) ? String.Empty : s;
         }
+
+        public IList<string> Ids { get { return new List<string> () { Id.ToString () }; } }
 
         public TimeEntryState State
         {

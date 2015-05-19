@@ -10,7 +10,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class ProjectListView : ICollectionDataView<object>, IDisposable
+    public class WorkspaceProjectsView : ICollectionDataView<object>, IDisposable
     {
         private readonly List<Workspace> workspaceWrappers = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public bool SortByClients { private set; get; }
 
-        public ProjectListView (bool sortByClients = false)
+        public WorkspaceProjectsView (bool sortByClients = false)
         {
             SortByClients = sortByClients;
 

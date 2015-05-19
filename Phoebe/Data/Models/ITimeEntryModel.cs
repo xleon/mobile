@@ -47,6 +47,10 @@ namespace Toggl.Phoebe.Data.Models
         Task MapTagsFromModel (TimeEntryModel model);
 
         Task MapMinorsFromModel (TimeEntryModel model);
+
+        void Touch ();
+
+        Task LoadAsync ();
     }
 }
 

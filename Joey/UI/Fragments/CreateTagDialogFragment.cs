@@ -1,36 +1,25 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Text;
 using Android.Widget;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class CreateTagDialogFragment : BaseDialogFragment
     {
         private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
-        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
+        private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entry_ids";
+
         private EditText nameEditText;
         private Button positiveButton;
-
-        public CreateTagDialogFragment (Guid workspaceId, TimeEntryModel timeEntry)
-        {
-            var args = new Bundle ();
-
-            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
-            if (timeEntry != null) {
-                args.PutString (TimeEntryIdArgument, timeEntry.Id.ToString ());
-            }
-
-            Arguments = args;
-        }
+        private CreateTagViewModel viewModel;
 
         public CreateTagDialogFragment ()
         {
@@ -38,6 +27,16 @@ namespace Toggl.Joey.UI.Fragments
 
         public CreateTagDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public CreateTagDialogFragment (Guid workspaceId, IList<TimeEntryData> timeEntryList)
+        {
+            var ids = timeEntryList.Select ( t => t.Id.ToString ()).ToList ();
+
+            var args = new Bundle ();
+            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
+            args.PutStringArrayList (TimeEntriesIdsArgument, ids);
+            Arguments = args;
         }
 
         private Guid WorkspaceId
@@ -51,41 +50,34 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private Guid TimeEntryId
+        private IList<string> TimeEntryIds
         {
             get {
-                var id = Guid.Empty;
-                if (Arguments != null) {
-                    Guid.TryParse (Arguments.GetString (TimeEntryIdArgument), out id);
-                }
-                return id;
+                return Arguments != null ? Arguments.GetStringArrayList (TimeEntriesIdsArgument) : new List<string>();
             }
         }
 
-
-        private WorkspaceModel workspace;
-        private TimeEntryModel timeEntry;
-        private bool modelsLoaded;
-
-        public override void OnCreate (Bundle state)
+        public override async void OnCreate (Bundle savedInstanceState)
         {
-            base.OnCreate (state);
+            base.OnCreate (savedInstanceState);
 
-            LoadData ();
-        }
-
-        private async void LoadData ()
-        {
-            workspace = new WorkspaceModel (WorkspaceId);
-            if (TimeEntryId != Guid.Empty) {
-                timeEntry = new TimeEntryModel (TimeEntryId);
-                await Task.WhenAll (workspace.LoadAsync (), timeEntry.LoadAsync ());
-            } else {
-                await workspace.LoadAsync ();
+            if (viewModel == null) {
+                var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (TimeEntryIds);
+                viewModel = new CreateTagViewModel (WorkspaceId, timeEntryList);
             }
+            viewModel.OnIsLoadingChanged += OnModelLoaded;
+            viewModel.Init ();
 
-            modelsLoaded = true;
             ValidateTagName ();
+        }
+
+        private void OnModelLoaded (object sender, EventArgs e)
+        {
+            if (!viewModel.IsLoading) {
+                if (viewModel == null) {
+                    Dismiss ();
+                }
+            }
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -107,8 +99,6 @@ namespace Toggl.Joey.UI.Fragments
             base.OnStart ();
             positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
             ValidateTagName ();
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
         private void OnNameEditTextTextChanged (object sender, TextChangedEventArgs e)
@@ -118,62 +108,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            if (!modelsLoaded) {
-                return;
-            }
-
-            if (workspace == null) {
-                return;
-            }
-
-            await AssignTag (workspace, nameEditText.Text, timeEntry);
-        }
-
-        private static async Task AssignTag (WorkspaceModel workspace, string tagName, TimeEntryModel timeEntry)
-        {
-            var store = ServiceContainer.Resolve<IDataStore>();
-            var existing = await store.Table<TagData>()
-                           .QueryAsync (r => r.WorkspaceId == workspace.Id && r.Name == tagName)
-                           .ConfigureAwait (false);
-
-            var checkRelation = true;
-            TagModel tag;
-            if (existing.Count > 0) {
-                tag = new TagModel (existing [0]);
-            } else {
-                tag = new TagModel () {
-                    Name = tagName,
-                    Workspace = workspace,
-                };
-                await tag.SaveAsync ().ConfigureAwait (false);
-
-                checkRelation = false;
-            }
-
-            if (timeEntry != null) {
-                var assignTag = true;
-
-                if (checkRelation) {
-                    // Check if the relation already exists before adding it
-                    var relations = await store.Table<TimeEntryTagData> ()
-                                    .CountAsync (r => r.TimeEntryId == timeEntry.Id && r.TagId == tag.Id && r.DeletedAt == null)
-                                    .ConfigureAwait (false);
-                    if (relations < 1) {
-                        assignTag = false;
-                    }
-                }
-
-                if (assignTag) {
-                    var relationModel = new TimeEntryTagModel () {
-                        TimeEntry = timeEntry,
-                        Tag = tag,
-                    };
-                    await relationModel.SaveAsync ().ConfigureAwait (false);
-
-                    timeEntry.Touch ();
-                    await timeEntry.SaveAsync ().ConfigureAwait (false);
-                }
-            }
+            await viewModel.AssignTag (nameEditText.Text);
         }
 
         private void ValidateTagName ()
@@ -185,13 +120,21 @@ namespace Toggl.Joey.UI.Fragments
             var valid = true;
             var name = nameEditText.Text;
 
-            if (!modelsLoaded) {
-                valid = false;
-            } else if (String.IsNullOrWhiteSpace (name)) {
+            if (String.IsNullOrWhiteSpace (name)) {
                 valid = false;
             }
 
             positiveButton.Enabled = valid;
+        }
+
+        public override void OnDestroy ()
+        {
+            if (viewModel != null) {
+                viewModel.OnIsLoadingChanged += OnModelLoaded;
+                viewModel.Dispose ();
+            }
+
+            base.OnDestroy ();
         }
     }
 }

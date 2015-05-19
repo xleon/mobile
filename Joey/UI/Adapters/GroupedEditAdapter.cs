@@ -46,8 +46,7 @@ namespace Toggl.Joey.UI.Adapters
                 color = v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimeColorView);
                 period = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
                 duration = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemDurationTextView);
-
-                v.Click += (object sender, EventArgs e) => listener (base.Position);
+                v.Click += (sender, e) => listener (LayoutPosition);
             }
         }
 
@@ -76,6 +75,8 @@ namespace Toggl.Joey.UI.Adapters
             if (entryGroup.Model.Project != null) {
                 var color = Color.ParseColor (entryGroup.Model.Project.GetHexColor ());
                 vh.ColorView.SetBackgroundColor (color);
+            } else {
+                vh.ColorView.SetBackgroundColor (Color.Transparent);
             }
 
             var stopTime = (entry.StopTime != null) ? " – " + entry.StopTime.Value.ToShortTimeString () : "";

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Android.Content;
 using Android.OS;
 using Android.Support.V4.App;
@@ -8,7 +10,7 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Data.ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -18,14 +20,12 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class EditGroupedTimeEntryFragment : Fragment
     {
-        // logica objects
-        private EditTimeEntryGroupView viewModel;
+        private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entries_ids";
 
-        // visual objects
+        private EditTimeEntryViewModel viewModel;
         private RecyclerView recyclerView;
         private SimpleEditTimeEntryFragment editTimeEntryFragment;
-
-        private RecyclerView.Adapter adapter;
+        private RecyclerView.Adapter listAdapter;
 
         public EditGroupedTimeEntryFragment ()
         {
@@ -33,6 +33,24 @@ namespace Toggl.Joey.UI.Fragments
 
         public EditGroupedTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public EditGroupedTimeEntryFragment (IList<TimeEntryData> timeEntryList)
+        {
+            var ids = timeEntryList.Select ( t => t.Id.ToString ()).ToList ();
+
+            var args = new Bundle ();
+            args.PutStringArrayList (TimeEntriesIdsArgument, ids);
+            Arguments = args;
+
+            viewModel = new EditTimeEntryViewModel (timeEntryList);
+        }
+
+        private IList<string> TimeEntryIds
+        {
+            get {
+                return Arguments != null ? Arguments.GetStringArrayList (TimeEntriesIdsArgument) : new List<string>();
+            }
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -48,30 +66,28 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnStart ()
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
-            base.OnStart ();
+            base.OnViewCreated (view, savedInstanceState);
 
-            var extras = Activity.Intent.Extras;
-            if (extras == null) {
-                Activity.Finish ();
+            if (viewModel == null) {
+                var timeEntryList = await EditTimeEntryActivity.GetIntentTimeEntryData (Activity.Intent);
+                viewModel = new EditTimeEntryViewModel (timeEntryList);
             }
 
-            var extraGuids = extras.GetStringArray (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids);
-            viewModel = new EditTimeEntryGroupView (extraGuids);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.Init ();
         }
 
-        public override void OnStop ()
+        public override void OnDestroyView ()
         {
-            base.OnStop ();
-
             if (viewModel != null) {
+                viewModel.OnProjectListChanged -= OnProjectListChanged;
                 viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.Dispose ();
                 viewModel = null;
             }
+            base.OnDestroyView ();
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
@@ -79,36 +95,53 @@ namespace Toggl.Joey.UI.Fragments
             if (!viewModel.IsLoading) {
                 if (viewModel != null) {
                     editTimeEntryFragment.TimeEntry = viewModel.Model;
+                    editTimeEntryFragment.OnPressedProjectSelector += OnProjectSelected;
+                    editTimeEntryFragment.OnPressedTagSelector += OnTagSelected;
+                    viewModel.OnProjectListChanged += OnProjectListChanged;
 
                     // Set adapter
-                    adapter = new GroupedEditAdapter (viewModel.Model);
-                    (adapter as GroupedEditAdapter).HandleTapTimeEntry = HandleTimeEntryClick;
-                    recyclerView.SetAdapter (adapter);
+                    listAdapter = new GroupedEditAdapter (viewModel.Model);
+                    (listAdapter as GroupedEditAdapter).HandleTapTimeEntry = HandleTimeEntryClick;
+                    recyclerView.SetAdapter (listAdapter);
                 } else {
                     Activity.Finish ();
                 }
             }
         }
 
+        private void OnProjectListChanged (object sender, EventArgs e)
+        {
+            if (listAdapter != null) {
+                // Refresh adapter
+                listAdapter.NotifyDataSetChanged ();
+            }
+        }
+
         private void HandleTimeEntryClick (TimeEntryData timeEntry)
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-            intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, timeEntry.Id.ToString());
+            intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {timeEntry.Id.ToString()});
             StartActivity (intent);
         }
 
-
-        private void OnProjectEditTextClick (object sender, EventArgs e)
+        private void OnProjectSelected (object sender, EventArgs e)
         {
             if (viewModel.Model == null) {
                 return;
             }
 
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (ProjectListActivity.ExtraTimeEntriesIds, viewModel.Model.TimeEntryGuids);
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, TimeEntryIds);
             StartActivity (intent);
         }
 
+        private void OnTagSelected (object sender, EventArgs e)
+        {
+            if (viewModel.Model == null) {
+                return;
+            }
+            new ChooseTimeEntryTagsDialogFragment (viewModel.Model.Workspace.Id, viewModel.Model.TimeEntryList).Show (FragmentManager, "tags_dialog");
+        }
     }
 }
 

@@ -7,6 +7,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using TTask = System.Threading.Tasks.Task;
 
 namespace Toggl.Phoebe.Data.Utils
 {
@@ -23,6 +24,26 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeEntryGroup (TimeEntryData data)
         {
             Add (data);
+        }
+
+        public TimeEntryGroup (IList<TimeEntryData> dataList)
+        {
+            Add (dataList);
+        }
+
+        public static async Task<IList<TimeEntryData>> GetTimeEntryDataList (IList<string> ids)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var list = new List<TimeEntryData> (ids.Count);
+
+            foreach (var stringGuid in ids) {
+                var guid = new Guid (stringGuid);
+                var rows = await store.Table<TimeEntryData> ()
+                           .QueryAsync (r => r.Id == guid && r.DeletedAt == null);
+                var data = rows.FirstOrDefault ();
+                list.Add (data);
+            }
+            return list;
         }
 
         public TimeEntryModel Model
@@ -44,17 +65,17 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
+        public IList<string> TimeEntryGuids
+        {
+            get {
+                return dataObjects.AsEnumerable ().Select (r => r.Id.ToString ()).ToList ();
+            }
+        }
+
         public List<TimeEntryData> TimeEntryList
         {
             get {
                 return dataObjects;
-            }
-        }
-
-        public string[] TimeEntryGuids
-        {
-            get {
-                return dataObjects.AsEnumerable ().Select (r => r.Id.ToString ()).ToArray ();
             }
         }
 
@@ -90,6 +111,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
+        public void Add (IList<TimeEntryData> dataList)
+        {
+            dataObjects.AddRange (dataList);
+        }
+
         public void Add (TimeEntryData data)
         {
             dataObjects.Add (data);
@@ -103,7 +129,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public void UpdateIfPossible (TimeEntryData entry)
         {
-            if (CanContains (entry)) {
+            if (CanContain (entry)) {
                 Add (entry);
             }
         }
@@ -122,7 +148,7 @@ namespace Toggl.Phoebe.Data.Utils
             dataObjects.Sort ((a, b) => a.StartTime.CompareTo (b.StartTime));
         }
 
-        public bool CanContains (TimeEntryData data)
+        public bool CanContain (TimeEntryData data)
         {
             return dataObjects.Last().IsGroupableWith (data);
         }
@@ -172,24 +198,37 @@ namespace Toggl.Phoebe.Data.Utils
 
         public async Task DeleteAsync ()
         {
-            // Update to a more optimized way
-
-            TimeEntryModel mModel;
-            for (int i = 0; i < dataObjects.Count; i++) {
-                mModel = new TimeEntryModel (dataObjects [i]);
-                await mModel.DeleteAsync ();
-            }
+            await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {
+                var m = new TimeEntryModel (obj);
+                m.DeleteAsync();
+            }));
             Dispose ();
         }
 
         public async Task SaveAsync ()
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {
+                Model<TimeEntryData>.MarkDirty (obj);
+                dataStore.PutAsync (obj);
+            }));
+        }
 
+        public void Touch ()
+        {
             for (int i = 0; i < dataObjects.Count; i++) {
-                Model<TimeEntryData>.MarkDirty (dataObjects [i]);
-                dataObjects [i] = await dataStore.PutAsync (dataObjects [i]);
+                var newData = new TimeEntryData (dataObjects[i]);;
+                Model<TimeEntryData>.MarkDirty (newData);
+                dataObjects[i] = newData;
             }
+        }
+
+        public async Task Apply (Func<TimeEntryModel, Task> action)
+        {
+            foreach (var obj in dataObjects) {
+                await action (new TimeEntryModel (obj));
+            }
+            await SaveAsync();
         }
 
         public TimeEntryData Data
@@ -261,8 +300,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.IsBillable = value;
                 }
-
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -276,8 +314,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.UserId = value.Id;
                 }
-
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -289,8 +326,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.WorkspaceId = value.Id;
                 }
-
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -305,8 +341,7 @@ namespace Toggl.Phoebe.Data.Utils
                     foreach (var item in dataObjects) {
                         item.Description = value;
                     }
-
-                    SaveAsync ();
+                    SaveTimeEntryData ();
                 }
             }
         }
@@ -319,10 +354,13 @@ namespace Toggl.Phoebe.Data.Utils
 
             set {
                 foreach (var item in dataObjects) {
-                    item.ProjectId = value.Id;
+                    if (value != null) {
+                        item.ProjectId = value.Id;
+                    } else {
+                        item.ProjectId = null;
+                    }
                 }
-
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -344,8 +382,13 @@ namespace Toggl.Phoebe.Data.Utils
                     item.TaskId = value.Id;
                 }
 
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
+        }
+
+        public TTask LoadAsync ()
+        {
+            return Model.LoadAsync ();
         }
 
         public string GetFormattedDuration ()
@@ -384,6 +427,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
 
             return duration;
+        }
+
+        private async void SaveTimeEntryData ()
+        {
+            await SaveAsync ();
         }
     }
 }

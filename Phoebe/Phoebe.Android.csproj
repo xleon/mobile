@@ -59,6 +59,7 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
+    <Compile Include="Data\ViewModels\NewProjectViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />
@@ -66,6 +67,7 @@
     <Folder Include="Contrib\XPlatUtils\" />
     <Folder Include="Data\Reports\" />
     <Folder Include="Assemblies\" />
+    <Folder Include="Data\ViewModels\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

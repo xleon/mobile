@@ -3,7 +3,6 @@ using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using Toggl.Joey.UI.Fragments;
-using Toggl.Phoebe.Data.Models;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 
@@ -17,50 +16,32 @@ namespace Toggl.Joey.UI.Activities
         public static readonly string ExtraWorkspaceId = "com.toggl.timer.workspace_id";
         public static readonly string ExtraProjectId = "com.toggl.timer.project_id";
 
-        private WorkspaceModel workspace;
-
         protected override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.NewProjectActivity);
 
-            CreateModelFromIntent ();
+            var workspaceId = GetWorkspaceData (Intent);
 
             SupportFragmentManager.BeginTransaction ()
-            .Add (Resource.Id.NewProjectActivityLayout, new NewProjectFragment (workspace))
+            .Add (Resource.Id.NewProjectActivityLayout, new NewProjectFragment (workspaceId))
             .Commit ();
         }
 
-        private async void CreateModelFromIntent ()
+        public static Guid GetWorkspaceData (Android.Content.Intent intent)
         {
-            var extras = Intent.Extras;
+            var extras = intent.Extras;
             if (extras == null) {
-                return;
+                return Guid.Empty;
             }
 
+            // Get TimeEntryData from intent.
             var extraIdStr = extras.GetString (ExtraWorkspaceId);
             Guid extraGuid;
             Guid.TryParse (extraIdStr, out extraGuid);
 
-            workspace = new WorkspaceModel (extraGuid);
-            workspace.PropertyChanged += OnPropertyChange;
-            await workspace.LoadAsync ();
-
-            if (workspace == null) {
-                Finish ();
-            }
-        }
-
-        private void OnPropertyChange (object sender, EventArgs e)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-            if (workspace.Id == Guid.Empty) {
-                Finish ();
-            }
+            return extraGuid;
         }
     }
 }

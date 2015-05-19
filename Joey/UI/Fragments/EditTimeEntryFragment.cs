@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using Android.Content;
 using Android.OS;
+using Android.Views;
 using Toggl.Joey.UI.Activities;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 
@@ -15,11 +18,17 @@ namespace Toggl.Joey.UI.Fragments
 
         public EditTimeEntryFragment ()
         {
-            Arguments = new Bundle ();
         }
 
         public EditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
+        }
+
+        public EditTimeEntryFragment (TimeEntryData timeEntry)
+        {
+            Arguments = new Bundle ();
+            Arguments.PutString (TimeEntryIdArgument, timeEntry.Id.ToString ());
+            viewModel = new EditTimeEntryView (timeEntry);
         }
 
         private Guid TimeEntryId
@@ -33,7 +42,7 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public override void OnViewCreated (Android.Views.View view, Bundle savedInstanceState)
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
@@ -42,23 +51,39 @@ namespace Toggl.Joey.UI.Fragments
                 useDraft = savedInstanceState.GetBoolean (UseDraftKey, useDraft);
             }
 
-            var extras = Activity.Intent.Extras;
-            if (extras != null) {
-                var extraGuid = extras.GetString (EditTimeEntryActivity.ExtraTimeEntryId);
-                Arguments.PutString (TimeEntryIdArgument, extraGuid);
+            if (viewModel == null) {
+                var timeEntryList = await EditTimeEntryActivity.GetIntentTimeEntryData (Activity.Intent);
+
+                TimeEntryData timeEntry = null;
+                if (timeEntryList.Count > 0) {
+                    timeEntry = timeEntryList[0];
+                }
+
+                viewModel = new EditTimeEntryView (timeEntry);
             }
 
-            viewModel = new EditTimeEntryView (TimeEntryId, useDraft);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.Init ();
+            viewModel.Init (useDraft);
+        }
+
+        public override void OnDestroyView ()
+        {
+            if (viewModel != null) {
+                viewModel.OnIsLoadingChanged -= OnModelLoaded;
+                viewModel.OnModelChanged -= OnModelChanged;
+                viewModel.Dispose ();
+            }
+            base.OnDestroyView ();
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
         {
             if (!viewModel.IsLoading) {
                 if (viewModel != null) {
-                    TimeEntry = (ITimeEntryModel)viewModel.Model;
+                    TimeEntry = viewModel.Model;
                     viewModel.OnModelChanged += OnModelChanged;
+                    OnPressedProjectSelector += OnProjectSelected;
+                    OnPressedTagSelector += OnTagSelected;
                 } else {
                     Activity.Finish ();
                 }
@@ -67,18 +92,26 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnModelChanged (object sender, EventArgs e)
         {
-            TimeEntry = (ITimeEntryModel)viewModel.Model;
+            TimeEntry = viewModel.Model;
         }
 
-        public override void OnDestroy ()
+        private void OnProjectSelected (object sender, EventArgs e)
         {
-            if (viewModel != null) {
-                viewModel.OnIsLoadingChanged -= OnModelLoaded;
-                viewModel.OnModelChanged -= OnModelChanged;
-                viewModel.Dispose ();
+            if (TimeEntry == null) {
+                return;
             }
 
-            base.OnDestroy ();
+            var intent = new Intent (Activity, typeof (ProjectListActivity));
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, new List<string> {TimeEntry.Id.ToString ()});
+            StartActivity (intent);
+        }
+
+        private void OnTagSelected (object sender, EventArgs e)
+        {
+            if (TimeEntry == null) {
+                return;
+            }
+            new ChooseTimeEntryTagsDialogFragment (TimeEntry.Workspace.Id, new List<TimeEntryData> {TimeEntry.Data}).Show (FragmentManager, "tags_dialog");
         }
 
         public override void OnSaveInstanceState (Bundle outState)

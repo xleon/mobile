@@ -7,11 +7,7 @@ using Android.Views;
 using Android.Views.InputMethods;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
+using Toggl.Phoebe.Data.ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using AlertDialog = Android.Support.V7.App.AlertDialog;
@@ -24,19 +20,23 @@ namespace Toggl.Joey.UI.Fragments
     public class NewProjectFragment : Fragment
     {
         private ActionBar Toolbar;
-        private readonly ProjectModel model;
         private bool isSaving;
+        private NewProjectViewModel viewModel;
 
         public TogglField ProjectBit { get; private set; }
         public ColorPickerRecyclerView ColorPicker { get; private set; }
 
-        public NewProjectFragment (WorkspaceModel workspace)
+        public NewProjectFragment ()
         {
-            model = new ProjectModel {
-                Workspace = workspace,
-                IsActive = true,
-                IsPrivate = true
-            };
+        }
+
+        public NewProjectFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
+        public NewProjectFragment (Guid workspaceId)
+        {
+            viewModel = new NewProjectViewModel (workspaceId);
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -58,11 +58,33 @@ namespace Toggl.Joey.UI.Fragments
 
             ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
             ColorPicker.SelectedColorChanged += (sender, e) => {
-                model.Color = e;
+                viewModel.Model.Color = e;
             };
 
             HasOptionsMenu = true;
             return view;
+        }
+
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        {
+            base.OnViewCreated (view, savedInstanceState);
+
+            if (viewModel == null) {
+                var workspaceId = NewProjectActivity.GetWorkspaceData (Activity.Intent);
+                viewModel = new NewProjectViewModel (workspaceId);
+            }
+
+            viewModel.OnIsLoadingChanged += OnModelLoaded;
+            viewModel.Init ();
+        }
+
+        private void OnModelLoaded (object sender, EventArgs e)
+        {
+            if (!viewModel.IsLoading) {
+                if (viewModel == null) {
+                    Activity.Finish ();
+                }
+            }
         }
 
         public override void OnStart ()
@@ -74,9 +96,16 @@ namespace Toggl.Joey.UI.Fragments
             }, 100);
         }
 
+        public override void OnDestroyView ()
+        {
+            viewModel.OnIsLoadingChanged -= OnModelLoaded;
+            viewModel.Dispose ();
+            base.OnDestroyView ();
+        }
+
         private async void SaveButtonHandler (object sender, EventArgs e)
         {
-            if (String.IsNullOrWhiteSpace (model.Name)) {
+            if (String.IsNullOrWhiteSpace (viewModel.Model.Name)) {
                 new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.NewProjectEmptyDialogTitle)
                 .SetMessage (Resource.String.NewProjectEmptyDialogMessage)
@@ -92,10 +121,7 @@ namespace Toggl.Joey.UI.Fragments
             isSaving = true;
 
             try {
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                Guid clientId = (model.Client == null) ? Guid.Empty : model.Client.Id;
-                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync (model.Name, clientId);
-
+                var existWithName = await viewModel.ExistProjectWithName (ProjectBit.TextField.Text);
                 if (existWithName) {
                     new AlertDialog.Builder (Activity)
                     .SetTitle (Resource.String.NewProjectDuplicateDialogTitle)
@@ -103,19 +129,7 @@ namespace Toggl.Joey.UI.Fragments
                     .SetPositiveButton (Resource.String.NewProjectEmptyDialogPositiveButtonTitle, (EventHandler<DialogClickEventArgs>)null)
                     .Show();
                 } else {
-                    await model.SaveAsync();
-
-                    // Create an extra model for Project / User relationship
-                    var userData = ServiceContainer.Resolve<AuthManager> ().User;
-                    var userId = userData != null ? userData.Id : (Guid?)null;
-
-                    if (userId.HasValue) {
-                        var projectUserModel = new ProjectUserModel ();
-                        projectUserModel.Project = model;
-                        projectUserModel.User = new UserModel (userId.Value);
-                        await projectUserModel.SaveAsync ();
-                    }
-
+                    await viewModel.SaveProjectModel ();
                     FinishActivity (true);
                 }
             } finally {
@@ -126,8 +140,8 @@ namespace Toggl.Joey.UI.Fragments
         private void ProjectBitTextChangedHandler (object sender, TextChangedEventArgs e)
         {
             var t = ProjectBit.TextField.Text;
-            if (t != model.Name) {
-                model.Name = t;
+            if (t != viewModel.Model.Name) {
+                viewModel.Model.Name = t;
             }
         }
 
@@ -150,8 +164,8 @@ namespace Toggl.Joey.UI.Fragments
         {
             var resultIntent = new Intent ();
             if (isProjectCreated) {
-                resultIntent.PutExtra (NewProjectActivity.ExtraWorkspaceId, model.Workspace.Id.ToString());
-                resultIntent.PutExtra (NewProjectActivity.ExtraProjectId, model.Id.ToString());
+                resultIntent.PutExtra (NewProjectActivity.ExtraWorkspaceId, viewModel.Model.Workspace.Id.ToString());
+                resultIntent.PutExtra (NewProjectActivity.ExtraProjectId, viewModel.Model.Id.ToString());
             }
             Activity.SetResult (isProjectCreated ? Result.Ok : Result.Canceled, resultIntent);
             Activity.Finish();;

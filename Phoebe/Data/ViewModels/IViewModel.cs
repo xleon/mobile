@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Toggl.Phoebe.Data.Views
+namespace Toggl.Phoebe.Data.ViewModels
 {
-    public interface IView<T>
+    public interface IViewModel<T>
     {
         T Model { get; }
 

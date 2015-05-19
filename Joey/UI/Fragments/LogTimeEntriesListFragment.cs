@@ -17,6 +17,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
+using System.Collections.Generic;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -169,13 +170,13 @@ namespace Toggl.Joey.UI.Fragments
             if (parent.GetAdapter () is LogTimeEntriesAdapter) {
                 logAdapter.SetSelectedItem (position);
                 string id = ((TimeEntryData)logAdapter.GetEntry (position)).Id.ToString();
-                intent.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, id);
+                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {id});
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, false);
             } else {
                 groupedAdapter.SetSelectedItem (position);
-                string[] guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
+                IList<string> guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, true);
-                intent.PutExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
             }
             StartActivity (intent);
         }
@@ -231,7 +232,7 @@ namespace Toggl.Joey.UI.Fragments
                 }
                 isUndoShowed = value;
 
-                var targetTranY = isUndoShowed ? 0.0f : 100.0f;
+                var targetTranY = isUndoShowed ? 0.0f : 160.0f;
                 ValueAnimator animator = ValueAnimator.OfFloat (undoBar.TranslationY, targetTranY);
                 animator.SetDuration (500);
                 animator.Update += (sender, e) => {

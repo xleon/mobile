@@ -1,9 +1,7 @@
 ﻿using System;
-using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
@@ -31,6 +29,10 @@ namespace Toggl.Joey.UI.Fragments
         private bool canRebind;
         private bool descriptionChanging;
         private bool autoCommitScheduled;
+
+        public event EventHandler OnPressedProjectSelector;
+
+        public event EventHandler OnPressedTagSelector;
 
         protected BaseEditTimeEntryFragment ()
         {
@@ -393,22 +395,32 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnProjectEditTextClick (object sender, EventArgs e)
         {
+            if (OnPressedProjectSelector != null) {
+                OnPressedProjectSelector.Invoke (sender, e);
+            }
+            /*
             if (TimeEntry == null) {
                 return;
             }
 
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (ProjectListActivity.ExtraTimeEntryId, TimeEntry.Id.ToString ());
+            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, model.Ids);
             StartActivity (intent);
+            */
         }
 
         private void OnTagsEditTextClick (object sender, EventArgs e)
         {
+            if (OnPressedTagSelector != null) {
+                OnPressedTagSelector.Invoke (sender, e);
+            }
+
+            /*
             if (TimeEntry == null) {
                 return;
             }
-
             new ChooseTimeEntryTagsDialogFragment (TimeEntry).Show (FragmentManager, "tags_dialog");
+            */
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)

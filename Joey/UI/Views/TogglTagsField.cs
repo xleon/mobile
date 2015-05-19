@@ -8,7 +8,6 @@ using Android.Text.Style;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 
 namespace Toggl.Joey.UI.Views
@@ -96,28 +95,34 @@ namespace Toggl.Joey.UI.Views
 
         private BitmapDrawable MakeTagChip (String tagText)
         {
+            try {
+                var Inflater = LayoutInflater.FromContext (Context);
+                var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, this, false);
+                tagChipView.Text = tagText.ToUpper ();
+                int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
+                tagChipView.Measure (spec, spec);
+                tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
 
-            var Inflater = LayoutInflater.FromContext (Context);
-            var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, this, false);
+                var b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
 
-            tagChipView.Text = tagText.ToUpper ();
-            int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
-            tagChipView.Measure (spec, spec);
-            tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
+                var canvas = new Canvas (b);
+                canvas.Translate (-tagChipView.ScrollX, -tagChipView.ScrollY);
+                tagChipView.Draw (canvas);
+                tagChipView.DrawingCacheEnabled = true;
 
-            var b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
+                var cacheBmp = tagChipView.DrawingCache;
+                var viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
+                tagChipView.DestroyDrawingCache ();
+                var bmpDrawable = new BitmapDrawable (Resources, viewBmp);
+                bmpDrawable.SetBounds (0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
+                return bmpDrawable;
+            } catch (Exception ex) {
+                Console.WriteLine ("here");
+                return null;
+            }
 
-            var canvas = new Canvas (b);
-            canvas.Translate (-tagChipView.ScrollX, -tagChipView.ScrollY);
-            tagChipView.Draw (canvas);
-            tagChipView.DrawingCacheEnabled = true;
 
-            var cacheBmp = tagChipView.DrawingCache;
-            var viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
-            tagChipView.DestroyDrawingCache ();
-            var bmpDrawable = new BitmapDrawable (Resources, viewBmp);
-            bmpDrawable.SetBounds (0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
-            return bmpDrawable;
+
         }
     }
 }

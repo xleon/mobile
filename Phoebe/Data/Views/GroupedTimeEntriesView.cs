@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Data.Views
         private int lastItemNumber;
 
         // for Undo/Restore operations
-        private TimeEntryGroup removedItem;
+        private TimeEntryGroup lastRemovedItem;
 
         public GroupedTimeEntriesView ()
         {
@@ -72,25 +72,29 @@ namespace Toggl.Phoebe.Data.Views
 
         public void RestoreItemFromUndo ()
         {
-            if (removedItem != null) {
-                AddTimeEntryGroup (removedItem);
-                removedItem = null;
+            if (lastRemovedItem != null) {
+                AddTimeEntryGroup (lastRemovedItem);
+                lastRemovedItem = null;
             }
         }
 
         public void RemoveItemWithUndo (TimeEntryGroup data)
         {
             // Remove previous if exists
-            ConfirmItemRemove ();
-            removedItem = data;
+            RemoveItemPermanently (lastRemovedItem);
+            lastRemovedItem = data;
             RemoveTimeEntryGroup (data);
         }
 
         public void ConfirmItemRemove ()
         {
-            if (removedItem != null) {
-                DeleteTimeGroup (removedItem);
-                removedItem = null;
+            RemoveItemPermanently (lastRemovedItem);
+        }
+
+        private async void RemoveItemPermanently (TimeEntryGroup itemToRemove)
+        {
+            if (itemToRemove != null) {
+                await itemToRemove.DeleteAsync();
             }
         }
 
@@ -356,7 +360,7 @@ namespace Toggl.Phoebe.Data.Views
             isNewEntryGroup = false;
 
             foreach (var grp in dateGroup.DataObjects) {
-                if (grp.CanContains (dataObject)) {
+                if (grp.CanContain (dataObject)) {
                     return grp;
                 }
             }

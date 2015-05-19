@@ -10,9 +10,17 @@
         android:layout_height="?attr/actionBarSize"
         android:minHeight="?attr/actionBarSize"
         android:background="@drawable/ToolbarBgPattern" />
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/ProjectListRecyclerView"
-        android:background="#f8f8f8"
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent" />
+	    <FrameLayout
+	    	android:layout_width="match_parent"
+	    	android:layout_height="match_parent">
+    	    <android.support.v7.widget.RecyclerView
+		        android:id="@+id/ProjectListRecyclerView"
+		        android:background="#f8f8f8"
+		        android:layout_width="match_parent"
+		        android:layout_height="fill_parent" />
+	        <View
+		        android:layout_width="match_parent"
+            	android:layout_height="4dp"
+             	android:background="@dimen/ToolbarDropShadowHeight" />
+    	</FrameLayout>
 </LinearLayout>

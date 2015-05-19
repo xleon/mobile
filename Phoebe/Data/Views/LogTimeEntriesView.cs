@@ -32,7 +32,7 @@ namespace Toggl.Phoebe.Data.Views
         private int lastItemNumber;
 
         // for Undo/Restore operations
-        private TimeEntryData removedItem;
+        private TimeEntryData lastRemovedItem;
 
         public LogTimeEntriesView ()
         {
@@ -73,25 +73,30 @@ namespace Toggl.Phoebe.Data.Views
 
         public void RestoreItemFromUndo ()
         {
-            if (removedItem != null) {
-                AddOrUpdateEntry (removedItem);
-                removedItem = null;
+            if (lastRemovedItem != null) {
+                AddOrUpdateEntry (lastRemovedItem);
+                lastRemovedItem = null;
             }
         }
 
         public void RemoveItemWithUndo (TimeEntryData data)
         {
             // Remove previous if exists
-            ConfirmItemRemove ();
-            removedItem = data;
+            RemoveItemPermanently (lastRemovedItem);
+            lastRemovedItem = data;
             RemoveEntry (data);
         }
 
         public void ConfirmItemRemove ()
         {
-            if (removedItem != null) {
-                DeleteTimeEntry (removedItem);
-                removedItem = null;
+            RemoveItemPermanently (lastRemovedItem);
+        }
+
+        private async void RemoveItemPermanently (TimeEntryData itemToRemove)
+        {
+            if (itemToRemove != null) {
+                var model = new TimeEntryModel (itemToRemove);
+                await model.DeleteAsync();
             }
         }
 

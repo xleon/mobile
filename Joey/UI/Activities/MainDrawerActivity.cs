@@ -29,7 +29,6 @@ namespace Toggl.Joey.UI.Activities
          #if DEBUG
          // The actual entry-point is defined in manifest via activity-alias, this here is just to
          // make adb launch the activity automatically when developing.
-         MainLauncher = true,
          #endif
          Theme = "@style/Theme.Toggl.App")]
     public class MainDrawerActivity : BaseActivity

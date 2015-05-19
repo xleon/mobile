@@ -2,6 +2,10 @@
 <resources>
     <style name="Theme.Toggl.Base"  parent="Theme.AppCompat.Light.NoActionBar">
     </style>
+    <style name="Theme.Toggl.Splash"  parent="Theme.Toggl.Base">
+        <item name="android:windowBackground">@drawable/splashdrawable</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
         <item name="windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>

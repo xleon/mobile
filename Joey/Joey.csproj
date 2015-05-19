@@ -169,6 +169,7 @@
     <Compile Include="UI\Fragments\EditGroupedTimeEntryFragment.cs" />
     <Compile Include="UI\Views\TogglTagsField.cs" />
     <Compile Include="UI\Views\ShadowItemDecoration.cs" />
+    <Compile Include="UI\Activities\SplashActivity.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -662,6 +663,10 @@
     <AndroidResource Include="Resources\drawable\ButtonGreenDisabled.xml" />
     <AndroidResource Include="Resources\drawable\ButtonGreenPressed.xml" />
     <AndroidResource Include="Resources\drawable\DropShadowVertical.xml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\SplashScreen.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\SplashScreen.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\SplashScreen.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\SplashScreen.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

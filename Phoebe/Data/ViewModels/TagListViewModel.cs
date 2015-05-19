@@ -44,9 +44,13 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             // Create tag list.
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            modelTags = await dataStore.Table<TimeEntryTagData> ()
-                        .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+            modelTags = new List<TimeEntryTagData> ();
 
+            foreach (var timeEntryData in timeEntryList) {
+                var tags = await dataStore.Table<TimeEntryTagData> ()
+                           .QueryAsync (r => r.TimeEntryId == timeEntryData.Id && r.DeletedAt == null);
+                modelTags.AddRange (tags);
+            }
 
             Model.PropertyChanged += OnModelPropertyChanged;
             IsLoading = false;
@@ -54,6 +58,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public async void SaveChanges (List<TagData> selectedTags)
         {
+
             // Delete unused tag relations:
             var deleteTasks = modelTags
                               .Where (oldTag => !selectedTags.Any (newTag => newTag.Id == oldTag.TagId))
@@ -61,10 +66,14 @@ namespace Toggl.Phoebe.Data.ViewModels
                               .ToList();
 
             // Create new tag relations:
-            var createTasks = selectedTags
-                              .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-            .Select (data => new TimeEntryTagModel () { TimeEntry = new TimeEntryModel (model.Data), Tag = new TagModel (data) } .SaveAsync ())
-            .ToList();
+            var createTasks = new List<Task> ();
+            foreach (var timeEntryData in timeEntryList) {
+                var tasks = selectedTags
+                            .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
+                .Select (data => new TimeEntryTagModel () { TimeEntry = new TimeEntryModel (timeEntryData), Tag = new TagModel (data) } .SaveAsync ())
+                .ToList();
+                createTasks.AddRange (tasks);
+            }
 
             await Task.WhenAll (deleteTasks.Concat (createTasks));
 
@@ -76,10 +85,9 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public void Dispose ()
         {
-            Model.PropertyChanged -= OnModelPropertyChanged;
+            model.PropertyChanged -= OnModelPropertyChanged;
             tagList.Dispose ();
             tagList = null;
-            model = null;
         }
 
         public IList<TimeEntryData> TimeEntryList

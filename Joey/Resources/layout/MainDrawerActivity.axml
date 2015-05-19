@@ -11,21 +11,24 @@
         android:layout_height="match_parent"
         android:background="@color/windowBackground">
         <LinearLayout
-	            android:layout_width="match_parent"
-	            android:layout_height="match_parent"
-	            android:orientation="vertical">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
             <include
                 android:id="@+id/MainToolbar"
                 layout="@layout/MainToolbar" />
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:background="@drawable/DropShadowVertical" />
-            <FrameLayout 
-                android:id="@+id/ContentFrameLayout"
-                android:layout_marginTop="-3dp"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+            <FrameLayout
+		        android:layout_width="match_parent"
+		        android:layout_height="match_parent">
+	        	<FrameLayout 
+	                android:id="@+id/ContentFrameLayout"
+	                android:layout_width="match_parent"
+	                android:layout_height="match_parent"/>
+	        	<View
+	                android:layout_width="match_parent"
+	                android:layout_height="3dp"
+	                android:background="@drawable/DropShadowVertical" />
+	        </FrameLayout>
         </LinearLayout>
     </FrameLayout>
 <!-- The navigation drawer -->

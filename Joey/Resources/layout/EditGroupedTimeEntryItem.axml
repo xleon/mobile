@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="fill_parent"
         android:src="@drawable/icClock"
-        android:layout_marginLeft="16dp"
+        android:layout_marginLeft="27dp"
         android:layout_marginRight="5dp" />
     <TextView
         android:layout_width="wrap_content"
@@ -29,7 +29,7 @@
         android:layout_height="match_parent"
         android:textColor="#313131"
         android:textSize="16sp"
-        android:layout_marginRight="16dp"
+        android:layout_marginRight="32dp"
         android:id="@+id/GroupedEditTimeEntryItemDurationTextView"
         android:gravity="right|center_vertical" />
 </LinearLayout>

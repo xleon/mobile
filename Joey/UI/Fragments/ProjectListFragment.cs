@@ -138,11 +138,14 @@ namespace Toggl.Joey.UI.Fragments
             base.OnActivityResult (requestCode, resultCode, data);
             if (requestCode == ProjectCreatedRequestCode) {
                 if (resultCode == (int)Result.Ok) {
+
                     Guid extraGuid;
                     Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraWorkspaceId), out extraGuid);
+                    var workspace = new WorkspaceModel (extraGuid);
                     Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraProjectId), out extraGuid);
+                    var project = new ProjectModel (extraGuid);
 
-                    await viewModel.SaveModelAsync (new ProjectModel (extraGuid), new WorkspaceModel (extraGuid));
+                    await viewModel.SaveModelAsync (project, workspace);
                     Activity.Finish();
                 }
             }

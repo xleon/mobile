@@ -81,13 +81,15 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnModelLoaded (object sender, EventArgs e)
         {
-            if (!viewModel.IsLoading && viewModel.Model != null) {
-                // set list adapter
-                var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
-                adapter.HandleProjectSelection = OnItemSelected;
-                recyclerView.SetAdapter (adapter);
-            } else {
-                Activity.Finish ();
+            if (!viewModel.IsLoading) {
+                if (viewModel.Model != null) {
+                    // set list adapter
+                    var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
+                    adapter.HandleProjectSelection = OnItemSelected;
+                    recyclerView.SetAdapter (adapter);
+                } else {
+                    Activity.Finish ();
+                }
             }
         }
 

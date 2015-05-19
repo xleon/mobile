@@ -298,6 +298,11 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnDrawerListViewItemClick (object sender, ListView.ItemClickEventArgs e)
         {
+            // If tap outside options just close drawer
+            if (e.Id == -1) {
+                DrawerLayout.CloseDrawers ();
+                return;
+            }
 
             // Configure timer component for selected page:
             if (e.Id != DrawerListAdapter.TimerPageId) {

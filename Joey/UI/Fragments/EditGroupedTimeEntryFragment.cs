@@ -79,15 +79,14 @@ namespace Toggl.Joey.UI.Fragments
             viewModel.Init ();
         }
 
-        public override void OnStop ()
+        public override void OnDestroyView ()
         {
-            base.OnStop ();
-
             if (viewModel != null) {
                 viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.Dispose ();
                 viewModel = null;
             }
+            base.OnDestroyView ();
         }
 
         private void OnModelLoaded (object sender, EventArgs e)

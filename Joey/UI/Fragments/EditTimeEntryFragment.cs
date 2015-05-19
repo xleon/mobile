@@ -66,6 +66,16 @@ namespace Toggl.Joey.UI.Fragments
             viewModel.Init (useDraft);
         }
 
+        public override void OnDestroyView ()
+        {
+            if (viewModel != null) {
+                viewModel.OnIsLoadingChanged -= OnModelLoaded;
+                viewModel.OnModelChanged -= OnModelChanged;
+                viewModel.Dispose ();
+            }
+            base.OnDestroyView ();
+        }
+
         private void OnModelLoaded (object sender, EventArgs e)
         {
             if (!viewModel.IsLoading) {
@@ -102,17 +112,6 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
             new ChooseTimeEntryTagsDialogFragment (TimeEntry.Workspace.Id, new List<TimeEntryData> {TimeEntry.Data}).Show (FragmentManager, "tags_dialog");
-        }
-
-        public override void OnDestroy ()
-        {
-            if (viewModel != null) {
-                viewModel.OnIsLoadingChanged -= OnModelLoaded;
-                viewModel.OnModelChanged -= OnModelChanged;
-                viewModel.Dispose ();
-            }
-
-            base.OnDestroy ();
         }
 
         public override void OnSaveInstanceState (Bundle outState)

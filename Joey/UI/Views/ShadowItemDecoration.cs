@@ -13,17 +13,19 @@ namespace Toggl.Joey.UI.Views
         Type LastItemTypeToApplyShadow { get; }
     }
 
-    public class ShadowItemDecoration<T> : RecyclerView.ItemDecoration
+    public class ShadowItemDecoration<T, TT> : RecyclerView.ItemDecoration
     {
         private const int shadowHeightInDps = 2;
         private readonly int shadowHeightInPixels;
 
         private readonly Drawable shadow;
+        private readonly bool detectHolder;
 
-        public ShadowItemDecoration (Context context)
+        public ShadowItemDecoration (Context context, bool detectHolder = false)
         {
             shadow = context.Resources.GetDrawable (Resource.Drawable.DropShadowVertical);
-            shadowHeightInPixels = (int)(context.Resources.DisplayMetrics.Density * shadowHeightInDps + 0.5f);
+            shadowHeightInPixels = (int) (context.Resources.DisplayMetrics.Density * shadowHeightInDps + 0.5f);
+            this.detectHolder = detectHolder;
         }
 
         public override void OnDraw (Canvas c, RecyclerView parent, RecyclerView.State state)
@@ -38,11 +40,15 @@ namespace Toggl.Joey.UI.Views
                 var child = parent.GetChildAt (i);
                 var childNext = parent.GetChildAt (i+1);
 
-                if (!ShouldDraw (child) || childNext is T) {
+                var childType = detectHolder ? GetHolderType (parent, child) : child.GetType ();
+                var childNextType = detectHolder ? GetHolderType (parent, childNext) : childNext.GetType();
+
+
+                if (!ShouldDraw (child) || childNextType == typeof (T) || childNextType == typeof (TT)) {
                     continue;
                 }
 
-                if (child is T) {
+                if (childType == typeof (T) || childType == typeof(TT)) {
                     var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams> ();
                     var top = child.Bottom + layoutParams.BottomMargin;
 
@@ -56,6 +62,11 @@ namespace Toggl.Joey.UI.Views
 
         }
 
+        private Type GetHolderType (RecyclerView parent, View child)
+        {
+            return parent.GetChildViewHolder (child).GetType ();
+        }
+
         private bool ShouldDraw (View child)
         {
             if (child.Visibility != ViewStates.Visible
@@ -64,7 +75,6 @@ namespace Toggl.Joey.UI.Views
                 return false;
             }
             return true;
-
         }
     }
 }

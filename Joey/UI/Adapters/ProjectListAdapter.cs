@@ -114,7 +114,7 @@ namespace Toggl.Joey.UI.Adapters
 
         #region View holders
 
-        private class WorkspaceListItemHolder : RecycledModelViewHolder<ProjectListView.Workspace>
+        public class WorkspaceListItemHolder : RecycledModelViewHolder<ProjectListView.Workspace>
         {
             private WorkspaceModel model;
 
@@ -168,7 +168,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class ProjectListItemHolder : RecycledModelViewHolder<ProjectListView.Project>, View.IOnClickListener
+        public class ProjectListItemHolder : RecycledModelViewHolder<ProjectListView.Project>, View.IOnClickListener
         {
             private ProjectModel model;
             private readonly ProjectListAdapter adapter;
@@ -278,7 +278,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
+        public class NoProjectListItemHolder : RecycledBindableViewHolder<ProjectListView.Project>, View.IOnClickListener
         {
             private readonly ProjectListAdapter adapter;
 

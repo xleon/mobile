@@ -24,7 +24,7 @@ namespace Toggl.Joey.UI.Views
         public ShadowItemDecoration (Context context, bool detectHolder = false)
         {
             shadow = context.Resources.GetDrawable (Resource.Drawable.DropShadowVertical);
-            shadowHeightInPixels = (int)(context.Resources.DisplayMetrics.Density * shadowHeightInDps + 0.5f);
+            shadowHeightInPixels = (int) (context.Resources.DisplayMetrics.Density * shadowHeightInDps + 0.5f);
             this.detectHolder = detectHolder;
         }
 
@@ -40,15 +40,15 @@ namespace Toggl.Joey.UI.Views
                 var child = parent.GetChildAt (i);
                 var childNext = parent.GetChildAt (i+1);
 
-                var childType = detectHolder ? GetHolderType(parent, child) : child.GetType ();
-                var childNextType = detectHolder ? GetHolderType(parent, childNext) : childNext.GetType();
+                var childType = detectHolder ? GetHolderType (parent, child) : child.GetType ();
+                var childNextType = detectHolder ? GetHolderType (parent, childNext) : childNext.GetType();
 
-               
-                if (!ShouldDraw (child) || childNextType == typeof(T)) {
+
+                if (!ShouldDraw (child) || childNextType == typeof (T)) {
                     continue;
                 }
 
-                if (childType == typeof(T)) {
+                if (childType == typeof (T)) {
                     var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams> ();
                     var top = child.Bottom + layoutParams.BottomMargin;
 
@@ -62,7 +62,8 @@ namespace Toggl.Joey.UI.Views
 
         }
 
-        private Type GetHolderType(RecyclerView parent, View child) {
+        private Type GetHolderType (RecyclerView parent, View child)
+        {
             return parent.GetChildViewHolder (child).GetType ();
         }
 
@@ -74,7 +75,6 @@ namespace Toggl.Joey.UI.Views
                 return false;
             }
             return true;
-
         }
     }
 }

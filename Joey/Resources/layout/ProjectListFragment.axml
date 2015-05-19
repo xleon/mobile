@@ -20,7 +20,7 @@
 		        android:layout_height="fill_parent" />
 	        <View
 		        android:layout_width="match_parent"
-            	android:layout_height="4dp"
-             	android:background="@dimen/ToolbarDropShadowHeight" />
+            	android:layout_height="@dimen/ToolbarDropShadowHeight"
+             	android:background="@drawable/DropShadowVertical" />
     	</FrameLayout>
 </LinearLayout>

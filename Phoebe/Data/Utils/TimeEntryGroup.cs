@@ -300,8 +300,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.IsBillable = value;
                 }
-
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -315,8 +314,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.UserId = value.Id;
                 }
-
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -328,8 +326,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.WorkspaceId = value.Id;
                 }
-
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -344,8 +341,7 @@ namespace Toggl.Phoebe.Data.Utils
                     foreach (var item in dataObjects) {
                         item.Description = value;
                     }
-
-                    SaveAsync ();
+                    SaveTimeEntryData ();
                 }
             }
         }
@@ -358,8 +354,13 @@ namespace Toggl.Phoebe.Data.Utils
 
             set {
                 foreach (var item in dataObjects) {
-                    item.ProjectId = value.Id;
+                    if (value != null) {
+                        item.ProjectId = value.Id;
+                    } else {
+                        item.ProjectId = null;
+                    }
                 }
+                SaveTimeEntryData ();
             }
         }
 
@@ -381,7 +382,7 @@ namespace Toggl.Phoebe.Data.Utils
                     item.TaskId = value.Id;
                 }
 
-                SaveAsync ();
+                SaveTimeEntryData ();
             }
         }
 
@@ -426,6 +427,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
 
             return duration;
+        }
+
+        private async void SaveTimeEntryData ()
+        {
+            await SaveAsync ();
         }
     }
 }

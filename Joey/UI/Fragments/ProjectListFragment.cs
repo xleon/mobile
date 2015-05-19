@@ -148,10 +148,10 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public override void OnDestroy ()
+        public override void OnDestroyView ()
         {
-            base.OnDestroy ();
             Dispose (true);
+            base.OnDestroyView ();
         }
 
         protected override void Dispose (bool disposing)

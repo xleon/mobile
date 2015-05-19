@@ -77,10 +77,12 @@ namespace Toggl.Joey.UI.Fragments
         private void OnModelLoaded (object sender, EventArgs e)
         {
             if (!viewModel.IsLoading) {
-                viewModel.TagListDataView.Updated += OnWorkspaceTagsUpdated;
-                SelectInitialTags ();
-            } else {
-                Dismiss ();
+                if (viewModel.Model != null) {
+                    viewModel.TagListDataView.Updated += OnWorkspaceTagsUpdated;
+                    SelectInitialTags ();
+                } else {
+                    Dismiss ();
+                }
             }
         }
 
@@ -139,6 +141,10 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SelectInitialTags ()
         {
+            if (listView == null) {
+                return;
+            }
+
             // Select tags
             listView.ClearChoices ();
             foreach (var index in viewModel.SelectedTagsIndex) {

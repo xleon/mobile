@@ -74,9 +74,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnModelLoaded (object sender, EventArgs e)
         {
             if (!viewModel.IsLoading) {
-                if (viewModel != null) {
-                    positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
-                } else {
+                if (viewModel == null) {
                     Dismiss ();
                 }
             }
@@ -99,6 +97,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnStart ()
         {
             base.OnStart ();
+            positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
             ValidateTagName ();
         }
 

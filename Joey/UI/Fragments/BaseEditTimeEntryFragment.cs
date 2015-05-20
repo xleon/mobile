@@ -413,15 +413,6 @@ namespace Toggl.Joey.UI.Fragments
             if (OnPressedProjectSelector != null) {
                 OnPressedProjectSelector.Invoke (sender, e);
             }
-            /*
-            if (TimeEntry == null) {
-                return;
-            }
-
-            var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, model.Ids);
-            StartActivity (intent);
-            */
         }
 
         private void OnTagsEditTextClick (object sender, EventArgs e)
@@ -429,13 +420,6 @@ namespace Toggl.Joey.UI.Fragments
             if (OnPressedTagSelector != null) {
                 OnPressedTagSelector.Invoke (sender, e);
             }
-
-            /*
-            if (TimeEntry == null) {
-                return;
-            }
-            new ChooseTimeEntryTagsDialogFragment (TimeEntry).Show (FragmentManager, "tags_dialog");
-            */
         }
 
         private void OnBillableCheckBoxCheckedChange (object sender, CompoundButton.CheckedChangeEventArgs e)
@@ -495,6 +479,9 @@ namespace Toggl.Joey.UI.Fragments
         private void CommitDescriptionChanges ()
         {
             if (TimeEntry != null && descriptionChanging) {
+                if (string.IsNullOrEmpty (TimeEntry.Description) && string.IsNullOrEmpty (DescriptionEditText.Text)) {
+                    return;
+                }
                 if (TimeEntry.Description != DescriptionEditText.Text) {
                     TimeEntry.Description = DescriptionEditText.Text;
                     SaveTimeEntry ();

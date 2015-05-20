@@ -228,14 +228,6 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public async Task Apply (Func<TimeEntryModel, Task> action)
-        {
-            foreach (var obj in dataObjects) {
-                await action (new TimeEntryModel (obj));
-            }
-            await SaveAsync();
-        }
-
         public TimeEntryData Data
         {
 
@@ -305,7 +297,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.IsBillable = value;
                 }
-                SaveTimeEntryData ();
+                Touch ();
             }
         }
 
@@ -319,7 +311,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.UserId = value.Id;
                 }
-                SaveTimeEntryData ();
+                Touch ();
             }
         }
 
@@ -331,7 +323,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.WorkspaceId = value.Id;
                 }
-                SaveTimeEntryData ();
+                Touch ();
             }
         }
 
@@ -342,11 +334,15 @@ namespace Toggl.Phoebe.Data.Utils
             }
 
             set {
+                if (string.IsNullOrEmpty (Description) && string.IsNullOrEmpty (value)) {
+                    return;
+                }
+
                 if (Description != value) {
                     foreach (var item in dataObjects) {
                         item.Description = value;
                     }
-                    SaveTimeEntryData ();
+                    Touch ();
                 }
             }
         }
@@ -365,7 +361,7 @@ namespace Toggl.Phoebe.Data.Utils
                         item.ProjectId = null;
                     }
                 }
-                SaveTimeEntryData ();
+                Touch ();
             }
         }
 
@@ -386,8 +382,7 @@ namespace Toggl.Phoebe.Data.Utils
                 foreach (var item in dataObjects) {
                     item.TaskId = value.Id;
                 }
-
-                SaveTimeEntryData ();
+                Touch ();
             }
         }
 
@@ -432,11 +427,6 @@ namespace Toggl.Phoebe.Data.Utils
             }
 
             return duration;
-        }
-
-        private async void SaveTimeEntryData ()
-        {
-            await SaveAsync ();
         }
     }
 }

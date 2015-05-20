@@ -67,13 +67,14 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         // Replace the contents of a view (invoked by the layout manager)
-        public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        public async override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
             var vh = holder as ViewHolder;
             var entry = entryGroup.TimeEntryList [position];
 
-            if (entryGroup.Model.Project != null) {
-                var color = Color.ParseColor (entryGroup.Model.Project.GetHexColor ());
+            if (entryGroup.Project != null) {
+                await entryGroup.Project.LoadAsync ();
+                var color = Color.ParseColor (entryGroup.Project.GetHexColor ());
                 vh.ColorView.SetBackgroundColor (color);
             } else {
                 vh.ColorView.SetBackgroundColor (Color.Transparent);

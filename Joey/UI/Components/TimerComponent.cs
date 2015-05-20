@@ -19,6 +19,7 @@ using Toggl.Phoebe.Logging;
 using XPlatUtils;
 using Activity = Android.Support.V4.App.FragmentActivity;
 using Fragment = Android.Support.V4.App.Fragment;
+using System.Collections.Generic;
 
 namespace Toggl.Joey.UI.Components
 {
@@ -286,7 +287,7 @@ namespace Toggl.Joey.UI.Components
         private void OpenTimeEntryEdit (ITimeEntryModel model)
         {
             var i = new Intent (activity, typeof (EditTimeEntryActivity));
-            i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
+            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {model.Id.ToString ()});
             activity.StartActivity (i);
         }
 

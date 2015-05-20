@@ -150,9 +150,6 @@ namespace Toggl.Joey.UI.Adapters
                 return;
             }
 
-            // Set item selected
-            holder.ItemView.Selected = selectedItemIndex == position;
-
             BindHolder (holder, position);
         }
 

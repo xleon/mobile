@@ -55,6 +55,7 @@ namespace Toggl.Joey.UI.Utils
             View view = GetChildViewUnder (e);
             if (view != null) {
                 view.Pressed = true;
+                view.Selected = true;
             }
         }
 
@@ -72,6 +73,7 @@ namespace Toggl.Joey.UI.Utils
             if ( listener.CanClick (recyclerView, position)) {
                 listener.OnItemClick (recyclerView, view, position);
                 view.Pressed = false;
+                view.Selected = false;
                 return true;
             }
             return false;

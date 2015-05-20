@@ -212,11 +212,10 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecycledModelViewHolder<TimeEntryModel>, View.IOnTouchListener
+        private class TimeEntryListItemHolder : RecycledBindableViewHolder<TimeEntryModel>, View.IOnTouchListener
         {
             private readonly Handler handler;
             private readonly LogTimeEntriesAdapter adapter;
-            private TimeEntryTagsView tagsView;
 
             public View ColorView { get; private set; }
 
@@ -273,107 +272,12 @@ namespace Toggl.Joey.UI.Adapters
                 return false;
             }
 
-            protected override void OnDataSourceChanged ()
-            {
-                // Clear out old
-                if (tagsView != null) {
-                    tagsView.Updated -= OnTagsUpdated;
-                    tagsView = null;
-                }
-
-                if (DataSource != null) {
-                    tagsView = new TimeEntryTagsView (DataSource.Id);
-                    tagsView.Updated += OnTagsUpdated;
-                }
-
-                RebindTags ();
-
-                base.OnDataSourceChanged ();
-            }
-
-            protected override void Dispose (bool disposing)
-            {
-                if (disposing) {
-                    if (tagsView != null) {
-                        tagsView.Updated -= OnTagsUpdated;
-                        tagsView = null;
-                    }
-                }
-                base.Dispose (disposing);
-            }
-
-            private void OnTagsUpdated (object sender, EventArgs args)
-            {
-                RebindTags ();
-            }
-
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
-
-                    if (DataSource.Project != null) {
-                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
-
-                        if (DataSource.Project.Client != null) {
-                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
-                        }
-                    }
-
-                    if (DataSource.Task != null) {
-                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
-                    }
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleTimeEntryPropertyChanged (string prop)
-            {
-                if (prop == TimeEntryModel.PropertyProject
-                        || prop == TimeEntryModel.PropertyTask
-                        || prop == TimeEntryModel.PropertyState
-                        || prop == TimeEntryModel.PropertyStartTime
-                        || prop == TimeEntryModel.PropertyStopTime
-                        || prop == TimeEntryModel.PropertyDescription
-                        || prop == TimeEntryModel.PropertyIsBillable) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleProjectPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyClient
-                        || prop == ProjectModel.PropertyColor
-                        || prop == ProjectModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleTaskPropertyChanged (string prop)
-            {
-                if (prop == TaskModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            protected override void Rebind ()
+            protected async override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
-
-                ResetTrackedObservables ();
 
                 if (DataSource == null) {
                     return;
@@ -381,6 +285,10 @@ namespace Toggl.Joey.UI.Adapters
 
                 // Init swipe delete bg
                 ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
+
+                if (DataSource.Project != null && String.IsNullOrWhiteSpace (DataSource.Project.Name)) {
+                    await DataSource.Project.LoadAsync ();
+                }
 
                 var ctx = ServiceContainer.Resolve<Context> ();
 
@@ -434,6 +342,7 @@ namespace Toggl.Joey.UI.Adapters
                 BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
                 RebindDuration ();
+                RebindTags ();
             }
 
             private void RebindDuration ()
@@ -465,18 +374,16 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            private void RebindTags ()
+            private async void RebindTags ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
 
-                var showTags = tagsView != null && tagsView.HasNonDefault;
-                if (showTags) {
-                    TagsView.BubbleCount = (int)tagsView.Count;
-                }
-                TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
+                var numberOfTags = await DataSource.GetNumberOfTagsAsync ();
+                TagsView.BubbleCount = numberOfTags;
+                TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
             }
         }
     }

@@ -133,31 +133,13 @@ namespace Toggl.Joey.UI.Adapters
                 WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView).SetFont (Font.RobotoMedium);
             }
 
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (model != null) {
-                    Tracker.Add (model, HandleWorkspacePropertyChanged);
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleWorkspacePropertyChanged (string prop)
-            {
-                if (prop == WorkspaceModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
-                ResetTrackedObservables ();
+
                 if (model == null) {
                     return;
                 }
@@ -206,45 +188,12 @@ namespace Toggl.Joey.UI.Adapters
                 base.OnDataSourceChanged ();
             }
 
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (model != null) {
-                    Tracker.Add (model, HandleProjectPropertyChanged);
-
-                    if (model.Client != null) {
-                        Tracker.Add (model.Client, HandleClientPropertyChanged);
-                    }
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleProjectPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyClient
-                        || prop == ProjectModel.PropertyColor
-                        || prop == ProjectModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
             protected override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
-
-                ResetTrackedObservables ();
 
                 if (model == null) {
                     ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
@@ -275,7 +224,7 @@ namespace Toggl.Joey.UI.Adapters
                 adapter.HandleProjectSelection (DataSource);
             }
         }
-            
+
         public class NoProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private readonly ProjectListAdapter adapter;

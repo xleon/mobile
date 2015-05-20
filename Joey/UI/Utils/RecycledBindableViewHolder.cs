@@ -8,36 +8,19 @@ namespace Toggl.Joey.UI.Utils
     /// </summary>
     public abstract class RecycledBindableViewHolder<T> : RecyclerView.ViewHolder
     {
-        private readonly View root;
-
         public T DataSource { get; private set; }
 
         protected RecycledBindableViewHolder (View root) : base (root)
         {
-            this.root = root;
-            root.ViewAttachedToWindow += OnRootAttachedToWindow;
-            root.ViewDetachedFromWindow += OnRootDetachedFromWindow;
         }
 
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                root.ViewAttachedToWindow -= OnRootAttachedToWindow;
-                root.ViewDetachedFromWindow -= OnRootDetachedFromWindow;
-
                 DataSource = default (T);
             }
 
             base.Dispose (disposing);
-        }
-
-        protected virtual void OnRootAttachedToWindow (object sender, View.ViewAttachedToWindowEventArgs e)
-        {
-            Rebind ();
-        }
-
-        protected virtual void OnRootDetachedFromWindow (object sender, View.ViewDetachedFromWindowEventArgs e)
-        {
         }
 
         public void Bind (T dataSource)

@@ -48,7 +48,7 @@ namespace Toggl.Joey.UI.Views
                     continue;
                 }
 
-                if (childType == typeof (T) || childType == typeof(TT)) {
+                if (childType == typeof (T) || childType == typeof (TT)) {
                     var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams> ();
                     var top = child.Bottom + layoutParams.BottomMargin;
 

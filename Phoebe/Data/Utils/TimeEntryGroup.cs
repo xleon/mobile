@@ -196,6 +196,11 @@ namespace Toggl.Phoebe.Data.Utils
             return Model.StopAsync ();
         }
 
+        public Task<int> GetNumberOfTagsAsync ()
+        {
+            return Model.GetNumberOfTagsAsync ();
+        }
+
         public async Task DeleteAsync ()
         {
             await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {

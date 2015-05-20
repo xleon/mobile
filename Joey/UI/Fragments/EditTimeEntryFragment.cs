@@ -69,6 +69,9 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnDestroyView ()
         {
             if (viewModel != null) {
+                // TimeEntry property must be nullified to
+                // stop event listeners on BaseEditTimeEntryFragment.
+                TimeEntry = null;
                 viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.OnModelChanged -= OnModelChanged;
                 viewModel.Dispose ();

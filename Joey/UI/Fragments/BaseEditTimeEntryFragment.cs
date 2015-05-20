@@ -95,6 +95,16 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public override void OnDestroyView ()
+        {
+            if (tagsView != null) {
+                tagsView.Updated -= OnTimeEntryTagsUpdated;
+                tagsView = null;
+            }
+
+            base.OnDestroyView ();
+        }
+
         public override bool UserVisibleHint
         {
             get { return base.UserVisibleHint; }
@@ -247,9 +257,14 @@ namespace Toggl.Joey.UI.Fragments
 
         private void RebindTags()
         {
+            if (TimeEntry == null || !canRebind) {
+                return;
+            }
+
             if (TagsBit == null) {
                 return;
             }
+
             TagsBit.RebindTags (tagsView);
         }
 

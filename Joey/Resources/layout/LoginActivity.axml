@@ -8,67 +8,18 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <FrameLayout
+        <ImageView
+            android:src="@drawable/LogoBig"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="-5dp"
-            android:background="@android:color/black">
-            <ImageView
-                android:src="@drawable/LoginHeader"
-                android:scaleType="fitXY"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true" />
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageView
-                    android:src="@drawable/LogoBig"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginBottom="5dp" />
-                <TextView
-                    android:id="@+id/SloganTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="@string/LoginHeaderText"
-                    android:textColor="@android:color/white" />
-            </LinearLayout>
-        </FrameLayout>
-        <RadioGroup
-            android:id="@+id/TabsRadioGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_horizontal">
-            <RadioButton
-                android:id="@+id/LoginTabRadioButton"
-                style="@style/RadioButtonTab"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="true"
-                android:text="@string/LoginLoginTabText" />
-            <RadioButton
-                android:id="@+id/SignupTabRadioButton"
-                style="@style/RadioButtonTab"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/LoginSignupTabText" />
-        </RadioGroup>
+            android:layout_height="200dp"
+            android:scaleType="center" />
         <AutoCompleteTextView
             android:id="@+id/EmailAutoCompleteTextView"
             android:inputType="textEmailAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/LoginEmailHint"
+            android:textColor="#ffffff"
             android:imeOptions="actionNext"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
@@ -81,6 +32,8 @@
                 android:inputType="textVisiblePassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textColorHint="#ffffff"
                 android:hint="@string/LoginPasswordHint"
                 android:imeOptions="actionDone"
                 android:layout_marginRight="10dp"
@@ -94,6 +47,8 @@
                 android:focusable="false"
                 android:textSize="12dp"
                 android:text="@string/LoginHideButtonText"
+                android:textColor="#ffffff"
+                android:textColorHint="#ffffff"
                 android:background="@null"
                 android:minWidth="70dp"
                 android:minHeight="0dp"
@@ -102,7 +57,7 @@
         </FrameLayout>
         <Button
             android:id="@+id/LoginButton"
-            style="@style/Button.Green"
+            style="@style/Button.Red"
             android:text="@string/LoginButtonText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

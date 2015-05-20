@@ -65,10 +65,10 @@ namespace Toggl.Joey.UI.Activities
         private void FindViews ()
         {
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
-            FindViewById<TextView> (Resource.Id.SloganTextView).SetFont (Font.RobotoLight);
-            TabsRadioGroup = FindViewById<RadioGroup> (Resource.Id.TabsRadioGroup);
-            LoginTabRadioButton = FindViewById<RadioButton> (Resource.Id.LoginTabRadioButton).SetFont (Font.Roboto);
-            SignupTabRadioButton = FindViewById<RadioButton> (Resource.Id.SignupTabRadioButton).SetFont (Font.Roboto);
+//            FindViewById<TextView> (Resource.Id.SloganTextView).SetFont (Font.RobotoLight);
+//            TabsRadioGroup = FindViewById<RadioGroup> (Resource.Id.TabsRadioGroup);
+//            LoginTabRadioButton = FindViewById<RadioButton> (Resource.Id.LoginTabRadioButton).SetFont (Font.Roboto);
+//            SignupTabRadioButton = FindViewById<RadioButton> (Resource.Id.SignupTabRadioButton).SetFont (Font.Roboto);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
             PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont (Font.Roboto);
@@ -121,7 +121,7 @@ namespace Toggl.Joey.UI.Activities
 
             ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener (this);
 
-            TabsRadioGroup.CheckedChange += OnTabsRadioGroupCheckedChange;
+//            TabsRadioGroup.CheckedChange += OnTabsRadioGroupCheckedChange;
             LoginButton.Click += OnLoginButtonClick;
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
             EmailEditText.Adapter = MakeEmailsAdapter ();
@@ -198,9 +198,9 @@ namespace Toggl.Joey.UI.Activities
                 GoogleLoginButton.SetText (Resource.String.LoginSignupGoogleButtonText);
             }
 
-            LoginTabRadioButton.Enabled = !isAuthenticating;
-            SignupTabRadioButton.Enabled = !isAuthenticating;
-            TabsRadioGroup.Enabled = !isAuthenticating;
+//            LoginTabRadioButton.Enabled = !isAuthenticating;
+//            SignupTabRadioButton.Enabled = !isAuthenticating;
+//            TabsRadioGroup.Enabled = !isAuthenticating;
             EmailEditText.Enabled = !isAuthenticating;
             PasswordEditText.Enabled = !isAuthenticating;
             GoogleLoginButton.Enabled = !isAuthenticating;
@@ -408,12 +408,13 @@ namespace Toggl.Joey.UI.Activities
         private Mode CurrentMode
         {
             get {
-                switch (TabsRadioGroup != null ? TabsRadioGroup.CheckedRadioButtonId : -1) {
-                case Resource.Id.SignupTabRadioButton:
-                    return Mode.Signup;
-                default:
-                    return Mode.Login;
-                }
+                return Mode.Login;
+//                switch (TabsRadioGroup != null ? TabsRadioGroup.CheckedRadioButtonId : -1) {
+//                case Resource.Id.SignupTabRadioButton:
+//                    return Mode.Signup;
+//                default:
+//                    return Mode.Login;
+//                }
             }
         }
 

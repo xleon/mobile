@@ -42,9 +42,9 @@ namespace Toggl.Joey.Logging
 
         void IBugsnagClient.Notify (Exception e, Bugsnag.Data.ErrorSeverity severity, Bugsnag.Data.Metadata extraMetadata)
         {
-            var reportSeverity = ReportSeverity.Error;
+            var reportSeverity = Insights.Severity.Error;
             if (severity == Bugsnag.Data.ErrorSeverity.Warning) {
-                reportSeverity = ReportSeverity.Warning;
+                reportSeverity = Insights.Severity.Warning;
             }
 
             var extraData = new Dictionary<string, string> ();

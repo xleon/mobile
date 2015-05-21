@@ -1,14 +1,13 @@
 using System;
-using Toggl.Phoebe;
+using Toggl.Joey.Data;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
-using Toggl.Joey.Data;
 
 namespace Toggl.Joey.Logging
 {
     public class Logger : BaseLogger
     {
-        public Logger () : base ()
+        public Logger ()
         {
         }
 

@@ -32,6 +32,7 @@ namespace Toggl.Joey.UI.Views
 
             text.FocusChange += (sender, e) => {
                 title.Selected = text.HasFocus;
+                Selected = text.HasFocus;
             };
         }
 

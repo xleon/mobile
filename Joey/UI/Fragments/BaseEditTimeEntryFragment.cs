@@ -21,7 +21,6 @@ namespace Toggl.Joey.UI.Fragments
 {
     public abstract class BaseEditTimeEntryFragment : Fragment
     {
-
         private readonly Handler handler = new Handler ();
         private PropertyChangeTracker propertyTracker;
         private ITimeEntryModel model;

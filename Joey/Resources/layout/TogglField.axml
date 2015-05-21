@@ -28,7 +28,8 @@
                         android:ellipsize="start"
                         android:textColor="@color/material_black"
                         android:textSize="18dp"
-                        android:layout_below="@id/EditTimeEntryBitTitle" />
+                        android:layout_below="@id/EditTimeEntryBitTitle" 
+                       	android:textCursorDrawable="@drawable/RedCursor"/>
                 <ImageView
 						android:id="@+id/EditTimeEntryBitArrow"
                         android:layout_width="wrap_content"
@@ -51,6 +52,5 @@
     					android:textStyle="normal"
                         android:textSize="12dp"
                         android:background="@drawable/RoundedGrayBackground"
-                        android:textColor="#ffffff"
-                        android:textCursorDrawable="@drawable/RedCursor" />
+                        android:textColor="#ffffff" />
             </RelativeLayout>

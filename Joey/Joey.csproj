@@ -665,6 +665,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\SplashScreen.png" />
     <AndroidResource Include="Resources\drawable-mdpi\SplashScreen.png" />
     <AndroidResource Include="Resources\drawable-hdpi\SplashScreen.png" />
+    <AndroidResource Include="Resources\drawable\RedCursor.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

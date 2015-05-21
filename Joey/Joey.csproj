@@ -40,7 +40,6 @@
     <AndroidLinkMode>Full</AndroidLinkMode>
     <AndroidLinkSkip>Bugsnag;Bugsnag.Android;Phoebe;Joey</AndroidLinkSkip>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-    <EnableProguard>true</EnableProguard>
     <DebugType>full</DebugType>
   </PropertyGroup>
   <ItemGroup>

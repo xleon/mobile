@@ -6,9 +6,7 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:background="@drawable/BgArrowsFull">
+        android:layout_height="wrap_content">
         <fragment
             android:id="@+id/TimeEntryEditChildFragment"
             android:name="toggl.joey.ui.fragments.SimpleEditTimeEntryFragment"
@@ -17,17 +15,15 @@
     </LinearLayout>
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="2">
+        android:layout_height="match_parent">
         <android.support.v7.widget.RecyclerView
             android:id="@+id/recyclerView"
-            android:layout_weight="2"
             android:background="#f8f8f8"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
         <View
             android:layout_width="match_parent"
-            android:layout_height="8dp"
-            android:background="@drawable/DropShadow" />
+            android:layout_height="@dimen/ToolbarDropShadowHeight"
+            android:background="@drawable/DropShadowVertical" />
     </FrameLayout>
 </LinearLayout>

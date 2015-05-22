@@ -55,16 +55,18 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public async void ContinueTimeEntry (TimeEntryModel model)
+        public async void ContinueTimeEntry (TimeEntryData timeEntryData)
         {
+            var model = new TimeEntryModel (timeEntryData);
             await model.ContinueAsync ();
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
         }
 
-        public async void StopTimeEntry (TimeEntryModel model)
+        public async void StopTimeEntry (TimeEntryData timeEntryData)
         {
+            var model = new TimeEntryModel (timeEntryData);
             await model.StopAsync ();
 
             // Ping analytics
@@ -147,7 +149,6 @@ namespace Toggl.Phoebe.Data.Views
                         Sort ();
                         newIndex = GetTimeEntryIndex (entry);
                         if (newIndex != oldIndex) {
-                            OnUpdated();
                             DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
                         }
                         entryAction = NotifyCollectionChangedAction.Replace;
@@ -162,9 +163,6 @@ namespace Toggl.Phoebe.Data.Views
                 Sort ();
                 entryAction = NotifyCollectionChangedAction.Add;
             }
-
-            // Update datasource.
-            OnUpdated();
 
             // Update group.
             groupIndex = GetDateGroupIndex (grp);
@@ -193,7 +191,6 @@ namespace Toggl.Phoebe.Data.Views
                     groupAction = NotifyCollectionChangedAction.Remove;
                 }
 
-                OnUpdated ();
                 DispatchCollectionEvent (CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
                 DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
             }
@@ -282,17 +279,6 @@ namespace Toggl.Phoebe.Data.Views
 
         public event EventHandler Updated;
 
-        private void OnUpdated ()
-        {
-            if (updateMode != UpdateMode.Immediate) {
-                return;
-            }
-            var handler = Updated;
-            if (handler != null) {
-                handler (this, EventArgs.Empty);
-            }
-        }
-
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
         private void DispatchCollectionEvent (NotifyCollectionChangedEventArgs args)
@@ -318,7 +304,6 @@ namespace Toggl.Phoebe.Data.Views
         private void EndUpdate ()
         {
             updateMode = UpdateMode.Immediate;
-            OnUpdated ();
             if (Count > lastItemNumber) {
                 DispatchCollectionEvent (CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastItemNumber, Count - lastItemNumber));
             }
@@ -338,7 +323,6 @@ namespace Toggl.Phoebe.Data.Views
             if (syncManager.IsRunning) {
                 // Fake loading until initial sync has finished
                 IsLoading = true;
-                OnUpdated ();
 
                 reloadScheduled = true;
                 if (subscriptionSyncFinished == null) {
@@ -363,7 +347,6 @@ namespace Toggl.Phoebe.Data.Views
 
             IsLoading = true;
             var client = ServiceContainer.Resolve<ITogglClient> ();
-            OnUpdated ();
 
             try {
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();

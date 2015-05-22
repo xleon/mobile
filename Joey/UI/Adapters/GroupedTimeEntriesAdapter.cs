@@ -276,6 +276,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 // Init swipe delete bg
                 ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
+                ItemView.Selected = false;
 
                 if (DataSource.Project != null && String.IsNullOrWhiteSpace (DataSource.Project.Name)) {
                     await DataSource.Project.LoadAsync ();
@@ -343,7 +344,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                DurationTextView.Text = DataSource.GetFormattedDuration ();
+                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (DataSource.Data);
 
                 if (DataSource.Model.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);

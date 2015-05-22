@@ -19,7 +19,6 @@ namespace Toggl.Joey.UI.Adapters
         private CollectionCachingDataView<T> dataView;
         private int lastLoadingPosition;
         private UpdateScheduler updateScheduler;
-        private int selectedItemIndex = -1;
 
         protected RecyclerView Owner;
 
@@ -120,16 +119,6 @@ namespace Toggl.Joey.UI.Adapters
                 return ViewTypeLoaderPlaceholder;
             }
             return ViewTypeContent;
-        }
-
-        public void SetSelectedItem (int itemIndex)
-        {
-            if (selectedItemIndex != -1) {
-                NotifyItemChanged (selectedItemIndex);
-            }
-
-            selectedItemIndex = itemIndex;
-            NotifyItemChanged (selectedItemIndex);
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)

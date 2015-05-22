@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.Animation;
 using Android.Content;
 using Android.OS;
@@ -17,7 +18,6 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using System.Collections.Generic;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -168,12 +168,10 @@ namespace Toggl.Joey.UI.Fragments
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
 
             if (parent.GetAdapter () is LogTimeEntriesAdapter) {
-                logAdapter.SetSelectedItem (position);
                 string id = ((TimeEntryData)logAdapter.GetEntry (position)).Id.ToString();
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {id});
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, false);
             } else {
-                groupedAdapter.SetSelectedItem (position);
                 IList<string> guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, true);
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);

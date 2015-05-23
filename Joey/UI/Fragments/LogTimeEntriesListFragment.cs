@@ -205,14 +205,15 @@ namespace Toggl.Joey.UI.Fragments
             handler.PostDelayed (RemoveItemAndHideUndoBar, 5000);
         }
 
-        private void RemoveItemAndHideUndoBar ()
+        public void RemoveItemAndHideUndoBar ()
         {
+            UndoBarVisible = false;
+
             // Remove item permanently
             var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
             if (undoAdapter != null) {
                 undoAdapter.ConfirmItemRemove ();
             }
-            UndoBarVisible = false;
         }
 
         private void UndoBtnClicked (object sender, EventArgs e)
@@ -225,7 +226,7 @@ namespace Toggl.Joey.UI.Fragments
             UndoBarVisible = false;
         }
 
-        private bool UndoBarVisible
+        public bool UndoBarVisible
         {
             get {
                 return isUndoShowed;
@@ -249,11 +250,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
         {
-            private LogTimeEntriesListFragment owner;
+            private readonly LogTimeEntriesListFragment owner;
 
             public RecyclerViewScrollDetector (LogTimeEntriesListFragment owner)
             {
                 this.owner = owner;
+                ScrollThreshold = 10;
             }
 
             public int ScrollThreshold { get; set; }
@@ -268,11 +270,7 @@ namespace Toggl.Joey.UI.Fragments
 
                 var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
                 if (isSignificantDelta) {
-                    if (dy > 0) {
-                        OnScrollUp();
-                    } else {
-                        OnScrollDown();
-                    }
+                    OnScrollMoved();
                 }
             }
 
@@ -284,14 +282,11 @@ namespace Toggl.Joey.UI.Fragments
                 base.OnScrollStateChanged (recyclerView, newState);
             }
 
-            private void OnScrollUp()
+            private void OnScrollMoved()
             {
-                owner.UndoBarVisible = false;
-            }
-
-            private void OnScrollDown()
-            {
-                owner.UndoBarVisible = false;
+                if (owner.UndoBarVisible) {
+                    owner.RemoveItemAndHideUndoBar ();
+                }
             }
         }
     }

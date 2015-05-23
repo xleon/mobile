@@ -21,6 +21,8 @@ namespace Toggl.Phoebe.Data.Views
     public class LogTimeEntriesView : ICollectionDataView<object>, IDisposable
     {
         private static readonly string Tag = "LogTimeEntriesView";
+        private static readonly int ContinueThreshold = 4;
+
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
@@ -30,6 +32,7 @@ namespace Toggl.Phoebe.Data.Views
         private bool isLoading;
         private bool hasMore;
         private int lastItemNumber;
+        private DateTime lastTimeEntryContinuedTime;
 
         // for Undo/Restore operations
         private TimeEntryData lastRemovedItem;
@@ -38,6 +41,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+            lastTimeEntryContinuedTime = Time.UtcNow;
             HasMore = true;
             Reload ();
         }
@@ -57,6 +61,13 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void ContinueTimeEntry (TimeEntryData timeEntryData)
         {
+            // Don't continue a new TimeEntry before
+            // 5 seconds has passed.
+            if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
+                return;
+            }
+            lastTimeEntryContinuedTime = DateTime.UtcNow;
+
             var model = new TimeEntryModel (timeEntryData);
             await model.ContinueAsync ();
 

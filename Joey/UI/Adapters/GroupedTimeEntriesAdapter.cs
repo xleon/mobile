@@ -344,7 +344,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (DataSource.Data);
+                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (DataSource.Duration);
 
                 if (DataSource.Model.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);

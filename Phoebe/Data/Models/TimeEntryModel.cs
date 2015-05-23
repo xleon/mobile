@@ -236,6 +236,11 @@ namespace Toggl.Phoebe.Data.Models
         public static string GetFormattedDuration (TimeEntryData data)
         {
             TimeSpan duration = GetDuration (data, Time.UtcNow);
+            return GetFormattedDuration (duration);
+        }
+
+        public static string GetFormattedDuration (TimeSpan duration)
+        {
             string formattedString = duration.ToString (@"hh\:mm\:ss");
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 

@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data.Views
     public class LogTimeEntriesView : ICollectionDataView<object>, IDisposable
     {
         private static readonly string Tag = "LogTimeEntriesView";
-        private static readonly int ContinueThreshold = 4;
+        private static readonly int ContinueThreshold = 3;
 
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;

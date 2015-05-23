@@ -63,7 +63,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new ShadowItemDecoration<LogTimeEntryItem, LogTimeEntryItem> (Activity));
             recyclerView.AddOnItemTouchListener (swipeTouchListener);
             recyclerView.AddOnItemTouchListener (itemTouchListener);
-            recyclerView.GetItemAnimator ().ChangeDuration = 0;
+            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);

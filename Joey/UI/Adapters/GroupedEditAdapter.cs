@@ -46,7 +46,7 @@ namespace Toggl.Joey.UI.Adapters
                 color = v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimeColorView);
                 period = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
                 duration = (TextView)v.FindViewById (Resource.Id.GroupedEditTimeEntryItemDurationTextView);
-                v.Click += (sender, e) => listener (Position);
+                v.Click += (sender, e) => listener (LayoutPosition);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.Animation;
 using Android.Content;
 using Android.OS;
@@ -17,7 +18,6 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using System.Collections.Generic;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -63,7 +63,8 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new ShadowItemDecoration<LogTimeEntryItem, LogTimeEntryItem> (Activity));
             recyclerView.AddOnItemTouchListener (swipeTouchListener);
             recyclerView.AddOnItemTouchListener (itemTouchListener);
-            recyclerView.GetItemAnimator ().ChangeDuration = 0;
+            recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));
+            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -168,12 +169,10 @@ namespace Toggl.Joey.UI.Fragments
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
 
             if (parent.GetAdapter () is LogTimeEntriesAdapter) {
-                logAdapter.SetSelectedItem (position);
                 string id = ((TimeEntryData)logAdapter.GetEntry (position)).Id.ToString();
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {id});
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, false);
             } else {
-                groupedAdapter.SetSelectedItem (position);
                 IList<string> guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, true);
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
@@ -208,7 +207,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Remove item permanently
             var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
-            undoAdapter.ConfirmItemRemove ();
+            if (undoAdapter != null) {
+                undoAdapter.ConfirmItemRemove ();
+            }
             UndoBarVisible = false;
         }
 
@@ -243,5 +244,53 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         #endregion
+
+        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        {
+            private LogTimeEntriesListFragment owner;
+
+            public RecyclerViewScrollDetector (LogTimeEntriesListFragment owner)
+            {
+                this.owner = owner;
+            }
+
+            public int ScrollThreshold { get; set; }
+
+            public RecyclerView.OnScrollListener OnScrollListener { get; set; }
+
+            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrolled (recyclerView, dx, dy);
+                }
+
+                var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
+                if (isSignificantDelta) {
+                    if (dy > 0) {
+                        OnScrollUp();
+                    } else {
+                        OnScrollDown();
+                    }
+                }
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrollStateChanged (recyclerView, newState);
+                }
+                base.OnScrollStateChanged (recyclerView, newState);
+            }
+
+            private void OnScrollUp()
+            {
+                owner.UndoBarVisible = false;
+            }
+
+            private void OnScrollDown()
+            {
+                owner.UndoBarVisible = false;
+            }
+        }
     }
 }

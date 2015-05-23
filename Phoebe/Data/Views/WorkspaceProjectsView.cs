@@ -282,10 +282,7 @@ namespace Toggl.Phoebe.Data.Views
 
         private void OnUpdated ()
         {
-            var handler = Updated;
-            if (handler != null) {
-                handler (this, EventArgs.Empty);
-            }
+            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
         }
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;

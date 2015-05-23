@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 
@@ -8,8 +9,7 @@ namespace Toggl.Phoebe.Data.Views
     public class CollectionCachingDataView<T> : ICollectionDataView<T>, IDisposable
     {
         private readonly ICollectionDataView<T> source;
-        private IList<T> data;
-        private int? count;
+        private ObservableCollection<T> data;
 
         public CollectionCachingDataView (ICollectionDataView<T> source)
         {
@@ -17,8 +17,9 @@ namespace Toggl.Phoebe.Data.Views
                 throw new ArgumentNullException ("source");
             }
 
+            data = new ObservableCollection<T> (source.Data);
+
             this.source = source;
-            this.source.Updated += OnSourceUpdated;
             this.source.CollectionChanged += OnCollectionUpdated;
             this.source.OnIsLoadingChanged += OnLoading;
             this.source.OnHasMoreChanged += OnHasMore;
@@ -26,7 +27,6 @@ namespace Toggl.Phoebe.Data.Views
 
         public void Dispose ()
         {
-            source.Updated -= OnSourceUpdated;
             source.CollectionChanged -= OnCollectionUpdated;
             source.OnIsLoadingChanged -= OnLoading;
             source.OnHasMoreChanged -= OnHasMore;
@@ -37,21 +37,36 @@ namespace Toggl.Phoebe.Data.Views
             get { return source; }
         }
 
-        private void OnSourceUpdated (object sender, EventArgs e)
-        {
-            // Invalidate cached data
-            data = null;
-            count = null;
-
-            // Notify our listeners
-            var handler = Updated;
-            if (handler != null) {
-                handler (this, EventArgs.Empty);
-            }
-        }
-
         private void OnCollectionUpdated (object sender, NotifyCollectionChangedEventArgs e)
         {
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                data = new ObservableCollection<T> (source.Data);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Add) {
+                if (e.NewItems.Count == 1) {
+                    data.Insert (e.NewStartingIndex, source.Data.ElementAtOrDefault (e.NewStartingIndex));
+                } else {
+                    var count = e.NewStartingIndex;
+                    foreach (var item in source.Data) {
+                        data.Insert (count,item);
+                        count++;
+                    }
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                data.RemoveAt (e.OldStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                data [e.NewStartingIndex] = source.Data.ElementAtOrDefault (e.NewStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                data.Move (e.OldStartingIndex, e.NewStartingIndex);
+            }
+
             var handler = CollectionChanged;
             if (handler != null) {
                 handler (this, e);
@@ -95,13 +110,6 @@ namespace Toggl.Phoebe.Data.Views
         public IEnumerable<T> Data
         {
             get {
-                if (data == null) {
-                    var e = source.Data;
-                    data = e as IList<T>;
-                    if (data == null) {
-                        data = e.ToList ();
-                    }
-                }
                 return data;
             }
         }
@@ -109,10 +117,7 @@ namespace Toggl.Phoebe.Data.Views
         public int Count
         {
             get {
-                if (count == null) {
-                    count = source.Count;
-                }
-                return count.Value;
+                return data.Count;
             }
         }
 

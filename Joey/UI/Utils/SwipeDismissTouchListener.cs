@@ -40,8 +40,9 @@ namespace Toggl.Joey.UI.Utils
             minFlingVelocity = viewConfiguration.ScaledMinimumFlingVelocity * 16;
             maxFlingVelocity = viewConfiguration.ScaledMaximumFlingVelocity;
             swipingSlop = viewConfiguration.ScaledTouchSlop;
+
             this.recyclerView = recyclerView;
-            recyclerView.SetOnScrollListener ( new RecyclerViewScrollDetector (this));
+            recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));
             this.callbacks = callbacks;
             IsScrolling = false;
         }
@@ -49,7 +50,7 @@ namespace Toggl.Joey.UI.Utils
         public bool IsEnabled
         {
             get {
-                return ! (recyclerView.IsInLayout || IsScrolling);
+                return ! (recyclerView.IsInLayout || recyclerView.GetItemAnimator().IsRunning || IsScrolling);
             }
         }
 
@@ -185,7 +186,7 @@ namespace Toggl.Joey.UI.Utils
             public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
             {
                 base.OnScrollStateChanged (recyclerView, newState);
-                touchListener.IsScrolling = (newState == RecyclerView.ScrollStateDragging);
+                touchListener.IsScrolling = newState != RecyclerView.ScrollStateIdle;
             }
         }
     }

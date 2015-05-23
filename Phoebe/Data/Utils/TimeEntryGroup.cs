@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using TTask = System.Threading.Tasks.Task;
 
@@ -91,7 +90,7 @@ namespace Toggl.Phoebe.Data.Utils
             get {
                 TimeSpan duration = TimeSpan.Zero;
                 foreach (var item in dataObjects) {
-                    duration += GetDuration (item, Time.UtcNow);
+                    duration += TimeEntryModel.GetDuration (item, Time.UtcNow);
                 }
                 return duration;
             }
@@ -232,7 +231,7 @@ namespace Toggl.Phoebe.Data.Utils
         {
 
             get {
-                return Model.Data;
+                return TimeEntryList.Last ();
             }
 
             set {
@@ -258,7 +257,7 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeEntryState State
         {
             get {
-                return Model.State;
+                return TimeEntryList.Last ().State;
             } set {
                 Model.State = value;
             }
@@ -389,44 +388,6 @@ namespace Toggl.Phoebe.Data.Utils
         public TTask LoadAsync ()
         {
             return Model.LoadAsync ();
-        }
-
-        public string GetFormattedDuration ()
-        {
-            TimeSpan duration = Duration;
-            string formattedString = duration.ToString (@"hh\:mm\:ss");
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-
-            if (user == null) {
-                return formattedString;
-            }
-
-            if (user.DurationFormat == DurationFormat.Classic) {
-                if (duration.TotalMinutes < 1) {
-                    formattedString = duration.ToString (@"s\ \s\e\c");
-                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
-                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
-                } else {
-                    formattedString = duration.ToString (@"hh\:mm\:ss");
-                }
-            } else if (user.DurationFormat == DurationFormat.Decimal) {
-                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
-            }
-            return formattedString;
-        }
-
-        private static TimeSpan GetDuration (TimeEntryData entryData, DateTime now)
-        {
-            if (entryData.StartTime == DateTime.MinValue) {
-                return TimeSpan.Zero;
-            }
-
-            var duration = (entryData.StopTime ?? now) - entryData.StartTime;
-            if (duration < TimeSpan.Zero) {
-                duration = TimeSpan.Zero;
-            }
-
-            return duration;
         }
     }
 }

@@ -26,8 +26,6 @@ namespace Toggl.Phoebe.Data.Models
 
         TaskModel Task { get; set; }
 
-        string GetFormattedDuration ();
-
         TimeSpan GetDuration ();
 
         void SetDuration (TimeSpan value);

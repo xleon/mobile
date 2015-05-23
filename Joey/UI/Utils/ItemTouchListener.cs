@@ -1,4 +1,5 @@
-﻿using Android.Support.V7.Widget;
+﻿using System;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Java.Lang;
 
@@ -18,6 +19,7 @@ namespace Toggl.Joey.UI.Utils
         private IItemTouchListener listener;
         private readonly RecyclerView recyclerView;
         private GestureDetector gestureDetector;
+        private bool IsScrolling;
 
         public ItemTouchListener (RecyclerView recyclerView, IItemTouchListener listener)
         {
@@ -26,15 +28,17 @@ namespace Toggl.Joey.UI.Utils
                 throw new IllegalArgumentException ("RecyclerView and Listener arguments can not be null");
             }
 
+            IsScrolling = false;
             this.recyclerView = recyclerView;
             this.listener = listener;
             gestureDetector = new GestureDetector (recyclerView.Context, this);
+            recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));
         }
 
         private bool IsEnabled
         {
             get {
-                return ! (recyclerView.IsInLayout || recyclerView.GetItemAnimator().IsRunning);
+                return ! (recyclerView.IsInLayout || recyclerView.GetItemAnimator().IsRunning || IsScrolling);
             }
         }
 
@@ -106,6 +110,22 @@ namespace Toggl.Joey.UI.Utils
             }
 
             return false;
+        }
+
+        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        {
+            private readonly ItemTouchListener touchListener;
+
+            public RecyclerViewScrollDetector (ItemTouchListener touchListener)
+            {
+                this.touchListener = touchListener;
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                base.OnScrollStateChanged (recyclerView, newState);
+                touchListener.IsScrolling = newState != RecyclerView.ScrollStateIdle;
+            }
         }
     }
 }

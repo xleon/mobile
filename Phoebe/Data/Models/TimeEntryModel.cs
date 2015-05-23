@@ -233,9 +233,9 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        public string GetFormattedDuration ()
+        public static string GetFormattedDuration (TimeEntryData data)
         {
-            TimeSpan duration = GetDuration (Data, Time.UtcNow);
+            TimeSpan duration = GetDuration (data, Time.UtcNow);
             string formattedString = duration.ToString (@"hh\:mm\:ss");
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
@@ -262,12 +262,12 @@ namespace Toggl.Phoebe.Data.Models
             return GetDuration (Data, Time.UtcNow);
         }
 
-        private TimeSpan GetDuration (TimeEntryData data)
+        public TimeSpan GetDuration (TimeEntryData data)
         {
             return GetDuration (data, Time.UtcNow);
         }
 
-        private static TimeSpan GetDuration (TimeEntryData data, DateTime now)
+        public static TimeSpan GetDuration (TimeEntryData data, DateTime now)
         {
             if (data.StartTime == DateTime.MinValue) {
                 return TimeSpan.Zero;

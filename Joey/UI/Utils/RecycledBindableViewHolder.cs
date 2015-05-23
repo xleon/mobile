@@ -26,12 +26,17 @@ namespace Toggl.Joey.UI.Utils
         public void Bind (T dataSource)
         {
             DataSource = dataSource;
-            OnDataSourceChanged ();
+            Rebind ();
         }
 
         protected virtual void OnDataSourceChanged ()
         {
             Rebind ();
+        }
+
+        public void DisposeDataSource ()
+        {
+            DataSource = default (T);
         }
 
         protected abstract void Rebind ();

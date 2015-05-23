@@ -119,6 +119,8 @@ namespace Toggl.Joey.UI.Fragments
                 subscriptionSettingChanged = null;
             }
 
+            recyclerView.SetAdapter (null);
+
             if (logAdapter != null) {
                 logAdapter.Dispose ();
                 logAdapter = null;

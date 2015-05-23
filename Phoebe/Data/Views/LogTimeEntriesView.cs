@@ -62,7 +62,7 @@ namespace Toggl.Phoebe.Data.Views
         public async void ContinueTimeEntry (TimeEntryData timeEntryData)
         {
             // Don't continue a new TimeEntry before
-            // 5 seconds has passed.
+            // 4 seconds has passed.
             if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
                 return;
             }

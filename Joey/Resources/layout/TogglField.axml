@@ -28,7 +28,8 @@
                         android:ellipsize="start"
                         android:textColor="@color/material_black"
                         android:textSize="18dp"
-                        android:layout_below="@id/EditTimeEntryBitTitle" />
+                        android:layout_below="@id/EditTimeEntryBitTitle" 
+                       	android:textCursorDrawable="@drawable/RedCursor"/>
                 <ImageView
 						android:id="@+id/EditTimeEntryBitArrow"
                         android:layout_width="wrap_content"

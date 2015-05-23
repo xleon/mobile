@@ -20,6 +20,8 @@ namespace Toggl.Phoebe.Data.Views
     public class GroupedTimeEntriesView : ICollectionDataView<object>, IDisposable
     {
         private static readonly string Tag = "GroupedTimeEntriesView";
+        private static readonly int ContinueThreshold = 3;
+
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
@@ -29,6 +31,7 @@ namespace Toggl.Phoebe.Data.Views
         private bool isLoading;
         private bool hasMore;
         private int lastItemNumber;
+        private DateTime lastTimeEntryContinuedTime;
 
         // for Undo/Restore operations
         private TimeEntryGroup lastRemovedItem;
@@ -37,6 +40,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+            lastTimeEntryContinuedTime = Time.UtcNow;
             HasMore = true;
             Reload ();
         }
@@ -56,6 +60,13 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void ContinueTimeEntryGroup (TimeEntryGroup entryGroup)
         {
+            // Don't continue a new TimeEntry before
+            // 4 seconds has passed.
+            if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
+                return;
+            }
+            lastTimeEntryContinuedTime = DateTime.UtcNow;
+
             await entryGroup.Model.ContinueAsync ();
 
             // Ping analytics
@@ -204,6 +215,7 @@ namespace Toggl.Phoebe.Data.Views
             newIndex = GetEntryGroupIndex (entryGroup);
             if (entryAction == NotifyCollectionChangedAction.Replace && oldIndex != -1 && oldIndex != newIndex) {
                 DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
+                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
             } else {
                 DispatchCollectionEvent (CollectionEventBuilder.GetEvent (entryAction, newIndex, oldIndex));
             }

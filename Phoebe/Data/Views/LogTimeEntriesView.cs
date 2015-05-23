@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data.Views
     public class LogTimeEntriesView : ICollectionDataView<object>, IDisposable
     {
         private static readonly string Tag = "LogTimeEntriesView";
-        private static readonly int ContinueThreshold = 4;
+        private static readonly int ContinueThreshold = 3;
 
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
@@ -62,7 +62,7 @@ namespace Toggl.Phoebe.Data.Views
         public async void ContinueTimeEntry (TimeEntryData timeEntryData)
         {
             // Don't continue a new TimeEntry before
-            // 5 seconds has passed.
+            // 4 seconds has passed.
             if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
                 return;
             }

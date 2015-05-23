@@ -47,7 +47,6 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             recyclerView.AddItemDecoration (new ShadowItemDecoration<ProjectListAdapter.ProjectListItemHolder, ProjectListAdapter.NoProjectListItemHolder> (Activity, true));
-
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             var activity = (AppCompatActivity)Activity;
@@ -75,6 +74,10 @@ namespace Toggl.Joey.UI.Fragments
                 viewModel = new ProjectListViewModel (timeEntryList);
             }
 
+            var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
+            adapter.HandleProjectSelection = OnItemSelected;
+            recyclerView.SetAdapter (adapter);
+
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.Init ();
         }
@@ -82,12 +85,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnModelLoaded (object sender, EventArgs e)
         {
             if (!viewModel.IsLoading) {
-                if (viewModel.Model != null) {
-                    // set list adapter
-                    var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
-                    adapter.HandleProjectSelection = OnItemSelected;
-                    recyclerView.SetAdapter (adapter);
-                } else {
+                if (viewModel.Model == null) {
                     Activity.Finish ();
                 }
             }

@@ -118,16 +118,6 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView WorkspaceTextView { get; private set; }
 
-            protected override void OnDataSourceChanged ()
-            {
-                model = null;
-                if (DataSource != null) {
-                    model = (WorkspaceModel)DataSource.Data;
-                }
-
-                base.OnDataSourceChanged ();
-            }
-
             public WorkspaceListItemHolder (View root) : base (root)
             {
                 WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView).SetFont (Font.RobotoMedium);
@@ -178,21 +168,16 @@ namespace Toggl.Joey.UI.Adapters
                 root.SetOnClickListener (this);
             }
 
-            protected override void OnDataSourceChanged ()
-            {
-                model = null;
-                if (DataSource != null) {
-                    model = (ProjectModel)DataSource.Data;
-                }
-
-                base.OnDataSourceChanged ();
-            }
-
-            protected override void Rebind ()
+            protected async override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
+                }
+
+                model = null;
+                if (DataSource != null) {
+                    model = (ProjectModel)DataSource.Data;
                 }
 
                 if (model == null) {
@@ -202,6 +187,8 @@ namespace Toggl.Joey.UI.Adapters
                     TasksFrameLayout.Visibility = ViewStates.Gone;
                     return;
                 }
+
+                await model.LoadAsync ();
 
                 var color = Color.ParseColor (model.GetHexColor ());
                 ColorView.SetBackgroundColor (color);
@@ -264,18 +251,13 @@ namespace Toggl.Joey.UI.Adapters
 
             private ProjectModel model;
 
-            protected override void OnDataSourceChanged ()
+            protected override void Rebind ()
             {
                 model = null;
                 if (DataSource != null && DataSource.Data != null) {
                     model = new ProjectModel (DataSource.Data);
                 }
 
-                base.OnDataSourceChanged ();
-            }
-
-            protected override void Rebind ()
-            {
                 var color = Color.ParseColor (model.GetHexColor ());
                 ProjectTextView.SetText (Resource.String.ProjectsNewProject);
             }

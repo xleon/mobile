@@ -186,7 +186,7 @@ namespace Toggl.Joey.UI.Utils
             public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
             {
                 base.OnScrollStateChanged (recyclerView, newState);
-                touchListener.IsScrolling = (newState == RecyclerView.ScrollStateDragging);
+                touchListener.IsScrolling = newState != RecyclerView.ScrollStateIdle;
             }
         }
     }

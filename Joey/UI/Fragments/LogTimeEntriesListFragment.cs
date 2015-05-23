@@ -63,6 +63,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new ShadowItemDecoration<LogTimeEntryItem, LogTimeEntryItem> (Activity));
             recyclerView.AddOnItemTouchListener (swipeTouchListener);
             recyclerView.AddOnItemTouchListener (itemTouchListener);
+            recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));
             recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -206,7 +207,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Remove item permanently
             var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
-            undoAdapter.ConfirmItemRemove ();
+            if (undoAdapter != null) {
+                undoAdapter.ConfirmItemRemove ();
+            }
             UndoBarVisible = false;
         }
 
@@ -241,5 +244,53 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         #endregion
+
+        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        {
+            private LogTimeEntriesListFragment owner;
+
+            public RecyclerViewScrollDetector (LogTimeEntriesListFragment owner)
+            {
+                this.owner = owner;
+            }
+
+            public int ScrollThreshold { get; set; }
+
+            public RecyclerView.OnScrollListener OnScrollListener { get; set; }
+
+            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrolled (recyclerView, dx, dy);
+                }
+
+                var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
+                if (isSignificantDelta) {
+                    if (dy > 0) {
+                        OnScrollUp();
+                    } else {
+                        OnScrollDown();
+                    }
+                }
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrollStateChanged (recyclerView, newState);
+                }
+                base.OnScrollStateChanged (recyclerView, newState);
+            }
+
+            private void OnScrollUp()
+            {
+                owner.UndoBarVisible = false;
+            }
+
+            private void OnScrollDown()
+            {
+                owner.UndoBarVisible = false;
+            }
+        }
     }
 }

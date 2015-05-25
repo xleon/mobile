@@ -317,14 +317,6 @@ namespace Toggl.Joey.UI.Adapters
                 ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
                 ItemView.Selected = false;
 
-                if (DataSource.ProjectId != lastDataSource.ProjectId) {
-                    RebindProjectAndClient ();
-                }
-
-                if (DataSource.TaskId != lastDataSource.TaskId) {
-                    RebindTask ();
-                }
-
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 if (String.IsNullOrWhiteSpace (DataSource.Description)) {
@@ -341,6 +333,8 @@ namespace Toggl.Joey.UI.Adapters
 
                 BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
+                RebindProjectAndClient ();
+                RebindTask ();
                 RebindTags ();
                 RebindDuration ();
                 lastDataSource = DataSource;
@@ -348,48 +342,69 @@ namespace Toggl.Joey.UI.Adapters
 
             private async void RebindProjectAndClient ()
             {
-
                 var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();
-                ProjectData projectData = new ProjectData ();
-                ClientData clientData;
 
-                if (DataSource.ProjectId.HasValue) {
-                    projectData = await modelView.GetProjectData (DataSource.ProjectId.Value);
-                    color = Color.ParseColor (ProjectModel.HexColors [projectData.Color % ProjectModel.HexColors.Length]);
-                    ProjectTextView.SetTextColor (color);
-                    if (String.IsNullOrWhiteSpace (projectData.Name)) {
-                        ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
+                if (DataSource.ProjectId != lastDataSource.ProjectId ) {
+
+                    ProjectData projectData = new ProjectData ();
+                    ClientData clientData;
+
+                    if (DataSource.ProjectId.HasValue) {
+                        projectData = await modelView.GetProjectData (DataSource.ProjectId.Value);
+                        color = Color.ParseColor (ProjectModel.HexColors [projectData.Color % ProjectModel.HexColors.Length]);
+                        ProjectTextView.SetTextColor (color);
+                        if (String.IsNullOrWhiteSpace (projectData.Name)) {
+                            ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
+                        } else {
+                            ProjectTextView.Text = projectData.Name;
+                        }
                     } else {
-                        ProjectTextView.Text = projectData.Name;
+                        ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
+                        ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                     }
-                } else {
+
+                    if (projectData.ClientId.HasValue) {
+                        clientData = await modelView.GetClientData (projectData.ClientId.Value);
+                        ClientTextView.Text = String.Format ("{0} • ", clientData.Name);
+                        ClientTextView.Visibility = ViewStates.Visible;
+                    } else {
+                        ClientTextView.Text = String.Empty;
+                        ClientTextView.Visibility = ViewStates.Gone;
+                    }
+
+                    var shape = ColorView.Background as GradientDrawable;
+                    if (shape != null) {
+                        shape.SetColor (color);
+                    }
+
+                } else if (!DataSource.ProjectId.HasValue) {
+
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
-                }
 
-                if (projectData.ClientId.HasValue) {
-                    clientData = await modelView.GetClientData (projectData.ClientId.Value);
-                    ClientTextView.Text = String.Format ("{0} • ", clientData.Name);
-                    ClientTextView.Visibility = ViewStates.Visible;
-                } else {
+                    var shape = ColorView.Background as GradientDrawable;
+                    if (shape != null) {
+                        shape.SetColor (color);
+                    }
+
                     ClientTextView.Text = String.Empty;
                     ClientTextView.Visibility = ViewStates.Gone;
-                }
-
-                var shape = ColorView.Background as GradientDrawable;
-                if (shape != null) {
-                    shape.SetColor (color);
                 }
             }
 
             private async void RebindTask ()
             {
-                if (DataSource.TaskId.HasValue) {
-                    var taskData = await modelView.GetTaskData (DataSource.TaskId.Value);
-                    TaskTextView.Text = String.Format ("{0} • ", taskData.Name);
-                    TaskTextView.Visibility = ViewStates.Visible;
-                } else {
+                if (DataSource.TaskId != lastDataSource.TaskId) {
+                    if (DataSource.TaskId.HasValue) {
+                        var taskData = await modelView.GetTaskData (DataSource.TaskId.Value);
+                        TaskTextView.Text = String.Format ("{0} • ", taskData.Name);
+                        TaskTextView.Visibility = ViewStates.Visible;
+                    } else {
+                        TaskTextView.Text = String.Empty;
+                        TaskTextView.Visibility = ViewStates.Gone;
+                    }
+                } else if (!DataSource.TaskId.HasValue) {
                     TaskTextView.Text = String.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 }

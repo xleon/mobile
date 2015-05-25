@@ -14,8 +14,8 @@
     <string name="LoginSignupButtonText">Let\'s do it</string>
     <string name="LoginButtonProgressText">Logging in&#8230;</string>
     <string name="LoginButtonSignupProgressText">Signing up&#8230;</string>
-    <string name="LoginGoogleButtonText">Log in with Google Account</string>
-    <string name="LoginSignupGoogleButtonText">Sign up with Google Account</string>
+    <string name="LoginGoogleButtonText">Log in with Google</string>
+    <string name="LoginSignupGoogleButtonText">Sign up with Google</string>
     <string name="LoginSignupLegalText">By signing up you agree to Toggl\'s {0} and {1}</string>
     <string name="LoginSignupLegalTermsText">Terms</string>
     <string name="LoginSignupLegalPrivacyText">Privacy Policy</string>
@@ -202,4 +202,7 @@
     <string name="SwipeDeleteQuestion">Delete?</string>
     <string name="UndoBarDeletedText">Time entry deleted</string>
     <string name="UndoBarButtonText">UNDO</string>
+    <string name="SwitchViewText">or you can</string>
+    <string name="LoginViewButtonText">Log in</string>
+    <string name="SignupViewButtonText">Sign up</string>
 </resources>

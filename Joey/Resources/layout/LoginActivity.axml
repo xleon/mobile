@@ -15,30 +15,23 @@
             android:scaleType="center" />
         <AutoCompleteTextView
             android:id="@+id/EmailAutoCompleteTextView"
-            android:inputType="textEmailAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/LoginEmailHint"
-            android:textColor="#ffffff"
-            android:imeOptions="actionNext"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp" />
+            style="@style/Login.Input"
+            android:inputType="textEmailAddress"
+            android:imeOptions="actionNext" />
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <EditText
                 android:id="@+id/PasswordEditText"
-                android:inputType="textVisiblePassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#ffffff"
-                android:textColorHint="#ffffff"
                 android:hint="@string/LoginPasswordHint"
-                android:imeOptions="actionDone"
-                android:layout_marginRight="10dp"
-                android:layout_marginLeft="10dp"
-                android:paddingRight="60dp" />
+                style="@style/Login.Input"
+                android:inputType="textVisiblePassword"
+                android:imeOptions="actionDone" />
             <Button
                 android:id="@+id/PasswordToggleButton"
                 android:layout_width="wrap_content"
@@ -48,7 +41,6 @@
                 android:textSize="12dp"
                 android:text="@string/LoginHideButtonText"
                 android:textColor="#ffffff"
-                android:textColorHint="#ffffff"
                 android:background="@null"
                 android:minWidth="70dp"
                 android:minHeight="0dp"
@@ -61,10 +53,21 @@
             android:text="@string/LoginButtonText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="15dp"
             android:layout_marginBottom="15dp" />
+        <Button
+            android:id="@+id/GoogleLoginButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:drawableLeft="@drawable/IcGoogle"
+            android:drawablePadding="8dp"
+            style="@style/Login.GoogleLogin"
+            android:text="@string/LoginGoogleButtonText"
+            android:layout_gravity="center" />
         <TextView
             android:id="@+id/LegalTextView"
             android:layout_width="match_parent"
@@ -76,20 +79,23 @@
             android:gravity="center"
             android:text="By signing up you agree to Toggl's Terms and Privacy Policy"
             android:textSize="12sp"
+            android:textColor="@android:color/white"
             android:textColorLink="@color/green" />
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
-        <Button
-            android:id="@+id/GoogleLoginButton"
+        <TextView
+            android:id="@+id/SwitchViewText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@null"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/LoginGoogleButtonText" />
+            style="@style/Login.SwitchText"
+            android:text="@string/SwitchViewText" />
+        <Button
+            android:id="@+id/SwitchViewButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Login.SwitchButton"
+            android:text="@string/SignupViewButtonText" />
     </LinearLayout>
 </ScrollView>

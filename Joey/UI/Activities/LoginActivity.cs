@@ -46,9 +46,7 @@ namespace Toggl.Joey.UI.Activities
 
         protected RadioGroup TabsRadioGroup { get; private set; }
 
-        protected RadioButton LoginTabRadioButton { get; private set; }
-
-        protected RadioButton SignupTabRadioButton { get; private set; }
+        protected Button SwitchModeButton { get; private set; }
 
         protected AutoCompleteTextView EmailEditText { get; private set; }
 
@@ -65,16 +63,15 @@ namespace Toggl.Joey.UI.Activities
         private void FindViews ()
         {
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
-//            FindViewById<TextView> (Resource.Id.SloganTextView).SetFont (Font.RobotoLight);
-//            TabsRadioGroup = FindViewById<RadioGroup> (Resource.Id.TabsRadioGroup);
-//            LoginTabRadioButton = FindViewById<RadioButton> (Resource.Id.LoginTabRadioButton).SetFont (Font.Roboto);
-//            SignupTabRadioButton = FindViewById<RadioButton> (Resource.Id.SignupTabRadioButton).SetFont (Font.Roboto);
+            FindViewById<TextView> (Resource.Id.SwitchViewText).SetFont (Font.RobotoLight);
+            SwitchModeButton = FindViewById<Button> (Resource.Id.SwitchViewButton);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
             PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont (Font.Roboto);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont (Font.Roboto);
             LegalTextView = FindViewById<TextView> (Resource.Id.LegalTextView).SetFont (Font.RobotoLight);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
+            GoogleLoginButton.Text.ToUpper ();
         }
 
         protected override bool StartAuthActivity ()
@@ -121,7 +118,6 @@ namespace Toggl.Joey.UI.Activities
 
             ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener (this);
 
-//            TabsRadioGroup.CheckedChange += OnTabsRadioGroupCheckedChange;
             LoginButton.Click += OnLoginButtonClick;
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
             EmailEditText.Adapter = MakeEmailsAdapter ();
@@ -129,9 +125,9 @@ namespace Toggl.Joey.UI.Activities
             EmailEditText.TextChanged += OnEmailEditTextTextChanged;
             PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
             PasswordToggleButton.Click += OnPasswordToggleButtonClick;
-
+            SwitchModeButton.Click += OnModeToggleButtonClick;
             hasGoogleAccounts = GoogleAccounts.Count > 0;
-            GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
+//            GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
 
             if (bundle != null) {
                 showPassword = bundle.GetBoolean (ExtraShowPassword);
@@ -190,17 +186,15 @@ namespace Toggl.Joey.UI.Activities
                 LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
                 LegalTextView.Visibility = ViewStates.Gone;
                 GoogleLoginButton.SetText (Resource.String.LoginGoogleButtonText);
+                SwitchModeButton.SetText (Resource.String.SignupViewButtonText);
             } else {
                 LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonSignupProgressText : Resource.String.LoginSignupButtonText);
                 LegalTextView.SetText (FormattedLegalText, TextView.BufferType.Spannable);
                 LegalTextView.MovementMethod = Android.Text.Method.LinkMovementMethod.Instance;
                 LegalTextView.Visibility = ViewStates.Visible;
                 GoogleLoginButton.SetText (Resource.String.LoginSignupGoogleButtonText);
+                SwitchModeButton.SetText (Resource.String.LoginViewButtonText);
             }
-
-//            LoginTabRadioButton.Enabled = !isAuthenticating;
-//            SignupTabRadioButton.Enabled = !isAuthenticating;
-//            TabsRadioGroup.Enabled = !isAuthenticating;
             EmailEditText.Enabled = !isAuthenticating;
             PasswordEditText.Enabled = !isAuthenticating;
             GoogleLoginButton.Enabled = !isAuthenticating;
@@ -254,6 +248,12 @@ namespace Toggl.Joey.UI.Activities
                 // Restore cursor position:
                 PasswordEditText.SetSelection (selectionStart, selectionEnd);
             }
+        }
+
+        private void OnModeToggleButtonClick (object sender, EventArgs e)
+        {
+            CurrentMode = CurrentMode == Mode.Login ? Mode.Signup : Mode.Login;
+            SyncContent ();
         }
 
         private void OnEmailEditTextTextChanged (object sender, TextChangedEventArgs e)
@@ -405,18 +405,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private Mode CurrentMode
-        {
-            get {
-                return Mode.Login;
-//                switch (TabsRadioGroup != null ? TabsRadioGroup.CheckedRadioButtonId : -1) {
-//                case Resource.Id.SignupTabRadioButton:
-//                    return Mode.Signup;
-//                default:
-//                    return Mode.Login;
-//                }
-            }
-        }
+        private Mode CurrentMode;
 
         private enum Mode {
             Login,

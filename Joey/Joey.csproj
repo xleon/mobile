@@ -667,6 +667,10 @@
     <AndroidResource Include="Resources\drawable\ButtonRed.xml" />
     <AndroidResource Include="Resources\drawable\ButtonRedDefault.xml" />
     <AndroidResource Include="Resources\drawable\ButtonRedDisabled.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcGoogle.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcGoogle.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcGoogle.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcGoogle.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

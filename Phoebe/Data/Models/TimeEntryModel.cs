@@ -730,14 +730,6 @@ namespace Toggl.Phoebe.Data.Models
             return new TimeEntryModel (newData);
         }
 
-        public Task<int> GetNumberOfTagsAsync ()
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            return store.Table<TimeEntryTagData>()
-                   .Where (t => t.TimeEntryId == Id)
-                   .CountAsync ();
-        }
-
         public static explicit operator TimeEntryModel (TimeEntryData data)
         {
             if (data == null) {

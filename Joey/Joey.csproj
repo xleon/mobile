@@ -601,7 +601,6 @@
     <AndroidResource Include="Resources\drawable\BackgroundLine.xml" />
     <AndroidResource Include="Resources\color\MaterialPlaceholderColor.xml" />
     <AndroidResource Include="Resources\drawable\RoundedGrayBackground.xml" />
-    <AndroidResource Include="Resources\color\MaterialTransparentPlaceholderColor.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable-mdpi\icClock.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\icClock.png" />

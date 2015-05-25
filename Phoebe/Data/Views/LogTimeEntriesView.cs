@@ -62,14 +62,13 @@ namespace Toggl.Phoebe.Data.Views
         public async void ContinueTimeEntry (TimeEntryData timeEntryData)
         {
             // Don't continue a new TimeEntry before
-            // 4 seconds has passed.
+            // 3 seconds has passed.
             if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
                 return;
             }
             lastTimeEntryContinuedTime = DateTime.UtcNow;
 
-            var model = new TimeEntryModel (timeEntryData);
-            await model.ContinueAsync ();
+            var startedTimeEntry = await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
@@ -77,8 +76,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void StopTimeEntry (TimeEntryData timeEntryData)
         {
-            var model = new TimeEntryModel (timeEntryData);
-            await model.StopAsync ();
+            var stoppedEntry = await TimeEntryModel.StopAsync (timeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
@@ -97,8 +95,7 @@ namespace Toggl.Phoebe.Data.Views
             // Remove previous if exists
             RemoveItemPermanently (lastRemovedItem);
             if (data.State == TimeEntryState.Running) {
-                var model = new TimeEntryModel (data);
-                await model.StopAsync ();
+                await TimeEntryModel.StopAsync (data);
             }
             lastRemovedItem = data;
             RemoveEntry (data);
@@ -112,8 +109,7 @@ namespace Toggl.Phoebe.Data.Views
         private async void RemoveItemPermanently (TimeEntryData itemToRemove)
         {
             if (itemToRemove != null) {
-                var model = new TimeEntryModel (itemToRemove);
-                await model.DeleteAsync();
+                await TimeEntryModel.DeleteAsync (itemToRemove);
             }
         }
 

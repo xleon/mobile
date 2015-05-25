@@ -233,35 +233,6 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        public static string GetFormattedDuration (TimeEntryData data)
-        {
-            TimeSpan duration = GetDuration (data, Time.UtcNow);
-            return GetFormattedDuration (duration);
-        }
-
-        public static string GetFormattedDuration (TimeSpan duration)
-        {
-            string formattedString = duration.ToString (@"hh\:mm\:ss");
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-
-            if (user == null) {
-                return formattedString;
-            }
-
-            if (user.DurationFormat == DurationFormat.Classic) {
-                if (duration.TotalMinutes < 1) {
-                    formattedString = duration.ToString (@"s\ \s\e\c");
-                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
-                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
-                } else {
-                    formattedString = duration.ToString (@"hh\:mm\:ss");
-                }
-            } else if (user.DurationFormat == DurationFormat.Decimal) {
-                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
-            }
-            return formattedString;
-        }
-
         public TimeSpan GetDuration ()
         {
             return GetDuration (Data, Time.UtcNow);
@@ -632,6 +603,46 @@ namespace Toggl.Phoebe.Data.Models
             return model;
         }
 
+        public async Task MapTagsFromModel (TimeEntryModel model)
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+
+            var oldTags = await dataStore.Table<TimeEntryTagData> ()
+                          .QueryAsync (r => r.TimeEntryId == Id && r.DeletedAt == null);
+            var task1 = oldTags.Select (d => new TimeEntryTagModel (d).DeleteAsync ()).ToList();
+
+            var modelTags = await dataStore.Table<TimeEntryTagData> ()
+                            .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+            var task2 = modelTags.Select (d => new TimeEntryTagModel () { TimeEntry = this, Tag = new TagModel (d.TagId) } .SaveAsync()).ToList();
+
+            await System.Threading.Tasks.Task.WhenAll (task1.Concat (task2));
+
+            if (modelTags.Count > 0) {
+                Touch ();
+            }
+        }
+
+        public async Task MapMinorsFromModel (TimeEntryModel model)
+        {
+            await MapTagsFromModel (model);
+            Workspace = model.Workspace;
+            Project = model.Project;
+            Description = model.Description;
+            IsBillable = model.IsBillable;
+            await SaveAsync ();
+        }
+
+        TimeEntryData ITimeEntryModel.Data
+        {
+            get {
+                return Data;
+            } set {
+                Data = value;
+            }
+        }
+
+        #region Public static methods.
+
         private static TaskCompletionSource<TimeEntryData> draftDataTCS;
 
         public static async Task<TimeEntryModel> GetDraftAsync ()
@@ -700,6 +711,115 @@ namespace Toggl.Phoebe.Data.Models
             return new TimeEntryModel (data);
         }
 
+        public static async Task<TimeEntryData> ContinueTimeEntryDataAsync (TimeEntryData timeEntryData)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+
+            // Validate the current state
+            switch (timeEntryData.State) {
+            case TimeEntryState.Running:
+                return timeEntryData;
+            case TimeEntryState.Finished:
+                break;
+            default:
+                throw new InvalidOperationException (String.Format ("Cannot continue a time entry in {0} state.", timeEntryData.State));
+            }
+
+            // We can continue time entries which haven't been synced yet:
+            if (timeEntryData.DurationOnly && timeEntryData.StartTime.ToLocalTime ().Date == Time.Now.Date) {
+                if (timeEntryData.RemoteId == null) {
+                    // Mutate data
+                    timeEntryData = MutateData (timeEntryData, data => {
+                        data.State = TimeEntryState.Running;
+                        data.StartTime = Time.UtcNow - GetDuration (data, Time.UtcNow);
+                        data.StopTime = null;
+                    });
+                    return await SaveAsync (timeEntryData);
+                }
+            }
+
+            // Create new time entry:
+            var newData = new TimeEntryData () {
+                WorkspaceId = timeEntryData.WorkspaceId,
+                ProjectId = timeEntryData.ProjectId,
+                TaskId = timeEntryData.TaskId,
+                UserId = timeEntryData.UserId,
+                Description = timeEntryData.Description,
+                StartTime = Time.UtcNow,
+                DurationOnly = timeEntryData.DurationOnly,
+                IsBillable = timeEntryData.IsBillable,
+                State = TimeEntryState.Running,
+            };
+            MarkDirty (newData);
+
+            var parentId = timeEntryData.Id;
+            await store.ExecuteInTransactionAsync (ctx => {
+                newData = ctx.Put (newData);
+
+                // Duplicate tag relations as well
+                if (parentId != Guid.Empty) {
+                    var q = ctx.Connection.Table<TimeEntryTagData> ()
+                            .Where (r => r.TimeEntryId == parentId && r.DeletedAt == null);
+                    foreach (var row in q) {
+                        ctx.Put (new TimeEntryTagData () {
+                            TimeEntryId = newData.Id,
+                            TagId = row.TagId,
+                        });
+                    }
+                }
+            });
+
+            return newData;
+        }
+
+        public static async Task<TimeEntryData> StopAsync (TimeEntryData timeEntryData)
+        {
+            if (timeEntryData.State != TimeEntryState.Running) {
+                throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", timeEntryData.State));
+            }
+
+            // Mutate data
+            timeEntryData = MutateData (timeEntryData, data => {
+                data.State = TimeEntryState.Finished;
+                data.StopTime = Time.UtcNow;
+            });
+
+            return await SaveAsync (timeEntryData);
+        }
+
+        public static async Task<TimeEntryData> SaveAsync (TimeEntryData timeEntryData)
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var newData = await dataStore.PutAsync (timeEntryData);
+            return newData;
+        }
+
+        public static async Task DeleteAsync (TimeEntryData data)
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+
+            if (data.RemoteId == null) {
+                // We can safely delete the item as it has not been synchronized with the server yet
+                await dataStore.DeleteAsync (data);
+            } else {
+                // Need to just mark this item as deleted so that it could be synced with the server
+                var newData = new TimeEntryData (data);
+                newData.DeletedAt = Time.UtcNow;
+
+                MarkDirty (newData);
+
+                await dataStore.PutAsync (newData);
+            }
+        }
+
+        protected static TimeEntryData MutateData (TimeEntryData timeEntryData, Action<TimeEntryData> mutator)
+        {
+            var newData = new TimeEntryData (timeEntryData);
+            mutator (newData);
+            MarkDirty (newData);
+            return newData;
+        }
+
         public static async Task<TimeEntryModel> CreateFinishedAsync (TimeSpan duration)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
@@ -743,42 +863,35 @@ namespace Toggl.Phoebe.Data.Models
             return model.Data;
         }
 
-        public async Task MapTagsFromModel (TimeEntryModel model)
+        public static string GetFormattedDuration (TimeEntryData data)
         {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            TimeSpan duration = GetDuration (data, Time.UtcNow);
+            return GetFormattedDuration (duration);
+        }
 
-            var oldTags = await dataStore.Table<TimeEntryTagData> ()
-                          .QueryAsync (r => r.TimeEntryId == Id && r.DeletedAt == null);
-            var task1 = oldTags.Select (d => new TimeEntryTagModel (d).DeleteAsync ()).ToList();
+        public static string GetFormattedDuration (TimeSpan duration)
+        {
+            string formattedString = duration.ToString (@"hh\:mm\:ss");
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
 
-            var modelTags = await dataStore.Table<TimeEntryTagData> ()
-                            .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
-            var task2 = modelTags.Select (d => new TimeEntryTagModel () { TimeEntry = this, Tag = new TagModel (d.TagId) } .SaveAsync()).ToList();
-
-            await System.Threading.Tasks.Task.WhenAll (task1.Concat (task2));
-
-            if (modelTags.Count > 0) {
-                Touch ();
+            if (user == null) {
+                return formattedString;
             }
-        }
 
-        public async Task MapMinorsFromModel (TimeEntryModel model)
-        {
-            await MapTagsFromModel (model);
-            Workspace = model.Workspace;
-            Project = model.Project;
-            Description = model.Description;
-            IsBillable = model.IsBillable;
-            await SaveAsync ();
-        }
-
-        TimeEntryData ITimeEntryModel.Data
-        {
-            get {
-                return Data;
-            } set {
-                Data = value;
+            if (user.DurationFormat == DurationFormat.Classic) {
+                if (duration.TotalMinutes < 1) {
+                    formattedString = duration.ToString (@"s\ \s\e\c");
+                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
+                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
+                } else {
+                    formattedString = duration.ToString (@"hh\:mm\:ss");
+                }
+            } else if (user.DurationFormat == DurationFormat.Decimal) {
+                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
             }
+            return formattedString;
         }
+
+        #endregion
     }
 }

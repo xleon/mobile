@@ -92,10 +92,14 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public void RemoveItemWithUndo (TimeEntryData data)
+        public async void RemoveItemWithUndo (TimeEntryData data)
         {
             // Remove previous if exists
             RemoveItemPermanently (lastRemovedItem);
+            if (data.State == TimeEntryState.Running) {
+                var model = new TimeEntryModel (data);
+                await model.StopAsync ();
+            }
             lastRemovedItem = data;
             RemoveEntry (data);
         }
@@ -141,6 +145,10 @@ namespace Toggl.Phoebe.Data.Views
             TimeEntryData existingEntry;
             DateGroup grp;
             bool isNewGroup = false;
+
+            if (lastRemovedItem != null && lastRemovedItem.Matches (entry)) {
+                return;
+            }
 
             if (FindExistingEntry (entry, out grp, out existingEntry)) {
                 if (entry.StartTime != existingEntry.StartTime) {

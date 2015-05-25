@@ -559,5 +559,38 @@ namespace Toggl.Phoebe.Data.Views
             Immediate,
             Batch,
         }
+
+        public async Task<ProjectData> GetProjectData (Guid projectGuid)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var projectList = await store.Table<ProjectData> ()
+                              .Take (1).QueryAsync (m => m.Id == projectGuid);
+            return projectList.First ();
+        }
+
+        public async Task<TaskData> GetTaskData (Guid taskId)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var taskList = await store.Table<TaskData> ()
+                           .Take (1).QueryAsync (m => m.Id == taskId);
+            return taskList.First ();
+        }
+
+        public async Task<ClientData> GetClientData (Guid clientId)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var clientList = await store.Table<ClientData> ()
+                             .Take (1).QueryAsync (m => m.Id == clientId);
+            return clientList.First ();
+        }
+
+        public Task<int> GetNumberOfTagsAsync (Guid timeEntryGuid)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return store.Table<TimeEntryTagData>()
+                   .Where (t => t.TimeEntryId == timeEntryGuid)
+                   .CountAsync ();
+        }
+
     }
 }

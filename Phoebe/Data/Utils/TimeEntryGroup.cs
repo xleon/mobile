@@ -195,11 +195,6 @@ namespace Toggl.Phoebe.Data.Utils
             return Model.StopAsync ();
         }
 
-        public Task<int> GetNumberOfTagsAsync ()
-        {
-            return Model.GetNumberOfTagsAsync ();
-        }
-
         public async Task DeleteAsync ()
         {
             await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {
@@ -289,7 +284,7 @@ namespace Toggl.Phoebe.Data.Utils
         public bool IsBillable
         {
             get {
-                return Model.IsBillable;
+                return TimeEntryList.Last ().IsBillable;
             }
 
             set {
@@ -388,6 +383,14 @@ namespace Toggl.Phoebe.Data.Utils
         public TTask LoadAsync ()
         {
             return Model.LoadAsync ();
+        }
+
+        public Task<int> GetNumberOfTagsAsync ()
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return store.Table<TimeEntryTagData>()
+                   .Where (t => t.TimeEntryId == Id)
+                   .CountAsync ();
         }
     }
 }

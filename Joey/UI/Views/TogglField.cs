@@ -3,19 +3,23 @@ using Android.Util;
 using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
+using Android.Text;
 
 namespace Toggl.Joey.UI.Views
 {
     public class TogglField : RelativeLayout
     {
-        public TogglField (Context context) :
-        base (context)
+        public EditText TextField;
+        private TextView titleText;
+        private TextView assistView;
+        private ImageView arrow;
+
+        public TogglField (Context context) : base (context)
         {
             Initialize ();
         }
 
-        public TogglField (Context context, IAttributeSet attrs) :
-        base (context, attrs)
+        public TogglField (Context context, IAttributeSet attrs) : base (context, attrs)
         {
             Initialize ();
         }
@@ -25,17 +29,17 @@ namespace Toggl.Joey.UI.Views
             var inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
             inflater.Inflate (Resource.Layout.TogglField, this);
 
-            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
+            TextField = FindViewById<EditText> (Resource.Id.EditTimeEntryBitText);
+            titleText= FindViewById<TextView> (Resource.Id.EditTimeEntryBitTitle);
+            assistView = FindViewById<TextView> (Resource.Id.EditTimeEntryBitAssistView);
+            arrow = FindViewById<ImageView> (Resource.Id.EditTimeEntryBitArrow);
 
-            text.EditorAction += OnTextFieldEditorActionListener;
-
-            text.FocusChange += (sender, e) => {
-                title.Selected = text.HasFocus;
-                Selected = text.HasFocus;
+            TextField.EditorAction += OnTextFieldEditorActionListener;
+            TextField.FocusChange += (sender, e) => {
+                titleText.Selected = TextField.HasFocus;
+                Selected = TextField.HasFocus;
             };
         }
-
 
         private void OnTextFieldEditorActionListener (object sender, TextView.EditorActionEventArgs e)
         {
@@ -44,67 +48,53 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public EditText TextField
-        {
-            get { return (EditText)FindViewById (Resource.Id.EditTimeEntryBitText); }
-        }
-
         public TogglField SetName (string name)
         {
-            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            title.Text = name;
-            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-            text.Hint = name;
+            titleText.Text = name;
+            TextField.Hint = name;
             return this;
         }
 
         public TogglField SetName (int resourceId)
         {
-            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            title.SetText (resourceId);
-            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-            text.SetHint (resourceId);
+            titleText.SetText (resourceId);
+            TextField.SetHint (resourceId);
             return this;
         }
 
         public TogglField SetAssistViewTitle (string title)
         {
-            var assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
             assistView.Text = title;
             assistView.Visibility = ViewStates.Visible;
+            TextField.SetPadding (TextField.PaddingLeft, TextField.PaddingTop, assistView.Width + arrow.Width + 100, TextField.PaddingBottom);
             return this;
         }
 
         public TogglField DestroyAssistView()
         {
-            var assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
             assistView.Visibility = ViewStates.Gone;
             return this;
         }
 
         public TogglField RestoreAssistView()
         {
-            var assistView = (TextView)FindViewById (Resource.Id.EditTimeEntryBitAssistView);
             assistView.Visibility = ViewStates.Visible;
             return this;
         }
 
         public TogglField DestroyArrow()
         {
-            var arrow = (ImageView)FindViewById (Resource.Id.EditTimeEntryBitArrow);
             arrow.Visibility = ViewStates.Gone;
             return this;
         }
 
         public TogglField SimulateButton()
         {
-            var title = (TextView)FindViewById (Resource.Id.EditTimeEntryBitTitle);
-            var text = (EditText)FindViewById (Resource.Id.EditTimeEntryBitText);
-            text.Touch += (sender, e) => {
+            TextField.Touch += (sender, e) => {
                 e.Handled = false;
-                title.Pressed = e.Event.Action != MotionEventActions.Up;
+                titleText.Pressed = e.Event.Action != MotionEventActions.Up;
             };
-            text.Focusable = text.Clickable = false;
+            TextField.Focusable = TextField.Clickable = false;
             return this;
         }
     }

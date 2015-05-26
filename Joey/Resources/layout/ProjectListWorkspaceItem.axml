@@ -12,7 +12,6 @@
         app:fadeLength="15dp">
         <TextView
             android:id="@+id/WorkspaceTextView"
-            android:text="16 October 2014"
             android:textColor="@color/group_title_dark_gray"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:layout_width="0dp"

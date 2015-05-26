@@ -130,6 +130,11 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
+                model = null;
+                if (DataSource != null) {
+                    model = (WorkspaceModel)DataSource.Data;
+                }
+
                 if (model == null) {
                     return;
                 }

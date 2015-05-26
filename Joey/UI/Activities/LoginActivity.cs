@@ -44,8 +44,6 @@ namespace Toggl.Joey.UI.Activities
 
         protected ScrollView ScrollView { get; private set; }
 
-        protected RadioGroup TabsRadioGroup { get; private set; }
-
         protected Button SwitchModeButton { get; private set; }
 
         protected AutoCompleteTextView EmailEditText { get; private set; }
@@ -71,7 +69,6 @@ namespace Toggl.Joey.UI.Activities
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont (Font.Roboto);
             LegalTextView = FindViewById<TextView> (Resource.Id.LegalTextView).SetFont (Font.RobotoLight);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
-            GoogleLoginButton.Text.ToUpper ();
         }
 
         protected override bool StartAuthActivity ()
@@ -127,7 +124,7 @@ namespace Toggl.Joey.UI.Activities
             PasswordToggleButton.Click += OnPasswordToggleButtonClick;
             SwitchModeButton.Click += OnModeToggleButtonClick;
             hasGoogleAccounts = GoogleAccounts.Count > 0;
-//            GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
+            GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
 
             if (bundle != null) {
                 showPassword = bundle.GetBoolean (ExtraShowPassword);
@@ -146,12 +143,6 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnStart ()
         {
             base.OnStart ();
-            SyncCurrentScreen ();
-        }
-
-        private void OnTabsRadioGroupCheckedChange (object sender, RadioGroup.CheckedChangeEventArgs e)
-        {
-            SyncContent ();
             SyncCurrentScreen ();
         }
 

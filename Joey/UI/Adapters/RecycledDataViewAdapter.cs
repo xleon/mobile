@@ -96,7 +96,6 @@ namespace Toggl.Joey.UI.Adapters
             if (Handle == IntPtr.Zero) {
                 return;
             }
-
             updateScheduler.AddUpdate (e);
         }
 
@@ -212,7 +211,13 @@ namespace Toggl.Joey.UI.Adapters
 
             private void RunUpdate (NotifyCollectionChangedEventArgs eventInfo)
             {
-                UpdateHandler (eventInfo);
+                try {
+                    UpdateHandler (eventInfo);
+                } catch (Exception ex) {
+                    updateQueue.Insert (0, eventInfo);
+                    var log = XPlatUtils.ServiceContainer.Resolve<Toggl.Phoebe.Logging.ILogger> ();
+                    log.Warning ("RecyclerViewAdapter", ex, "Adapter failed", eventInfo.Action.ToString ());
+                }
             }
 
             private void CheckQueue()

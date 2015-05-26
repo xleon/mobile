@@ -21,7 +21,6 @@ namespace Toggl.Phoebe.Data.Views
     public class LogTimeEntriesView : ICollectionDataView<object>, IDisposable
     {
         private static readonly string Tag = "LogTimeEntriesView";
-        private static readonly int ContinueThreshold = 3;
 
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
@@ -32,7 +31,6 @@ namespace Toggl.Phoebe.Data.Views
         private bool isLoading;
         private bool hasMore;
         private int lastItemNumber;
-        private DateTime lastTimeEntryContinuedTime;
 
         // for Undo/Restore operations
         private TimeEntryData lastRemovedItem;
@@ -41,7 +39,6 @@ namespace Toggl.Phoebe.Data.Views
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
-            lastTimeEntryContinuedTime = Time.UtcNow;
             HasMore = true;
             Reload ();
         }
@@ -61,14 +58,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void ContinueTimeEntry (TimeEntryData timeEntryData)
         {
-            // Don't continue a new TimeEntry before
-            // 3 seconds has passed.
-            if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
-                return;
-            }
-            lastTimeEntryContinuedTime = DateTime.UtcNow;
-
-            var startedTimeEntry = await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryData);
+            await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
@@ -76,7 +66,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void StopTimeEntry (TimeEntryData timeEntryData)
         {
-            var stoppedEntry = await TimeEntryModel.StopAsync (timeEntryData);
+            await TimeEntryModel.StopAsync (timeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);

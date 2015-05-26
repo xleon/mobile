@@ -27,8 +27,10 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
+        private static readonly int ContinueThreshold = 2;
         private LogTimeEntriesView modelView;
         private readonly List<RecyclerView.ViewHolder> holderList;
+        private DateTime lastTimeEntryContinuedTime;
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
@@ -37,6 +39,7 @@ namespace Toggl.Joey.UI.Adapters
         public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesView modelView) : base (owner, modelView)
         {
             this.modelView = modelView;
+            lastTimeEntryContinuedTime = Time.UtcNow;
             holderList = new List<RecyclerView.ViewHolder> ();
         }
 
@@ -88,6 +91,24 @@ namespace Toggl.Joey.UI.Adapters
 
         private void OnContinueTimeEntry (TimeEntryData timeEntryData)
         {
+            // Don't continue a new TimeEntry before
+            // 3 seconds has passed.
+            if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
+                return;
+            }
+            lastTimeEntryContinuedTime = DateTime.UtcNow;
+
+            // Trick on view to show a better
+            // visual reaction to press Play btn
+            for (int i = 0; i < holderList.Count; i++) {
+                var holder = holderList [i] as TimeEntryListItemHolder;
+                if (holder != null) {
+                    if (holder.DataSource.State == TimeEntryState.Running) {
+                        holder.DataSource.State = TimeEntryState.Finished;
+                        BindHolder (holder, holder.AdapterPosition);
+                    }
+                }
+            }
             modelView.ContinueTimeEntry (timeEntryData);
         }
 
@@ -122,7 +143,7 @@ namespace Toggl.Joey.UI.Adapters
                 holder = new HeaderListItemHolder (view);
             } else {
                 view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
-                holder = new TimeEntryListItemHolder (modelView, view);
+                holder = new TimeEntryListItemHolder (this, view);
             }
 
             holderList.Add (holder);
@@ -165,11 +186,11 @@ namespace Toggl.Joey.UI.Adapters
 
         public override void OnViewDetachedFromWindow (Java.Lang.Object holder)
         {
-            if (holder is RecycledBindableViewHolder<TimeEntryData>) {
-                var mHolder = (RecycledBindableViewHolder<TimeEntryData>)holder;
+            if (holder is TimeEntryListItemHolder) {
+                var mHolder = (TimeEntryListItemHolder)holder;
                 mHolder.DisposeDataSource ();
-            } else if (holder is RecycledBindableViewHolder<LogTimeEntriesView.DateGroup>) {
-                var mHolder = (RecycledBindableViewHolder<LogTimeEntriesView.DateGroup>)holder;
+            } else if (holder is HeaderListItemHolder) {
+                var mHolder = (HeaderListItemHolder)holder;
                 mHolder.DisposeDataSource ();
             }
             base.OnViewDetachedFromWindow (holder);
@@ -242,6 +263,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             private readonly Handler handler;
             private readonly LogTimeEntriesView modelView;
+            private readonly LogTimeEntriesAdapter owner;
 
             private TimeEntryData lastDataSource;
 
@@ -263,10 +285,11 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton ContinueImageButton { get; private set; }
 
-            public TimeEntryListItemHolder (LogTimeEntriesView modelView, View root) : base (root)
+            public TimeEntryListItemHolder (LogTimeEntriesAdapter owner, View root) : base (root)
             {
                 handler = new Handler ();
-                this.modelView = modelView;
+                modelView = owner.modelView;
+                this.owner = owner;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.RobotoMedium);
@@ -291,11 +314,12 @@ namespace Toggl.Joey.UI.Adapters
                     }
 
                     if (DataSource.State == TimeEntryState.Running) {
-                        modelView.StopTimeEntry (DataSource);
+                        owner.OnStopTimeEntry (DataSource);
                         return false;
                     }
 
-                    modelView.ContinueTimeEntry (DataSource);
+                    owner.OnContinueTimeEntry (DataSource);
+
                     return false;
                 }
 

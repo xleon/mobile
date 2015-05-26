@@ -151,7 +151,7 @@ namespace Toggl.Joey.UI.Adapters
         public override int ItemCount
         {
             get {
-                if (dataView.HasMore) {
+                if (dataView.IsLoading || dataView.IsLoading) {
                     return dataView.Count + 1;
                 }
                 return dataView.Count;

@@ -230,7 +230,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class NewProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
+        public class NewProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private readonly ProjectListAdapter adapter;
 

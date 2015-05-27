@@ -168,6 +168,7 @@
     <Compile Include="UI\Views\TogglTagsField.cs" />
     <Compile Include="UI\Views\ShadowItemDecoration.cs" />
     <Compile Include="UI\Activities\SplashActivity.cs" />
+    <Compile Include="UI\Utils\DimensionsExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -665,6 +666,7 @@
     <AndroidResource Include="Resources\drawable-mdpi\SplashScreen.png" />
     <AndroidResource Include="Resources\drawable-hdpi\SplashScreen.png" />
     <AndroidResource Include="Resources\drawable\RedCursor.xml" />
+    <AndroidResource Include="Resources\drawable\DropShadowVerticalReverse.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

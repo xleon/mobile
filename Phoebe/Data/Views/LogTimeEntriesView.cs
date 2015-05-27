@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,18 +22,18 @@ namespace Toggl.Phoebe.Data.Views
     public class LogTimeEntriesView : ICollectionDataView<object>, IDisposable
     {
         private static readonly string Tag = "LogTimeEntriesView";
-        private static readonly int ContinueThreshold = 3;
 
+        private readonly ObservableCollection<object> itemCollection = new ObservableCollection<object> ();
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+
         private bool reloadScheduled;
         private bool isLoading;
         private bool hasMore;
         private int lastItemNumber;
-        private DateTime lastTimeEntryContinuedTime;
 
         // for Undo/Restore operations
         private TimeEntryData lastRemovedItem;
@@ -41,7 +42,6 @@ namespace Toggl.Phoebe.Data.Views
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
-            lastTimeEntryContinuedTime = Time.UtcNow;
             HasMore = true;
             Reload ();
         }
@@ -61,15 +61,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void ContinueTimeEntry (TimeEntryData timeEntryData)
         {
-            // Don't continue a new TimeEntry before
-            // 4 seconds has passed.
-            if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
-                return;
-            }
-            lastTimeEntryContinuedTime = DateTime.UtcNow;
-
-            var model = new TimeEntryModel (timeEntryData);
-            await model.ContinueAsync ();
+            await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
@@ -77,8 +69,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void StopTimeEntry (TimeEntryData timeEntryData)
         {
-            var model = new TimeEntryModel (timeEntryData);
-            await model.StopAsync ();
+            await TimeEntryModel.StopAsync (timeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
@@ -97,8 +88,7 @@ namespace Toggl.Phoebe.Data.Views
             // Remove previous if exists
             RemoveItemPermanently (lastRemovedItem);
             if (data.State == TimeEntryState.Running) {
-                var model = new TimeEntryModel (data);
-                await model.StopAsync ();
+                await TimeEntryModel.StopAsync (data);
             }
             lastRemovedItem = data;
             RemoveEntry (data);
@@ -112,8 +102,7 @@ namespace Toggl.Phoebe.Data.Views
         private async void RemoveItemPermanently (TimeEntryData itemToRemove)
         {
             if (itemToRemove != null) {
-                var model = new TimeEntryModel (itemToRemove);
-                await model.DeleteAsync();
+                await TimeEntryModel.DeleteAsync (itemToRemove);
             }
         }
 
@@ -131,6 +120,9 @@ namespace Toggl.Phoebe.Data.Views
             if (isExcluded) {
                 RemoveEntry (entry);
             } else {
+                if (lastRemovedItem != null && lastRemovedItem.Matches (entry)) {
+                    return;
+                }
                 AddOrUpdateEntry (new TimeEntryData (entry));
             }
         }
@@ -146,10 +138,6 @@ namespace Toggl.Phoebe.Data.Views
             DateGroup grp;
             bool isNewGroup = false;
 
-            if (lastRemovedItem != null && lastRemovedItem.Matches (entry)) {
-                return;
-            }
-
             if (FindExistingEntry (entry, out grp, out existingEntry)) {
                 if (entry.StartTime != existingEntry.StartTime) {
                     var date = entry.StartTime.ToLocalTime ().Date;
@@ -157,7 +145,7 @@ namespace Toggl.Phoebe.Data.Views
                     if (grp.Date != date) {
                         // Need to move entry: //TODO: remove dateGroup too?
                         grp.Remove (existingEntry);
-                        DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (grp), -1));
+                        DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (grp), -1));
 
                         grp = GetGroupFor (entry, out isNewGroup);
                         grp.Add (entry);
@@ -168,7 +156,7 @@ namespace Toggl.Phoebe.Data.Views
                         Sort ();
                         newIndex = GetTimeEntryIndex (entry);
                         if (newIndex != oldIndex) {
-                            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
+                            DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
                         }
                         entryAction = NotifyCollectionChangedAction.Replace;
                     }
@@ -183,14 +171,14 @@ namespace Toggl.Phoebe.Data.Views
                 entryAction = NotifyCollectionChangedAction.Add;
             }
 
+            // Updated entry.
+            newIndex = GetTimeEntryIndex (entry);
+            DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (entryAction, newIndex, oldIndex));
+
             // Update group.
             groupIndex = GetDateGroupIndex (grp);
             var groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (groupAction, groupIndex, oldIndex));
-
-            // Updated entry.
-            newIndex = GetTimeEntryIndex (entry);
-            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (entryAction, newIndex, oldIndex));
+            DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, oldIndex));
         }
 
         private void RemoveEntry (TimeEntryData entry)
@@ -210,8 +198,9 @@ namespace Toggl.Phoebe.Data.Views
                     groupAction = NotifyCollectionChangedAction.Remove;
                 }
 
-                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
-                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
+                // The order affects how the collection is updated.
+                DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
+                DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
             }
         }
 
@@ -300,11 +289,15 @@ namespace Toggl.Phoebe.Data.Views
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private void DispatchCollectionEvent (NotifyCollectionChangedEventArgs args)
+        private async void DispatchCollectionEvent (object item, NotifyCollectionChangedEventArgs args)
         {
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
+
+            // Update list
+            await UpdateCollection (item, args);
+
             var handler = CollectionChanged;
             if (handler != null) {
                 handler (this, args);
@@ -324,7 +317,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             updateMode = UpdateMode.Immediate;
             if (Count > lastItemNumber) {
-                DispatchCollectionEvent (CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastItemNumber, Count - lastItemNumber));
+                DispatchCollectionEvent (new object(), CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastItemNumber, Count - lastItemNumber));
             }
         }
 
@@ -447,12 +440,19 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        public IEnumerable<object> Data
+        {
+            get {
+                return itemCollection;
+            }
+        }
+
         public IEnumerable<DateGroup> DateGroups
         {
             get { return dateGroups; }
         }
 
-        public IEnumerable<object> Data
+        private IEnumerable<object> UpdatedList
         {
             get {
                 foreach (var grp in dateGroups) {
@@ -563,42 +563,303 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        public class TimeEntryHolder
+        {
+            private TimeEntryData timeEntry;
+            private ProjectData project;
+            private ClientData client;
+            private TaskData task;
+            private int numberOfTags;
+
+            public TimeEntryHolder (TimeEntryData timeEntry)
+            {
+                this.timeEntry = timeEntry;
+                project = new ProjectData ();
+                client = new ClientData ();
+                task = new TaskData ();
+            }
+
+            public TimeEntryData TimeEntryData
+            {
+                get { return timeEntry; }
+            }
+
+            public ProjectData ProjectData
+            {
+                get { return project; }
+            }
+
+            public ClientData ClientData
+            {
+                get { return client; }
+            }
+
+            public TaskData TaskData
+            {
+                get { return task; }
+            }
+
+            public Guid Id
+            {
+                get { return TimeEntryData.Id; }
+            }
+
+            public int NumberOfTags
+            {
+                get { return numberOfTags; }
+            }
+
+            public string ProjectName
+            {
+                get {
+                    return project.Name;
+                }
+            }
+
+            public string ClientName
+            {
+                get {
+                    return client.Name;
+                }
+            }
+
+            public string TaskName
+            {
+                get {
+                    return task.Name;
+                }
+            }
+
+            public string Description
+            {
+                get {
+                    return timeEntry.Description;
+                }
+            }
+
+            public int Color
+            {
+                get {
+                    return (project.Id != Guid.Empty) ? project.Color : -1;
+                }
+            }
+
+            public TimeEntryState State
+            {
+                get {
+                    return timeEntry.State;
+                }
+            }
+
+            public bool IsBillable
+            {
+                get {
+                    return timeEntry.IsBillable;
+                }
+            }
+
+            public async Task LoadAsync ()
+            {
+                numberOfTags = 0;
+
+                if (timeEntry.ProjectId.HasValue) {
+                    project = await GetProjectDataAsync (timeEntry.ProjectId.Value);
+                    if (project.ClientId.HasValue) {
+                        client = await GetClientDataAsync (project.ClientId.Value);
+                    }
+                }
+
+                if (timeEntry.TaskId.HasValue) {
+                    task = await GetTaskDataAsync (timeEntry.TaskId.Value);
+                }
+
+                numberOfTags = await GetNumberOfTagsAsync (timeEntry.Id);
+            }
+
+            public async Task UpdateAsync (TimeEntryData data)
+            {
+                timeEntry = new TimeEntryData (data);
+                project = await UpdateProject (data, ProjectData);
+                client = await UpdateClient (project, ClientData);
+                task = await UpdateTask (data, TaskData);
+                numberOfTags = await GetNumberOfTagsAsync (data.Id);
+            }
+
+            private async Task<ProjectData> GetProjectDataAsync (Guid projectGuid)
+            {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                var projectList = await store.Table<ProjectData> ()
+                                  .Take (1).QueryAsync (m => m.Id == projectGuid);
+                return projectList.First ();
+            }
+
+            private async Task<TaskData> GetTaskDataAsync (Guid taskId)
+            {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                var taskList = await store.Table<TaskData> ()
+                               .Take (1).QueryAsync (m => m.Id == taskId);
+                return taskList.First ();
+            }
+
+            private async Task<ClientData> GetClientDataAsync (Guid clientId)
+            {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                var clientList = await store.Table<ClientData> ()
+                                 .Take (1).QueryAsync (m => m.Id == clientId);
+                return clientList.First ();
+            }
+
+            private Task<int> GetNumberOfTagsAsync (Guid timeEntryGuid)
+            {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                return store.Table<TimeEntryTagData>()
+                       .Where (t => t.TimeEntryId == timeEntryGuid)
+                       .CountAsync ();
+            }
+
+            private async Task<ProjectData> UpdateProject (TimeEntryData newTimeEntry, ProjectData oldProjectData)
+            {
+                if (!newTimeEntry.ProjectId.HasValue) {
+                    return new ProjectData ();
+                }
+
+                if (oldProjectData.Id == Guid.Empty && newTimeEntry.ProjectId.HasValue) {
+                    return await GetProjectDataAsync (newTimeEntry.ProjectId.Value);
+                }
+
+                if (newTimeEntry.ProjectId.Value != oldProjectData.Id) {
+                    return await GetProjectDataAsync (newTimeEntry.ProjectId.Value);
+                }
+
+                return oldProjectData;
+            }
+
+            private async Task<ClientData> UpdateClient (ProjectData projectData, ClientData oldClientData)
+            {
+                if (!projectData.ClientId.HasValue) {
+                    return new ClientData ();
+                }
+
+                if (oldClientData == null && projectData.ClientId.HasValue) {
+                    return await GetClientDataAsync (projectData.ClientId.Value);
+                }
+
+                if (projectData.ClientId.Value != oldClientData.Id) {
+                    return await GetClientDataAsync (projectData.ClientId.Value);
+                }
+
+                return oldClientData;
+            }
+
+            private async Task<TaskData> UpdateTask (TimeEntryData newTimeEntry, TaskData oldTaskData)
+            {
+                if (!newTimeEntry.TaskId.HasValue) {
+                    return new TaskData ();
+                }
+
+                if (oldTaskData == null && newTimeEntry.TaskId.HasValue) {
+                    return await GetTaskDataAsync (newTimeEntry.TaskId.Value);
+                }
+
+                if (newTimeEntry.TaskId.Value != oldTaskData.Id) {
+                    return await GetTaskDataAsync (newTimeEntry.TaskId.Value);
+                }
+
+                return oldTaskData;
+            }
+        }
+
         private enum UpdateMode {
             Immediate,
             Batch,
         }
 
-        public async Task<ProjectData> GetProjectData (Guid projectGuid)
+        private async Task UpdateCollection (object data, NotifyCollectionChangedEventArgs e)
         {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            var projectList = await store.Table<ProjectData> ()
-                              .Take (1).QueryAsync (m => m.Id == projectGuid);
-            return projectList.First ();
-        }
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                var createHolderTaskList = new List<Task> ();
+                var currentItems = new List<object> (UpdatedList);
+                itemCollection.Clear ();
 
-        public async Task<TaskData> GetTaskData (Guid taskId)
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            var taskList = await store.Table<TaskData> ()
-                           .Take (1).QueryAsync (m => m.Id == taskId);
-            return taskList.First ();
-        }
+                for (int i = e.NewStartingIndex; i < e.NewStartingIndex + e.NewItems.Count; i++) {
+                    var item = currentItems [i];
+                    if (item is TimeEntryData) {
+                        var entryData = (TimeEntryData)item;
+                        var timeEntryHolder = new TimeEntryHolder (entryData);
+                        itemCollection.Add (item);
+                        createHolderTaskList.Add (timeEntryHolder.LoadAsync ());
+                    } else {
+                        itemCollection.Add (item);
+                    }
+                }
 
-        public async Task<ClientData> GetClientData (Guid clientId)
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            var clientList = await store.Table<ClientData> ()
-                             .Take (1).QueryAsync (m => m.Id == clientId);
-            return clientList.First ();
-        }
+                await Task.WhenAll (createHolderTaskList);
+                return;
+            }
 
-        public Task<int> GetNumberOfTagsAsync (Guid timeEntryGuid)
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            return store.Table<TimeEntryTagData>()
-                   .Where (t => t.TimeEntryId == timeEntryGuid)
-                   .CountAsync ();
-        }
+            if (e.Action == NotifyCollectionChangedAction.Add) {
+                if (e.NewItems.Count == 1) {
+                    if (data is TimeEntryData) {
+                        var newHolder = new TimeEntryHolder ((TimeEntryData)data);
+                        await newHolder.LoadAsync ();
+                        itemCollection.Insert (e.NewStartingIndex, newHolder);
+                    } else {
+                        itemCollection.Insert (e.NewStartingIndex, data);
+                    }
+                } else {
 
+                    var createHolderTaskList = new List<Task> ();
+                    var currentItems = new List<object> (UpdatedList);
+                    if (e.NewStartingIndex == 0) {
+                        itemCollection.Clear ();
+                    }
+
+                    for (int i = e.NewStartingIndex; i < e.NewStartingIndex + e.NewItems.Count; i++) {
+                        var item = currentItems [i];
+
+                        if (item is TimeEntryData) {
+                            var entryData = (TimeEntryData)item;
+                            var timeEntryHolder = new TimeEntryHolder (entryData);
+
+                            if (i == itemCollection.Count) {
+                                itemCollection.Insert (i, timeEntryHolder);
+                                createHolderTaskList.Add (timeEntryHolder.LoadAsync ());
+                            } else if (i > itemCollection.Count) {
+                                itemCollection.Add (timeEntryHolder);
+                                createHolderTaskList.Add (timeEntryHolder.LoadAsync ());
+                            }  else {
+                                itemCollection [i] = timeEntryHolder;
+                                createHolderTaskList.Add (timeEntryHolder.UpdateAsync (entryData));
+                            }
+                        } else {
+                            if (i == itemCollection.Count) {
+                                itemCollection.Insert (i, item);
+                            } else if (i > itemCollection.Count) {
+                                itemCollection.Add (item);
+                            }
+                        }
+                    }
+                    await Task.WhenAll (createHolderTaskList);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                itemCollection.Move (e.OldStartingIndex, e.NewStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                itemCollection.RemoveAt (e.OldStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                if (data is TimeEntryData) {
+                    var oldHolder = (TimeEntryHolder)itemCollection.ElementAt (e.NewStartingIndex);
+                    await oldHolder.UpdateAsync ((TimeEntryData)data);
+                    itemCollection [e.NewStartingIndex] = oldHolder;
+                } else {
+                    itemCollection [e.NewStartingIndex] = data;
+                }
+            }
+        }
     }
 }

@@ -27,8 +27,10 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
+        private static readonly int ContinueThreshold = 2;
         private LogTimeEntriesView modelView;
         private readonly List<RecyclerView.ViewHolder> holderList;
+        private DateTime lastTimeEntryContinuedTime;
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
@@ -37,6 +39,7 @@ namespace Toggl.Joey.UI.Adapters
         public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesView modelView) : base (owner, modelView)
         {
             this.modelView = modelView;
+            lastTimeEntryContinuedTime = Time.UtcNow;
             holderList = new List<RecyclerView.ViewHolder> ();
         }
 
@@ -88,6 +91,24 @@ namespace Toggl.Joey.UI.Adapters
 
         private void OnContinueTimeEntry (TimeEntryData timeEntryData)
         {
+            // Don't continue a new TimeEntry before
+            // 3 seconds has passed.
+            if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
+                return;
+            }
+            lastTimeEntryContinuedTime = DateTime.UtcNow;
+
+            // Trick on view to show a better
+            // visual reaction to press Play btn
+            for (int i = 0; i < holderList.Count; i++) {
+                var holder = holderList [i] as TimeEntryListItemHolder;
+                if (holder != null) {
+                    if (holder.DataSource.State == TimeEntryState.Running) {
+                        holder.DataSource.TimeEntryData.State = TimeEntryState.Finished;
+                        BindHolder (holder, holder.AdapterPosition);
+                    }
+                }
+            }
             modelView.ContinueTimeEntry (timeEntryData);
         }
 
@@ -98,8 +119,8 @@ namespace Toggl.Joey.UI.Adapters
 
         public void RemoveItemWithUndo (int index)
         {
-            var entry = (TimeEntryData)DataView.Data.ElementAt (index);
-            modelView.RemoveItemWithUndo (entry);
+            var holder = (LogTimeEntriesView.TimeEntryHolder)DataView.Data.ElementAt (index);
+            modelView.RemoveItemWithUndo (holder.TimeEntryData);
         }
 
         public void RestoreItemFromUndo ()
@@ -122,7 +143,7 @@ namespace Toggl.Joey.UI.Adapters
                 holder = new HeaderListItemHolder (view);
             } else {
                 view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
-                holder = new TimeEntryListItemHolder (modelView, view);
+                holder = new TimeEntryListItemHolder (this, view);
             }
 
             holderList.Add (holder);
@@ -136,7 +157,7 @@ namespace Toggl.Joey.UI.Adapters
                 headerHolder.Bind ((LogTimeEntriesView.DateGroup) GetEntry (position));
             } else {
                 var entryHolder = (TimeEntryListItemHolder)holder;
-                entryHolder.Bind ((TimeEntryData) GetEntry (position));
+                entryHolder.Bind ((LogTimeEntriesView.TimeEntryHolder) GetEntry (position));
             }
         }
 
@@ -165,11 +186,11 @@ namespace Toggl.Joey.UI.Adapters
 
         public override void OnViewDetachedFromWindow (Java.Lang.Object holder)
         {
-            if (holder is RecycledBindableViewHolder<TimeEntryData>) {
-                var mHolder = (RecycledBindableViewHolder<TimeEntryData>)holder;
+            if (holder is TimeEntryListItemHolder) {
+                var mHolder = (TimeEntryListItemHolder)holder;
                 mHolder.DisposeDataSource ();
-            } else if (holder is RecycledBindableViewHolder<LogTimeEntriesView.DateGroup>) {
-                var mHolder = (RecycledBindableViewHolder<LogTimeEntriesView.DateGroup>)holder;
+            } else if (holder is HeaderListItemHolder) {
+                var mHolder = (HeaderListItemHolder)holder;
                 mHolder.DisposeDataSource ();
             }
             base.OnViewDetachedFromWindow (holder);
@@ -238,12 +259,10 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecycledBindableViewHolder<TimeEntryData>, View.IOnTouchListener
+        private class TimeEntryListItemHolder : RecycledBindableViewHolder<LogTimeEntriesView.TimeEntryHolder>, View.IOnTouchListener
         {
             private readonly Handler handler;
-            private readonly LogTimeEntriesView modelView;
-
-            private TimeEntryData lastDataSource;
+            private readonly LogTimeEntriesAdapter owner;
 
             public View ColorView { get; private set; }
 
@@ -263,10 +282,10 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton ContinueImageButton { get; private set; }
 
-            public TimeEntryListItemHolder (LogTimeEntriesView modelView, View root) : base (root)
+            public TimeEntryListItemHolder (LogTimeEntriesAdapter owner, View root) : base (root)
             {
                 handler = new Handler ();
-                this.modelView = modelView;
+                this.owner = owner;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.RobotoMedium);
@@ -278,8 +297,6 @@ namespace Toggl.Joey.UI.Adapters
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
                 ContinueImageButton.SetOnTouchListener (this);
-
-                lastDataSource = new TimeEntryData ();
             }
 
             public bool OnTouch (View v, MotionEvent e)
@@ -291,11 +308,11 @@ namespace Toggl.Joey.UI.Adapters
                     }
 
                     if (DataSource.State == TimeEntryState.Running) {
-                        modelView.StopTimeEntry (DataSource);
+                        owner.OnStopTimeEntry (DataSource.TimeEntryData);
                         return false;
                     }
 
-                    modelView.ContinueTimeEntry (DataSource);
+                    owner.OnContinueTimeEntry (DataSource.TimeEntryData);
                     return false;
                 }
 
@@ -317,18 +334,36 @@ namespace Toggl.Joey.UI.Adapters
                 ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
                 ItemView.Selected = false;
 
-                if (DataSource.ProjectId != lastDataSource.ProjectId) {
-                    RebindProjectAndClient ();
-                }
-
-                if (DataSource.TaskId != lastDataSource.TaskId) {
-                    RebindTask ();
-                }
-
+                var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
+                if (!String.IsNullOrWhiteSpace (DataSource.TaskName)) {
+                    TaskTextView.Text = String.Format ("{0} • ", DataSource.TaskName);
+                    TaskTextView.Visibility = ViewStates.Visible;
+                } else {
+                    TaskTextView.Text = String.Empty;
+                    TaskTextView.Visibility = ViewStates.Gone;
+                }
+
+                if (!String.IsNullOrWhiteSpace (DataSource.ProjectName)) {
+                    color = Color.ParseColor (ProjectModel.HexColors [DataSource.Color % ProjectModel.HexColors.Length]);
+                    ProjectTextView.SetTextColor (color);
+                    ProjectTextView.Text = DataSource.ProjectName;
+                } else {
+                    ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
+                    ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
+                }
+
+                if (!String.IsNullOrWhiteSpace (DataSource.ClientName)) {
+                    ClientTextView.Text = String.Format ("{0} • ", DataSource.ClientName);
+                    ClientTextView.Visibility = ViewStates.Visible;
+                } else {
+                    ClientTextView.Text = String.Empty;
+                    ClientTextView.Visibility = ViewStates.Gone;
+                }
+
                 if (String.IsNullOrWhiteSpace (DataSource.Description)) {
-                    if (DataSource.TaskId == null) {
+                    if (String.IsNullOrWhiteSpace (DataSource.TaskName)) {
                         DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                         DescriptionTextView.Visibility = ViewStates.Visible;
                     } else {
@@ -341,58 +376,14 @@ namespace Toggl.Joey.UI.Adapters
 
                 BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
-                RebindTags ();
-                RebindDuration ();
-                lastDataSource = DataSource;
-            }
-
-            private async void RebindProjectAndClient ()
-            {
-
-                var color = Color.Transparent;
-                var ctx = ServiceContainer.Resolve<Context> ();
-                ProjectData projectData = new ProjectData ();
-                ClientData clientData;
-
-                if (DataSource.ProjectId.HasValue) {
-                    projectData = await modelView.GetProjectData (DataSource.ProjectId.Value);
-                    color = Color.ParseColor (ProjectModel.HexColors [projectData.Color % ProjectModel.HexColors.Length]);
-                    ProjectTextView.SetTextColor (color);
-                    if (String.IsNullOrWhiteSpace (projectData.Name)) {
-                        ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
-                    } else {
-                        ProjectTextView.Text = projectData.Name;
-                    }
-                } else {
-                    ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
-                    ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
-                }
-
-                if (projectData.ClientId.HasValue) {
-                    clientData = await modelView.GetClientData (projectData.ClientId.Value);
-                    ClientTextView.Text = String.Format ("{0} • ", clientData.Name);
-                    ClientTextView.Visibility = ViewStates.Visible;
-                } else {
-                    ClientTextView.Text = String.Empty;
-                    ClientTextView.Visibility = ViewStates.Gone;
-                }
 
                 var shape = ColorView.Background as GradientDrawable;
                 if (shape != null) {
                     shape.SetColor (color);
                 }
-            }
 
-            private async void RebindTask ()
-            {
-                if (DataSource.TaskId.HasValue) {
-                    var taskData = await modelView.GetTaskData (DataSource.TaskId.Value);
-                    TaskTextView.Text = String.Format ("{0} • ", taskData.Name);
-                    TaskTextView.Visibility = ViewStates.Visible;
-                } else {
-                    TaskTextView.Text = String.Empty;
-                    TaskTextView.Visibility = ViewStates.Gone;
-                }
+                RebindTags ();
+                RebindDuration ();
             }
 
             private void RebindDuration ()
@@ -401,8 +392,8 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var duration = TimeEntryModel.GetDuration (DataSource, Time.UtcNow);
-                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (DataSource);
+                var duration = TimeEntryModel.GetDuration (DataSource.TimeEntryData, Time.UtcNow);
+                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (DataSource.TimeEntryData);
 
                 if (DataSource.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
@@ -427,14 +418,14 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            private async void RebindTags ()
+            private void RebindTags ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
 
-                var numberOfTags = await modelView.GetNumberOfTagsAsync (DataSource.Id);
+                var numberOfTags = DataSource.NumberOfTags;
                 TagsView.BubbleCount = numberOfTags;
                 TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
             }

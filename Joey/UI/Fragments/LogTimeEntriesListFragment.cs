@@ -14,7 +14,6 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -171,7 +170,7 @@ namespace Toggl.Joey.UI.Fragments
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
 
             if (parent.GetAdapter () is LogTimeEntriesAdapter) {
-                string id = ((TimeEntryData)logAdapter.GetEntry (position)).Id.ToString();
+                string id = ((LogTimeEntriesView.TimeEntryHolder)logAdapter.GetEntry (position)).Id.ToString();
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {id});
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, false);
             } else {

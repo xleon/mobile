@@ -17,7 +17,7 @@ namespace Toggl.Phoebe.Data.Views
                 throw new ArgumentNullException ("source");
             }
 
-            data = new ObservableCollection<T> ();
+            data = new ObservableCollection<T> (source.Data);
 
             this.source = source;
             this.source.CollectionChanged += OnCollectionUpdated;
@@ -47,6 +47,10 @@ namespace Toggl.Phoebe.Data.Views
                 if (e.NewItems.Count == 1) {
                     data.Insert (e.NewStartingIndex, source.Data.ElementAtOrDefault (e.NewStartingIndex));
                 } else {
+                    if (e.NewStartingIndex == 0) {
+                        data.Clear ();
+                    }
+
                     for (int i = e.NewStartingIndex; i < e.NewStartingIndex + e.NewItems.Count; i++) {
                         var item = source.Data.ElementAtOrDefault (i);
                         if (i == data.Count) {

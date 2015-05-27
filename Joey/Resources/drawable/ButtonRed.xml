@@ -5,6 +5,6 @@
         android:drawable="@drawable/ButtonRedDefault"
         android:state_enabled="true"/>
     <item
-        android:drawable="@drawable/ButtonGreenDisabled"
+        android:drawable="@drawable/ButtonRedDisabled"
         android:state_enabled="false" />
 </selector>

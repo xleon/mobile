@@ -24,8 +24,8 @@
     <style name="Theme.Toggl.Login" parent="Theme.Toggl.App">
         <item name="android:windowBackground">@drawable/bgloginscreen</item>
         <item name="colorControlNormal">#ffffff</item>
-        <item name="colorControlActivated">#ffffff</item>
-        <item name="colorControlHighlight">#ffffff</item>
+        <item name="colorControlActivated">#bff30c16</item>
+        <item name="colorControlHighlight">#bff30c16</item>
     </style>
     <style name="Theme.Toggl.ListView" parent="@android:style/Widget.ListView">
         <item name="android:divider">@android:color/transparent</item>
@@ -67,7 +67,7 @@
     </style>
     <style name="Button.Red">
         <item name="android:background">@drawable/buttonred</item>
-        <item name="android:textColor">@color/buttongreentextcolor</item>
+        <item name="android:textColor">@color/buttonredtextcolor</item>
         <item name="android:textSize">16sp</item>
     </style>
     <style name="Button.FeedbackSubmitButton">

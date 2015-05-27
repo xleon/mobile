@@ -379,13 +379,14 @@ namespace Toggl.Joey.UI.Activities
                     var s = formattedLegalText = new SpannableString (String.Format (template, arg0, arg1));
                     var mode = SpanTypes.InclusiveExclusive;
                     s.SetSpan (
-                        new URLSpan (Phoebe.Build.TermsOfServiceUrl.ToString ()),
+                        new TogglURLSPan (Phoebe.Build.TermsOfServiceUrl.ToString ()),
                         arg0idx,
                         arg0idx + arg0.Length,
                         mode
                     );
+
                     s.SetSpan (
-                        new URLSpan (Phoebe.Build.PrivacyPolicyUrl.ToString ()),
+                        new TogglURLSPan (Phoebe.Build.PrivacyPolicyUrl.ToString ()),
                         arg1idx,
                         arg1idx + arg1.Length,
                         mode
@@ -793,6 +794,20 @@ namespace Toggl.Joey.UI.Activities
 
             private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
             {
+            }
+        }
+
+        private class TogglURLSPan : URLSpan
+        {
+            public TogglURLSPan (String url) : base (url)
+            {
+            }
+
+            public override void UpdateDrawState (TextPaint ds)
+            {
+                base.UpdateDrawState (ds);
+                ds.UnderlineText = false;
+                ds.SetTypeface (Android.Graphics.Typeface.DefaultBold);
             }
         }
     }

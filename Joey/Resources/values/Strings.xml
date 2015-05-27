@@ -16,7 +16,7 @@
     <string name="LoginButtonSignupProgressText">Signing up&#8230;</string>
     <string name="LoginGoogleButtonText">Log in with Google</string>
     <string name="LoginSignupGoogleButtonText">Sign up with Google</string>
-    <string name="LoginSignupLegalText">By signing up you agree to Toggl\'s {0} and {1}</string>
+    <string name="LoginSignupLegalText">By signing up you agree to\n Toggl\'s {0} and {1}</string>
     <string name="LoginSignupLegalTermsText">Terms</string>
     <string name="LoginSignupLegalPrivacyText">Privacy Policy</string>
     <string name="LoginAccountsDialogTitle">Select account</string>

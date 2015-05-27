@@ -74,13 +74,13 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
-            android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
             android:gravity="center"
             android:text="By signing up you agree to Toggl's Terms and Privacy Policy"
             android:textSize="12sp"
             android:textColor="@android:color/white"
-            android:textColorLink="@color/green" />
+            android:textColorLink="@android:color/white"
+            android:layout_marginTop="-15dp" />
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"

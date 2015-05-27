@@ -4,6 +4,7 @@ using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
 using Android.Text;
+using System;
 
 namespace Toggl.Joey.UI.Views
 {
@@ -66,13 +67,14 @@ namespace Toggl.Joey.UI.Views
         {
             assistView.Text = title;
             assistView.Visibility = ViewStates.Visible;
-            TextField.SetPadding (TextField.PaddingLeft, TextField.PaddingTop, assistView.Width + arrow.Width + 100, TextField.PaddingBottom);
+            ClipText();
             return this;
         }
 
         public TogglField DestroyAssistView()
         {
             assistView.Visibility = ViewStates.Gone;
+            ClipText();
             return this;
         }
 
@@ -96,6 +98,20 @@ namespace Toggl.Joey.UI.Views
             };
             TextField.Focusable = TextField.Clickable = false;
             return this;
+        }
+
+        private void ClipText()
+        {
+            int paddingLeft = 0;
+            if (assistView.Visibility == ViewStates.Visible) {
+                assistView.Measure (0, 0);
+                paddingLeft = assistView.MeasuredWidth + 20;
+            }
+            if (arrow.Visibility == ViewStates.Visible) {
+                arrow.Measure (0, 0);
+                paddingLeft += arrow.MeasuredWidth;
+            }
+            TextField.SetPadding (TextField.PaddingLeft, TextField.PaddingTop, paddingLeft, TextField.PaddingBottom);
         }
     }
 }

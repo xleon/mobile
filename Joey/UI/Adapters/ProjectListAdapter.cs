@@ -114,8 +114,6 @@ namespace Toggl.Joey.UI.Adapters
 
         public class WorkspaceListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Workspace>
         {
-            private WorkspaceModel model;
-
             public TextView WorkspaceTextView { get; private set; }
 
             public WorkspaceListItemHolder (View root) : base (root)
@@ -129,12 +127,8 @@ namespace Toggl.Joey.UI.Adapters
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
-
-                if (model == null) {
-                    return;
-                }
-
-                WorkspaceTextView.Text = (model.Name ?? String.Empty);
+                var ctx = ServiceContainer.Resolve<Context> ();
+                WorkspaceTextView.Text = !String.IsNullOrWhiteSpace (DataSource.Data.Name) ? DataSource.Data.Name : ctx.GetString (Resource.String.ProjectsNamelessWorkspace);
             }
         }
 

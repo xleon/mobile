@@ -74,6 +74,7 @@
     <string name="ProjectsTasks">TASKS</string>
     <string name="ProjectsTitle">Projects</string>
     <string name="ProjectsNoClient">No client</string>
+    <string name="ProjectsNamelessWorkspace">(nameless workspace)</string>
     <string name="NewProjectTitle">New project</string>
     <string name="NewProjectProjectFieldName">Project Name</string>
     <string name="NewProjectClientFieldName">Client</string>

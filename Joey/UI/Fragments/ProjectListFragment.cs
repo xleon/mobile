@@ -46,8 +46,7 @@ namespace Toggl.Joey.UI.Fragments
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration<ProjectListAdapter.WorkspaceListItemHolder> (Activity, top: false, bottom: true));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration<ProjectListAdapter.NewProjectListItemHolder> (Activity, top: true, bottom: false));
+            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             var activity = (AppCompatActivity)Activity;

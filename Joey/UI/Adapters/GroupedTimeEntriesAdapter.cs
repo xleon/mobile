@@ -161,6 +161,7 @@ namespace Toggl.Joey.UI.Adapters
             base.OnDetachedFromRecyclerView (recyclerView);
         }
 
+        [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
         public class HeaderListItemHolder : RecycledBindableViewHolder<GroupedTimeEntriesView.DateGroup>
         {
             private readonly Handler handler;

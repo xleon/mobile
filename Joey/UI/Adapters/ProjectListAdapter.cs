@@ -112,6 +112,7 @@ namespace Toggl.Joey.UI.Adapters
 
         #region View holders
 
+        [Shadow (ShadowAttribute.Mode.Bottom)]
         public class WorkspaceListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Workspace>
         {
             public TextView WorkspaceTextView { get; private set; }
@@ -230,6 +231,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        [Shadow (ShadowAttribute.Mode.Top)]
         public class NewProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private readonly ProjectListAdapter adapter;

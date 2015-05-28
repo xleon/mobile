@@ -60,8 +60,7 @@ namespace Toggl.Joey.UI.Fragments
 
             recyclerView.SetLayoutManager (linearLayout);
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration<GroupedTimeEntriesAdapter.HeaderListItemHolder> (Activity, top: true, bottom: true));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration<LogTimeEntriesAdapter.HeaderListItemHolder> (Activity, top: true, bottom: true));
+            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
             recyclerView.AddOnItemTouchListener (swipeTouchListener);
             recyclerView.AddOnItemTouchListener (itemTouchListener);
             recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));

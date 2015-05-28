@@ -175,6 +175,7 @@ namespace Toggl.Joey.UI.Adapters
             base.OnViewDetachedFromWindow (holder);
         }
 
+        [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
         public class HeaderListItemHolder : RecycledBindableViewHolder<LogTimeEntriesView.DateGroup>
         {
             private readonly Handler handler;

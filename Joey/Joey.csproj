@@ -672,6 +672,7 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcGoogle.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcGoogle.png" />
     <AndroidResource Include="Resources\color\ButtonRedTextColor.xml" />
+    <AndroidResource Include="Resources\drawable\LoginBackground.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

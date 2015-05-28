@@ -22,7 +22,7 @@
         <item name="android:selectableItemBackgroundBorderless">@drawable/play_button_background</item>
     </style>
     <style name="Theme.Toggl.Login" parent="Theme.Toggl.App">
-        <item name="android:windowBackground">@drawable/bgloginscreen</item>
+        <item name="android:windowBackground">@drawable/loginbackground</item>
         <item name="colorControlNormal">#ffffff</item>
         <item name="colorControlActivated">#bff30c16</item>
         <item name="colorControlHighlight">#bff30c16</item>

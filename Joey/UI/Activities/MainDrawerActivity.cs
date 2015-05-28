@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Android.App;
+using Android.Content.PM;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
@@ -23,6 +24,7 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
+         ScreenOrientation = ScreenOrientation.Portrait,
          Name = "toggl.joey.ui.activities.MainDrawerActivity",
          Label = "@string/EntryName",
          Exported = true,

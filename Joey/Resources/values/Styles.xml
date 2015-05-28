@@ -82,11 +82,9 @@
         <item name="android:textSize">18sp</item>
         <item name="android:textColor">#ffffff</item>
         <item name="android:textColorHint">#ffffff</item>
-        <item name="android:layout_marginRight">20dp</item>
-        <item name="android:layout_marginLeft">20dp</item>
         <item name="android:paddingRight">60dp</item>
         <item name="android:paddingLeft">16dp</item>
-        <item name="android:paddingBottom">20dp</item>
+        <item name="android:paddingBottom">15dp</item>
     </style>
 
     <style name="Login.Button" parent="@android:style/TextAppearance">
@@ -98,8 +96,6 @@
     <style name="Login.GoogleLogin" parent="Login.Button">
         <item name="android:textAllCaps">true</item>
         <item name="android:layout_marginBottom">15dp</item>
-        <item name="android:layout_marginLeft">10dp</item>
-        <item name="android:layout_marginRight">10dp</item>
     </style>
     <style name="Login.SwitchText" parent="Login.Button">
         <item name="android:layout_marginBottom">-10dp</item>

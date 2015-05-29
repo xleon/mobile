@@ -82,8 +82,6 @@
     <Compile Include="AndroidApp.cs" />
     <Compile Include="Data\SettingsStore.cs" />
     <Compile Include="UI\Activities\BaseActivity.cs" />
-    <Compile Include="UI\Adapters\RecentTimeEntriesAdapter.cs" />
-    <Compile Include="UI\Fragments\RecentTimeEntriesListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
@@ -121,12 +119,10 @@
     <Compile Include="UI\Fragments\EditTimeEntryFragment.cs" />
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
-    <Compile Include="UI\Fragments\RecentTimeEntryContinueDialogFragment.cs" />
     <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
     <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
-    <Compile Include="UI\Views\RecentTimeEntryItem.cs" />
     <Compile Include="UI\Views\LogTimeEntryItem.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
@@ -306,7 +302,6 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcSyncGray.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcSyncGray.png" />
     <AndroidResource Include="Resources\anim\SpinningAnimation.xml" />
-    <AndroidResource Include="Resources\layout\WelcomeBox.axml" />
     <AndroidResource Include="Resources\drawable\BottomBorder.xml" />
     <AndroidResource Include="Resources\drawable\DividerHorizontalLight.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\Icon.png" />
@@ -345,7 +340,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\BgWelcome.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\BgWelcome.9.png" />
     <AndroidResource Include="Resources\drawable-hdpi\BgWelcome.9.png" />
-    <AndroidResource Include="Resources\layout\LogTimeEntryListExpandedItem.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDetailsDuration.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDetailsEntry.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcDetailsProject.png" />
@@ -438,7 +432,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidBtnCheckOnHoloLight.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidBtnCheckOnPressedHoloLight.png" />
     <AndroidResource Include="Resources\drawable\AndroidBtnCheckHoloLight.xml" />
-    <AndroidResource Include="Resources\layout\RecentTimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\ProjectListNoProjectItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListNewProjectItem.axml" />
     <AndroidResource Include="Resources\layout\DoneActionBarView.axml" />
@@ -463,7 +456,6 @@
     <AndroidResource Include="Resources\drawable-hdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcNotificationIconIdle.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcNotificationIconIdle.png" />
-    <AndroidResource Include="Resources\layout\RecentTimeEntriesListFooterFragment.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\BgMainListButtonSelected.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\BgMainListButtonSelected.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\BgMainListButtonSelected.9.png" />
@@ -510,7 +502,6 @@
     <AndroidResource Include="Resources\drawable\TagsView.xml" />
     <AndroidResource Include="Resources\layout\TagViewChip.axml" />
     <AndroidResource Include="Resources\layout\LogTimeEntryListItem.axml" />
-    <AndroidResource Include="Resources\layout\RecentTimeEntryListItem.axml" />
     <AndroidResource Include="Resources\layout\ReportsFragment.axml" />
     <AndroidResource Include="Resources\layout\ReportsProjectListItem.axml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcKeyLeft.png" />

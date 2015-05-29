@@ -67,10 +67,10 @@
         android:src="@drawable/IcPlayArrowGrey"
         android:layout_width="wrap_content"
         android:layout_height="72dp"
-        android:paddingLeft="0dp"
-        android:paddingRight="-14dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="32dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:id="@+id/ContinueImageButton"
-        style="?android:attr/borderlessButtonStyle" />
+        android:background="?android:attr/selectableItemBackground" />
 </merge>

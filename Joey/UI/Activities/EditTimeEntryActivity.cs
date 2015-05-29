@@ -1,10 +1,10 @@
-﻿using Android.App;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Toggl.Joey.UI.Fragments;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 

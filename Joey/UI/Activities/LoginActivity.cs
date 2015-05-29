@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Android.Accounts;
 using Android.App;
 using Android.Content;
+using Android.Content.PM;
 using Android.Gms.Auth;
 using Android.Gms.Common;
 using Android.OS;
@@ -13,13 +14,12 @@ using Android.Text;
 using Android.Text.Style;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.UI.Utils;
-using Toggl.Joey.UI.Views;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
@@ -28,6 +28,7 @@ namespace Toggl.Joey.UI.Activities
 {
     [Activity (
          Exported = false,
+         ScreenOrientation = ScreenOrientation.Portrait,
          WindowSoftInputMode = SoftInput.StateHidden,
          Theme = "@style/Theme.Toggl.Login")]
     public class LoginActivity : BaseActivity, ViewTreeObserver.IOnGlobalLayoutListener

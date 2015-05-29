@@ -702,4 +702,7 @@
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProguardConfiguration Include="Proguard.cfg" />
+  </ItemGroup>
 </Project>

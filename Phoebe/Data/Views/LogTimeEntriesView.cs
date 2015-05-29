@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,12 +22,13 @@ namespace Toggl.Phoebe.Data.Views
     {
         private static readonly string Tag = "LogTimeEntriesView";
 
-        private readonly ObservableCollection<object> itemCollection = new ObservableCollection<object> ();
+        private readonly List<object> itemCollection = new List<object> ();
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+        private UpdateScheduler updateScheduler = new UpdateScheduler ();
 
         private bool reloadScheduled;
         private bool isLoading;
@@ -131,54 +131,83 @@ namespace Toggl.Phoebe.Data.Views
         {
             int groupIndex;
             int newIndex;
-            int oldIndex = -1;
-            NotifyCollectionChangedAction entryAction;
+            NotifyCollectionChangedAction groupAction;
 
             TimeEntryData existingEntry;
             DateGroup grp;
-            bool isNewGroup = false;
+            bool isNewGroup;
 
             if (FindExistingEntry (entry, out grp, out existingEntry)) {
                 if (entry.StartTime != existingEntry.StartTime) {
                     var date = entry.StartTime.ToLocalTime ().Date;
-                    oldIndex = GetTimeEntryIndex (existingEntry);
-                    if (grp.Date != date) {
-                        // Need to move entry: //TODO: remove dateGroup too?
-                        grp.Remove (existingEntry);
-                        DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (grp), -1));
+                    var oldIndex = GetTimeEntryIndex (existingEntry);
 
+                    // Move TimeEntry to another DateGroup
+                    if (grp.Date != date) {
+
+                        // Remove entry from previous DateGroup: //TODO: remove dateGroup too?
+                        grp.Remove (existingEntry);
+                        groupIndex = GetDateGroupIndex (grp);
+                        DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
+
+                        // Move entry to new DateGroup
                         grp = GetGroupFor (entry, out isNewGroup);
                         grp.Add (entry);
-                        entryAction = NotifyCollectionChangedAction.Move;
                         Sort ();
-                    } else {
-                        grp.DataObjects.UpdateData (entry);
-                        Sort ();
+
                         newIndex = GetTimeEntryIndex (entry);
-                        if (newIndex != oldIndex) {
-                            DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
-                        }
-                        entryAction = NotifyCollectionChangedAction.Replace;
+                        DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
+
+                        // Update new container DateGroup
+                        groupIndex = GetDateGroupIndex (grp);
+                        groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
+                        DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+
+                        return;
                     }
-                } else {
+
+                    // Move TimeEntry inside DateGroup
                     grp.DataObjects.UpdateData (entry);
-                    entryAction = NotifyCollectionChangedAction.Replace;
+                    Sort ();
+
+                    // Update group
+                    groupIndex = GetDateGroupIndex (grp);
+                    DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
+
+                    newIndex = GetTimeEntryIndex (entry);
+                    if (newIndex != oldIndex) {
+                        // Move if index is differente.
+                        DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
+                    }
+
+                    // Update in any condition
+                    DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
+
+                } else {
+                    // Update TimeEntry only
+                    grp.DataObjects.UpdateData (entry);
+
+                    // Update entry
+                    newIndex = GetTimeEntryIndex (entry);
+                    DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
                 }
             } else {
+
+                // Add new TimeEntry
                 grp = GetGroupFor (entry, out isNewGroup);
                 grp.Add (entry);
                 Sort ();
-                entryAction = NotifyCollectionChangedAction.Add;
+
+                // Update group
+                groupIndex = GetDateGroupIndex (grp);
+                groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
+                DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+
+                // Add new TimeEntry
+                newIndex = GetTimeEntryIndex (entry);
+                DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newIndex, -1));
             }
 
-            // Updated entry.
-            newIndex = GetTimeEntryIndex (entry);
-            DispatchCollectionEvent (entry, CollectionEventBuilder.GetEvent (entryAction, newIndex, oldIndex));
-
-            // Update group.
-            groupIndex = GetDateGroupIndex (grp);
-            var groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-            DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, oldIndex));
         }
 
         private void RemoveEntry (TimeEntryData entry)
@@ -289,19 +318,12 @@ namespace Toggl.Phoebe.Data.Views
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private async void DispatchCollectionEvent (object item, NotifyCollectionChangedEventArgs args)
+        private void DispatchCollectionEvent (object item, NotifyCollectionChangedEventArgs args)
         {
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
-
-            // Update list
-            await UpdateCollection (item, args);
-
-            var handler = CollectionChanged;
-            if (handler != null) {
-                handler (this, args);
-            }
+            updateScheduler.AddUpdate (UpdateCollection (item, args));
         }
 
         private void BeginUpdate ()
@@ -573,7 +595,7 @@ namespace Toggl.Phoebe.Data.Views
 
             public TimeEntryHolder (TimeEntryData timeEntry)
             {
-                this.timeEntry = timeEntry;
+                this.timeEntry = new TimeEntryData (timeEntry);
                 project = new ProjectData ();
                 client = new ClientData ();
                 task = new TaskData ();
@@ -776,8 +798,10 @@ namespace Toggl.Phoebe.Data.Views
 
         private async Task UpdateCollection (object data, NotifyCollectionChangedEventArgs e)
         {
+            var holderTaskList = new List<Task> ();
+
             if (e.Action == NotifyCollectionChangedAction.Reset) {
-                var createHolderTaskList = new List<Task> ();
+
                 var currentItems = new List<object> (UpdatedList);
                 itemCollection.Clear ();
 
@@ -787,28 +811,24 @@ namespace Toggl.Phoebe.Data.Views
                         var entryData = (TimeEntryData)item;
                         var timeEntryHolder = new TimeEntryHolder (entryData);
                         itemCollection.Add (item);
-                        createHolderTaskList.Add (timeEntryHolder.LoadAsync ());
+                        holderTaskList.Add (timeEntryHolder.LoadAsync ());
                     } else {
                         itemCollection.Add (item);
                     }
                 }
-
-                await Task.WhenAll (createHolderTaskList);
-                return;
             }
 
             if (e.Action == NotifyCollectionChangedAction.Add) {
                 if (e.NewItems.Count == 1) {
                     if (data is TimeEntryData) {
                         var newHolder = new TimeEntryHolder ((TimeEntryData)data);
-                        await newHolder.LoadAsync ();
                         itemCollection.Insert (e.NewStartingIndex, newHolder);
+                        holderTaskList.Add (newHolder.LoadAsync ());
                     } else {
                         itemCollection.Insert (e.NewStartingIndex, data);
                     }
                 } else {
 
-                    var createHolderTaskList = new List<Task> ();
                     var currentItems = new List<object> (UpdatedList);
                     if (e.NewStartingIndex == 0) {
                         itemCollection.Clear ();
@@ -823,13 +843,13 @@ namespace Toggl.Phoebe.Data.Views
 
                             if (i == itemCollection.Count) {
                                 itemCollection.Insert (i, timeEntryHolder);
-                                createHolderTaskList.Add (timeEntryHolder.LoadAsync ());
+                                holderTaskList.Add (timeEntryHolder.LoadAsync ());
                             } else if (i > itemCollection.Count) {
                                 itemCollection.Add (timeEntryHolder);
-                                createHolderTaskList.Add (timeEntryHolder.LoadAsync ());
+                                holderTaskList.Add (timeEntryHolder.LoadAsync ());
                             }  else {
                                 itemCollection [i] = timeEntryHolder;
-                                createHolderTaskList.Add (timeEntryHolder.UpdateAsync (entryData));
+                                holderTaskList.Add (timeEntryHolder.UpdateAsync (entryData));
                             }
                         } else {
                             if (i == itemCollection.Count) {
@@ -839,12 +859,13 @@ namespace Toggl.Phoebe.Data.Views
                             }
                         }
                     }
-                    await Task.WhenAll (createHolderTaskList);
                 }
             }
 
             if (e.Action == NotifyCollectionChangedAction.Move) {
-                itemCollection.Move (e.OldStartingIndex, e.NewStartingIndex);
+                var savedItem = itemCollection [e.OldStartingIndex];
+                itemCollection.RemoveAt (e.OldStartingIndex);
+                itemCollection.Insert (e.NewStartingIndex, savedItem);
             }
 
             if (e.Action == NotifyCollectionChangedAction.Remove) {
@@ -854,12 +875,49 @@ namespace Toggl.Phoebe.Data.Views
             if (e.Action == NotifyCollectionChangedAction.Replace) {
                 if (data is TimeEntryData) {
                     var oldHolder = (TimeEntryHolder)itemCollection.ElementAt (e.NewStartingIndex);
-                    await oldHolder.UpdateAsync ((TimeEntryData)data);
                     itemCollection [e.NewStartingIndex] = oldHolder;
+                    holderTaskList.Add (oldHolder.UpdateAsync ((TimeEntryData)data));
                 } else {
                     itemCollection [e.NewStartingIndex] = data;
                 }
             }
+
+            await Task.WhenAll (holderTaskList);
+
+            // Dispatch event.
+            var handler = CollectionChanged;
+            if (handler != null) {
+                handler (this, e);
+            }
         }
+
+        private class UpdateScheduler
+        {
+            private bool isStarted;
+            private readonly List<Task> updateQueue = new List<Task>();
+
+            public void AddUpdate (Task updateTask)
+            {
+                updateQueue.Add (updateTask);
+                if (!isStarted) {
+                    isStarted = true;
+                    CheckQueue ();
+                }
+            }
+
+            private async void CheckQueue()
+            {
+                if (updateQueue.Count > 0) {
+                    var eventTask = updateQueue.First ();
+                    await Task.WhenAny (eventTask);
+                    updateQueue.Remove (eventTask);
+                    CheckQueue ();
+                } else {
+                    isStarted = false;
+                }
+            }
+        }
+
+
     }
 }

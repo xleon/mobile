@@ -27,6 +27,7 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
+        private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 2;
         private LogTimeEntriesView modelView;
         private readonly List<RecyclerView.ViewHolder> holderList;
@@ -119,8 +120,8 @@ namespace Toggl.Joey.UI.Adapters
 
         public void RemoveItemWithUndo (int index)
         {
-            var holder = (LogTimeEntriesView.TimeEntryHolder)DataView.Data.ElementAt (index);
-            modelView.RemoveItemWithUndo (holder.TimeEntryData);
+            var holder = (RecycledBindableViewHolder<LogTimeEntriesView.TimeEntryHolder>)Owner.FindViewHolderForPosition (index);
+            modelView.RemoveItemWithUndo (holder.DataSource.TimeEntryData);
         }
 
         public void RestoreItemFromUndo ()
@@ -140,10 +141,10 @@ namespace Toggl.Joey.UI.Adapters
 
             if (viewType == ViewTypeDateHeader) {
                 view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
-                holder = new HeaderListItemHolder (view);
+                holder = new HeaderListItemHolder (handler, view);
             } else {
                 view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
-                holder = new TimeEntryListItemHolder (this, view);
+                holder = new TimeEntryListItemHolder (handler, this, view);
             }
 
             holderList.Add (holder);
@@ -178,9 +179,14 @@ namespace Toggl.Joey.UI.Adapters
 
         public override void OnDetachedFromRecyclerView (RecyclerView recyclerView)
         {
+            handler.RemoveCallbacksAndMessages (null);
+            handler.Dispose ();
+
             foreach (var item in holderList) {
                 item.Dispose ();
             }
+            holderList.Clear ();
+
             base.OnDetachedFromRecyclerView (recyclerView);
         }
 
@@ -205,9 +211,9 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView DateGroupDurationTextView { get; private set; }
 
-            public HeaderListItemHolder (View root) : base (root)
+            public HeaderListItemHolder (Handler handler, View root) : base (root)
             {
-                handler = new Handler ();
+                this.handler = handler;
                 DateGroupTitleTextView = root.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoMedium);
                 DateGroupDurationTextView = root.FindViewById<TextView> (Resource.Id.DateGroupDurationTextView).SetFont (Font.Roboto);
             }
@@ -233,7 +239,7 @@ namespace Toggl.Joey.UI.Adapters
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - TimeEntryModel.GetDuration (runningModel, Time.UtcNow).Milliseconds);
                 } else {
-                    handler.RemoveCallbacksAndMessages (null);
+                    handler.RemoveCallbacks (RebindDuration);
                 }
             }
 
@@ -251,12 +257,6 @@ namespace Toggl.Joey.UI.Adapters
                 default:
                     return dateTime.ToDeviceDateString ();
                 }
-            }
-
-            protected override void Dispose (bool disposing)
-            {
-                handler.RemoveCallbacksAndMessages (null);
-                base.Dispose (disposing);
             }
         }
 
@@ -283,9 +283,9 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton ContinueImageButton { get; private set; }
 
-            public TimeEntryListItemHolder (LogTimeEntriesAdapter owner, View root) : base (root)
+            public TimeEntryListItemHolder (Handler handler, LogTimeEntriesAdapter owner, View root) : base (root)
             {
-                handler = new Handler ();
+                this.handler = handler;
                 this.owner = owner;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
@@ -400,7 +400,7 @@ namespace Toggl.Joey.UI.Adapters
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
                 } else {
-                    handler.RemoveCallbacksAndMessages (null);
+                    handler.RemoveCallbacks (RebindDuration);
                 }
 
                 ShowStopButton ();
@@ -430,13 +430,6 @@ namespace Toggl.Joey.UI.Adapters
                 TagsView.BubbleCount = numberOfTags;
                 TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
             }
-
-            protected override void Dispose (bool disposing)
-            {
-                handler.RemoveCallbacksAndMessages (null);
-                base.Dispose (disposing);
-            }
-
         }
     }
 }

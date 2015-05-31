@@ -163,7 +163,7 @@ namespace Toggl.Joey
 
         private void OnSettingChanged (SettingChangedMessage msg)
         {
-            if (msg.Name == SettingsStore.PropertyIdleNotification) {
+            if (msg.Name == SettingsStore.PropertyIdleNotification || msg.Name == SettingsStore.PropertyShowNotification ) {
                 SyncNotification ();
             }
         }
@@ -191,6 +191,12 @@ namespace Toggl.Joey
                     notificationManager.Cancel (IdleNotifId);
                 }
             } else {
+                var settings = ServiceContainer.Resolve<SettingsStore> ();
+                if (!settings.ShowNotification) {
+                    notificationManager.Cancel (RunningNotifId);
+                    notificationManager.Cancel (IdleNotifId);
+                    return;
+                }
                 notificationManager.Cancel (IdleNotifId);
                 var correction = ServiceContainer.Resolve<TimeCorrectionManager> ().Correction;
                 var startTime = currentTimeEntry.StartTime - correction;

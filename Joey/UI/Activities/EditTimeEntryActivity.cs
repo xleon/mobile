@@ -1,107 +1,60 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Android.App;
+using Android.Content.PM;
 using Android.OS;
 using Android.Views;
-using Android.Widget;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
 using Toggl.Joey.UI.Fragments;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
          Exported = false,
-         WindowSoftInputMode = SoftInput.StateHidden)]
+         WindowSoftInputMode = SoftInput.StateHidden,
+         ScreenOrientation = ScreenOrientation.Portrait,
+         Theme = "@style/Theme.Toggl.App")]
     public class EditTimeEntryActivity : BaseActivity
     {
+        public static readonly string IsGrouped = "com.toggl.timer.grouped_edit";
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
+        public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";
 
-        private FrameLayout DoneFrameLayout { get; set; }
-
-        private TimeEntryModel model;
-
-        protected override void OnCreateActivity (Bundle state)
+        protected async override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);
 
-            var actionBarView = CreateDoneActionBarView ();
-            DoneFrameLayout = actionBarView.FindViewById<FrameLayout> (Resource.Id.DoneFrameLayout);
-            DoneFrameLayout.Click += OnDoneFrameLayoutClick;
-
-            ActionBar.SetDisplayOptions (
-                ActionBarDisplayOptions.ShowCustom,
-                (ActionBarDisplayOptions) ((int)ActionBarDisplayOptions.ShowCustom
-                                           | (int)ActionBarDisplayOptions.ShowHome
-                                           | (int)ActionBarDisplayOptions.ShowTitle));
-            ActionBar.CustomView = actionBarView;
-
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 
-            CreateModelFromIntent ();
-
-            if (state == null) {
-                if (model == null) {
-                    Finish ();
-                } else {
-                    FragmentManager.BeginTransaction ()
-                    .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (model))
-                    .Commit ();
-                }
+            var timeEntryList = await GetIntentTimeEntryData (Intent);
+            TimeEntryData timeEntry = null;
+            if (timeEntryList.Count > 0) {
+                timeEntry = timeEntryList[0];
             }
+
+            var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);
+            if (isGrouped)
+                FragmentManager.BeginTransaction ()
+                .Add (Resource.Id.FrameLayout, new EditGroupedTimeEntryFragment (timeEntryList))
+                .Commit ();
+            else
+                FragmentManager.BeginTransaction ()
+                .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (timeEntry))
+                .Commit ();
         }
 
-        private async void CreateModelFromIntent ()
+        public async static Task<IList<TimeEntryData>> GetIntentTimeEntryData (Android.Content.Intent intent)
         {
-            var extras = Intent.Extras;
+            var extras = intent.Extras;
             if (extras == null) {
-                return;
+                return new List<TimeEntryData> ();
             }
 
-            var extraIdStr = extras.GetString (ExtraTimeEntryId);
-            Guid extraId;
-            if (!Guid.TryParse (extraIdStr, out extraId)) {
-                return;
-            }
-
-            model = new TimeEntryModel (extraId);
-            model.PropertyChanged += OnPropertyChange;
-
-            // Ensure that the model exists
-            await model.LoadAsync ();
-            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
-                Finish ();
-            }
-        }
-
-        private View CreateDoneActionBarView ()
-        {
-            var inflater = (LayoutInflater)ActionBar.ThemedContext.GetSystemService (LayoutInflaterService);
-            return inflater.Inflate (Resource.Layout.DoneActionBarView, null);
-        }
-
-        private void OnDoneFrameLayoutClick (object sender, EventArgs e)
-        {
-            Finish ();
-        }
-
-        private void OnPropertyChange (object sender, EventArgs e)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-            if (model.Id == Guid.Empty) {
-                Finish ();
-            }
-        }
-
-        protected override void OnStart ()
-        {
-            base.OnStart ();
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
+            // Get TimeEntryData from intent.
+            var extraGuids = extras.GetStringArrayList (ExtraGroupedTimeEntriesGuids);
+            var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (extraGuids);
+            return timeEntryList;
         }
     }
 }

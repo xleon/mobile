@@ -12,19 +12,13 @@
         app:fadeLength="15dp">
         <TextView
             android:id="@+id/WorkspaceTextView"
-            android:layout_width="match_parent"
+            android:textColor="@color/group_title_dark_gray"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:text="Workspace name"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:gravity="bottom"
-            android:paddingBottom="8dp"
-            android:paddingLeft="12dp"
-            android:singleLine="true"
-            android:textColor="@color/project_list_dark_gray"
-            android:ellipsize="none" />
+            android:layout_weight="1"
+            android:textSize="@dimen/normalTextSize"
+            android:gravity="center_vertical"
+            android:layout_marginLeft="@dimen/leftMargin" />
     </toggl.joey.ui.views.FadeLinearLayout>
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@drawable/DividerHorizontalOpaque" />
 </LinearLayout>

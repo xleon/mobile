@@ -1,17 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <ListView
-        android:id="@id/android:list"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/LogRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:drawSelectorOnTop="false"
-        android:paddingLeft="-2dp" />
+        android:layout_height="match_parent" />
     <LinearLayout
-        android:id="@id/android:empty"
+        android:id="@+id/EmptyMessageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -30,4 +27,6 @@
             android:text="@string/NoItemsText"
             android:gravity="center" />
     </LinearLayout>
-</LinearLayout>
+    <include layout="@layout/UndoBar" />    
+</FrameLayout>
+

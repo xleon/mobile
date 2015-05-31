@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Drawing;
-using System.Linq;
 using Android.Content;
-using Android.Content.Res;
 using Android.Graphics.Drawables;
 using Android.Util;
 using Android.Views;
@@ -10,28 +8,40 @@ using Android.Widget;
 
 namespace Toggl.Joey.UI.Views
 {
-    public class LogTimeEntryItem : ViewGroup
+    public class LogTimeEntryItem : ListItemSwipeable
     {
+        private Android.Graphics.Color normalColor = Android.Graphics.Color.White;
+        private Android.Graphics.Color selectedColor;
         private View colorView;
         private TextView projectTextView;
         private TextView clientTextView;
         private TextView taskTextView;
         private TextView descriptionTextView;
         private ImageButton continueImageButton;
-        private View continueButtonSeparator;
         private TextView durationTextView;
         private ImageView billableIcon;
         private ImageView tagsIcon;
-
-        private Drawable topFadeDrawable;
-        private int topFadeWidth;
-        private Rectangle topFadeRect;
-
-        private Drawable bottomFadeDrawable;
-        private int bottomFadeWidth;
-        private Rectangle bottomFadeRect;
-
+        private View backgroundView;
+        private Drawable fadeDrawable;
+        private int fadeWidth;
+        private Rectangle fadeRect;
         private View view;
+
+        public override bool Selected
+        {
+            get {
+                return base.Selected;
+            } set {
+                if (value == base.Selected) {
+                    return;
+                }
+
+                base.Selected = value;
+                var color = (value) ? selectedColor : normalColor;
+                backgroundView.SetBackgroundColor (color);
+                ReplaceDrawable (ref fadeDrawable, ref fadeWidth, MakeFadeDrawable ());
+            }
+        }
 
         public LogTimeEntryItem (Context context, IAttributeSet attrs) : base (context, attrs)
         {
@@ -47,31 +57,30 @@ namespace Toggl.Joey.UI.Views
 
         private void Initialize ()
         {
-            this.DescendantFocusability = DescendantFocusability.BlockDescendants;
-            view.SetBackgroundDrawable (Resources.GetDrawable (Resource.Drawable.MainListButton));
+            selectedColor = Context.Resources.GetColor (Resource.Color.background_light_gray);
+            DescendantFocusability = DescendantFocusability.BlockDescendants;
+            view.SetBackgroundColor (Android.Graphics.Color.White);
             colorView = FindViewById (Resource.Id.ColorView);
             projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
             clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView);
             taskTextView = view.FindViewById<TextView> (Resource.Id.TaskTextView);
+            backgroundView = FindViewById (Resource.Id.BackgroundSeparator);
             descriptionTextView = view.FindViewById<TextView> (Resource.Id.DescriptionTextView);
             continueImageButton = view.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
-            continueButtonSeparator = view.FindViewById<View> (Resource.Id.ContinueButtonSeparator);
             durationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
             billableIcon = view.FindViewById<ImageView> (Resource.Id.BillableIcon);
             tagsIcon = view.FindViewById<ImageView> (Resource.Id.TagsIcon);
 
-            ReplaceDrawable (ref topFadeDrawable, ref topFadeWidth, MakeFadeDrawable ());
-            ReplaceDrawable (ref bottomFadeDrawable, ref bottomFadeWidth, MakeFadeDrawable ());
+            ReplaceDrawable (ref fadeDrawable, ref fadeWidth, MakeFadeDrawable ());
         }
 
         private FadeDrawable MakeFadeDrawable ()
         {
             var width = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 20, Resources.DisplayMetrics);
-
+            var color = (Selected) ? selectedColor : normalColor;
             var d = new FadeDrawable (width);
-            d.SetStateColor (new[] { Android.Resource.Attribute.StatePressed }, Android.Graphics.Color.Rgb (245, 245, 245));
-            d.SetStateColor (new[] { Android.Resource.Attribute.StateActivated }, Android.Graphics.Color.Rgb (222, 222, 222));
-            d.SetStateColor (new int[] { }, Android.Graphics.Color.White);
+
+            d.SetStateColor (new int[] { }, color);
             return d;
         }
 
@@ -83,12 +92,13 @@ namespace Toggl.Joey.UI.Views
 
             MeasureChildWithMargins (colorView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             heightUsed += GetMeasuredHeightWithMargins (colorView);
+            MeasureChildWithMargins (DeleteTextDialog, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
 
+            MeasureChildWithMargins (backgroundView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (projectTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (descriptionTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (clientTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (taskTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
-            MeasureChildWithMargins (continueButtonSeparator, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (continueImageButton, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (durationTextView, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
             MeasureChildWithMargins (billableIcon, widthMeasureSpec, widthUsed, heightMeasureSpec, heightUsed);
@@ -103,68 +113,67 @@ namespace Toggl.Joey.UI.Views
             int paddingLeft = PaddingLeft;
             int currentTop = PaddingTop;
 
-            LayoutView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
+            LayoutChildView (DeleteTextDialog, PaddingLeft, PaddingTop, DeleteTextDialog.MeasuredWidth, DeleteTextDialog.MeasuredHeight);
+            LayoutChildView (backgroundView, PaddingLeft, PaddingTop, backgroundView.MeasuredWidth, backgroundView.MeasuredHeight);
+
+            LayoutChildView (colorView, paddingLeft, currentTop, colorView.MeasuredWidth, colorView.MeasuredHeight);
             paddingLeft += GetWidthWithMargins (colorView);
 
             int durationBar = r - continueImageButton.MeasuredWidth;
-            LayoutView (continueButtonSeparator, durationBar, currentTop, continueButtonSeparator.MeasuredWidth, continueButtonSeparator.MeasuredHeight);
-            LayoutView (continueImageButton, durationBar, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
-            int secondLineMark = durationBar;
+            LayoutChildView (continueImageButton, durationBar, currentTop, continueImageButton.MeasuredWidth, continueImageButton.MeasuredHeight);
+
             durationBar -= durationTextView.MeasuredWidth;
-            LayoutView (durationTextView, durationBar, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
+            LayoutChildView (durationTextView, durationBar, currentTop, durationTextView.MeasuredWidth, durationTextView.MeasuredHeight);
 
             if (billableIcon.Visibility == ViewStates.Visible) {
                 durationBar -= billableIcon.MeasuredWidth;
-                LayoutView (billableIcon, durationBar, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
+                LayoutChildView (billableIcon, durationBar, currentTop, billableIcon.MeasuredWidth, billableIcon.MeasuredHeight);
             }
             if (tagsIcon.Visibility == ViewStates.Visible) {
                 durationBar -= tagsIcon.MeasuredWidth;
-                LayoutView (tagsIcon, durationBar, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
+                LayoutChildView (tagsIcon, durationBar, currentTop, tagsIcon.MeasuredWidth, tagsIcon.MeasuredHeight);
             }
 
             int usableWidthFirstLine = durationBar - paddingLeft;
-            int firstWidth = GetFirstElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth);
+            int firstWidth = 0;
 
-            LayoutView (projectTextView, paddingLeft, currentTop, firstWidth, projectTextView.MeasuredHeight);
             if (clientTextView.Text != String.Empty) {
-                LayoutView (clientTextView, paddingLeft + firstWidth, currentTop, GetSecondElementWidth (usableWidthFirstLine, projectTextView.MeasuredWidth, clientTextView.MeasuredWidth), clientTextView.MeasuredHeight);
+                firstWidth = GetFirstElementWidth (usableWidthFirstLine, clientTextView.MeasuredWidth);
+                LayoutChildView (clientTextView, paddingLeft, currentTop, firstWidth, clientTextView.MeasuredHeight);
             }
-            topFadeRect = new Rectangle (
+            LayoutChildView (projectTextView, paddingLeft + firstWidth, currentTop, GetSecondElementWidth (usableWidthFirstLine, firstWidth, projectTextView.MeasuredWidth), projectTextView.MeasuredHeight);
+
+            fadeRect = new Rectangle (
                 usableWidthFirstLine + paddingLeft, currentTop,
-                0, Math.Max (projectTextView.MeasuredHeight, clientTextView.MeasuredHeight)
+                0, projectTextView.MeasuredHeight + descriptionTextView.MeasuredHeight
             );
 
-            int usableWidthSecondLine = secondLineMark - paddingLeft;
-
             if (taskTextView.Text != String.Empty) {
-                LayoutView (
+                LayoutChildView (
                     taskTextView,
                     paddingLeft,
                     currentTop,
-                    GetFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth),
+                    GetFirstElementWidth (usableWidthFirstLine, taskTextView.MeasuredWidth),
                     taskTextView.MeasuredHeight
                 );
-                LayoutView (
+
+                descriptionTextView.Measure (0, 0);
+                LayoutChildView (
                     descriptionTextView,
-                    paddingLeft + GetFirstElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth),
+                    paddingLeft + GetFirstElementWidth (usableWidthFirstLine, taskTextView.MeasuredWidth),
                     currentTop,
-                    GetSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth),
+                    GetSecondElementWidth (usableWidthFirstLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth),
                     descriptionTextView.MeasuredHeight
                 );
             } else {
-                LayoutView (
+                LayoutChildView (
                     descriptionTextView,
                     paddingLeft,
                     currentTop,
-                    GetSecondElementWidth (usableWidthSecondLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth),
+                    GetSecondElementWidth (usableWidthFirstLine, taskTextView.MeasuredWidth, descriptionTextView.MeasuredWidth),
                     descriptionTextView.MeasuredHeight
                 );
             }
-
-            bottomFadeRect = new Rectangle (
-                secondLineMark, currentTop + durationTextView.MeasuredHeight,
-                0, Math.Max (taskTextView.MeasuredHeight, descriptionTextView.MeasuredHeight) - durationTextView.MeasuredHeight
-            );
 
             ConfigureDrawables ();
         }
@@ -174,11 +183,8 @@ namespace Toggl.Joey.UI.Views
             base.DispatchDraw (canvas);
 
             // Draw gradients on-top of others
-            if (topFadeDrawable != null) {
-                topFadeDrawable.Draw (canvas);
-            }
-            if (bottomFadeDrawable != null) {
-                bottomFadeDrawable.Draw (canvas);
+            if (fadeDrawable != null) {
+                fadeDrawable.Draw (canvas);
             }
         }
 
@@ -192,21 +198,21 @@ namespace Toggl.Joey.UI.Views
             int firstActual = GetFirstElementWidth (usable, first);
             if (firstActual == usable) {
                 return 0;
-            } else if (usable < firstActual + second) {
-                return usable - firstActual;
-            } else {
-                return second;
             }
+            if (usable < firstActual + second) {
+                return usable - firstActual;
+            }
+            return second;
         }
 
-        private void LayoutView (View view, int left, int top, int width, int height)
+        private void LayoutChildView (View childView, int left, int top, int width, int height)
         {
-            var margins = (MarginLayoutParams)view.LayoutParameters;
+            var margins = (MarginLayoutParams)childView.LayoutParameters;
             int leftWithMargins = left + margins.LeftMargin;
             int topWithMargins = top + margins.TopMargin;
 
-            view.Layout (leftWithMargins, topWithMargins,
-                         leftWithMargins + width, topWithMargins + height);
+            childView.Layout (leftWithMargins, topWithMargins,
+                              leftWithMargins + width, topWithMargins + height);
         }
 
         private int GetWidthWithMargins (View child)
@@ -245,28 +251,19 @@ namespace Toggl.Joey.UI.Views
 
         private void ConfigureDrawables ()
         {
-            if (topFadeDrawable != null) {
-                topFadeDrawable.SetBounds (
-                    topFadeRect.X - topFadeWidth,
-                    topFadeRect.Y,
-                    topFadeRect.X,
-                    topFadeRect.Y + topFadeRect.Height
-                );
-            }
-
-            if (bottomFadeDrawable != null) {
-                bottomFadeDrawable.SetBounds (
-                    bottomFadeRect.X - bottomFadeWidth,
-                    bottomFadeRect.Y,
-                    bottomFadeRect.X,
-                    bottomFadeRect.Y + bottomFadeRect.Height
+            if (fadeDrawable != null) {
+                fadeDrawable.SetBounds (
+                    fadeRect.X - fadeWidth,
+                    fadeRect.Y,
+                    fadeRect.X,
+                    fadeRect.Y + fadeRect.Height
                 );
             }
         }
 
         public override void InvalidateDrawable (Drawable drawable)
         {
-            if (drawable == topFadeDrawable || drawable == bottomFadeDrawable) {
+            if (drawable == fadeDrawable) {
                 Invalidate ();
             } else {
                 base.InvalidateDrawable (drawable);
@@ -302,27 +299,13 @@ namespace Toggl.Joey.UI.Views
             Invalidate ();
         }
 
-        protected override void DrawableStateChanged ()
-        {
-            base.DrawableStateChanged ();
-            if (topFadeDrawable != null && topFadeDrawable.IsStateful) {
-                topFadeDrawable.SetState (GetDrawableState ());
-            }
-            if (bottomFadeDrawable != null && bottomFadeDrawable.IsStateful) {
-                bottomFadeDrawable.SetState (GetDrawableState ());
-            }
-        }
-
         public override ViewStates Visibility
         {
             get { return base.Visibility; }
             set {
                 base.Visibility = value;
-                if (topFadeDrawable != null) {
-                    topFadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
-                }
-                if (bottomFadeDrawable != null) {
-                    bottomFadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
+                if (fadeDrawable != null) {
+                    fadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
                 }
             }
         }
@@ -330,22 +313,16 @@ namespace Toggl.Joey.UI.Views
         protected override void OnAttachedToWindow ()
         {
             base.OnAttachedToWindow ();
-            if (topFadeDrawable != null) {
-                topFadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
-            }
-            if (bottomFadeDrawable != null) {
-                bottomFadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
+            if (fadeDrawable != null) {
+                fadeDrawable.SetVisible (Visibility == ViewStates.Visible, false);
             }
         }
 
         protected override void OnDetachedFromWindow ()
         {
             base.OnDetachedFromWindow ();
-            if (topFadeDrawable != null) {
-                topFadeDrawable.SetVisible (false, false);
-            }
-            if (bottomFadeDrawable != null) {
-                bottomFadeDrawable.SetVisible (false, false);
+            if (fadeDrawable != null) {
+                fadeDrawable.SetVisible (false, false);
             }
         }
     }

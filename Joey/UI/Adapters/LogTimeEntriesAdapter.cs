@@ -1,155 +1,209 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
-using Android.Text;
-using Android.Text.Style;
+using Android.Support.V7.Widget;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using Toggl.Joey.UI.Text;
-using Toggl.Joey.UI.Utils;
-using Toggl.Joey.UI.Views;
-using Android.Util;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : BaseDataViewAdapter<object>
+    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<object>, IUndoCapabilities
     {
+        public static readonly int ViewTypeLoaderPlaceholder = 0;
+        public static readonly int ViewTypeContent = 1;
         protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
-        protected static readonly int ViewTypeExpanded = ViewTypeContent + 2;
-        private readonly Handler handler = new Handler ();
-        private int? expandedPos;
 
-        public LogTimeEntriesAdapter () : base (new AllTimeEntriesView ())
+        private readonly Handler handler = new Handler ();
+        private static readonly int ContinueThreshold = 2;
+        private LogTimeEntriesView modelView;
+        private readonly List<RecyclerView.ViewHolder> holderList;
+        private DateTime lastTimeEntryContinuedTime;
+
+        public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        public override bool IsEnabled (int position)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesView modelView) : base (owner, modelView)
         {
-            return ExpandedPosition != position && GetEntry (position) is TimeEntryData;
+            this.modelView = modelView;
+            lastTimeEntryContinuedTime = Time.UtcNow;
+            holderList = new List<RecyclerView.ViewHolder> ();
+        }
+
+        protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                NotifyDataSetChanged();
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Add) {
+
+                if (e.NewItems.Count == 0) {
+                    return;
+                }
+
+                // First items are inserterd with a reset
+                // to fix the top scroll position
+                if (e.NewItems.Count == DataView.Count && e.NewStartingIndex == 0) {
+                    NotifyDataSetChanged();
+                    return;
+                }
+
+                if (e.NewItems.Count == 1) {
+
+                    // If new TE is started,
+                    // move scroll to top position
+                    if (e.NewStartingIndex == 1) {
+                        Owner.SmoothScrollToPosition (0);
+                    }
+
+                    NotifyItemInserted (e.NewStartingIndex);
+                } else {
+                    NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                NotifyItemChanged (e.NewStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                NotifyItemRemoved (e.OldStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                NotifyItemMoved (e.OldStartingIndex, e.NewStartingIndex);
+            }
+        }
+
+        private void OnContinueTimeEntry (TimeEntryData timeEntryData)
+        {
+            // Don't continue a new TimeEntry before
+            // 3 seconds has passed.
+            if (Time.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
+                return;
+            }
+            lastTimeEntryContinuedTime = Time.UtcNow;
+
+            // Trick on view to show a better
+            // visual reaction to press Play btn
+            for (int i = 0; i < holderList.Count; i++) {
+                var holder = holderList [i] as TimeEntryListItemHolder;
+                if (holder != null) {
+                    if (holder.DataSource.State == TimeEntryState.Running) {
+                        holder.DataSource.TimeEntryData.State = TimeEntryState.Finished;
+                        BindHolder (holder, holder.AdapterPosition);
+                    }
+                }
+            }
+            modelView.ContinueTimeEntry (timeEntryData);
+        }
+
+        private void OnStopTimeEntry (TimeEntryData timeEntryData)
+        {
+            modelView.StopTimeEntry (timeEntryData);
+        }
+
+        public void RemoveItemWithUndo (int index)
+        {
+            var holder = (RecycledBindableViewHolder<LogTimeEntriesView.TimeEntryHolder>)Owner.FindViewHolderForPosition (index);
+            modelView.RemoveItemWithUndo (holder.DataSource.TimeEntryData);
+        }
+
+        public void RestoreItemFromUndo ()
+        {
+            modelView.RestoreItemFromUndo ();
+        }
+
+        public void ConfirmItemRemove ()
+        {
+            modelView.ConfirmItemRemove ();
+        }
+
+        protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
+        {
+            View view;
+            RecyclerView.ViewHolder holder;
+
+            if (viewType == ViewTypeDateHeader) {
+                view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
+                holder = new HeaderListItemHolder (handler, view);
+            } else {
+                view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
+                holder = new TimeEntryListItemHolder (handler, this, view);
+            }
+
+            holderList.Add (holder);
+            return holder;
+        }
+
+        protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
+        {
+            if (GetItemViewType (position) == ViewTypeDateHeader) {
+                var headerHolder = (HeaderListItemHolder)holder;
+                headerHolder.Bind ((LogTimeEntriesView.DateGroup) GetEntry (position));
+            } else {
+                var entryHolder = (TimeEntryListItemHolder)holder;
+                entryHolder.Bind ((LogTimeEntriesView.TimeEntryHolder) GetEntry (position));
+            }
         }
 
         public override int GetItemViewType (int position)
         {
-            if (position == DataView.Count && DataView.IsLoading) {
+            // TODO: investigate positio > DataView.Count
+            if (position >= DataView.Count) {
                 return ViewTypeLoaderPlaceholder;
             }
 
             var obj = GetEntry (position);
-            if (obj is AllTimeEntriesView.DateGroup) {
+            if (obj is LogTimeEntriesView.DateGroup) {
                 return ViewTypeDateHeader;
             }
-            if (position == expandedPos) {
-                return ViewTypeExpanded;
-            }
+
             return ViewTypeContent;
         }
 
-        public override int ViewTypeCount
+        public override void OnDetachedFromRecyclerView (RecyclerView recyclerView)
         {
-            get { return base.ViewTypeCount + 2; }
-        }
+            handler.RemoveCallbacksAndMessages (null);
+            handler.Dispose ();
 
-        public int? ExpandedPosition
-        {
-            get { return expandedPos; }
-            set {
-                if (expandedPos == value) {
-                    return;
-                }
-                expandedPos = value;
-                NotifyDataSetChanged ();
+            foreach (var item in holderList) {
+                item.Dispose ();
             }
+            holderList.Clear ();
+
+            base.OnDetachedFromRecyclerView (recyclerView);
         }
 
-        private void OnDeleteTimeEntry (TimeEntryModel model)
+        public override void OnViewDetachedFromWindow (Java.Lang.Object holder)
         {
-            var handler = HandleTimeEntryDeletion;
-            if (handler != null) {
-                handler (model);
+            if (holder is TimeEntryListItemHolder) {
+                var mHolder = (TimeEntryListItemHolder)holder;
+                mHolder.DisposeDataSource ();
+            } else if (holder is HeaderListItemHolder) {
+                var mHolder = (HeaderListItemHolder)holder;
+                mHolder.DisposeDataSource ();
             }
+            base.OnViewDetachedFromWindow (holder);
         }
 
-        private void OnEditTimeEntry (TimeEntryModel model)
-        {
-            var handler = HandleTimeEntryEditing;
-            if (handler != null) {
-                handler (model);
-            }
-        }
-
-        private void OnContinueTimeEntry (TimeEntryModel model)
-        {
-            var handler = HandleTimeEntryContinue;
-            if (handler != null) {
-                handler (model);
-            }
-        }
-
-        private void OnStopTimeEntry (TimeEntryModel model)
-        {
-            var handler = HandleTimeEntryStop;
-            if (handler != null) {
-                handler (model);
-            }
-        }
-
-        public Action<TimeEntryModel> HandleTimeEntryDeletion { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryEditing { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryContinue { get; set; }
-
-        public Action<TimeEntryModel> HandleTimeEntryStop { get; set; }
-
-        protected override View GetModelView (int position, View convertView, ViewGroup parent)
-        {
-            View view = convertView;
-
-            var entry = GetEntry (position);
-            var viewType = GetItemViewType (position);
-
-            if (viewType == ViewTypeDateHeader) {
-                var dateGroup = (AllTimeEntriesView.DateGroup)entry;
-                if (view == null) {
-                    view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
-                               Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
-                    view.Tag = new HeaderListItemHolder (handler, view);
-                }
-                var holder = (HeaderListItemHolder)view.Tag;
-                holder.Bind (dateGroup);
-            } else if (viewType == ViewTypeExpanded) {
-                var data = (TimeEntryData)entry;
-                if (view == null) {
-                    view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (
-                               Resource.Layout.LogTimeEntryListExpandedItem, parent, false);
-                    view.Tag = new ExpandedListItemHolder (this, view);
-                }
-                var holder = (ExpandedListItemHolder)view.Tag;
-                holder.Bind ((TimeEntryModel)data);
-            } else {
-                var data = (TimeEntryData)entry;
-                var model = (TimeEntryModel)data;
-                if (view == null) {
-                    view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
-                    view.Tag = new TimeEntryListItemHolder (handler, this, view);
-                }
-                var holder = (TimeEntryListItemHolder)view.Tag;
-                holder.Bind (model);
-            }
-
-            return view;
-        }
-
-        private class HeaderListItemHolder : BindableViewHolder<AllTimeEntriesView.DateGroup>
+        [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
+        public class HeaderListItemHolder : RecycledBindableViewHolder<LogTimeEntriesView.DateGroup>
         {
             private readonly Handler handler;
 
@@ -160,8 +214,8 @@ namespace Toggl.Joey.UI.Adapters
             public HeaderListItemHolder (Handler handler, View root) : base (root)
             {
                 this.handler = handler;
-                DateGroupTitleTextView = root.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoLight);
-                DateGroupDurationTextView = root.FindViewById<TextView> (Resource.Id.DateGroupDurationTextView).SetFont (Font.RobotoLight);
+                DateGroupTitleTextView = root.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoMedium);
+                DateGroupDurationTextView = root.FindViewById<TextView> (Resource.Id.DateGroupDurationTextView).SetFont (Font.Roboto);
             }
 
             protected override void Rebind ()
@@ -176,14 +230,16 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var models = DataSource.DataObjects.Select (data => new TimeEntryModel (data)).ToList ();
-                var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
+                var timeEntryDataList = DataSource.DataObjects;
+                var duration = TimeSpan.FromSeconds (timeEntryDataList.Sum (m => TimeEntryModel.GetDuration (m, Time.UtcNow).TotalSeconds));
                 DateGroupDurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
 
-                var runningModel = models.FirstOrDefault (m => m.State == TimeEntryState.Running);
+                var runningModel = timeEntryDataList.FirstOrDefault (m => m.State == TimeEntryState.Running);
                 if (runningModel != null) {
                     handler.RemoveCallbacks (RebindDuration);
-                    handler.PostDelayed (RebindDuration, 1000 - runningModel.GetDuration ().Milliseconds);
+                    handler.PostDelayed (RebindDuration, 1000 - TimeEntryModel.GetDuration (runningModel, Time.UtcNow).Milliseconds);
+                } else {
+                    handler.RemoveCallbacks (RebindDuration);
                 }
             }
 
@@ -204,11 +260,10 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : ModelViewHolder<TimeEntryModel>
+        private class TimeEntryListItemHolder : RecycledBindableViewHolder<LogTimeEntriesView.TimeEntryHolder>, View.IOnTouchListener
         {
             private readonly Handler handler;
-            private readonly LogTimeEntriesAdapter adapter;
-            private TimeEntryTagsView tagsView;
+            private readonly LogTimeEntriesAdapter owner;
 
             public View ColorView { get; private set; }
 
@@ -220,7 +275,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView DescriptionTextView { get; private set; }
 
-            public View TagsView { get; private set; }
+            public ImageView TagsView { get; private set; }
 
             public View BillableView { get; private set; }
 
@@ -228,128 +283,42 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton ContinueImageButton { get; private set; }
 
-            public TimeEntryListItemHolder (Handler handler, LogTimeEntriesAdapter adapter, View root) : base (root)
+            public TimeEntryListItemHolder (Handler handler, LogTimeEntriesAdapter owner, View root) : base (root)
             {
                 this.handler = handler;
-                this.adapter = adapter;
+                this.owner = owner;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
-                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
-                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
-                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.Roboto);
-                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.RobotoLight);
-                TagsView = root.FindViewById<View> (Resource.Id.TagsIcon);
+                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.RobotoMedium);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoMedium);
+                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoMedium);
+                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.Roboto);
+                TagsView = root.FindViewById<ImageView> (Resource.Id.TagsIcon);
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
-
-                ContinueImageButton.Click += OnContinueButtonClicked;
+                ContinueImageButton.SetOnTouchListener (this);
             }
 
-            private void OnContinueButtonClicked (object sender, EventArgs e)
+            public bool OnTouch (View v, MotionEvent e)
             {
-                if (DataSource == null) {
-                    return;
-                }
-
-                if (DataSource.State == TimeEntryState.Running) {
-                    adapter.OnStopTimeEntry (DataSource);
-                    return;
-                }
-                adapter.OnContinueTimeEntry (DataSource);
-            }
-
-            protected override void OnDataSourceChanged ()
-            {
-                // Clear out old
-                if (tagsView != null) {
-                    tagsView.Updated -= OnTagsUpdated;
-                    tagsView = null;
-                }
-
-                if (DataSource != null) {
-                    tagsView = new TimeEntryTagsView (DataSource.Id);
-                    tagsView.Updated += OnTagsUpdated;
-                }
-
-                RebindTags ();
-
-                base.OnDataSourceChanged ();
-            }
-
-            protected override void Dispose (bool disposing)
-            {
-                if (disposing) {
-                    if (tagsView != null) {
-                        tagsView.Updated -= OnTagsUpdated;
-                        tagsView = null;
-                    }
-                }
-                base.Dispose (disposing);
-            }
-
-            private void OnTagsUpdated (object sender, EventArgs args)
-            {
-                RebindTags ();
-            }
-
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
-
-                    if (DataSource.Project != null) {
-                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
-
-                        if (DataSource.Project.Client != null) {
-                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
-                        }
+                switch (e.Action) {
+                case MotionEventActions.Up:
+                    if (DataSource == null) {
+                        return false;
                     }
 
-                    if (DataSource.Task != null) {
-                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
+                    if (DataSource.State == TimeEntryState.Running) {
+                        owner.OnStopTimeEntry (DataSource.TimeEntryData);
+                        ContinueImageButton.Pressed = true;
+                        return false;
                     }
+
+                    owner.OnContinueTimeEntry (DataSource.TimeEntryData);
+                    return false;
                 }
 
-                Tracker.ClearStale ();
-            }
-
-            private void HandleTimeEntryPropertyChanged (string prop)
-            {
-                if (prop == TimeEntryModel.PropertyProject
-                        || prop == TimeEntryModel.PropertyTask
-                        || prop == TimeEntryModel.PropertyState
-                        || prop == TimeEntryModel.PropertyStartTime
-                        || prop == TimeEntryModel.PropertyStopTime
-                        || prop == TimeEntryModel.PropertyDescription
-                        || prop == TimeEntryModel.PropertyIsBillable) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleProjectPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyClient
-                        || prop == ProjectModel.PropertyColor
-                        || prop == ProjectModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleTaskPropertyChanged (string prop)
-            {
-                if (prop == TaskModel.PropertyName) {
-                    Rebind ();
-                }
+                return false;
             }
 
             protected override void Rebind ()
@@ -359,50 +328,44 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                ResetTrackedObservables ();
-
                 if (DataSource == null) {
                     return;
                 }
 
+                // View setup
+                ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
+                ItemView.Selected = false;
+
+                var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (DataSource.Project != null && DataSource.Project.Client != null) {
-                    ClientTextView.Text = DataSource.Project.Client.Name;
-                    ClientTextView.Visibility = ViewStates.Visible;
-                } else {
-                    ClientTextView.Visibility = ViewStates.Gone;
-                }
-
-                if (DataSource.Task != null) {
-                    TaskTextView.Text = DataSource.Task.Name;
+                if (!String.IsNullOrWhiteSpace (DataSource.TaskName)) {
+                    TaskTextView.Text = String.Format ("{0} • ", DataSource.TaskName);
                     TaskTextView.Visibility = ViewStates.Visible;
                 } else {
                     TaskTextView.Text = String.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 }
 
-                var color = Color.Transparent;
-                if (DataSource.Project != null) {
-                    color = Color.ParseColor (DataSource.Project.GetHexColor ());
+                if (!String.IsNullOrWhiteSpace (DataSource.ProjectName)) {
+                    color = Color.ParseColor (ProjectModel.HexColors [DataSource.Color % ProjectModel.HexColors.Length]);
                     ProjectTextView.SetTextColor (color);
-                    if (String.IsNullOrWhiteSpace (DataSource.Project.Name)) {
-                        ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
-                    } else {
-                        ProjectTextView.Text = DataSource.Project.Name;
-                    }
+                    ProjectTextView.Text = DataSource.ProjectName;
                 } else {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
 
-                var shape = ColorView.Background as GradientDrawable;
-                if (shape != null) {
-                    shape.SetColor (color);
+                if (!String.IsNullOrWhiteSpace (DataSource.ClientName)) {
+                    ClientTextView.Text = String.Format ("{0} • ", DataSource.ClientName);
+                    ClientTextView.Visibility = ViewStates.Visible;
+                } else {
+                    ClientTextView.Text = String.Empty;
+                    ClientTextView.Visibility = ViewStates.Gone;
                 }
 
                 if (String.IsNullOrWhiteSpace (DataSource.Description)) {
-                    if (DataSource.Task == null) {
+                    if (String.IsNullOrWhiteSpace (DataSource.TaskName)) {
                         DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                         DescriptionTextView.Visibility = ViewStates.Visible;
                     } else {
@@ -415,6 +378,13 @@ namespace Toggl.Joey.UI.Adapters
 
                 BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
+
+                var shape = ColorView.Background as GradientDrawable;
+                if (shape != null) {
+                    shape.SetColor (color);
+                }
+
+                RebindTags ();
                 RebindDuration ();
             }
 
@@ -424,13 +394,16 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var duration = DataSource.GetDuration ();
-                DurationTextView.Text = DataSource.GetFormattedDuration ();
+                var duration = TimeEntryModel.GetDuration (DataSource.TimeEntryData, Time.UtcNow);
+                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (DataSource.TimeEntryData);
 
                 if (DataSource.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
+                } else {
+                    handler.RemoveCallbacks (RebindDuration);
                 }
+
                 ShowStopButton ();
             }
 
@@ -443,7 +416,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (DataSource.State == TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
                 } else {
-                    ContinueImageButton.SetImageResource (Resource.Drawable.IcContinue);
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
                 }
             }
 
@@ -454,288 +427,8 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var showTags = tagsView != null && tagsView.HasNonDefault;
-                TagsView.Visibility = showTags ? ViewStates.Visible : ViewStates.Gone;
-            }
-        }
-
-        private class ExpandedListItemHolder : ModelViewHolder<TimeEntryModel>
-        {
-            private readonly LogTimeEntriesAdapter adapter;
-            private TimeEntryTagsView tagsView;
-
-            public View ColorView { get; private set; }
-
-            public TextView ProjectTextView { get; private set; }
-
-            public TextView DescriptionTextView { get; private set; }
-
-            public TextView TimeTextView { get; private set; }
-
-            public TextView TagTextView { get; private set; }
-
-            public ImageView IsBillableView { get; private set; }
-
-            public ImageButton DeleteImageButton { get; private set; }
-
-            public ImageButton CloseImageButton { get; private set; }
-
-            public ImageButton EditImageButton { get; private set; }
-
-            public LinearLayout TagListView { get; private set; }
-
-            public View TagListViewSeparator { get; private set; }
-
-            public ExpandedListItemHolder (LogTimeEntriesAdapter adapter, View root) : base (root)
-            {
-                this.adapter = adapter;
-
-                ColorView = root.FindViewById<View> (Resource.Id.ColorView);
-                ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView);
-                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView);
-                TimeTextView = root.FindViewById<TextView> (Resource.Id.TimeTextView).SetFont (Font.RobotoLight);
-                TagListView = root.FindViewById<LinearLayout> (Resource.Id.TagListView);
-                TagListViewSeparator = root.FindViewById<View> (Resource.Id.TagListViewSeparator);
-                TagTextView = root.FindViewById<TextView> (Resource.Id.TagTextView).SetFont (Font.RobotoLight);
-                DeleteImageButton = root.FindViewById<ImageButton> (Resource.Id.DeleteImageButton);
-                CloseImageButton = root.FindViewById<ImageButton> (Resource.Id.CloseImageButton);
-                EditImageButton = root.FindViewById<ImageButton> (Resource.Id.EditImageButton);
-                IsBillableView = root.FindViewById<ImageView> (Resource.Id.IsBillableView);
-
-                DeleteImageButton.Click += OnDeleteImageButton;
-                CloseImageButton.Click += OnCloseImageButton;
-                EditImageButton.Click += OnEditImageButton;
-            }
-
-            private void OnDeleteImageButton (object sender, EventArgs e)
-            {
-                adapter.OnDeleteTimeEntry (DataSource);
-                adapter.ExpandedPosition = null;
-            }
-
-            private void OnCloseImageButton (object sender, EventArgs e)
-            {
-                adapter.ExpandedPosition = null;
-            }
-
-            private void OnEditImageButton (object sender, EventArgs e)
-            {
-                adapter.OnEditTimeEntry (DataSource);
-                adapter.ExpandedPosition = null;
-            }
-
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
-
-                    if (DataSource.Project != null) {
-                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
-
-                        if (DataSource.Project.Client != null) {
-                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
-                        }
-                    }
-
-                    if (DataSource.Task != null) {
-                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
-                    }
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void OnTagsUpdated (object sender, EventArgs args)
-            {
-                RebindTags ();
-            }
-
-            private void HandleTimeEntryPropertyChanged (string prop)
-            {
-                if (prop == TimeEntryModel.PropertyProject
-                        || prop == TimeEntryModel.PropertyTask
-                        || prop == TimeEntryModel.PropertyStartTime
-                        || prop == TimeEntryModel.PropertyStopTime
-                        || prop == TimeEntryModel.PropertyDescription) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleProjectPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyClient
-                        || prop == ProjectModel.PropertyColor
-                        || prop == ProjectModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == ClientModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleTaskPropertyChanged (string prop)
-            {
-                if (prop == TaskModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            protected override void Rebind ()
-            {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
-                    return;
-                }
-
-                ResetTrackedObservables ();
-
-                if (DataSource == null) {
-                    return;
-                }
-
-                var ctx = ServiceContainer.Resolve<Context> ();
-
-                RebindProjectTextView (ctx);
-                RebindDescriptionTextView (ctx);
-
-                var color = Color.Transparent;
-                if (DataSource.Project != null) {
-                    color = Color.ParseColor (DataSource.Project.GetHexColor ());
-                }
-
-                var shape = ColorView.Background as GradientDrawable;
-                if (shape != null) {
-                    shape.SetColor (color);
-                }
-
-                if (DataSource.IsBillable) {
-                    IsBillableView.Visibility = ViewStates.Visible;
-                } else {
-                    IsBillableView.Visibility = ViewStates.Invisible;
-                }
-
-                if (DataSource.StopTime.HasValue) {
-                    TimeTextView.Text = String.Format ("{0} - {1}",
-                                                       DataSource.StartTime.ToLocalTime ().ToDeviceTimeString (),
-                                                       DataSource.StopTime.Value.ToLocalTime ().ToDeviceTimeString ());
-                } else {
-                    TimeTextView.Text = DataSource.StartTime.ToLocalTime ().ToDeviceTimeString ();
-                }
-            }
-
-            protected override void OnDataSourceChanged ()
-            {
-                if (tagsView != null) {
-                    tagsView.Updated -= OnTagsUpdated;
-                    tagsView = null;
-                }
-
-                if (DataSource != null) {
-                    tagsView = new TimeEntryTagsView (DataSource.Id);
-                    tagsView.Updated += OnTagsUpdated;
-                }
-
-                RebindTags ();
-
-                base.OnDataSourceChanged ();
-            }
-
-            private void RebindProjectTextView (Context ctx)
-            {
-                String text;
-                int projectLength = 0;
-                int clientLength = 0;
-                var mode = SpanTypes.InclusiveExclusive;
-
-                if (DataSource.Project != null) {
-                    var projectName = DataSource.Project.Name;
-                    if (String.IsNullOrWhiteSpace (projectName)) {
-                        projectName = ctx.GetString (Resource.String.RecentTimeEntryNamelessProject);
-                    }
-
-                    projectLength = projectName.Length;
-                    if (DataSource.Project.Client != null && !String.IsNullOrWhiteSpace (DataSource.Project.Client.Name)) {
-                        clientLength = DataSource.Project.Client.Name.Length;
-                        text = String.Concat (projectName, "   ", DataSource.Project.Client.Name);
-                    } else {
-                        text = projectName;
-                    }
-                } else {
-                    text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
-                    projectLength = text.Length;
-                }
-
-                var start = 0;
-                var end = start + projectLength;
-
-                var spannable = new SpannableString (text);
-                spannable.SetSpan (new FontSpan (Font.Roboto), start, end, mode);
-                spannable.SetSpan (new AbsoluteSizeSpan (18, true), start, end, mode);
-                if (clientLength > 0) {
-                    start = projectLength + 3;
-                    end = start + clientLength;
-
-                    spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
-                    spannable.SetSpan (new AbsoluteSizeSpan (14, true), start, end, mode);
-                }
-                ProjectTextView.SetText (spannable, TextView.BufferType.Spannable);
-            }
-
-            private void RebindDescriptionTextView (Context ctx)
-            {
-                String text;
-                int taskLength = 0;
-                int descriptionLength = 0;
-                var mode = SpanTypes.InclusiveExclusive;
-
-                if (String.IsNullOrWhiteSpace (DataSource.Description)) {
-                    text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
-                    descriptionLength = text.Length;
-                } else {
-                    text = DataSource.Description;
-                    descriptionLength = DataSource.Description.Length;
-                }
-
-                if (DataSource.Task != null && !String.IsNullOrEmpty (DataSource.Task.Name)) {
-                    taskLength = DataSource.Task.Name.Length;
-                    text = String.Concat (DataSource.Task.Name, "  ", text);
-                }
-
-                var spannable = new SpannableString (text);
-                var start = 0;
-                var end = taskLength;
-
-                if (taskLength > 0) {
-                    spannable.SetSpan (new FontSpan (Font.Roboto), start, end, mode);
-                }
-
-                start = taskLength > 0 ? taskLength + 2 : 0;
-                end = start + descriptionLength;
-                spannable.SetSpan (new FontSpan (Font.RobotoLight), start, end, mode);
-
-                DescriptionTextView.SetText (spannable, TextView.BufferType.Spannable);
-            }
-
-            private void RebindTags ()
-            {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
-                    return;
-                }
-
-                var tagsViewState = tagsView.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
-                TagListView.Visibility = tagsViewState;
-                TagListViewSeparator.Visibility = tagsViewState;
-
-                if (tagsView.Count > 0) {
-                    TagTextView.Text = String.Join (", ", tagsView.Data);
-                }
+                var numberOfTags = DataSource.NumberOfTags;
+                TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
             }
         }
     }

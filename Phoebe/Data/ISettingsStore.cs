@@ -17,5 +17,7 @@ namespace Toggl.Phoebe.Data
         string ExperimentId { get; set; }
 
         int? LastReportZoomViewed { get; set; }
+
+        bool GroupedTimeEntries { get; set; }
     }
 }

@@ -8,7 +8,7 @@ using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Activity = Android.Support.V4.App.FragmentActivity;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Activities
@@ -86,14 +86,14 @@ namespace Toggl.Joey.UI.Activities
             get { return (LogClient)ServiceContainer.Resolve<IBugsnagClient> (); }
         }
 
-        protected sealed override void OnCreate (Bundle state)
+        protected sealed override void OnCreate (Bundle savedInstanceState)
         {
-            base.OnCreate (state);
+            base.OnCreate (savedInstanceState);
             Window windowManager = Window;
             windowManager.AddFlags (WindowManagerFlags.ShowWhenLocked); // to launch app from lock screen widget
 
             if (!StartAuthActivity ()) {
-                OnCreateActivity (state);
+                OnCreateActivity (savedInstanceState);
             }
         }
 
@@ -106,7 +106,6 @@ namespace Toggl.Joey.UI.Activities
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             subscriptionTogglHttpResponse = bus.Subscribe<TogglHttpResponseMessage> (OnTogglHttpResponse);
 
-            RequestWindowFeature (WindowFeatures.Progress);
         }
 
         protected sealed override void OnResume ()

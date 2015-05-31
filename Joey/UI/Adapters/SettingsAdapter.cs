@@ -1,13 +1,13 @@
 ﻿using System;
-using Android.Widget;
-using Toggl.Joey.Data;
-using XPlatUtils;
 using System.Collections.Generic;
 using Android.Views;
+using Android.Widget;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -21,6 +21,13 @@ namespace Toggl.Joey.UI.Adapters
         {
             listItems = new List<IListItem> () {
                 new HeaderListItem (Resource.String.SettingsGeneralHeader),
+                    new CheckboxListItem (
+                        Resource.String.SettingsGeneralShowNotificationTitle,
+                        Resource.String.SettingsGeneralShowNotificationDesc,
+                        SettingsStore.PropertyShowNotification,
+                        s => s.ShowNotification,
+                        (s, v) => s.ShowNotification = v
+                    ),
                     new CheckboxListItem (
                         Resource.String.SettingsGeneralNotifTitle,
                         Resource.String.SettingsGeneralNotifDesc,
@@ -42,6 +49,14 @@ namespace Toggl.Joey.UI.Adapters
                         s => s.UseDefaultTag,
                         (s, v) => s.UseDefaultTag = v
                     ),
+                    new CheckboxListItem (
+                        Resource.String.SettingsGeneralGroupedEntriesTitle,
+                        Resource.String.SettingsGeneralGroupedEntriesDesc,
+                        SettingsStore.PropertyGroupedTimeEntries,
+                        s => s.GroupedTimeEntries,
+                        (s, v) => s.GroupedTimeEntries = v
+                    ),
+
             };
         }
 

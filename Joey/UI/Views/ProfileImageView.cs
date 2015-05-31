@@ -6,17 +6,17 @@ using Android.Content;
 using Android.Graphics;
 using Android.Util;
 using Android.Widget;
+using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
-using Toggl.Joey.UI.Utils;
 
 namespace Toggl.Joey.UI.Views
 {
     class ProfileImageView : ImageView
     {
         private static readonly string LogTag = "ProfileImageView";
-        private static readonly int RectSize = 30;
+        private static readonly int RectSize = 40;
         //In DP!
         public ProfileImageView (Context context) : base (context)
         {
@@ -46,6 +46,7 @@ namespace Toggl.Joey.UI.Views
             if (bitmap != null) {
                 return bitmap;
             }
+
             try {
                 var request = WebRequest.Create (url);
                 var resp = await request.GetResponseAsync ()
@@ -90,8 +91,6 @@ namespace Toggl.Joey.UI.Views
 
         private static Bitmap MakeImageRound (Bitmap bitmap)
         {
-            float roundPx = RectSize;
-
             Bitmap output = Bitmap.CreateBitmap (bitmap.Width, bitmap.Height, Bitmap.Config.Argb8888);
             var canvas = new Canvas (output);
 
@@ -103,7 +102,7 @@ namespace Toggl.Joey.UI.Views
             paint.Color = Color.Black;
 
             canvas.DrawARGB (0, 0, 0, 0);
-            canvas.DrawRoundRect (rectF, roundPx, roundPx, paint);
+            canvas.DrawRoundRect (rectF, bitmap.Width, bitmap.Height, paint);
 
             paint.SetXfermode (new PorterDuffXfermode (PorterDuff.Mode.SrcIn));
 

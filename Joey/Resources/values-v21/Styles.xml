@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+  <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
+    <item name="android:windowContentTransitions">true</item>
+    <item name="android:windowAllowEnterTransitionOverlap">true</item>
+    <item name="android:windowAllowReturnTransitionOverlap">true</item>
+    <item name="android:windowSharedElementEnterTransition">@android:transition/move</item>
+    <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
+    <item name="toolbarNavigationButtonStyle">@style/ToolbarNavigation</item>
+    <item name="selectableItemBackground">@drawable/play_button_background</item>
+    <item name="android:selectableItemBackground">@drawable/play_button_background</item>
+    <item name="selectableItemBackgroundBorderless">@drawable/play_button_background</item>
+    <item name="android:selectableItemBackgroundBorderless">@drawable/play_button_background</item>
+  </style>
+</resources>

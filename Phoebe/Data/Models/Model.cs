@@ -19,7 +19,7 @@ namespace Toggl.Phoebe.Data.Models
 
         protected static readonly string PropertyId = GetPropertyName (m => m.Id);
 
-        protected static void MarkDirty (T data) {
+        public static void MarkDirty (T data) {
             data.IsDirty = true;
             data.ModifiedAt = Time.UtcNow;
             data.RemoteRejected = false;

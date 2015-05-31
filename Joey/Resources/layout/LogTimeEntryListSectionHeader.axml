@@ -6,21 +6,23 @@
     android:layout_height="60dp">
     <TextView
         android:text="16 October 2014"
-        android:textColor="@color/group_title_gray"
+        android:textColor="@color/group_title_dark_gray"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:id="@+id/DateGroupTitleTextView"
         android:layout_weight="1"
+        android:textSize="@dimen/normalTextSize"
         android:gravity="center_vertical"
-        android:layout_marginLeft="26dp" />
+        android:layout_marginLeft="@dimen/leftMargin" />
     <TextView
         android:text="12:00"
-        android:textColor="@color/group_title_gray"
+        android:textSize="@dimen/normalTextSize"
+        android:textColor="@color/group_title_dark_gray"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:id="@+id/DateGroupDurationTextView"
         android:gravity="center_vertical"
-        android:layout_marginRight="10dp" />
+        android:layout_marginRight="@dimen/rightMargin" />
 </LinearLayout>

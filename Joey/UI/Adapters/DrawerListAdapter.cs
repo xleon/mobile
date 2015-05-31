@@ -2,19 +2,17 @@
 using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
     class DrawerListAdapter : BaseAdapter
     {
-        protected static readonly int ViewTypeDrawerHeader = 0;
-        protected static readonly int ViewTypeDrawerItem = 1;
-        protected static readonly int ViewTypeDrawerSubItem = 2;
+        protected static readonly int ViewTypeDrawerItem = 0;
+        protected static readonly int ViewTypeDrawerSubItem = 1;
         public static readonly int TimerPageId = 0;
         public static readonly int ReportsPageId = 1;
         public static readonly int ReportsWeekPageId = 5;
@@ -103,9 +101,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position == 0) {
-                return ViewTypeDrawerHeader;
-            } else if (rowItems [position - 1].ChildOf > 0) {
+            if (rowItems [position].ChildOf > 0) {
                 return ViewTypeDrawerSubItem;
             } else {
                 return ViewTypeDrawerItem;
@@ -116,16 +112,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             View view = convertView;
 
-            if (GetItemViewType (position) == ViewTypeDrawerHeader) {
-                if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
-                               Resource.Layout.MainDrawerListHeader, parent, false);
-                    view.Tag = new HeaderViewHolder (view);
-                }
-
-                var holder = (HeaderViewHolder)view.Tag;
-                holder.Bind ((UserModel)authManager.User);
-            } else if (GetItemViewType (position) == ViewTypeDrawerSubItem) {
+            if (GetItemViewType (position) == ViewTypeDrawerSubItem) {
 
                 if (view == null) {
                     view = LayoutInflater.FromContext (parent.Context).Inflate (
@@ -152,7 +139,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int Count
         {
-            get { return rowItems.Count + 1; } // + 1 is for header
+            get { return rowItems.Count; }
         }
 
         public override Java.Lang.Object GetItem (int position)
@@ -168,19 +155,12 @@ namespace Toggl.Joey.UI.Adapters
 
         private DrawerItem GetDrawerItem (int position)
         {
-            if (position == 0) {
-                return null;
-            }
-            return rowItems [position - 1]; //Header is 0
+            return rowItems [position];
         }
 
         public override long GetItemId (int position)
         {
-            if (GetItemViewType (position) == ViewTypeDrawerHeader) {
-                return -1;
-            } else {
-                return GetDrawerItem (position).Id;
-            }
+            return GetDrawerItem (position).Id;
         }
 
         public void ExpandCollapse (int position)
@@ -222,56 +202,6 @@ namespace Toggl.Joey.UI.Adapters
             public List<DrawerItem> SubItems;
         }
 
-        private class HeaderViewHolder : ModelViewHolder<UserModel>
-        {
-            public ProfileImageView IconProfileImageView { get; private set; }
-
-            public TextView TitleTextView { get; private set; }
-
-            public HeaderViewHolder (View root) : base (root)
-            {
-                IconProfileImageView = root.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
-            }
-
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleUserPropertyChanged);
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleUserPropertyChanged (string prop)
-            {
-                if (prop == UserModel.PropertyName
-                        || prop == UserModel.PropertyImageUrl) {
-                    Rebind ();
-                }
-            }
-
-
-            protected override void Rebind ()
-            {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
-                    return;
-                }
-
-                ResetTrackedObservables ();
-
-                if (DataSource == null) {
-                    return;
-                }
-
-                IconProfileImageView.ImageUrl = DataSource.ImageUrl;
-                TitleTextView.Text = DataSource.Name;
-            }
-        }
-
         private class DrawerItemViewHolder : BindableViewHolder<DrawerItem>
         {
             public ImageView IconImageView { get; private set; }
@@ -281,7 +211,7 @@ namespace Toggl.Joey.UI.Adapters
             public DrawerItemViewHolder (View root) : base (root)
             {
                 IconImageView = root.FindViewById<ImageView> (Resource.Id.IconImageView);
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.RobotoLight);
             }
 
             protected override void Rebind ()
@@ -302,7 +232,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public DrawerSubItemViewHolder (View root) : base (root)
             {
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.RobotoLight);
             }
 
             protected override void Rebind ()

@@ -6,5 +6,7 @@ namespace Toggl.Phoebe.Analytics
         AskForProject,
         IdleNotification,
         DefaultMobileTag,
+        GroupedTimeEntries,
+        ShowNotification,
     }
 }

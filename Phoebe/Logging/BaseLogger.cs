@@ -9,7 +9,7 @@ namespace Toggl.Phoebe.Logging
         private readonly LogLevel threshold;
         private readonly LogLevel consoleThreshold;
 
-        public BaseLogger ()
+        protected BaseLogger ()
         {
             #if DEBUG
             threshold = LogLevel.Debug;
@@ -20,7 +20,7 @@ namespace Toggl.Phoebe.Logging
             #endif
         }
 
-        public BaseLogger (LogLevel threshold)
+        protected BaseLogger (LogLevel threshold)
         {
             this.threshold = threshold;
         }

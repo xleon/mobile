@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/NewProjectsFragmentToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:minHeight="?attr/actionBarSize"
+        android:paddingRight="20dp"
+        android:background="@null" />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingRight="32dp"
+        android:paddingLeft="32dp"
+        android:layout_marginTop="15dp">
+        <Toggl.Joey.UI.Views.TogglField
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/NewProjectProjectNameBit" />
+        <TextView
+            android:id="@+id/NewProjectProjectColorTitleTextView"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="5dp"
+            android:textSize="16sp"
+            android:lines="1"
+            android:text="Project color:"
+            android:textColor="@color/MaterialPlaceholderColor" />
+    </LinearLayout>
+    <Toggl.Joey.UI.Views.ColorPickerRecyclerView
+        android:layout_marginTop="15dp"
+        android:paddingRight="26dp"
+        android:paddingLeft="26dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/NewProjectColorPickerRecyclerView" />
+</LinearLayout>

@@ -1,32 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
+using Android.Animation;
 using Android.Content;
 using Android.OS;
+using Android.Support.V4.App;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using ListFragment = Android.Support.V4.App.ListFragment;
+using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : ListFragment, AbsListView.IMultiChoiceModeListener
+    public class LogTimeEntriesListFragment : Fragment, SwipeDismissTouchListener.IDismissCallbacks, ItemTouchListener.IItemTouchListener
     {
-        private ActionMode actionMode;
+        private RecyclerView recyclerView;
+        private View emptyMessageView;
+        private Subscription<SettingChangedMessage> subscriptionSettingChanged;
+        private LogTimeEntriesAdapter logAdapter;
+        private GroupedTimeEntriesAdapter groupedAdapter;
+        private readonly Handler handler = new Handler ();
+        private FrameLayout undoBar;
+        private Button undoButton;
+        private bool isUndoShowed;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
             view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
+
+            emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
+            emptyMessageView.Visibility = ViewStates.Gone;
+            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
+
+            undoBar = view.FindViewById<FrameLayout> (Resource.Id.UndoBar);
+            undoButton = view.FindViewById<Button> (Resource.Id.UndoButton);
+            undoButton.Click += UndoBtnClicked;
+
             return view;
         }
 
@@ -34,51 +53,26 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            ListView.SetClipToPadding (false);
-            ListView.ChoiceMode = (ChoiceMode)AbsListViewChoiceMode.MultipleModal;
-            ListView.SetMultiChoiceModeListener (this);
+            var linearLayout = new LinearLayoutManager (Activity);
+            var swipeTouchListener = new SwipeDismissTouchListener (recyclerView, this);
+            var itemTouchListener = new ItemTouchListener (recyclerView, this);
+
+            recyclerView.SetLayoutManager (linearLayout);
+            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
+            recyclerView.AddOnItemTouchListener (swipeTouchListener);
+            recyclerView.AddOnItemTouchListener (itemTouchListener);
+            recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));
+            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
         }
 
         public override void OnResume ()
         {
             EnsureAdapter ();
             base.OnResume ();
-        }
-
-        public override void OnListItemClick (ListView l, View v, int position, long id)
-        {
-            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
-            if (adapter == null) {
-                return;
-            }
-
-            var model = adapter.GetEntry (position);
-            if (model == null) {
-                return;
-            }
-
-            adapter.ExpandedPosition = adapter.ExpandedPosition != position ? position : (int?)null;
-        }
-
-        private async void ContinueTimeEntry (TimeEntryModel model)
-        {
-            DurOnlyNoticeDialogFragment.TryShow (FragmentManager);
-
-            var entry = await model.ContinueAsync ();
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Send (new UserTimeEntryStateChangeMessage (this, entry));
-
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
-        }
-
-        private async void StopTimeEntry (TimeEntryModel model)
-        {
-            await model.StopAsync ();
-
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
         }
 
         public override bool UserVisibleHint
@@ -92,109 +86,207 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureAdapter ()
         {
-            if (ListAdapter == null && UserVisibleHint) {
-                var adapter = new LogTimeEntriesAdapter ();
-                adapter.HandleTimeEntryDeletion = ConfirmTimeEntryDeletion;
-                adapter.HandleTimeEntryEditing = OpenTimeEntryEdit;
-                adapter.HandleTimeEntryContinue = ContinueTimeEntry;
-                adapter.HandleTimeEntryStop = StopTimeEntry;
-                ListAdapter = adapter;
+            if (recyclerView.GetAdapter() == null) {
+                var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
+                if (isGrouped) {
+                    if (logAdapter != null) {
+                        logAdapter.Dispose ();
+                        logAdapter = null;
+                    }
+                    if (groupedAdapter == null) {
+                        groupedAdapter = new GroupedTimeEntriesAdapter (recyclerView, new GroupedTimeEntriesView());
+                    }
+                    recyclerView.SetAdapter (groupedAdapter);
+                } else {
+                    if (groupedAdapter != null) {
+                        groupedAdapter.Dispose ();
+                        groupedAdapter = null;
+                    }
+                    if (logAdapter == null) {
+                        logAdapter = new LogTimeEntriesAdapter (recyclerView, new LogTimeEntriesView());
+                    }
+                    recyclerView.SetAdapter (logAdapter);
+                }
             }
         }
 
-        private void ConfirmTimeEntryDeletion (TimeEntryModel model)
+        public override void OnDestroyView ()
         {
-            var dia = new DeleteTimeEntriesPromptDialogFragment (new List<TimeEntryModel> () { model });
-            dia.Show (FragmentManager, "confirm_delete");
-        }
-
-        private void OpenTimeEntryEdit (TimeEntryModel model)
-        {
-            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutExtra (EditTimeEntryActivity.ExtraTimeEntryId, model.Id.ToString ());
-            StartActivity (i);
-        }
-
-        void AbsListView.IMultiChoiceModeListener.OnItemCheckedStateChanged (ActionMode mode, int position, long id, bool @checked)
-        {
-            var checkedCount = ListView.CheckedItemCount;
-            mode.Title = String.Format ("{0} selected", checkedCount);
-            actionMode = mode;
-//            mode.Menu.FindItem (Resource.Id.EditMenuItem).SetEnabled (checkedCount == 1);
-        }
-
-        bool ActionMode.ICallback.OnCreateActionMode (ActionMode mode, IMenu menu)
-        {
-            mode.MenuInflater.Inflate (Resource.Menu.LogTimeEntriesContextMenu, menu);
-            return true;
-        }
-
-        bool ActionMode.ICallback.OnPrepareActionMode (ActionMode mode, IMenu menu)
-        {
-            return false;
-        }
-
-        bool ActionMode.ICallback.OnActionItemClicked (ActionMode mode, IMenuItem item)
-        {
-            switch (item.ItemId) {
-            case Resource.Id.DeleteMenuItem:
-                DeleteCheckedTimeEntries ();
-                mode.Finish ();
-                return true;
-//            case Resource.Id.EditMenuItem:
-            // TODO: Show time entry editing
-//                return true;
-            default:
-                return false;
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionSettingChanged != null) {
+                bus.Unsubscribe (subscriptionSettingChanged);
+                subscriptionSettingChanged = null;
             }
+
+            recyclerView.SetAdapter (null);
+
+            if (logAdapter != null) {
+                logAdapter.Dispose ();
+                logAdapter = null;
+            }
+
+            if (groupedAdapter != null) {
+                groupedAdapter.Dispose ();
+                groupedAdapter = null;
+            }
+
+            base.OnDestroyView ();
         }
 
-        void ActionMode.ICallback.OnDestroyActionMode (ActionMode mode)
+        private void OnSettingChanged (SettingChangedMessage msg)
         {
-            actionMode = null;
-        }
-
-        private void DeleteCheckedTimeEntries ()
-        {
-            var adapter = ListView.Adapter as LogTimeEntriesAdapter;
-            if (adapter == null) {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero) {
                 return;
             }
 
-            // Find models to delete:
-            var checkedPositions = ListView.CheckedItemPositions;
-            var arrSize = checkedPositions.Size ();
-            var toDelete = new List<TimeEntryModel> (arrSize);
-
-            for (var i = 0; i < arrSize; i++) {
-                var position = checkedPositions.KeyAt (i);
-                var isChecked = checkedPositions.Get (position);
-                if (!isChecked) {
-                    continue;
-                }
-
-                var data = adapter.GetEntry (position) as TimeEntryData;
-                if (data != null) {
-                    toDelete.Add ((TimeEntryModel)data);
-                }
-            }
-
-            // Delete models:
-            var dia = new DeleteTimeEntriesPromptDialogFragment (toDelete);
-            dia.Show (FragmentManager, "confirm_delete");
-        }
-
-        public void CloseActionMode ()
-        {
-            if (actionMode != null) {
-                actionMode.Finish ();
+            if (msg.Name == SettingsStore.PropertyGroupedTimeEntries) {
+                EnsureAdapter();
             }
         }
 
-        public override void OnStop ()
+        #region IDismissCallbacks implementation
+
+        public bool CanDismiss (RecyclerView view, int position)
         {
-            base.OnStop ();
-            CloseActionMode ();
+            var adapter = view.GetAdapter ();
+            return (adapter.GetItemViewType (position) == GroupedTimeEntriesAdapter.ViewTypeContent ||
+                    adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent);
+        }
+
+        public void OnDismiss (RecyclerView view, int position)
+        {
+            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
+            undoAdapter.RemoveItemWithUndo (position);
+            ShowUndoBar ();
+        }
+
+        #endregion
+
+        #region IRecyclerViewOnItemClickListener implementation
+
+        public void OnItemClick (RecyclerView parent, View clickedView, int position)
+        {
+            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+
+            if (parent.GetAdapter () is LogTimeEntriesAdapter) {
+                string id = ((LogTimeEntriesView.TimeEntryHolder)logAdapter.GetEntry (position)).Id.ToString();
+                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {id});
+                intent.PutExtra (EditTimeEntryActivity.IsGrouped, false);
+            } else {
+                IList<string> guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
+                intent.PutExtra (EditTimeEntryActivity.IsGrouped, true);
+                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+            }
+            StartActivity (intent);
+        }
+
+        public void OnItemLongClick (RecyclerView parent, View clickedView, int position)
+        {
+            OnItemClick (parent, clickedView, position);
+        }
+
+        public bool CanClick (RecyclerView view, int position)
+        {
+            return CanDismiss (view, position);
+        }
+
+        #endregion
+
+        #region Undo bar
+
+        private void ShowUndoBar ()
+        {
+            if (!UndoBarVisible) {
+                UndoBarVisible = true;
+            }
+            handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
+            handler.PostDelayed (RemoveItemAndHideUndoBar, 5000);
+        }
+
+        public void RemoveItemAndHideUndoBar ()
+        {
+            UndoBarVisible = false;
+
+            // Remove item permanently
+            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
+            if (undoAdapter != null) {
+                undoAdapter.ConfirmItemRemove ();
+            }
+        }
+
+        private void UndoBtnClicked (object sender, EventArgs e)
+        {
+            // Undo remove item.
+            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
+            undoAdapter.RestoreItemFromUndo ();
+
+            handler.RemoveCallbacks (ShowUndoBar);
+            UndoBarVisible = false;
+        }
+
+        public bool UndoBarVisible
+        {
+            get {
+                return isUndoShowed;
+            } set {
+                if (isUndoShowed == value) {
+                    return;
+                }
+                isUndoShowed = value;
+
+                var targetTranY = isUndoShowed ? 0.0f : 160.0f;
+                ValueAnimator animator = ValueAnimator.OfFloat (undoBar.TranslationY, targetTranY);
+                animator.SetDuration (500);
+                animator.Update += (sender, e) => {
+                    undoBar.TranslationY = (float)animator.AnimatedValue;
+                };
+                animator.Start();
+            }
+        }
+
+        #endregion
+
+        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
+        {
+            private readonly LogTimeEntriesListFragment owner;
+
+            public RecyclerViewScrollDetector (LogTimeEntriesListFragment owner)
+            {
+                this.owner = owner;
+                ScrollThreshold = 10;
+            }
+
+            public int ScrollThreshold { get; set; }
+
+            public RecyclerView.OnScrollListener OnScrollListener { get; set; }
+
+            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrolled (recyclerView, dx, dy);
+                }
+
+                var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
+                if (isSignificantDelta) {
+                    OnScrollMoved();
+                }
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                if (OnScrollListener != null) {
+                    OnScrollListener.OnScrollStateChanged (recyclerView, newState);
+                }
+                base.OnScrollStateChanged (recyclerView, newState);
+            }
+
+            private void OnScrollMoved()
+            {
+                if (owner.UndoBarVisible) {
+                    owner.RemoveItemAndHideUndoBar ();
+                }
+            }
         }
     }
 }

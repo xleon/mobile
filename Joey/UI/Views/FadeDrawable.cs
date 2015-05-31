@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Util;
-using Android.Views;
-using Android.Widget;
 
 namespace Toggl.Joey.UI.Views
 {

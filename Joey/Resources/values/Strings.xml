@@ -69,9 +69,22 @@
     <string name="TimeTrackingWelcomeTab">WELCOME</string>
     <string name="TimeTrackingRecentTab">RECENT</string>
     <string name="TimeTrackingLogTab">LOG</string>
-    <string name="ProjectsNoProject">Without project</string>
-    <string name="ProjectsNewProject">Create new project&#8230;</string>
+    <string name="ProjectsNoProject">No project</string>
+    <string name="ProjectsNewProject">Create new project</string>
     <string name="ProjectsTasks">TASKS</string>
+    <string name="ProjectsTitle">Projects</string>
+    <string name="ProjectsNoClient">No client</string>
+    <string name="ProjectsNamelessWorkspace">(nameless workspace)</string>
+    <string name="NewProjectTitle">New project</string>
+    <string name="NewProjectProjectFieldName">Project Name</string>
+    <string name="NewProjectClientFieldName">Client</string>
+    <string name="NewProjectSaveButtonText">Save</string>
+    <string name="NewProjectEmptyDialogTitle">Empty name</string>
+    <string name="NewProjectEmptyDialogMessage">Fill in the project name before saving</string>
+    <string name="NewProjectEmptyDialogPositiveButtonTitle">Ok</string>
+    <string name="NewProjectDuplicateDialogTitle">Duplicate</string>
+    <string name="NewProjectDuplicateDialogMessage">Another project with this name already exists</string>
+    <string name="NewProjectDuplicateDialogPositiveButtonTitle">Got it</string>
     <string name="DeleteTimeEntriesDialogTitle">Delete?</string>
     <string name="DeleteTimeEntriesDialogDeleteButton">Delete</string>
     <string name="DeleteTimeEntriesDialogCancelButton">Cancel</string>
@@ -123,6 +136,10 @@
     <string name="SettingsGeneralAskProjectDesc">Starting a new time entry asks for project.</string>
     <string name="SettingsGeneralMobileTagTitle">\"Mobile\" tag</string>
     <string name="SettingsGeneralMobileTagDesc">Automatically tag created time entries with \"mobile\" tag.</string>
+    <string name="SettingsGeneralGroupedEntriesTitle">Grouped entries (Alpha state)</string>
+    <string name="SettingsGeneralGroupedEntriesDesc">Group similar time entries as a single item.</string>
+    <string name="SettingsGeneralShowNotificationTitle">Running entry notification</string>
+    <string name="SettingsGeneralShowNotificationDesc">Show the running entry as a notification.</string>
     <string name="ForcedUpgradeDialogTitle">Update time!</string>
     <string name="ForcedUpgradeDialogMessage">It seems that you haven\'t updated your Toggl app in a while&#8230;\n\nNow is the time as this version is no longer supported.</string>
     <string name="ForcedUpgradeDialogUpdate">Open Play Store</string>
@@ -178,4 +195,11 @@
     <string name="RunningWidgetNoDescription">(no description)</string>
     <string name="WidgetSingInNotice">Sign in to track time</string>
     <string name="WidgetName">Toggl Widget</string>
+    <string name="BaseEditTimeEntryFragmentProject">Project</string>
+    <string name="BaseEditTimeEntryFragmentTask">Task</string>
+    <string name="BaseEditTimeEntryFragmentDescription">Description</string>
+    <string name="BaseEditTimeEntryFragmentSaveButtonText">Save</string>
+    <string name="SwipeDeleteQuestion">Delete?</string>
+    <string name="UndoBarDeletedText">Time entry deleted</string>
+    <string name="UndoBarButtonText">UNDO</string>
 </resources>

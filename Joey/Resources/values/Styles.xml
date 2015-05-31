@@ -1,16 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
-    <style name="Theme.Toggl.Base" parent="@android:style/Theme.Holo.Light.DarkActionBar">
+    <style name="Theme.Toggl.Base" parent="Theme.AppCompat.Light.NoActionBar">
+    </style>
+    <style name="Theme.Toggl.Splash"  parent="Theme.Toggl.Base">
+        <item name="android:windowBackground">@drawable/splashscreen</item>
+        <item name="android:windowNoTitle">true</item>
     </style>
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
-        <item name="android:actionBarStyle">@style/Theme.Toggl.ActionBar</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/windowBackground</item>
+        <item name="colorPrimary">@color/primary</item> <!-- Toolbar branding color -->
+        <item name="colorPrimaryDark">@color/primaryDark</item> <!-- statusBarColor is inherited from this -->
+        <item name="colorAccent">@color/windowBackground</item>
         <item name="android:listViewStyle">@style/Theme.Toggl.ListView</item>
         <item name="android:listChoiceIndicatorMultiple">@drawable/androidbtncheckhololight</item>
-        <item name="android:windowBackground">@color/background_light_gray</item>
+        <item name="toolbarNavigationButtonStyle">@style/ToolbarNavigation</item>
+        <item name="selectableItemBackground">@drawable/play_button_background</item>
+        <item name="android:selectableItemBackground">@drawable/play_button_background</item>
+        <item name="selectableItemBackgroundBorderless">@drawable/play_button_background</item>
+        <item name="android:selectableItemBackgroundBorderless">@drawable/play_button_background</item>
     </style>
-    <style name="Theme.Toggl.Login" parent="Theme.Toggl.Base">
-        <item name="android:windowNoTitle">true</item>
+    <style name="Theme.Toggl.Login" parent="Theme.Toggl.App">
         <item name="android:windowBackground">@android:color/white</item>
+        <item name="colorControlNormal">#c0c0c0</item>
+        <item name="colorControlActivated">#4dd965</item>
+        <item name="colorControlHighlight">#4dd965</item>
     </style>
     <style name="Theme.Toggl.ListView" parent="@android:style/Widget.ListView">
         <item name="android:divider">@android:color/transparent</item>
@@ -22,19 +37,13 @@
         <item name="android:paddingTop">6dp</item>
         <item name="android:paddingBottom">6dp</item>
     </style>
-    <style name="Theme.Toggl.ActionBar" parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
-        <item name="android:background">@color/dark_gray</item>
-        <item name="android:titleTextStyle">@style/ActionBarTitle</item>
-        <item name="android:progressBarPadding">0dip</item>
-        <item name="android:displayOptions">showHome|useLogo</item>
-    </style>
-    <style name="ActionBarTitle" parent="@android:style/TextAppearance.StatusBar.Title">
-        <item name="android:textColor">#A5A5A5</item>
-        <item name="android:textSize">15dp</item>
-        <item name="android:textStyle">normal</item>
-    </style>
 
-
+    <style name="ToolbarNavigation" parent="@style/Widget.AppCompat.Toolbar.Button.Navigation">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">30dp</item>
+        <item name="android:scaleType">centerInside</item>
+    </style>
 
     <style name="RadioButtonTab">
         <item name="android:button">@null</item>
@@ -66,12 +75,12 @@
     </style>
 
     <style name="TimeEntryListItem.Text" parent="@android:style/TextAppearance">
-        <item name="android:textColor">@color/dark_gray_text</item>
+        <item name="android:textColor">@color/list_item_gray_text</item>
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">none</item>
     </style>
     <style name="TimeEntryListItem.Text.Project">
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">14sp</item>
     </style>
     <style name="TimeEntryListItem.Text.Client">
         <item name="android:textSize">14sp</item>
@@ -83,66 +92,7 @@
         <item name="android:textSize">14sp</item>
     </style>
     <style name="TimeEntryListItem.Text.Duration">
-        <item name="android:textSize">14sp</item>
-    </style>
-
-    <style name="TimeEntryDetailsBox">
-    </style>
-    <style name="TimeEntryDetailsBox.Row">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:orientation">horizontal</item>
-        <item name="android:gravity">center_vertical</item>
-    </style>
-    <style name="TimeEntryDetailsBox.Indicator">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginLeft">3dp</item>
-        <item name="android:layout_marginTop">13dp</item>
-        <item name="android:layout_marginBottom">13dp</item>
-        <item name="android:layout_marginRight">13dp</item>
-    </style>
-    <style name="TimeEntryDetailsBox.Text">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">6dp</item>
-        <item name="android:layout_marginBottom">6dp</item>
-        <item name="android:textColor">@color/dark_gray_text</item>
-        <item name="android:textSize">13sp</item>
-    </style>
-    <style name="TimeEntryDetailsBox.Divider">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">1dp</item>
-        <item name="android:background">@drawable/dividerhorizontallight</item>
-    </style>
-
-    <style name="WelcomeBox">
-    </style>
-    <style name="WelcomeBox.Row">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:orientation">horizontal</item>
-        <item name="android:gravity">center_vertical</item>
-    </style>
-    <style name="WelcomeBox.Indicator">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">13dp</item>
-        <item name="android:layout_marginBottom">13dp</item>
-        <item name="android:layout_marginRight">13dp</item>
-    </style>
-    <style name="WelcomeBox.Text">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">6dp</item>
-        <item name="android:layout_marginBottom">6dp</item>
-        <item name="android:textColor">@color/dark_gray_text</item>
-        <item name="android:textSize">13sp</item>
-    </style>
-    <style name="WelcomeBox.Divider">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">1dp</item>
-        <item name="android:background">@drawable/dividerhorizontallight</item>
+        <item name="android:textSize">16sp</item>
     </style>
 
     <style name="ChangeDurationDialog">

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Android.App;
+using Android.Content.PM;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
@@ -10,21 +12,25 @@ using Android.Widget;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
 using Fragment = Android.Support.V4.App.Fragment;
+using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Activities
 {
     [Activity (
+         ScreenOrientation = ScreenOrientation.Portrait,
+         Name = "toggl.joey.ui.activities.MainDrawerActivity",
          Label = "@string/EntryName",
          Exported = true,
          #if DEBUG
          // The actual entry-point is defined in manifest via activity-alias, this here is just to
          // make adb launch the activity automatically when developing.
-         MainLauncher = true,
          #endif
          Theme = "@style/Theme.Toggl.App")]
     public class MainDrawerActivity : BaseActivity
@@ -33,7 +39,7 @@ namespace Toggl.Joey.UI.Activities
         private const string LastSyncArgument = "com.toggl.timer.last_sync";
         private const string LastSyncResultArgument = "com.toggl.timer.last_sync_result";
         private readonly TimerComponent barTimer = new TimerComponent ();
-        private readonly Lazy<TimeTrackingFragment> trackingFragment = new Lazy<TimeTrackingFragment> ();
+        private readonly Lazy<LogTimeEntriesListFragment> trackingFragment = new Lazy<LogTimeEntriesListFragment> ();
         private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
         private readonly Lazy<ReportsPagerFragment> reportFragment = new Lazy<ReportsPagerFragment> ();
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();
@@ -53,31 +59,54 @@ namespace Toggl.Joey.UI.Activities
 
         private ListView DrawerListView { get; set; }
 
+        private TextView DrawerUserName { get; set; }
+
+        private ProfileImageView DrawerImage { get; set; }
+
+        private View DrawerUserView { get; set; }
+
         private DrawerLayout DrawerLayout { get; set; }
 
         protected ActionBarDrawerToggle DrawerToggle { get; private set; }
 
         private FrameLayout DrawerSyncView { get; set; }
 
-        protected override void OnCreateActivity (Bundle bundle)
+        private Toolbar MainToolbar { get; set; }
+
+
+        protected override void OnCreateActivity (Bundle state)
         {
-            base.OnCreateActivity (bundle);
+            base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
+            DrawerUserView = LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
+            DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
+            DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
+            DrawerListView.AddHeaderView (DrawerUserView);
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            authManager.PropertyChanged += OnUserChangedEvent;
+
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
-            DrawerToggle = new ActionBarDrawerToggle (this, DrawerLayout, Resource.Drawable.IcDrawer, Resource.String.EntryName, Resource.String.EntryName);
+            DrawerToggle = new ActionBarDrawerToggle (this, DrawerLayout, MainToolbar, Resource.String.EntryName, Resource.String.EntryName);
 
             DrawerLayout.SetDrawerShadow (Resource.Drawable.drawershadow, (int)GravityFlags.Start);
             DrawerLayout.SetDrawerListener (DrawerToggle);
 
             Timer.OnCreate (this);
-            var lp = new ActionBar.LayoutParams (ActionBar.LayoutParams.WrapContent, ActionBar.LayoutParams.WrapContent);
-            lp.Gravity = GravityFlags.Right | GravityFlags.CenterVertical;
+
+            var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);
+
+            MainToolbar = FindViewById<Toolbar> (Resource.Id.MainToolbar);
+            SetSupportActionBar (MainToolbar);
+            MainToolbar.SetNavigationIcon (Resource.Drawable.IcDrawer);
+            SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
+            SupportActionBar.SetCustomView (Timer.Root, lp);
+            SupportActionBar.SetDisplayShowCustomEnabled (true);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             drawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
@@ -90,21 +119,26 @@ namespace Toggl.Joey.UI.Activities
 
             syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
 
-            ActionBar.SetCustomView (Timer.Root, lp);
-            ActionBar.SetDisplayShowCustomEnabled (true);
-            ActionBar.SetDisplayHomeAsUpEnabled (true);
-            ActionBar.SetHomeButtonEnabled (true);
-
-            if (bundle == null) {
+            if (state == null) {
                 OpenPage (DrawerListAdapter.TimerPageId);
             } else {
                 // Restore page stack
                 pageStack.Clear ();
-                var arr = bundle.GetIntArray (PageStackExtra);
+                var arr = state.GetIntArray (PageStackExtra);
                 if (arr != null) {
                     pageStack.AddRange (arr);
                 }
             }
+        }
+
+        private void OnUserChangedEvent (object sender, PropertyChangedEventArgs args)
+        {
+            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            if (userData == null) {
+                return;
+            }
+            DrawerUserName.Text = userData.Name;
+            DrawerImage.ImageUrl = userData.ImageUrl;
         }
 
         protected override void OnSaveInstanceState (Bundle outState)
@@ -123,7 +157,6 @@ namespace Toggl.Joey.UI.Activities
                 UpdateSyncStatus ();
             }
             base.OnPostCreate (savedInstanceState);
-            DrawerToggle.SyncState ();
         }
 
         public override void OnConfigurationChanged (Android.Content.Res.Configuration newConfig)
@@ -134,11 +167,7 @@ namespace Toggl.Joey.UI.Activities
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (DrawerToggle.OnOptionsItemSelected (item)) {
-                return true;
-            }
-
-            return base.OnOptionsItemSelected (item);
+            return DrawerToggle.OnOptionsItemSelected (item) || base.OnOptionsItemSelected (item);
         }
 
         protected override void OnStart ()
@@ -182,6 +211,7 @@ namespace Toggl.Joey.UI.Activities
                 base.OnBackPressed ();
             }
         }
+
         private void SetMenuSelection (int pos)
         {
             int parentPos = drawerAdapter.GetParentPosition (pos -1);
@@ -196,70 +226,49 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void SwitchActionBarView (int pageId)
-        {
-            bool showReportsActionBar = (pageId == DrawerListAdapter.ReportsPageId ||
-                                         pageId == DrawerListAdapter.ReportsWeekPageId ||
-                                         pageId == DrawerListAdapter.ReportsMonthPageId ||
-                                         pageId == DrawerListAdapter.ReportsYearPageId);
-
-            if (showReportsActionBar) {
-                ActionBar.SetDisplayShowTitleEnabled (true);
-                ActionBar.SetDisplayShowCustomEnabled (false);
-            } else {
-                ActionBar.SetDisplayShowTitleEnabled (false);
-                ActionBar.SetDisplayShowCustomEnabled (true);
-            }
-
-            // Configure timer component for selected page:
-            if (pageId != DrawerListAdapter.TimerPageId) {
-                Timer.HideAction = true;
-                Timer.HideDuration = false;
-            } else {
-                Timer.HideAction = false;
-            }
-        }
-
         private void OpenPage (int id)
         {
-            SwitchActionBarView (id);
-
             if (id == DrawerListAdapter.SettingsPageId) {
                 OpenFragment (settingsFragment.Value);
+                SupportActionBar.SetTitle (Resource.String.MainDrawerSettings);
             } else if (id == DrawerListAdapter.ReportsPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 if (reportFragment.Value.ZoomLevel == ZoomLevel.Week) {
-                    ActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
+                    SupportActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
                     id = DrawerListAdapter.ReportsWeekPageId;
                 } else if (reportFragment.Value.ZoomLevel == ZoomLevel.Month) {
-                    ActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
+                    SupportActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
                     id = DrawerListAdapter.ReportsMonthPageId;
                 } else {
-                    ActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
+                    SupportActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
                     id = DrawerListAdapter.ReportsYearPageId;
                 }
                 OpenFragment (reportFragment.Value);
+                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
             } else if (id == DrawerListAdapter.ReportsWeekPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
-                ActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
+                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Week;
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsMonthPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
-                ActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
+                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Month;
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.ReportsYearPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
-                ActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
+                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
                 reportFragment.Value.ZoomLevel = ZoomLevel.Year;
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.FeedbackPageId) {
+                SupportActionBar.SetTitle (Resource.String.MainDrawerFeedback);
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.FeedbackPageId);
                 OpenFragment (feedbackFragment.Value);
             } else {
+                SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
                 OpenFragment (trackingFragment.Value);
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.TimerPageId);
+                Timer.HideAction = false;
             }
             SetMenuSelection (drawerAdapter.GetItemPosition (id));
 
@@ -290,6 +299,20 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnDrawerListViewItemClick (object sender, ListView.ItemClickEventArgs e)
         {
+            // If tap outside options just close drawer
+            if (e.Id == -1) {
+                DrawerLayout.CloseDrawers ();
+                return;
+            }
+
+            // Configure timer component for selected page:
+            if (e.Id != DrawerListAdapter.TimerPageId) {
+                Timer.HideAction = true;
+                Timer.HideDuration = false;
+            } else {
+                Timer.HideAction = false;
+            }
+
             if (e.Id == DrawerListAdapter.TimerPageId) {
                 OpenPage (DrawerListAdapter.TimerPageId);
 

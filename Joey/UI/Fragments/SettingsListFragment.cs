@@ -1,10 +1,9 @@
 ﻿using Android.OS;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.UI.Adapters;
 using Toggl.Phoebe.Analytics;
 using XPlatUtils;
-using Toggl.Joey.UI.Adapters;
 using ListFragment = Android.Support.V4.App.ListFragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -12,10 +11,6 @@ namespace Toggl.Joey.UI.Fragments
     // Need to use ordinary ListFragment here as PreferenceFragment isn't available in support library.
     public class SettingsListFragment : ListFragment
     {
-        public override void OnCreate (Bundle savedInstanceState)
-        {
-            base.OnCreate (savedInstanceState);
-        }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {

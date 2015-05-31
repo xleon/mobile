@@ -72,5 +72,6 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:id="@+id/ContinueImageButton"
-        android:background="?android:attr/selectableItemBackground" />
+        android:clickable="true"
+        android:background="@drawable/play_button_background" />
 </merge>

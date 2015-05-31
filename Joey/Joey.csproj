@@ -658,6 +658,8 @@
     <AndroidResource Include="Resources\drawable-hdpi\SplashScreen.png" />
     <AndroidResource Include="Resources\drawable\RedCursor.xml" />
     <AndroidResource Include="Resources\drawable\DropShadowVerticalReverse.xml" />
+    <AndroidResource Include="Resources\drawable-v21\play_button_background.xml" />
+    <AndroidResource Include="Resources\drawable\play_button_background.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -690,6 +692,7 @@
     <Folder Include="Resources\xml\" />
     <Folder Include="Widget\" />
     <Folder Include="Resources\values-v21\" />
+    <Folder Include="Resources\drawable-v21\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

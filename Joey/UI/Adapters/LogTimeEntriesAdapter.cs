@@ -94,10 +94,10 @@ namespace Toggl.Joey.UI.Adapters
         {
             // Don't continue a new TimeEntry before
             // 3 seconds has passed.
-            if (DateTime.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
+            if (Time.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
                 return;
             }
-            lastTimeEntryContinuedTime = DateTime.UtcNow;
+            lastTimeEntryContinuedTime = Time.UtcNow;
 
             // Trick on view to show a better
             // visual reaction to press Play btn
@@ -310,6 +310,7 @@ namespace Toggl.Joey.UI.Adapters
 
                     if (DataSource.State == TimeEntryState.Running) {
                         owner.OnStopTimeEntry (DataSource.TimeEntryData);
+                        ContinueImageButton.Pressed = true;
                         return false;
                     }
 

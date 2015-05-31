@@ -108,6 +108,9 @@ namespace Toggl.Joey.UI.Utils
                     return false;
                 }
 
+                downView.Selected = false;
+                downView.Pressed = false;
+
                 velocityTracker.ComputeCurrentVelocity (1000);
                 float velocityX = velocityTracker.XVelocity;
                 float absVelocityX = Math.Abs (velocityX);
@@ -167,9 +170,15 @@ namespace Toggl.Joey.UI.Utils
 
         private void OnItemDismissed (object sender, EventArgs e)
         {
+            var swipeView = (ListItemSwipeable)sender;
+            if (swipeView != null) {
+                swipeView.SwipeAnimationEnd -= OnItemDismissed;
+            }
+
             if (downPosition != -1) {
                 callbacks.OnDismiss (recyclerView, downPosition);
             }
+
             downPosition = AdapterView.InvalidPosition;
             downView = null;
         }

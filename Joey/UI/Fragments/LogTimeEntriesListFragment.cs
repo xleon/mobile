@@ -16,6 +16,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
@@ -149,6 +150,12 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool CanDismiss (RecyclerView view, int position)
         {
+            // Find a better solution
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
+            if (syncManager.IsRunning) {
+                return false;
+            }
+
             var adapter = view.GetAdapter ();
             return (adapter.GetItemViewType (position) == GroupedTimeEntriesAdapter.ViewTypeContent ||
                     adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent);

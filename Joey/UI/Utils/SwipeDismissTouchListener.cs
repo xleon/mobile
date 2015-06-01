@@ -50,7 +50,11 @@ namespace Toggl.Joey.UI.Utils
         public bool IsEnabled
         {
             get {
-                return ! (recyclerView.IsInLayout || recyclerView.GetItemAnimator().IsRunning || IsScrolling);
+                var isEnabled = !recyclerView.GetItemAnimator().IsRunning || IsScrolling;
+                if (Android.OS.Build.VERSION.SdkInt > Android.OS.BuildVersionCodes.JellyBeanMr1) {
+                    isEnabled = ! (recyclerView.IsInLayout || recyclerView.GetItemAnimator().IsRunning || IsScrolling);
+                }
+                return isEnabled;
             }
         }
 

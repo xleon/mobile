@@ -25,7 +25,12 @@ namespace Toggl.Joey.UI.Adapters
         private bool IsInLayout
         {
             get {
-                return Owner.IsInLayout;
+                var isInLayout = Owner.GetItemAnimator().IsRunning;
+                if (Build.VERSION.SdkInt > BuildVersionCodes.JellyBeanMr1) {
+                    isInLayout = Owner.GetItemAnimator().IsRunning || Owner.IsInLayout;
+                }
+
+                return isInLayout;
             }
         }
 

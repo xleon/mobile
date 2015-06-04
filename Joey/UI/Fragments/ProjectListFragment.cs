@@ -95,6 +95,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             ProjectModel project = null;
             WorkspaceModel workspace = null;
+            TaskData task = null;
 
             if (m is WorkspaceProjectsView.Project) {
                 var wrap = (WorkspaceProjectsView.Project)m;
@@ -115,10 +116,14 @@ namespace Toggl.Joey.UI.Fragments
             } else if (m is ProjectAndTaskView.Workspace) {
                 var wrap = (ProjectAndTaskView.Workspace)m;
                 workspace = (WorkspaceModel)wrap.Data;
+            } else if (m is TaskData) {
+                task = (TaskData)m;
+                project = new ProjectModel (task.ProjectId);
+                workspace = new WorkspaceModel (task.WorkspaceId);
             }
 
             if (project != null || workspace != null) {
-                await viewModel.SaveModelAsync (project, workspace);
+                await viewModel.SaveModelAsync (project, workspace, task);
                 Activity.Finish ();
             }
         }

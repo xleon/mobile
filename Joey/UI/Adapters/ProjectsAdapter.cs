@@ -201,8 +201,6 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView TasksTextView { get; private set; }
 
-            public ImageView TasksImageView { get; private set; }
-
             public ProjectListItemHolder (ExpandableProjectsView dataView, View root) : base (root)
             {
                 this.dataView = dataView;
@@ -212,7 +210,6 @@ namespace Toggl.Joey.UI.Adapters
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
                 TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
                 TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView).SetFont (Font.RobotoMedium);
-                TasksImageView = root.FindViewById<ImageView> (Resource.Id.TasksImageView);
 
                 TasksFrameLayout.Click += OnTasksFrameLayoutClick;
             }
@@ -296,7 +293,6 @@ namespace Toggl.Joey.UI.Adapters
                 TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
                 var expanded = dataView.AreProjectTasksVisible (model.Id);
                 TasksTextView.Visibility = expanded ? ViewStates.Invisible : ViewStates.Visible;
-                TasksImageView.Visibility = !expanded ? ViewStates.Invisible : ViewStates.Visible;
             }
         }
 

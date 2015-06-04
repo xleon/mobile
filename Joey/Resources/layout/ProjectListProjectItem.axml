@@ -56,11 +56,5 @@
             android:layout_marginRight="10dp"
             android:layout_marginLeft="10dp"
             android:singleLine="true" />
-        <ImageView
-            android:id="@+id/TasksImageView"
-            android:src="@drawable/IcUpArrow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center" />
     </FrameLayout>
 </LinearLayout>

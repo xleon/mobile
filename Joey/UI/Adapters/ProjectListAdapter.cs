@@ -231,7 +231,7 @@ namespace Toggl.Joey.UI.Adapters
             public ProjectListTaskItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
                 this.adapter = adapter;
-                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoMedium);
+                TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoLight);
 
                 root.SetOnClickListener (this);
             }

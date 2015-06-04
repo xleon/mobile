@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<toggl.joey.ui.views.FadeLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="48dp"
     android:orientation="horizontal"
-    app:fadeLength="15dp">
-    <TextView
-        android:id="@+id/TaskTextView"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:background="@android:color/white"
+    android:gravity="center_vertical">
+    <toggl.joey.ui.views.FadeLinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Task name"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:paddingLeft="24dp"
-        android:gravity="center_vertical"
-        android:singleLine="true"
-        android:textColor="@color/project_list_gray"
-        android:ellipsize="none" />
-</toggl.joey.ui.views.FadeLinearLayout>
+        android:orientation="horizontal"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="35dp"
+        app:fadeLength="15dp">
+        <TextView
+            android:id="@+id/TaskTextView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:textColor="@color/group_title_dark_gray"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:singleLine="true"
+            android:ellipsize="none" />
+    </toggl.joey.ui.views.FadeLinearLayout>
+</LinearLayout>

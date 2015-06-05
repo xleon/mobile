@@ -339,14 +339,6 @@ namespace Toggl.Joey.UI.Adapters
                 var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (!String.IsNullOrWhiteSpace (DataSource.TaskName)) {
-                    TaskTextView.Text = String.Format ("{0} • ", DataSource.TaskName);
-                    TaskTextView.Visibility = ViewStates.Visible;
-                } else {
-                    TaskTextView.Text = String.Empty;
-                    TaskTextView.Visibility = ViewStates.Gone;
-                }
-
                 if (!String.IsNullOrWhiteSpace (DataSource.ProjectName)) {
                     color = Color.ParseColor (ProjectModel.HexColors [DataSource.Color % ProjectModel.HexColors.Length]);
                     ProjectTextView.SetTextColor (color);
@@ -356,24 +348,26 @@ namespace Toggl.Joey.UI.Adapters
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
 
-                if (!String.IsNullOrWhiteSpace (DataSource.ClientName)) {
-                    ClientTextView.Text = String.Format ("{0} • ", DataSource.ClientName);
-                    ClientTextView.Visibility = ViewStates.Visible;
-                } else {
+                if (String.IsNullOrWhiteSpace (DataSource.ClientName)) {
                     ClientTextView.Text = String.Empty;
                     ClientTextView.Visibility = ViewStates.Gone;
+                } else {
+                    ClientTextView.Text = String.Format ("{0} • ", DataSource.ClientName);
+                    ClientTextView.Visibility = ViewStates.Visible;
+                }
+
+                if (String.IsNullOrWhiteSpace (DataSource.TaskName)) {
+                    TaskTextView.Text = String.Empty;
+                    TaskTextView.Visibility = ViewStates.Gone;
+                } else {
+                    TaskTextView.Text = String.Format ("{0} • ", DataSource.TaskName);
+                    TaskTextView.Visibility = ViewStates.Visible;
                 }
 
                 if (String.IsNullOrWhiteSpace (DataSource.Description)) {
-                    if (String.IsNullOrWhiteSpace (DataSource.TaskName)) {
-                        DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
-                        DescriptionTextView.Visibility = ViewStates.Visible;
-                    } else {
-                        DescriptionTextView.Visibility = ViewStates.Gone;
-                    }
+                    DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                 } else {
                     DescriptionTextView.Text = DataSource.Description;
-                    DescriptionTextView.Visibility = ViewStates.Visible;
                 }
 
                 BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;

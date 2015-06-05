@@ -314,8 +314,6 @@ namespace Toggl.Joey.UI.Adapters
                     ClientTextView.Text = String.Empty;
                 }
 
-
-
                 if (DataSource.Model.Project != null) {
                     color = Color.ParseColor (DataSource.Model.Project.GetHexColor ());
                     ProjectTextView.SetTextColor (color);

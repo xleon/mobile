@@ -15,7 +15,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.Views
 {
     /// <summary>
-    /// This view combines IDataStore data and data from ITogglClient for time views. It tries to load data from
+    /// This view combines ICollectionDataView data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
     public class LogTimeEntriesView : ICollectionDataView<object>, IDisposable
@@ -28,7 +28,7 @@ namespace Toggl.Phoebe.Data.Views
         private DateTime startFrom;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private UpdateScheduler updateScheduler = new UpdateScheduler ();
+        private List<Task> updateTasks = new List<Task> ();
 
         private bool reloadScheduled;
         private bool isLoading;
@@ -106,11 +106,20 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private void OnDataChange (DataChangeMessage msg)
+        private async void OnDataChange (DataChangeMessage msg)
         {
             var entry = msg.Data as TimeEntryData;
             if (entry == null) {
                 return;
+            }
+
+            // Wait for last update tasks.
+            // in order to execute the whole process (detect, create event,
+            // load data  object, dispatch collection event) sequencially.
+            // This method will be replaced by Rx code.
+            if (updateTasks.Any (e => !e.IsCompleted)) {
+                await Task.WhenAll (updateTasks);
+                updateTasks.Clear ();
             }
 
             var isExcluded = entry.DeletedAt != null
@@ -323,7 +332,8 @@ namespace Toggl.Phoebe.Data.Views
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
-            updateScheduler.AddUpdate (UpdateCollection (item, args));
+
+            updateTasks.Add (UpdateCollection (item, args));
         }
 
         private void BeginUpdate ()
@@ -798,36 +808,17 @@ namespace Toggl.Phoebe.Data.Views
 
         private async Task UpdateCollection (object data, NotifyCollectionChangedEventArgs e)
         {
-            var holderTaskList = new List<Task> ();
-
-            if (e.Action == NotifyCollectionChangedAction.Reset) {
-
-                var currentItems = new List<object> (UpdatedList);
-                itemCollection.Clear ();
-
-                for (int i = e.NewStartingIndex; i < e.NewStartingIndex + e.NewItems.Count; i++) {
-                    var item = currentItems [i];
-                    if (item is TimeEntryData) {
-                        var entryData = (TimeEntryData)item;
-                        var timeEntryHolder = new TimeEntryHolder (entryData);
-                        itemCollection.Add (item);
-                        holderTaskList.Add (timeEntryHolder.LoadAsync ());
-                    } else {
-                        itemCollection.Add (item);
-                    }
-                }
-            }
-
             if (e.Action == NotifyCollectionChangedAction.Add) {
                 if (e.NewItems.Count == 1) {
                     if (data is TimeEntryData) {
                         var newHolder = new TimeEntryHolder ((TimeEntryData)data);
+                        await newHolder.LoadAsync ();
                         itemCollection.Insert (e.NewStartingIndex, newHolder);
-                        holderTaskList.Add (newHolder.LoadAsync ());
                     } else {
                         itemCollection.Insert (e.NewStartingIndex, data);
                     }
                 } else {
+                    var holderTaskList = new List<Task> ();
 
                     var currentItems = new List<object> (UpdatedList);
                     if (e.NewStartingIndex == 0) {
@@ -859,6 +850,7 @@ namespace Toggl.Phoebe.Data.Views
                             }
                         }
                     }
+                    await Task.WhenAll (holderTaskList);
                 }
             }
 
@@ -875,49 +867,17 @@ namespace Toggl.Phoebe.Data.Views
             if (e.Action == NotifyCollectionChangedAction.Replace) {
                 if (data is TimeEntryData) {
                     var oldHolder = (TimeEntryHolder)itemCollection.ElementAt (e.NewStartingIndex);
+                    await oldHolder.UpdateAsync ((TimeEntryData)data);
                     itemCollection [e.NewStartingIndex] = oldHolder;
-                    holderTaskList.Add (oldHolder.UpdateAsync ((TimeEntryData)data));
                 } else {
                     itemCollection [e.NewStartingIndex] = data;
                 }
             }
 
-            await Task.WhenAll (holderTaskList);
-
-            // Dispatch event.
             var handler = CollectionChanged;
             if (handler != null) {
                 handler (this, e);
             }
         }
-
-        private class UpdateScheduler
-        {
-            private bool isStarted;
-            private readonly List<Task> updateQueue = new List<Task>();
-
-            public void AddUpdate (Task updateTask)
-            {
-                updateQueue.Add (updateTask);
-                if (!isStarted) {
-                    isStarted = true;
-                    CheckQueue ();
-                }
-            }
-
-            private async void CheckQueue()
-            {
-                if (updateQueue.Count > 0) {
-                    var eventTask = updateQueue.First ();
-                    await Task.WhenAny (eventTask);
-                    updateQueue.Remove (eventTask);
-                    CheckQueue ();
-                } else {
-                    isStarted = false;
-                }
-            }
-        }
-
-
     }
 }

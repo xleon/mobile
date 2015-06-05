@@ -60,6 +60,7 @@
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
     <Compile Include="Data\ViewModels\NewProjectViewModel.cs" />
+    <Compile Include="Data\Utils\TimeEntryHolder.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

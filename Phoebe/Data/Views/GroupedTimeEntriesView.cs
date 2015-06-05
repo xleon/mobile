@@ -689,16 +689,6 @@ namespace Toggl.Phoebe.Data.Views
                 }
             }
 
-            public event EventHandler Updated;
-
-            private void OnUpdated ()
-            {
-                var handler = Updated;
-                if (handler != null) {
-                    handler (this, EventArgs.Empty);
-                }
-            }
-
             public void Add (TimeEntryGroup entryGroup)
             {
                 dataObjects.Add (entryGroup);

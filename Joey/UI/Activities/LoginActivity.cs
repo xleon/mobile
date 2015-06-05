@@ -41,6 +41,8 @@ namespace Toggl.Joey.UI.Activities
         private bool showPassword;
         private bool isAuthenticating;
         private ISpannable formattedLegalText;
+        private int topLogoPosition;
+        private ImageView bigLogo;
 
         protected ScrollView ScrollView { get; private set; }
 
@@ -62,6 +64,7 @@ namespace Toggl.Joey.UI.Activities
         {
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
             FindViewById<TextView> (Resource.Id.SwitchViewText).SetFont (Font.RobotoLight);
+            bigLogo = FindViewById<ImageView> (Resource.Id.MainLogoLoginScreen);
             SwitchModeButton = FindViewById<Button> (Resource.Id.SwitchViewButton);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
@@ -102,13 +105,18 @@ namespace Toggl.Joey.UI.Activities
 
         void ViewTreeObserver.IOnGlobalLayoutListener.OnGlobalLayout ()
         {
-            // Make sure that the on every resize we scroll to the bottom
-            ScrollView.ScrollTo (0, ScrollView.Bottom);
+            // Move scroll and let the logo visible.
+            var position = new int[2];
+            bigLogo.GetLocationInWindow (position);
+            if (topLogoPosition == 0 && position[1] != 0) {
+                topLogoPosition = position[1] + Convert.ToInt32 (bigLogo.Height * 0.2);
+            }
+            ScrollView.SmoothScrollTo (0, topLogoPosition);
         }
 
-        protected override void OnCreateActivity (Bundle bundle)
+        protected override void OnCreateActivity (Bundle state)
         {
-            base.OnCreateActivity (bundle);
+            base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.LoginActivity);
             FindViews ();
@@ -126,8 +134,8 @@ namespace Toggl.Joey.UI.Activities
             hasGoogleAccounts = GoogleAccounts.Count > 0;
             GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
 
-            if (bundle != null) {
-                showPassword = bundle.GetBoolean (ExtraShowPassword);
+            if (state != null) {
+                showPassword = state.GetBoolean (ExtraShowPassword);
             }
 
             SyncContent ();
@@ -464,14 +472,14 @@ namespace Toggl.Joey.UI.Activities
                 tx.Commit ();
             }
 
-            public GoogleAuthFragment (string email) : base ()
+            public GoogleAuthFragment (string email)
             {
                 var args = new Bundle ();
                 args.PutString (EmailArgument, email);
                 Arguments = args;
             }
 
-            public GoogleAuthFragment () : base ()
+            public GoogleAuthFragment ()
             {
             }
 
@@ -479,17 +487,17 @@ namespace Toggl.Joey.UI.Activities
             {
             }
 
-            public override void OnCreate (Bundle state)
+            public override void OnCreate (Bundle savedInstanceState)
             {
-                base.OnCreate (state);
+                base.OnCreate (savedInstanceState);
 
                 RetainInstance = true;
                 StartAuth ();
             }
 
-            public override void OnActivityCreated (Bundle state)
+            public override void OnActivityCreated (Bundle savedInstanceState)
             {
-                base.OnActivityCreated (state);
+                base.OnActivityCreated (savedInstanceState);
 
                 // Restore IsAuthenticating value
                 var activity = Activity as LoginActivity;

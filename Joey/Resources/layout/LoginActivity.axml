@@ -3,7 +3,7 @@
     android:id="@+id/ScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:isScrollContainer="false"
+    android:isScrollContainer="true"
     android:fillViewport="true">
     <LinearLayout
         android:orientation="vertical"
@@ -12,6 +12,7 @@
         android:paddingLeft="32dp"
         android:paddingRight="32dp">
         <ImageView
+            android:id="@+id/MainLogoLoginScreen"
             android:src="@drawable/LogoBig"
             android:layout_width="match_parent"
             android:layout_height="200dp"

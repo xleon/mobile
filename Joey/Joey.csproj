@@ -660,6 +660,19 @@
     <AndroidResource Include="Resources\drawable\DropShadowVerticalReverse.xml" />
     <AndroidResource Include="Resources\drawable-v21\play_button_background.xml" />
     <AndroidResource Include="Resources\drawable\play_button_background.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\bgLoginScreen.jpg" />
+    <AndroidResource Include="Resources\drawable-mdpi\bgLoginScreen.jpg" />
+    <AndroidResource Include="Resources\drawable-xhdpi\bgLoginScreen.jpg" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\bgLoginScreen.jpg" />
+    <AndroidResource Include="Resources\drawable\ButtonRed.xml" />
+    <AndroidResource Include="Resources\drawable\ButtonRedDefault.xml" />
+    <AndroidResource Include="Resources\drawable\ButtonRedDisabled.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcGoogle.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcGoogle.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcGoogle.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcGoogle.png" />
+    <AndroidResource Include="Resources\color\ButtonRedTextColor.xml" />
+    <AndroidResource Include="Resources\drawable\LoginBackground.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

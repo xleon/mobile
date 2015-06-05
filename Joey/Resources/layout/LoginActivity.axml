@@ -3,89 +3,39 @@
     android:id="@+id/ScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:isScrollContainer="true"
     android:fillViewport="true">
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <FrameLayout
+        android:layout_height="match_parent"
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp">
+        <ImageView
+            android:id="@+id/MainLogoLoginScreen"
+            android:src="@drawable/LogoBig"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="-5dp"
-            android:background="@android:color/black">
-            <ImageView
-                android:src="@drawable/LoginHeader"
-                android:scaleType="fitXY"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true" />
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:gravity="center">
-                <ImageView
-                    android:src="@drawable/LogoBig"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginBottom="5dp" />
-                <TextView
-                    android:id="@+id/SloganTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="@string/LoginHeaderText"
-                    android:textColor="@android:color/white" />
-            </LinearLayout>
-        </FrameLayout>
-        <RadioGroup
-            android:id="@+id/TabsRadioGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_horizontal">
-            <RadioButton
-                android:id="@+id/LoginTabRadioButton"
-                style="@style/RadioButtonTab"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="true"
-                android:text="@string/LoginLoginTabText" />
-            <RadioButton
-                android:id="@+id/SignupTabRadioButton"
-                style="@style/RadioButtonTab"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/LoginSignupTabText" />
-        </RadioGroup>
+            android:layout_height="200dp"
+            android:scaleType="center" />
         <AutoCompleteTextView
             android:id="@+id/EmailAutoCompleteTextView"
-            android:inputType="textEmailAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/LoginEmailHint"
-            android:imeOptions="actionNext"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp" />
+            style="@style/Login.Input"
+            android:inputType="textEmailAddress"
+            android:imeOptions="actionNext" />
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <EditText
                 android:id="@+id/PasswordEditText"
-                android:inputType="textVisiblePassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/LoginPasswordHint"
-                android:imeOptions="actionDone"
-                android:layout_marginRight="10dp"
-                android:layout_marginLeft="10dp"
-                android:paddingRight="60dp" />
+                style="@style/Login.Input"
+                android:inputType="textVisiblePassword"
+                android:imeOptions="actionDone" />
             <Button
                 android:id="@+id/PasswordToggleButton"
                 android:layout_width="wrap_content"
@@ -94,6 +44,7 @@
                 android:focusable="false"
                 android:textSize="12dp"
                 android:text="@string/LoginHideButtonText"
+                android:textColor="#ffffff"
                 android:background="@null"
                 android:minWidth="70dp"
                 android:minHeight="0dp"
@@ -102,39 +53,52 @@
         </FrameLayout>
         <Button
             android:id="@+id/LoginButton"
-            style="@style/Button.Green"
+            style="@style/Button.Red"
             android:text="@string/LoginButtonText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
+            android:gravity="center"
             android:layout_marginTop="15dp"
-            android:layout_marginBottom="15dp" />
+            android:layout_marginBottom="15dp"
+            android:layout_marginLeft="3dp"
+            android:layout_marginRight="3dp" />
+        <Button
+            android:id="@+id/GoogleLoginButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:drawableLeft="@drawable/IcGoogle"
+            android:drawablePadding="8dp"
+            style="@style/Login.GoogleLogin"
+            android:text="@string/LoginGoogleButtonText"
+            android:layout_gravity="center" />
         <TextView
             android:id="@+id/LegalTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
-            android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
             android:gravity="center"
             android:text="By signing up you agree to Toggl's Terms and Privacy Policy"
             android:textSize="12sp"
-            android:textColorLink="@color/green" />
+            android:textColor="@android:color/white"
+            android:layout_marginTop="-5dp"
+            android:textColorLink="@android:color/white" />
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
-        <Button
-            android:id="@+id/GoogleLoginButton"
+        <TextView
+            android:id="@+id/SwitchViewText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@null"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/LoginGoogleButtonText" />
+            style="@style/Login.SwitchText"
+            android:text="@string/SwitchViewText" />
+        <Button
+            android:id="@+id/SwitchViewButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Login.SwitchButton"
+            android:text="@string/SignupViewButtonText"
+            android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>

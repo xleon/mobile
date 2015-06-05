@@ -41,14 +41,12 @@ namespace Toggl.Joey.UI.Activities
         private bool showPassword;
         private bool isAuthenticating;
         private ISpannable formattedLegalText;
+        private int topLogoPosition;
+        private ImageView bigLogo;
 
         protected ScrollView ScrollView { get; private set; }
 
-        protected RadioGroup TabsRadioGroup { get; private set; }
-
-        protected RadioButton LoginTabRadioButton { get; private set; }
-
-        protected RadioButton SignupTabRadioButton { get; private set; }
+        protected Button SwitchModeButton { get; private set; }
 
         protected AutoCompleteTextView EmailEditText { get; private set; }
 
@@ -65,10 +63,9 @@ namespace Toggl.Joey.UI.Activities
         private void FindViews ()
         {
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
-            FindViewById<TextView> (Resource.Id.SloganTextView).SetFont (Font.RobotoLight);
-            TabsRadioGroup = FindViewById<RadioGroup> (Resource.Id.TabsRadioGroup);
-            LoginTabRadioButton = FindViewById<RadioButton> (Resource.Id.LoginTabRadioButton).SetFont (Font.Roboto);
-            SignupTabRadioButton = FindViewById<RadioButton> (Resource.Id.SignupTabRadioButton).SetFont (Font.Roboto);
+            FindViewById<TextView> (Resource.Id.SwitchViewText).SetFont (Font.RobotoLight);
+            bigLogo = FindViewById<ImageView> (Resource.Id.MainLogoLoginScreen);
+            SwitchModeButton = FindViewById<Button> (Resource.Id.SwitchViewButton);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
             PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont (Font.Roboto);
@@ -108,20 +105,24 @@ namespace Toggl.Joey.UI.Activities
 
         void ViewTreeObserver.IOnGlobalLayoutListener.OnGlobalLayout ()
         {
-            // Make sure that the on every resize we scroll to the bottom
-            ScrollView.ScrollTo (0, ScrollView.Bottom);
+            // Move scroll and let the logo visible.
+            var position = new int[2];
+            bigLogo.GetLocationInWindow (position);
+            if (topLogoPosition == 0 && position[1] != 0) {
+                topLogoPosition = position[1] + Convert.ToInt32 (bigLogo.Height * 0.2);
+            }
+            ScrollView.SmoothScrollTo (0, topLogoPosition);
         }
 
-        protected override void OnCreateActivity (Bundle bundle)
+        protected override void OnCreateActivity (Bundle state)
         {
-            base.OnCreateActivity (bundle);
+            base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.LoginActivity);
             FindViews ();
 
             ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener (this);
 
-            TabsRadioGroup.CheckedChange += OnTabsRadioGroupCheckedChange;
             LoginButton.Click += OnLoginButtonClick;
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
             EmailEditText.Adapter = MakeEmailsAdapter ();
@@ -129,12 +130,12 @@ namespace Toggl.Joey.UI.Activities
             EmailEditText.TextChanged += OnEmailEditTextTextChanged;
             PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
             PasswordToggleButton.Click += OnPasswordToggleButtonClick;
-
+            SwitchModeButton.Click += OnModeToggleButtonClick;
             hasGoogleAccounts = GoogleAccounts.Count > 0;
             GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
 
-            if (bundle != null) {
-                showPassword = bundle.GetBoolean (ExtraShowPassword);
+            if (state != null) {
+                showPassword = state.GetBoolean (ExtraShowPassword);
             }
 
             SyncContent ();
@@ -150,12 +151,6 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnStart ()
         {
             base.OnStart ();
-            SyncCurrentScreen ();
-        }
-
-        private void OnTabsRadioGroupCheckedChange (object sender, RadioGroup.CheckedChangeEventArgs e)
-        {
-            SyncContent ();
             SyncCurrentScreen ();
         }
 
@@ -190,17 +185,15 @@ namespace Toggl.Joey.UI.Activities
                 LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
                 LegalTextView.Visibility = ViewStates.Gone;
                 GoogleLoginButton.SetText (Resource.String.LoginGoogleButtonText);
+                SwitchModeButton.SetText (Resource.String.SignupViewButtonText);
             } else {
                 LoginButton.SetText (isAuthenticating ? Resource.String.LoginButtonSignupProgressText : Resource.String.LoginSignupButtonText);
                 LegalTextView.SetText (FormattedLegalText, TextView.BufferType.Spannable);
                 LegalTextView.MovementMethod = Android.Text.Method.LinkMovementMethod.Instance;
                 LegalTextView.Visibility = ViewStates.Visible;
                 GoogleLoginButton.SetText (Resource.String.LoginSignupGoogleButtonText);
+                SwitchModeButton.SetText (Resource.String.LoginViewButtonText);
             }
-
-            LoginTabRadioButton.Enabled = !isAuthenticating;
-            SignupTabRadioButton.Enabled = !isAuthenticating;
-            TabsRadioGroup.Enabled = !isAuthenticating;
             EmailEditText.Enabled = !isAuthenticating;
             PasswordEditText.Enabled = !isAuthenticating;
             GoogleLoginButton.Enabled = !isAuthenticating;
@@ -254,6 +247,12 @@ namespace Toggl.Joey.UI.Activities
                 // Restore cursor position:
                 PasswordEditText.SetSelection (selectionStart, selectionEnd);
             }
+        }
+
+        private void OnModeToggleButtonClick (object sender, EventArgs e)
+        {
+            CurrentMode = CurrentMode == Mode.Login ? Mode.Signup : Mode.Login;
+            SyncContent ();
         }
 
         private void OnEmailEditTextTextChanged (object sender, TextChangedEventArgs e)
@@ -388,13 +387,14 @@ namespace Toggl.Joey.UI.Activities
                     var s = formattedLegalText = new SpannableString (String.Format (template, arg0, arg1));
                     var mode = SpanTypes.InclusiveExclusive;
                     s.SetSpan (
-                        new URLSpan (Phoebe.Build.TermsOfServiceUrl.ToString ()),
+                        new TogglURLSPan (Phoebe.Build.TermsOfServiceUrl.ToString ()),
                         arg0idx,
                         arg0idx + arg0.Length,
                         mode
                     );
+
                     s.SetSpan (
-                        new URLSpan (Phoebe.Build.PrivacyPolicyUrl.ToString ()),
+                        new TogglURLSPan (Phoebe.Build.PrivacyPolicyUrl.ToString ()),
                         arg1idx,
                         arg1idx + arg1.Length,
                         mode
@@ -405,17 +405,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private Mode CurrentMode
-        {
-            get {
-                switch (TabsRadioGroup != null ? TabsRadioGroup.CheckedRadioButtonId : -1) {
-                case Resource.Id.SignupTabRadioButton:
-                    return Mode.Signup;
-                default:
-                    return Mode.Login;
-                }
-            }
-        }
+        private Mode CurrentMode;
 
         private enum Mode {
             Login,
@@ -482,14 +472,14 @@ namespace Toggl.Joey.UI.Activities
                 tx.Commit ();
             }
 
-            public GoogleAuthFragment (string email) : base ()
+            public GoogleAuthFragment (string email)
             {
                 var args = new Bundle ();
                 args.PutString (EmailArgument, email);
                 Arguments = args;
             }
 
-            public GoogleAuthFragment () : base ()
+            public GoogleAuthFragment ()
             {
             }
 
@@ -497,17 +487,17 @@ namespace Toggl.Joey.UI.Activities
             {
             }
 
-            public override void OnCreate (Bundle state)
+            public override void OnCreate (Bundle savedInstanceState)
             {
-                base.OnCreate (state);
+                base.OnCreate (savedInstanceState);
 
                 RetainInstance = true;
                 StartAuth ();
             }
 
-            public override void OnActivityCreated (Bundle state)
+            public override void OnActivityCreated (Bundle savedInstanceState)
             {
-                base.OnActivityCreated (state);
+                base.OnActivityCreated (savedInstanceState);
 
                 // Restore IsAuthenticating value
                 var activity = Activity as LoginActivity;
@@ -812,6 +802,20 @@ namespace Toggl.Joey.UI.Activities
 
             private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
             {
+            }
+        }
+
+        private class TogglURLSPan : URLSpan
+        {
+            public TogglURLSPan (String url) : base (url)
+            {
+            }
+
+            public override void UpdateDrawState (TextPaint ds)
+            {
+                base.UpdateDrawState (ds);
+                ds.UnderlineText = false;
+                ds.SetTypeface (Android.Graphics.Typeface.DefaultBold);
             }
         }
     }

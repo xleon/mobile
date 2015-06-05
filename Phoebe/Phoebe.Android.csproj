@@ -61,6 +61,7 @@
     <Compile Include="Logging\**\*.cs" />
     <Compile Include="Data\ViewModels\NewProjectViewModel.cs" />
     <Compile Include="Data\Utils\TimeEntryHolder.cs" />
+    <Compile Include="Data\Views\TimeEntriesCollectionView.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

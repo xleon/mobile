@@ -19,6 +19,16 @@ namespace Toggl.Phoebe.Data.Views
         private bool isLoading;
         private bool hasMore;
 
+        private Project displayingTaskForProject;
+        public Project DisplayingTaskForProject { 
+            set { 
+                displayingTaskForProject = displayingTaskForProject == value ? null : value;
+                DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
+            }
+            get {
+                return displayingTaskForProject;
+            }
+        }
         public bool SortByClients { private set; get; }
 
         public WorkspaceProjectsView (bool sortByClients = false)
@@ -448,8 +458,10 @@ namespace Toggl.Phoebe.Data.Views
                     foreach (var proj in ws.Projects) {
                         yield return proj;
 
-                        foreach (var task in proj.Tasks) {
-                            yield return task;
+                        if (DisplayingTaskForProject != null && proj == DisplayingTaskForProject) {
+                            foreach (var task in proj.Tasks) {
+                                yield return task;
+                            }
                         }
                     }
                 }

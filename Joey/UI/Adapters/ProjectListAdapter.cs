@@ -26,9 +26,12 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
 
         public Action<object> HandleProjectSelection { get; set; }
-
+        private WorkspaceProjectsView collectionView;
+        public event EventHandler<int> TasksProjectItemClick;
+        
         public ProjectListAdapter (RecyclerView owner, WorkspaceProjectsView collectionView) : base (owner, collectionView)
         {
+            this.collectionView = collectionView;
         }
 
         protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
@@ -51,7 +54,7 @@ namespace Toggl.Joey.UI.Adapters
                 // projects
                 if (viewType == ViewTypeProject) {
                     view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListProjectItem, parent, false);
-                    holder = new ProjectListItemHolder (this, view);
+                    holder = new ProjectListItemHolder (this, view, HandleTasksProjectItemClick);
                 } else if (viewType == ViewTypeNewProject) {
                     view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListNewProjectItem, parent, false);
                     holder = new NewProjectListItemHolder (this, view);
@@ -64,6 +67,15 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
             return holder;
+        }
+
+        void HandleTasksProjectItemClick (int position)
+        {
+            if (TasksProjectItemClick != null) {
+                TasksProjectItemClick (this, position);
+            }
+
+            collectionView.DisplayingTaskForProject = (WorkspaceProjectsView.Project)GetEntry (position);
         }
 
         protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
@@ -164,7 +176,9 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageView TasksImageView { get; private set; }
 
-            public ProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
+            private Action<int> tasksClickListener;
+
+            public ProjectListItemHolder (ProjectListAdapter adapter, View root, Action<int> tasksClickListener) : base (root)
             {
                 this.adapter = adapter;
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
@@ -173,7 +187,16 @@ namespace Toggl.Joey.UI.Adapters
                 TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
                 TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView).SetFont (Font.RobotoMedium);
 
+                this.tasksClickListener = tasksClickListener;
+
                 root.SetOnClickListener (this);
+            }
+
+            public void OnClick (View v)
+            {
+                if (tasksClickListener != null) {
+                    tasksClickListener(base.AdapterPosition);
+                }
             }
 
             protected async override void Rebind ()
@@ -212,11 +235,6 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
-            }
-
-            public void OnClick (View v)
-            {
-                adapter.HandleProjectSelection (DataSource);
             }
         }
 

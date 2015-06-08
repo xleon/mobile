@@ -600,6 +600,7 @@ namespace Toggl.Phoebe.Data.Views
             Batch,
         }
 
+        /*
         private async Task UpdateCollection (object data, NotifyCollectionChangedEventArgs e)
         {
             if (e.Action == NotifyCollectionChangedAction.Add) {
@@ -672,6 +673,74 @@ namespace Toggl.Phoebe.Data.Views
             if (handler != null) {
                 handler (this, e);
             }
+        }*/
+
+        protected async Task UpdateCollection (object data, NotifyCollectionChangedEventArgs e)
+        {
+            var timeEntryList = new List<TimeEntryData> ();
+
+            if (data is TimeEntryData) {
+                timeEntryList.Add ((TimeEntryData)data);
+            } else if (data is TimeEntryGroup) {
+                timeEntryList.AddRange (((TimeEntryGroup)data).TimeEntryList);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Add) {
+                if (e.NewItems.Count == 1) {
+                    if (data is TimeEntriesCollectionView.IDateGroup) {
+                        itemCollection.Insert (e.NewStartingIndex, data);
+                    } else {
+                        var newHolder = new TimeEntryHolder (timeEntryList);
+                        await newHolder.LoadAsync ();
+                        itemCollection.Insert (e.NewStartingIndex, newHolder);
+                    }
+                } else {
+                    var holderTaskList = new List<Task> ();
+                    var currentItems = new List<object> (UpdatedList);
+
+                    if (e.NewStartingIndex == 0) {
+                        itemCollection.Clear ();
+                    }
+
+                    for (int i = e.NewStartingIndex; i < e.NewStartingIndex + e.NewItems.Count; i++) {
+                        var item = currentItems [i];
+                        if (item is TimeEntriesCollectionView.IDateGroup) {
+                            itemCollection.Insert (i, item);
+                        } else {
+                            var timeEntryHolder = new TimeEntryHolder (timeEntryList);
+                            itemCollection.Insert (i, timeEntryHolder);
+                            holderTaskList.Add (timeEntryHolder.LoadAsync ());
+                        }
+                    }
+                    await Task.WhenAll (holderTaskList);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                var savedItem = itemCollection [e.OldStartingIndex];
+                itemCollection.RemoveAt (e.OldStartingIndex);
+                itemCollection.Insert (e.NewStartingIndex, savedItem);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                itemCollection.RemoveAt (e.OldStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                if (data is TimeEntriesCollectionView.IDateGroup) {
+                    itemCollection [e.NewStartingIndex] = data;
+                } else {
+                    var oldHolder = (TimeEntryHolder)itemCollection.ElementAt (e.NewStartingIndex);
+                    await oldHolder.UpdateAsync (timeEntryList);
+                    itemCollection [e.NewStartingIndex] = oldHolder;
+                }
+            }
+
+            var handler = CollectionChanged;
+            if (handler != null) {
+                handler (this, e);
+            }
         }
+
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -16,6 +15,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
@@ -29,7 +29,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 2;
-        private LogTimeEntriesView modelView;
+        private TimeEntriesCollectionView modelView;
         private readonly List<RecyclerView.ViewHolder> holderList;
         private DateTime lastTimeEntryContinuedTime;
 
@@ -37,7 +37,7 @@ namespace Toggl.Joey.UI.Adapters
         {
         }
 
-        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesView modelView) : base (owner, modelView)
+        public LogTimeEntriesAdapter (RecyclerView owner, TimeEntriesCollectionView modelView) : base (owner, modelView)
         {
             this.modelView = modelView;
             lastTimeEntryContinuedTime = Time.UtcNow;
@@ -120,7 +120,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public void RemoveItemWithUndo (int index)
         {
-            var holder = (RecycledBindableViewHolder<LogTimeEntriesView.TimeEntryHolder>)Owner.FindViewHolderForPosition (index);
+            var holder = (RecycledBindableViewHolder<TimeEntryHolder>)Owner.FindViewHolderForPosition (index);
             modelView.RemoveItemWithUndo (holder.DataSource.TimeEntryData);
         }
 
@@ -155,10 +155,10 @@ namespace Toggl.Joey.UI.Adapters
         {
             if (GetItemViewType (position) == ViewTypeDateHeader) {
                 var headerHolder = (HeaderListItemHolder)holder;
-                headerHolder.Bind ((LogTimeEntriesView.DateGroup) GetEntry (position));
+                headerHolder.Bind ((TimeEntriesCollectionView.IDateGroup) GetEntry (position));
             } else {
                 var entryHolder = (TimeEntryListItemHolder)holder;
-                entryHolder.Bind ((LogTimeEntriesView.TimeEntryHolder) GetEntry (position));
+                entryHolder.Bind ((TimeEntryHolder) GetEntry (position));
             }
         }
 
@@ -170,7 +170,7 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             var obj = GetEntry (position);
-            if (obj is LogTimeEntriesView.DateGroup) {
+            if (obj is TimeEntriesCollectionView.IDateGroup) {
                 return ViewTypeDateHeader;
             }
 
@@ -203,7 +203,7 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
-        public class HeaderListItemHolder : RecycledBindableViewHolder<LogTimeEntriesView.DateGroup>
+        public class HeaderListItemHolder : RecycledBindableViewHolder<TimeEntriesCollectionView.IDateGroup>
         {
             private readonly Handler handler;
 
@@ -230,14 +230,12 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var timeEntryDataList = DataSource.DataObjects;
-                var duration = TimeSpan.FromSeconds (timeEntryDataList.Sum (m => TimeEntryModel.GetDuration (m, Time.UtcNow).TotalSeconds));
+                var duration = DataSource.TotalDuration;
                 DateGroupDurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
 
-                var runningModel = timeEntryDataList.FirstOrDefault (m => m.State == TimeEntryState.Running);
-                if (runningModel != null) {
+                if (DataSource.IsRunning) {
                     handler.RemoveCallbacks (RebindDuration);
-                    handler.PostDelayed (RebindDuration, 1000 - TimeEntryModel.GetDuration (runningModel, Time.UtcNow).Milliseconds);
+                    handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
                 } else {
                     handler.RemoveCallbacks (RebindDuration);
                 }
@@ -260,7 +258,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecycledBindableViewHolder<LogTimeEntriesView.TimeEntryHolder>, View.IOnTouchListener
+        private class TimeEntryListItemHolder : RecycledBindableViewHolder<TimeEntryHolder>, View.IOnTouchListener
         {
             private readonly Handler handler;
             private readonly LogTimeEntriesAdapter owner;
@@ -388,8 +386,8 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var duration = TimeEntryModel.GetDuration (DataSource.TimeEntryData, Time.UtcNow);
-                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (DataSource.TimeEntryData);
+                var duration = DataSource.TotalDuration;
+                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (duration);
 
                 if (DataSource.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);

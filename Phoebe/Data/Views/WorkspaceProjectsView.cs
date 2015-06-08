@@ -34,7 +34,8 @@ namespace Toggl.Phoebe.Data.Views
             Reload ();
         }
 
-        public void ShowTaskForProject(Project project, int position, out int collapsingCount) {
+        public void ShowTaskForProject (Project project, int position, out int collapsingCount)
+        {
             collapsingCount = displayingTaskForProject == null ? 0 : displayingTaskForProject.Tasks.Count;
 
             if (displayingTaskForProject == project) {

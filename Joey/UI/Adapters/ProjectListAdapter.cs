@@ -30,7 +30,7 @@ namespace Toggl.Joey.UI.Adapters
         private RecyclerView owner;
 
         public event EventHandler<int> TasksProjectItemClick;
-        
+
         public ProjectListAdapter (RecyclerView owner, WorkspaceProjectsView collectionView) : base (owner, collectionView)
         {
             this.owner = owner;
@@ -72,7 +72,7 @@ namespace Toggl.Joey.UI.Adapters
             return holder;
         }
 
-        void HandleTasksProjectItemClick (int position)
+        private void HandleTasksProjectItemClick (int position)
         {
             if (TasksProjectItemClick != null) {
                 TasksProjectItemClick (this, position);
@@ -201,7 +201,7 @@ namespace Toggl.Joey.UI.Adapters
             public void OnClick (View v)
             {
                 if (tasksClickListener != null) {
-                    tasksClickListener(base.AdapterPosition);
+                    tasksClickListener (base.AdapterPosition);
                 }
             }
 

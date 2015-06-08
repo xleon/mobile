@@ -27,10 +27,13 @@ namespace Toggl.Joey.UI.Adapters
 
         public Action<object> HandleProjectSelection { get; set; }
         private WorkspaceProjectsView collectionView;
+        private RecyclerView owner;
+
         public event EventHandler<int> TasksProjectItemClick;
         
         public ProjectListAdapter (RecyclerView owner, WorkspaceProjectsView collectionView) : base (owner, collectionView)
         {
+            this.owner = owner;
             this.collectionView = collectionView;
         }
 
@@ -75,7 +78,10 @@ namespace Toggl.Joey.UI.Adapters
                 TasksProjectItemClick (this, position);
             }
 
-            collectionView.DisplayingTaskForProject = (WorkspaceProjectsView.Project)GetEntry (position);
+            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
+            int collapsingCount;
+            collectionView.ShowTaskForProject (proj, position, out collapsingCount);
+            owner.ScrollToPosition (position - collapsingCount);
         }
 
         protected override void BindHolder (RecyclerView.ViewHolder holder, int position)

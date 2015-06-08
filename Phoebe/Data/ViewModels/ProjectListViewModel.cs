@@ -78,10 +78,13 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        public async Task SaveModelAsync (ProjectModel project, WorkspaceModel workspace)
+        public async Task SaveModelAsync (ProjectModel project, WorkspaceModel workspace, TaskData task = null)
         {
             model.Project = project;
             model.Workspace = workspace;
+            if (task != null) {
+                model.Task = new TaskModel (task);
+            }
             await model.SaveAsync ();
         }
 

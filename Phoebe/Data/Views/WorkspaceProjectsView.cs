@@ -19,6 +19,9 @@ namespace Toggl.Phoebe.Data.Views
         private bool isLoading;
         private bool hasMore;
 
+        private int displayTaskForProjectPosition;
+        private Project displayingTaskForProject;
+
         public bool SortByClients { private set; get; }
 
         public WorkspaceProjectsView (bool sortByClients = false)
@@ -29,6 +32,25 @@ namespace Toggl.Phoebe.Data.Views
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
 
             Reload ();
+        }
+
+        public void ShowTaskForProject (Project project, int position, out int collapsingCount)
+        {
+            collapsingCount = displayingTaskForProject == null ? 0 : displayingTaskForProject.Tasks.Count;
+
+            if (displayingTaskForProject == project) {
+                collapsingCount = 0;
+                displayingTaskForProject = null;
+            } else {
+                displayingTaskForProject = project;
+            }
+
+            if (displayTaskForProjectPosition > position) {
+                collapsingCount = 0;
+            }
+
+            displayTaskForProjectPosition = position;
+            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
         }
 
         public void Dispose ()
@@ -448,6 +470,11 @@ namespace Toggl.Phoebe.Data.Views
                     foreach (var proj in ws.Projects) {
                         yield return proj;
 
+                        if (displayingTaskForProject != null && proj == displayingTaskForProject) {
+                            foreach (var task in proj.Tasks) {
+                                yield return task;
+                            }
+                        }
                     }
                 }
             }
@@ -580,5 +607,6 @@ namespace Toggl.Phoebe.Data.Views
                 get { return tasks; }
             }
         }
+
     }
 }

@@ -89,8 +89,6 @@ namespace Toggl.Joey.UI.Activities
         protected sealed override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            Window windowManager = Window;
-            windowManager.AddFlags (WindowManagerFlags.ShowWhenLocked); // to launch app from lock screen widget
 
             if (!StartAuthActivity ()) {
                 OnCreateActivity (savedInstanceState);

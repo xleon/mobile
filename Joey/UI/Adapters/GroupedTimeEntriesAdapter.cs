@@ -314,14 +314,6 @@ namespace Toggl.Joey.UI.Adapters
                     ClientTextView.Text = String.Empty;
                 }
 
-                if (DataSource.Model.Task != null) {
-                    TaskTextView.Text = String.Format ("{0} • ", DataSource.Model.Task.Name);
-                    TaskTextView.Visibility = ViewStates.Visible;
-                } else {
-                    TaskTextView.Text = String.Empty;
-                    TaskTextView.Visibility = ViewStates.Gone;
-                }
-
                 if (DataSource.Model.Project != null) {
                     color = Color.ParseColor (DataSource.Model.Project.GetHexColor ());
                     ProjectTextView.SetTextColor (color);
@@ -340,16 +332,18 @@ namespace Toggl.Joey.UI.Adapters
                     shape.SetColor (color);
                 }
 
+                if (DataSource.Model.Task != null) {
+                    TaskTextView.Text = String.Format ("{0} • ", DataSource.Model.Task.Name);
+                    TaskTextView.Visibility = ViewStates.Visible;
+                } else {
+                    TaskTextView.Text = String.Empty;
+                    TaskTextView.Visibility = ViewStates.Gone;
+                }
+
                 if (String.IsNullOrWhiteSpace (DataSource.Description)) {
-                    if (DataSource.Model.Task == null) {
-                        DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
-                        DescriptionTextView.Visibility = ViewStates.Visible;
-                    } else {
-                        DescriptionTextView.Visibility = ViewStates.Gone;
-                    }
+                    DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                 } else {
                     DescriptionTextView.Text = DataSource.Description;
-                    DescriptionTextView.Visibility = ViewStates.Visible;
                 }
 
                 BillableView.Visibility = DataSource.Model.IsBillable ? ViewStates.Visible : ViewStates.Gone;

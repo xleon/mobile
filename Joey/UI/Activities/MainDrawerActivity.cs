@@ -244,7 +244,6 @@ namespace Toggl.Joey.UI.Activities
                     id = DrawerListAdapter.ReportsYearPageId;
                 }
                 OpenFragment (reportFragment.Value);
-                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
             } else if (id == DrawerListAdapter.ReportsWeekPageId) {
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 SupportActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);

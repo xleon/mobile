@@ -80,8 +80,8 @@ namespace Toggl.Joey.UI.Adapters
                 vh.ColorView.SetBackgroundColor (Color.Transparent);
             }
 
-            var stopTime = (entry.StopTime != null) ? " – " + entry.StopTime.Value.ToShortTimeString () : "";
-            vh.PeriodTextView.Text = entry.StartTime.ToShortTimeString () + stopTime;
+            var stopTime = (entry.StopTime != null) ? " – " + entry.StopTime.Value.ToLocalTime().ToShortTimeString () : "";
+            vh.PeriodTextView.Text = entry.StartTime.ToLocalTime().ToShortTimeString () + stopTime;
             vh.DurationTextView.Text = GetDuration (entry, Time.UtcNow).ToString (@"hh\:mm\:ss");
         }
 

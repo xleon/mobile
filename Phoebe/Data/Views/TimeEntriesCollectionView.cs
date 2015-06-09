@@ -36,7 +36,7 @@ namespace Toggl.Phoebe.Data.Views
         private int lastNumberOfItems;
 
         // for Undo/Restore operations
-        private TimeEntryData lastRemovedItem;
+        private TimeEntryHolder lastRemovedItem;
 
         public TimeEntriesCollectionView ()
         {
@@ -64,7 +64,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             // Avoid a removed item (Undoable)
             // been added again.
-            if (lastRemovedItem != null && lastRemovedItem.Matches (entry)) {
+            if (lastRemovedItem != null && lastRemovedItem.TimeEntryData.Matches (entry)) {
                 return;
             }
         }
@@ -161,17 +161,17 @@ namespace Toggl.Phoebe.Data.Views
         #endregion
 
         #region TimeEntry operations
-        public async void ContinueTimeEntry (TimeEntryData timeEntryData)
+        public async void ContinueTimeEntry (TimeEntryHolder timeEntryHolder)
         {
-            await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryData);
+            await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.TimeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
         }
 
-        public async void StopTimeEntry (TimeEntryData timeEntryData)
+        public async void StopTimeEntry (TimeEntryHolder timeEntryHolder)
         {
-            await TimeEntryModel.StopAsync (timeEntryData);
+            await TimeEntryModel.StopAsync (timeEntryHolder.TimeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
@@ -182,20 +182,20 @@ namespace Toggl.Phoebe.Data.Views
         public void RestoreItemFromUndo ()
         {
             if (lastRemovedItem != null) {
-                AddOrUpdateEntry (lastRemovedItem);
+                AddTimeEntryHolder (lastRemovedItem);
                 lastRemovedItem = null;
             }
         }
 
-        public async void RemoveItemWithUndo (TimeEntryData data)
+        public async void RemoveItemWithUndo (TimeEntryHolder holder)
         {
             // Remove previous if exists
             RemoveItemPermanently (lastRemovedItem);
-            if (data.State == TimeEntryState.Running) {
-                await TimeEntryModel.StopAsync (data);
+            if (holder.State == TimeEntryState.Running) {
+                await TimeEntryModel.StopAsync (holder.TimeEntryData);
             }
-            lastRemovedItem = data;
-            RemoveEntry (data);
+            lastRemovedItem = holder;
+            RemoveTimeEntryHolder (holder);
         }
 
         public void ConfirmItemRemove ()
@@ -203,11 +203,26 @@ namespace Toggl.Phoebe.Data.Views
             RemoveItemPermanently (lastRemovedItem);
         }
 
-        private async void RemoveItemPermanently (TimeEntryData itemToRemove)
+        private async void RemoveItemPermanently (TimeEntryHolder holder)
         {
-            if (itemToRemove != null) {
-                await TimeEntryModel.DeleteAsync (itemToRemove);
+            if (holder == null) {
+                return;
             }
+
+            if (holder.TimeEntryDataList.Count > 1) {
+                var timeEntryGroup = new TimeEntryGroup (holder.TimeEntryDataList);
+                await timeEntryGroup.DeleteAsync ();
+            } else {
+                await TimeEntryModel.DeleteAsync (holder.TimeEntryDataList.First ());
+            }
+        }
+
+        protected virtual void AddTimeEntryHolder (TimeEntryHolder holder)
+        {
+        }
+
+        protected virtual void RemoveTimeEntryHolder (TimeEntryHolder holder)
+        {
         }
         #endregion
 

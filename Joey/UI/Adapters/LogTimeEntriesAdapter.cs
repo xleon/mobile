@@ -13,7 +13,6 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
@@ -90,7 +89,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private void OnContinueTimeEntry (TimeEntryData timeEntryData)
+        private void OnContinueTimeEntry (TimeEntryHolder timeEntryHolder)
         {
             // Don't continue a new TimeEntry before
             // 3 seconds has passed.
@@ -110,18 +109,18 @@ namespace Toggl.Joey.UI.Adapters
                     }
                 }
             }
-            modelView.ContinueTimeEntry (timeEntryData);
+            modelView.ContinueTimeEntry (timeEntryHolder);
         }
 
-        private void OnStopTimeEntry (TimeEntryData timeEntryData)
+        private void OnStopTimeEntry (TimeEntryHolder timeEntryHolder)
         {
-            modelView.StopTimeEntry (timeEntryData);
+            modelView.StopTimeEntry (timeEntryHolder);
         }
 
         public void RemoveItemWithUndo (int index)
         {
             var holder = (RecycledBindableViewHolder<TimeEntryHolder>)Owner.FindViewHolderForPosition (index);
-            modelView.RemoveItemWithUndo (holder.DataSource.TimeEntryData);
+            modelView.RemoveItemWithUndo (holder.DataSource);
         }
 
         public void RestoreItemFromUndo ()
@@ -307,12 +306,12 @@ namespace Toggl.Joey.UI.Adapters
                     }
 
                     if (DataSource.State == TimeEntryState.Running) {
-                        owner.OnStopTimeEntry (DataSource.TimeEntryData);
+                        owner.OnStopTimeEntry (DataSource);
                         ContinueImageButton.Pressed = true;
                         return false;
                     }
 
-                    owner.OnContinueTimeEntry (DataSource.TimeEntryData);
+                    owner.OnContinueTimeEntry (DataSource);
                     return false;
                 }
 

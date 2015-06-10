@@ -101,10 +101,10 @@ namespace Toggl.Joey.UI.Adapters
 
             // Trick on view to show a better
             // visual reaction to press Play btn
-            for (int i = 0; i < holderList.Count; i++) {
-                var holder = holderList [i] as TimeEntryListItemHolder;
+            foreach (var item in holderList) {
+                var holder = item as TimeEntryListItemHolder;
                 if (holder != null) {
-                    if (holder.DataSource.State == TimeEntryState.Running) {
+                    if (holder.DataSource.State == TimeEntryState.Running && holder.AdapterPosition != -1) {
                         holder.DataSource.TimeEntryData.State = TimeEntryState.Finished;
                         BindHolder (holder, holder.AdapterPosition);
                     }

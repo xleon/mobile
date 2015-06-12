@@ -61,6 +61,7 @@ namespace Toggl.Ross.ViewControllers
         private bool shouldRebindOnAppear;
         private UITableView autoCompletionTableView;
         private UIBarButtonItem autoCompletionDoneBarButtonItem;
+        private Stack<UIBarButtonItem> barButtonItemsStack = new Stack<UIBarButtonItem> ();
 
         public EditTimeEntryViewController (TimeEntryModel model)
         {
@@ -307,6 +308,11 @@ namespace Toggl.Ross.ViewControllers
             autoCompletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) => {
                 DescriptionSuggestionsMode = false;
             };
+
+            if (v.RightBarButtonItem != null) {
+                barButtonItemsStack.Push (v.RightBarButtonItem);
+            }
+
             v.SetRightBarButtonItem (autoCompletionDoneBarButtonItem, true);
         }
 
@@ -314,6 +320,9 @@ namespace Toggl.Ross.ViewControllers
         {
             if (v.RightBarButtonItem == autoCompletionDoneBarButtonItem) {
                 v.SetRightBarButtonItem (null, true);
+                if (barButtonItemsStack.Count > 0) {
+                    v.SetRightBarButtonItem (barButtonItemsStack.Pop (), true);
+                }
                 autoCompletionDoneBarButtonItem = null;
             }
         }

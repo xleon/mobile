@@ -16,6 +16,7 @@ namespace Toggl.Ross.ViewControllers
     {
         private LabelSwitchView askProjectView;
         private LabelSwitchView mobileTagView;
+        private LabelSwitchView groupedView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private bool isResuming;
 
@@ -42,34 +43,36 @@ namespace Toggl.Ross.ViewControllers
             View = new UIView ().Apply (Style.Screen);
 
             Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (askProjectView = new LabelSwitchView () {
-                TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.Settings.RowBackground).Apply (BindAskProjectView));
+            Add (askProjectView = new LabelSwitchView ().Apply (Style.Settings.RowBackground));
             askProjectView.Label.Apply (Style.Settings.SettingLabel);
             askProjectView.Label.Text = "SettingsAskProject".Tr ();
             askProjectView.Switch.ValueChanged += OnAskProjectViewValueChanged;
 
             Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (new UILabel () {
-                Text = "SettingsAskProjectDesc".Tr (),
-                TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.Settings.DescriptionLabel));
+            Add (new UILabel () { Text = "SettingsAskProjectDesc".Tr () } .Apply (Style.Settings.DescriptionLabel));
 
             Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (mobileTagView = new LabelSwitchView () {
-                TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.Settings.RowBackground).Apply (BindMobileTagView));
+            Add (mobileTagView = new LabelSwitchView ().Apply (Style.Settings.RowBackground));
             mobileTagView.Label.Apply (Style.Settings.SettingLabel);
             mobileTagView.Label.Text = "SettingsMobileTag".Tr ();
             mobileTagView.Switch.ValueChanged += OnMobileTagViewValueChanged;
 
             Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (new UILabel () {
-                Text = "SettingsMobileTagDesc".Tr (),
-                TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.Settings.DescriptionLabel));
+            Add (new UILabel () { Text = "SettingsMobileTagDesc".Tr () } .Apply (Style.Settings.DescriptionLabel));
 
+            Add (new SeparatorView ().Apply (Style.Settings.Separator));
+            Add (groupedView = new LabelSwitchView().Apply (Style.Settings.RowBackground));
+            groupedView.Label.Apply (Style.Settings.SettingLabel);
+            groupedView.Label.Text = "SettingsGrouped".Tr ();
+            groupedView.Switch.ValueChanged += OnGroupedViewValueChanged;
+
+            Add (new SeparatorView ().Apply (Style.Settings.Separator));
+            Add (new UILabel () { Text = "SettingsGroupedDesc".Tr () } .Apply (Style.Settings.DescriptionLabel));
+
+            View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
             View.AddConstraints (MakeConstraints (View));
+
+            Rebind ();
         }
 
         private void BindAskProjectView (LabelSwitchView v)
@@ -82,10 +85,16 @@ namespace Toggl.Ross.ViewControllers
             v.Switch.On = SettingsStore.UseDefaultTag;
         }
 
+        private void BindGroupedView (LabelSwitchView v)
+        {
+            v.Switch.On = SettingsStore.GroupedTimeEntries;
+        }
+
         private void Rebind ()
         {
             askProjectView.Apply (BindAskProjectView);
             mobileTagView.Apply (BindMobileTagView);
+            groupedView.Apply (BindGroupedView);
         }
 
         private void OnAskProjectViewValueChanged (object sender, EventArgs e)
@@ -96,6 +105,11 @@ namespace Toggl.Ross.ViewControllers
         private void OnMobileTagViewValueChanged (object sender, EventArgs e)
         {
             SettingsStore.UseDefaultTag = mobileTagView.Switch.On;
+        }
+
+        private void OnGroupedViewValueChanged (object sender, EventArgs e)
+        {
+            SettingsStore.GroupedTimeEntries = groupedView.Switch.On;
         }
 
         public override void ViewWillAppear (bool animated)

@@ -17,6 +17,7 @@ namespace Toggl.Ross.Data
         private const string PhoebeLastAppVersionKey = "phoebeLastAppVersion";
         private const string PhoebeExperimentIdKey = "phoebeExperimentId";
         private const string PhoebeLastReportZoomKey = "lastReportZoomKey";
+        private const string PhoebeGroupedEntriesKey = "groupedEntriesKey";
         private const string RossInstallIdKey = "rossInstallId";
         private const string RossPreferredStartViewKey = "rossPreferredStartView";
         private const string RossChooseProjectForNewKey = "rossChooseProjectForNew";
@@ -160,6 +161,16 @@ namespace Toggl.Ross.Data
                 SetInt (PhoebeUseDefaultTagKey, value ? 1 : 0);
                 OnSettingChanged (PropertyUseDefaultTag);
                 ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.DefaultMobileTag);
+            }
+        }
+
+        public bool GroupedTimeEntries
+        {
+            get { return (GetInt (PhoebeGroupedEntriesKey) ?? 1) == 1; }
+            set {
+                SetInt (PhoebeGroupedEntriesKey, value ? 1 : 0);
+                OnSettingChanged (PhoebeGroupedEntriesKey);
+                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.GroupedTimeEntries);
             }
         }
 

@@ -73,7 +73,7 @@
       <HintPath>..\packages\Xamarin.Android.Support.v7.RecyclerView.22.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v7.RecyclerView.dll</HintPath>
     </Reference>
     <Reference Include="Xamarin.Insights">
-      <HintPath>..\packages\Xamarin.Insights.1.10.3.111\lib\MonoAndroid10\Xamarin.Insights.dll</HintPath>
+      <HintPath>..\packages\Xamarin.Insights.1.10.4.112\lib\MonoAndroid10\Xamarin.Insights.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -142,7 +142,6 @@
     <Compile Include="Widget\RemotesViewsFactory.cs" />
     <Compile Include="Widget\WidgetStartStopService.cs" />
     <Compile Include="Logging\LogClient.cs" />
-    <Compile Include="UI\Adapters\GroupedTimeEntriesAdapter.cs" />
     <Compile Include="UI\Views\NotificationImageView.cs" />
     <Compile Include="UI\Activities\NewProjectActivity.cs" />
     <Compile Include="UI\Fragments\NewProjectFragment.cs" />

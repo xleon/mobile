@@ -26,7 +26,6 @@ namespace Toggl.Joey.UI.Fragments
         private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private LogTimeEntriesAdapter logAdapter;
-        private GroupedTimeEntriesAdapter groupedAdapter;
         private readonly Handler handler = new Handler ();
         private FrameLayout undoBar;
         private Button undoButton;
@@ -89,24 +88,11 @@ namespace Toggl.Joey.UI.Fragments
             if (recyclerView.GetAdapter() == null) {
                 var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
                 if (isGrouped) {
-                    if (logAdapter != null) {
-                        logAdapter.Dispose ();
-                        logAdapter = null;
-                    }
-                    if (groupedAdapter == null) {
-                        groupedAdapter = new GroupedTimeEntriesAdapter (recyclerView, new GroupedTimeEntriesView());
-                    }
-                    recyclerView.SetAdapter (groupedAdapter);
+                    logAdapter = new LogTimeEntriesAdapter (recyclerView, new GroupedTimeEntriesView());
                 } else {
-                    if (groupedAdapter != null) {
-                        groupedAdapter.Dispose ();
-                        groupedAdapter = null;
-                    }
-                    if (logAdapter == null) {
-                        logAdapter = new LogTimeEntriesAdapter (recyclerView, new LogTimeEntriesView());
-                    }
-                    recyclerView.SetAdapter (logAdapter);
+                    logAdapter = new LogTimeEntriesAdapter (recyclerView, new LogTimeEntriesView());
                 }
+                recyclerView.SetAdapter (logAdapter);
             }
         }
 
@@ -123,11 +109,6 @@ namespace Toggl.Joey.UI.Fragments
             if (logAdapter != null) {
                 logAdapter.Dispose ();
                 logAdapter = null;
-            }
-
-            if (groupedAdapter != null) {
-                groupedAdapter.Dispose ();
-                groupedAdapter = null;
             }
 
             base.OnDestroyView ();
@@ -150,8 +131,7 @@ namespace Toggl.Joey.UI.Fragments
         public bool CanDismiss (RecyclerView view, int position)
         {
             var adapter = view.GetAdapter ();
-            return (adapter.GetItemViewType (position) == GroupedTimeEntriesAdapter.ViewTypeContent ||
-                    adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent);
+            return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
         }
 
         public void OnDismiss (RecyclerView view, int position)
@@ -169,15 +149,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
 
-            if (parent.GetAdapter () is LogTimeEntriesAdapter) {
-                string id = ((LogTimeEntriesView.TimeEntryHolder)logAdapter.GetEntry (position)).Id.ToString();
-                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {id});
-                intent.PutExtra (EditTimeEntryActivity.IsGrouped, false);
-            } else {
-                IList<string> guids = ((TimeEntryGroup)groupedAdapter.GetEntry (position)).TimeEntryGuids;
-                intent.PutExtra (EditTimeEntryActivity.IsGrouped, true);
-                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
-            }
+            IList<string> guids = ((TimeEntryHolder)logAdapter.GetEntry (position)).TimeEntryGuids;
+            intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+            intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
+
             StartActivity (intent);
         }
 

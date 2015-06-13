@@ -106,11 +106,19 @@ namespace Toggl.Phoebe.Data.Views
             return null;
         }
 
-        protected virtual async Task UpdateCollectionAsync (object data, NotifyCollectionChangedEventArgs args)
+        protected virtual async Task UpdateCollectionAsync (object data, NotifyCollectionChangedAction action, int newIndex, int oldIndex = -1, bool isRange = false)
         {
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
+
+            NotifyCollectionChangedEventArgs args;
+            if (isRange) {
+                args = CollectionEventBuilder.GetRangeEvent (action, newIndex, oldIndex);
+            } else {
+                args = CollectionEventBuilder.GetEvent (action, newIndex, oldIndex);
+            }
+
 
             // Update collection.
             if (args.Action == NotifyCollectionChangedAction.Add) {
@@ -283,7 +291,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             updateMode = UpdateMode.Immediate;
             if (Count > lastNumberOfItems) {
-                await UpdateCollectionAsync (null, CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastNumberOfItems, Count - lastNumberOfItems));
+                await UpdateCollectionAsync (null, NotifyCollectionChangedAction.Add, lastNumberOfItems, Count - lastNumberOfItems, true);
             }
         }
 

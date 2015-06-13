@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data.Views
                         // Remove entry from previous DateGroup: //TODO: remove dateGroup too?
                         grp.Remove (existingEntry);
                         groupIndex = GetDateGroupIndex (grp);
-                        await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
+                        await UpdateCollectionAsync (grp, NotifyCollectionChangedAction.Replace, groupIndex);
 
                         // Move entry to new DateGroup
                         grp = GetGroupFor (entry, out isNewGroup);
@@ -48,12 +48,12 @@ namespace Toggl.Phoebe.Data.Views
                         Sort ();
 
                         newIndex = GetTimeEntryIndex (entry);
-                        await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
+                        await UpdateCollectionAsync (entry, NotifyCollectionChangedAction.Move, newIndex, oldIndex);
 
                         // Update new container DateGroup
                         groupIndex = GetDateGroupIndex (grp);
                         groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-                        await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+                        await UpdateCollectionAsync (grp, groupAction, groupIndex);
 
                         return;
                     }
@@ -64,16 +64,16 @@ namespace Toggl.Phoebe.Data.Views
 
                     // Update group
                     groupIndex = GetDateGroupIndex (grp);
-                    await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
+                    await UpdateCollectionAsync (grp, NotifyCollectionChangedAction.Replace, groupIndex);
 
                     newIndex = GetTimeEntryIndex (entry);
                     if (newIndex != oldIndex) {
                         // Move if index is differente.
-                        await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
+                        await UpdateCollectionAsync (entry, NotifyCollectionChangedAction.Move, newIndex, oldIndex);
                     }
 
                     // Update in any condition
-                    await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
+                    await UpdateCollectionAsync (entry, NotifyCollectionChangedAction.Replace, newIndex);
 
                 } else {
                     // Update TimeEntry only
@@ -81,7 +81,7 @@ namespace Toggl.Phoebe.Data.Views
 
                     // Update entry
                     newIndex = GetTimeEntryIndex (entry);
-                    await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
+                    await UpdateCollectionAsync (entry, NotifyCollectionChangedAction.Replace, newIndex);
                 }
             } else {
 
@@ -93,11 +93,11 @@ namespace Toggl.Phoebe.Data.Views
                 // Update group
                 groupIndex = GetDateGroupIndex (grp);
                 groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-                await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+                await UpdateCollectionAsync (grp, groupAction, groupIndex);
 
                 // Add new TimeEntry
                 newIndex = GetTimeEntryIndex (entry);
-                await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newIndex, -1));
+                await UpdateCollectionAsync (entry, NotifyCollectionChangedAction.Add, newIndex);
             }
         }
 
@@ -119,8 +119,8 @@ namespace Toggl.Phoebe.Data.Views
                 }
 
                 // The order affects how the collection is updated.
-                await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
-                await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+                await UpdateCollectionAsync (entry, NotifyCollectionChangedAction.Remove, entryIndex);
+                await UpdateCollectionAsync (grp, groupAction, groupIndex);
             }
         }
 

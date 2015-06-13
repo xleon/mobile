@@ -20,8 +20,7 @@ namespace Toggl.Phoebe.Data.Views
     /// </summary>
     public class TimeEntriesCollectionView : ICollectionDataView<object>, IDisposable
     {
-        private static readonly string Tag = "TimeEntriesCollectionView";
-
+        protected string Tag = "TimeEntriesCollectionView";
         protected TimeEntryHolder LastRemovedItem;
         protected readonly List<object> ItemCollection = new List<object> ();
 
@@ -68,7 +67,7 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            if (isUpdatingCollection) {
+            if (isUpdatingCollection || IsLoading) {
                 updateMessageQueue.Enqueue (msg);
             } else {
                 ProcessUpdateMessage (msg);

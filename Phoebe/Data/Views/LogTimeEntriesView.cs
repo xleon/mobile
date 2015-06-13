@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data.Views
                         // Remove entry from previous DateGroup: //TODO: remove dateGroup too?
                         grp.Remove (existingEntry);
                         groupIndex = GetDateGroupIndex (grp);
-                        await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1)).ConfigureAwait (false);
+                        await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
 
                         // Move entry to new DateGroup
                         grp = GetGroupFor (entry, out isNewGroup);
@@ -48,12 +48,12 @@ namespace Toggl.Phoebe.Data.Views
                         Sort ();
 
                         newIndex = GetTimeEntryIndex (entry);
-                        await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex)).ConfigureAwait (false);
+                        await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
 
                         // Update new container DateGroup
                         groupIndex = GetDateGroupIndex (grp);
                         groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-                        await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1)).ConfigureAwait (false);
+                        await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
 
                         return;
                     }
@@ -64,16 +64,16 @@ namespace Toggl.Phoebe.Data.Views
 
                     // Update group
                     groupIndex = GetDateGroupIndex (grp);
-                    await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1)).ConfigureAwait (false);
+                    await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
 
                     newIndex = GetTimeEntryIndex (entry);
                     if (newIndex != oldIndex) {
                         // Move if index is differente.
-                        await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex)).ConfigureAwait (false);
+                        await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
                     }
 
                     // Update in any condition
-                    await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1)).ConfigureAwait (false);
+                    await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
 
                 } else {
                     // Update TimeEntry only
@@ -81,7 +81,7 @@ namespace Toggl.Phoebe.Data.Views
 
                     // Update entry
                     newIndex = GetTimeEntryIndex (entry);
-                    await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1)).ConfigureAwait (false);
+                    await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
                 }
             } else {
 
@@ -93,11 +93,11 @@ namespace Toggl.Phoebe.Data.Views
                 // Update group
                 groupIndex = GetDateGroupIndex (grp);
                 groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-                await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1)).ConfigureAwait (false);
+                await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
 
                 // Add new TimeEntry
                 newIndex = GetTimeEntryIndex (entry);
-                await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newIndex, -1)).ConfigureAwait (false);
+                await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newIndex, -1));
             }
         }
 
@@ -119,20 +119,25 @@ namespace Toggl.Phoebe.Data.Views
                 }
 
                 // The order affects how the collection is updated.
-                await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1)).ConfigureAwait (false);
-                await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1)).ConfigureAwait (false);
+                await UpdateCollectionAsync (entry, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryIndex, -1));
+                await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
             }
+        }
+
+        protected override IList<IDateGroup> DateGroups
+        {
+            get { return dateGroups.ToList<IDateGroup> (); }
         }
 
         #region Undo
         protected async override void AddTimeEntryHolder (TimeEntryHolder holder)
         {
-            await AddOrUpdateEntryAsync (holder.TimeEntryData).ConfigureAwait (false);
+            await AddOrUpdateEntryAsync (holder.TimeEntryData);
         }
 
         protected async override void RemoveTimeEntryHolder (TimeEntryHolder holder)
         {
-            await RemoveEntryAsync (holder.TimeEntryData).ConfigureAwait (false);
+            await RemoveEntryAsync (holder.TimeEntryData);
         }
         #endregion
 

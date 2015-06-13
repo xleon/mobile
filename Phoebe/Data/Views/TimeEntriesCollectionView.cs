@@ -84,9 +84,9 @@ namespace Toggl.Phoebe.Data.Views
                              || entry.State == TimeEntryState.New;
 
             if (isExcluded) {
-                await RemoveEntryAsync (entry).ConfigureAwait (false);
+                await RemoveEntryAsync (entry);
             } else {
-                await AddOrUpdateEntryAsync (new TimeEntryData (entry)).ConfigureAwait (false);
+                await AddOrUpdateEntryAsync (new TimeEntryData (entry));
             }
 
             if (updateMessageQueue.Count > 0) {
@@ -120,7 +120,7 @@ namespace Toggl.Phoebe.Data.Views
                     } else {
                         var timeEntryList = GetListOfTimeEntries (data);
                         var newHolder = new TimeEntryHolder (timeEntryList);
-                        await newHolder.LoadAsync ().ConfigureAwait (false);
+                        await newHolder.LoadAsync ();
                         ItemCollection.Insert (args.NewStartingIndex, newHolder);
                     }
                 } else {
@@ -142,7 +142,7 @@ namespace Toggl.Phoebe.Data.Views
                             holderTaskList.Add (timeEntryHolder.LoadAsync ());
                         }
                     }
-                    await Task.WhenAll (holderTaskList).ConfigureAwait (false);
+                    await Task.WhenAll (holderTaskList);
                 }
             }
 
@@ -162,7 +162,7 @@ namespace Toggl.Phoebe.Data.Views
                 } else {
                     var oldHolder = (TimeEntryHolder)ItemCollection.ElementAt (args.NewStartingIndex);
                     var timeEntryList = GetListOfTimeEntries (data);
-                    await oldHolder.UpdateAsync (timeEntryList).ConfigureAwait (false);
+                    await oldHolder.UpdateAsync (timeEntryList);
                     ItemCollection [args.NewStartingIndex] = oldHolder;
                 }
             }
@@ -191,7 +191,7 @@ namespace Toggl.Phoebe.Data.Views
         #region TimeEntry operations
         public async void ContinueTimeEntry (TimeEntryHolder timeEntryHolder)
         {
-            await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.TimeEntryData).ConfigureAwait (false);
+            await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.TimeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
@@ -199,7 +199,7 @@ namespace Toggl.Phoebe.Data.Views
 
         public async void StopTimeEntry (TimeEntryHolder timeEntryHolder)
         {
-            await TimeEntryModel.StopAsync (timeEntryHolder.TimeEntryData).ConfigureAwait (false);
+            await TimeEntryModel.StopAsync (timeEntryHolder.TimeEntryData);
 
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
@@ -220,7 +220,7 @@ namespace Toggl.Phoebe.Data.Views
             // Remove previous if exists
             RemoveItemPermanently (LastRemovedItem);
             if (holder.State == TimeEntryState.Running) {
-                await TimeEntryModel.StopAsync (holder.TimeEntryData).ConfigureAwait (false);
+                await TimeEntryModel.StopAsync (holder.TimeEntryData);
             }
             LastRemovedItem = holder;
             RemoveTimeEntryHolder (holder);
@@ -239,9 +239,9 @@ namespace Toggl.Phoebe.Data.Views
 
             if (holder.TimeEntryDataList.Count > 1) {
                 var timeEntryGroup = new TimeEntryGroup (holder.TimeEntryDataList);
-                await timeEntryGroup.DeleteAsync ().ConfigureAwait (false);
+                await timeEntryGroup.DeleteAsync ();
             } else {
-                await TimeEntryModel.DeleteAsync (holder.TimeEntryDataList.First ()).ConfigureAwait (false);
+                await TimeEntryModel.DeleteAsync (holder.TimeEntryDataList.First ());
             }
         }
 
@@ -283,7 +283,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             updateMode = UpdateMode.Immediate;
             if (Count > lastNumberOfItems) {
-                await UpdateCollectionAsync (null, CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastNumberOfItems, Count - lastNumberOfItems)).ConfigureAwait (false);
+                await UpdateCollectionAsync (null, CollectionEventBuilder.GetRangeEvent (NotifyCollectionChangedAction.Add, lastNumberOfItems, Count - lastNumberOfItems));
             }
         }
 
@@ -343,7 +343,7 @@ namespace Toggl.Phoebe.Data.Views
                     const int numDays = 5;
                     try {
                         var minStart = endTime;
-                        var jsonEntries = await client.ListTimeEntries (endTime, numDays).ConfigureAwait (false);
+                        var jsonEntries = await client.ListTimeEntries (endTime, numDays);
 
                         BeginUpdate ();
                         var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
@@ -351,7 +351,7 @@ namespace Toggl.Phoebe.Data.Views
 
                         // Add entries to list:
                         foreach (var entry in entries) {
-                            await AddOrUpdateEntryAsync (entry).ConfigureAwait (false);
+                            await AddOrUpdateEntryAsync (entry);
 
                             if (entry.StartTime < minStart) {
                                 minStart = entry.StartTime;
@@ -384,16 +384,16 @@ namespace Toggl.Phoebe.Data.Views
                                             && r.UserId == userId);
                     var entries = await baseQuery
                                   .QueryAsync (r => r.StartTime <= endTime
-                                               && r.StartTime > startTime).ConfigureAwait (false);
+                                               && r.StartTime > startTime);
 
                     BeginUpdate ();
                     foreach (var entry in entries) {
-                        await AddOrUpdateEntryAsync (entry).ConfigureAwait (false);
+                        await AddOrUpdateEntryAsync (entry);
                     }
 
                     if (!initialLoad) {
                         var count = await baseQuery
-                                    .CountAsync (r => r.StartTime <= startTime).ConfigureAwait (false);
+                                    .CountAsync (r => r.StartTime <= startTime);
                         HasMore = count > 0;
                     }
                 }

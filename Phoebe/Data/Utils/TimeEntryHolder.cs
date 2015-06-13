@@ -139,16 +139,16 @@ namespace Toggl.Phoebe.Data.Utils
             numberOfTags = 0;
 
             if (timeEntryData.ProjectId.HasValue) {
-                projectData = await GetProjectDataAsync (timeEntryData.ProjectId.Value).ConfigureAwait (false);
+                projectData = await GetProjectDataAsync (timeEntryData.ProjectId.Value);
                 if (projectData.ClientId.HasValue) {
-                    clientData = await GetClientDataAsync (projectData.ClientId.Value).ConfigureAwait (false);
+                    clientData = await GetClientDataAsync (projectData.ClientId.Value);
                 }
             }
 
             if (timeEntryData.TaskId.HasValue) {
-                taskData = await GetTaskDataAsync (timeEntryData.TaskId.Value).ConfigureAwait (false);
+                taskData = await GetTaskDataAsync (timeEntryData.TaskId.Value);
             }
-            numberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id).ConfigureAwait (false);
+            numberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id);
         }
 
         public async Task UpdateAsync (IEnumerable<TimeEntryData> timeEntryGroup)
@@ -157,10 +157,10 @@ namespace Toggl.Phoebe.Data.Utils
             timeEntryDataList.Clear ();
             timeEntryDataList.AddRange (timeEntryGroup);
 
-            projectData = await UpdateProject (timeEntryData, ProjectData).ConfigureAwait (false);
-            clientData = await UpdateClient (projectData, ClientData).ConfigureAwait (false);
-            taskData = await UpdateTask (timeEntryData, TaskData).ConfigureAwait (false);
-            numberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id).ConfigureAwait (false);
+            projectData = await UpdateProject (timeEntryData, ProjectData);
+            clientData = await UpdateClient (projectData, ClientData);
+            taskData = await UpdateTask (timeEntryData, TaskData);
+            numberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id);
         }
 
         private async Task<ProjectData> GetProjectDataAsync (Guid projectGuid)
@@ -202,11 +202,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
 
             if (oldProjectData.Id == Guid.Empty && newTimeEntry.ProjectId.HasValue) {
-                return await GetProjectDataAsync (newTimeEntry.ProjectId.Value).ConfigureAwait (false);
+                return await GetProjectDataAsync (newTimeEntry.ProjectId.Value);
             }
 
             if (newTimeEntry.ProjectId.Value != oldProjectData.Id) {
-                return await GetProjectDataAsync (newTimeEntry.ProjectId.Value).ConfigureAwait (false);
+                return await GetProjectDataAsync (newTimeEntry.ProjectId.Value);
             }
 
             return oldProjectData;
@@ -219,11 +219,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
 
             if (oldClientData == null && newProjectData.ClientId.HasValue) {
-                return await GetClientDataAsync (newProjectData.ClientId.Value).ConfigureAwait (false);
+                return await GetClientDataAsync (newProjectData.ClientId.Value);
             }
 
             if (newProjectData.ClientId.Value != oldClientData.Id) {
-                return await GetClientDataAsync (newProjectData.ClientId.Value).ConfigureAwait (false);
+                return await GetClientDataAsync (newProjectData.ClientId.Value);
             }
 
             return oldClientData;
@@ -236,11 +236,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
 
             if (oldTaskData == null && newTimeEntry.TaskId.HasValue) {
-                return await GetTaskDataAsync (newTimeEntry.TaskId.Value).ConfigureAwait (false);
+                return await GetTaskDataAsync (newTimeEntry.TaskId.Value);
             }
 
             if (newTimeEntry.TaskId.Value != oldTaskData.Id) {
-                return await GetTaskDataAsync (newTimeEntry.TaskId.Value).ConfigureAwait (false);
+                return await GetTaskDataAsync (newTimeEntry.TaskId.Value);
             }
 
             return oldTaskData;

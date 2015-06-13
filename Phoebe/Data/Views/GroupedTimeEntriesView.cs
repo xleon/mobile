@@ -9,12 +9,15 @@ using Toggl.Phoebe.Data.Utils;
 namespace Toggl.Phoebe.Data.Views
 {
     /// <summary>
-    /// This view combines IDataStore data and data from ITogglClient for time views. It tries to load data from
-    /// web, but always falls back to data from the local store.
     /// </summary>
     public class GroupedTimeEntriesView : TimeEntriesCollectionView
     {
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
+
+        public GroupedTimeEntriesView ()
+        {
+            Tag = "GroupedTimeEntriesView";
+        }
 
         protected async override Task AddOrUpdateEntryAsync (TimeEntryData entry)
         {
@@ -426,7 +429,6 @@ namespace Toggl.Phoebe.Data.Views
                     return dataObjects;
                 }
             }
-
 
             public List<TimeEntryGroup> TimeEntryGroupList
             {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 
@@ -14,140 +15,215 @@ namespace Toggl.Phoebe.Data.Views
     public class GroupedTimeEntriesView : TimeEntriesCollectionView
     {
         private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
-        private static readonly string Tag = "GroupedTimeEntriesView";
 
-        protected override void AddOrUpdateEntry (TimeEntryData entry)
+        protected async override Task AddOrUpdateEntryAsync (TimeEntryData entry)
         {
-            base.AddOrUpdateEntry (entry);
-
-            TimeEntryGroup entryGroup;
-            DateGroup dateGroup;
-            TimeEntryData existingEntry;
-            NotifyCollectionChangedAction entryAction;
-
-            bool isNewEntryGroup;
-            bool isNewDateGroup = false;
-            int newIndex;
-            int groupIndex;
-            int oldIndex = -1;
-
-            if (FindExistingEntry (entry, out dateGroup, out entryGroup, out existingEntry)) {
-                if (entry.StartTime != existingEntry.StartTime) {
-                    var date = entry.StartTime.ToLocalTime ().Date;
-                    oldIndex = GetEntryGroupIndex (entryGroup);
-
-                    // Move TimeEntryGroup to another DateGroup
-                    if (dateGroup.Date != date) {
-
-                        // Remove from containers.
-                        entryGroup.Remove (existingEntry);
-                        if (entryGroup.Count == 0) {
-                            entryGroup.Dispose ();
-                            dateGroup.Remove (entryGroup);
-                            DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, oldIndex, -1));
-                        } else {
-                            DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, oldIndex, -1));
-                        }
-
-                        // Update old group
-                        DispatchCollectionEvent (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (dateGroup), -1));
-
-                        dateGroup = GetDateGroupFor (entry, out isNewDateGroup);
-                        entryGroup = GetSuitableEntryGroupFor (dateGroup, entry, out isNewEntryGroup);
-
-                        // In case of new container group, entry is added at creation.
-                        if (!isNewEntryGroup) {
-                            entryGroup.Add (entry);
-                        }
-
-                        Sort ();
-
-                        entryAction = (isNewEntryGroup) ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-                    } else {
-                        entryGroup.Update (entry);
-                        dateGroup.Update (entryGroup);
-                        Sort ();
-                        entryAction = NotifyCollectionChangedAction.Replace;
-                    }
-                } else {
-                    entryGroup.Update (entry);
-                    dateGroup.Update (entryGroup);
-                    entryAction = NotifyCollectionChangedAction.Replace;
-                }
-            } else {
-                dateGroup = GetDateGroupFor (entry, out isNewDateGroup);
-                entryGroup = GetSuitableEntryGroupFor (dateGroup, entry, out isNewEntryGroup);
-
-                // In case of new container group, entry is added at creation.
-                if (!isNewEntryGroup) {
-                    oldIndex = GetEntryGroupIndex (entryGroup);
-                    entryGroup.Add (entry);
-                    entryAction = NotifyCollectionChangedAction.Replace;
-                } else {
-                    entryAction = NotifyCollectionChangedAction.Add;
-                }
-
-                Sort ();
+            // Avoid a removed item (Undoable)
+            // been added again.
+            if (LastRemovedItem != null && LastRemovedItem.TimeEntryData.Matches (entry)) {
+                return;
             }
 
-            // Update group.
-            groupIndex = GetDateGroupIndex (dateGroup);
-            var groupAction = isNewDateGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-            DispatchCollectionEvent (dateGroup, CollectionEventBuilder.GetEvent (groupAction, groupIndex, oldIndex));
+            TimeEntryGroup timeEntryGroup;
+            DateGroup dateGroup;
+            TimeEntryData existingTimeEntry;
 
-            // Updated entry.
-            newIndex = GetEntryGroupIndex (entryGroup);
-            if (entryAction == NotifyCollectionChangedAction.Replace && oldIndex != -1 && oldIndex != newIndex) {
-                DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newIndex, oldIndex));
-                DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newIndex, -1));
+            bool isNewTimeEntryGroup;
+            bool isNewDateGroup;
+            int newTimeEntryGroupIndex;
+            int groupIndex;
+            int oldTimeEntryGroupIndex;
+
+            var entryExists = FindExistingEntry (entry, out dateGroup, out timeEntryGroup, out existingTimeEntry);
+            bool entryBelongsToSameGroup = false;
+            if (entryExists) {
+                entryBelongsToSameGroup = timeEntryGroup.CanContain (entry);
+            }
+
+            if (entryBelongsToSameGroup) {
+                if (entry.StartTime != existingTimeEntry.StartTime) {
+
+                    var date = entry.StartTime.ToLocalTime ().Date;
+                    oldTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+
+                    // Move TimeEntryGroup to another DateGroup container.
+                    if (dateGroup.Date != date) {
+
+                        // Remove time entry from previous group.
+                        timeEntryGroup.Remove (existingTimeEntry);
+
+                        // Update or Delete old container Date group.
+                        if (timeEntryGroup.Count == 0) {
+                            timeEntryGroup.Dispose ();
+                            dateGroup.Remove (timeEntryGroup);
+                            await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, oldTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                        } else {
+                            oldTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+                            Sort ();
+                            newTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+
+                            // Move if needed
+                            if (newTimeEntryGroupIndex != oldTimeEntryGroupIndex) {
+                                await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newTimeEntryGroupIndex, oldTimeEntryGroupIndex)).ConfigureAwait (false);
+                            }
+                            await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                        }
+
+                        // Update or Delete old container Date group.
+                        if (dateGroup.TimeEntryGroupList.Count == 0) {
+                            await  UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, GetDateGroupIndex (dateGroup), -1)).ConfigureAwait (false);
+                            dateGroups.Remove (dateGroup);
+                        } else {
+                            await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (dateGroup), -1)).ConfigureAwait (false);
+                        }
+
+                        // Get or create containers.
+                        dateGroup = GetDateGroupFor (entry, out isNewDateGroup);
+                        timeEntryGroup = GetSuitableEntryGroupFor (dateGroup, entry, out isNewTimeEntryGroup);
+                        if (!isNewTimeEntryGroup) {
+                            // In case of new container group, entry is added at creation.
+                            timeEntryGroup.Add (entry);
+                        }
+                        // Get old time entry group index.
+                        oldTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+
+                        Sort ();
+
+                        // Get new index.
+                        newTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+                        var newDateGroupIndex = GetDateGroupIndex (dateGroup);
+
+                        // Add or Update corresponding header.
+                        if (isNewDateGroup) {
+                            await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newDateGroupIndex, -1)).ConfigureAwait (false);
+                        } else {
+                            await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newDateGroupIndex, -1)).ConfigureAwait (false);
+                        }
+
+                        // Updated or add time entry group.
+                        if (isNewTimeEntryGroup) {
+                            await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                        } else {
+                            // Move if needed
+                            if (newTimeEntryGroupIndex != oldTimeEntryGroupIndex) {
+                                await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newTimeEntryGroupIndex, oldTimeEntryGroupIndex)).ConfigureAwait (false);
+                            }
+                            await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                        }
+
+                        return;
+                    }
+
+                    // Update containers.
+                    timeEntryGroup.Update (entry);
+                    dateGroup.Update (timeEntryGroup);
+                    Sort ();
+
+                    // Update corresponding header.
+                    await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, GetDateGroupIndex (dateGroup), -1)).ConfigureAwait (false);
+
+                    newTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+                    if (newTimeEntryGroupIndex != oldTimeEntryGroupIndex) {
+                        // Move if needed. Update in any case.
+                        await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newTimeEntryGroupIndex, oldTimeEntryGroupIndex)).ConfigureAwait (false);
+                    }
+                    await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+
+                } else {
+                    // Update group container only.
+                    timeEntryGroup.Update (entry);
+                    newTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+                    await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                }
             } else {
-                DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (entryAction, newIndex, oldIndex));
+
+                // Remove from previous if exists.
+                if (entryExists) {
+                    oldTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+                    timeEntryGroup.Remove (existingTimeEntry);
+                    if (timeEntryGroup.Count == 0) {
+                        timeEntryGroup.Dispose ();
+                        dateGroup.Remove (timeEntryGroup);
+                        await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, oldTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                    }  else {
+                        Sort ();
+                        newTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+                        // Move if needed
+                        if (newTimeEntryGroupIndex != oldTimeEntryGroupIndex) {
+                            await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newTimeEntryGroupIndex, oldTimeEntryGroupIndex)).ConfigureAwait (false);
+                        }
+                        await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                    }
+                }
+
+                // Get or create containers.
+                dateGroup = GetDateGroupFor (entry, out isNewDateGroup);
+                timeEntryGroup = GetSuitableEntryGroupFor (dateGroup, entry, out isNewTimeEntryGroup);
+                oldTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+
+                if (!isNewTimeEntryGroup) {
+                    // In case of existing container group, we should add the entry.
+                    timeEntryGroup.Add (entry);
+                }
+                Sort ();
+
+                // Update group.
+                groupIndex = GetDateGroupIndex (dateGroup);
+                var groupAction = isNewDateGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
+                await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1)).ConfigureAwait (false);
+
+                // Updated or add time entry group.
+                newTimeEntryGroupIndex = GetEntryGroupIndex (timeEntryGroup);
+                if (isNewTimeEntryGroup) {
+                    await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                } else {
+                    // Move if needed
+                    if (newTimeEntryGroupIndex != oldTimeEntryGroupIndex) {
+                        await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, newTimeEntryGroupIndex, oldTimeEntryGroupIndex)).ConfigureAwait (false);
+                    }
+                    await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, newTimeEntryGroupIndex, -1)).ConfigureAwait (false);
+                }
             }
         }
 
-        protected override void RemoveEntry (TimeEntryData entry)
+        protected async override Task RemoveEntryAsync (TimeEntryData entry)
         {
-            base.RemoveEntry (entry);
-
             TimeEntryGroup entryGroup;
             DateGroup dateGroup;
             TimeEntryData existingEntry;
 
-            int groupIndex;
             int entryIndex;
             int oldIndex;
 
             if (FindExistingEntry (entry, out dateGroup, out entryGroup, out existingEntry)) {
-                groupIndex = GetDateGroupIndex (dateGroup);
                 oldIndex = GetEntryGroupIndex (entryGroup);
 
                 // Remove entry from group
                 entryGroup.Remove (existingEntry);
 
-                // If group is empty, remove it.
+                // Update or Delete old container Date group.
                 if (entryGroup.Count == 0) {
-                    dateGroup.Remove (entryGroup);
-                    DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, oldIndex, -1));
                     entryGroup.Dispose ();
-
-                    // If container DateGroup is empty, remove it too.
-                    if (dateGroup.TimeEntryGroupList.Count == 0) {
-                        dateGroups.Remove (dateGroup);
-                        DispatchCollectionEvent (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, groupIndex, -1));
-                    } else {
-                        DispatchCollectionEvent (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
-                    }
+                    dateGroup.Remove (entryGroup);
+                    await UpdateCollectionAsync (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, oldIndex, -1)).ConfigureAwait (false);
                 } else {
-                    // If no item is removed, just sort the list.
                     Sort ();
                     entryIndex = GetEntryGroupIndex (entryGroup);
-                    if (entryIndex != oldIndex) {
-                        DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, entryIndex, oldIndex));
-                    }
 
-                    // Update both items (header and item)
-                    DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, entryIndex, -1));
-                    DispatchCollectionEvent (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, groupIndex, -1));
+                    // Move if needed
+                    if (entryIndex != oldIndex) {
+                        await UpdateCollectionAsync (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Move, entryIndex, oldIndex)).ConfigureAwait (false);
+                    }
+                    await UpdateCollectionAsync (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, entryIndex, -1)).ConfigureAwait (false);
+                }
+
+                // Update or Delete old container Date group.
+                var dateGroupIndex = GetDateGroupIndex (dateGroup);
+                if (dateGroup.TimeEntryGroupList.Count == 0) {
+                    await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, dateGroupIndex, -1)).ConfigureAwait (false);
+                    dateGroups.Remove (dateGroup);
+                } else {
+                    await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, dateGroupIndex, -1)).ConfigureAwait (false);
                 }
             }
         }
@@ -158,7 +234,7 @@ namespace Toggl.Phoebe.Data.Views
         }
 
         #region Undo
-        protected override void AddTimeEntryHolder (TimeEntryHolder holder)
+        protected async override void AddTimeEntryHolder (TimeEntryHolder holder)
         {
             var entryGroup = new TimeEntryGroup (holder.TimeEntryDataList);
 
@@ -170,14 +246,14 @@ namespace Toggl.Phoebe.Data.Views
             // Update Date group.
             var groupIndex = GetDateGroupIndex (grp);
             var groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
-            DispatchCollectionEvent (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1));
+            await UpdateCollectionAsync (grp, CollectionEventBuilder.GetEvent (groupAction, groupIndex, -1)).ConfigureAwait (false);
 
             // Add time entry group.
             var newIndex = GetEntryGroupIndex (entryGroup);
-            DispatchCollectionEvent (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newIndex, -1));
+            await UpdateCollectionAsync (entryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Add, newIndex, -1)).ConfigureAwait (false);
         }
 
-        protected override void RemoveTimeEntryHolder (TimeEntryHolder holder)
+        protected async override void RemoveTimeEntryHolder (TimeEntryHolder holder)
         {
             DateGroup dateGroup;
             TimeEntryGroup timeEntryGroup;
@@ -191,14 +267,14 @@ namespace Toggl.Phoebe.Data.Views
                 dateGroup.Remove (timeEntryGroup);
 
                 // Notify removed entry group.
-                DispatchCollectionEvent (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryGroupIndex, -1));
+                await UpdateCollectionAsync (timeEntryGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, entryGroupIndex, -1)).ConfigureAwait (false);
 
                 // Notify or update Date group.
                 if (dateGroup.TimeEntryGroupList.Count == 0) {
                     dateGroups.Remove (dateGroup);
-                    DispatchCollectionEvent (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, dateGroupIndex, -1));
+                    await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Remove, dateGroupIndex, -1)).ConfigureAwait (false);
                 } else {
-                    DispatchCollectionEvent (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, dateGroupIndex, -1));
+                    await UpdateCollectionAsync (dateGroup, CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Replace, dateGroupIndex, -1)).ConfigureAwait (false);
                 }
             }
         }

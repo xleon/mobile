@@ -97,12 +97,17 @@ namespace Toggl.Joey.UI.Utils
                     downX = motionEvent.RawX;
                     downY = motionEvent.RawY;
                     downPosition = recyclerView.GetChildPosition (downView);
-                    if (callbacks.CanDismiss (recyclerView, downPosition)) {
-                        velocityTracker = VelocityTracker.Obtain ();
-                        velocityTracker.AddMovement (motionEvent);
+                    if (downPosition != -1) {
+                        if (callbacks.CanDismiss (recyclerView, downPosition)) {
+                            velocityTracker = VelocityTracker.Obtain ();
+                            velocityTracker.AddMovement (motionEvent);
+                        } else {
+                            downView = null;
+                        }
                     } else {
                         downView = null;
                     }
+
                 }
                 return false;
 

@@ -368,7 +368,7 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     DescriptionTextView.Text = DataSource.Description;
                 }
-                DescriptionTextView.Text = DataSource.TimeEntryData.RemoteId.ToString ();
+
                 BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
 

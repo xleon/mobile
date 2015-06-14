@@ -171,6 +171,11 @@ namespace Toggl.Phoebe.Data.Views
                     var oldHolder = (TimeEntryHolder)ItemCollection.ElementAt (args.NewStartingIndex);
                     var timeEntryList = GetListOfTimeEntries (data);
                     await oldHolder.UpdateAsync (timeEntryList);
+                    // Weird case,
+                    // For further investigation
+                    if (args.NewStartingIndex > ItemCollection.Count) {
+                        return;
+                    }
                     ItemCollection [args.NewStartingIndex] = oldHolder;
                 }
             }

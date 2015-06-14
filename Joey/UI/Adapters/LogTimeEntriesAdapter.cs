@@ -103,9 +103,11 @@ namespace Toggl.Joey.UI.Adapters
             foreach (var item in holderList) {
                 var holder = item as TimeEntryListItemHolder;
                 if (holder != null) {
-                    if (holder.DataSource.State == TimeEntryState.Running && holder.AdapterPosition != -1) {
+                    if (holder.DataSource.State == TimeEntryState.Running) {
                         holder.DataSource.TimeEntryData.State = TimeEntryState.Finished;
-                        BindHolder (holder, holder.AdapterPosition);
+                        if (holder.AdapterPosition != -1) {
+                            BindHolder (holder, holder.AdapterPosition);
+                        }
                     }
                 }
             }
@@ -366,7 +368,7 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     DescriptionTextView.Text = DataSource.Description;
                 }
-
+                DescriptionTextView.Text = DataSource.TimeEntryData.RemoteId.ToString ();
                 BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
 

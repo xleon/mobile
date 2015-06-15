@@ -31,6 +31,9 @@ namespace Toggl.Joey.UI.Activities
             TimeEntryData timeEntry = null;
             if (timeEntryList.Count > 0) {
                 timeEntry = timeEntryList[0];
+            } else {
+                OnBackPressed ();
+                return;
             }
 
             var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);

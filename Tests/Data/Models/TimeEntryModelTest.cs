@@ -559,7 +559,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void TestStaticContinueDurationOtherDay ()
         {
             RunAsync (async delegate {
-                var parent = new TimeEntryModel () {
+                var parent = new TimeEntryModel {
                     User = user,
                     StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
                     StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
@@ -582,7 +582,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
             RunAsync (async delegate {
                 var startTime = Time.Now.Date.AddHours (1);
                 var stopTime = startTime + TimeSpan.FromHours (2);
-                var parent = new TimeEntryModel () {
+                var parent = new TimeEntryModel {
                     User = user,
                     StartTime = startTime,
                     StopTime = stopTime,
@@ -591,9 +591,47 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 await parent.StoreAsync ();
 
                 var entry = await TimeEntryModel.ContinueTimeEntryDataAsync (parent.Data);
-                Assert.AreSame (parent.Data, entry);
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent.Data, entry);
+                Assert.AreEqual (parent.Data.Id, entry.Id);
                 Assert.IsNull (entry.StopTime);
                 Assert.AreEqual (TimeEntryState.Running, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestStaticSaving ()
+        {
+            RunAsync (async delegate {
+                var parent = new TimeEntryData {
+                    UserId = user.Id
+                };
+
+                var entry = await TimeEntryModel.SaveTimeEntryDataAsync (parent);
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent, entry);
+                Assert.AreNotEqual (parent.Id, entry.Id);
+                Assert.AreNotEqual (Guid.Empty, entry.Id, "Id should've been updated after save.");
+            });
+        }
+
+        [Test]
+        public void TestStaticStop ()
+        {
+            RunAsync (async delegate {
+                var parent = new TimeEntryData {
+                    UserId = user.Id
+                };
+                var model = new TimeEntryModel (parent);
+                await model.StartAsync ();
+
+                // Check if running.
+                Assert.AreEqual (TimeEntryState.Running, model.State);
+
+                var entry = await TimeEntryModel.StopAsync (model.Data);
+                Assert.NotNull (entry);
+                Assert.AreEqual (model.Data.Id, entry.Id);
+                Assert.AreEqual (TimeEntryState.Finished, entry.State);
             });
         }
     }

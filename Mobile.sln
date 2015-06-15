@@ -43,6 +43,7 @@ Global
 		{6DDC0688-0534-466A-9134-0E331AC0E998}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
 		{6DDC0688-0534-466A-9134-0E331AC0E998}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
 		{6DDC0688-0534-466A-9134-0E331AC0E998}.Debug|x86.ActiveCfg = Debug|iPhoneSimulator
+		{6DDC0688-0534-466A-9134-0E331AC0E998}.Debug|x86.Build.0 = Debug|iPhoneSimulator
 		{6DDC0688-0534-466A-9134-0E331AC0E998}.Release|iPhone.ActiveCfg = Release|iPhone
 		{6DDC0688-0534-466A-9134-0E331AC0E998}.Release|iPhone.Build.0 = Release|iPhone
 		{6DDC0688-0534-466A-9134-0E331AC0E998}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator
@@ -122,6 +123,7 @@ Global
 		{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
 		{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
 		{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}.Debug|x86.ActiveCfg = Debug|iPhoneSimulator
+		{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}.Debug|x86.Build.0 = Debug|iPhoneSimulator
 		{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}.Release|iPhone.ActiveCfg = Release|iPhone
 		{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}.Release|iPhone.Build.0 = Release|iPhone
 		{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator

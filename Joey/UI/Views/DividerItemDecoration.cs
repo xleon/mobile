@@ -11,12 +11,11 @@ namespace Toggl.Joey.UI.Views
     public class DividerItemDecoration : RecyclerView.ItemDecoration
     {
         private int[] Attrs = { Android.Resource.Attribute.ListDivider };
+        private Drawable divider;
+        private int orientation;
 
         public const int HorizontalList = LinearLayoutManager.Horizontal;
         public const int VerticalList = LinearLayoutManager.Vertical;
-
-        private Drawable divider;
-        private int orientation;
 
         public DividerItemDecoration (Context context, int orientation)
         {
@@ -44,15 +43,24 @@ namespace Toggl.Joey.UI.Views
         {
             var left = parent.PaddingLeft;
             var right = parent.PaddingRight;
+            RecyclerView.LayoutParams layoutParams = null;
+            View child = null;
 
             var childCount = parent.ChildCount;
             for (int i = 0; i < childCount; i++) {
-                var child = parent.GetChildAt (i);
-                var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams>();
+                child = parent.GetChildAt (i);
+                layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams>();
                 var top = child.Bottom + layoutParams.BottomMargin;
                 var bottom = top + divider.IntrinsicHeight;
                 divider.SetBounds (left, top, right, bottom);
                 divider.Draw (c);
+            }
+
+            if (child != null) {
+                child.Dispose ();
+            }
+            if (layoutParams != null) {
+                layoutParams.Dispose ();
             }
         }
 
@@ -60,15 +68,24 @@ namespace Toggl.Joey.UI.Views
         {
             var top = parent.PaddingTop;
             var bottom = parent.PaddingBottom;
+            RecyclerView.LayoutParams layoutParams = null;
+            View child = null;
 
             var childCount = parent.ChildCount;
             for (int i = 0; i < childCount; i++) {
-                var child = parent.GetChildAt (i);
-                var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams>();
+                child = parent.GetChildAt (i);
+                layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams>();
                 var left = child.Right + layoutParams.RightMargin;
                 var right = left + divider.IntrinsicHeight;
                 divider.SetBounds (left, top, right, bottom);
                 divider.Draw (c);
+            }
+
+            if (child != null) {
+                child.Dispose ();
+            }
+            if (layoutParams != null) {
+                layoutParams.Dispose ();
             }
         }
 

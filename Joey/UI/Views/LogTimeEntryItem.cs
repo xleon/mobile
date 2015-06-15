@@ -2,6 +2,7 @@
 using System.Drawing;
 using Android.Content;
 using Android.Graphics.Drawables;
+using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -41,6 +42,10 @@ namespace Toggl.Joey.UI.Views
                 backgroundView.SetBackgroundColor (color);
                 ReplaceDrawable (ref fadeDrawable, ref fadeWidth, MakeFadeDrawable ());
             }
+        }
+
+        public LogTimeEntryItem (IntPtr a, JniHandleOwnership b) : base (a, b)
+        {
         }
 
         public LogTimeEntryItem (Context context, IAttributeSet attrs) : base (context, attrs)

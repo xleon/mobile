@@ -22,6 +22,9 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : Fragment, SwipeDismissTouchListener.IDismissCallbacks, ItemTouchListener.IItemTouchListener
     {
+        private static readonly int UndbarVisibleTime = 6000;
+        private static readonly int UndbarScrollThreshold = 100;
+
         private RecyclerView recyclerView;
         private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
@@ -201,7 +204,7 @@ namespace Toggl.Joey.UI.Fragments
                 UndoBarVisible = true;
             }
             handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
-            handler.PostDelayed (RemoveItemAndHideUndoBar, 5000);
+            handler.PostDelayed (RemoveItemAndHideUndoBar, UndbarVisibleTime);
         }
 
         public void RemoveItemAndHideUndoBar ()
@@ -254,7 +257,7 @@ namespace Toggl.Joey.UI.Fragments
             public RecyclerViewScrollDetector (LogTimeEntriesListFragment owner)
             {
                 this.owner = owner;
-                ScrollThreshold = 10;
+                ScrollThreshold = UndbarScrollThreshold;
             }
 
             public int ScrollThreshold { get; set; }

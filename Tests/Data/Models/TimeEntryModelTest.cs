@@ -534,5 +534,105 @@ namespace Toggl.Phoebe.Tests.Data.Models
             Assert.AreEqual (new DateTime (2013, 10, 1, 10, 12, 0, DateTimeKind.Utc), entry.StartTime);
             Assert.AreEqual (new DateTime (2013, 10, 1, 11, 12, 0, DateTimeKind.Utc), entry.StopTime);
         }
+
+        [Test]
+        public void TestStaticContinueStartStop ()
+        {
+            RunAsync (async delegate {
+                var parent = new TimeEntryModel () {
+                    User = user,
+                    StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
+                    StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
+                };
+                await parent.StoreAsync ();
+
+                var entry = await TimeEntryModel.ContinueTimeEntryDataAsync (parent.Data);
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent.Data, entry);
+                Assert.AreNotEqual (parent.Data.Id, entry.Id);
+                Assert.IsNull (entry.StopTime);
+                Assert.AreEqual (TimeEntryState.Running, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestStaticContinueDurationOtherDay ()
+        {
+            RunAsync (async delegate {
+                var parent = new TimeEntryModel {
+                    User = user,
+                    StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
+                    StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
+                    DurationOnly = true,
+                };
+                await parent.StoreAsync ();
+
+                var entry = await TimeEntryModel.ContinueTimeEntryDataAsync (parent.Data);
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent.Data, entry);
+                Assert.AreNotEqual (parent.Data.Id, entry.Id);
+                Assert.IsNull (entry.StopTime);
+                Assert.AreEqual (TimeEntryState.Running, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestStaticContinueDurationSameDay ()
+        {
+            RunAsync (async delegate {
+                var startTime = Time.Now.Date.AddHours (1);
+                var stopTime = startTime + TimeSpan.FromHours (2);
+                var parent = new TimeEntryModel {
+                    User = user,
+                    StartTime = startTime,
+                    StopTime = stopTime,
+                    DurationOnly = true,
+                };
+                await parent.StoreAsync ();
+
+                var entry = await TimeEntryModel.ContinueTimeEntryDataAsync (parent.Data);
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent.Data, entry);
+                Assert.AreEqual (parent.Data.Id, entry.Id);
+                Assert.IsNull (entry.StopTime);
+                Assert.AreEqual (TimeEntryState.Running, entry.State);
+            });
+        }
+
+        [Test]
+        public void TestStaticSaving ()
+        {
+            RunAsync (async delegate {
+                var parent = new TimeEntryData {
+                    UserId = user.Id
+                };
+
+                var entry = await TimeEntryModel.SaveTimeEntryDataAsync (parent);
+                Assert.NotNull (entry);
+                Assert.AreNotSame (parent, entry);
+                Assert.AreNotEqual (parent.Id, entry.Id);
+                Assert.AreNotEqual (Guid.Empty, entry.Id, "Id should've been updated after save.");
+            });
+        }
+
+        [Test]
+        public void TestStaticStop ()
+        {
+            RunAsync (async delegate {
+                var parent = new TimeEntryData {
+                    UserId = user.Id
+                };
+                var model = new TimeEntryModel (parent);
+                await model.StartAsync ();
+
+                // Check if running.
+                Assert.AreEqual (TimeEntryState.Running, model.State);
+
+                var entry = await TimeEntryModel.StopAsync (model.Data);
+                Assert.NotNull (entry);
+                Assert.AreEqual (model.Data.Id, entry.Id);
+                Assert.AreEqual (TimeEntryState.Finished, entry.State);
+            });
+        }
     }
 }

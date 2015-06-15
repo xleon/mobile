@@ -254,7 +254,7 @@ namespace Toggl.Phoebe.Data.Views
                 var timeEntryGroup = new TimeEntryGroup (holder.TimeEntryDataList);
                 await timeEntryGroup.DeleteAsync ();
             } else {
-                await TimeEntryModel.DeleteAsync (holder.TimeEntryDataList.First ());
+                await TimeEntryModel.DeleteTimeEntryDataAsync (holder.TimeEntryDataList.First ());
             }
         }
 

@@ -109,8 +109,6 @@ namespace Toggl.Phoebe.Data.Models
             return String.IsNullOrEmpty (s) ? String.Empty : s;
         }
 
-        public IList<string> Ids { get { return new List<string> () { Id.ToString () }; } }
-
         public TimeEntryState State
         {
             get {
@@ -734,7 +732,7 @@ namespace Toggl.Phoebe.Data.Models
                         data.StartTime = Time.UtcNow - GetDuration (data, Time.UtcNow);
                         data.StopTime = null;
                     });
-                    return await SaveAsync (timeEntryData);
+                    return await SaveTimeEntryDataAsync (timeEntryData);
                 }
             }
 
@@ -784,17 +782,17 @@ namespace Toggl.Phoebe.Data.Models
                 data.StopTime = Time.UtcNow;
             });
 
-            return await SaveAsync (timeEntryData);
+            return await SaveTimeEntryDataAsync (timeEntryData);
         }
 
-        public static async Task<TimeEntryData> SaveAsync (TimeEntryData timeEntryData)
+        public static async Task<TimeEntryData> SaveTimeEntryDataAsync (TimeEntryData timeEntryData)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var newData = await dataStore.PutAsync (timeEntryData);
             return newData;
         }
 
-        public static async Task DeleteAsync (TimeEntryData data)
+        public static async Task DeleteTimeEntryDataAsync (TimeEntryData data)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 

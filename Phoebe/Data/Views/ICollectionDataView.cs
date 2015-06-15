@@ -4,7 +4,7 @@ using System.Collections.Specialized;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public interface ICollectionDataView<T> : INotifyCollectionChanged
+    public interface ICollectionDataView<T> : INotifyCollectionChanged, IDisposable
     {
         IEnumerable<T> Data { get; }
 

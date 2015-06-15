@@ -75,8 +75,6 @@ namespace Toggl.Phoebe.Data.Views
             } else if (msg.Data is ClientData) {
                 OnDataChange ((ClientData)msg.Data, msg.Action);
             }
-
-            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
         }
 
         private void OnDataChange (UserData data)
@@ -300,8 +298,6 @@ namespace Toggl.Phoebe.Data.Views
             return false;
         }
 
-        public event EventHandler Updated;
-
         private void OnUpdated ()
         {
             DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
@@ -341,7 +337,6 @@ namespace Toggl.Phoebe.Data.Views
                 IsLoading = true;
                 workspaceWrappers.Clear ();
                 clientDataObjects.Clear ();
-                OnUpdated ();
 
                 var workspacesTask = store.Table<WorkspaceData> ()
                                      .QueryAsync (r => r.DeletedAt == null);
@@ -381,7 +376,6 @@ namespace Toggl.Phoebe.Data.Views
                 }
             } finally {
                 IsLoading = false;
-                OnUpdated ();
                 DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
 
                 if (shouldSubscribe) {

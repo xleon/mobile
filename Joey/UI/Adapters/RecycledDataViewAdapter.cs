@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using Android.App;
 using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
@@ -18,7 +18,6 @@ namespace Toggl.Joey.UI.Adapters
         private readonly int LoadMoreOffset = 3;
         private CollectionCachingDataView<T> dataView;
         private int lastLoadingPosition;
-        private UpdateScheduler updateScheduler;
 
         protected RecyclerView Owner;
 
@@ -45,10 +44,6 @@ namespace Toggl.Joey.UI.Adapters
             this.dataView.OnIsLoadingChanged += OnLoading;
             this.dataView.OnHasMoreChanged += OnHasMore;
             Owner = owner;
-
-            updateScheduler = new UpdateScheduler (this);
-            updateScheduler.UpdateHandler = CollectionChanged;
-
             HasStableIds = false;
         }
 
@@ -101,7 +96,9 @@ namespace Toggl.Joey.UI.Adapters
             if (Handle == IntPtr.Zero) {
                 return;
             }
-            updateScheduler.AddUpdate (e);
+
+            // Run always on main UI thread.
+            Application.SynchronizationContext.Post (_ => CollectionChanged (e), null);
         }
 
         public virtual T GetEntry (int position)
@@ -190,60 +187,6 @@ namespace Toggl.Joey.UI.Adapters
                 SpinningImage.StartAnimation (spinningImageAnimation);
             }
         }
-
-        private class UpdateScheduler
-        {
-            private bool isStarted;
-            private RecycledDataViewAdapter<T> owner;
-            private readonly Handler handler = new Handler ();
-            private readonly List<NotifyCollectionChangedEventArgs> updateQueue = new List<NotifyCollectionChangedEventArgs>();
-
-            public UpdateScheduler (RecycledDataViewAdapter<T> owner)
-            {
-                this.owner = owner;
-            }
-
-            public void AddUpdate (NotifyCollectionChangedEventArgs eventInfo)
-            {
-                updateQueue.Add (eventInfo);
-                if (!isStarted) {
-                    isStarted = true;
-                    CheckQueue ();
-                }
-            }
-
-            public Action<NotifyCollectionChangedEventArgs> UpdateHandler;
-
-            private void RunUpdate (NotifyCollectionChangedEventArgs eventInfo)
-            {
-                try {
-                    UpdateHandler (eventInfo);
-                } catch (Exception ex) {
-                    updateQueue.Insert (0, eventInfo);
-                    var log = XPlatUtils.ServiceContainer.Resolve<Toggl.Phoebe.Logging.ILogger> ();
-                    log.Warning ("RecyclerViewAdapter", ex, "Adapter failed", eventInfo.Action.ToString ());
-                }
-            }
-
-            private void CheckQueue()
-            {
-                if (updateQueue.Count > 0) {
-                    if (owner.IsInLayout) {
-                        handler.RemoveCallbacks (CheckQueue);
-                        handler.PostDelayed (CheckQueue, 10);
-                        return;
-                    }
-
-                    var evt = updateQueue.First ();
-                    RunUpdate (evt);
-                    updateQueue.Remove (evt);
-                    CheckQueue ();
-
-                } else {
-                    isStarted = false;
-                }
-            }
-        }
     }
 
     public interface IUndoCapabilities
@@ -254,6 +197,4 @@ namespace Toggl.Joey.UI.Adapters
 
         void ConfirmItemRemove ();
     }
-
-
 }

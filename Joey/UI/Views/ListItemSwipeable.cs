@@ -1,6 +1,7 @@
 ﻿using System;
 using Android.Animation;
 using Android.Content;
+using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
@@ -29,6 +30,10 @@ namespace Toggl.Joey.UI.Views
         {
             ctx = context;
             ImplementDelete();
+        }
+
+        public ListItemSwipeable (IntPtr a, JniHandleOwnership b) : base (a, b)
+        {
         }
 
         public void OnScrollEvent (int x)

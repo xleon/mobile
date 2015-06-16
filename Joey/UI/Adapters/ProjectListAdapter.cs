@@ -74,11 +74,20 @@ namespace Toggl.Joey.UI.Adapters
 
         private void HandleTasksProjectItemClick (int position)
         {
+            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
+
+            if (proj.Tasks.Count == 0) {
+                var handler = HandleProjectSelection;
+                if (handler != null) {
+                    handler (proj);
+                }
+                return;
+            }
+
             if (TasksProjectItemClick != null) {
                 TasksProjectItemClick (this, position);
             }
 
-            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
             int collapsingCount;
             collectionView.ShowTaskForProject (proj, position, out collapsingCount);
             owner.ScrollToPosition (position - collapsingCount);
@@ -201,7 +210,7 @@ namespace Toggl.Joey.UI.Adapters
             public void OnClick (View v)
             {
                 if (tasksClickListener != null) {
-                    tasksClickListener (base.AdapterPosition);
+                    tasksClickListener (AdapterPosition);
                 }
             }
 
@@ -269,7 +278,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 model = null;
                 if (DataSource != null) {
-                    model = (TaskModel)DataSource;
+                    model = DataSource;
                 }
 
                 if (model == null) {

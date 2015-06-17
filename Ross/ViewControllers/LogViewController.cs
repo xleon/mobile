@@ -5,12 +5,14 @@ using CoreAnimation;
 using CoreFoundation;
 using CoreGraphics;
 using Foundation;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Net;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
@@ -73,11 +75,16 @@ namespace Toggl.Ross.ViewControllers
                     Message = "LogEmptyMessage".Tr (),
                 };
 
+                var headerView = new TableViewRefreshView ();
+
                 var source = new Source (this) {
                     EmptyView = emptyView,
+                    HeaderView = headerView
                 };
                 source.Attach ();
-                TableView.TableHeaderView = new TableViewHeaderView ();
+
+                RefreshControl = headerView;
+                headerView.AdaptToTableView (TableView);
             }
 
             public override void ViewDidLayoutSubviews ()
@@ -88,12 +95,14 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryData>
+        class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryData>, IDisposable
         {
             readonly static NSString EntryCellId = new NSString ("EntryCellId");
             readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
             readonly ContentController controller;
             readonly AllTimeEntriesView dataView;
+            private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+            public UIRefreshControl HeaderView { get; set; }
 
             public Source (ContentController controller) : this (controller, new AllTimeEntriesView ())
             {
@@ -106,6 +115,24 @@ namespace Toggl.Ross.ViewControllers
 
                 controller.TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
                 controller.TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+            }
+
+            public override void Attach ()
+            {
+                base.Attach ();
+
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+
+                if (HeaderView != null) {
+                    HeaderView.ValueChanged += (sender, e) => ServiceContainer.Resolve<ISyncManager> ().Run();
+                    dataView.Updated += (sender, e) => HeaderView.EndRefreshing ();
+                }
+            }
+
+            private void OnSyncFinished (SyncFinishedMessage msg)
+            {
+                HeaderView.EndRefreshing ();
             }
 
             protected override IEnumerable<AllTimeEntriesView.DateGroup> GetSections ()
@@ -183,6 +210,18 @@ namespace Toggl.Ross.ViewControllers
                 };
                 base.Update ();
                 CATransaction.Commit();
+            }
+
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (subscriptionSyncFinished != null) {
+                        var bus = ServiceContainer.Resolve<MessageBus> ();
+                        bus.Unsubscribe (subscriptionSyncFinished);
+                        subscriptionSyncFinished = null;
+                    }
+                }
+                base.Dispose (disposing);
             }
         }
 

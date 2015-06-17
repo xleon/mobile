@@ -325,6 +325,7 @@
     <Compile Include="FluentLayoutExtensions.cs" />
     <Compile Include="Views\SuggestionTableViewCell.cs" />
     <Compile Include="Data\WidgetUpdateService.cs" />
+    <Compile Include="Views\TableViewRefreshView.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

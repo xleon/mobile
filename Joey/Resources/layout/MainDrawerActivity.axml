@@ -4,12 +4,12 @@
     android:id="@+id/DrawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/windowBackground">
+    android:background="@color/window_background">
 <!-- The main content view -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/windowBackground">
+        android:background="@color/window_background">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -18,17 +18,17 @@
                 android:id="@+id/MainToolbar"
                 layout="@layout/MainToolbar" />
             <FrameLayout
-		        android:layout_width="match_parent"
-		        android:layout_height="match_parent">
-	        	<FrameLayout 
-	                android:id="@+id/ContentFrameLayout"
-	                android:layout_width="match_parent"
-	                android:layout_height="match_parent"/>
-	        	<View
-	                android:layout_width="match_parent"
-	                android:layout_height="@dimen/ToolbarDropShadowHeight"
-	                android:background="@drawable/DropShadowVertical" />
-	        </FrameLayout>
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <FrameLayout
+                    android:id="@+id/ContentFrameLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/ToolbarDropShadowHeight"
+                    android:background="@drawable/DropShadowVertical" />
+            </FrameLayout>
         </LinearLayout>
     </FrameLayout>
 <!-- The navigation drawer -->

@@ -77,7 +77,7 @@ namespace Toggl.Joey.UI.Utils
             View view = GetChildViewUnder (e);
             if (view == null) { return false; }
 
-            int position = recyclerView.GetChildPosition (view);
+            int position = recyclerView.GetChildLayoutPosition (view);
             if ( listener.CanClick (recyclerView, position)) {
                 listener.OnItemClick (recyclerView, view, position);
                 view.Pressed = false;
@@ -85,6 +85,10 @@ namespace Toggl.Joey.UI.Utils
                 return true;
             }
             return false;
+        }
+
+        public void OnRequestDisallowInterceptTouchEvent (bool p0)
+        {
         }
 
         private View GetChildViewUnder (MotionEvent e)

@@ -96,7 +96,7 @@ namespace Toggl.Joey.UI.Utils
                 if (downView != null) {
                     downX = motionEvent.RawX;
                     downY = motionEvent.RawY;
-                    downPosition = recyclerView.GetChildPosition (downView);
+                    downPosition = recyclerView.GetChildLayoutPosition (downView);
                     if (downPosition != -1) {
                         if (callbacks.CanDismiss (recyclerView, downPosition)) {
                             velocityTracker = VelocityTracker.Obtain ();
@@ -151,7 +151,6 @@ namespace Toggl.Joey.UI.Utils
                 if (Math.Abs (deltaX) > swipingSlop && Math.Abs (deltaY) < Math.Abs (deltaX) / 2) {
                     swiping = true;
                     slop = (deltaX > 0 ? swipingSlop : -swipingSlop);
-                    recyclerView.RequestDisallowInterceptTouchEvent (true);
                     MotionEvent cancelEvent = MotionEvent.Obtain (motionEvent);
                     cancelEvent.Action = MotionEventActions.Cancel;
 
@@ -190,6 +189,10 @@ namespace Toggl.Joey.UI.Utils
 
             downPosition = AdapterView.InvalidPosition;
             downView = null;
+        }
+
+        public void OnRequestDisallowInterceptTouchEvent (bool p0)
+        {
         }
 
         private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener

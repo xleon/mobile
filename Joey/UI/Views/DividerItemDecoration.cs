@@ -43,24 +43,15 @@ namespace Toggl.Joey.UI.Views
         {
             var left = parent.PaddingLeft;
             var right = parent.PaddingRight;
-            RecyclerView.LayoutParams layoutParams = null;
-            View child = null;
 
             var childCount = parent.ChildCount;
             for (int i = 0; i < childCount; i++) {
-                child = parent.GetChildAt (i);
-                layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams>();
-                var top = child.Bottom + layoutParams.BottomMargin;
-                var bottom = top + divider.IntrinsicHeight;
-                divider.SetBounds (left, top, right, bottom);
-                divider.Draw (c);
-            }
-
-            if (child != null) {
-                child.Dispose ();
-            }
-            if (layoutParams != null) {
-                layoutParams.Dispose ();
+                using (View child = parent.GetChildAt (i)) {
+                    var top = child.Bottom;
+                    var bottom = top + divider.IntrinsicHeight;
+                    divider.SetBounds (left, top, right, bottom);
+                    divider.Draw (c);
+                }
             }
         }
 
@@ -89,7 +80,7 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public override void GetItemOffsets (Rect outRect, int itemPosition, RecyclerView parent)
+        public override void GetItemOffsets (Rect outRect, View view, RecyclerView parent, RecyclerView.State state)
         {
             if (orientation == VerticalList) {
                 outRect.Set (0, 0, 0, divider.IntrinsicHeight);
@@ -98,7 +89,7 @@ namespace Toggl.Joey.UI.Views
             }
         }
 
-        public override void OnDraw (Canvas c, RecyclerView parent)
+        public override void OnDraw (Canvas c, RecyclerView parent, RecyclerView.State state)
         {
             if (orientation == VerticalList) {
                 DrawVertical (c, parent);

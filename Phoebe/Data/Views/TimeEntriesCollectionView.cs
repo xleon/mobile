@@ -495,7 +495,7 @@ namespace Toggl.Phoebe.Data.Views
 
         #endregion
 
-        public interface IDateGroup
+        public interface IDateGroup : IDisposable
         {
             DateTime Date {  get; }
 

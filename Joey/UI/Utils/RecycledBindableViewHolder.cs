@@ -1,4 +1,5 @@
-﻿using Android.Support.V7.Widget;
+﻿using System;
+using Android.Support.V7.Widget;
 using Android.Views;
 
 namespace Toggl.Joey.UI.Utils
@@ -9,6 +10,10 @@ namespace Toggl.Joey.UI.Utils
     public abstract class RecycledBindableViewHolder<T> : RecyclerView.ViewHolder
     {
         public T DataSource { get; private set; }
+
+        protected RecycledBindableViewHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
 
         protected RecycledBindableViewHolder (View root) : base (root)
         {

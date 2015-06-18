@@ -47,6 +47,12 @@
     <Reference Include="Bugsnag.iOS">
       <HintPath>..\packages\Toggl.Bugsnag.1.0.1\lib\Xamarin.iOS10\Bugsnag.iOS.dll</HintPath>
     </Reference>
+    <Reference Include="Xamarin.Insights">
+      <HintPath>..\packages\Xamarin.Insights.1.10.3.111\lib\Xamarin.iOS10\Xamarin.Insights.dll</HintPath>
+    </Reference>
+    <Reference Include="PLCrashReporterUnifiedBinding">
+      <HintPath>..\packages\Xamarin.Insights.1.10.3.111\lib\Xamarin.iOS10\PLCrashReporterUnifiedBinding.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Contrib\sqlite-net\src\SQLite.cs">

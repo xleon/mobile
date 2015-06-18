@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Bugsnag;
 using Xamarin;
-using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Logging;
 
 namespace Toggl.Ross.Logging
 {

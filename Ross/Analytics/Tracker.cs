@@ -18,12 +18,6 @@ namespace Toggl.Ross.Analytics
             GAI.SharedInstance.DryRun = true;
             #endif
 
-            #if DEBUG
-            Insights.Initialize (Insights.DebugModeKey);
-            #else
-            Insights.Initialize (Build.XamInsightsApiKey);
-            #endif
-
             tracker = GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId);
         }
 

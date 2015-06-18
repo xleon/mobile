@@ -1,11 +1,8 @@
 ﻿using System;
 using Android.Content;
 using Android.OS;
-using Android.Views;
-using Toggl.Joey.Logging;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Activity = Android.Support.V7.App.AppCompatActivity;

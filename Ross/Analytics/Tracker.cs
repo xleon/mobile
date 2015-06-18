@@ -21,7 +21,7 @@ namespace Toggl.Ross.Analytics
             #if DEBUG
             Insights.Initialize (Insights.DebugModeKey);
             #else
-            Insights.Initialize (XamInsightsApiKey);
+            Insights.Initialize (Build.XamInsightsApiKey);
             #endif
 
             tracker = GAI.SharedInstance.GetTracker (Build.GoogleAnalyticsId);

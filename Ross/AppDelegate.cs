@@ -124,15 +124,9 @@ namespace Toggl.Ross
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));
             ServiceContainer.Register<IBugsnagClient> (delegate {
-                return new BugsnagClient (Build.BugsnagApiKey) {
+                return new LogClient (this, Build.XamInsightsApiKey, Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
-                    NotifyReleaseStages = new List<string> () { "production" },
-                    #if DEBUG
-                    ReleaseStage = "development",
-                    #else
-                    ReleaseStage = "production",
-                    #endif
                 };
             });
             ServiceContainer.Register<ITracker> (() => new Tracker());

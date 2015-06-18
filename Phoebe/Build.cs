@@ -35,6 +35,8 @@ namespace Toggl.Phoebe
         public static readonly string AppIdentifier = "TogglRoss";
         public static readonly string BugsnagApiKey = "";
         public static readonly string GoogleOAuthClientId = "";
+        public static readonly string XamInsightsApiKey = "";
+
         #endif
         #endregion
     }

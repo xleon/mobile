@@ -2,7 +2,6 @@
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
-using Android.Runtime;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Toggl.Joey.UI.Utils;
@@ -53,23 +52,20 @@ namespace Toggl.Joey.UI.Views
                 ShadowAttribute shadowAttr = attributes [0] as ShadowAttribute;
 
                 if (ShouldDraw (child) && shadowAttr != null) {
-                    var m = shadowAttr.Modes;
-                    var layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams> ();
 
-                    var childTrueTop = child.Top + layoutParams.TopMargin;
-                    var childTrueBottom = child.Bottom + layoutParams.BottomMargin;
+                    var m = shadowAttr.Modes;
                     var left = parent.PaddingLeft;
                     var right = child.Right + child.PaddingRight;
 
                     if (m.HasFlag (top) && topShadowHeightInPixels > 0 && parent.GetChildAdapterPosition (child) != 0) {
-                        var shadowBottom = childTrueTop + topShadowHeightInPixels;
-                        shadow.SetBounds (left, childTrueTop, right, shadowBottom);
+                        var shadowBottom = child.Top + topShadowHeightInPixels;
+                        shadow.SetBounds (left, child.Top, right, shadowBottom);
                         shadow.Draw (c);
                     }
 
                     if (m.HasFlag (bottom) && bottomShadowHeightInPixels > 0) {
-                        var reverseShadowTop = childTrueBottom - bottomShadowHeightInPixels;
-                        reverseShadow.SetBounds (left, reverseShadowTop, right, childTrueBottom);
+                        var reverseShadowTop = child.Bottom - bottomShadowHeightInPixels;
+                        reverseShadow.SetBounds (left, reverseShadowTop, right, child.Bottom);
                         reverseShadow.Draw (c);
                     }
                 }

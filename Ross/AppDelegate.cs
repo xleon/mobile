@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Foundation;
 using Toggl.Phoebe;
@@ -13,6 +14,7 @@ using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
 using UIKit;
 using XPlatUtils;
+using Xamarin;
 
 namespace Toggl.Ross
 {
@@ -123,7 +125,13 @@ namespace Toggl.Ross
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));
             ServiceContainer.Register<ILoggerClient> (delegate {
-                return new LogClient (Build.XamInsightsApiKey, Build.BugsnagApiKey) {
+                return new LogClient (delegate {
+                    #if DEBUG
+                        Insights.Initialize (Insights.DebugModeKey);
+                    #else
+                        Insights.Initialize (Build.XamInsightsApiKey);
+                    #endif  
+                }) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };

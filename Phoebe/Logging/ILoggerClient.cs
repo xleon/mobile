@@ -49,17 +49,9 @@ namespace Toggl.Phoebe.Logging
 
     public interface ILoggerClient
     {
-        bool AutoNotify { get; set; }
+        string DeviceId { get; set; }
 
         string Context { get; set; }
-
-        string ReleaseStage { get; set; }
-
-        List<string> NotifyReleaseStages { get; set; }
-
-        List<string> Filters { get; set; }
-
-        List<Type> IgnoredExceptions { get; set; }
 
         List<string> ProjectNamespaces { get; set; }
 

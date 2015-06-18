@@ -1,33 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using Xamarin;
-using Android.Content;
 using Toggl.Phoebe.Logging;
 
 namespace Toggl.Phoebe.Logging
 {
     public class LogClient : ILoggerClient
     {
-        public LogClient (string xamApiKey, string bugsnagApiKey, bool enableMetrics = true, Context context = null)
+        public LogClient (Action platformInitAction)
         {
-            #if __IOS__
-                #if DEBUG
-                Insights.Initialize (Insights.DebugModeKey);
-                #else
-                Insights.Initialize (xamApiKey);
-                #endif
-            #endif
-
-            #if __ANDROID__
-                if (context == null) {
-                    throw new ArgumentNullException();
-                }
-                #if DEBUG
-                Insights.Initialize (Insights.DebugModeKey, context);
-                #else
-                Insights.Initialize (xamApiKeyt, contex);
-                #endif
-            #endif
+            if (platformInitAction != null) {
+                platformInitAction();
+            }
         }
 
         #region ILoggerClient implementation
@@ -66,21 +50,10 @@ namespace Toggl.Phoebe.Logging
                 Insights.Report (e, extraData, reportSeverity);
             }
         }
-
-
+            
         public string DeviceId { get; set; }
 
-        public bool AutoNotify { get; set; }
-
         public string Context { get; set; }
-
-        public string ReleaseStage { get; set; }
-
-        public List<string> NotifyReleaseStages { get; set; }
-
-        public List<string> Filters { get; set; }
-
-        public List<Type> IgnoredExceptions { get; set; }
 
         public List<string> ProjectNamespaces { get; set; }
             

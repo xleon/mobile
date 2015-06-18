@@ -14,6 +14,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Xamarin;
 using XPlatUtils;
 
 namespace Toggl.Joey
@@ -67,7 +68,13 @@ namespace Toggl.Joey
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
             ServiceContainer.Register<ILoggerClient> (delegate {
-                return new LogClient (Build.XamInsightsApiKey, Build.BugsnagApiKey, true, this) {
+                return new LogClient (delegate {
+                    #if DEBUG
+                        Insights.Initialize (Insights.DebugModeKey, this);
+                    #else
+                        Insights.Initialize(Build.XamInsightsApiKey, this);
+                    #endif
+                }) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };

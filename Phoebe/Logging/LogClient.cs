@@ -53,8 +53,6 @@ namespace Toggl.Phoebe.Logging
             
         public string DeviceId { get; set; }
 
-        public string Context { get; set; }
-
         public List<string> ProjectNamespaces { get; set; }
             
         #endregion

@@ -51,8 +51,6 @@ namespace Toggl.Phoebe.Logging
     {
         string DeviceId { get; set; }
 
-        string Context { get; set; }
-
         List<string> ProjectNamespaces { get; set; }
 
         void SetUser (string id, string email = null, string name = null);

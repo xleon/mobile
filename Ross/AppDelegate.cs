@@ -50,7 +50,7 @@ namespace Toggl.Ross
 
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
-            ServiceContainer.Resolve<IBugsnagClient> ();
+            ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<BugsnagUserManager> ();
             ServiceContainer.Resolve<ITracker> ();
 

@@ -20,7 +20,7 @@ namespace Toggl.Ross.Logging
             bugsnagClient = new BugsnagClient (bugsnagApiKey, enableMetrics);
         }
 
-        #region IBugsnagClient implementation
+        #region ILoggerClient implementation
 
         public void SetUser (string id, string email, string name)
         {

@@ -34,6 +34,13 @@ namespace Toggl.Joey.UI.Fragments
         private Button undoButton;
         private bool isUndoShowed;
 
+        // Recycler setup
+        private DividerItemDecoration dividerDecoration;
+        private ShadowItemDecoration shadowDecoration;
+        private ItemTouchListener itemTouchListener;
+        private SwipeDismissTouchListener swipeTouchListener;
+        private RecyclerViewScrollDetector scrollListener;
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
@@ -43,6 +50,7 @@ namespace Toggl.Joey.UI.Fragments
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
             emptyMessageView.Visibility = ViewStates.Gone;
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
+            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
 
             undoBar = view.FindViewById<FrameLayout> (Resource.Id.UndoBar);
             undoButton = view.FindViewById<Button> (Resource.Id.UndoButton);
@@ -54,18 +62,6 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
-            var linearLayout = new LinearLayoutManager (Activity);
-            var swipeTouchListener = new SwipeDismissTouchListener (recyclerView, this);
-            var itemTouchListener = new ItemTouchListener (recyclerView, this);
-
-            recyclerView.SetLayoutManager (linearLayout);
-            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
-            recyclerView.AddOnItemTouchListener (swipeTouchListener);
-            recyclerView.AddOnItemTouchListener (itemTouchListener);
-            recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));
-            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -96,6 +92,7 @@ namespace Toggl.Joey.UI.Fragments
                     logAdapter = new LogTimeEntriesAdapter (recyclerView, new LogTimeEntriesView());
                 }
                 recyclerView.SetAdapter (logAdapter);
+                SetupRecyclerView ();
             }
         }
 
@@ -107,14 +104,47 @@ namespace Toggl.Joey.UI.Fragments
                 subscriptionSettingChanged = null;
             }
 
-            recyclerView.SetAdapter (null);
-
-            if (logAdapter != null) {
-                logAdapter.Dispose ();
-                logAdapter = null;
-            }
+            ReleaseRecyclerView ();
 
             base.OnDestroyView ();
+        }
+
+        private void SetupRecyclerView ()
+        {
+            // Touch listeners.
+            //swipeTouchListener = new SwipeDismissTouchListener (recyclerView, this);
+            itemTouchListener = new ItemTouchListener (recyclerView, this);
+            //recyclerView.AddOnItemTouchListener (swipeTouchListener);
+            recyclerView.AddOnItemTouchListener (itemTouchListener);
+
+            // Decorations.
+            dividerDecoration = new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList);
+            shadowDecoration = new ShadowItemDecoration (Activity);
+            recyclerView.AddItemDecoration (dividerDecoration);
+            recyclerView.AddItemDecoration (shadowDecoration);
+
+            scrollListener = new RecyclerViewScrollDetector (this);
+            recyclerView.AddOnScrollListener (scrollListener);
+            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
+        }
+
+        private void ReleaseRecyclerView ()
+        {
+            recyclerView.RemoveOnScrollListener (scrollListener);
+            recyclerView.RemoveItemDecoration (shadowDecoration);
+            recyclerView.RemoveItemDecoration (dividerDecoration);
+            //recyclerView.RemoveOnItemTouchListener (swipeTouchListener);
+            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
+
+            recyclerView.GetAdapter ().Dispose ();
+            recyclerView.Dispose ();
+            logAdapter = null;
+
+            itemTouchListener.Dispose ();
+            //swipeTouchListener.Dispose ();
+            dividerDecoration.Dispose ();
+            shadowDecoration.Dispose ();
+            scrollListener.Dispose ();
         }
 
         private void OnSettingChanged (SettingChangedMessage msg)

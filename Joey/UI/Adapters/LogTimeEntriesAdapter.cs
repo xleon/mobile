@@ -5,7 +5,6 @@ using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Support.V7.Widget;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
@@ -23,7 +22,7 @@ namespace Toggl.Joey.UI.Adapters
     {
         public static readonly int ViewTypeLoaderPlaceholder = 0;
         public static readonly int ViewTypeContent = 1;
-        protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
+        public static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 2;
@@ -128,7 +127,7 @@ namespace Toggl.Joey.UI.Adapters
                 view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
                 holder = new HeaderListItemHolder (handler, view);
             } else {
-                view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
+                view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListItem, parent, false);
                 holder = new TimeEntryListItemHolder (handler, this, view);
             }
 

@@ -33,7 +33,7 @@ namespace Toggl.Phoebe
 
             RegisterJsonConverters ();
 
-            ServiceContainer.Register<BugsnagUserManager> ();
+            ServiceContainer.Register<LoggerUserManager> ();
         }
 
         private static void RegisterJsonConverters ()

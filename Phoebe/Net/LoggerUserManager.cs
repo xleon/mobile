@@ -5,9 +5,9 @@ using Toggl.Phoebe.Logging;
 
 namespace Toggl.Phoebe.Net
 {
-    public class BugsnagUserManager
+    public class LoggerUserManager
     {
-        public BugsnagUserManager ()
+        public LoggerUserManager ()
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             authManager.PropertyChanged += OnAuthPropertyChanged;

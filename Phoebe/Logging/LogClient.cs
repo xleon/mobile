@@ -4,22 +4,35 @@ using Xamarin;
 using Android.Content;
 using Toggl.Phoebe.Logging;
 
-namespace Toggl.Joey.Logging
+namespace Toggl.Phoebe.Logging
 {
     public class LogClient : ILoggerClient
     {
-        public LogClient (Context context, string xamApiKey, string bugsnagApiKey, bool enableMetrics = true)
+        public LogClient (string xamApiKey, string bugsnagApiKey, bool enableMetrics = true, Context context = null)
         {
-            #if DEBUG
-            Insights.Initialize (Insights.DebugModeKey, context);
-            #else
-            Insights.Initialize (xamApiKeyt, contex);
+            #if __IOS__
+                #if DEBUG
+                Insights.Initialize (Insights.DebugModeKey);
+                #else
+                Insights.Initialize (xamApiKey);
+                #endif
+            #endif
+
+            #if __ANDROID__
+                if (context == null) {
+                    throw new ArgumentNullException();
+                }
+                #if DEBUG
+                Insights.Initialize (Insights.DebugModeKey, context);
+                #else
+                Insights.Initialize (xamApiKeyt, contex);
+                #endif
             #endif
         }
 
         #region ILoggerClient implementation
 
-        public void SetUser (string id, string email, string name)
+        public void SetUser (string id, string email = null, string name = null)
         {
             if (id != null) {
                 var traits = new Dictionary<string, string> {
@@ -30,7 +43,7 @@ namespace Toggl.Joey.Logging
             }
         }
 
-        public void Notify (Exception e, ErrorSeverity severity, Metadata extraMetadata)
+        public void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null)
         {
             var reportSeverity = Insights.Severity.Error;
             if (severity == ErrorSeverity.Warning) {
@@ -70,18 +83,8 @@ namespace Toggl.Joey.Logging
         public List<Type> IgnoredExceptions { get; set; }
 
         public List<string> ProjectNamespaces { get; set; }
-
-        public void AddToTab (string tabName, string key, object value)
-        {
-        }
-
-        public void ClearTab (string tabName)
-        {
-        }
-
-
+            
         #endregion
-
 
     }
 }

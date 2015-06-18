@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Bugsnag;
 using XPlatUtils;
+using Toggl.Phoebe.Logging;
 
 namespace Toggl.Phoebe.Net
 {

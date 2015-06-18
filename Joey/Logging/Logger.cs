@@ -57,7 +57,7 @@ namespace Toggl.Joey.Logging
             }
         }
 
-        protected override void AddExtraMetadata (Bugsnag.Data.Metadata md)
+        protected override void AddExtraMetadata (Metadata md)
         {
             var settings = ServiceContainer.Resolve<SettingsStore> ();
             md.AddToTab ("State", "Experiment", settings.ExperimentId);

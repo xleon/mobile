@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using Bugsnag;
 using XPlatUtils;
 using Toggl.Phoebe.Logging;
 

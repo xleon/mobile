@@ -4,7 +4,6 @@ using System.Diagnostics;
 using Android.App;
 using Android.Content;
 using Android.Net;
-using Bugsnag;
 using Toggl.Joey.Analytics;
 using Toggl.Joey.Data;
 using Toggl.Joey.Logging;
@@ -81,8 +80,8 @@ namespace Toggl.Joey
         private void InitializeStartupComponents ()
         {
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
-            ServiceContainer.Resolve<IBugsnagClient> ();
-            ServiceContainer.Resolve<BugsnagUserManager> ();
+            ServiceContainer.Resolve<ILoggerClient> ();
+            ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<WidgetSyncManager>();
         }
 

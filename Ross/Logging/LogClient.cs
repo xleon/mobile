@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Bugsnag;
 using Xamarin;
 using Toggl.Phoebe.Logging;
 
@@ -8,8 +7,6 @@ namespace Toggl.Ross.Logging
 {
     public class LogClient : ILoggerClient
     {
-        private BugsnagClient bugsnagClient;
-
         public LogClient (string xamApiKey, string bugsnagApiKey, bool enableMetrics = true)
         {
             #if DEBUG
@@ -17,7 +14,6 @@ namespace Toggl.Ross.Logging
             #else
             Insights.Initialize (xamApiKey);
             #endif
-            bugsnagClient = new BugsnagClient (bugsnagApiKey, enableMetrics);
         }
 
         #region ILoggerClient implementation
@@ -31,15 +27,8 @@ namespace Toggl.Ross.Logging
                 };
                 Insights.Identify (id, traits);
             }
-
-            bugsnagClient.SetUser (id, email, name);
         }
-
-        public void TrackUser ()
-        {
-            bugsnagClient.TrackUser ();
-        }
-
+            
         public void Notify (Exception e, ErrorSeverity severity, Metadata extraMetadata)
         {
             var reportSeverity = Insights.Severity.Error;
@@ -62,37 +51,8 @@ namespace Toggl.Ross.Logging
             } else {
                 Insights.Report (e, extraData, reportSeverity);
             }
-
-            // ISSUE INTREFACE COLLIDE ISSUES, NEEDS CONVERTER IF GONNA CONTINUE TO USE BUSGNAG
-            // bugsnagClient.Notify (e, (Bugsnag.Data.ErrorSeverity)severity, (Bugsnag.Data.Metadata)extraMetadata);
         }
-
-        public string UserId
-        {
-            get {
-                return bugsnagClient.UserId;
-            } set {
-                bugsnagClient.UserId = value;
-            }
-        }
-
-        public string UserEmail
-        {
-            get {
-                return bugsnagClient.UserEmail;
-            } set {
-                bugsnagClient.UserEmail = value;
-            }
-        }
-
-        public string UserName
-        {
-            get {
-                return bugsnagClient.UserName;
-            } set {
-                bugsnagClient.UserName = value;
-            }
-        }
+            
 
         public string DeviceId { get; set; }
 
@@ -112,25 +72,15 @@ namespace Toggl.Ross.Logging
 
         public void AddToTab (string tabName, string key, object value)
         {
-            bugsnagClient.AddToTab (tabName, key, value);
         }
 
         public void ClearTab (string tabName)
         {
-            bugsnagClient.ClearTab (tabName);
         }
 
 
         #endregion
 
-        #region IDisposable implementation
-
-        void IDisposable.Dispose ()
-        {
-            bugsnagClient.Dispose ();
-        }
-
-        #endregion
 
     }
 }

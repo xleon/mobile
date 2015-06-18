@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Bugsnag;
 using Foundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;

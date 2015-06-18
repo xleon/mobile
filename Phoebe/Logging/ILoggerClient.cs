@@ -47,7 +47,7 @@ namespace Toggl.Phoebe.Logging
         }
     }
 
-    public interface ILoggerClient : IDisposable
+    public interface ILoggerClient
     {
         bool AutoNotify { get; set; }
 
@@ -63,19 +63,11 @@ namespace Toggl.Phoebe.Logging
 
         List<string> ProjectNamespaces { get; set; }
 
-        string UserId { get; set; }
-
-        string UserEmail { get; set; }
-
-        string UserName { get; set; }
-
         void SetUser (string id, string email = null, string name = null);
 
         void AddToTab (string tabName, string key, object value);
 
         void ClearTab (string tabName);
-
-        void TrackUser ();
 
         void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null);
     }

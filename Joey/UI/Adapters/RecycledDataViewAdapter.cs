@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Linq;
-using Android.App;
 using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
@@ -16,7 +15,7 @@ namespace Toggl.Joey.UI.Adapters
         private readonly int ViewTypeLoaderPlaceholder = 0;
         private readonly int ViewTypeContent = 1;
         private readonly int LoadMoreOffset = 3;
-        private CollectionCachingDataView<T> dataView;
+        private ICollectionDataView<T> dataView;
         private int lastLoadingPosition;
 
         protected RecyclerView Owner;
@@ -39,7 +38,7 @@ namespace Toggl.Joey.UI.Adapters
 
         protected RecycledDataViewAdapter (RecyclerView owner, ICollectionDataView<T> dataView)
         {
-            this.dataView = new CollectionCachingDataView<T> (dataView);
+            this.dataView = dataView;
             this.dataView.CollectionChanged += OnCollectionChanged;
             this.dataView.OnIsLoadingChanged += OnLoading;
             this.dataView.OnHasMoreChanged += OnHasMore;
@@ -51,11 +50,9 @@ namespace Toggl.Joey.UI.Adapters
         {
             if (disposing) {
                 if (dataView != null) {
-                    var sourceView = dataView.Source as IDisposable;
-
-                    if (sourceView != null) {
-                        sourceView.Dispose ();
-                    }
+                    dataView.CollectionChanged -= OnCollectionChanged;
+                    dataView.OnIsLoadingChanged -= OnLoading;
+                    dataView.OnHasMoreChanged -= OnHasMore;
 
                     dataView.Dispose ();
                     dataView = null;
@@ -97,8 +94,7 @@ namespace Toggl.Joey.UI.Adapters
                 return;
             }
 
-            // Run always on main UI thread.
-            Application.SynchronizationContext.Post (_ => CollectionChanged (e), null);
+            CollectionChanged (e);
         }
 
         public virtual T GetEntry (int position)
@@ -159,7 +155,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        public CollectionCachingDataView<T> DataView
+        public ICollectionDataView<T> DataView
         {
             get { return dataView; }
         }

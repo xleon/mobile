@@ -65,10 +65,6 @@ namespace Toggl.Phoebe.Logging
 
         void SetUser (string id, string email = null, string name = null);
 
-        void AddToTab (string tabName, string key, object value);
-
-        void ClearTab (string tabName);
-
         void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null);
     }
 }

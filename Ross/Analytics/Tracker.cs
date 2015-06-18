@@ -32,7 +32,7 @@ namespace Toggl.Ross.Analytics
         {
             SendHit (GAIDictionaryBuilder.CreateTiming (category, elapsedMilliseconds, variable, label));
             if (Insights.IsInitialized) {
-                Insights.Track("AppStartupTime", new Dictionary<string, string>  {{"ElapsedTime", elapsedMilliseconds.ToString() + "ms"}});
+                Insights.Track ("AppStartupTime", new Dictionary<string, string>  {{"ElapsedTime", elapsedMilliseconds.ToString() + "ms"}});
             }
         }
 

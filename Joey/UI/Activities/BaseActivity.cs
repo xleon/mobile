@@ -120,7 +120,7 @@ namespace Toggl.Joey.UI.Activities
             }
             app.MarkLaunched ();
         }
-            
+
         protected override void OnDestroy ()
         {
             base.OnDestroy ();

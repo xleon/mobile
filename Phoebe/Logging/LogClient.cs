@@ -50,11 +50,11 @@ namespace Toggl.Phoebe.Logging
                 Insights.Report (e, extraData, reportSeverity);
             }
         }
-            
+
         public string DeviceId { get; set; }
 
         public List<string> ProjectNamespaces { get; set; }
-            
+
         #endregion
 
     }

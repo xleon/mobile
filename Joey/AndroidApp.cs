@@ -70,9 +70,9 @@ namespace Toggl.Joey
             ServiceContainer.Register<ILoggerClient> (delegate {
                 return new LogClient (delegate {
                     #if DEBUG
-                        Insights.Initialize (Insights.DebugModeKey, this);
+                    Insights.Initialize (Insights.DebugModeKey, this);
                     #else
-                        Insights.Initialize(Build.XamInsightsApiKey, this);
+                    Insights.Initialize (Build.XamInsightsApiKey, this);
                     #endif
                 }) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,

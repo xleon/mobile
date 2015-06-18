@@ -4,8 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Toggl.Phoebe.Logging
 {
-    public enum ErrorSeverity
-    {
+    public enum ErrorSeverity {
         Info,
         Warning,
         Error,

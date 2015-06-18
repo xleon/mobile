@@ -127,10 +127,10 @@ namespace Toggl.Ross
             ServiceContainer.Register<ILoggerClient> (delegate {
                 return new LogClient (delegate {
                     #if DEBUG
-                        Insights.Initialize (Insights.DebugModeKey);
+                    Insights.Initialize (Insights.DebugModeKey);
                     #else
-                        Insights.Initialize (Build.XamInsightsApiKey);
-                    #endif  
+                    Insights.Initialize (Build.XamInsightsApiKey);
+                    #endif
                 }) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },

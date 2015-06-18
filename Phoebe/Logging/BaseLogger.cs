@@ -72,10 +72,10 @@ namespace Toggl.Phoebe.Logging
                 md.AddToTab ("Logger", "Message", message);
                 AddExtraMetadata (md);
 
-                var bugsnagClient = ServiceContainer.Resolve<IBugsnagClient> ();
+                var loggerClient = ServiceContainer.Resolve<ILoggerClient> ();
 
-                if (bugsnagClient != null) {
-                    bugsnagClient.Notify (exc, severity, md);
+                if (loggerClient != null) {
+                    loggerClient.Notify (exc, severity, md);
                 }
             }
         }

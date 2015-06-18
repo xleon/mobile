@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
-namespace Toggl.Phoebe.Analytics
+namespace Toggl.Phoebe.Logging
 {
     public enum ErrorSeverity
     {

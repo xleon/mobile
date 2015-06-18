@@ -22,14 +22,14 @@ namespace Toggl.Phoebe.Net
 
         private void UpdateUser ()
         {
-            var bugsnag = ServiceContainer.Resolve<IBugsnagClient> ();
+            var loggerClient = ServiceContainer.Resolve<ILoggerClient> ();
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
             if (user == null) {
-                bugsnag.SetUser (null, null, null);
+                loggerClient.SetUser (null, null, null);
             } else {
                 string id = user.RemoteId.HasValue ? user.RemoteId.ToString () : null;
-                bugsnag.SetUser (id, null, user.Name);
+                loggerClient.SetUser (id, null, user.Name);
             }
         }
     }

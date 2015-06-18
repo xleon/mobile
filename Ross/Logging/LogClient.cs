@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using Bugsnag;
 using Xamarin;
+using Toggl.Phoebe.Analytics;
 
 namespace Toggl.Ross.Logging
 {
-    public class LogClient : IBugsnagClient
+    public class LogClient : ILoggerClient
     {
         private BugsnagClient bugsnagClient;
 
@@ -14,14 +15,14 @@ namespace Toggl.Ross.Logging
             #if DEBUG
             Insights.Initialize (Insights.DebugModeKey);
             #else
-            Insights.Initialize (xamApiKey, context);
+            Insights.Initialize (xamApiKey);
             #endif
             bugsnagClient = new BugsnagClient (bugsnagApiKey, enableMetrics);
         }
 
         #region IBugsnagClient implementation
 
-        void IBugsnagClient.SetUser (string id, string email, string name)
+        public void SetUser (string id, string email, string name)
         {
             if (id != null) {
                 var traits = new Dictionary<string, string> {
@@ -34,15 +35,15 @@ namespace Toggl.Ross.Logging
             bugsnagClient.SetUser (id, email, name);
         }
 
-        void IBugsnagClient.TrackUser ()
+        public void TrackUser ()
         {
             bugsnagClient.TrackUser ();
         }
 
-        void IBugsnagClient.Notify (Exception e, Bugsnag.Data.ErrorSeverity severity, Bugsnag.Data.Metadata extraMetadata)
+        public void Notify (Exception e, ErrorSeverity severity, Metadata extraMetadata)
         {
             var reportSeverity = Insights.Severity.Error;
-            if (severity == Bugsnag.Data.ErrorSeverity.Warning) {
+            if (severity == ErrorSeverity.Warning) {
                 reportSeverity = Insights.Severity.Warning;
             }
 
@@ -56,16 +57,17 @@ namespace Toggl.Ross.Logging
                 }
             }
 
-            if (severity == Bugsnag.Data.ErrorSeverity.Info) {
+            if (severity == ErrorSeverity.Info) {
                 Insights.Track ("Info", extraData);
             } else {
                 Insights.Report (e, extraData, reportSeverity);
             }
 
-            bugsnagClient.Notify (e, severity, extraMetadata);
+            // ISSUE INTREFACE COLLIDE ISSUES, NEEDS CONVERTER IF GONNA CONTINUE TO USE BUSGNAG
+            // bugsnagClient.Notify (e, (Bugsnag.Data.ErrorSeverity)severity, (Bugsnag.Data.Metadata)extraMetadata);
         }
 
-        string IBugsnagClient.UserId
+        public string UserId
         {
             get {
                 return bugsnagClient.UserId;
@@ -74,7 +76,7 @@ namespace Toggl.Ross.Logging
             }
         }
 
-        string IBugsnagClient.UserEmail
+        public string UserEmail
         {
             get {
                 return bugsnagClient.UserEmail;
@@ -83,7 +85,7 @@ namespace Toggl.Ross.Logging
             }
         }
 
-        string IBugsnagClient.UserName
+        public string UserName
         {
             get {
                 return bugsnagClient.UserName;
@@ -108,12 +110,12 @@ namespace Toggl.Ross.Logging
 
         public List<string> ProjectNamespaces { get; set; }
 
-        void IBugsnagClient.AddToTab (string tabName, string key, object value)
+        public void AddToTab (string tabName, string key, object value)
         {
             bugsnagClient.AddToTab (tabName, key, value);
         }
 
-        void IBugsnagClient.ClearTab (string tabName)
+        public void ClearTab (string tabName)
         {
             bugsnagClient.ClearTab (tabName);
         }

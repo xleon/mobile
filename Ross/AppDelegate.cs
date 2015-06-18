@@ -123,8 +123,8 @@ namespace Toggl.Ross
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));
-            ServiceContainer.Register<IBugsnagClient> (delegate {
-                return new LogClient (this, Build.XamInsightsApiKey, Build.BugsnagApiKey) {
+            ServiceContainer.Register<ILoggerClient> (delegate {
+                return new LogClient (Build.XamInsightsApiKey, Build.BugsnagApiKey) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };

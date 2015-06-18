@@ -1,6 +1,6 @@
 using System.ComponentModel;
-using XPlatUtils;
 using Toggl.Phoebe.Logging;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {

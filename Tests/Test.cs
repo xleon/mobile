@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Logging;
 using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Xamarin;
 using Toggl.Phoebe.Logging;
+using Xamarin;
 
 namespace Toggl.Phoebe.Logging
 {

@@ -81,11 +81,6 @@ namespace Toggl.Joey.UI.Activities
             return false;
         }
 
-        private LogClient LoggerClient
-        {
-            get { return (LogClient)ServiceContainer.Resolve<ILoggerClient> (); }
-        }
-
         protected sealed override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
@@ -97,8 +92,6 @@ namespace Toggl.Joey.UI.Activities
 
         protected virtual void OnCreateActivity (Bundle state)
         {
-            //LoggerClient.OnActivityCreated (this);
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
@@ -116,8 +109,6 @@ namespace Toggl.Joey.UI.Activities
 
         protected virtual void OnResumeActivity ()
         {
-            //LoggerClient.OnActivityResumed (this);
-
             ResetSyncProgressBar ();
 
             // Make sure that the components are initialized (and that this initialisation wouldn't cause a lag)
@@ -129,17 +120,10 @@ namespace Toggl.Joey.UI.Activities
             }
             app.MarkLaunched ();
         }
-
-        protected override void OnPause ()
-        {
-            base.OnPause ();
-           // LoggerClient.OnActivityPaused (this);
-        }
-
+            
         protected override void OnDestroy ()
         {
             base.OnDestroy ();
-          //  LoggerClient.OnActivityDestroyed (this);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionSyncStarted != null) {

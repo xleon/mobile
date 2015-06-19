@@ -241,13 +241,15 @@ namespace Toggl.Phoebe.Data
             public Context (SqliteDataStore store, string dbPath)
             {
                 this.store = store;
-                conn = new SQLiteConnection (dbPath);
+                conn = new SQLiteConnection (dbPath, SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex);
             }
 
             public T Put<T> (T obj)
             where T : new()
             {
-                conn.InsertOrReplace (obj);
+                lock (conn) {
+                    conn.InsertOrReplace (obj);
+                }
 
                 // Schedule message to be sent about this update post transaction
                 messages.Add (new DataChangeMessage (store, obj, DataAction.Put));
@@ -257,7 +259,10 @@ namespace Toggl.Phoebe.Data
 
             public bool Delete (object obj)
             {
-                var count = conn.Delete (obj);
+                int count;
+                lock (conn) {
+                    count = conn.Delete (obj);
+                }
                 var success = count > 0;
 
                 // Schedule message to be sent about this delete post transaction

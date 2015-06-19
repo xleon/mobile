@@ -106,7 +106,11 @@ namespace Toggl.Ross.ViewControllers
             signOutButton.SetTitle ("NavMenuSignOut".Tr (), UIControlState.Normal);
 
             foreach (var menuButton in menuButtons) {
-                menuButton.Apply (menuButton == logButton && controller is LogViewController ? Style.NavMenu.HighlightedItem : Style.NavMenu.NormalItem);
+                if (menuButton == logButton && controller is LogViewController) {
+                    menuButton.Apply (Style.NavMenu.HighlightedItem);
+                } else {
+                    menuButton.Apply (Style.NavMenu.NormalItem);
+                }
                 menuButton.TouchUpInside += OnMenuButtonTouchUpInside;
             }
 

@@ -109,10 +109,15 @@ namespace Toggl.Ross.ViewControllers
         private void ResetRootViewController ()
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.IsAuthenticated && ViewControllers.Length < 1 ) {
-                var vc = ViewControllers [0] is WelcomeViewController ? (UIViewController)new LogViewController () : new WelcomeViewController ();
-                SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
+            UIViewController vc = null;
+            bool emptyStack = ViewControllers.Length < 1;
+            if (authManager.IsAuthenticated && (emptyStack || ViewControllers [0] is WelcomeViewController)) {
+                vc = new LogViewController ();
+            } else if (emptyStack || ! (ViewControllers [0] is WelcomeViewController)) {
+                vc = new WelcomeViewController ();
             }
+            SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
+
         }
 
         private void OnEdgePanGesture ()

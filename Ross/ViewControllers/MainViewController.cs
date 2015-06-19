@@ -109,23 +109,9 @@ namespace Toggl.Ross.ViewControllers
         private void ResetRootViewController ()
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.IsAuthenticated) {
-                if (ViewControllers.Length < 1 || ViewControllers [0] is WelcomeViewController) {
-                    // Determine the default root view controller
-                    UIViewController activeController;
-                    var preferredView = ServiceContainer.Resolve<SettingsStore> ().PreferredStartView;
-                    if (preferredView == "recent") {
-                        activeController = new RecentViewController ();
-                    } else {
-                        activeController = new LogViewController ();
-                    }
-
-                    SetViewControllers (new [] { activeController }, ViewControllers.Length > 0);
-                }
-            } else {
-                if (ViewControllers.Length < 1 || ! (ViewControllers [0] is WelcomeViewController)) {
-                    SetViewControllers (new [] { new WelcomeViewController () }, ViewControllers.Length > 0);
-                }
+            if (authManager.IsAuthenticated && ViewControllers.Length < 1 ) {
+                var vc = ViewControllers [0] is WelcomeViewController ? (UIViewController)new LogViewController () : new WelcomeViewController ();
+                SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
             }
         }
 

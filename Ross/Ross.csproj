@@ -233,7 +233,6 @@
     <Compile Include="Theme\Style.NavMenu.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
-    <Compile Include="ViewControllers\RecentViewController.cs" />
     <Compile Include="Views\SwipableTimeEntryTableViewCell.cs" />
     <Compile Include="Theme\Style.TimeEntryCell.cs">
       <DependentUpon>Style.cs</DependentUpon>

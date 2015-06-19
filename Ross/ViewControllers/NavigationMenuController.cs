@@ -14,7 +14,6 @@ namespace Toggl.Ross.ViewControllers
         private UIView containerView;
         private UIView menuView;
         private UIButton logButton;
-        private UIButton recentButton;
         private UIButton reportsButton;
         private UIButton settingsButton;
         private UIButton feedbackButton;

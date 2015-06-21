@@ -123,7 +123,6 @@
     <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
     <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
-    <Compile Include="UI\Views\LogTimeEntryItem.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="UI\Views\PieChart.cs" />
@@ -156,14 +155,13 @@
     <Compile Include="UI\Activities\ProjectListActivity.cs" />
     <Compile Include="UI\Fragments\ProjectListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectListAdapter.cs" />
-    <Compile Include="UI\Views\ListItemSwipeable.cs" />
-    <Compile Include="UI\Utils\SwipeDismissTouchListener.cs" />
     <Compile Include="UI\Utils\ItemTouchListener.cs" />
     <Compile Include="UI\Fragments\EditGroupedTimeEntryFragment.cs" />
     <Compile Include="UI\Views\TogglTagsField.cs" />
     <Compile Include="UI\Views\ShadowItemDecoration.cs" />
     <Compile Include="UI\Activities\SplashActivity.cs" />
     <Compile Include="UI\Utils\DimensionsExtensions.cs" />
+    <Compile Include="UI\Utils\SwipeDismissCallback.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

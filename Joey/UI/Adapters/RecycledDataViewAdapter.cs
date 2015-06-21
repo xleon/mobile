@@ -193,7 +193,7 @@ namespace Toggl.Joey.UI.Adapters
 
     public interface IUndoCapabilities
     {
-        void RemoveItemWithUndo (int index);
+        void RemoveItemWithUndo (RecyclerView.ViewHolder viewHolder);
 
         void RestoreItemFromUndo ();
 

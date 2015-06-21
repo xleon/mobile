@@ -102,10 +102,9 @@ namespace Toggl.Joey.UI.Adapters
             modelView.StopTimeEntry (timeEntryHolder);
         }
 
-        public void RemoveItemWithUndo (int index)
+        public void RemoveItemWithUndo (RecyclerView.ViewHolder viewHolder)
         {
-            var holder = (RecycledBindableViewHolder<TimeEntryHolder>)Owner.FindViewHolderForLayoutPosition (index);
-            modelView.RemoveItemWithUndo (holder.DataSource);
+            modelView.RemoveItemWithUndo (((TimeEntryListItemHolder)viewHolder).DataSource);
         }
 
         public void RestoreItemFromUndo ()

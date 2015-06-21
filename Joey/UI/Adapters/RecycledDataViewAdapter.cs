@@ -44,7 +44,7 @@ namespace Toggl.Joey.UI.Adapters
             this.dataView.OnHasMoreChanged += OnHasMore;
             Owner = owner;
 
-            HasStableIds = true;
+            HasStableIds = false;
         }
 
         protected override void Dispose (bool disposing)
@@ -108,12 +108,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override long GetItemId (int position)
         {
-            if (position == 0) {
-                return 0;
-            }
-
-            var obj = GetEntry (position);
-            return Convert.ToInt64 (obj.GetHashCode ());
+            return -1;
         }
 
         public override int GetItemViewType (int position)

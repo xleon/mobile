@@ -39,7 +39,7 @@
                     android:id="@+id/ProjectTextView"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:ellipsize="marquee"
+                    android:ellipsize="end"
                     android:text="Project New Project longText" />
             </RelativeLayout>
             <RelativeLayout
@@ -58,7 +58,7 @@
                     android:id="@+id/DescriptionTextView"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:ellipsize="marquee"
+                    android:ellipsize="end"
                     android:text="@string/RecentTimeEntryNoDescription" />
             </RelativeLayout>
         </LinearLayout>

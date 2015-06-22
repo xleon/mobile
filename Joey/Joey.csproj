@@ -82,7 +82,6 @@
     <Compile Include="AndroidApp.cs" />
     <Compile Include="Data\SettingsStore.cs" />
     <Compile Include="UI\Activities\BaseActivity.cs" />
-    <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
     <Compile Include="Net\GcmRegistrationManager.cs" />
@@ -102,7 +101,6 @@
     <Compile Include="UI\Adapters\TagsAdapter.cs" />
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
     <Compile Include="UI\Utils\ModelViewHolder.cs" />
-    <Compile Include="UI\Fragments\ChooseTimeEntryProjectDialogFragment.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
     <Compile Include="UI\Utils\Font.cs" />
     <Compile Include="Data\UserTimeEntryStateChangeMessage.cs" />

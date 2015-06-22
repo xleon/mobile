@@ -49,14 +49,13 @@ namespace Toggl.Joey.UI.Activities
 
         public async static Task<IList<TimeEntryData>> GetIntentTimeEntryData (Android.Content.Intent intent)
         {
-            var extras = intent.Extras;
-            if (extras == null) {
+            var guids = intent.GetStringArrayListExtra (ExtraGroupedTimeEntriesGuids);
+
+            if (guids == null || guids.Count == 0) {
                 return new List<TimeEntryData> ();
             }
 
-            // Get TimeEntryData from intent.
-            var extraGuids = extras.GetStringArrayList (ExtraGroupedTimeEntriesGuids);
-            var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (extraGuids);
+            var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (guids);
             return timeEntryList;
         }
     }

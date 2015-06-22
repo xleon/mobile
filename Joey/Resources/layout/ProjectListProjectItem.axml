@@ -39,13 +39,13 @@
             android:alpha=".8"
             android:layout_marginLeft="10dp" />
     </toggl.joey.ui.views.FadeLinearLayout>
-        <ImageButton
-        android:id="@+id/TasksButton"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:src="@drawable/icTasks"
-        android:layout_gravity="center"
-        android:paddingRight="25dp"
-        android:paddingLeft="25dp"
-        android:background="@null" />
+    <ImageButton
+	    android:id="@+id/TasksButton"
+	    android:layout_width="wrap_content"
+	    android:layout_height="match_parent"
+	    android:src="@drawable/icTasks"
+	    android:layout_gravity="center"
+	    android:paddingRight="25dp"
+	    android:paddingLeft="25dp"
+	    android:background="@null" />
 </LinearLayout>

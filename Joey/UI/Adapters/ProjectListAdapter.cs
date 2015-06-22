@@ -73,7 +73,7 @@ namespace Toggl.Joey.UI.Adapters
             return holder;
         }
 
-        private void HandleProjectItemClick (int position) 
+        private void HandleProjectItemClick (int position)
         {
             var proj = (WorkspaceProjectsView.Project)GetEntry (position);
             var handler = HandleProjectSelection;

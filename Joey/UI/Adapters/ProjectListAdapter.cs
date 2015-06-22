@@ -183,7 +183,6 @@ namespace Toggl.Joey.UI.Adapters
         public class ProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private ProjectModel model;
-            private readonly ProjectListAdapter adapter;
 
             public View ColorView { get; private set; }
 
@@ -191,9 +190,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView ClientTextView { get; private set; }
 
-            public FrameLayout TasksFrameLayout { get; private set; }
-
-            public TextView TasksTextView { get; private set; }
+            public ImageButton TasksButton { get; private set; }
 
             public ImageView TasksImageView { get; private set; }
 
@@ -202,22 +199,19 @@ namespace Toggl.Joey.UI.Adapters
 
             public ProjectListItemHolder (ProjectListAdapter adapter, View root, Action<int> tasksClickListener, Action<int> clickListener) : base (root)
             {
-                this.adapter = adapter;
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
-                TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
-                TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView).SetFont (Font.RobotoMedium);
-
+                TasksButton = root.FindViewById<ImageButton> (Resource.Id.TasksButton);
                 this.clickListener = clickListener;
 
-                TasksFrameLayout.Click += (sender, e) => tasksClickListener (AdapterPosition);
+                TasksButton.Click += (sender, e) => tasksClickListener (AdapterPosition);
                 root.SetOnClickListener (this);
             }
 
             public void OnClick (View v)
             {
-                if (v == TasksImageView || v == TasksTextView) {
+                if (v == TasksButton) {
                     return;
                 }
                 if (clickListener != null) {
@@ -241,7 +235,7 @@ namespace Toggl.Joey.UI.Adapters
                     ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
                     ProjectTextView.SetText (Resource.String.ProjectsNoProject);
                     ClientTextView.Visibility = ViewStates.Gone;
-                    TasksFrameLayout.Visibility = ViewStates.Gone;
+                    TasksButton.Visibility = ViewStates.Gone;
                     return;
                 }
 
@@ -260,7 +254,7 @@ namespace Toggl.Joey.UI.Adapters
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
-                TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TasksButton.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
             }
         }
 

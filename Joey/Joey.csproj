@@ -670,6 +670,10 @@
     <AndroidResource Include="Resources\color\ButtonRedTextColor.xml" />
     <AndroidResource Include="Resources\drawable\LoginBackground.xml" />
     <AndroidResource Include="Resources\drawable\swipe_background_shape.xml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\icTasks.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

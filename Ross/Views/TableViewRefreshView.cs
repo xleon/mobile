@@ -7,6 +7,8 @@ namespace Toggl.Ross.Views
 {
     public class TableViewRefreshView : UIRefreshControl
     {
+        const int sideSize = 5;
+
         public TableViewRefreshView ()
         {
             this.Apply (Style.TableViewHeader);
@@ -14,9 +16,9 @@ namespace Toggl.Ross.Views
 
         public void AdaptToTableView (UITableView tableView)
         {
-            var frame = tableView.Frame;
-            frame.Y = -frame.Size.Height;
-            var view = new UIView (frame);
+            var tableFrame = tableView.Frame;
+            tableFrame.Y = -tableFrame.Size.Height;
+            var view = new UIView (tableFrame);
             view.BackgroundColor = BackgroundColor;
             tableView.InsertSubviewBelow (view, this);
         }

@@ -5,6 +5,7 @@ using Android.Content;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
+using Android.Support.V7.Widget.Helper;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.Data;
@@ -20,7 +21,7 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : Fragment, SwipeDismissTouchListener.IDismissCallbacks, ItemTouchListener.IItemTouchListener
+    public class LogTimeEntriesListFragment : Fragment, SwipeDismissCallback.IDismissListener, ItemTouchListener.IItemTouchListener
     {
         private static readonly int UndbarVisibleTime = 6000;
         private static readonly int UndbarScrollThreshold = 100;
@@ -34,6 +35,12 @@ namespace Toggl.Joey.UI.Fragments
         private Button undoButton;
         private bool isUndoShowed;
 
+        // Recycler setup
+        private DividerItemDecoration dividerDecoration;
+        private ShadowItemDecoration shadowDecoration;
+        private ItemTouchListener itemTouchListener;
+        private RecyclerViewScrollDetector scrollListener;
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
@@ -43,6 +50,7 @@ namespace Toggl.Joey.UI.Fragments
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
             emptyMessageView.Visibility = ViewStates.Gone;
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
+            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
 
             undoBar = view.FindViewById<FrameLayout> (Resource.Id.UndoBar);
             undoButton = view.FindViewById<Button> (Resource.Id.UndoButton);
@@ -54,18 +62,6 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
-            var linearLayout = new LinearLayoutManager (Activity);
-            var swipeTouchListener = new SwipeDismissTouchListener (recyclerView, this);
-            var itemTouchListener = new ItemTouchListener (recyclerView, this);
-
-            recyclerView.SetLayoutManager (linearLayout);
-            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
-            recyclerView.AddOnItemTouchListener (swipeTouchListener);
-            recyclerView.AddOnItemTouchListener (itemTouchListener);
-            recyclerView.AddOnScrollListener (new RecyclerViewScrollDetector (this));
-            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -96,6 +92,7 @@ namespace Toggl.Joey.UI.Fragments
                     logAdapter = new LogTimeEntriesAdapter (recyclerView, new LogTimeEntriesView());
                 }
                 recyclerView.SetAdapter (logAdapter);
+                SetupRecyclerView ();
             }
         }
 
@@ -107,14 +104,47 @@ namespace Toggl.Joey.UI.Fragments
                 subscriptionSettingChanged = null;
             }
 
-            recyclerView.SetAdapter (null);
-
-            if (logAdapter != null) {
-                logAdapter.Dispose ();
-                logAdapter = null;
-            }
+            ReleaseRecyclerView ();
 
             base.OnDestroyView ();
+        }
+
+        private void SetupRecyclerView ()
+        {
+            // Touch listeners.
+            itemTouchListener = new ItemTouchListener (recyclerView, this);
+            recyclerView.AddOnItemTouchListener (itemTouchListener);
+
+            var touchCallback = new SwipeDismissCallback (ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
+            var touchHelper = new ItemTouchHelper (touchCallback);
+            touchHelper.AttachToRecyclerView (recyclerView);
+
+            // Decorations.
+            dividerDecoration = new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList);
+            shadowDecoration = new ShadowItemDecoration (Activity);
+            recyclerView.AddItemDecoration (dividerDecoration);
+            recyclerView.AddItemDecoration (shadowDecoration);
+
+            scrollListener = new RecyclerViewScrollDetector (this);
+            recyclerView.AddOnScrollListener (scrollListener);
+            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
+        }
+
+        private void ReleaseRecyclerView ()
+        {
+            recyclerView.RemoveOnScrollListener (scrollListener);
+            recyclerView.RemoveItemDecoration (shadowDecoration);
+            recyclerView.RemoveItemDecoration (dividerDecoration);
+            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
+
+            recyclerView.GetAdapter ().Dispose ();
+            recyclerView.Dispose ();
+            logAdapter = null;
+
+            itemTouchListener.Dispose ();
+            dividerDecoration.Dispose ();
+            shadowDecoration.Dispose ();
+            scrollListener.Dispose ();
         }
 
         private void OnSettingChanged (SettingChangedMessage msg)
@@ -129,18 +159,18 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        #region IDismissCallbacks implementation
+        #region IDismissListener implementation
 
-        public bool CanDismiss (RecyclerView view, int position)
+        public bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
         {
-            var adapter = view.GetAdapter ();
-            return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
+            var adapter = recyclerView.GetAdapter ();
+            return adapter.GetItemViewType (viewHolder.LayoutPosition) == LogTimeEntriesAdapter.ViewTypeContent;
         }
 
-        public void OnDismiss (RecyclerView view, int position)
+        public void OnDismiss (RecyclerView.ViewHolder viewHolder, int position)
         {
             var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
-            undoAdapter.RemoveItemWithUndo (position);
+            undoAdapter.RemoveItemWithUndo (viewHolder);
             ShowUndoBar ();
         }
 
@@ -166,7 +196,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool CanClick (RecyclerView view, int position)
         {
-            return CanDismiss (view, position);
+            var adapter = recyclerView.GetAdapter ();
+            return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
         }
 
         #endregion

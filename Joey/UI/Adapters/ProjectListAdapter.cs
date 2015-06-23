@@ -26,10 +26,11 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
 
         public Action<object> HandleProjectSelection { get; set; }
-        private WorkspaceProjectsView collectionView;
-        private RecyclerView owner;
 
         public event EventHandler<int> TasksProjectItemClick;
+
+        private WorkspaceProjectsView collectionView;
+        private RecyclerView owner;
 
         public ProjectListAdapter (RecyclerView owner, WorkspaceProjectsView collectionView) : base (owner, collectionView)
         {
@@ -149,6 +150,10 @@ namespace Toggl.Joey.UI.Adapters
         {
             public TextView WorkspaceTextView { get; private set; }
 
+            public WorkspaceListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
+
             public WorkspaceListItemHolder (View root) : base (root)
             {
                 WorkspaceTextView = root.FindViewById<TextView> (Resource.Id.WorkspaceTextView).SetFont (Font.RobotoMedium);
@@ -184,6 +189,10 @@ namespace Toggl.Joey.UI.Adapters
 
             private Action<int> tasksClickListener;
 
+            public ProjectListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
+
             public ProjectListItemHolder (ProjectListAdapter adapter, View root, Action<int> tasksClickListener) : base (root)
             {
                 this.adapter = adapter;
@@ -201,7 +210,7 @@ namespace Toggl.Joey.UI.Adapters
             public void OnClick (View v)
             {
                 if (tasksClickListener != null) {
-                    tasksClickListener (base.AdapterPosition);
+                    tasksClickListener (AdapterPosition);
                 }
             }
 
@@ -249,8 +258,11 @@ namespace Toggl.Joey.UI.Adapters
             private TaskData model;
             private readonly ProjectListAdapter adapter;
 
-
             public TextView TaskTextView { get; private set; }
+
+            public ProjectListTaskItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
 
             public ProjectListTaskItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
@@ -269,7 +281,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 model = null;
                 if (DataSource != null) {
-                    model = (TaskModel)DataSource;
+                    model = DataSource;
                 }
 
                 if (model == null) {
@@ -290,6 +302,10 @@ namespace Toggl.Joey.UI.Adapters
             private readonly ProjectListAdapter adapter;
 
             public TextView ProjectTextView { get; private set; }
+
+            public NoProjectListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
 
             public NoProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
@@ -315,6 +331,10 @@ namespace Toggl.Joey.UI.Adapters
             private readonly ProjectListAdapter adapter;
 
             public TextView ProjectTextView { get; private set; }
+
+            public NewProjectListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
 
             public NewProjectListItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {

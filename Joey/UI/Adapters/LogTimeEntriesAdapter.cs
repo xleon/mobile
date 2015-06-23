@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Support.V7.Widget;
-using Android.Util;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
@@ -24,12 +22,11 @@ namespace Toggl.Joey.UI.Adapters
     {
         public static readonly int ViewTypeLoaderPlaceholder = 0;
         public static readonly int ViewTypeContent = 1;
-        protected static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
+        public static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 2;
         private TimeEntriesCollectionView modelView;
-        private readonly List<RecyclerView.ViewHolder> holderList;
         private DateTime lastTimeEntryContinuedTime;
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
@@ -40,7 +37,6 @@ namespace Toggl.Joey.UI.Adapters
         {
             this.modelView = modelView;
             lastTimeEntryContinuedTime = Time.UtcNow;
-            holderList = new List<RecyclerView.ViewHolder> ();
         }
 
         protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
@@ -98,19 +94,6 @@ namespace Toggl.Joey.UI.Adapters
             }
             lastTimeEntryContinuedTime = Time.UtcNow;
 
-            // Trick on view to show a better
-            // visual reaction to press Play btn
-            foreach (var item in holderList) {
-                var holder = item as TimeEntryListItemHolder;
-                if (holder != null) {
-                    if (holder.DataSource.State == TimeEntryState.Running) {
-                        holder.DataSource.TimeEntryData.State = TimeEntryState.Finished;
-                        if (holder.AdapterPosition != -1) {
-                            BindHolder (holder, holder.AdapterPosition);
-                        }
-                    }
-                }
-            }
             modelView.ContinueTimeEntry (timeEntryHolder);
         }
 
@@ -119,10 +102,9 @@ namespace Toggl.Joey.UI.Adapters
             modelView.StopTimeEntry (timeEntryHolder);
         }
 
-        public void RemoveItemWithUndo (int index)
+        public void RemoveItemWithUndo (RecyclerView.ViewHolder viewHolder)
         {
-            var holder = (RecycledBindableViewHolder<TimeEntryHolder>)Owner.FindViewHolderForPosition (index);
-            modelView.RemoveItemWithUndo (holder.DataSource);
+            modelView.RemoveItemWithUndo (((TimeEntryListItemHolder)viewHolder).DataSource);
         }
 
         public void RestoreItemFromUndo ()
@@ -144,11 +126,10 @@ namespace Toggl.Joey.UI.Adapters
                 view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
                 holder = new HeaderListItemHolder (handler, view);
             } else {
-                view = new LogTimeEntryItem (ServiceContainer.Resolve<Context> (), (IAttributeSet)null);
+                view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListItem, parent, false);
                 holder = new TimeEntryListItemHolder (handler, this, view);
             }
 
-            holderList.Add (holder);
             return holder;
         }
 
@@ -178,23 +159,15 @@ namespace Toggl.Joey.UI.Adapters
             return ViewTypeContent;
         }
 
-        public override void OnDetachedFromRecyclerView (RecyclerView recyclerView)
-        {
-            handler.RemoveCallbacksAndMessages (null);
-            handler.Dispose ();
-
-            foreach (var item in holderList) {
-                item.Dispose ();
-            }
-            holderList.Clear ();
-
-            base.OnDetachedFromRecyclerView (recyclerView);
-        }
-
         public override void OnViewDetachedFromWindow (Java.Lang.Object holder)
         {
             if (holder is TimeEntryListItemHolder) {
                 var mHolder = (TimeEntryListItemHolder)holder;
+
+                // View setup
+                //((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
+                //ItemView.Selected = false;
+
                 mHolder.DisposeDataSource ();
             } else if (holder is HeaderListItemHolder) {
                 var mHolder = (HeaderListItemHolder)holder;
@@ -211,6 +184,10 @@ namespace Toggl.Joey.UI.Adapters
             public TextView DateGroupTitleTextView { get; private set; }
 
             public TextView DateGroupDurationTextView { get; private set; }
+
+            public HeaderListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
 
             public HeaderListItemHolder (Handler handler, View root) : base (root)
             {
@@ -282,6 +259,10 @@ namespace Toggl.Joey.UI.Adapters
 
             public ImageButton ContinueImageButton { get; private set; }
 
+            public TimeEntryListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
+
             public TimeEntryListItemHolder (Handler handler, LogTimeEntriesAdapter owner, View root) : base (root)
             {
                 this.handler = handler;
@@ -330,10 +311,6 @@ namespace Toggl.Joey.UI.Adapters
                 if (DataSource == null) {
                     return;
                 }
-
-                // View setup
-                ((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
-                ItemView.Selected = false;
 
                 var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();

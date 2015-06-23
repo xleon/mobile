@@ -8,7 +8,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Utils
 {
-    public class TimeEntryHolder
+    public class TimeEntryHolder : IDisposable
     {
         private List<TimeEntryData> timeEntryDataList = new List<TimeEntryData> ();
         private TimeEntryData timeEntryData;
@@ -25,6 +25,15 @@ namespace Toggl.Phoebe.Data.Utils
 
             timeEntryDataList.AddRange (timeEntryGroup);
             timeEntryData = new TimeEntryData (timeEntryGroup.Last ());
+            projectData = new ProjectData ();
+            clientData = new ClientData ();
+            taskData = new TaskData ();
+        }
+
+        public void Dispose ()
+        {
+            timeEntryDataList.Clear ();
+            timeEntryData = new TimeEntryData ();
             projectData = new ProjectData ();
             clientData = new ClientData ();
             taskData = new TaskData ();

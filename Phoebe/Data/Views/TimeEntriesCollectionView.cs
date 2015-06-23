@@ -46,6 +46,14 @@ namespace Toggl.Phoebe.Data.Views
 
         public void Dispose ()
         {
+            // Clean lists
+            updateMessageQueue.Clear ();
+            ItemCollection.Clear ();
+            foreach (var dateGroup in dateGroups) {
+                dateGroup.Dispose ();
+            }
+            dateGroups.Clear ();
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionDataChange != null) {
                 bus.Unsubscribe (subscriptionDataChange);
@@ -495,7 +503,7 @@ namespace Toggl.Phoebe.Data.Views
 
         #endregion
 
-        public interface IDateGroup
+        public interface IDateGroup : IDisposable
         {
             DateTime Date {  get; }
 

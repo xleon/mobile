@@ -9,10 +9,10 @@
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
         <item name="windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@color/windowBackground</item>
+        <item name="android:windowBackground">@color/window_background</item>
         <item name="colorPrimary">@color/primary</item> <!-- Toolbar branding color -->
-        <item name="colorPrimaryDark">@color/primaryDark</item> <!-- statusBarColor is inherited from this -->
-        <item name="colorAccent">@color/windowBackground</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item> <!-- statusBarColor is inherited from this -->
+        <item name="colorAccent">@color/window_background</item>
         <item name="android:listViewStyle">@style/Theme.Toggl.ListView</item>
         <item name="android:listChoiceIndicatorMultiple">@drawable/androidbtncheckhololight</item>
         <item name="toolbarNavigationButtonStyle">@style/ToolbarNavigation</item>

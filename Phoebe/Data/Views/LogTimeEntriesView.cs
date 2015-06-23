@@ -219,6 +219,11 @@ namespace Toggl.Phoebe.Data.Views
                 this.date = date.Date;
             }
 
+            public void Dispose ()
+            {
+                dataObjects.Clear ();
+            }
+
             public DateTime Date
             {
                 get { return date; }

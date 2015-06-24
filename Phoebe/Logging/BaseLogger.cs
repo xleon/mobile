@@ -28,7 +28,7 @@ namespace Toggl.Phoebe.Logging
         {
             LogToConsole (level, tag, message, exc);
             LogToFile (level, tag, message, exc);
-            LogToXI (level, tag, message, exc);
+            LogToLoggerClient (level, tag, message, exc);
         }
 
         private void LogToConsole (LogLevel level, string tag, string message, Exception exc)
@@ -48,9 +48,8 @@ namespace Toggl.Phoebe.Logging
             }
         }
 
-        private void LogToXI (LogLevel level, string tag, string message, Exception exc)
+        private void LogToLoggerClient (LogLevel level, string tag, string message, Exception exc)
         {
-            // Send warnings and errors to Bugsnag:
             if (level >= LogLevel.Warning) {
                 ErrorSeverity severity;
 

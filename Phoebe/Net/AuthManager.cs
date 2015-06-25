@@ -25,6 +25,13 @@ namespace Toggl.Phoebe.Net
 
         public AuthManager ()
         {
+            Init ();
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+        }
+            
+        public async void Init() {
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             try {
                 if (credStore.UserId.HasValue) {
@@ -32,7 +39,7 @@ namespace Toggl.Phoebe.Net
                         Id = credStore.UserId.Value,
                     };
                     // Load full user data:
-                    ReloadUser ();
+                    await ReloadUser ();
                 }
                 Token = credStore.ApiToken;
                 IsAuthenticated = !String.IsNullOrEmpty (Token);
@@ -41,13 +48,9 @@ namespace Toggl.Phoebe.Net
                 credStore.UserId = null;
                 credStore.ApiToken = null;
             }
-
-            // Listen for global data changes
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
         }
 
-        private async void ReloadUser ()
+        private async Task ReloadUser ()
         {
             if (User == null) {
                 return;

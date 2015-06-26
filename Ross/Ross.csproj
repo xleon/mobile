@@ -331,6 +331,7 @@
     <Compile Include="Views\SuggestionTableViewCell.cs" />
     <Compile Include="Data\WidgetUpdateService.cs" />
     <Compile Include="Views\TableViewRefreshView.cs" />
+    <Compile Include="Net\APNSManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

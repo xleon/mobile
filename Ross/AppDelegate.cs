@@ -27,6 +27,7 @@ namespace Toggl.Ross
         private TogglWindow window;
         private int systemVersion;
         private const int minVersionWidget = 7;
+        private bool componentsInitialized = false;
 
         public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
@@ -48,9 +49,26 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<ITracker> ();
+            ServiceContainer.Resolve<APNSManager> ();
 
             return true;
         }
+
+        public override void RegisteredForRemoteNotifications (UIApplication application, NSData deviceToken)
+        {
+            ServiceContainer.Resolve<APNSManager> ().RegisteredForRemoteNotifications (application, deviceToken);
+        }
+
+        public override void FailedToRegisterForRemoteNotifications (UIApplication application, NSError error)
+        {
+            ServiceContainer.Resolve<APNSManager> ().FailedToRegisterForRemoteNotifications (application, error);
+        }
+
+        public override void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
+        {
+            ServiceContainer.Resolve<APNSManager> ().DidReceiveRemoteNotification (application, userInfo, completionHandler);
+        }
+
 
         public override void OnActivated (UIApplication application)
         {
@@ -136,6 +154,11 @@ namespace Toggl.Ross
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
             ServiceContainer.Register<OAuthManager> ();
+			ServiceContainer.Register<APNSManager> ();
+
+
+            // Register Phoebe services async
+            await Services.RegisterAsync ();
         }
 
         public static TogglWindow TogglWindow

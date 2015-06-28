@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Bugsnag;
 using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
@@ -42,7 +41,7 @@ namespace Toggl.Phoebe.Tests
                 return new SqliteDataStore (databasePath);
             });
             ServiceContainer.Register<LogStore> ((LogStore)null);
-            ServiceContainer.Register<IBugsnagClient> ((IBugsnagClient)null);
+            ServiceContainer.Register<ILoggerClient> ((ILoggerClient)null);
             ServiceContainer.Register<ILogger> (() => new VoidLogger());
         }
 

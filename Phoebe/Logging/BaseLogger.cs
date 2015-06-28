@@ -1,5 +1,4 @@
 using System;
-using Bugsnag;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Logging
@@ -29,7 +28,7 @@ namespace Toggl.Phoebe.Logging
         {
             LogToConsole (level, tag, message, exc);
             LogToFile (level, tag, message, exc);
-            LogToBugsnag (level, tag, message, exc);
+            LogToLoggerClient (level, tag, message, exc);
         }
 
         private void LogToConsole (LogLevel level, string tag, string message, Exception exc)
@@ -49,38 +48,37 @@ namespace Toggl.Phoebe.Logging
             }
         }
 
-        private void LogToBugsnag (LogLevel level, string tag, string message, Exception exc)
+        private void LogToLoggerClient (LogLevel level, string tag, string message, Exception exc)
         {
-            // Send warnings and errors to Bugsnag:
             if (level >= LogLevel.Warning) {
-                Bugsnag.Data.ErrorSeverity severity;
+                ErrorSeverity severity;
 
                 switch (level) {
                 case LogLevel.Warning:
-                    severity = Bugsnag.Data.ErrorSeverity.Warning;
+                    severity = ErrorSeverity.Warning;
                     break;
                 case LogLevel.Error:
-                    severity = Bugsnag.Data.ErrorSeverity.Error;
+                    severity = ErrorSeverity.Error;
                     break;
                 default:
-                    severity = Bugsnag.Data.ErrorSeverity.Info;
+                    severity = ErrorSeverity.Info;
                     break;
                 }
 
-                var md = new Bugsnag.Data.Metadata ();
+                var md = new Metadata ();
                 md.AddToTab ("Logger", "Tag", tag);
                 md.AddToTab ("Logger", "Message", message);
                 AddExtraMetadata (md);
 
-                var bugsnagClient = ServiceContainer.Resolve<IBugsnagClient> ();
+                var loggerClient = ServiceContainer.Resolve<ILoggerClient> ();
 
-                if (bugsnagClient != null) {
-                    bugsnagClient.Notify (exc, severity, md);
+                if (loggerClient != null) {
+                    loggerClient.Notify (exc, severity, md);
                 }
             }
         }
 
-        protected abstract void AddExtraMetadata (Bugsnag.Data.Metadata md);
+        protected abstract void AddExtraMetadata (Metadata md);
 
         protected virtual void WriteConsole (LogLevel level, string tag, string message, Exception exc)
         {

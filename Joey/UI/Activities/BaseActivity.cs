@@ -1,9 +1,6 @@
 ﻿using System;
 using Android.Content;
 using Android.OS;
-using Android.Views;
-using Bugsnag;
-using Toggl.Joey.Logging;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
@@ -81,11 +78,6 @@ namespace Toggl.Joey.UI.Activities
             return false;
         }
 
-        private LogClient BugsnagClient
-        {
-            get { return (LogClient)ServiceContainer.Resolve<IBugsnagClient> (); }
-        }
-
         protected sealed override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
@@ -97,8 +89,6 @@ namespace Toggl.Joey.UI.Activities
 
         protected virtual void OnCreateActivity (Bundle state)
         {
-            BugsnagClient.OnActivityCreated (this);
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
@@ -116,8 +106,6 @@ namespace Toggl.Joey.UI.Activities
 
         protected virtual void OnResumeActivity ()
         {
-            BugsnagClient.OnActivityResumed (this);
-
             ResetSyncProgressBar ();
 
             // Make sure that the components are initialized (and that this initialisation wouldn't cause a lag)
@@ -130,16 +118,9 @@ namespace Toggl.Joey.UI.Activities
             app.MarkLaunched ();
         }
 
-        protected override void OnPause ()
-        {
-            base.OnPause ();
-            BugsnagClient.OnActivityPaused (this);
-        }
-
         protected override void OnDestroy ()
         {
             base.OnDestroy ();
-            BugsnagClient.OnActivityDestroyed (this);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionSyncStarted != null) {

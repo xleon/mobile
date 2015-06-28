@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using Bugsnag;
 using Foundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
@@ -14,6 +14,7 @@ using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
 using UIKit;
 using XPlatUtils;
+using Xamarin;
 
 namespace Toggl.Ross
 {
@@ -50,8 +51,8 @@ namespace Toggl.Ross
 
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
-            ServiceContainer.Resolve<IBugsnagClient> ();
-            ServiceContainer.Resolve<BugsnagUserManager> ();
+            ServiceContainer.Resolve<ILoggerClient> ();
+            ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<ITracker> ();
 
             return true;
@@ -123,16 +124,16 @@ namespace Toggl.Ross
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));
-            ServiceContainer.Register<IBugsnagClient> (delegate {
-                return new BugsnagClient (Build.BugsnagApiKey) {
+            ServiceContainer.Register<ILoggerClient> (delegate {
+                return new LogClient (delegate {
+                    #if DEBUG
+                    Insights.Initialize (Insights.DebugModeKey);
+                    #else
+                    Insights.Initialize (Build.XamInsightsApiKey);
+                    #endif
+                }) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
-                    NotifyReleaseStages = new List<string> () { "production" },
-                    #if DEBUG
-                    ReleaseStage = "development",
-                    #else
-                    ReleaseStage = "production",
-                    #endif
                 };
             });
             ServiceContainer.Register<ITracker> (() => new Tracker());

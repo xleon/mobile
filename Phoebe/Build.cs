@@ -22,7 +22,6 @@ namespace Toggl.Phoebe
         #if __ANDROID__
         public static readonly string AppIdentifier = "TogglJoey";
         public static readonly string GcmSenderId = "";
-        public static readonly string BugsnagApiKey = "";
         public static readonly string XamInsightsApiKey = "";
         public static readonly string GooglePlayUrl = "https://play.google.com/store/apps/details?id=com.toggl.timer";
         #endif
@@ -33,8 +32,9 @@ namespace Toggl.Phoebe
         #if __IOS__
         public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl/toggltimer";
         public static readonly string AppIdentifier = "TogglRoss";
-        public static readonly string BugsnagApiKey = "";
         public static readonly string GoogleOAuthClientId = "";
+        public static readonly string XamInsightsApiKey = "";
+
         #endif
         #endregion
     }

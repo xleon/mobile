@@ -4,7 +4,6 @@ using System.Diagnostics;
 using Android.App;
 using Android.Content;
 using Android.Net;
-using Bugsnag;
 using Toggl.Joey.Analytics;
 using Toggl.Joey.Data;
 using Toggl.Joey.Logging;
@@ -15,6 +14,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Xamarin;
 using XPlatUtils;
 
 namespace Toggl.Joey
@@ -67,8 +67,14 @@ namespace Toggl.Joey
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
-            ServiceContainer.Register<IBugsnagClient> (delegate {
-                return new LogClient (this, Build.XamInsightsApiKey, Build.BugsnagApiKey) {
+            ServiceContainer.Register<ILoggerClient> (delegate {
+                return new LogClient (delegate {
+                    #if DEBUG
+                    Insights.Initialize (Insights.DebugModeKey, this);
+                    #else
+                    Insights.Initialize (Build.XamInsightsApiKey, this);
+                    #endif
+                }) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
                     ProjectNamespaces = new List<string> () { "Toggl." },
                 };
@@ -80,8 +86,8 @@ namespace Toggl.Joey
         private void InitializeStartupComponents ()
         {
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
-            ServiceContainer.Resolve<IBugsnagClient> ();
-            ServiceContainer.Resolve<BugsnagUserManager> ();
+            ServiceContainer.Resolve<ILoggerClient> ();
+            ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<WidgetSyncManager>();
         }
 

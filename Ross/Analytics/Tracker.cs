@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using GoogleAnalytics.iOS;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Xamarin;
 
 namespace Toggl.Ross.Analytics
 {
@@ -30,6 +31,9 @@ namespace Toggl.Ross.Analytics
         protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label)
         {
             SendHit (GAIDictionaryBuilder.CreateTiming (category, elapsedMilliseconds, variable, label));
+            if (Insights.IsInitialized) {
+                Insights.Track ("AppStartupTime", new Dictionary<string, string>  {{"ElapsedTime", elapsedMilliseconds.ToString() + "ms"}});
+            }
         }
 
         protected override void SendEvent (string category, string action, string label, long value)

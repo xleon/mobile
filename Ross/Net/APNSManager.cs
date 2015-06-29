@@ -21,7 +21,11 @@ namespace Toggl.Ross.Net
         private readonly object subscriptionAuthChanged;
 
         private string authToken;
-        private string SavedDeviceToken { get { return NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey); } }
+        private string SavedDeviceToken { 
+            get { 
+                return NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey); 
+            } 
+        }
 
         private DateTime? lastSyncTime;
 

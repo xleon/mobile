@@ -27,7 +27,7 @@ namespace Toggl.Ross.Theme
             }, UIControlState.Normal);
         }
 
-        public static void TableViewHeader (TableViewHeaderView v)
+        public static void TableViewHeader (UIView v)
         {
             v.BackgroundColor = Color.LightestGray;
         }

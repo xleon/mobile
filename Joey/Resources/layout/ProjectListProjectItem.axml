@@ -43,7 +43,7 @@
 	    android:id="@+id/TasksButton"
 	    android:layout_width="wrap_content"
 	    android:layout_height="match_parent"
-	    android:src="@drawable/icTasks"
+	    android:src="@drawable/TasksButtonBackground"
 	    android:layout_gravity="center"
 	    android:paddingRight="25dp"
 	    android:paddingLeft="25dp"

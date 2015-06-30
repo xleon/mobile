@@ -669,9 +669,14 @@
     <AndroidResource Include="Resources\drawable\LoginBackground.xml" />
     <AndroidResource Include="Resources\drawable\swipe_background_shape.xml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\icTasksSelected.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\icTasksSelected.png" />
     <AndroidResource Include="Resources\drawable-mdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\icTasksSelected.png" />
     <AndroidResource Include="Resources\drawable-hdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\icTasksSelected.png" />
+    <AndroidResource Include="Resources\drawable\TasksButtonBackground.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

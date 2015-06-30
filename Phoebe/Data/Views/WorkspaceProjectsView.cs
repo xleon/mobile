@@ -20,7 +20,13 @@ namespace Toggl.Phoebe.Data.Views
         private bool hasMore;
 
         private int displayTaskForProjectPosition;
+
         private Project displayingTaskForProject;
+        public Project DisplayingTaskForProject {
+            get {
+                return displayingTaskForProject;
+            }
+        }
 
         public bool SortByClients { private set; get; }
 

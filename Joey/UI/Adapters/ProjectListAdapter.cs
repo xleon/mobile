@@ -112,6 +112,7 @@ namespace Toggl.Joey.UI.Adapters
                     if (viewType == ViewTypeProject) {
                         var projectHolder = (ProjectListItemHolder)holder;
                         projectHolder.Bind (data);
+                        projectHolder.TasksButton.Selected |= null != collectionView.DisplayingTaskForProject && collectionView.DisplayingTaskForProject.Data.RemoteId == data.Data.RemoteId;
                     } else if (viewType == ViewTypeNewProject) {
                         var projectHolder = (NewProjectListItemHolder)holder;
                         projectHolder.Bind (data);
@@ -255,6 +256,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 TasksButton.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TasksButton.Selected = false;
             }
         }
 

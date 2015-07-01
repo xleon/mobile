@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Foundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
@@ -66,6 +67,7 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<ITracker> ();
+            ServiceContainer.Resolve<APNSManager> ();
 
             return true;
         }
@@ -82,7 +84,7 @@ namespace Toggl.Ross
 
         public override void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
         {
-            APNSManager.DidReceiveRemoteNotification (application, userInfo, completionHandler);
+            Task.Run (() => APNSManager.DidReceiveRemoteNotification (application, userInfo, completionHandler));
         }
 
 

@@ -15,6 +15,7 @@ using Toggl.Ross.Views;
 using UIKit;
 using XPlatUtils;
 using Xamarin;
+using System.Threading.Tasks;
 
 namespace Toggl.Ross
 {
@@ -28,12 +29,13 @@ namespace Toggl.Ross
         private int systemVersion;
         private const int minVersionWidget = 7;
 
-        public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
+        public async override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
             var versionString = UIDevice.CurrentDevice.SystemVersion;
             systemVersion = System.Convert.ToInt32 ( versionString.Split ( new [] {"."}, System.StringSplitOptions.None)[0]);
 
-            RegisterComponents ();
+            // wait for component initialisation.
+            await RegisterComponentsAsync ();
 
             var signIn = Google.Plus.SignIn.SharedInstance;
             signIn.ClientId = Build.GoogleOAuthClientId;
@@ -103,12 +105,10 @@ namespace Toggl.Ross
             }
         }
 
-        private void RegisterComponents ()
+        private async Task RegisterComponentsAsync ()
         {
             // Register platform info first.
             ServiceContainer.Register<IPlatformInfo> (this);
-
-            Services.Register ();
 
             // Override default implementation
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider ());
@@ -140,6 +140,9 @@ namespace Toggl.Ross
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
+
+            // Register Phoebe services async
+            await Services.RegisterAsync ();
         }
 
         public static TogglWindow TogglWindow

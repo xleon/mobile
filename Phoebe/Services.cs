@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
@@ -9,11 +10,11 @@ namespace Toggl.Phoebe
 {
     public static class Services
     {
-        public static void Register ()
+        public async static Task RegisterAsync ()
         {
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<UpgradeManger> ();
-            ServiceContainer.Register<AuthManager> ();
+
             ServiceContainer.Register<ActiveTimeEntryManager> ();
             ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
@@ -31,9 +32,17 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
             ServiceContainer.Register<IReportsClient> (() => new ReportsRestClient (Build.ReportsApiUrl));
 
+            // Asynchronous Initialization Pattern
+            // as described at http://blog.stephencleary.com/2013/01/async-oop-2-constructors.html
+            var authManagerServ = new AuthManager ();
+            ServiceContainer.Register<AuthManager> (authManagerServ);
+
             RegisterJsonConverters ();
 
             ServiceContainer.Register<LoggerUserManager> ();
+
+            // initialise async services.
+            await authManagerServ.Initialization;
         }
 
         private static void RegisterJsonConverters ()

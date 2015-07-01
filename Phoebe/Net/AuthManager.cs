@@ -12,7 +12,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {
-    public class AuthManager : ObservableObject
+    public class AuthManager : ObservableObject, IAsyncInitialization
     {
         private static readonly string Tag = "AuthManager";
 
@@ -21,28 +21,37 @@ namespace Toggl.Phoebe.Net
             return expr.ToPropertyName ();
         }
 
-        private readonly Subscription<DataChangeMessage> subscriptionDataChange;
-
         public AuthManager ()
         {
-            Init ();
+            var credStore = ServiceContainer.Resolve<ISettingsStore> ();
+            try {
+                Token = credStore.ApiToken;
+                IsAuthenticated = !String.IsNullOrEmpty (Token);
+            } catch (ArgumentException) {
+                // When data is corrupt and cannot find user
+                credStore.UserId = null;
+                credStore.ApiToken = null;
+            }
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+            bus.Subscribe<DataChangeMessage> (OnDataChange);
+
+            Initialization = InitUserAsync ();
         }
-            
-        public async void Init() {
+
+        public Task Initialization { get; private set; }
+
+        private async Task InitUserAsync ()
+        {
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             try {
                 if (credStore.UserId.HasValue) {
-                    User = new UserData () {
+                    User = new UserData {
                         Id = credStore.UserId.Value,
                     };
                     // Load full user data:
                     await ReloadUser ();
                 }
-                Token = credStore.ApiToken;
-                IsAuthenticated = !String.IsNullOrEmpty (Token);
             } catch (ArgumentException) {
                 // When data is corrupt and cannot find user
                 credStore.UserId = null;
@@ -60,7 +69,7 @@ namespace Toggl.Phoebe.Net
             User = rows.FirstOrDefault ();
         }
 
-        private async Task<AuthResult> Authenticate (Func<Task<UserJson>> getUser, AuthChangeReason reason, AccountCredentials credentialsType)
+        private async Task<AuthResult> AuthenticateAsync (Func<Task<UserJson>> getUser, AuthChangeReason reason, AccountCredentials credentialsType)
         {
             if (IsAuthenticated) {
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
@@ -146,44 +155,44 @@ namespace Toggl.Phoebe.Net
             return AuthResult.Success;
         }
 
-        public Task<AuthResult> Authenticate (string username, string password)
+        public Task<AuthResult> AuthenticateAsync (string username, string password)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with email ({0}).", username);
-            return Authenticate (() => client.GetUser (username, password), AuthChangeReason.Login, AccountCredentials.Password);
+            return AuthenticateAsync (() => client.GetUser (username, password), AuthChangeReason.Login, AccountCredentials.Password);
         }
 
-        public Task<AuthResult> AuthenticateWithGoogle (string accessToken)
+        public Task<AuthResult> AuthenticateWithGoogleAsync (string accessToken)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with Google access token.");
-            return Authenticate (() => client.GetUser (accessToken), AuthChangeReason.Login, AccountCredentials.Google);
+            return AuthenticateAsync (() => client.GetUser (accessToken), AuthChangeReason.Login, AccountCredentials.Google);
         }
 
-        public Task<AuthResult> Signup (string email, string password)
+        public Task<AuthResult> SignupAsync (string email, string password)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email ({0}).", email);
-            return Authenticate (() => client.Create (new UserJson () {
+            return AuthenticateAsync (() => client.Create (new UserJson () {
                 Email = email,
                 Password = password,
                 Timezone = Time.TimeZoneId,
             }), AuthChangeReason.Signup, AccountCredentials.Password);
         }
 
-        public Task<AuthResult> SignupWithGoogle (string accessToken)
+        public Task<AuthResult> SignupWithGoogleAsync (string accessToken)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email Google access token.");
-            return Authenticate (() => client.Create (new UserJson () {
+            return AuthenticateAsync (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
             }), AuthChangeReason.Signup, AccountCredentials.Google);

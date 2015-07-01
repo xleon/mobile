@@ -140,7 +140,7 @@ namespace Toggl.Ross.Net
         private static readonly NSString updatedAtConst = new NSString("updated_at");
         private static readonly NSString taskIdConst = new NSString("task_id");
 
-        public async Task DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
+        public async Task DidReceiveRemoteNotificationAsync (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
         {
             try {
                 var syncManager = ServiceContainer.Resolve<ISyncManager> ();

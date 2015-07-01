@@ -84,7 +84,7 @@ namespace Toggl.Ross
 
         public override void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
         {
-            Task.Run (() => APNSManager.DidReceiveRemoteNotification (application, userInfo, completionHandler));
+            Task.Run (() => APNSManager.DidReceiveRemoteNotificationAsync (application, userInfo, completionHandler));
         }
 
 

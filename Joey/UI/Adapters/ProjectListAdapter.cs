@@ -146,14 +146,6 @@ namespace Toggl.Joey.UI.Adapters
             return ViewTypeWorkspace;
         }
 
-        private void OnDeleteTimeEntry (object item)
-        {
-            var handler = HandleProjectSelection;
-            if (handler != null) {
-                handler (item);
-            }
-        }
-
         #region View holders
 
         [Shadow (ShadowAttribute.Mode.Bottom)]

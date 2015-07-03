@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="56dp"
     android:orientation="horizontal"
+    android:background="@drawable/play_button_background"
     android:gravity="center_vertical">
     <TextView
         android:id="@+id/ProjectTextView"

@@ -197,20 +197,23 @@ namespace Toggl.Phoebe.Data.Utils
 
         public async Task DeleteAsync ()
         {
-            await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {
-                var m = new TimeEntryModel (obj);
-                m.DeleteAsync();
-            }));
+            var deleteTasks = new List<Task> ();
+            foreach (var item in dataObjects) {
+                var m = new TimeEntryModel (item);
+                deleteTasks.Add (m.DeleteAsync ());
+            }
+            await TTask.WhenAll (deleteTasks);
             Dispose ();
         }
 
         public async Task SaveAsync ()
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            await TTask.Run (() => Parallel.ForEach (dataObjects, obj => {
-                Model<TimeEntryData>.MarkDirty (obj);
-                dataStore.PutAsync (obj);
-            }));
+            var saveTasks = new List<Task> ();
+            foreach (var item in dataObjects) {
+                saveTasks.Add (dataStore.PutAsync (item));
+            }
+            await TTask.WhenAll (saveTasks);
         }
 
         public void Touch ()
@@ -224,7 +227,6 @@ namespace Toggl.Phoebe.Data.Utils
 
         public TimeEntryData Data
         {
-
             get {
                 return TimeEntryList.Last ();
             }

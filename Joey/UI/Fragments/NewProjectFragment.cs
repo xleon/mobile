@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -7,13 +8,13 @@ using Android.Views;
 using Android.Views.InputMethods;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using AlertDialog = Android.Support.V7.App.AlertDialog;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
-
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -34,9 +35,9 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public NewProjectFragment (Guid workspaceId)
+        public NewProjectFragment (List<TimeEntryData> timeEntryList)
         {
-            viewModel = new NewProjectViewModel (workspaceId);
+            viewModel = new NewProjectViewModel (timeEntryList);
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -65,17 +66,18 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
             if (viewModel == null) {
-                var workspaceId = NewProjectActivity.GetWorkspaceData (Activity.Intent);
-                viewModel = new NewProjectViewModel (workspaceId);
+                var timeEntryList = BaseActivity.GetDataFromIntent <List<TimeEntryData>>
+                                    (Activity.Intent, NewProjectActivity.ExtraTimeEntryDataListId);
+                viewModel = new NewProjectViewModel (timeEntryList);
             }
 
             viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.Init ();
+            await viewModel.Init ();
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
@@ -163,12 +165,8 @@ namespace Toggl.Joey.UI.Fragments
         private void FinishActivity (bool isProjectCreated)
         {
             var resultIntent = new Intent ();
-            if (isProjectCreated) {
-                resultIntent.PutExtra (NewProjectActivity.ExtraWorkspaceId, viewModel.Model.Workspace.Id.ToString());
-                resultIntent.PutExtra (NewProjectActivity.ExtraProjectId, viewModel.Model.Id.ToString());
-            }
             Activity.SetResult (isProjectCreated ? Result.Ok : Result.Canceled, resultIntent);
-            Activity.Finish();;
+            Activity.Finish();
         }
     }
 }

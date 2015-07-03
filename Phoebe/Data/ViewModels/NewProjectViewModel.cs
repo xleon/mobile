@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -13,11 +16,12 @@ namespace Toggl.Phoebe.Data.ViewModels
         private ProjectModel model;
         private WorkspaceModel workspaceModel;
         private Guid workspaceId;
+        private List<TimeEntryData> timeEntryList;
 
-
-        public NewProjectViewModel (Guid workspaceId)
+        public NewProjectViewModel (List<TimeEntryData> timeEntryList)
         {
-            this.workspaceId = workspaceId;
+            this.timeEntryList = timeEntryList;
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
         public void Dispose ()
@@ -54,28 +58,40 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        public void Init ()
+        public async Task Init ()
         {
             IsLoading = true;
 
-            workspaceModel = new WorkspaceModel (workspaceId);
-            workspaceModel.LoadAsync ();
+            try {
+                var user = ServiceContainer.Resolve<AuthManager> ().User;
+                if (user == null) {
+                    model = null;
+                    return;
+                }
 
-            model = new ProjectModel {
-                Workspace = workspaceModel,
-                IsActive = true,
-                IsPrivate = true
-            };
+                workspaceId = user.DefaultWorkspaceId;
+                workspaceModel = new WorkspaceModel (workspaceId);
+                await workspaceModel.LoadAsync ();
 
-            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
+                model = new ProjectModel {
+                    Workspace = workspaceModel,
+                    IsActive = true,
+                    IsPrivate = true
+                };
+
+                if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
+                    model = null;
+                }
+            } catch (Exception ex) {
                 model = null;
+            } finally {
+                IsLoading = false;
             }
-
-            IsLoading = false;
         }
 
         public async Task SaveProjectModel ()
         {
+            // Save new project.
             await model.SaveAsync();
 
             // Create an extra model for Project / User relationship
@@ -88,6 +104,12 @@ namespace Toggl.Phoebe.Data.ViewModels
                 projectUserModel.User = new UserModel (userId.Value);
                 await projectUserModel.SaveAsync ();
             }
+
+            // Update entry list.
+            var timeEntryGroup = new TimeEntryGroup (timeEntryList);
+            timeEntryGroup.Project = new ProjectModel (model.Id);
+            timeEntryGroup.Workspace = new WorkspaceModel (workspaceModel.Id);
+            await timeEntryGroup.SaveAsync ();
         }
 
         public async Task<bool> ExistProjectWithName (string projectName)

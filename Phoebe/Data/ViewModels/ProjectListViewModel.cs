@@ -24,7 +24,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
         }
 
-        public async void Init ()
+        public async Task Init ()
         {
             IsLoading = true;
 
@@ -75,6 +75,13 @@ namespace Toggl.Phoebe.Data.ViewModels
                 if (OnModelChanged != null) {
                     OnModelChanged (this, EventArgs.Empty);
                 }
+            }
+        }
+
+        public IList<TimeEntryData> TimeEntryList
+        {
+            get {
+                return timeEntryList;
             }
         }
 

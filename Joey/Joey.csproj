@@ -82,7 +82,6 @@
     <Compile Include="AndroidApp.cs" />
     <Compile Include="Data\SettingsStore.cs" />
     <Compile Include="UI\Activities\BaseActivity.cs" />
-    <Compile Include="UI\Adapters\ProjectsAdapter.cs" />
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
     <Compile Include="Net\GcmRegistrationManager.cs" />
@@ -102,7 +101,6 @@
     <Compile Include="UI\Adapters\TagsAdapter.cs" />
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
     <Compile Include="UI\Utils\ModelViewHolder.cs" />
-    <Compile Include="UI\Fragments\ChooseTimeEntryProjectDialogFragment.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
     <Compile Include="UI\Utils\Font.cs" />
     <Compile Include="Data\UserTimeEntryStateChangeMessage.cs" />
@@ -114,7 +112,6 @@
     <Compile Include="UI\Fragments\SettingsListFragment.cs" />
     <Compile Include="UI\Fragments\ForcedUpgradeDialogFragment.cs" />
     <Compile Include="UI\Fragments\DurOnlyNoticeDialogFragment.cs" />
-    <Compile Include="UI\Fragments\CreateProjectDialogFragment.cs" />
     <Compile Include="UI\Activities\EditTimeEntryActivity.cs" />
     <Compile Include="UI\Fragments\EditTimeEntryFragment.cs" />
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
@@ -670,6 +667,15 @@
     <AndroidResource Include="Resources\color\ButtonRedTextColor.xml" />
     <AndroidResource Include="Resources\drawable\LoginBackground.xml" />
     <AndroidResource Include="Resources\drawable\swipe_background_shape.xml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\icTasksSelected.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\icTasksSelected.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\icTasksSelected.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\icTasks.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\icTasksSelected.png" />
+    <AndroidResource Include="Resources\drawable\TasksButtonBackground.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

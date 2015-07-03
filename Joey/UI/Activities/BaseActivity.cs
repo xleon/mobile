@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Android.Content;
 using Android.OS;
 using Toggl.Joey.UI.Fragments;
@@ -140,6 +141,33 @@ namespace Toggl.Joey.UI.Activities
         public new FragmentManager FragmentManager
         {
             get { return SupportFragmentManager; }
+        }
+
+        public static Intent CreateDataIntent<TActivity, T> (Context context, T dataObject, string id)
+        {
+            var intent = new Intent (context, typeof (TActivity));
+
+            // User json serializer for fast process?
+            var serializer = new System.Xml.Serialization.XmlSerializer (typeof (T));
+            using (var listStream = new MemoryStream ()) {
+                serializer.Serialize (listStream, dataObject);
+                intent.PutExtra (id, listStream.ToArray ());
+            }
+            return intent;
+        }
+
+        public static T GetDataFromIntent<T> (Intent intent, string id) where T : new ()
+        {
+            // Get the person object from the intent
+            T dataObject;
+            if (intent.HasExtra (id)) {
+                var serializer = new System.Xml.Serialization.XmlSerializer (typeof (T));
+                var byteArray = intent.GetByteArrayExtra (id);
+                dataObject = (T)serializer.Deserialize (new MemoryStream (byteArray));
+            } else {
+                dataObject = new T ();
+            }
+            return dataObject;
         }
     }
 }

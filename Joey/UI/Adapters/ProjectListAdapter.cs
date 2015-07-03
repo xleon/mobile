@@ -58,7 +58,7 @@ namespace Toggl.Joey.UI.Adapters
                 // projects
                 if (viewType == ViewTypeProject) {
                     view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListProjectItem, parent, false);
-                    holder = new ProjectListItemHolder (this, view, HandleTasksProjectItemClick);
+                    holder = new ProjectListItemHolder (this, view, HandleTasksProjectItemClick, HandleProjectItemClick);
                 } else if (viewType == ViewTypeNewProject) {
                     view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListNewProjectItem, parent, false);
                     holder = new NewProjectListItemHolder (this, view);
@@ -73,13 +73,23 @@ namespace Toggl.Joey.UI.Adapters
             return holder;
         }
 
+        private void HandleProjectItemClick (int position)
+        {
+            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
+            var handler = HandleProjectSelection;
+            if (handler != null) {
+                handler (proj);
+            }
+            return;
+        }
+
         private void HandleTasksProjectItemClick (int position)
         {
+            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
             if (TasksProjectItemClick != null) {
                 TasksProjectItemClick (this, position);
             }
 
-            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
             int collapsingCount;
             collectionView.ShowTaskForProject (proj, position, out collapsingCount);
             owner.ScrollToPosition (position - collapsingCount);
@@ -102,6 +112,7 @@ namespace Toggl.Joey.UI.Adapters
                     if (viewType == ViewTypeProject) {
                         var projectHolder = (ProjectListItemHolder)holder;
                         projectHolder.Bind (data);
+                        projectHolder.TasksButton.Selected |= null != collectionView.DisplayingTaskForProject && collectionView.DisplayingTaskForProject.Data.RemoteId == data.Data.RemoteId;
                     } else if (viewType == ViewTypeNewProject) {
                         var projectHolder = (NewProjectListItemHolder)holder;
                         projectHolder.Bind (data);
@@ -135,14 +146,6 @@ namespace Toggl.Joey.UI.Adapters
             return ViewTypeWorkspace;
         }
 
-        private void OnDeleteTimeEntry (object item)
-        {
-            var handler = HandleProjectSelection;
-            if (handler != null) {
-                handler (item);
-            }
-        }
-
         #region View holders
 
         [Shadow (ShadowAttribute.Mode.Bottom)]
@@ -173,7 +176,6 @@ namespace Toggl.Joey.UI.Adapters
         public class ProjectListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Project>, View.IOnClickListener
         {
             private ProjectModel model;
-            private readonly ProjectListAdapter adapter;
 
             public View ColorView { get; private set; }
 
@@ -181,36 +183,32 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView ClientTextView { get; private set; }
 
-            public FrameLayout TasksFrameLayout { get; private set; }
-
-            public TextView TasksTextView { get; private set; }
+            public ImageButton TasksButton { get; private set; }
 
             public ImageView TasksImageView { get; private set; }
 
-            private Action<int> tasksClickListener;
+            private Action<int> clickListener;
 
-            public ProjectListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
-            {
-            }
 
-            public ProjectListItemHolder (ProjectListAdapter adapter, View root, Action<int> tasksClickListener) : base (root)
+            public ProjectListItemHolder (ProjectListAdapter adapter, View root, Action<int> tasksClickListener, Action<int> clickListener) : base (root)
             {
-                this.adapter = adapter;
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
-                TasksFrameLayout = root.FindViewById<FrameLayout> (Resource.Id.TasksFrameLayout);
-                TasksTextView = root.FindViewById<TextView> (Resource.Id.TasksTextView).SetFont (Font.RobotoMedium);
+                TasksButton = root.FindViewById<ImageButton> (Resource.Id.TasksButton);
+                this.clickListener = clickListener;
 
-                this.tasksClickListener = tasksClickListener;
-
+                TasksButton.Click += (sender, e) => tasksClickListener (AdapterPosition);
                 root.SetOnClickListener (this);
             }
 
             public void OnClick (View v)
             {
-                if (tasksClickListener != null) {
-                    tasksClickListener (AdapterPosition);
+                if (v == TasksButton) {
+                    return;
+                }
+                if (clickListener != null) {
+                    clickListener (AdapterPosition);
                 }
             }
 
@@ -230,7 +228,7 @@ namespace Toggl.Joey.UI.Adapters
                     ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
                     ProjectTextView.SetText (Resource.String.ProjectsNoProject);
                     ClientTextView.Visibility = ViewStates.Gone;
-                    TasksFrameLayout.Visibility = ViewStates.Gone;
+                    TasksButton.Visibility = ViewStates.Gone;
                     return;
                 }
 
@@ -249,7 +247,8 @@ namespace Toggl.Joey.UI.Adapters
                     ClientTextView.Visibility = ViewStates.Gone;
                 }
 
-                TasksFrameLayout.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TasksButton.Visibility = DataSource.Tasks.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                TasksButton.Selected = false;
             }
         }
 

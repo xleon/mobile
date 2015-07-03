@@ -79,7 +79,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.SetAdapter (adapter);
 
             viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.Init ();
+            await viewModel.Init ();
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
@@ -102,12 +102,10 @@ namespace Toggl.Joey.UI.Fragments
                 if (wrap.IsNoProject) {
                     workspace = new WorkspaceModel (wrap.WorkspaceId);
                 } else if (wrap.IsNewProject) {
-                    var data = wrap.Data;
-                    var ws = new WorkspaceModel (data.WorkspaceId);
-
                     // Show create project activity instead
-                    var intent = new Intent (Activity, typeof (NewProjectActivity));
-                    intent.PutExtra (NewProjectActivity.ExtraWorkspaceId, ws.Id.ToString());
+                    var entryList = new List<TimeEntryData> (viewModel.TimeEntryList);
+                    var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
+                                 (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
                     StartActivityForResult (intent, ProjectCreatedRequestCode);
                 } else {
                     project = (ProjectModel)wrap.Data;
@@ -136,19 +134,12 @@ namespace Toggl.Joey.UI.Fragments
             return base.OnOptionsItemSelected (item);
         }
 
-        public async override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
+
             if (requestCode == ProjectCreatedRequestCode) {
                 if (resultCode == (int)Result.Ok) {
-
-                    Guid extraGuid;
-                    Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraWorkspaceId), out extraGuid);
-                    var workspace = new WorkspaceModel (extraGuid);
-                    Guid.TryParse (data.Extras.GetString (NewProjectActivity.ExtraProjectId), out extraGuid);
-                    var project = new ProjectModel (extraGuid);
-
-                    await viewModel.SaveModelAsync (project, workspace);
                     Activity.Finish();
                 }
             }

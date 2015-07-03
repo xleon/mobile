@@ -75,7 +75,6 @@ namespace Toggl.Joey.UI.Activities
                 Finish ();
                 return true;
             }
-
             return false;
         }
 

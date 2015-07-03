@@ -287,7 +287,7 @@ namespace Toggl.Joey.UI.Activities
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             AuthResult authRes;
             try {
-                authRes = await authManager.Authenticate (EmailEditText.Text, PasswordEditText.Text);
+                authRes = await authManager.AuthenticateAsync (EmailEditText.Text, PasswordEditText.Text);
             } catch (InvalidOperationException ex) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Info (LogTag, ex, "Failed to authenticate user with password.");
@@ -317,7 +317,7 @@ namespace Toggl.Joey.UI.Activities
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             AuthResult authRes;
             try {
-                authRes = await authManager.Signup (EmailEditText.Text, PasswordEditText.Text);
+                authRes = await authManager.SignupAsync (EmailEditText.Text, PasswordEditText.Text);
             } catch (InvalidOperationException ex) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Info (LogTag, ex, "Failed to signup user with password.");
@@ -567,14 +567,14 @@ namespace Toggl.Joey.UI.Activities
                         activity = Activity as LoginActivity;
                         if (activity != null && activity.CurrentMode == Mode.Signup) {
                             // Signup with Google
-                            var authRes = await authManager.SignupWithGoogle (token);
+                            var authRes = await authManager.SignupWithGoogleAsync (token);
                             if (authRes != AuthResult.Success) {
                                 ClearGoogleToken (ctx, token);
                                 activity.ShowAuthError (Email, authRes, Mode.Signup, googleAuth: true);
                             }
                         } else {
                             // Authenticate client
-                            var authRes = await authManager.AuthenticateWithGoogle (token);
+                            var authRes = await authManager.AuthenticateWithGoogleAsync (token);
                             if (authRes != AuthResult.Success) {
                                 ClearGoogleToken (ctx, token);
                                 activity.ShowAuthError (Email, authRes, Mode.Login, googleAuth: true);

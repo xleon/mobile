@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Net;
@@ -28,7 +29,7 @@ namespace Toggl.Joey
                Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformInfo
     {
-        private bool componentsInitialized = false;
+        private bool componentsInitialized;
         private Stopwatch startTimeMeasure = Stopwatch.StartNew();
 
         public AndroidApp () : base ()
@@ -39,21 +40,18 @@ namespace Toggl.Joey
         {
         }
 
-        public override void OnCreate ()
+        public async override void OnCreate ()
         {
             base.OnCreate ();
 
-            RegisterComponents ();
+            await RegisterComponentsAsync ();
             InitializeStartupComponents ();
         }
 
-        private void RegisterComponents ()
+        private async Task RegisterComponentsAsync ()
         {
             // Register platform service.
             ServiceContainer.Register<IPlatformInfo> (this);
-
-            // Register Phoebe services.
-            Services.Register ();
 
             // Register Joey components:
             ServiceContainer.Register<ILogger> (() => new Logger ());
@@ -81,6 +79,9 @@ namespace Toggl.Joey
             });
             ServiceContainer.Register<ITracker> (() => new Tracker (this));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
+
+            // Register Phoebe services.
+            await Services.RegisterAsync ();
         }
 
         private void InitializeStartupComponents ()
@@ -136,6 +137,8 @@ namespace Toggl.Joey
             get { return PackageManager.GetPackageInfo (PackageName, 0).VersionName; }
         }
 
+        // Property to match with the IPlatformInfo
+        // interface. This interface is implemented by iOS and Android.
         public bool IsWidgetAvailable
         {
             get { return true; }

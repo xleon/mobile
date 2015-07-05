@@ -22,7 +22,8 @@ namespace Toggl.Phoebe.Data.Views
         private int displayTaskForProjectPosition;
 
         private Project displayingTaskForProject;
-        public Project DisplayingTaskForProject {
+        public Project DisplayingTaskForProject
+        {
             get {
                 return displayingTaskForProject;
             }

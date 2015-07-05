@@ -85,7 +85,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private void OnContinueTimeEntry (TimeEntryHolder timeEntryHolder)
+        private void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
             // Don't continue a new TimeEntry before
             // 3 seconds has passed.
@@ -94,17 +94,18 @@ namespace Toggl.Joey.UI.Adapters
             }
             lastTimeEntryContinuedTime = Time.UtcNow;
 
-            modelView.ContinueTimeEntry (timeEntryHolder);
+            modelView.ContinueTimeEntry (viewHolder.AdapterPosition);
         }
 
-        private void OnStopTimeEntry (TimeEntryHolder timeEntryHolder)
+        private void OnStopTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
-            modelView.StopTimeEntry (timeEntryHolder);
+            modelView.StopTimeEntry (viewHolder.AdapterPosition);
         }
 
         public void RemoveItemWithUndo (RecyclerView.ViewHolder viewHolder)
         {
-            modelView.RemoveItemWithUndo (((TimeEntryListItemHolder)viewHolder).DataSource);
+
+            modelView.RemoveItemWithUndo (viewHolder.AdapterPosition);
         }
 
         public void RestoreItemFromUndo ()
@@ -163,12 +164,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             if (holder is TimeEntryListItemHolder) {
                 var mHolder = (TimeEntryListItemHolder)holder;
-
-                // View setup
-                //((LogTimeEntryItem)ItemView).InitSwipeDeleteBg ();
-                //ItemView.Selected = false;
-
-                mHolder.DisposeDataSource ();
+                mHolder.DataSource = null;
             } else if (holder is HeaderListItemHolder) {
                 var mHolder = (HeaderListItemHolder)holder;
                 mHolder.DisposeDataSource ();
@@ -236,10 +232,12 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecycledBindableViewHolder<TimeEntryHolder>, View.IOnTouchListener
+        private class TimeEntryListItemHolder : RecyclerView.ViewHolder, View.IOnTouchListener
         {
             private readonly Handler handler;
             private readonly LogTimeEntriesAdapter owner;
+
+            public TimeEntryHolder DataSource { get; set; }
 
             public View ColorView { get; private set; }
 
@@ -289,26 +287,23 @@ namespace Toggl.Joey.UI.Adapters
                     }
 
                     if (DataSource.State == TimeEntryState.Running) {
-                        owner.OnStopTimeEntry (DataSource);
+                        owner.OnStopTimeEntry (this);
                         ContinueImageButton.Pressed = true;
                         return false;
                     }
 
-                    owner.OnContinueTimeEntry (DataSource);
+                    owner.OnContinueTimeEntry (this);
                     return false;
                 }
 
                 return false;
             }
 
-            protected override void Rebind ()
+            public void Bind (TimeEntryHolder datasource)
             {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
-                    return;
-                }
+                DataSource = datasource;
 
-                if (DataSource == null) {
+                if (DataSource == null || Handle == IntPtr.Zero) {
                     return;
                 }
 

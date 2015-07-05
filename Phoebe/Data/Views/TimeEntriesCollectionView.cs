@@ -217,7 +217,7 @@ namespace Toggl.Phoebe.Data.Views
             if (timeEntryHolder == null) {
                 return;
             }
-            Console.WriteLine ("startedddddd!!!! : " + timeEntryHolder.TimeEntryData.Id);
+
             await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.TimeEntryData);
 
             // Ping analytics

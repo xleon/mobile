@@ -61,10 +61,10 @@ namespace Toggl.Joey.UI.Adapters
                 if (e.NewItems.Count == 1) {
 
                     // If new TE is started,
-                    // move scroll to top position
-                    if (e.NewStartingIndex == 1) {
-                        Owner.SmoothScrollToPosition (0);
-                    }
+                    // we should move the scroll to top position
+                    // Owner.SmoothScrollToPosition (0);
+                    // but in some special cases, this movement breaks
+                    // RecyclerView layout. Under investigation.
 
                     NotifyItemInserted (e.NewStartingIndex);
                 } else {

@@ -218,24 +218,15 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.TimeEntryData);
+            var timeEntry = timeEntryHolder.TimeEntryData;
 
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
-        }
-
-        public async void StopTimeEntry (int index)
-        {
-            // Get data holder
-            var timeEntryHolder = GetHolderFromIndex (index);
-            if (timeEntryHolder == null) {
-                return;
+            if (timeEntry.State == TimeEntryState.Running) {
+                await TimeEntryModel.StopAsync (timeEntryHolder.TimeEntryData);
+                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
+            } else {
+                await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.TimeEntryData);
+                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
-
-            await TimeEntryModel.StopAsync (timeEntryHolder.TimeEntryData);
-
-            // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
         }
         #endregion
 

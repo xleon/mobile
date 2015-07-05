@@ -25,7 +25,7 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
-        private static readonly int ContinueThreshold = 2;
+        private static readonly int ContinueThreshold = 1;
         private TimeEntriesCollectionView modelView;
         private DateTime lastTimeEntryContinuedTime;
 
@@ -88,7 +88,7 @@ namespace Toggl.Joey.UI.Adapters
         private void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
             // Don't continue a new TimeEntry before
-            // 3 seconds has passed.
+            // x seconds has passed.
             if (Time.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
                 return;
             }
@@ -97,14 +97,8 @@ namespace Toggl.Joey.UI.Adapters
             modelView.ContinueTimeEntry (viewHolder.AdapterPosition);
         }
 
-        private void OnStopTimeEntry (RecyclerView.ViewHolder viewHolder)
-        {
-            modelView.StopTimeEntry (viewHolder.AdapterPosition);
-        }
-
         public void RemoveItemWithUndo (RecyclerView.ViewHolder viewHolder)
         {
-
             modelView.RemoveItemWithUndo (viewHolder.AdapterPosition);
         }
 
@@ -282,16 +276,6 @@ namespace Toggl.Joey.UI.Adapters
             {
                 switch (e.Action) {
                 case MotionEventActions.Up:
-                    if (DataSource == null) {
-                        return false;
-                    }
-
-                    if (DataSource.State == TimeEntryState.Running) {
-                        owner.OnStopTimeEntry (this);
-                        ContinueImageButton.Pressed = true;
-                        return false;
-                    }
-
                     owner.OnContinueTimeEntry (this);
                     return false;
                 }

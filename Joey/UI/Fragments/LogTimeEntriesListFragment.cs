@@ -98,6 +98,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnDestroyView ()
         {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero) {
+                return;
+            }
+
             var bus = ServiceContainer.Resolve<MessageBus> ();
             if (subscriptionSettingChanged != null) {
                 bus.Unsubscribe (subscriptionSettingChanged);
@@ -105,8 +110,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // Remove calls to hide Undo bar.
-            handler.RemoveCallbacksAndMessages (null);
-            handler.Dispose ();
+            handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
 
             ReleaseRecyclerView ();
 
@@ -210,6 +214,11 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ShowUndoBar ()
         {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero) {
+                return;
+            }
+
             if (!UndoBarVisible) {
                 UndoBarVisible = true;
             }
@@ -230,6 +239,11 @@ namespace Toggl.Joey.UI.Fragments
 
         private void UndoBtnClicked (object sender, EventArgs e)
         {
+            // Protect against Java side being GCed
+            if (Handle == IntPtr.Zero) {
+                return;
+            }
+
             // Undo remove item.
             var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
             undoAdapter.RestoreItemFromUndo ();

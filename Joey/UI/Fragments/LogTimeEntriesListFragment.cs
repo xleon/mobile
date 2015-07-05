@@ -104,6 +104,10 @@ namespace Toggl.Joey.UI.Fragments
                 subscriptionSettingChanged = null;
             }
 
+            // Remove calls to hide Undo bar.
+            handler.RemoveCallbacksAndMessages (null);
+            handler.Dispose ();
+
             ReleaseRecyclerView ();
 
             base.OnDestroyView ();

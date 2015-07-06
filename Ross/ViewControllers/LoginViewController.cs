@@ -144,7 +144,7 @@ namespace Toggl.Ross.ViewControllers
 
             try {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
-                var authRes = await authManager.Authenticate (emailTextField.Text, passwordTextField.Text);
+                var authRes = await authManager.AuthenticateAsync (emailTextField.Text, passwordTextField.Text);
 
                 if (authRes != AuthResult.Success) {
                     AuthErrorAlert.Show (this, emailTextField.Text, authRes, AuthErrorAlert.Mode.Login);

@@ -149,7 +149,7 @@ namespace Toggl.Ross.ViewControllers
                         IsAuthenticating = true;
                         var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
                         var authManager = ServiceContainer.Resolve<AuthManager> ();
-                        var authRes = await authManager.AuthenticateWithGoogle (token);
+                        var authRes = await authManager.AuthenticateWithGoogleAsync (token);
                         // No need to keep the users Google account access around anymore
                         Google.Plus.SignIn.SharedInstance.Disconnect ();
                         if (authRes != AuthResult.Success) {

@@ -29,13 +29,13 @@ namespace Toggl.Ross
         private int systemVersion;
         private const int minVersionWidget = 7;
 
-        public async override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
+        public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
             var versionString = UIDevice.CurrentDevice.SystemVersion;
             systemVersion = System.Convert.ToInt32 ( versionString.Split ( new [] {"."}, System.StringSplitOptions.None)[0]);
 
             // wait for component initialisation.
-            await RegisterComponentsAsync ();
+            RegisterComponentsAsync ();
 
             var signIn = Google.Plus.SignIn.SharedInstance;
             signIn.ClientId = Build.GoogleOAuthClientId;
@@ -105,7 +105,7 @@ namespace Toggl.Ross
             }
         }
 
-        private async Task RegisterComponentsAsync ()
+        private async void RegisterComponentsAsync ()
         {
             // Register platform info first.
             ServiceContainer.Register<IPlatformInfo> (this);

@@ -218,7 +218,7 @@ namespace Toggl.Ross.ViewControllers
 
             try {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
-                var authRes = await authManager.Signup (emailTextField.Text, passwordTextField.Text);
+                var authRes = await authManager.SignupAsync (emailTextField.Text, passwordTextField.Text);
 
                 if (authRes != AuthResult.Success) {
                     AuthErrorAlert.Show (this, emailTextField.Text, authRes, AuthErrorAlert.Mode.Signup);
@@ -238,7 +238,7 @@ namespace Toggl.Ross.ViewControllers
                         var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
 
                         var authManager = ServiceContainer.Resolve<AuthManager> ();
-                        var authRes = await authManager.SignupWithGoogle (token);
+                        var authRes = await authManager.SignupWithGoogleAsync (token);
 
                         // No need to keep the users Google account access around anymore
                         Google.Plus.SignIn.SharedInstance.Disconnect ();

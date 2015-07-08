@@ -14,9 +14,8 @@ using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
 using UIKit;
-using XPlatUtils;
 using Xamarin;
-using System.Threading.Tasks;
+using XPlatUtils;
 
 namespace Toggl.Ross
 {
@@ -31,7 +30,8 @@ namespace Toggl.Ross
         private const int minVersionWidget = 7;
 
         private APNSManager apnsManager;
-        private APNSManager APNSManager {
+        private APNSManager APNSManager
+        {
             get {
                 if (apnsManager == null) {
                     apnsManager = ServiceContainer.Resolve<APNSManager> ();

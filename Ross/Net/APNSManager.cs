@@ -16,15 +16,14 @@ namespace Toggl.Ross.Net
     public class APNSManager
     {
         private static readonly string Tag = "APNSManager";
-
         private const string PushDeviceTokenKey = "PushDeviceToken";
-        private readonly object subscriptionAuthChanged;
 
         private string authToken;
-        private string SavedDeviceToken { 
-            get { 
-                return NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey); 
-            } 
+        private string SavedDeviceToken
+        {
+            get {
+                return NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey);
+            }
         }
 
         private DateTime? lastSyncTime;
@@ -32,7 +31,7 @@ namespace Toggl.Ross.Net
         public APNSManager ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChangedMessage);
+            bus.Subscribe<AuthChangedMessage> (OnAuthChangedMessage);
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             authToken = authManager.Token;
@@ -110,7 +109,7 @@ namespace Toggl.Ross.Net
             }
 
             var oldDeviceToken = NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey);
-            var oldDeviceTokenEmpty = string.IsNullOrEmpty(oldDeviceToken);
+            var oldDeviceTokenEmpty = string.IsNullOrEmpty (oldDeviceToken);
 
             NSUserDefaults.StandardUserDefaults.SetString (DeviceToken, PushDeviceTokenKey);
 
@@ -137,8 +136,8 @@ namespace Toggl.Ross.Net
             return dt.ToUtc ();
         }
 
-        private static readonly NSString updatedAtConst = new NSString("updated_at");
-        private static readonly NSString taskIdConst = new NSString("task_id");
+        private static readonly NSString updatedAtConst = new NSString ("updated_at");
+        private static readonly NSString taskIdConst = new NSString ("task_id");
 
         public async Task DidReceiveRemoteNotificationAsync (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
         {
@@ -153,7 +152,7 @@ namespace Toggl.Ross.Net
 
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var rows = await dataStore.Table<TimeEntryData> ()
-                    .QueryAsync (r => r.RemoteId == entryId);
+                           .QueryAsync (r => r.RemoteId == entryId);
                 var entry = rows.FirstOrDefault();
 
                 var modifiedAt = ParseDate (modifiedAtObj.ToString());

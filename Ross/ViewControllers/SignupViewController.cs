@@ -2,16 +2,17 @@ using System;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
 using MonoTouch.TTTAttributedLabel;
-using UIKit;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
+using Toggl.Ross.Net;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class SignupViewController : UIViewController, Google.Plus.ISignInDelegate
+    public class SignupViewController : UIViewController
     {
         private UIView inputsContainer;
         private UIView topBorder;
@@ -131,27 +132,11 @@ namespace Toggl.Ross.ViewControllers
             ResetSignupButtonState ();
         }
 
-        public override void ViewWillAppear (bool animated)
-        {
-            base.ViewWillAppear (animated);
-
-            Google.Plus.SignIn.SharedInstance.Delegate = this;
-        }
-
         public override void ViewDidAppear (bool animated)
         {
             base.ViewDidAppear (animated);
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Signup";
-        }
-
-        public override void ViewWillDisappear (bool animated)
-        {
-            base.ViewWillDisappear (animated);
-
-            if (Google.Plus.SignIn.SharedInstance.Delegate == this) {
-                Google.Plus.SignIn.SharedInstance.Delegate = null;
-            }
         }
 
         private void OnTextFieldEditingChanged (object sender, EventArgs e)
@@ -205,7 +190,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnGoogleActionButtonTouchUpInside (object sender, EventArgs e)
         {
-            Google.Plus.SignIn.SharedInstance.Authenticate ();
+            var oauthManager = ServiceContainer.Resolve<OAuthManager> ();
+            oauthManager.Authenticated = Finished;
+            PresentViewController (oauthManager.UI, true, null);
         }
 
         private async void TryPasswordSignup ()
@@ -228,24 +215,22 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public void Finished (Google.OpenSource.OAuth2Authentication auth, NSError error)
+        public void Finished (string token, bool googleFailed)
         {
+            DismissViewController (true, null);
             InvokeOnMainThread (async delegate {
                 try {
-                    if (error == null) {
+                    if (!googleFailed) {
+                        if (token == null) {
+                            return;
+                        }
                         IsAuthenticating = true;
-
-                        var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
 
                         var authManager = ServiceContainer.Resolve<AuthManager> ();
                         var authRes = await authManager.SignupWithGoogleAsync (token);
 
-                        // No need to keep the users Google account access around anymore
-                        Google.Plus.SignIn.SharedInstance.Disconnect ();
-
                         if (authRes != AuthResult.Success) {
-                            var email = Google.Plus.SignIn.SharedInstance.Authentication.UserEmail;
-                            AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Signup, googleAuth: true);
+                            AuthErrorAlert.Show (this, null, authRes, AuthErrorAlert.Mode.Signup, googleAuth: true);
                         }
                     } else {
                         new UIAlertView (

@@ -140,6 +140,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
+            ServiceContainer.Register<OAuthManager> ();
 
             // Register Phoebe services async
             await Services.RegisterAsync ();

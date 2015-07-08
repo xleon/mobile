@@ -129,6 +129,9 @@ namespace Toggl.Joey.UI.Activities
                     pageStack.AddRange (arr);
                 }
             }
+
+            // Make sure that the user will see newest data when they start the activity
+            ServiceContainer.Resolve<ISyncManager> ().Run ();
         }
 
         private void OnUserChangedEvent (object sender, PropertyChangedEventArgs args)

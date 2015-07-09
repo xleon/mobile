@@ -54,6 +54,7 @@ namespace Toggl.Joey
             ServiceContainer.Register<IPlatformInfo> (this);
 
             // Register Joey components:
+            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<Context> (this);
             ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService (Context));

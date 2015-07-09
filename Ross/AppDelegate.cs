@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Foundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
@@ -14,8 +13,9 @@ using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
 using UIKit;
-using Xamarin;
 using XPlatUtils;
+using Xamarin;
+using System.Threading.Tasks;
 
 namespace Toggl.Ross
 {
@@ -28,17 +28,6 @@ namespace Toggl.Ross
         private TogglWindow window;
         private int systemVersion;
         private const int minVersionWidget = 7;
-
-        private APNSManager apnsManager;
-        private APNSManager APNSManager
-        {
-            get {
-                if (apnsManager == null) {
-                    apnsManager = ServiceContainer.Resolve<APNSManager> ();
-                }
-                return apnsManager;
-            }
-        }
 
         public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
@@ -67,26 +56,9 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<ITracker> ();
-            ServiceContainer.Resolve<APNSManager> ();
 
             return true;
         }
-
-        public override void RegisteredForRemoteNotifications (UIApplication application, NSData deviceToken)
-        {
-            APNSManager.RegisteredForRemoteNotifications (application, deviceToken);
-        }
-
-        public override void FailedToRegisterForRemoteNotifications (UIApplication application, NSError error)
-        {
-            APNSManager.FailedToRegisterForRemoteNotifications (application, error);
-        }
-
-        public override void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
-        {
-            Task.Run (() => APNSManager.DidReceiveRemoteNotificationAsync (application, userInfo, completionHandler));
-        }
-
 
         public override void OnActivated (UIApplication application)
         {
@@ -168,7 +140,6 @@ namespace Toggl.Ross
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
-            ServiceContainer.Register<APNSManager> ();
 
             // Register Phoebe services async
             await Services.RegisterAsync ();

@@ -33,6 +33,11 @@ namespace Toggl.Phoebe
         public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl/toggltimer";
         public static readonly string AppIdentifier = "TogglRoss";
         public static readonly string GoogleOAuthClientId = "";
+        public static readonly string GoogleOAuthSecret = "";
+        public static readonly string GoogleOAuthAuthorizeUrl = "https://accounts.google.com/o/oauth2/auth";
+        public static readonly string GoogleOAuthAccessTokenUrl = "https://accounts.google.com/o/oauth2/token";
+        public static readonly string GoogleOAuthRedirectUrl = "com.toggl.timer:/oauth2callback";
+
         public static readonly string XamInsightsApiKey = "";
 
         #endif

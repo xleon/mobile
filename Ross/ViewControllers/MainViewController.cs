@@ -116,8 +116,9 @@ namespace Toggl.Ross.ViewControllers
             } else if (emptyStack || ! (ViewControllers [0] is WelcomeViewController)) {
                 vc = new WelcomeViewController ();
             }
-            SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
-
+            if (vc != null) {
+                SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
+            }
         }
 
         private void OnEdgePanGesture ()

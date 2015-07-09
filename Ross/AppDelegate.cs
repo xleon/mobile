@@ -13,9 +13,8 @@ using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
 using UIKit;
-using XPlatUtils;
 using Xamarin;
-using System.Threading.Tasks;
+using XPlatUtils;
 
 namespace Toggl.Ross
 {
@@ -23,7 +22,7 @@ namespace Toggl.Ross
     // User Interface of the application, as well as listening (and optionally responding) to
     // application events from iOS.
     [Register ("AppDelegate")]
-    public partial class AppDelegate : UIApplicationDelegate, IPlatformInfo
+    public class AppDelegate : UIApplicationDelegate, IPlatformInfo
     {
         private TogglWindow window;
         private int systemVersion;
@@ -32,17 +31,10 @@ namespace Toggl.Ross
         public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
             var versionString = UIDevice.CurrentDevice.SystemVersion;
-            systemVersion = System.Convert.ToInt32 ( versionString.Split ( new [] {"."}, System.StringSplitOptions.None)[0]);
+            systemVersion = Convert.ToInt32 ( versionString.Split ( new [] {"."}, StringSplitOptions.None)[0]);
 
             // wait for component initialisation.
             RegisterComponentsAsync ();
-
-            var signIn = Google.Plus.SignIn.SharedInstance;
-            signIn.ClientId = Build.GoogleOAuthClientId;
-            signIn.Scopes = new [] {
-                "https://www.googleapis.com/auth/userinfo.profile",
-                "https://www.googleapis.com/auth/userinfo.email",
-            };
 
             Toggl.Ross.Theme.Style.Initialize ();
 
@@ -86,7 +78,7 @@ namespace Toggl.Ross
                     return true;
                 }
             }
-            return Google.Plus.UrlHandler.HandleUrl (url, sourceApplication, annotation);
+            return false;
         }
 
         public override void DidEnterBackground (UIApplication application)
@@ -140,6 +132,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
+            ServiceContainer.Register<OAuthManager> ();
 
             // Register Phoebe services async
             await Services.RegisterAsync ();

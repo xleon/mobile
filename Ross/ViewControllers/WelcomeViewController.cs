@@ -1,18 +1,17 @@
 using System;
 using Cirrious.FluentLayouts.Touch;
-using Foundation;
 using UIKit;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using Toggl.Ross.Net;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class WelcomeViewController : UIViewController, Google.Plus.ISignInDelegate
+    public class WelcomeViewController : UIViewController
     {
         private const string Tag = "WelcomeViewController";
 
@@ -83,7 +82,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnGoogleButtonTouchUpInside (object sender, EventArgs e)
         {
-            Google.Plus.SignIn.SharedInstance.Authenticate ();
+            var oauthManager = ServiceContainer.Resolve<OAuthManager> ();
+            oauthManager.Authenticated = Finished;
+            PresentViewController (oauthManager.UI, true, null);
         }
 
         public override void ViewWillAppear (bool animated)
@@ -94,8 +95,6 @@ namespace Toggl.Ross.ViewControllers
             if (navController != null) {
                 navController.SetNavigationBarHidden (true, animated);
             }
-
-            Google.Plus.SignIn.SharedInstance.Delegate = this;
         }
 
         public override void ViewDidAppear (bool animated)
@@ -114,9 +113,6 @@ namespace Toggl.Ross.ViewControllers
                 navController = null;
             }
 
-            if (Google.Plus.SignIn.SharedInstance.Delegate == this) {
-                Google.Plus.SignIn.SharedInstance.Delegate = null;
-            }
         }
 
         private bool IsAuthenticating
@@ -141,20 +137,20 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public void Finished (Google.OpenSource.OAuth2Authentication auth, NSError error)
+        public void Finished (string token, bool googleFailed)
         {
+            DismissViewController (true, null);
             InvokeOnMainThread (async delegate {
                 try {
-                    if (error == null) {
+                    if (!googleFailed) {
+                        if (token == null) {
+                            return;
+                        }
                         IsAuthenticating = true;
-                        var token = Google.Plus.SignIn.SharedInstance.Authentication.AccessToken;
                         var authManager = ServiceContainer.Resolve<AuthManager> ();
                         var authRes = await authManager.AuthenticateWithGoogleAsync (token);
-                        // No need to keep the users Google account access around anymore
-                        Google.Plus.SignIn.SharedInstance.Disconnect ();
                         if (authRes != AuthResult.Success) {
-                            var email = Google.Plus.SignIn.SharedInstance.Authentication.UserEmail;
-                            AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Login, googleAuth: true);
+                            AuthErrorAlert.Show (this, null, authRes, AuthErrorAlert.Mode.Login, googleAuth: true);
                         } else {
                             // Start the initial sync for the user
                             ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);

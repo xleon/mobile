@@ -219,24 +219,27 @@ namespace Toggl.Phoebe.Net
             return req;
         }
 
-        private void PrepareResponse (HttpResponseMessage resp, TimeSpan requestTime)
+        private async Task PrepareResponse (HttpResponseMessage resp, TimeSpan requestTime)
         {
             ServiceContainer.Resolve<MessageBus> ().Send (new TogglHttpResponseMessage (this, resp, requestTime));
             if (!resp.IsSuccessStatusCode) {
-                throw new UnsuccessfulRequestException (resp.StatusCode, resp.ReasonPhrase);
+                string content = string.Empty;
+                if (resp.Content != null) {
+                    content = await resp.Content.ReadAsStringAsync ().ConfigureAwait (false);
+                }
+                throw new UnsuccessfulRequestException (resp.StatusCode, resp.ReasonPhrase + ":" + content);
             }
         }
 
         private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq)
         {
             using (var httpClient = MakeHttpClient ()) {
-
                 var reqTimer = Stopwatch.StartNew ();
                 var httpResp = await httpClient.SendAsync (httpReq)
-                               .ConfigureAwait (continueOnCapturedContext: false);
+                               .ConfigureAwait (false);
                 reqTimer.Stop ();
 
-                PrepareResponse (httpResp, reqTimer.Elapsed);
+                await PrepareResponse (httpResp, reqTimer.Elapsed);
 
                 return httpResp;
             }
@@ -252,10 +255,10 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
@@ -268,10 +271,10 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
             var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
@@ -286,10 +289,10 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
             var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
@@ -303,10 +306,10 @@ namespace Toggl.Phoebe.Net
             });
 
             var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
             return JsonConvert.DeserializeObject<List<T>> (respData) ?? new List<T> (0);
         }
 
@@ -316,8 +319,7 @@ namespace Toggl.Phoebe.Net
                 Method = HttpMethod.Delete,
                 RequestUri = url,
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
+            await SendAsync (httpReq).ConfigureAwait (false);
         }
 
         private Task DeleteObjects (Uri url)
@@ -685,10 +687,10 @@ namespace Toggl.Phoebe.Net
                     Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                 string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
             var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserJson>> (respData);
 
             return wrap.Data;
@@ -721,10 +723,10 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
             });
             var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
 
             var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
+                           .ConfigureAwait (false);
             var json = JObject.Parse (respData);
 
             var user = json ["data"].ToObject<UserJson> ();

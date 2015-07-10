@@ -24,8 +24,6 @@
 	<string>com.toggl.timer</string>
 	<key>CFBundleShortVersionString</key>
 	<string>7.0.23</string>
-	<key>CFBundleVersion</key>
-	<string>15</string>
 	<key>UIPrerenderedIcon</key>
 	<true/>
 	<key>XSAppIconAssets</key>
@@ -49,5 +47,7 @@
 	<array>
 		<string>Fonts/icomoon.ttf</string>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>17</string>
 </dict>
 </plist>

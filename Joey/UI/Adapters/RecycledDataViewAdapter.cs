@@ -27,7 +27,6 @@ namespace Toggl.Joey.UI.Adapters
                 if (Build.VERSION.SdkInt > BuildVersionCodes.JellyBeanMr1) {
                     isInLayout = Owner.GetItemAnimator().IsRunning || Owner.IsInLayout;
                 }
-
                 return isInLayout;
             }
         }
@@ -72,7 +71,7 @@ namespace Toggl.Joey.UI.Adapters
 
             // Sometimes a new call to LoadMore is needed.
             if (lastLoadingPosition + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
-                dataView.LoadMore();
+                dataView.LoadMore ();
             }
         }
 
@@ -82,10 +81,8 @@ namespace Toggl.Joey.UI.Adapters
                 return;
             }
 
-            if (dataView.HasMore) {
-                NotifyItemInserted (dataView.Count);
-            } else {
-                NotifyItemRemoved (dataView.Count);
+            if (!dataView.HasMore) {
+                NotifyItemChanged (ItemCount - 1);
             }
         }
 
@@ -100,7 +97,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public virtual T GetEntry (int position)
         {
-            if (position == dataView.Count) {
+            if (position >= dataView.Data.Count() ) {
                 return default (T);
             }
             return dataView.Data.ElementAt (position);
@@ -113,7 +110,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position == dataView.Count) {
+            if (position >= dataView.Data.Count()) {
                 return ViewTypeLoaderPlaceholder;
             }
             return ViewTypeContent;
@@ -133,7 +130,7 @@ namespace Toggl.Joey.UI.Adapters
 
             if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {
                 var spinnerHolder = (SpinnerHolder)holder;
-                spinnerHolder.StartAnimation ();
+                spinnerHolder.StartAnimation (dataView.HasMore);
                 return;
             }
 
@@ -149,10 +146,7 @@ namespace Toggl.Joey.UI.Adapters
         public override int ItemCount
         {
             get {
-                if (dataView.IsLoading || dataView.HasMore) {
-                    return dataView.Count + 1;
-                }
-                return dataView.Count;
+                return dataView.Count + 1;
             }
         }
 
@@ -175,13 +169,18 @@ namespace Toggl.Joey.UI.Adapters
             public SpinnerHolder (View root) : base (root)
             {
                 SpinningImage = ItemView.FindViewById<ImageView> (Resource.Id.LoadingImageView);
-                IsRecyclable  = false;
+                IsRecyclable = false;
             }
 
-            public virtual void StartAnimation()
+            public virtual void StartAnimation (bool hasMore)
             {
-                Animation spinningImageAnimation = AnimationUtils.LoadAnimation (ItemView.Context, Resource.Animation.SpinningAnimation);
-                SpinningImage.StartAnimation (spinningImageAnimation);
+                if (hasMore) {
+                    Animation spinningImageAnimation = AnimationUtils.LoadAnimation (ItemView.Context, Resource.Animation.SpinningAnimation);
+                    SpinningImage.StartAnimation (spinningImageAnimation);
+                } else {
+                    SpinningImage.Visibility = ViewStates.Gone;
+                }
+
             }
         }
     }

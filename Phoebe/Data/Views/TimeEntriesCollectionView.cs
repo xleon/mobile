@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
@@ -34,7 +35,10 @@ namespace Toggl.Phoebe.Data.Views
         private bool hasMore;
         private int lastNumberOfItems;
         private bool isUpdatingCollection;
-        private Queue<DataChangeMessage> updateMessageQueue = new Queue<DataChangeMessage> ();
+
+        // BufferBlock is an element introduced to
+        // deal with the fast producer, slow consumer effect.
+        private BufferBlock<DataChangeMessage> bufferBlock = new BufferBlock<DataChangeMessage> ();
 
         public TimeEntriesCollectionView ()
         {
@@ -47,7 +51,7 @@ namespace Toggl.Phoebe.Data.Views
         public void Dispose ()
         {
             // Clean lists
-            updateMessageQueue.Clear ();
+            bufferBlock.Complete ();
             ItemCollection.Clear ();
             foreach (var dateGroup in dateGroups) {
                 dateGroup.Dispose ();
@@ -68,24 +72,33 @@ namespace Toggl.Phoebe.Data.Views
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private void OnDataChange (DataChangeMessage msg)
+        private async void OnDataChange (DataChangeMessage msg)
         {
             var entry = msg.Data as TimeEntryData;
             if (entry == null) {
                 return;
             }
 
-            if (isUpdatingCollection || IsLoading) {
-                updateMessageQueue.Enqueue (msg);
-            } else {
-                ProcessUpdateMessage (msg);
-            }
-        }
+            // Save message to async buffer
+            await bufferBlock.SendAsync (msg);
 
-        private async void ProcessUpdateMessage (DataChangeMessage msg)
-        {
+            if (isUpdatingCollection) {
+                return;
+            }
+
             isUpdatingCollection = true;
 
+            // Get messages from async buffer
+            while (bufferBlock.Count > 0) {
+                var receivedMsg = await bufferBlock.ReceiveAsync ();
+                await ProcessUpdateMessage (receivedMsg);
+            }
+
+            isUpdatingCollection = false;
+        }
+
+        private async Task ProcessUpdateMessage (DataChangeMessage msg)
+        {
             var entry = msg.Data as TimeEntryData;
             var isExcluded = entry.DeletedAt != null
                              || msg.Action == DataAction.Delete
@@ -96,12 +109,6 @@ namespace Toggl.Phoebe.Data.Views
             } else {
                 await AddOrUpdateEntryAsync (new TimeEntryData (entry));
             }
-
-            if (updateMessageQueue.Count > 0) {
-                ProcessUpdateMessage (updateMessageQueue.Dequeue ());
-            }
-
-            isUpdatingCollection = false;
         }
 
         protected virtual Task AddOrUpdateEntryAsync (TimeEntryData entry)
@@ -126,7 +133,6 @@ namespace Toggl.Phoebe.Data.Views
             } else {
                 args = CollectionEventBuilder.GetEvent (action, newIndex, oldIndex);
             }
-
 
             // Update collection.
             if (args.Action == NotifyCollectionChangedAction.Add) {

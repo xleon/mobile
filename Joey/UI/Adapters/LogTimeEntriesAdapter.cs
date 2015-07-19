@@ -62,13 +62,17 @@ namespace Toggl.Joey.UI.Adapters
 
                     // If new TE is started,
                     // we should move the scroll to top position
-                    // Owner.SmoothScrollToPosition (0);
-                    // but in some special cases, this movement breaks
-                    // RecyclerView layout. Under investigation.
+                    Owner.SmoothScrollToPosition (0);
 
-                    NotifyItemInserted (e.NewStartingIndex);
+                    // After some investigation, this action breaks
+                    // RecyclerView layout. Under investigation.
+                    // For the moment, the NotifyItemRangeInserted will be
+                    // replaced by the generic NotifyDataSetChanged.
+                    // NotifyItemInserted (e.NewStartingIndex);
+                    NotifyDataSetChanged ();
                 } else {
-                    NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                    //NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                    NotifyDataSetChanged ();
                 }
             }
 

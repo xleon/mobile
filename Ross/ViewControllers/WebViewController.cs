@@ -24,7 +24,7 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
             navBar = new UIToolbar();
             navBar.Frame = new CGRect (0, View.Frame.Height-40, View.Frame.Width, 40);
-            navBar.TintColor = UIColor.LightGray;
+            navBar.TintColor = UIColor.Gray;
 
             items = new [] {
                 new UIBarButtonItem (UIBarButtonSystemItem.Stop, (o, e) => {

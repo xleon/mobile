@@ -332,6 +332,7 @@
     <Compile Include="Data\WidgetUpdateService.cs" />
     <Compile Include="Views\TableViewRefreshView.cs" />
     <Compile Include="Net\OAuthManager.cs" />
+    <Compile Include="ViewControllers\WebViewController.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

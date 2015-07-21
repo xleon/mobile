@@ -264,7 +264,8 @@ namespace Toggl.Ross.ViewControllers
         {
             public override void DidSelectLinkWithURL (TTTAttributedLabel label, NSUrl url)
             {
-                UIApplication.SharedApplication.OpenUrl (url);
+                WebViewController controller = new WebViewController (url);
+                label.Window.RootViewController.PresentViewController (controller, true, null);
             }
         }
     }

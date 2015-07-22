@@ -97,7 +97,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public virtual T GetEntry (int position)
         {
-            if (position >= dataView.Data.Count() ) {
+            if (position >= dataView.Count ) {
                 return default (T);
             }
             return dataView.Data.ElementAt (position);
@@ -110,7 +110,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position >= dataView.Data.Count()) {
+            if (position >= dataView.Count) {
                 return ViewTypeLoaderPlaceholder;
             }
             return ViewTypeContent;
@@ -180,7 +180,6 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     SpinningImage.Visibility = ViewStates.Gone;
                 }
-
             }
         }
     }

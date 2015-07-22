@@ -321,15 +321,15 @@ namespace Toggl.Phoebe.Data.Views
             if (updateMode != UpdateMode.Immediate) {
                 return;
             }
-            lastNumberOfItems = Count;
+            lastNumberOfItems = UpdatedCount;
             updateMode = UpdateMode.Batch;
         }
 
         private async void EndUpdate ()
         {
             updateMode = UpdateMode.Immediate;
-            if (Count > lastNumberOfItems) {
-                await UpdateCollectionAsync (null, NotifyCollectionChangedAction.Add, lastNumberOfItems, Count - lastNumberOfItems, true);
+            if (UpdatedCount > lastNumberOfItems) {
+                await UpdateCollectionAsync (null, NotifyCollectionChangedAction.Add, lastNumberOfItems, UpdatedCount - lastNumberOfItems, true);
             }
         }
 
@@ -518,11 +518,18 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public int Count
+        protected int UpdatedCount
         {
             get {
                 var itemsCount = DateGroups.Sum (g => g.DataObjects.Count ());
                 return DateGroups.Count + itemsCount;
+            }
+        }
+
+        public int Count
+        {
+            get {
+                return ItemCollection.Count;
             }
         }
 

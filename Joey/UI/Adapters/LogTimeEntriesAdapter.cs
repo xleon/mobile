@@ -68,11 +68,11 @@ namespace Toggl.Joey.UI.Adapters
                     // RecyclerView layout. Under investigation.
                     // For the moment, the NotifyItemRangeInserted will be
                     // replaced by the generic NotifyDataSetChanged.
-                    // NotifyItemInserted (e.NewStartingIndex);
-                    NotifyDataSetChanged ();
+                    NotifyItemInserted (e.NewStartingIndex);
+                    // NotifyDataSetChanged ();
                 } else {
-                    //NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
-                    NotifyDataSetChanged ();
+                    NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                    // NotifyDataSetChanged ();
                 }
             }
 

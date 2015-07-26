@@ -264,7 +264,14 @@ namespace Toggl.Ross.ViewControllers
         {
             public override void DidSelectLinkWithURL (TTTAttributedLabel label, NSUrl url)
             {
-                UIApplication.SharedApplication.OpenUrl (url);
+                var stringUrl = url.AbsoluteString;
+                var tosUrl = Phoebe.Build.TermsOfServiceUrl.ToString ();
+                var privacyUrl = Phoebe.Build.PrivacyPolicyUrl.ToString ();
+                if (stringUrl.Equals (tosUrl) || stringUrl.Equals (privacyUrl)) {
+                    url = new NSUrl (String.Format ("{0}?simple=true", stringUrl));
+                }
+                WebViewController controller = new WebViewController (url);
+                label.Window.RootViewController.PresentViewController (controller, true, null);
             }
         }
     }

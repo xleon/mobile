@@ -381,6 +381,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var numberOfTags = DataSource.NumberOfTags;
+                TagsView.BubbleCount = numberOfTags;
                 TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
             }
         }

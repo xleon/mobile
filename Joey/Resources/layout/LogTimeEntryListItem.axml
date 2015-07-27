@@ -72,7 +72,7 @@
                 android:layout_height="72dp"
                 android:gravity="center"
                 android:paddingLeft="5dp"
-                android:paddingRight="5dp"
+                android:paddingRight="10dp"
                 android:src="@drawable/IcTagsMiniGray" />
             <ImageView
                 android:id="@+id/BillableIcon"

@@ -38,7 +38,7 @@ namespace Toggl.Joey.UI.Views
         {
             get {
                 if (paint == null) {
-                    var labelFontSize = TypedValue.ApplyDimension (ComplexUnitType.Dip, 10, ctx.Resources.DisplayMetrics);
+                    var labelFontSize = TypedValue.ApplyDimension (ComplexUnitType.Dip, 9, ctx.Resources.DisplayMetrics);
                     paint = new Paint {
                         Color = ctx.Resources.GetColor (Resource.Color.dark_gray_text),
                         TextSize = labelFontSize,
@@ -75,13 +75,15 @@ namespace Toggl.Joey.UI.Views
         {
             base.Draw (canvas);
 
-            var circleCenterX = (canvas.Width - CircleShape.MinimumWidth) /2;
-            var circleCenterY = (canvas.Height - CircleShape.MinimumHeight) /2;
-            CircleShape.SetBounds (circleCenterX, circleCenterY, circleCenterX + CircleShape.MinimumWidth, circleCenterY + CircleShape.MinimumHeight);
+            var circleX = canvas.Width /2 - CircleShape.MinimumWidth /4;
+            var circleY = canvas.Height /2 - CircleShape.MinimumHeight;
+            CircleShape.SetBounds (circleX, circleY, circleX + CircleShape.MinimumWidth, circleY + CircleShape.MinimumHeight);
             CircleShape.Draw (canvas);
 
             LabelPaint.GetTextBounds (BubbleText, 0, BubbleText.Length, textBoundsRect);
-            canvas.DrawText (BubbleText, circleCenterX, circleCenterY, LabelPaint);
+            canvas.DrawText (BubbleText,
+                             circleX + CircleShape.MinimumWidth /2 - textBoundsRect.Width () /2,
+                             (canvas.Height - textBoundsRect.Height ())/2, LabelPaint);
         }
 
         protected override void Dispose (bool disposing)

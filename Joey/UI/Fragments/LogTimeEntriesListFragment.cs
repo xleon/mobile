@@ -161,11 +161,12 @@ namespace Toggl.Joey.UI.Fragments
             var duration = TimeEntriesCollectionView.UndoSecondsInterval * 1000;
 
             await collectionView.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
-            Snackbar
-            .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
-            .SetAction (Resources.GetString (Resource.String.UndoBarButtonText), async v => await collectionView.RestoreItemFromUndoAsync ())
-            .SetDuration (duration)
-            .Show ();
+            var snackBar = Snackbar
+                           .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
+                           .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
+                                       async v => await collectionView.RestoreItemFromUndoAsync ());
+            ChangeSnackBarColor (snackBar);
+            snackBar.Show ();
         }
 
         #endregion
@@ -195,5 +196,23 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         #endregion
+
+        // Temporal hack to change the
+        // action color in snack bar
+        private void ChangeSnackBarColor (Snackbar snack)
+        {
+            var group = (ViewGroup) snack.View;
+            for (int i = 0; i < group.ChildCount; i++) {
+                View v = group.GetChildAt (i);
+                var textView = v as TextView;
+                if (textView != null) {
+                    TextView t = textView;
+                    if (t.Text == Resources.GetString (Resource.String.UndoBarButtonText)) {
+                        t.SetTextColor (Resources.GetColor (Resource.Color.material_green));
+                    }
+
+                }
+            }
+        }
     }
 }

@@ -23,28 +23,15 @@ namespace Toggl.Joey.Widget
 
         private Subscription<SyncWidgetMessage> subscriptionSyncFinishedMessage;
 
-        public override void OnStart (Intent intent, int startId)
-        {
-            StartSync();
-            base.OnStart (intent, startId);
-        }
-
         public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
         {
-            OnStart (intent, startId);
+            StartSync();
             return StartCommandResult.Sticky;
         }
 
         public override void OnCreate ()
         {
             base.OnCreate ();
-
-            // Track startup time.
-            var handler = Xamarin.Insights.TrackTime ("TimeToStartWidget");
-
-            handler.Start ();
-            ((AndroidApp)Application).InitializeComponents ();
-            handler.Stop ();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncFinishedMessage = bus.Subscribe<SyncWidgetMessage> (OnSyncFinishedMessage);

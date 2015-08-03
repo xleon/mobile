@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Android.Animation;
 using Android.Content;
 using Android.OS;
+using Android.Support.Design.Widget;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
 using Android.Support.V7.Widget.Helper;
@@ -23,23 +23,18 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : Fragment, SwipeDismissCallback.IDismissListener, ItemTouchListener.IItemTouchListener
     {
-        private static readonly int UndbarVisibleTime = 6000;
-        private static readonly int UndbarScrollThreshold = 100;
-
         private RecyclerView recyclerView;
         private View emptyMessageView;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private LogTimeEntriesAdapter logAdapter;
-        private readonly Handler handler = new Handler ();
-        private FrameLayout undoBar;
-        private Button undoButton;
-        private bool isUndoShowed;
+        private CoordinatorLayout coordinatorLayout;
+
+        private TimeEntriesCollectionView collectionView;
 
         // Recycler setup
         private DividerItemDecoration dividerDecoration;
         private ShadowItemDecoration shadowDecoration;
         private ItemTouchListener itemTouchListener;
-        private RecyclerViewScrollDetector scrollListener;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -51,11 +46,7 @@ namespace Toggl.Joey.UI.Fragments
             emptyMessageView.Visibility = ViewStates.Gone;
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
-
-            undoBar = view.FindViewById<FrameLayout> (Resource.Id.UndoBar);
-            undoButton = view.FindViewById<Button> (Resource.Id.UndoButton);
-            undoButton.Click += UndoBtnClicked;
-
+            coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             return view;
         }
 
@@ -86,11 +77,8 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (recyclerView.GetAdapter() == null) {
                 var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
-                if (isGrouped) {
-                    logAdapter = new LogTimeEntriesAdapter (recyclerView, new GroupedTimeEntriesView());
-                } else {
-                    logAdapter = new LogTimeEntriesAdapter (recyclerView, new LogTimeEntriesView());
-                }
+                collectionView = isGrouped ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+                logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
                 recyclerView.SetAdapter (logAdapter);
                 SetupRecyclerView ();
             }
@@ -108,9 +96,6 @@ namespace Toggl.Joey.UI.Fragments
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-
-            // Remove calls to hide Undo bar.
-            handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
 
             ReleaseRecyclerView ();
 
@@ -133,14 +118,11 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (dividerDecoration);
             recyclerView.AddItemDecoration (shadowDecoration);
 
-            scrollListener = new RecyclerViewScrollDetector (this);
-            recyclerView.AddOnScrollListener (scrollListener);
             recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
         }
 
         private void ReleaseRecyclerView ()
         {
-            recyclerView.RemoveOnScrollListener (scrollListener);
             recyclerView.RemoveItemDecoration (shadowDecoration);
             recyclerView.RemoveItemDecoration (dividerDecoration);
             recyclerView.RemoveOnItemTouchListener (itemTouchListener);
@@ -152,7 +134,6 @@ namespace Toggl.Joey.UI.Fragments
             itemTouchListener.Dispose ();
             dividerDecoration.Dispose ();
             shadowDecoration.Dispose ();
-            scrollListener.Dispose ();
         }
 
         private void OnSettingChanged (SettingChangedMessage msg)
@@ -175,11 +156,17 @@ namespace Toggl.Joey.UI.Fragments
             return adapter.GetItemViewType (viewHolder.LayoutPosition) == LogTimeEntriesAdapter.ViewTypeContent;
         }
 
-        public void OnDismiss (RecyclerView.ViewHolder viewHolder, int position)
+        public async void OnDismiss (RecyclerView.ViewHolder viewHolder)
         {
-            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
-            undoAdapter.RemoveItemWithUndo (viewHolder);
-            ShowUndoBar ();
+            var duration = TimeEntriesCollectionView.UndoSecondsInterval * 1000;
+
+            await collectionView.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
+            var snackBar = Snackbar
+                           .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
+                           .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
+                                       async v => await collectionView.RestoreItemFromUndoAsync ());
+            ChangeSnackBarColor (snackBar);
+            snackBar.Show ();
         }
 
         #endregion
@@ -210,108 +197,20 @@ namespace Toggl.Joey.UI.Fragments
 
         #endregion
 
-        #region Undo bar
-
-        private void ShowUndoBar ()
+        // Temporal hack to change the
+        // action color in snack bar
+        private void ChangeSnackBarColor (Snackbar snack)
         {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
+            var group = (ViewGroup) snack.View;
+            for (int i = 0; i < group.ChildCount; i++) {
+                View v = group.GetChildAt (i);
+                var textView = v as TextView;
+                if (textView != null) {
+                    TextView t = textView;
+                    if (t.Text == Resources.GetString (Resource.String.UndoBarButtonText)) {
+                        t.SetTextColor (Resources.GetColor (Resource.Color.material_green));
+                    }
 
-            if (!UndoBarVisible) {
-                UndoBarVisible = true;
-            }
-            handler.RemoveCallbacks (RemoveItemAndHideUndoBar);
-            handler.PostDelayed (RemoveItemAndHideUndoBar, UndbarVisibleTime);
-        }
-
-        public void RemoveItemAndHideUndoBar ()
-        {
-            UndoBarVisible = false;
-
-            // Remove item permanently
-            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
-            if (undoAdapter != null) {
-                undoAdapter.ConfirmItemRemove ();
-            }
-        }
-
-        private void UndoBtnClicked (object sender, EventArgs e)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-
-            // Undo remove item.
-            var undoAdapter = recyclerView.GetAdapter () as IUndoCapabilities;
-            undoAdapter.RestoreItemFromUndo ();
-
-            handler.RemoveCallbacks (ShowUndoBar);
-            UndoBarVisible = false;
-        }
-
-        public bool UndoBarVisible
-        {
-            get {
-                return isUndoShowed;
-            } set {
-                if (isUndoShowed == value) {
-                    return;
-                }
-                isUndoShowed = value;
-
-                var targetTranY = isUndoShowed ? 0.0f : 160.0f;
-                ValueAnimator animator = ValueAnimator.OfFloat (undoBar.TranslationY, targetTranY);
-                animator.SetDuration (500);
-                animator.Update += (sender, e) => {
-                    undoBar.TranslationY = (float)animator.AnimatedValue;
-                };
-                animator.Start();
-            }
-        }
-
-        #endregion
-
-        private class RecyclerViewScrollDetector : RecyclerView.OnScrollListener
-        {
-            private readonly LogTimeEntriesListFragment owner;
-
-            public RecyclerViewScrollDetector (LogTimeEntriesListFragment owner)
-            {
-                this.owner = owner;
-                ScrollThreshold = UndbarScrollThreshold;
-            }
-
-            public int ScrollThreshold { get; set; }
-
-            public RecyclerView.OnScrollListener OnScrollListener { get; set; }
-
-            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
-            {
-                if (OnScrollListener != null) {
-                    OnScrollListener.OnScrolled (recyclerView, dx, dy);
-                }
-
-                var isSignificantDelta = Math.Abs (dy) > ScrollThreshold;
-                if (isSignificantDelta) {
-                    OnScrollMoved();
-                }
-            }
-
-            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
-            {
-                if (OnScrollListener != null) {
-                    OnScrollListener.OnScrollStateChanged (recyclerView, newState);
-                }
-                base.OnScrollStateChanged (recyclerView, newState);
-            }
-
-            private void OnScrollMoved()
-            {
-                if (owner.UndoBarVisible) {
-                    owner.RemoveItemAndHideUndoBar ();
                 }
             }
         }

@@ -18,7 +18,8 @@ namespace Toggl.Ross.Net
         private static readonly string Tag = "APNSManager";
 
         private const string PushDeviceTokenKey = "PushDeviceToken";
-        private readonly object subscriptionAuthChanged;
+        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
+        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 
         private string authToken;
         private string SavedDeviceToken { get { return NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey); } }
@@ -29,6 +30,7 @@ namespace Toggl.Ross.Net
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChangedMessage);
+            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             authToken = authManager.Token;
@@ -55,7 +57,7 @@ namespace Toggl.Ross.Net
             }
 
             if (authManager.IsAuthenticated) {
-                if (apnsEnabled) {
+                if (apnsEnabled && SavedDeviceToken != null) {
                     RegisterDevice (SavedDeviceToken);
                 } else {
                     RegisterForRemoteNotifications ();
@@ -108,7 +110,7 @@ namespace Toggl.Ross.Net
             }
 
             var oldDeviceToken = NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey);
-            if (!string.IsNullOrEmpty (oldDeviceToken) || !oldDeviceToken.Equals (DeviceToken)) {
+            if (!string.IsNullOrEmpty (oldDeviceToken) && !oldDeviceToken.Equals (DeviceToken)) {
                 UnregisterDevice (oldDeviceToken);
             }
 
@@ -136,8 +138,12 @@ namespace Toggl.Ross.Net
         private static readonly NSString updatedAtConst = new NSString("updated_at");
         private static readonly NSString taskIdConst = new NSString("task_id");
 
-        public async void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
+        private Action<UIBackgroundFetchResult> backgroundFetchHandler;
+
+        public async void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, Action<UIBackgroundFetchResult> completionHandler)
         {
+            backgroundFetchHandler = completionHandler;
+
             var syncManager = ServiceContainer.Resolve<ISyncManager> ();
 
             NSObject entryIdObj, modifiedAtObj;
@@ -165,6 +171,15 @@ namespace Toggl.Ross.Net
                 lastSyncTime = Time.UtcNow;
             }
         }
+
+        private async void OnSyncFinished (SyncFinishedMessage msg)
+        {
+            if (backgroundFetchHandler != null) {
+                backgroundFetchHandler (msg.HadErrors ? UIBackgroundFetchResult.Failed : UIBackgroundFetchResult.NewData);
+            }
+
+        }
+
     }
 }
 

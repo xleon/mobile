@@ -53,15 +53,13 @@ namespace Toggl.Ross.Net
             authToken = authManager.Token;
 
             if (apnsEnabled) {
-                UnregisterDevice (SavedDeviceToken);
-            }
-
-            if (authManager.IsAuthenticated) {
-                if (apnsEnabled && SavedDeviceToken != null) {
+                if (authManager.IsAuthenticated) {
                     RegisterDevice (SavedDeviceToken);
                 } else {
-                    RegisterForRemoteNotifications ();
+                    UnregisterDevice (SavedDeviceToken);
                 }
+            } else if (authManager.IsAuthenticated) {
+                RegisterForRemoteNotifications ();
             }
         }
 
@@ -110,13 +108,15 @@ namespace Toggl.Ross.Net
             }
 
             var oldDeviceToken = NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey);
-            if (!string.IsNullOrEmpty (oldDeviceToken) && !oldDeviceToken.Equals (DeviceToken)) {
-                UnregisterDevice (oldDeviceToken);
-            }
+            var oldDeviceTokenEmpty = string.IsNullOrEmpty (oldDeviceToken);
 
             NSUserDefaults.StandardUserDefaults.SetString (DeviceToken, PushDeviceTokenKey);
 
-            RegisterDevice (DeviceToken);
+            if (oldDeviceTokenEmpty) {
+                RegisterDevice (DeviceToken);
+            } else if (!oldDeviceToken.Equals (DeviceToken)) {
+                UnregisterDevice (oldDeviceToken);
+            }
         }
 
         public void FailedToRegisterForRemoteNotifications (UIApplication application, NSError error)
@@ -144,31 +144,36 @@ namespace Toggl.Ross.Net
         {
             backgroundFetchHandler = completionHandler;
 
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
+            try {
+                var syncManager = ServiceContainer.Resolve<ISyncManager> ();
 
-            NSObject entryIdObj, modifiedAtObj;
-            userInfo.TryGetValue (updatedAtConst, out modifiedAtObj);
-            userInfo.TryGetValue (taskIdConst, out entryIdObj);
+                NSObject entryIdObj, modifiedAtObj;
+                userInfo.TryGetValue (updatedAtConst, out modifiedAtObj);
+                userInfo.TryGetValue (taskIdConst, out entryIdObj);
 
-            var entryId = Convert.ToInt64 (entryIdObj.ToString ());
+                var entryId = Convert.ToInt64 (entryIdObj.ToString ());
 
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var rows = await dataStore.Table<TimeEntryData> ()
-                       .QueryAsync (r => r.RemoteId == entryId);
-            var entry = rows.FirstOrDefault();
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var rows = await dataStore.Table<TimeEntryData> ()
+                    .QueryAsync (r => r.RemoteId == entryId);
+                var entry = rows.FirstOrDefault();
 
-            var modifiedAt = ParseDate (modifiedAtObj.ToString());
+                var modifiedAt = ParseDate (modifiedAtObj.ToString());
 
-            var localDataNewer = entry != null && modifiedAt <= entry.ModifiedAt.ToUtc ();
-            var skipSync = lastSyncTime.HasValue && modifiedAt < lastSyncTime.Value;
+                var localDataNewer = entry != null && modifiedAt <= entry.ModifiedAt.ToUtc ();
+                var skipSync = lastSyncTime.HasValue && modifiedAt < lastSyncTime.Value;
 
-            if (syncManager.IsRunning || localDataNewer || skipSync) {
-                return;
-            }
+                if (syncManager.IsRunning || localDataNewer || skipSync) {
+                    return;
+                }
 
-            syncManager.Run (SyncMode.Pull);
-            if (syncManager.IsRunning) {
-                lastSyncTime = Time.UtcNow;
+                syncManager.Run (SyncMode.Pull);
+                if (syncManager.IsRunning) {
+                    lastSyncTime = Time.UtcNow;
+                }
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Error (Tag, ex, "Failed to process pushed message.");
             }
         }
 
@@ -177,7 +182,6 @@ namespace Toggl.Ross.Net
             if (backgroundFetchHandler != null) {
                 backgroundFetchHandler (msg.HadErrors ? UIBackgroundFetchResult.Failed : UIBackgroundFetchResult.NewData);
             }
-
         }
 
     }

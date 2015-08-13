@@ -51,7 +51,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             // Calculate time entry duration
             TimeSpan duration;
-            if (data.StartTime == DateTime.MinValue) {
+            if (data.StartTime.IsMinValue ()) {
                 duration = TimeSpan.Zero;
             } else {
                 duration = (data.StopTime ?? now) - data.StartTime;

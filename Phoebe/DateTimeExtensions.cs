@@ -67,6 +67,11 @@ namespace Toggl.Phoebe
         {
             return AbsoluteStart (dateTime).AddDays (1).AddTicks (-1);
         }
+
+        public static bool IsMinValue (this DateTime dateTime)
+        {
+            return (dateTime - DateTime.MinValue).Ticks < 10;
+        }
     }
 }
 

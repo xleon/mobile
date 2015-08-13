@@ -178,7 +178,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             DateTime startTime;
-            var useTimer = TimeEntry.StartTime == DateTime.MinValue;
+            var useTimer = TimeEntry.StartTime.IsMinValue ();
             if (useTimer) {
                 startTime = Time.Now;
 
@@ -215,7 +215,7 @@ namespace Toggl.Joey.UI.Fragments
                 StopTimeEditText.Visibility = ViewStates.Visible;
             } else {
                 StopTimeEditText.Text = Time.Now.ToDeviceTimeString ();
-                if (TimeEntry.StartTime == DateTime.MinValue || TimeEntry.State == TimeEntryState.Running) {
+                if (TimeEntry.StartTime.IsMinValue () || TimeEntry.State == TimeEntryState.Running) {
                     StopTimeEditText.Visibility = ViewStates.Invisible;
                     StopTimeEditLabel.Visibility = ViewStates.Invisible;
                 } else {

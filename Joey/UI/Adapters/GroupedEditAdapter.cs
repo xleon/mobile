@@ -93,7 +93,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private static TimeSpan GetDuration (TimeEntryData data, DateTime now)
         {
-            if (data.StartTime == DateTime.MinValue) {
+            if (data.StartTime.IsMinValue ()) {
                 return TimeSpan.Zero;
             }
 

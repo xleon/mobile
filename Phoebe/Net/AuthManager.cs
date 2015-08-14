@@ -12,7 +12,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {
-    public class AuthManager : ObservableObject, IAsyncInitialization
+    public class AuthManager : ObservableObject
     {
         private static readonly string Tag = "AuthManager";
 
@@ -21,10 +21,19 @@ namespace Toggl.Phoebe.Net
             return expr.ToPropertyName ();
         }
 
+        private readonly Subscription<DataChangeMessage> subscriptionDataChange;
+
         public AuthManager ()
         {
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             try {
+                if (credStore.UserId.HasValue) {
+                    User = new UserData () {
+                        Id = credStore.UserId.Value,
+                    };
+                    // Load full user data:
+                    ReloadUser ();
+                }
                 Token = credStore.ApiToken;
                 IsAuthenticated = !String.IsNullOrEmpty (Token);
             } catch (ArgumentException) {
@@ -33,33 +42,12 @@ namespace Toggl.Phoebe.Net
                 credStore.ApiToken = null;
             }
 
+            // Listen for global data changes
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Subscribe<DataChangeMessage> (OnDataChange);
-
-            Initialization = InitUserAsync ();
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
         }
 
-        public Task Initialization { get; private set; }
-
-        private async Task InitUserAsync ()
-        {
-            var credStore = ServiceContainer.Resolve<ISettingsStore> ();
-            try {
-                if (credStore.UserId.HasValue) {
-                    User = new UserData {
-                        Id = credStore.UserId.Value,
-                    };
-                    // Load full user data:
-                    await ReloadUser ();
-                }
-            } catch (ArgumentException) {
-                // When data is corrupt and cannot find user
-                credStore.UserId = null;
-                credStore.ApiToken = null;
-            }
-        }
-
-        private async Task ReloadUser ()
+        private async void ReloadUser ()
         {
             if (User == null) {
                 return;

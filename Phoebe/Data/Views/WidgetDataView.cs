@@ -107,7 +107,7 @@ namespace Toggl.Phoebe.Data.Views
 
         private TimeSpan GetDuration (DateTime startTime, DateTime stopTime)
         {
-            if (startTime == DateTime.MinValue) {
+            if (startTime.IsMinValue ()) {
                 return TimeSpan.Zero;
             }
 

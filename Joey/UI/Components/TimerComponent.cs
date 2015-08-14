@@ -110,7 +110,7 @@ namespace Toggl.Joey.UI.Components
             var data = ActiveTimeEntryData;
             if (data != null) {
                 if (backingActiveTimeEntry == null) {
-                    backingActiveTimeEntry = (ITimeEntryModel)new TimeEntryModel (data);
+                    backingActiveTimeEntry = new TimeEntryModel (data);
                 } else {
                     backingActiveTimeEntry.Data = data;
                     shouldRebind = false;

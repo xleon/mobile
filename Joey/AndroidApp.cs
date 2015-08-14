@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Net;
@@ -40,18 +39,21 @@ namespace Toggl.Joey
         {
         }
 
-        public async override void OnCreate ()
+        public override void OnCreate ()
         {
             base.OnCreate ();
 
-            await RegisterComponentsAsync ();
+            RegisterComponents ();
             InitializeStartupComponents ();
         }
 
-        private async Task RegisterComponentsAsync ()
+        private void RegisterComponents ()
         {
             // Register platform service.
             ServiceContainer.Register<IPlatformInfo> (this);
+
+            // Register Phoebe services.
+            Services.Register ();
 
             // Register Joey components:
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
@@ -80,9 +82,6 @@ namespace Toggl.Joey
             });
             ServiceContainer.Register<ITracker> (() => new Tracker (this));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
-
-            // Register Phoebe services.
-            await Services.RegisterAsync ();
         }
 
         private void InitializeStartupComponents ()

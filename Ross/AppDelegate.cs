@@ -34,7 +34,7 @@ namespace Toggl.Ross
             systemVersion = Convert.ToInt32 ( versionString.Split ( new [] {"."}, StringSplitOptions.None)[0]);
 
             // wait for component initialisation.
-            RegisterComponentsAsync ();
+            RegisterComponents ();
 
             Toggl.Ross.Theme.Style.Initialize ();
 
@@ -97,10 +97,13 @@ namespace Toggl.Ross
             }
         }
 
-        private async void RegisterComponentsAsync ()
+        private void RegisterComponents ()
         {
             // Register platform info first.
             ServiceContainer.Register<IPlatformInfo> (this);
+
+            // Register Phoebe services
+            Services.Register ();
 
             // Override default implementation
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider ());
@@ -133,9 +136,6 @@ namespace Toggl.Ross
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
             ServiceContainer.Register<OAuthManager> ();
-
-            // Register Phoebe services async
-            await Services.RegisterAsync ();
         }
 
         public static TogglWindow TogglWindow

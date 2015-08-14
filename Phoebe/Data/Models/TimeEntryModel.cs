@@ -243,7 +243,7 @@ namespace Toggl.Phoebe.Data.Models
 
         public static TimeSpan GetDuration (TimeEntryData data, DateTime now)
         {
-            if (data.StartTime == DateTime.MinValue) {
+            if (data.StartTime.IsMinValue ()) {
                 return TimeSpan.Zero;
             }
 
@@ -362,7 +362,7 @@ namespace Toggl.Phoebe.Data.Models
             if (Data.State != TimeEntryState.New) {
                 throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", Data.State));
             }
-            if (Data.StartTime != DateTime.MinValue || Data.StopTime.HasValue) {
+            if (!Data.StartTime.IsMinValue () || Data.StopTime.HasValue) {
                 throw new InvalidOperationException ("Cannot start tracking time entry with start/stop time set already.");
             }
 
@@ -463,7 +463,7 @@ namespace Toggl.Phoebe.Data.Models
             if (Data.State != TimeEntryState.New) {
                 throw new InvalidOperationException (String.Format ("Cannot store a time entry in {0} state.", Data.State));
             }
-            if (Data.StartTime == DateTime.MinValue || Data.StopTime == null) {
+            if (Data.StartTime.IsMinValue () || Data.StopTime == null) {
                 throw new InvalidOperationException ("Cannot store time entry with start/stop time not set.");
             }
 

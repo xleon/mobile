@@ -52,8 +52,8 @@ namespace Toggl.Ross.Net
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             authToken = authManager.Token;
 
-            if (apnsEnabled) {
-                if (authManager.IsAuthenticated) {
+            if (apnsEnabled && SavedDeviceToken != null) {
+                if (authManager.IsAuthenticated ) {
                     RegisterDevice (SavedDeviceToken);
                 } else {
                     UnregisterDevice (SavedDeviceToken);

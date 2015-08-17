@@ -135,8 +135,8 @@ namespace Toggl.Ross.Net
             return dt.ToUtc ();
         }
 
-        private static readonly NSString updatedAtConst = new NSString("updated_at");
-        private static readonly NSString taskIdConst = new NSString("task_id");
+        private static readonly NSString updatedAtConst = new NSString ("updated_at");
+        private static readonly NSString taskIdConst = new NSString ("task_id");
 
         private Action<UIBackgroundFetchResult> backgroundFetchHandler;
 
@@ -155,7 +155,7 @@ namespace Toggl.Ross.Net
 
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var rows = await dataStore.Table<TimeEntryData> ()
-                    .QueryAsync (r => r.RemoteId == entryId);
+                           .QueryAsync (r => r.RemoteId == entryId);
                 var entry = rows.FirstOrDefault();
 
                 var modifiedAt = ParseDate (modifiedAtObj.ToString());

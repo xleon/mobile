@@ -8,8 +8,8 @@ namespace Toggl.Ross.Views
 {
     public abstract class SwipableTimeEntryTableViewCell : ModelTableViewCell<TimeEntryModel>
     {
-        private const float ContinueSwipeWidth = 110f;
-        private const float DeleteSwipeWidth = 120f;
+        private const float ContinueSwipeWidth = 90f;
+        private const float DeleteSwipeWidth = 100f;
         private const float SnapDistance = 20f;
 
         private readonly UILabel continueActionLabel;
@@ -195,6 +195,13 @@ namespace Toggl.Ross.Views
                 x: 0, y: 0,
                 height: contentFrame.Height,
                 width: ContinueSwipeWidth + SnapDistance
+            );
+
+            deleteActionLabel.Frame = new CGRect (
+                x: contentFrame.Width - DeleteSwipeWidth,
+                y: 0,
+                height: contentFrame.Height,
+                width: DeleteSwipeWidth
             );
         }
 

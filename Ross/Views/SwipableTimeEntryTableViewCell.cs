@@ -8,12 +8,11 @@ namespace Toggl.Ross.Views
 {
     public abstract class SwipableTimeEntryTableViewCell : ModelTableViewCell<TimeEntryModel>
     {
-        private const float ContinueSwipeWidth = 90f;
-        private const float DeleteSwipeWidth = 100f;
+        private const float ContinueSwipeWidth = 110f;
+        private const float DeleteSwipeWidth = 120f;
         private const float SnapDistance = 20f;
 
         private readonly UILabel continueActionLabel;
-        private readonly UILabel confirmActionLabel;
         private readonly UILabel deleteActionLabel;
         private readonly UIView actualContentView;
 
@@ -25,9 +24,6 @@ namespace Toggl.Ross.Views
             deleteActionLabel = new UILabel () {
                 Text = "SwipeTimeEntryDelete".Tr (),
             } .Apply (Style.TimeEntryCell.SwipeActionLabel);
-            confirmActionLabel = new UILabel () {
-                Text = "SwipeTimeEntryConfirm".Tr (),
-            } .Apply (Style.TimeEntryCell.SwipeActionLabel);
             actualContentView = new UIView ().Apply (Style.Log.CellContentView);
 
             BackgroundView = new UIView ();
@@ -35,7 +31,6 @@ namespace Toggl.Ross.Views
             ContentView.AddSubviews (
                 continueActionLabel,
                 deleteActionLabel,
-                confirmActionLabel,
                 actualContentView
             );
 
@@ -57,16 +52,17 @@ namespace Toggl.Ross.Views
         private CGPoint panStart;
         private nfloat panDeltaX;
         private bool panLockInHorizDirection;
-        private bool panDeleteConfirmed;
         private PanLock panLock;
 
         private void OnPanningGesture (UIPanGestureRecognizer gesture)
         {
+            var leftWidth = ContinueSwipeWidth;
+            var rightWidth = DeleteSwipeWidth;
+
             switch (gesture.State) {
             case UIGestureRecognizerState.Began:
                 panStart = gesture.TranslationInView (actualContentView);
                 panLockInHorizDirection = false;
-                panDeleteConfirmed = false;
                 panLock = PanLock.None;
                 break;
             case UIGestureRecognizerState.Changed:
@@ -85,8 +81,6 @@ namespace Toggl.Ross.Views
 
                 // Switch pan lock
                 var oldLock = panLock;
-                var leftWidth = ContinueSwipeWidth;
-                var rightWidth = DeleteSwipeWidth;
 
                 switch (panLock) {
                 case PanLock.None:
@@ -94,10 +88,6 @@ namespace Toggl.Ross.Views
                         panLock = PanLock.Left;
                     } else if (panDeltaX >= rightWidth) {
                         panLock = PanLock.Right;
-                    }
-                    // Reset delete confirmation when completely hiding the delete
-                    if (panDeltaX <= 0) {
-                        panDeleteConfirmed = false;
                     }
                     break;
                 case PanLock.Left:
@@ -135,50 +125,30 @@ namespace Toggl.Ross.Views
                     LayoutActualContentView ();
                 }
 
-                if (!panDeleteConfirmed && panLock == PanLock.Right) {
-                    // Queue cross fade animation
-                    UIView.Animate (0.6, 0.4,
-                                    UIViewAnimationOptions.CurveEaseInOut,
-                    delegate {
-                        confirmActionLabel.Alpha = 0;
-                    },
-                    delegate {
-                        if (panLock != PanLock.Right) {
-                            return;
-                        }
-                        panDeleteConfirmed = true;
-                    });
-
-                    UIView.Animate (0.4, 0.8,
-                                    UIViewAnimationOptions.CurveEaseInOut,
-                    delegate {
-                        deleteActionLabel.Alpha = 1;
-                    }, null);
-                }
-
                 break;
             case UIGestureRecognizerState.Cancelled:
             case UIGestureRecognizerState.Ended:
                 if (!gesture.Enabled) {
                     gesture.Enabled = true;
                 }
-                panLockInHorizDirection = false;
-                panDeltaX = 0;
 
-                var shouldContinue = panLock == PanLock.Left;
-                var shouldDelete = panLock == PanLock.Right && panDeleteConfirmed;
+                var velocityX = gesture.VelocityInView (gesture.View).X;
 
-                UIView.Animate (0.3, 0,
-                                UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
-                                LayoutActualContentView,
-                delegate {
-                    if (shouldContinue) {
-                        OnContinue ();
-                    }
-                    if (shouldDelete) {
-                        OnDelete ();
-                    }
+                var absolutePanDeltaX = Math.Abs (panDeltaX);
+                var maxX = velocityX < 0 ? leftWidth : -rightWidth;
+
+                var duration = (Math.Abs (maxX) - absolutePanDeltaX) / velocityX;
+
+                UIView.Animate (duration, delegate {
+                    var frame = ContentView.Frame;
+                    panDeltaX = maxX - frame.X;
+                    LayoutActualContentView();
+
+                }, delegate {
+                    LayoutActualContentView();
                 });
+
+                Console.WriteLine ("velocity {0}, duration {1}", velocityX, duration);
                 break;
             }
         }
@@ -200,19 +170,15 @@ namespace Toggl.Ross.Views
             switch (panLock) {
             case PanLock.None:
                 continueActionLabel.Alpha = (nfloat)Math.Min (1, Math.Max (0, -2 * panDeltaX / ContinueSwipeWidth - 1));
-                var delAlpha = (nfloat)Math.Min (1, Math.Max (0, 2 * panDeltaX / DeleteSwipeWidth - 1));
-                confirmActionLabel.Alpha = panDeleteConfirmed ? 0 : delAlpha;
-                deleteActionLabel.Alpha = panDeleteConfirmed ? delAlpha : 0;
+                deleteActionLabel.Alpha = (nfloat)Math.Min (1, Math.Max (0, 2 * Math.Abs (panDeltaX) / DeleteSwipeWidth - 1));
                 break;
             case PanLock.Left:
                 continueActionLabel.Alpha = 1;
-                confirmActionLabel.Alpha = 0;
                 deleteActionLabel.Alpha = 0;
                 break;
             case PanLock.Right:
                 continueActionLabel.Alpha = 0;
-                confirmActionLabel.Alpha = panDeleteConfirmed ? 0 : 1;
-                deleteActionLabel.Alpha = panDeleteConfirmed ? 1 : 0;
+                deleteActionLabel.Alpha = 1;
                 break;
             }
         }
@@ -229,12 +195,6 @@ namespace Toggl.Ross.Views
                 x: 0, y: 0,
                 height: contentFrame.Height,
                 width: ContinueSwipeWidth + SnapDistance
-            );
-            confirmActionLabel.Frame = deleteActionLabel.Frame = new CGRect (
-                x: contentFrame.Width - DeleteSwipeWidth - SnapDistance,
-                y: 0,
-                height: contentFrame.Height,
-                width: DeleteSwipeWidth + SnapDistance
             );
         }
 

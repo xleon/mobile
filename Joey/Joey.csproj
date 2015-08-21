@@ -695,6 +695,14 @@
     <AndroidResource Include="Resources\layout\ClientListFragment.axml" />
     <AndroidResource Include="Resources\layout\ClientListClientItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListClientItem.axml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcTogglerProjectEmptyState.png" />
   </ItemGroup>
   <Import Project="..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

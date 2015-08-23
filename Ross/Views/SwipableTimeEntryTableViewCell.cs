@@ -132,10 +132,16 @@ namespace Toggl.Ross.Views
                     gesture.Enabled = true;
                 }
 
+                var currentX = actualContentView.Frame.X;
                 var velocityX = gesture.VelocityInView (gesture.View).X;
 
+                float maxX = 0;
+
+                if (((int)currentX ^ (int)velocityX) > 0) {
+                    maxX = velocityX < 0 ? leftWidth : -rightWidth;
+                }
+
                 var absolutePanDeltaX = Math.Abs (panDeltaX);
-                var maxX = velocityX < 0 ? leftWidth : -rightWidth;
 
                 var duration = (Math.Abs (maxX) - absolutePanDeltaX) / velocityX;
 

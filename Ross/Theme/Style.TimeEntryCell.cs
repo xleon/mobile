@@ -13,11 +13,11 @@ namespace Toggl.Ross.Theme
                 v.BackgroundColor = Color.White;
             }
 
-            public static void SwipeActionLabel (UILabel v)
+            public static void SwipeActionButton (UIButton v)
             {
-                v.TextColor = Color.White;
+                v.SetTitleColor (Color.White, UIControlState.Normal);
                 v.Font = UIFont.FromName ("HelveticaNeue", 18f);
-                v.TextAlignment = UITextAlignment.Center;
+                v.TitleLabel.TextAlignment = UITextAlignment.Center;
             }
 
             public static void ProjectLabel (UILabel v)

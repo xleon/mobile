@@ -12,25 +12,30 @@ namespace Toggl.Ross.Views
         private const float DeleteSwipeWidth = 100f;
         private const float SnapDistance = 20f;
 
-        private readonly UILabel continueActionLabel;
-        private readonly UILabel deleteActionLabel;
+        private readonly UIButton continueActionButton;
+        private readonly UIButton deleteActionButton;
+
         private readonly UIView actualContentView;
 
         protected SwipableTimeEntryTableViewCell (IntPtr ptr) : base (ptr)
         {
-            continueActionLabel = new UILabel () {
-                Text = "SwipeTimeEntryContinue".Tr (),
-            } .Apply (Style.TimeEntryCell.SwipeActionLabel);
-            deleteActionLabel = new UILabel () {
-                Text = "SwipeTimeEntryDelete".Tr (),
-            } .Apply (Style.TimeEntryCell.SwipeActionLabel);
+            continueActionButton = new UIButton () {} .Apply (Style.TimeEntryCell.SwipeActionButton).Apply(Style.TimeEntryCell.ContinueState);
+            deleteActionButton = new UIButton () {} .Apply (Style.TimeEntryCell.SwipeActionButton).Apply(Style.TimeEntryCell.DeleteState);
+
             actualContentView = new UIView ().Apply (Style.Log.CellContentView);
 
+            continueActionButton.SetTitle ("SwipeTimeEntryContinue".Tr (), UIControlState.Normal);
+            deleteActionButton.SetTitle ("SwipeTimeEntryDelete".Tr (), UIControlState.Normal);
+
+
             BackgroundView = new UIView ();
+
+
+
             SelectedBackgroundView = new UIView ().Apply (Style.CellSelectedBackground);
             ContentView.AddSubviews (
-                continueActionLabel,
-                deleteActionLabel,
+                continueActionButton,
+                deleteActionButton,
                 actualContentView
             );
 
@@ -164,29 +169,6 @@ namespace Toggl.Ross.Views
             var frame = ContentView.Frame;
             frame.X -= panDeltaX;
             actualContentView.Frame = frame;
-
-            if (panDeltaX < 0) {
-                BackgroundView.Apply (Style.TimeEntryCell.ContinueState);
-            } else if (panDeltaX > 0) {
-                BackgroundView.Apply (Style.TimeEntryCell.DeleteState);
-            } else {
-                BackgroundView.Apply (Style.TimeEntryCell.NoSwipeState);
-            }
-
-            switch (panLock) {
-            case PanLock.None:
-                continueActionLabel.Alpha = (nfloat)Math.Min (1, Math.Max (0, -2 * panDeltaX / ContinueSwipeWidth - 1));
-                deleteActionLabel.Alpha = (nfloat)Math.Min (1, Math.Max (0, 2 * Math.Abs (panDeltaX) / DeleteSwipeWidth - 1));
-                break;
-            case PanLock.Left:
-                continueActionLabel.Alpha = 1;
-                deleteActionLabel.Alpha = 0;
-                break;
-            case PanLock.Right:
-                continueActionLabel.Alpha = 0;
-                deleteActionLabel.Alpha = 1;
-                break;
-            }
         }
 
         public override void LayoutSubviews ()
@@ -197,13 +179,13 @@ namespace Toggl.Ross.Views
 
             LayoutActualContentView ();
 
-            continueActionLabel.Frame = new CGRect (
+            continueActionButton.Frame = new CGRect (
                 x: 0, y: 0,
                 height: contentFrame.Height,
                 width: ContinueSwipeWidth + SnapDistance
             );
 
-            deleteActionLabel.Frame = new CGRect (
+            deleteActionButton.Frame = new CGRect (
                 x: contentFrame.Width - DeleteSwipeWidth,
                 y: 0,
                 height: contentFrame.Height,

@@ -135,9 +135,16 @@ namespace Toggl.Phoebe.Data.Views
                     }
                     UpdateCollection();
                 } else if (data.WorkspaceId == currentWorkspace.Data.Id) {
+
                     project = new Project (data);
                     currentWorkspace.Projects.Add (project);
-                    SortProjects (currentWorkspace.Projects, clientDataObjects, SortByClients);
+
+                    if (project.Data.ClientId == null) {
+                        currentWorkspace.Clients.First ().Projects.Add (project);
+                    } else {
+                        currentWorkspace.Clients.Where (r => r.Data.Id == project.Data.ClientId).First ().Projects.Add (project);
+                    }
+                    SortEverything ();
                     UpdateCollection();
                 }
             }
@@ -321,21 +328,27 @@ namespace Toggl.Phoebe.Data.Views
                     }
                     currentWorkspace.Clients.Add (client);
                 }
-
                 clientDataObjects.AddRange (clients);
-                SortClients (currentWorkspace.Clients);
-                foreach (var client in currentWorkspace.Clients) {
-                    SortProjects (client.Projects, new List<ClientData> (), false);
-                    foreach (var project in client.Projects) {
-                        SortTasks (project.Tasks);
-                    }
-                }
+                SortEverything();
             } finally {
                 UpdateCollection ();
                 IsLoading = false;
 
                 if (shouldSubscribe) {
                     subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+                }
+            }
+        }
+        private void SortEverything()
+        {
+
+            SortProjects (currentWorkspace.Projects, clientDataObjects, false);
+
+            SortClients (currentWorkspace.Clients);
+            foreach (var client in currentWorkspace.Clients) {
+                SortProjects (client.Projects, new List<ClientData> (), false);
+                foreach (var project in client.Projects) {
+                    SortTasks (project.Tasks);
                 }
             }
         }
@@ -346,7 +359,6 @@ namespace Toggl.Phoebe.Data.Views
                 if (a.IsNoProject != b.IsNoProject) {
                     return a.IsNoProject ? -1 : 1;
                 }
-
                 var res = 0;
 
                 if (!sortByClients) {
@@ -378,8 +390,7 @@ namespace Toggl.Phoebe.Data.Views
                 }
                 return String.Compare (
                            a.Data.Name ?? String.Empty,
-                           b.Data.Name ?? String.Empty,
-                           StringComparison.OrdinalIgnoreCase
+                           b.Data.Name ?? String.Empty,StringComparison.OrdinalIgnoreCase
                        );
             });
         }

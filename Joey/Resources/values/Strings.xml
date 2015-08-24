@@ -207,4 +207,7 @@
     <string name="SignupViewButtonText">Sign up</string>
     <string name="ClientsNoClient">No client</string>
     <string name="ProjectListEmptyStateText">You haven\'t created any projects\nin this workspace yet. <b>Create</b> one now!</string>
+    <string name="ProjectListToolbarMenuTitle">SORT BY</string>
+    <string name="ProjectListToolbarMenuProjects">Projects</string>
+    <string name="ProjectListToolbarMenuClients">Clients</string>
 </resources>

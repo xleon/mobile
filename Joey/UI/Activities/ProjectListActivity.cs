@@ -23,7 +23,7 @@ namespace Toggl.Joey.UI.Activities
     [Activity (Label = "ProjectListActivity",
                ScreenOrientation = ScreenOrientation.Portrait,
                Theme = "@style/Theme.Toggl.App")]
-    public class ProjectListActivity : BaseActivity, AppBarLayout.IOnOffsetChangedListener
+    public class ProjectListActivity : BaseActivity, AppBarLayout.IOnOffsetChangedListener, Toolbar.IOnMenuItemClickListener
     {
         public static readonly string ExtraTimeEntriesIds = "com.toggl.timer.time_entries_ids";
         private static readonly int ProjectCreatedRequestCode = 1;
@@ -64,6 +64,15 @@ namespace Toggl.Joey.UI.Activities
             SupportActionBar.SetDisplayHomeAsUpEnabled (true);
             SupportActionBar.SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle);
         }
+
+        public override bool OnCreateOptionsMenu (IMenu menu)
+        {
+            base.OnCreateOptionsMenu (menu);
+            MenuInflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
+            toolbar.SetOnMenuItemClickListener (this);
+            return true;
+        }
+
         private void SetupCoordinatorViews()
         {
             var appBarLayoutParamaters = new CoordinatorLayout.LayoutParams (appBar.LayoutParameters);
@@ -116,6 +125,14 @@ namespace Toggl.Joey.UI.Activities
                     return fragments.Count;
                 }
             }
+            public WorkspaceProjectsView.SortProjectsBy SortBy
+            {
+                set {
+                    foreach (var fragment in fragments) {
+                        ((ProjectListFragment)fragment).SortBy = value;
+                    }
+                }
+            }
 
             public override Fragment GetItem (int position)
             {
@@ -151,6 +168,18 @@ namespace Toggl.Joey.UI.Activities
             tabLayout.TranslationY = (-verticalOffset) > 0 ? -verticalOffset : 0;
         }
 
+        public bool OnMenuItemClick (IMenuItem item)
+        {
+            switch (item.ItemId) {
+            case Resource.Id.SortByClients:
+                projectFragmentAdapter.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
+                break;
+            case Resource.Id.SortByProjects:
+                projectFragmentAdapter.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
+                break;
+            }
+            return true;
+        }
     }
 }
 

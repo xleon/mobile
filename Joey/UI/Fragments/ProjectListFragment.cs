@@ -90,6 +90,13 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public WorkspaceProjectsView.SortProjectsBy SortBy
+        {
+            set {
+                viewModel.ProjectList.SortBy = value;
+            }
+        }
+
         private void OnListLoaded (object sender, EventArgs e)
         {
             EnsureCorrectState ();

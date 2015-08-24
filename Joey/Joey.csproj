@@ -698,6 +698,7 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcTogglerProjectEmptyState.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcArrowProjectEmptyState.png" />
     <AndroidResource Include="Resources\drawable-hdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\menu\ProjectListToolbarMenu.xml" />
   </ItemGroup>
   <Import Project="..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

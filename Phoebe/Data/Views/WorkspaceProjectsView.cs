@@ -18,6 +18,7 @@ namespace Toggl.Phoebe.Data.Views
         private Workspace currentWorkspace;
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
+        private SortProjectsBy sortBy;
         private bool isLoading;
         private bool hasMore;
 
@@ -44,6 +45,13 @@ namespace Toggl.Phoebe.Data.Views
             Reload ();
         }
 
+        public SortProjectsBy SortBy
+        {
+            set {
+                sortBy = value;
+                UpdateCollection ();
+            }
+        }
         public void ShowTaskForProject (Project project, int position, out int collapsingCount)
         {
             collapsingCount = displayingTaskForProject == null ? 0 : displayingTaskForProject.Tasks.Count;
@@ -328,6 +336,15 @@ namespace Toggl.Phoebe.Data.Views
                     }
                     currentWorkspace.Clients.Add (client);
                 }
+
+                foreach (var projectData in projects) {
+                    var project = new Project (projectData);
+
+                    var tasks = tasksTask.Result.Where (r => r.ProjectId == projectData.Id);
+                    project.Tasks.AddRange (tasks);
+
+                    currentWorkspace.Projects.Add (project);
+                }
                 clientDataObjects.AddRange (clients);
                 SortEverything();
             } finally {
@@ -407,17 +424,30 @@ namespace Toggl.Phoebe.Data.Views
 
         private void UpdateCollection ()
         {
-            dataObjects.Clear();
+            dataObjects.Clear ();
 
             if (currentWorkspace == null || currentWorkspace.Projects == null || currentWorkspace.Clients == null) {
                 return;
             }
-            foreach (var client in currentWorkspace.Clients) {
-                if (client.Projects.Count == 0) {
-                    continue;
+            switch (sortBy) {
+            case SortProjectsBy.Clients:
+                foreach (var client in currentWorkspace.Clients) {
+                    if (client.Projects.Count == 0) {
+                        continue;
+                    }
+                    dataObjects.Add (client);
+                    foreach (var project in client.Projects) {
+                        dataObjects.Add (project);
+                        if (displayingTaskForProject != null && project == displayingTaskForProject) {
+                            foreach (var task in project.Tasks) {
+                                dataObjects.Add (task);
+                            }
+                        }
+                    }
                 }
-                dataObjects.Add (client);
-                foreach (var project in client.Projects) {
+                break;
+            default:
+                foreach (var project in currentWorkspace.Projects) {
                     dataObjects.Add (project);
                     if (displayingTaskForProject != null && project == displayingTaskForProject) {
                         foreach (var task in project.Tasks) {
@@ -425,6 +455,7 @@ namespace Toggl.Phoebe.Data.Views
                         }
                     }
                 }
+                break;
             }
 
             OnUpdated ();
@@ -640,5 +671,9 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        public enum SortProjectsBy {
+            Projects,
+            Clients
+        }
     }
 }

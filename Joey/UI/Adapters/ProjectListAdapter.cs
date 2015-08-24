@@ -17,12 +17,12 @@ namespace Toggl.Joey.UI.Adapters
 {
     public class ProjectListAdapter : RecycledDataViewAdapter<object>
     {
-        protected static readonly int ViewTypeContent = 1;
-        protected static readonly int ViewTypeNoProject = ViewTypeContent;
-        protected static readonly int ViewTypeClient = ViewTypeContent + 1;
-        protected static readonly int ViewTypeProject = ViewTypeContent + 2;
-        protected static readonly int ViewTypeTask = ViewTypeContent + 3;
-        protected static readonly int ViewTypeLoaderPlaceholder = 0;
+        protected const int ViewTypeContent = 1;
+        protected const int ViewTypeNoProject = ViewTypeContent;
+        protected const int ViewTypeClient = ViewTypeContent + 1;
+        protected const int ViewTypeProject = ViewTypeContent + 2;
+        protected const int ViewTypeTask = ViewTypeContent + 3;
+        protected const int ViewTypeLoaderPlaceholder = 0;
 
         public Action<object> HandleProjectSelection { get; set; }
 
@@ -48,19 +48,25 @@ namespace Toggl.Joey.UI.Adapters
         {
             View view;
             RecyclerView.ViewHolder holder;
+            var inflater = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ());
 
-            if (viewType == ViewTypeClient) {
-                view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListClientItem, parent, false);
+            switch (viewType) {
+            case ViewTypeClient:
+                view = inflater.Inflate (Resource.Layout.ProjectListClientItem, parent, false);
                 holder = new ClientListItemHolder (this, view);
-            } else if (viewType == ViewTypeProject) {
-                view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListProjectItem, parent, false);
+                break;
+            case ViewTypeProject:
+                view = inflater.Inflate (Resource.Layout.ProjectListProjectItem, parent, false);
                 holder = new ProjectListItemHolder (this, view, HandleTasksProjectItemClick, HandleProjectItemClick);
-            } else if (viewType == ViewTypeTask) {
-                view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListTaskItem, parent, false);
+                break;
+            case ViewTypeTask:
+                view = inflater.Inflate (Resource.Layout.ProjectListTaskItem, parent, false);
                 holder = new ProjectListTaskItemHolder (this, view);
-            } else {
-                view =  LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.ProjectListNoProjectItem, parent, false);
+                break;
+            default:
+                view = inflater.Inflate (Resource.Layout.ProjectListNoProjectItem, parent, false);
                 holder = new NoProjectListItemHolder (this, view);
+                break;
             }
             return holder;
         }

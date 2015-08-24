@@ -18,7 +18,7 @@ namespace Toggl.Phoebe.Data.Views
         private Workspace currentWorkspace;
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
-        private SortProjectsBy sortBy;
+        private SortProjectsBy sortBy = SortProjectsBy.Clients;
         private bool isLoading;
         private bool hasMore;
 
@@ -33,11 +33,8 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public bool SortByClients { private set; get; }
-
-        public WorkspaceProjectsView (Guid workspaceId,  bool sortByClients = false)
+        public WorkspaceProjectsView (Guid workspaceId)
         {
-            SortByClients = sortByClients;
             this.workspaceId = workspaceId;
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
@@ -47,7 +44,9 @@ namespace Toggl.Phoebe.Data.Views
 
         public SortProjectsBy SortBy
         {
-            set {
+            get {
+                return sortBy;
+            } set {
                 sortBy = value;
                 UpdateCollection ();
             }
@@ -139,7 +138,7 @@ namespace Toggl.Phoebe.Data.Views
                                      || existingData.ClientId != data.ClientId;
 
                     if (shouldSort) {
-                        SortProjects (currentWorkspace.Projects, clientDataObjects, SortByClients);
+                        SortProjects (currentWorkspace.Projects, clientDataObjects);
                     }
                     UpdateCollection();
                 } else if (data.WorkspaceId == currentWorkspace.Data.Id) {
@@ -221,7 +220,7 @@ namespace Toggl.Phoebe.Data.Views
 
                     var shouldSort = data.Name != existingData.Name;
                     if (shouldSort) {
-                        SortProjects (currentWorkspace.Projects, clientDataObjects, SortByClients);
+                        SortProjects (currentWorkspace.Projects, clientDataObjects);
                     }
                 } else {
                     clientDataObjects.Add (data);
@@ -359,18 +358,18 @@ namespace Toggl.Phoebe.Data.Views
         private void SortEverything()
         {
 
-            SortProjects (currentWorkspace.Projects, clientDataObjects, false);
+            SortProjects (currentWorkspace.Projects, clientDataObjects);
 
             SortClients (currentWorkspace.Clients);
             foreach (var client in currentWorkspace.Clients) {
-                SortProjects (client.Projects, new List<ClientData> (), false);
+                SortProjects (client.Projects, new List<ClientData> ());
                 foreach (var project in client.Projects) {
                     SortTasks (project.Tasks);
                 }
             }
         }
 
-        private static void SortProjects (List<Project> data, List<ClientData> clients, bool sortByClients)
+        private void SortProjects (List<Project> data, List<ClientData> clients)
         {
             data.Sort ((a, b) => {
                 if (a.IsNoProject != b.IsNoProject) {
@@ -378,14 +377,12 @@ namespace Toggl.Phoebe.Data.Views
                 }
                 var res = 0;
 
-                if (!sortByClients) {
+                if (sortBy == SortProjectsBy.Projects) {
                     var aName = a.Data != null ? (a.Data.Name ?? String.Empty) : String.Empty;
                     var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
                     res = String.Compare (aName, bName, StringComparison.OrdinalIgnoreCase);
-                }
-
-                // Try to order by client name when same project name
-                if (res == 0) {
+                } else {
+                    // Try to order by client name when same project name
                     var aClient = a.Data != null ? clients.FirstOrDefault (r => r.Id == a.Data.ClientId) : null;
                     var bClient = b.Data != null ? clients.FirstOrDefault (r => r.Id == b.Data.ClientId) : null;
 

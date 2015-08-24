@@ -152,7 +152,7 @@ namespace Toggl.Joey.UI.Adapters
 
             public ProjectListItemHolder (ProjectListAdapter adapter, View root, Action<int> tasksClickListener, Action<int> clickListener) : base (root)
             {
-                displayClientText = !adapter.collectionView.SortByClients;
+                displayClientText = adapter.collectionView.SortBy == WorkspaceProjectsView.SortProjectsBy.Projects;
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);

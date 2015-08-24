@@ -28,7 +28,6 @@ namespace Toggl.Joey.UI.Fragments
         private LinearLayout emptyStateLayout;
         private ProjectListViewModel viewModel;
         private Guid workspaceId;
-        private bool sortByClients = true;
 
         public ProjectListFragment ()
         {

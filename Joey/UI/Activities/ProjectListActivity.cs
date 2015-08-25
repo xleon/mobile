@@ -173,12 +173,16 @@ namespace Toggl.Joey.UI.Activities
             switch (item.ItemId) {
             case Resource.Id.SortByClients:
                 projectFragmentAdapter.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
+                return true;
                 break;
             case Resource.Id.SortByProjects:
                 projectFragmentAdapter.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
+                return true;
+                break;
+            default:
+                return false;
                 break;
             }
-            return true;
         }
     }
 }

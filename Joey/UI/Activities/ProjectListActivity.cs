@@ -7,8 +7,8 @@ using Android.OS;
 using Android.Support.Design.Widget;
 using Android.Support.V4.App;
 using Android.Support.V4.View;
-using Android.Support.V7.Widget;
 using Android.Views;
+using Android.Widget;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
@@ -17,6 +17,7 @@ using Toggl.Phoebe.Data.Views;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
+using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -165,7 +166,7 @@ namespace Toggl.Joey.UI.Activities
 
         public void OnOffsetChanged (AppBarLayout layout, int verticalOffset)
         {
-            tabLayout.TranslationY = (-verticalOffset) > 0 ? -verticalOffset : 0;
+            tabLayout.TranslationY = -verticalOffset;
         }
 
         public bool OnMenuItemClick (IMenuItem item)
@@ -174,14 +175,11 @@ namespace Toggl.Joey.UI.Activities
             case Resource.Id.SortByClients:
                 projectFragmentAdapter.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
                 return true;
-                break;
             case Resource.Id.SortByProjects:
                 projectFragmentAdapter.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
                 return true;
-                break;
             default:
                 return false;
-                break;
             }
         }
     }

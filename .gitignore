@@ -13,5 +13,7 @@ local.properties
 .DS_Store
 *.user
 *.suo
+.fake
+.ci/**/*.exe
 packages
 Resource.designer.cs

@@ -27,6 +27,7 @@ namespace Toggl.Joey.UI.Fragments
         private RecyclerView recyclerView;
         private LinearLayout emptyStateLayout;
         private ProjectListViewModel viewModel;
+        private bool listLoadedAtLeastOnce;
         private Guid workspaceId;
 
         public ProjectListFragment ()
@@ -74,10 +75,18 @@ namespace Toggl.Joey.UI.Fragments
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
-            EnsureCorrectState ();
+
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.ProjectList.OnIsLoadingChanged += OnListLoaded;
             await viewModel.Init ();
+        }
+
+        public override void OnResume ()
+        {
+            if (listLoadedAtLeastOnce) {
+                EnsureCorrectState ();
+            }
+            base.OnResume ();
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
@@ -98,6 +107,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnListLoaded (object sender, EventArgs e)
         {
+            listLoadedAtLeastOnce = true;
             EnsureCorrectState ();
         }
 

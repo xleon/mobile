@@ -19,4 +19,5 @@ if [[ ! -e ${XC} ]]; then
 fi
 
 mono --runtime=v4.0 ${NUGET} install FAKE -Version 4.1.4 -OutputDirectory packages
+mono --runtime=v4.0 ${NUGET} install NUnit.Runners -Version 2.6.4 -OutputDirectory packages
 mono --runtime=v4.0 packages/FAKE.4.1.4/tools/FAKE.exe .build.fsx $@

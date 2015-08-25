@@ -113,13 +113,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureCorrectState()
         {
-            if (viewModel.ProjectList.Count == 0) {
-                recyclerView.Visibility = ViewStates.Gone;
-                emptyStateLayout.Visibility = ViewStates.Visible;
-            } else {
-                emptyStateLayout.Visibility = ViewStates.Gone;
-                recyclerView.Visibility = ViewStates.Visible;
-            }
+            recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
+            emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
         }
 
         private async void OnItemSelected (object m)

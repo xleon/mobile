@@ -51,6 +51,13 @@ namespace Toggl.Phoebe.Data.Views
                 UpdateCollection ();
             }
         }
+
+        public bool IsEmpty
+        {
+            get {
+                return currentWorkspace.HasNoProjects;
+            }
+        }
         public void ShowTaskForProject (Project project, int position, out int collapsingCount)
         {
             collapsingCount = displayingTaskForProject == null ? 0 : displayingTaskForProject.Tasks.Count;
@@ -311,7 +318,9 @@ namespace Toggl.Phoebe.Data.Views
 
                 var projects = projectsTask.Result.Where (r => r.WorkspaceId == currentWorkspace.Data.Id);
 
-                var clients = clientsTask.Result;
+                var clients = new List<ClientData> ();
+                clients.Add (new ClientData());
+                clients.AddRange (clientsTask.Result);
 
                 foreach (var clientData in clients) {
                     Client client;
@@ -562,6 +571,12 @@ namespace Toggl.Phoebe.Data.Views
                 get { return projects; }
             }
 
+            public bool HasNoProjects
+            {
+                get {
+                    return Projects.Count == 1 && Projects[0].IsNoProject;
+                }
+            }
             public List<Client> Clients
             {
                 get { return clients; }

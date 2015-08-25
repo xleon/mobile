@@ -46,7 +46,6 @@
         <android.support.v7.widget.RecyclerView
             android:id="@+id/ProjectListRecyclerView"
             android:background="#f8f8f8"
-            android:layout_marginTop="@dimen/MinusToolbarDropShadowHeight"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
         <View

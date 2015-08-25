@@ -178,9 +178,8 @@ namespace Toggl.Joey.UI.Activities
             case Resource.Id.SortByProjects:
                 projectFragmentAdapter.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
                 return true;
-            default:
-                return false;
             }
+            return false;
         }
     }
 }

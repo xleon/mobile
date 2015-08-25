@@ -50,15 +50,19 @@ namespace Toggl.Joey.UI.Activities
             projectFragmentAdapter = new ProjectFragmentAdapter (SupportFragmentManager, timeEntryList);
             viewPager = FindViewById<ViewPager> (Resource.Id.ProjectListViewPager);
             viewPager.Adapter = projectFragmentAdapter;
+            viewPager.PageSelected += OnTabSelected;
+
             tabLayout = FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
             tabLayout.SetupWithViewPager (viewPager);
             tabLayout.Visibility = projectFragmentAdapter.Count == 1 ? ViewStates.Gone : ViewStates.Visible;
-            tabLayout.TabSelected += OnTabSelected;
+
             appBar = FindViewById<TogglAppBar> (Resource.Id.ProjectListAppBar);
             appBar.AddOnOffsetChangedListener (this);
-            SetupCoordinatorViews ();
+
             fab = FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
             fab.Click += OnFABClick;
+
+            SetupCoordinatorViews ();
 
             toolbar = FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
             SetSupportActionBar (toolbar);
@@ -100,7 +104,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void OnTabSelected (object sender, TabLayout.TabSelectedEventArgs e)
+        private void OnTabSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
             appBar.Expand ();
         }

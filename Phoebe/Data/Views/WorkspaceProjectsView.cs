@@ -328,6 +328,7 @@ namespace Toggl.Phoebe.Data.Views
 
                     if (currentWorkspace.Clients.Count == 0) { // first element
                         client = new Client (currentWorkspace.Data);
+                        client.Projects.Add (new Project (currentWorkspace.Data));
                         projectsOfClient = projects.Where (r => r.ClientId == null);
                     } else {
                         client = new Client (clientData);

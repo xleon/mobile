@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.Data.Views
 
         private string currentFilterInfix = "";
 
-        public const int StringMaxLength = 50;
+        public const int StringMaxLength = 20;
 
         private ITrie<TimeEntryData> trie;
 

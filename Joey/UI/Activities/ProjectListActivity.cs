@@ -50,6 +50,7 @@ namespace Toggl.Joey.UI.Activities
             projectFragmentAdapter = new ProjectFragmentAdapter (SupportFragmentManager, timeEntryList);
             viewPager = FindViewById<ViewPager> (Resource.Id.ProjectListViewPager);
             viewPager.Adapter = projectFragmentAdapter;
+            viewPager.SetCurrentItem (projectFragmentAdapter.FirstTabPos, false);
             viewPager.PageSelected += OnTabSelected;
 
             tabLayout = FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
@@ -114,13 +115,21 @@ namespace Toggl.Joey.UI.Activities
             private List<Fragment> fragments = new List<Fragment> ();
             private List<String> fragmentTitles = new List<String> ();
             private List<WorkspaceData> workspaces;
+            private int firstTabPos = 0;
 
             public ProjectFragmentAdapter (FragmentManager fm, IList<TimeEntryData> timeEntryList) : base (fm)
             {
                 workspaces = WorkspaceProjectsView.GetWorkspaces().Result;
+
+                int pos = 0;
                 foreach (var ws in workspaces) {
                     fragmentTitles.Add (ws.Name);
                     fragments.Add (new ProjectListFragment (timeEntryList, ws.Id));
+
+                    if (ws.Id == timeEntryList[0].WorkspaceId) {
+                        firstTabPos = pos;
+                    }
+                    pos++;
                 }
             }
 
@@ -130,6 +139,14 @@ namespace Toggl.Joey.UI.Activities
                     return fragments.Count;
                 }
             }
+
+            public int FirstTabPos
+            {
+                get {
+                    return firstTabPos;
+                }
+            }
+
             public WorkspaceProjectsView.SortProjectsBy SortBy
             {
                 set {

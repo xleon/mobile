@@ -627,6 +627,7 @@ namespace Toggl.Phoebe.Data.Models
             Project = model.Project;
             Description = model.Description;
             IsBillable = model.IsBillable;
+            Task = model.Task;
             await SaveAsync ();
         }
 

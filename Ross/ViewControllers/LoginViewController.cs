@@ -44,6 +44,7 @@ namespace Toggl.Ross.ViewControllers
                 ReturnKeyType = UIReturnKeyType.Next,
                 ClearButtonMode = UITextFieldViewMode.Always,
                 ShouldReturn = HandleShouldReturn,
+                AutocorrectionType = UITextAutocorrectionType.No
             } .Apply (Style.Login.EmailField));
 
             inputsContainer.Add (middleBorder = new UIView ().Apply (Style.Login.InputsBorder));

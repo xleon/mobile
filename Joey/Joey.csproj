@@ -715,12 +715,6 @@
     <AndroidAsset Include="Assets\fonts\Roboto-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
-    <XamarinComponentReference Include="googleplayservices">
-      <Version>19.0.0.2</Version>
-      <Visible>False</Visible>
-    </XamarinComponentReference>
-  </ItemGroup>
-  <ItemGroup>
     <ProguardConfiguration Include="Proguard.cfg" />
   </ItemGroup>
 </Project>

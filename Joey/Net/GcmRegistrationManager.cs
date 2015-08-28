@@ -122,7 +122,7 @@ namespace Toggl.Joey.Net
                 var gcm = GoogleCloudMessaging.GetInstance (ctx);
 
                 try {
-                    RegistrationId = regId = await Task.Factory.StartNew (() =>
+                    RegistrationId = regId = await System.Threading.Tasks.Task.Factory.StartNew (() =>
                                              gcm.Register (Build.GcmSenderId));
                 } catch (Exception exc) {
                     var log = ServiceContainer.Resolve<ILogger> ();
@@ -150,7 +150,7 @@ namespace Toggl.Joey.Net
             }
         }
 
-        private static void IgnoreTaskErrors (Task task)
+        private static void IgnoreTaskErrors (System.Threading.Tasks.Task task)
         {
             task.ContinueWith ((t) => {
                 var e = t.Exception;

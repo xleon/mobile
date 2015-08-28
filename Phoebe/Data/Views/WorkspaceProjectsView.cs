@@ -387,7 +387,7 @@ namespace Toggl.Phoebe.Data.Views
                 }
                 var res = 0;
 
-                if (sortBy == SortProjectsBy.Projects) {
+                if (sortBy == SortProjectsBy.Clients) {
                     var aName = a.Data != null ? (a.Data.Name ?? String.Empty) : String.Empty;
                     var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
                     res = String.Compare (aName, bName, StringComparison.OrdinalIgnoreCase);

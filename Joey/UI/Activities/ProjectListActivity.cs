@@ -11,9 +11,12 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
@@ -47,28 +50,33 @@ namespace Toggl.Joey.UI.Activities
             }
 
             SetContentView (Resource.Layout.ProjectListActivityLayout);
+
             projectFragmentAdapter = new ProjectFragmentAdapter (SupportFragmentManager, timeEntryList);
-            viewPager = FindViewById<NoSwipePager> (Resource.Id.ProjectListViewPager);
-            viewPager.Adapter = projectFragmentAdapter;
-            viewPager.SetCurrentItem (projectFragmentAdapter.FirstTabPos, false);
-            viewPager.PageSelected += OnTabSelected;
-
-            tabLayout = FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
-            tabLayout.SetupWithViewPager (viewPager);
-            tabLayout.Visibility = projectFragmentAdapter.Count == 1 ? ViewStates.Gone : ViewStates.Visible;
-
             appBar = FindViewById<TogglAppBar> (Resource.Id.ProjectListAppBar);
-            appBar.AddOnOffsetChangedListener (this);
-
-            fab = FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
-            fab.Click += OnFABClick;
-
-            SetupCoordinatorViews ();
-
             toolbar = FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
+            tabLayout = FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
+            viewPager = FindViewById<NoSwipePager> (Resource.Id.ProjectListViewPager);
+            fab = FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
+
             SetSupportActionBar (toolbar);
             SupportActionBar.SetDisplayHomeAsUpEnabled (true);
             SupportActionBar.SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle);
+
+            appBar.AddOnOffsetChangedListener (this);
+            fab.Click += OnFABClick;
+
+            SetupViews ();
+        }
+
+        private void SetupViews ()
+        {
+            viewPager.Adapter = projectFragmentAdapter;
+            viewPager.SetCurrentItem (projectFragmentAdapter.FirstTabPos, false);
+
+            tabLayout.SetupWithViewPager (viewPager);
+            tabLayout.Visibility = projectFragmentAdapter.Count == 1 ? ViewStates.Gone : ViewStates.Visible;
+
+            SetupCoordinatorViews ();
         }
 
         public override bool OnCreateOptionsMenu (IMenu menu)
@@ -119,7 +127,7 @@ namespace Toggl.Joey.UI.Activities
 
             public ProjectFragmentAdapter (FragmentManager fm, IList<TimeEntryData> timeEntryList) : base (fm)
             {
-                workspaces = WorkspaceProjectsView.GetWorkspaces().Result;
+                workspaces = GetWorkspacesAsync().Result;
 
                 int pos = 0;
                 foreach (var ws in workspaces) {
@@ -169,6 +177,35 @@ namespace Toggl.Joey.UI.Activities
             public Guid GetWorkspaceIdOfPosition (int position)
             {
                 return workspaces [position].Id;
+            }
+
+            private async Task<List<WorkspaceData>> GetWorkspacesAsync ()
+            {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                var workspacesTask = store.Table<WorkspaceData> ()
+                                     .QueryAsync (r => r.DeletedAt == null);
+                await Task.WhenAll (workspacesTask);
+                return SortWorkspaces (workspacesTask.Result);
+            }
+
+            private List<WorkspaceData> SortWorkspaces (List<WorkspaceData> data)
+            {
+                var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+                data.Sort ((a, b) => {
+                    if (user != null) {
+                        if (a != null && a.Id == user.DefaultWorkspaceId) {
+                            return -1;
+                        }
+                        if (b != null && b.Id == user.DefaultWorkspaceId) {
+                            return 1;
+                        }
+                    }
+                    var aName = a != null ? (a.Name ?? String.Empty) : String.Empty;
+                    var bName = b != null ? (b.Name ?? String.Empty) : String.Empty;
+                    return String.Compare (aName, bName, StringComparison.Ordinal);
+                });
+                return data;
             }
         }
 

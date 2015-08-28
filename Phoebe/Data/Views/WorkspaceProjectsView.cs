@@ -512,35 +512,6 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public static async Task<List<WorkspaceData>> GetWorkspaces()
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            var workspacesTask = store.Table<WorkspaceData> ()
-                                 .QueryAsync (r => r.DeletedAt == null);
-            await Task.WhenAll (workspacesTask);
-            return SortWorkspaces (workspacesTask.Result);
-        }
-
-        private static List<WorkspaceData> SortWorkspaces (List<WorkspaceData> data)
-        {
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-
-            data.Sort ((a, b) => {
-                if (user != null) {
-                    if (a != null && a.Id == user.DefaultWorkspaceId) {
-                        return -1;
-                    }
-                    if (b != null && b.Id == user.DefaultWorkspaceId) {
-                        return 1;
-                    }
-                }
-                var aName = a != null ? (a.Name ?? String.Empty) : String.Empty;
-                var bName = b != null ? (b.Name ?? String.Empty) : String.Empty;
-                return String.Compare (aName, bName, StringComparison.Ordinal);
-            });
-            return data;
-        }
-
         public class Workspace
         {
             private WorkspaceData dataObject;

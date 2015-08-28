@@ -29,7 +29,7 @@ namespace Toggl.Joey.UI.Activities
         public static readonly string ExtraTimeEntriesIds = "com.toggl.timer.time_entries_ids";
         private static readonly int ProjectCreatedRequestCode = 1;
 
-        private ViewPager viewPager;
+        private NoSwipePager viewPager;
         private ProjectFragmentAdapter projectFragmentAdapter;
         private TabLayout tabLayout;
         private TogglAppBar appBar;
@@ -48,7 +48,7 @@ namespace Toggl.Joey.UI.Activities
 
             SetContentView (Resource.Layout.ProjectListActivityLayout);
             projectFragmentAdapter = new ProjectFragmentAdapter (SupportFragmentManager, timeEntryList);
-            viewPager = FindViewById<ViewPager> (Resource.Id.ProjectListViewPager);
+            viewPager = FindViewById<NoSwipePager> (Resource.Id.ProjectListViewPager);
             viewPager.Adapter = projectFragmentAdapter;
             viewPager.SetCurrentItem (projectFragmentAdapter.FirstTabPos, false);
             viewPager.PageSelected += OnTabSelected;

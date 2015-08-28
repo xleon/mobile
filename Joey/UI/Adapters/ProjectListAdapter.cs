@@ -291,6 +291,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
+        [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
         public class ClientListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Client>
         {
             private WorkspaceProjectsView.Client model;

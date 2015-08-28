@@ -12,12 +12,14 @@ let Exec command args =
 
 let RestorePackages packageConfigFile =
     let toolFolder = Path.Combine("", ".ci/teamcity/tools/NuGet/NuGet.exe")
-    printfn "File: %s" packageConfigFile
     Exec toolFolder ("restore " + packageConfigFile + " -PackagesDirectory packages")
 
-let RestoreComponents solutionFile =
-      let toolFolder = Path.Combine("", ".ci/teamcity/tools/xpkg/xamarin-component.exe")
-      Exec toolFolder ("restore " + solutionFile)
+let RestoreXamComponents projectFile =
+      log "Restoring componentes!"
+      RestoreComponents (fun defaults ->
+        {defaults with
+            ToolPath = ".ci/teamcity/tools/xpkg/xamarin-component.exe"
+            }) projectFile
 
 let RunNUnitTests dllPath xmlPath =
     Exec "packages/NUnit.Runners.2.6.4/tools/nunit-console.exe" (dllPath + " -xml=" + xmlPath)

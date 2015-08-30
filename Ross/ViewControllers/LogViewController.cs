@@ -182,7 +182,14 @@ namespace Toggl.Ross.ViewControllers
 
             public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
             {
-                return false;
+                return true;
+            }
+
+            public override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
+            {
+                if (editingStyle == UITableViewCellEditingStyle.Delete) {
+
+                }
             }
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)

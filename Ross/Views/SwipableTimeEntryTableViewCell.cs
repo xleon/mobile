@@ -8,9 +8,14 @@ namespace Toggl.Ross.Views
 {
     public abstract class SwipableTimeEntryTableViewCell : ModelTableViewCell<TimeEntryModel>
     {
-        private const float ContinueSwipeWidth = 90f;
-        private const float DeleteSwipeWidth = 100f;
-        private const float SnapDistance = 20f;
+        private const float SwipeWidth = 100f;
+
+        private const float MinDuration = 0.2f;
+        private const float MaxDuration = 0.6f;
+
+        private const float FallbackTreshold = 40.0f;
+        private const float VelocityTreshold = 40.0f;
+
 
         private readonly UIButton continueActionButton;
         private readonly UIButton deleteActionButton;
@@ -57,22 +62,22 @@ namespace Toggl.Ross.Views
         private CGPoint panStart;
         private nfloat panDeltaX;
         private bool panLockInHorizDirection;
-        private PanLock panLock;
 
         private void OnPanningGesture (UIPanGestureRecognizer gesture)
         {
-            var leftWidth = ContinueSwipeWidth;
-            var rightWidth = DeleteSwipeWidth;
-
             switch (gesture.State) {
             case UIGestureRecognizerState.Began:
                 panStart = gesture.TranslationInView (actualContentView);
                 panLockInHorizDirection = false;
-                panLock = PanLock.None;
                 break;
             case UIGestureRecognizerState.Changed:
                 var currentPoint = gesture.TranslationInView (actualContentView);
                 panDeltaX = panStart.X - currentPoint.X;
+
+                if (panDeltaX > 0) {
+                    panDeltaX = 0;
+                    return;
+                }
 
                 if (!panLockInHorizDirection) {
                     if (Math.Abs (panDeltaX) > 10) {
@@ -84,55 +89,21 @@ namespace Toggl.Ross.Views
                     }
                 }
 
-                // Switch pan lock
-                var oldLock = panLock;
-
-                switch (panLock) {
-                case PanLock.None:
-                    if (-panDeltaX >= leftWidth) {
-                        panLock = PanLock.Left;
-                    } else if (panDeltaX >= rightWidth) {
-                        panLock = PanLock.Right;
-                    }
-                    break;
-                case PanLock.Left:
-                    if (-panDeltaX < leftWidth - SnapDistance) {
-                        panLock = PanLock.None;
-                    } else {
-                        return;
-                    }
-                    break;
-                case PanLock.Right:
-                    if (panDeltaX < rightWidth - SnapDistance) {
-                        panLock = PanLock.None;
-                    } else {
-                        return;
-                    }
-                    break;
+                if (-SwipeWidth > panDeltaX) {
+                    panDeltaX = -SwipeWidth;
                 }
-
-                // Apply delta limits
-                switch (panLock) {
-                case PanLock.Left:
-                    panDeltaX = - (leftWidth + SnapDistance);
-                    break;
-                case PanLock.Right:
-                    panDeltaX = rightWidth + SnapDistance;
-                    break;
-                }
-
-                var shouldAnimate = oldLock != panLock;
-                if (shouldAnimate) {
-                    UIView.Animate (0.1, 0,
-                                    UIViewAnimationOptions.CurveEaseOut,
-                                    LayoutActualContentView, null);
-                } else {
-                    LayoutActualContentView ();
-                }
+                    
+                UIView.Animate (0.1, 0,
+                                UIViewAnimationOptions.CurveEaseOut,
+                                LayoutActualContentView, null);
 
                 break;
             case UIGestureRecognizerState.Cancelled:
             case UIGestureRecognizerState.Ended:
+                if (Editing) {
+                    return;
+                }
+
                 if (!gesture.Enabled) {
                     gesture.Enabled = true;
                 }
@@ -142,13 +113,13 @@ namespace Toggl.Ross.Views
 
                 float maxX = 0;
 
-                if (((int)currentX ^ (int)velocityX) > 0) {
-                    maxX = velocityX < 0 ? leftWidth : -rightWidth;
+                if (((int)currentX ^ (int)velocityX) > 0 && (velocityX > VelocityTreshold || Math.Abs(currentX) > FallbackTreshold)) {
+                    maxX = -SwipeWidth;
                 }
 
                 var absolutePanDeltaX = Math.Abs (panDeltaX);
 
-                var duration = (Math.Abs (maxX) - absolutePanDeltaX) / velocityX;
+                var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (Math.Abs (maxX) - absolutePanDeltaX) / velocityX));
 
                 UIView.Animate (duration, delegate {
                     var frame = ContentView.Frame;
@@ -156,10 +127,17 @@ namespace Toggl.Ross.Views
                     LayoutActualContentView();
 
                 }, delegate {
-                    LayoutActualContentView();
+                    if (maxX != 0) {
+                        OnContinue ();
+                        maxX = 0;
+                        UIView.Animate (0.3f, delegate {
+                            var frame = ContentView.Frame;
+                            panDeltaX = maxX - frame.X;
+                            LayoutActualContentView();
+                        });
+                    }
                 });
 
-                Console.WriteLine ("velocity {0}, duration {1}", velocityX, duration);
                 break;
             }
         }
@@ -182,14 +160,14 @@ namespace Toggl.Ross.Views
             continueActionButton.Frame = new CGRect (
                 x: 0, y: 0,
                 height: contentFrame.Height,
-                width: ContinueSwipeWidth + SnapDistance
+                width: SwipeWidth
             );
 
             deleteActionButton.Frame = new CGRect (
-                x: contentFrame.Width - DeleteSwipeWidth,
+                x: contentFrame.Width - SwipeWidth,
                 y: 0,
                 height: contentFrame.Height,
-                width: DeleteSwipeWidth
+                width: SwipeWidth
             );
         }
 

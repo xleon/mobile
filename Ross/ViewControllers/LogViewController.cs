@@ -188,7 +188,10 @@ namespace Toggl.Ross.ViewControllers
             public override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
             {
                 if (editingStyle == UITableViewCellEditingStyle.Delete) {
-
+                    var cell = tableView.CellAt (indexPath) as TimeEntryCell;
+                    if (cell != null) {
+                        cell.DeleteData ();
+                    }
                 }
             }
 
@@ -335,9 +338,8 @@ namespace Toggl.Ross.ViewControllers
                 // Ping analytics
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
-
-            protected override async void OnDelete ()
-            {
+                
+            public async void DeleteData() {
                 if (DataSource == null) {
                     return;
                 }

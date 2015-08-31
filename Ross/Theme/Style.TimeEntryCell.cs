@@ -64,11 +64,6 @@ namespace Toggl.Ross.Theme
                 v.BackgroundColor = Color.Green;
             }
 
-            public static void DeleteState (UIView v)
-            {
-                v.BackgroundColor = Color.Red;
-            }
-
             public static void NoSwipeState (UIView v)
             {
                 v.BackgroundColor = UIColor.Clear;

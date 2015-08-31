@@ -16,28 +16,23 @@ namespace Toggl.Ross.Views
         private const float FallbackTreshold = 40.0f;
         private const float VelocityTreshold = 40.0f;
 
-
         private readonly UIButton continueActionButton;
-        private readonly UIButton deleteActionButton;
 
         private readonly UIView actualContentView;
 
         protected SwipableTimeEntryTableViewCell (IntPtr ptr) : base (ptr)
         {
             continueActionButton = new UIButton () {} .Apply (Style.TimeEntryCell.SwipeActionButton).Apply(Style.TimeEntryCell.ContinueState);
-            deleteActionButton = new UIButton () {} .Apply (Style.TimeEntryCell.SwipeActionButton).Apply(Style.TimeEntryCell.DeleteState);
 
             actualContentView = new UIView ().Apply (Style.Log.CellContentView);
 
             continueActionButton.SetTitle ("SwipeTimeEntryContinue".Tr (), UIControlState.Normal);
-            deleteActionButton.SetTitle ("SwipeTimeEntryDelete".Tr (), UIControlState.Normal);
 
             BackgroundView = new UIView ();
 
             SelectedBackgroundView = new UIView ().Apply (Style.CellSelectedBackground);
             ContentView.AddSubviews (
                 continueActionButton,
-                deleteActionButton,
                 actualContentView
             );
 
@@ -67,24 +62,22 @@ namespace Toggl.Ross.Views
                     panDeltaX = 0;
                     return;
                 }
-
+                    
                 if (!panLockInHorizDirection) {
-                    if (Math.Abs (panDeltaX) > 10) {
+                    if (Math.Abs (panDeltaX) > 30) {
                         // User is swiping the cell, lock them into this direction
                         panLockInHorizDirection = true;
-                    } else if (Math.Abs (panStart.Y - currentPoint.Y) > 10) {
+                    } else if (Math.Abs (panStart.Y - currentPoint.Y) > 5) {
                         // User is starting to move upwards, let them scroll
                         gesture.Enabled = false;
                     }
                 }
 
-                if (-SwipeWidth > panDeltaX) {
+                if (SwipeWidth < panDeltaX) {
                     panDeltaX = -SwipeWidth;
                 }
                     
-                UIView.Animate (0.1, 0,
-                                UIViewAnimationOptions.CurveEaseOut,
-                                LayoutActualContentView, null);
+                UIView.Animate (0.1, 0, UIViewAnimationOptions.CurveEaseOut, LayoutActualContentView, null);
 
                 break;
             case UIGestureRecognizerState.Cancelled:
@@ -102,7 +95,9 @@ namespace Toggl.Ross.Views
 
                 float maxX = 0;
 
-                if (((int)currentX ^ (int)velocityX) > 0 && (velocityX > VelocityTreshold || Math.Abs(currentX) > FallbackTreshold)) {
+                if (((int)currentX ^ (int)velocityX) > 0 
+                    && (velocityX > VelocityTreshold || Math.Abs (currentX) > FallbackTreshold) 
+                    && panLockInHorizDirection) {
                     maxX = -SwipeWidth;
                 }
 
@@ -111,24 +106,24 @@ namespace Toggl.Ross.Views
                 var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (Math.Abs (maxX) - absolutePanDeltaX) / velocityX));
 
                 UIView.Animate (duration, delegate {
-                    var frame = ContentView.Frame;
-                    panDeltaX = maxX - frame.X;
-                    LayoutActualContentView();
-
-                }, delegate {
-                    if (maxX != 0) {
-                        OnContinue ();
-                        maxX = 0;
-                        UIView.Animate (0.3f, delegate {
-                            var frame = ContentView.Frame;
-                            panDeltaX = maxX - frame.X;
-                            LayoutActualContentView();
-                        });
+                    LayoutActualContentView(maxX);
+                }, delegate (bool completed) {
+                    if (Math.Abs(maxX) < float.Epsilon && !completed) {
+                        return;
                     }
+                    OnContinue ();
+                    UIView.Animate (0.3f, t => LayoutActualContentView(0));
                 });
 
                 break;
             }
+        }
+
+        private void LayoutActualContentView (float maxEdge)
+        {
+            var frame = ContentView.Frame;
+            panDeltaX = maxEdge - frame.X;
+            LayoutActualContentView();
         }
 
         private void LayoutActualContentView ()
@@ -148,13 +143,6 @@ namespace Toggl.Ross.Views
 
             continueActionButton.Frame = new CGRect (
                 x: 0, y: 0,
-                height: contentFrame.Height,
-                width: SwipeWidth
-            );
-
-            deleteActionButton.Frame = new CGRect (
-                x: contentFrame.Width - SwipeWidth,
-                y: 0,
                 height: contentFrame.Height,
                 width: SwipeWidth
             );

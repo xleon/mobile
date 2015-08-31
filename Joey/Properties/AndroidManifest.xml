@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.toggl.timer" android:installLocation="auto" android:versionName="8.0.6" android:versionCode="55">
 	<uses-sdk android:minSdkVersion="15" android:targetSdkVersion="21" />
 	<uses-permission android:name="android.permission.INTERNET" />

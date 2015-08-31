@@ -5,6 +5,8 @@ open Fake.XamarinHelper
 open System
 open System.IO
 open System.Linq
+open System.Xml
+open Fake.FileUtils
 
 let Exec command args =
     let result = Shell.Exec("mono", "--runtime=v4.0 " + command + " " + args)
@@ -24,3 +26,20 @@ let RestoreXamComponents projectFile =
 let RunNUnitTests dllPath xmlPath =
     Exec "packages/NUnit.Runners.2.6.4/tools/nunit-console.exe" (dllPath + " -xml=" + xmlPath)
     TeamCityHelper.sendTeamCityNUnitImport xmlPath
+
+let GetAndroidFileName projectFolder =
+    let LoadXmlNode (projectPath:string) =
+        let xmlDoc = new XmlDocument ()
+        xmlDoc.Load (projectPath)
+        xmlDoc.DocumentElement
+
+    let node = LoadXmlNode projectFolder
+    let package = getAttribute "package" node
+    let version = getAttribute "android:versionName" node
+    let build = getAttribute "android:versionCode" node
+    (package + "_" + version + "_" + build + ".apk")
+
+let ChangeFileName (file:#FileInfo, fileName:string) =
+    let newName = Path.Combine (file.DirectoryName, fileName)
+    mv file.FullName newName
+    newName

@@ -95,8 +95,8 @@ namespace Toggl.Ross.Views
 
                 float maxX = 0;
 
-                if (((int)currentX ^ (int)velocityX) > 0 
-                    && (velocityX > VelocityTreshold || Math.Abs (currentX) > FallbackTreshold) 
+                if (((int)currentX ^ (int)velocityX) > 0
+                    && (velocityX > VelocityTreshold || Math.Abs (currentX) > FallbackTreshold)
                     && panLockInHorizDirection) {
                     maxX = -SwipeWidth;
                 }
@@ -105,14 +105,14 @@ namespace Toggl.Ross.Views
 
                 var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (Math.Abs (maxX) - absolutePanDeltaX) / velocityX));
 
-                UIView.Animate (duration, delegate {
-                    LayoutActualContentView(maxX);
-                }, delegate (bool completed) {
-                    if (Math.Abs(maxX) < float.Epsilon && !completed) {
+                UIView.AnimateNotify (duration, delegate {
+                    LayoutActualContentView (maxX);
+                }, delegate(bool finished) {
+                    if (Math.Abs (maxX) < float.Epsilon || !finished) {
                         return;
                     }
                     OnContinue ();
-                    UIView.Animate (0.3f, t => LayoutActualContentView(0));
+                    UIView.Animate (0.3f, () => LayoutActualContentView (0));
                 });
 
                 break;

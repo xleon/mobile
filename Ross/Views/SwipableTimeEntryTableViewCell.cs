@@ -22,7 +22,7 @@ namespace Toggl.Ross.Views
 
         protected SwipableTimeEntryTableViewCell (IntPtr ptr) : base (ptr)
         {
-            continueActionButton = new UIButton () {} .Apply (Style.TimeEntryCell.SwipeActionButton).Apply(Style.TimeEntryCell.ContinueState);
+            continueActionButton = new UIButton () {} .Apply (Style.TimeEntryCell.SwipeActionButton).Apply (Style.TimeEntryCell.ContinueState);
 
             actualContentView = new UIView ().Apply (Style.Log.CellContentView);
 
@@ -62,7 +62,7 @@ namespace Toggl.Ross.Views
                     panDeltaX = 0;
                     return;
                 }
-                    
+
                 if (!panLockInHorizDirection) {
                     if (Math.Abs (panDeltaX) > 30) {
                         // User is swiping the cell, lock them into this direction
@@ -76,7 +76,7 @@ namespace Toggl.Ross.Views
                 if (-SwipeWidth > panDeltaX) {
                     panDeltaX = -SwipeWidth;
                 }
-                    
+
                 UIView.Animate (0.1, 0, UIViewAnimationOptions.CurveEaseOut, LayoutActualContentView, null);
 
                 break;
@@ -96,8 +96,8 @@ namespace Toggl.Ross.Views
                 float maxX = 0;
 
                 if (((int)currentX ^ (int)velocityX) > 0
-                    && (velocityX > VelocityTreshold || Math.Abs (currentX) > FallbackTreshold)
-                    && panLockInHorizDirection) {
+                        && (velocityX > VelocityTreshold || Math.Abs (currentX) > FallbackTreshold)
+                        && panLockInHorizDirection) {
                     maxX = -SwipeWidth;
                 }
 
@@ -107,7 +107,7 @@ namespace Toggl.Ross.Views
 
                 UIView.AnimateNotify (duration, delegate {
                     LayoutActualContentView (maxX);
-                }, delegate(bool finished) {
+                }, delegate (bool finished) {
                     if (Math.Abs (maxX) < float.Epsilon || !finished) {
                         return;
                     }

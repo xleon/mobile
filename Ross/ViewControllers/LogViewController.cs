@@ -338,8 +338,9 @@ namespace Toggl.Ross.ViewControllers
                 // Ping analytics
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
-                
-            public async void DeleteData() {
+
+            public async void DeleteData()
+            {
                 if (DataSource == null) {
                     return;
                 }

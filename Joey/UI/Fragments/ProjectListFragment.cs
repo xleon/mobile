@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.OS;
+using Android.Support.Design.Widget;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
@@ -20,13 +21,18 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ProjectListFragment : Fragment
+    public class ProjectListFragment : Fragment, AppBarLayout.IOnOffsetChangedListener, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener
     {
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
+        private TabLayout tabLayout;
+        private TogglAppBar appBar;
+        private Toolbar Toolbar;
+        private FloatingActionButton fab;
         private LinearLayout emptyStateLayout;
         private ProjectListViewModel viewModel;
+        private IList<TimeEntryData> timeEntryList;
         private bool listLoadedAtLeastOnce;
         private Guid workspaceId;
 
@@ -38,10 +44,10 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ProjectListFragment (IList<TimeEntryData> timeEntryList, Guid workspaceId)
+        public ProjectListFragment (IList<TimeEntryData> timeEntryList)
         {
-            this.workspaceId = workspaceId;
-            viewModel = new ProjectListViewModel (timeEntryList, this.workspaceId);
+            this.timeEntryList = timeEntryList;
+            viewModel = new ProjectListViewModel (timeEntryList);
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -52,11 +58,65 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
+            appBar = view.FindViewById<TogglAppBar> (Resource.Id.ProjectListAppBar);
+            tabLayout = view.FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
+            fab = view.FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
+
+            Toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
+            var activity = (Activity)Activity;
+            activity.SetSupportActionBar (Toolbar);
+            activity.SupportActionBar.SetDisplayHomeAsUpEnabled (true);
+            activity.SupportActionBar.SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle);
 
             HasOptionsMenu = true;
 
+            appBar.AddOnOffsetChangedListener (this);
+            fab.Click += OnFABClick;
+
+            SetupViews ();
+
             return view;
+        }
+
+        private void SetupViews ()
+        {
+            tabLayout.Visibility = viewModel.ProjectList.CountWorkspaces == 1 ? ViewStates.Gone : ViewStates.Visible;
+            SetupCoordinatorViews ();
+        }
+
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            base.OnCreateOptionsMenu (menu, inflater);
+            inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
+            Toolbar.SetOnMenuItemClickListener (this);
+        }
+
+        private void SetupCoordinatorViews()
+        {
+            var appBarLayoutParamaters = new CoordinatorLayout.LayoutParams (appBar.LayoutParameters);
+            appBarLayoutParamaters.Behavior = new AppBarLayout.Behavior();
+            appBar.LayoutParameters = appBarLayoutParamaters;
+        }
+
+        private void OnFABClick (object sender, EventArgs e)
+        {
+            var entryList = new List<TimeEntryData> (timeEntryList);
+
+//            ChangeListWorkspace (entryList, ));
+//
+//            var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
+//            (this, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
+//
+//            StartActivityForResult (intent, ProjectCreatedRequestCode);
+        }
+
+        private void ChangeListWorkspace (List<TimeEntryData> list, Guid wsId)
+        {
+            foreach (var entry in list ) {
+                entry.WorkspaceId = wsId;
+            }
         }
 
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
@@ -69,13 +129,12 @@ namespace Toggl.Joey.UI.Fragments
                     Activity.Finish ();
                     return;
                 }
-                viewModel = new ProjectListViewModel (timeEntryList, workspaceId);
+                viewModel = new ProjectListViewModel (timeEntryList);
             }
 
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
-
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.ProjectList.OnIsLoadingChanged += OnListLoaded;
             await viewModel.Init ();
@@ -87,6 +146,19 @@ namespace Toggl.Joey.UI.Fragments
                 EnsureCorrectState ();
             }
             base.OnResume ();
+        }
+
+        private void GenerateTabs ()
+        {
+            foreach (var ws in viewModel.ProjectList.Workspaces) {
+                tabLayout.AddTab (tabLayout.NewTab().SetText (ws.Data.Name).SetContentDescription (ws.Data.Id.ToString()));
+            }
+            tabLayout.SetOnTabSelectedListener (this);
+        }
+
+        private void  OnTabClick (object sender, EventArgs e)
+        {
+            Console.WriteLine ("e:  {0}", e);
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
@@ -109,12 +181,13 @@ namespace Toggl.Joey.UI.Fragments
         {
             listLoadedAtLeastOnce = true;
             EnsureCorrectState ();
+            GenerateTabs ();
         }
 
         private void EnsureCorrectState()
         {
-            recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
-            emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
+//            recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
+//            emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
         }
 
         private async void OnItemSelected (object m)
@@ -186,6 +259,39 @@ namespace Toggl.Joey.UI.Fragments
                 viewModel.ProjectList.Dispose ();
             }
             base.Dispose (disposing);
+        }
+
+
+        public void OnOffsetChanged (AppBarLayout layout, int verticalOffset)
+        {
+            tabLayout.TranslationY = -verticalOffset;
+        }
+
+        public bool OnMenuItemClick (IMenuItem item)
+        {
+            switch (item.ItemId) {
+            case Resource.Id.SortByClients:
+                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
+                return true;
+            case Resource.Id.SortByProjects:
+                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
+                return true;
+            }
+            return false;
+        }
+
+
+        public void OnTabReselected (TabLayout.Tab tab)
+        {
+        }
+
+        public void OnTabSelected (TabLayout.Tab tab)
+        {
+            viewModel.ProjectList.Position = tab.Position;
+        }
+
+        public void OnTabUnselected (TabLayout.Tab tab)
+        {
         }
     }
 }

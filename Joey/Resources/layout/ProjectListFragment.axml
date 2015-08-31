@@ -1,12 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/ProjectListFragment"
-    android:orientation="vertical"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/ProjectListActivityLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/BgArrowsPattern">
+    <Toggl.Joey.UI.Views.TogglAppBar
+        android:id="@+id/ProjectListAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null">
+        <android.support.design.widget.CollapsingToolbarLayout
+            android:id="@+id/ProjectListCollapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_scrollFlags="scroll|enterAlwaysCollapsed|exitUntilCollapsed">
+        <!-- Toolbar placeholder for layout integrity -->
+            <android.support.v7.widget.Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_scrollFlags="scroll"
+                app:layout_collapseMode="pin"
+                android:background="@null" />
+            <android.support.design.widget.TabLayout
+                android:id="@+id/WorkspaceTabLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/TabNavigationStyle"
+                android:layout_marginTop="?attr/actionBarSize"
+                app:layout_scrollFlags="scroll|enterAlways"
+                app:tabIndicatorColor="#f30c16"
+                app:tabMode="scrollable" />
+        </android.support.design.widget.CollapsingToolbarLayout>
+    </Toggl.Joey.UI.Views.TogglAppBar>
+<!-- Actual toolbar -->
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/ProjectListToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:minHeight="?attr/actionBarSize"
+        android:background="@null" />
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:orientation="vertical">
         <LinearLayout
             android:id="@+id/ProjectListEmptyState"
@@ -53,4 +90,13 @@
             android:layout_height="@dimen/ToolbarDropShadowHeight"
             android:background="@drawable/DropShadowVertical" />
     </FrameLayout>
-</LinearLayout>
+    <Toggl.Joey.UI.Views.AddProjectFab
+        android:id="@+id/AddNewProjectFAB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:layout_gravity="bottom|end|right"
+        android:backgroundTint="@color/material_red"
+        android:src="@drawable/IcAdd"
+        android:layout_margin="@dimen/fab_margin" />
+</android.support.design.widget.CoordinatorLayout>

@@ -32,10 +32,7 @@ namespace Toggl.Ross.Views
             continueActionButton.SetTitle ("SwipeTimeEntryContinue".Tr (), UIControlState.Normal);
             deleteActionButton.SetTitle ("SwipeTimeEntryDelete".Tr (), UIControlState.Normal);
 
-
             BackgroundView = new UIView ();
-
-
 
             SelectedBackgroundView = new UIView ().Apply (Style.CellSelectedBackground);
             ContentView.AddSubviews (
@@ -50,14 +47,6 @@ namespace Toggl.Ross.Views
         }
 
         protected abstract void OnContinue ();
-
-        protected abstract void OnDelete ();
-
-        enum PanLock {
-            None,
-            Left,
-            Right
-        }
 
         private CGPoint panStart;
         private nfloat panDeltaX;

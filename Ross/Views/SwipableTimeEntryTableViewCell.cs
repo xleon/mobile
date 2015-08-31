@@ -73,7 +73,7 @@ namespace Toggl.Ross.Views
                     }
                 }
 
-                if (SwipeWidth < panDeltaX) {
+                if (-SwipeWidth > panDeltaX) {
                     panDeltaX = -SwipeWidth;
                 }
                     

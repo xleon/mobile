@@ -22,6 +22,8 @@ namespace Toggl.Phoebe.Data.Views
 
         private string currentFilterInfix = "";
 
+        public const int StringMaxLength = 20;
+
         private ITrie<TimeEntryData> trie;
 
         public bool HasSuggestions
@@ -81,7 +83,8 @@ namespace Toggl.Phoebe.Data.Views
                 var entries = await baseQuery.QueryAsync ();
                 TimeEntries.AddRange (entries.ToList());
                 foreach (var entry in TimeEntries) {
-                    trie.Add (entry.Description.ToLower(), entry);
+                    var description = entry.Description;
+                    trie.Add (description.Substring(0, Math.Min(description.Length, StringMaxLength)).ToLower(), entry);
                 }
 
             } catch (Exception exc) {

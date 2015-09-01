@@ -310,30 +310,31 @@ namespace Toggl.Phoebe.Data.Views
                                     .QueryAsync (r => r.DeletedAt == null);
                 var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
                 var tasksTask = store.Table<TaskData> ()
-                                .QueryAsync (r => r.DeletedAt == null && r.IsActive == true && r.WorkspaceId == workspaceId);
+                                .QueryAsync (r => r.DeletedAt == null && r.IsActive == true);
                 var clientsTask = store.Table<ClientData> ()
-                                  .QueryAsync (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+                                  .QueryAsync (r => r.DeletedAt == null);
 
                 workspaces = new Workspace (workspaceTask.Result.First());
 
                 await Task.WhenAll (workspaceTask, projectsTask, tasksTask, clientsTask);
 
 
-                var clients = new List<ClientData> ();
-                clients.Add (new ClientData());
-                clients.AddRange (clientsTask.Result);
+
 
                 var wsList = workspaceTask.Result;
                 workspacesList.Clear();
                 foreach (var ws in wsList) {
                     var workspace = new Workspace (ws);
                     var projects = projectsTask.Result.Where (r => r.WorkspaceId == ws.Id);
+                    var clients = new List<ClientData> ();
+                    clients.Add (new ClientData());
+                    clients.AddRange (clientsTask.Result.Where (r => r.WorkspaceId == ws.Id));
                     FillClientsBranchForWorkspace (workspace, clients, projects, tasksTask);
                     FillProjectsBranchForWorkspace (workspace, projects, tasksTask);
                     workspacesList.Add (workspace);
                 }
 
-                clientDataObjects.AddRange (clients);
+                clientDataObjects.AddRange (clientsTask.Result);
                 SortEverything();
             } finally {
                 UpdateCollection ();
@@ -351,7 +352,7 @@ namespace Toggl.Phoebe.Data.Views
                 Client client;
                 IEnumerable<ProjectData> projectsOfClient;
 
-                if (workspaces.Clients.Count == 0) { // first element
+                if (workspace.Clients.Count == 0) { // first element
                     client = new Client (workspaces.Data);
                     client.Projects.Add (new Project (workspaces.Data));
                     projectsOfClient = projects.Where (r => r.ClientId == null);
@@ -461,9 +462,8 @@ namespace Toggl.Phoebe.Data.Views
             if (workspacesList == null) {
                 return;
             }
-            Console.WriteLine ("UpdateCollection, current: {0}", currentWorkspaceId);
+
             var ws = workspacesList.Find (r => r.Data.Id == currentWorkspaceId);
-            Console.WriteLine ("ws.Name: {0}", ws.Data.Name);
             switch (sortBy) {
             case SortProjectsBy.Clients:
                 foreach (var client in ws.Clients) {

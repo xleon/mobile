@@ -23,6 +23,7 @@ namespace Toggl.Phoebe.Data.Views
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
         private bool isLoading;
         private bool hasMore;
+        private int currentPosition;
 
         private int displayTaskForProjectPosition;
 
@@ -59,7 +60,7 @@ namespace Toggl.Phoebe.Data.Views
         public bool IsEmpty
         {
             get {
-                return workspaces.HasNoProjects;
+                return workspacesList[currentPosition].HasNoProjects;
             }
         }
         public void ShowTaskForProject (Project project, int position, out int collapsingCount)
@@ -318,9 +319,6 @@ namespace Toggl.Phoebe.Data.Views
 
                 await Task.WhenAll (workspaceTask, projectsTask, tasksTask, clientsTask);
 
-
-
-
                 var wsList = workspaceTask.Result;
                 workspacesList.Clear();
                 foreach (var ws in wsList) {
@@ -387,16 +385,38 @@ namespace Toggl.Phoebe.Data.Views
 
         private void SortEverything()
         {
+            SortWorkspaces (workspacesList);
+            foreach (var ws in workspacesList) {
+                SortProjects (ws.Projects, clientDataObjects);
 
-            SortProjects (workspaces.Projects, clientDataObjects);
-
-            SortClients (workspaces.Clients);
-            foreach (var client in workspaces.Clients) {
-                SortProjects (client.Projects, new List<ClientData> ());
-                foreach (var project in client.Projects) {
-                    SortTasks (project.Tasks);
+                SortClients (ws.Clients);
+                foreach (var client in ws.Clients) {
+                    SortProjects (client.Projects, new List<ClientData> ());
+                    foreach (var project in client.Projects) {
+                        SortTasks (project.Tasks);
+                    }
                 }
             }
+
+        }
+
+        private static void SortWorkspaces (List<Workspace> data)
+        {
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            data.Sort ((a, b) => {
+                if (user != null) {
+                    if (a.Data != null && a.Data.Id == user.DefaultWorkspaceId) {
+                        return -1;
+                    }
+                    if (b.Data != null && b.Data.Id == user.DefaultWorkspaceId) {
+                        return 1;
+                    }
+                }
+
+                var aName = a.Data != null ? (a.Data.Name ?? String.Empty) : String.Empty;
+                var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
+                return String.Compare (aName, bName, StringComparison.Ordinal);
+            });
         }
 
         private void SortProjects (List<Project> data, List<ClientData> clients)
@@ -463,7 +483,7 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            var ws = workspacesList.Find (r => r.Data.Id == currentWorkspaceId);
+            var ws = workspacesList[currentPosition];
             switch (sortBy) {
             case SortProjectsBy.Clients:
                 foreach (var client in ws.Clients) {
@@ -502,6 +522,7 @@ namespace Toggl.Phoebe.Data.Views
                 return dataObjects;
             }
         }
+
         public int Count
         {
             get {
@@ -524,10 +545,15 @@ namespace Toggl.Phoebe.Data.Views
 
         }
 
-        public int Position
+        public int CurrentPosition
         {
-            set {
-                currentWorkspaceId = workspacesList[value].Data.Id;
+            get {
+                return currentPosition;
+            } set {
+                if (workspacesList.Count() > value) {
+                    currentPosition = value;
+                    currentWorkspaceId = workspacesList[currentPosition].Data.Id;
+                }
                 UpdateCollection ();
             }
         }

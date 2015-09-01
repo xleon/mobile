@@ -34,7 +34,7 @@ namespace Toggl.Joey.UI.Fragments
         private ProjectListViewModel viewModel;
         private IList<TimeEntryData> timeEntryList;
         private bool listLoadedAtLeastOnce;
-        private Guid workspaceId;
+        private Guid focusedWorkspaceId;
 
         public ProjectListFragment ()
         {
@@ -104,17 +104,17 @@ namespace Toggl.Joey.UI.Fragments
         {
             var entryList = new List<TimeEntryData> (timeEntryList);
 
-//            ChangeListWorkspace (entryList, ));
-//
-//            var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
-//            (this, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
-//
-//            StartActivityForResult (intent, ProjectCreatedRequestCode);
+            ChangeListWorkspace (entryList, focusedWorkspaceId);
+
+            var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
+                         (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
+
+            StartActivityForResult (intent, ProjectCreatedRequestCode);
         }
 
         private void ChangeListWorkspace (List<TimeEntryData> list, Guid wsId)
         {
-            foreach (var entry in list ) {
+            foreach (var entry in list) {
                 entry.WorkspaceId = wsId;
             }
         }
@@ -151,14 +151,9 @@ namespace Toggl.Joey.UI.Fragments
         private void GenerateTabs ()
         {
             foreach (var ws in viewModel.ProjectList.Workspaces) {
-                tabLayout.AddTab (tabLayout.NewTab().SetText (ws.Data.Name).SetContentDescription (ws.Data.Id.ToString()));
+                tabLayout.AddTab (tabLayout.NewTab().SetText (ws.Data.Name));
             }
             tabLayout.SetOnTabSelectedListener (this);
-        }
-
-        private void  OnTabClick (object sender, EventArgs e)
-        {
-            Console.WriteLine ("e:  {0}", e);
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
@@ -186,8 +181,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureCorrectState()
         {
-//            recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
-//            emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
+            recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
+            emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
         }
 
         private async void OnItemSelected (object m)
@@ -261,7 +256,6 @@ namespace Toggl.Joey.UI.Fragments
             base.Dispose (disposing);
         }
 
-
         public void OnOffsetChanged (AppBarLayout layout, int verticalOffset)
         {
             tabLayout.TranslationY = -verticalOffset;
@@ -280,14 +274,15 @@ namespace Toggl.Joey.UI.Fragments
             return false;
         }
 
+        public void OnTabSelected (TabLayout.Tab tab)
+        {
+            viewModel.ProjectList.CurrentPosition = tab.Position;
+            focusedWorkspaceId = viewModel.ProjectList.Workspaces[tab.Position].Data.Id;
+            EnsureCorrectState();
+        }
 
         public void OnTabReselected (TabLayout.Tab tab)
         {
-        }
-
-        public void OnTabSelected (TabLayout.Tab tab)
-        {
-            viewModel.ProjectList.Position = tab.Position;
         }
 
         public void OnTabUnselected (TabLayout.Tab tab)

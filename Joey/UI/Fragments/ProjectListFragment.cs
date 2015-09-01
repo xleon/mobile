@@ -150,9 +150,17 @@ namespace Toggl.Joey.UI.Fragments
 
         private void GenerateTabs ()
         {
+            int i = 0;
             foreach (var ws in viewModel.ProjectList.Workspaces) {
-                tabLayout.AddTab (tabLayout.NewTab().SetText (ws.Data.Name));
+                var tab = tabLayout.NewTab().SetText (ws.Data.Name);
+                tabLayout.AddTab (tab);
+                if (ws.Data.Id == timeEntryList[0].WorkspaceId) {
+                    viewModel.ProjectList.CurrentPosition = i;
+                    tab.Select();
+                }
+                i++;
             }
+
             tabLayout.SetOnTabSelectedListener (this);
         }
 

@@ -16,7 +16,6 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<Workspace> workspacesList = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
         private readonly List<object> dataObjects = new List<object> ();
-        private Workspace workspaces;
         private Guid currentWorkspaceId;
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
@@ -28,7 +27,6 @@ namespace Toggl.Phoebe.Data.Views
         private int displayTaskForProjectPosition;
 
         private Project displayingTaskForProject;
-        private Guid workspaceId;
         public Project DisplayingTaskForProject
         {
             get {
@@ -120,12 +118,34 @@ namespace Toggl.Phoebe.Data.Views
 
         private void OnDataChange (WorkspaceData data, DataAction action)
         {
-            var existingWorkspace = workspaces;
-            workspaces = new Workspace (data);
-            if (existingWorkspace == null || existingWorkspace.Data.Id != data.Id) {
-                OnUpdated ();
+            var isExcluded = action == DataAction.Delete
+                             || data.DeletedAt.HasValue;
+
+            Workspace workspace;
+
+            if (isExcluded) {
+                if (FindWorkspace (data.Id, out workspace)) {
+                    workspacesList.Remove (workspace);
+                    OnUpdated ();
+                }
+            } else {
+                data = new WorkspaceData (data);
+
+                if (FindWorkspace (data.Id, out workspace)) {
+                    var existingData = workspace.Data;
+
+                    workspace.Data = data;
+                    if (existingData.Name != data.Name) {
+                        SortWorkspaces (workspacesList);
+                    }
+                    OnUpdated ();
+                } else {
+                    workspace = new Workspace (data);
+                    workspacesList.Add (workspace);
+                    SortWorkspaces (workspacesList);
+                    OnUpdated ();
+                }
             }
-            workspaces = new Workspace (data);
         }
 
         private void OnDataChange (ProjectData data, DataAction action)
@@ -134,37 +154,44 @@ namespace Toggl.Phoebe.Data.Views
                              || data.DeletedAt.HasValue
                              || !data.IsActive;
 
+            Workspace workspace;
             Project project;
 
             if (isExcluded) {
-                if (FindProject (data.Id, out project)) {
-                    workspaces.Projects.Remove (project);
+                if (FindProject (data.Id, out workspace, out project)) {
+                    workspace.Projects.Remove (project);
                     UpdateCollection ();
                 }
             } else {
                 data = new ProjectData (data);
-                if (FindProject (data.Id, out project)) {
+
+                if (FindProject (data.Id, out workspace, out project)) {
                     var existingData = project.Data;
 
+                    var shouldReparent = existingData.WorkspaceId != data.WorkspaceId;
                     var shouldSort = existingData.Name != data.Name
-                                     || existingData.ClientId != data.ClientId;
+                                     || existingData.ClientId != data.ClientId
+                                     || shouldReparent;
 
-                    if (shouldSort) {
-                        SortProjects (workspaces.Projects, clientDataObjects);
+                    project.Data = data;
+
+                    if (shouldReparent) {
+                        workspace.Projects.Remove (project);
+                        if (FindWorkspace (data.WorkspaceId, out workspace)) {
+                            workspace.Projects.Add (project);
+                        }
                     }
-                    UpdateCollection();
-                } else if (data.WorkspaceId == workspaces.Data.Id) {
 
+                    if (shouldSort && workspace != null) {
+                        SortProjects (workspace.Projects, clientDataObjects);
+                    }
+                    UpdateCollection ();
+                } else if (FindWorkspace (data.WorkspaceId, out workspace)) {
                     project = new Project (data);
-                    workspaces.Projects.Add (project);
 
-                    if (project.Data.ClientId == null) {
-                        workspaces.Clients.First ().Projects.Add (project);
-                    } else {
-                        workspaces.Clients.Where (r => r.Data.Id == project.Data.ClientId).First ().Projects.Add (project);
-                    }
-                    SortEverything ();
-                    UpdateCollection();
+                    workspace.Projects.Add (project);
+                    SortProjects (workspace.Projects, clientDataObjects);
+                    UpdateCollection ();
                 }
             }
         }
@@ -175,18 +202,19 @@ namespace Toggl.Phoebe.Data.Views
                              || data.DeletedAt.HasValue
                              || !data.IsActive;
 
+            Workspace workspace;
             Project project;
             TaskData existingData;
 
             if (isExcluded) {
-                if (FindTask (data.Id, out project, out existingData)) {
+                if (FindTask (data.Id, out workspace, out project, out existingData)) {
                     project.Tasks.Remove (existingData);
                     UpdateCollection ();
                 }
             } else {
                 data = new TaskData (data);
 
-                if (FindTask (data.Id, out project, out existingData)) {
+                if (FindTask (data.Id, out workspace, out project, out existingData)) {
                     var shouldReparent = existingData.ProjectId != data.ProjectId;
                     var shouldSort = existingData.Name != data.Name
                                      || shouldReparent;
@@ -194,7 +222,7 @@ namespace Toggl.Phoebe.Data.Views
                     if (shouldReparent) {
                         project.Tasks.Remove (existingData);
 
-                        if (FindProject (data.ProjectId, out project)) {
+                        if (FindProject (data.ProjectId, out workspace, out project)) {
                             project.Tasks.Add (data);
                         }
                     } else {
@@ -204,8 +232,9 @@ namespace Toggl.Phoebe.Data.Views
                     if (shouldSort) {
                         SortTasks (project.Tasks);
                     }
+
                     UpdateCollection ();
-                } else if (FindProject (data.ProjectId, out project)) {
+                } else if (FindProject (data.ProjectId, out workspace, out project)) {
                     project.Tasks.Add (data);
                     SortTasks (project.Tasks);
                     UpdateCollection ();
@@ -232,7 +261,10 @@ namespace Toggl.Phoebe.Data.Views
 
                     var shouldSort = data.Name != existingData.Name;
                     if (shouldSort) {
-                        SortProjects (workspaces.Projects, clientDataObjects);
+                        Workspace workspace;
+                        if (FindWorkspace (data.WorkspaceId, out workspace)) {
+                            SortProjects (workspace.Projects, clientDataObjects);
+                        }
                     }
                 } else {
                     clientDataObjects.Add (data);
@@ -240,31 +272,52 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private bool FindProject (Guid id, out Project project)
+        private bool FindWorkspace (Guid id, out Workspace workspace)
         {
-            foreach (var proj in workspaces.Projects) {
-                if (proj.Data != null && proj.Data.Id == id) {
-                    project = proj;
+            foreach (var ws in workspacesList) {
+                if (ws.Data.Id == id) {
+                    workspace = ws;
                     return true;
                 }
             }
 
-            project = null;
+            workspace = null;
             return false;
         }
 
-        private bool FindTask (Guid id, out Project project, out TaskData existingData)
+        private bool FindProject (Guid id, out Workspace workspace, out Project project)
         {
-            foreach (var proj in workspaces.Projects) {
-                foreach (var task in proj.Tasks) {
-                    if (task.Id == id) {
+            foreach (var ws in workspacesList) {
+                foreach (var proj in ws.Projects) {
+                    if (proj.Data != null && proj.Data.Id == id) {
+                        workspace = ws;
                         project = proj;
-                        existingData = task;
                         return true;
                     }
                 }
             }
 
+            workspace = null;
+            project = null;
+            return false;
+        }
+
+        private bool FindTask (Guid id, out Workspace workspace, out Project project, out TaskData existingData)
+        {
+            foreach (var ws in workspacesList) {
+                foreach (var proj in ws.Projects) {
+                    foreach (var task in proj.Tasks) {
+                        if (task.Id == id) {
+                            workspace = ws;
+                            project = proj;
+                            existingData = task;
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            workspace = null;
             project = null;
             existingData = null;
             return false;
@@ -315,8 +368,6 @@ namespace Toggl.Phoebe.Data.Views
                 var clientsTask = store.Table<ClientData> ()
                                   .QueryAsync (r => r.DeletedAt == null);
 
-                workspaces = new Workspace (workspaceTask.Result.First());
-
                 await Task.WhenAll (workspaceTask, projectsTask, tasksTask, clientsTask);
 
                 var wsList = workspaceTask.Result;
@@ -351,8 +402,8 @@ namespace Toggl.Phoebe.Data.Views
                 IEnumerable<ProjectData> projectsOfClient;
 
                 if (workspace.Clients.Count == 0) { // first element
-                    client = new Client (workspaces.Data);
-                    client.Projects.Add (new Project (workspaces.Data));
+                    client = new Client (workspace.Data);
+                    client.Projects.Add (new Project (workspace.Data));
                     projectsOfClient = projects.Where (r => r.ClientId == null);
                 } else {
                     client = new Client (clientData);

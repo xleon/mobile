@@ -13,8 +13,8 @@ namespace Toggl.Ross.Views
         private const float MinDuration = 0.2f;
         private const float MaxDuration = 0.6f;
 
-        private const float FallbackTreshold = 40.0f;
-        private const float VelocityTreshold = 40.0f;
+        private const float FallbackTreshold = 50.0f;
+        private const float VelocityTreshold = 70.0f;
 
         private readonly UIButton continueActionButton;
 

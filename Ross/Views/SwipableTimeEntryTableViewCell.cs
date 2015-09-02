@@ -13,8 +13,8 @@ namespace Toggl.Ross.Views
         private const float MinDuration = 0.2f;
         private const float MaxDuration = 0.6f;
 
-        private const float FallbackTreshold = 50.0f;
-        private const float VelocityTreshold = 70.0f;
+        private const float FallbackTreshold = 40.0f;
+        private const float VelocityTreshold = 60.0f;
 
         private readonly UIButton continueActionButton;
 
@@ -105,10 +105,10 @@ namespace Toggl.Ross.Views
 
                 var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (Math.Abs (maxX) - absolutePanDeltaX) / velocityX));
 
-                UIView.AnimateNotify (duration, delegate {
+                UIView.Animate (duration, delegate {
                     LayoutActualContentView (maxX);
-                }, delegate (bool finished) {
-                    if (Math.Abs (maxX) < float.Epsilon || !finished) {
+                }, delegate {
+                    if (maxX < FallbackTreshold) {
                         return;
                     }
                     OnContinue ();

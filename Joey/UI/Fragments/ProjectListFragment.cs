@@ -27,12 +27,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private RecyclerView recyclerView;
         private TabLayout tabLayout;
-        private TogglAppBar appBar;
-        private Toolbar Toolbar;
-        private FloatingActionButton fab;
+        private TogglAppBar appBarLayout;
+        private Toolbar toolBar;
+        private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
+
         private ProjectListViewModel viewModel;
-        private IList<TimeEntryData> timeEntryList;
         private bool listLoadedAtLeastOnce;
         private Guid focusedWorkspaceId;
 
@@ -46,7 +46,6 @@ namespace Toggl.Joey.UI.Fragments
 
         public ProjectListFragment (IList<TimeEntryData> timeEntryList)
         {
-            this.timeEntryList = timeEntryList;
             viewModel = new ProjectListViewModel (timeEntryList);
         }
 
@@ -60,63 +59,49 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
-            appBar = view.FindViewById<TogglAppBar> (Resource.Id.ProjectListAppBar);
+            appBarLayout = view.FindViewById<TogglAppBar> (Resource.Id.ProjectListAppBar);
             tabLayout = view.FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
-            fab = view.FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
+            newProjectFab = view.FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
+            toolBar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
 
-            Toolbar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
             var activity = (Activity)Activity;
-            activity.SetSupportActionBar (Toolbar);
+            activity.SetSupportActionBar (toolBar);
             activity.SupportActionBar.SetDisplayHomeAsUpEnabled (true);
             activity.SupportActionBar.SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle);
 
             HasOptionsMenu = true;
-
-            appBar.AddOnOffsetChangedListener (this);
-            fab.Click += OnFABClick;
+            appBarLayout.AddOnOffsetChangedListener (this);
+            newProjectFab.Click += OnNewProjectFabClick;
 
             SetupViews ();
-
             return view;
         }
 
         private void SetupViews ()
         {
             tabLayout.Visibility = viewModel.ProjectList.CountWorkspaces == 1 ? ViewStates.Gone : ViewStates.Visible;
-            SetupCoordinatorViews ();
+
+            // Setup coordinator views
+            var appBarLayoutParamaters = new CoordinatorLayout.LayoutParams (appBarLayout.LayoutParameters);
+            appBarLayoutParamaters.Behavior = new AppBarLayout.Behavior();
+            appBarLayout.LayoutParameters = appBarLayoutParamaters;
         }
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
             base.OnCreateOptionsMenu (menu, inflater);
             inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
-            Toolbar.SetOnMenuItemClickListener (this);
+            toolBar.SetOnMenuItemClickListener (this);
         }
 
-        private void SetupCoordinatorViews()
+        private void OnNewProjectFabClick (object sender, EventArgs e)
         {
-            var appBarLayoutParamaters = new CoordinatorLayout.LayoutParams (appBar.LayoutParameters);
-            appBarLayoutParamaters.Behavior = new AppBarLayout.Behavior();
-            appBar.LayoutParameters = appBarLayoutParamaters;
-        }
+            var entryList = new List<TimeEntryData> (viewModel.TimeEntryList);
 
-        private void OnFABClick (object sender, EventArgs e)
-        {
-            var entryList = new List<TimeEntryData> (timeEntryList);
-
-            ChangeListWorkspace (entryList, focusedWorkspaceId);
-
+            // Show create project activity instead
             var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
                          (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
-
             StartActivityForResult (intent, ProjectCreatedRequestCode);
-        }
-
-        private void ChangeListWorkspace (List<TimeEntryData> list, Guid wsId)
-        {
-            foreach (var entry in list) {
-                entry.WorkspaceId = wsId;
-            }
         }
 
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
@@ -137,6 +122,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.SetAdapter (adapter);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.ProjectList.OnIsLoadingChanged += OnListLoaded;
+
             await viewModel.Init ();
         }
 
@@ -154,7 +140,7 @@ namespace Toggl.Joey.UI.Fragments
             foreach (var ws in viewModel.ProjectList.Workspaces) {
                 var tab = tabLayout.NewTab().SetText (ws.Data.Name);
                 tabLayout.AddTab (tab);
-                if (ws.Data.Id == timeEntryList[0].WorkspaceId) {
+                if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
                     viewModel.ProjectList.CurrentPosition = i;
                     focusedWorkspaceId = ws.Data.Id;
                     tab.Select();
@@ -188,7 +174,7 @@ namespace Toggl.Joey.UI.Fragments
             GenerateTabs ();
         }
 
-        private void EnsureCorrectState()
+        private void EnsureCorrectState ()
         {
             recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
             emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
@@ -257,10 +243,9 @@ namespace Toggl.Joey.UI.Fragments
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
+                viewModel.ProjectList.OnIsLoadingChanged -= OnListLoaded;
                 viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.Dispose ();
-                viewModel.ProjectList.OnIsLoadingChanged -= OnListLoaded;
-                viewModel.ProjectList.Dispose ();
             }
             base.Dispose (disposing);
         }

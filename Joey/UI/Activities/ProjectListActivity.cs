@@ -18,8 +18,6 @@ namespace Toggl.Joey.UI.Activities
     public class ProjectListActivity : BaseActivity
     {
         public static readonly string ExtraTimeEntriesIds = "com.toggl.timer.time_entries_ids";
-        private static readonly int ProjectCreatedRequestCode = 1;
-
         private IList<TimeEntryData> timeEntryList;
 
         protected async override void OnCreateActivity (Bundle state)

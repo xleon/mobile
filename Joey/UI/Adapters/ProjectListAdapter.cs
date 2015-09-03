@@ -106,7 +106,6 @@ namespace Toggl.Joey.UI.Adapters
                 var clientHolder = (ClientListItemHolder)holder;
                 clientHolder.Bind (data);
             } else {
-
                 var data = (WorkspaceProjectsView.Project) GetEntry (position);
                 if (viewType == ViewTypeProject) {
                     var projectHolder = (ProjectListItemHolder)holder;
@@ -238,7 +237,7 @@ namespace Toggl.Joey.UI.Adapters
                 root.SetOnClickListener (this);
             }
 
-            protected async override void Rebind ()
+            protected override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
@@ -309,7 +308,7 @@ namespace Toggl.Joey.UI.Adapters
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
             }
 
-            protected async override void Rebind ()
+            protected override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
@@ -330,9 +329,7 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     ClientTextView.Text = model.Data.Name;
                 }
-
             }
-
         }
         #endregion
     }

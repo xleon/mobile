@@ -156,6 +156,7 @@ namespace Toggl.Joey.UI.Fragments
                 tabLayout.AddTab (tab);
                 if (ws.Data.Id == timeEntryList[0].WorkspaceId) {
                     viewModel.ProjectList.CurrentPosition = i;
+                    focusedWorkspaceId = ws.Data.Id;
                     tab.Select();
                 }
                 i++;

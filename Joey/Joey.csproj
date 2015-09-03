@@ -167,7 +167,6 @@
     <Compile Include="UI\Views\StartStopFab.cs" />
     <Compile Include="UI\Views\AddProjectFab.cs" />
     <Compile Include="UI\Views\TogglAppBar.cs" />
-    <Compile Include="UI\Views\NoSwipePager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

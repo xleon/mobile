@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -16,7 +15,6 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<Workspace> workspacesList = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
         private readonly List<object> dataObjects = new List<object> ();
-        private Guid currentWorkspaceId;
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
@@ -37,7 +35,6 @@ namespace Toggl.Phoebe.Data.Views
         public WorkspaceProjectsView ()
         {
             userData = ServiceContainer.Resolve<AuthManager> ().User;
-            currentWorkspaceId = userData.DefaultWorkspaceId;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
@@ -603,7 +600,6 @@ namespace Toggl.Phoebe.Data.Views
             } set {
                 if (workspacesList.Count() > value) {
                     currentPosition = value;
-                    currentWorkspaceId = workspacesList[currentPosition].Data.Id;
                 }
                 UpdateCollection ();
             }

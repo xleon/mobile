@@ -12,8 +12,6 @@ namespace Toggl.Joey.UI.Views
 {
     public class AddProjectFab : FloatingActionButton
     {
-        private AnimatorSet switchAnimation;
-
         private Drawable createNewDraw;
 
         private ColorStateList backgroundTintNew;

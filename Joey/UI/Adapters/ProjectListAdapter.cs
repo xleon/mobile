@@ -88,9 +88,9 @@ namespace Toggl.Joey.UI.Adapters
                 TasksProjectItemClick (this, position);
             }
 
-            int collapsingCount;
-            collectionView.ShowTaskForProject (proj, position, out collapsingCount);
-            owner.ScrollToPosition (position - collapsingCount);
+            int collapsedTaskNumber;
+            collectionView.ShowTaskForProject (proj, position, out collapsedTaskNumber);
+            owner.ScrollToPosition (position - collapsedTaskNumber);
         }
 
         protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
@@ -110,7 +110,7 @@ namespace Toggl.Joey.UI.Adapters
                 if (viewType == ViewTypeProject) {
                     var projectHolder = (ProjectListItemHolder)holder;
                     projectHolder.Bind (data);
-                    projectHolder.TasksButton.Selected |= null != collectionView.DisplayingTaskForProject && collectionView.DisplayingTaskForProject.Data.RemoteId == data.Data.RemoteId;
+                    projectHolder.TasksButton.Selected |= null != collectionView.UnfoldedTaskProject && collectionView.UnfoldedTaskProject.Data.RemoteId == data.Data.RemoteId;
                 } else {
                     var projectHolder = (NoProjectListItemHolder)holder;
                     projectHolder.Bind (data);

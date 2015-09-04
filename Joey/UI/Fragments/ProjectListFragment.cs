@@ -123,7 +123,6 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureCorrectState ()
         {
-            Console.WriteLine (viewModel.ProjectList.Workspaces.Count);
             tabLayout.Visibility = viewModel.ProjectList.Workspaces.Count < 2 ? ViewStates.Gone : ViewStates.Visible;
             recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
             emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
@@ -234,7 +233,7 @@ namespace Toggl.Joey.UI.Fragments
                 tabLayout.AddTab (tab);
 
                 if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
-                    viewModel.ProjectList.CurrentPosition = i;
+                    viewModel.ProjectList.CurrentWorkspaceIndex = i;
                     tab.Select();
                 }
                 i++;
@@ -243,7 +242,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnTabSelected (TabLayout.Tab tab)
         {
-            viewModel.ProjectList.CurrentPosition = tab.Position;
+            viewModel.ProjectList.CurrentWorkspaceIndex = tab.Position;
             EnsureCorrectState();
         }
 

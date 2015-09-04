@@ -20,26 +20,23 @@ namespace Toggl.Phoebe.Data.Views
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
         private bool isLoading;
         private bool hasMore;
-        private int currentPosition;
-
-        private int displayTaskForProjectPosition;
-
-        private Project displayingTaskForProject;
-        public Project DisplayingTaskForProject
-        {
-            get {
-                return displayingTaskForProject;
-            }
-        }
+        private int currentWorkspaceIndex;
+        private int unfoldedProjectIndex;
+        private Project unfoldedTaskProject;
 
         public WorkspaceProjectsView ()
         {
             userData = ServiceContainer.Resolve<AuthManager> ().User;
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
-
             Reload ();
+        }
+
+        public Project UnfoldedTaskProject
+        {
+            get {
+                return unfoldedTaskProject;
+            }
         }
 
         public SortProjectsBy SortBy
@@ -55,25 +52,26 @@ namespace Toggl.Phoebe.Data.Views
         public bool IsEmpty
         {
             get {
-                return workspacesList[currentPosition].HasNoProjects;
+                return workspacesList [currentWorkspaceIndex].HasNoProjects;
             }
         }
-        public void ShowTaskForProject (Project project, int position, out int collapsingCount)
+
+        public void ShowTaskForProject (Project project, int position, out int collapsedTaskNumber)
         {
-            collapsingCount = displayingTaskForProject == null ? 0 : displayingTaskForProject.Tasks.Count;
+            collapsedTaskNumber = unfoldedTaskProject == null ? 0 : unfoldedTaskProject.Tasks.Count;
 
-            if (displayingTaskForProject == project) {
-                collapsingCount = 0;
-                displayingTaskForProject = null;
+            if (unfoldedTaskProject == project) {
+                collapsedTaskNumber = 0;
+                unfoldedTaskProject = null;
             } else {
-                displayingTaskForProject = project;
+                unfoldedTaskProject = project;
             }
 
-            if (displayTaskForProjectPosition > position) {
-                collapsingCount = 0;
+            if (unfoldedProjectIndex > position) {
+                collapsedTaskNumber = 0;
             }
 
-            displayTaskForProjectPosition = position;
+            unfoldedProjectIndex = position;
             UpdateCollection ();
         }
 
@@ -104,12 +102,10 @@ namespace Toggl.Phoebe.Data.Views
         private void OnDataChange (UserData data)
         {
             var existingData = userData;
-
             userData = data;
             if (existingData == null || existingData.DefaultWorkspaceId != data.DefaultWorkspaceId) {
                 OnUpdated ();
             }
-
             userData = data;
         }
 
@@ -445,7 +441,6 @@ namespace Toggl.Phoebe.Data.Views
                     }
                 }
             }
-
         }
 
         private static void SortWorkspaces (List<Workspace> data)
@@ -518,11 +513,6 @@ namespace Toggl.Phoebe.Data.Views
 
         public void LoadMore () {}
 
-        private bool IsValidWorkspace (Guid wsId)
-        {
-            return true;
-        }
-
         private void UpdateCollection ()
         {
             dataObjects.Clear ();
@@ -531,7 +521,7 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            var ws = workspacesList[currentPosition];
+            var ws = workspacesList [currentWorkspaceIndex];
             switch (sortBy) {
             case SortProjectsBy.Clients:
                 foreach (var client in ws.Clients) {
@@ -541,7 +531,7 @@ namespace Toggl.Phoebe.Data.Views
                     dataObjects.Add (client);
                     foreach (var project in client.Projects) {
                         dataObjects.Add (project);
-                        if (displayingTaskForProject != null && project == displayingTaskForProject) {
+                        if (unfoldedTaskProject != null && project == unfoldedTaskProject) {
                             foreach (var task in project.Tasks) {
                                 dataObjects.Add (task);
                             }
@@ -552,7 +542,7 @@ namespace Toggl.Phoebe.Data.Views
             default:
                 foreach (var project in ws.Projects) {
                     dataObjects.Add (project);
-                    if (displayingTaskForProject != null && project == displayingTaskForProject) {
+                    if (unfoldedTaskProject != null && project == unfoldedTaskProject) {
                         foreach (var task in project.Tasks) {
                             dataObjects.Add (task);
                         }
@@ -581,7 +571,7 @@ namespace Toggl.Phoebe.Data.Views
         public int CountWorkspaces
         {
             get {
-                return workspacesList.Count();
+                return workspacesList.Count;
             }
         }
 
@@ -590,16 +580,15 @@ namespace Toggl.Phoebe.Data.Views
             get {
                 return workspacesList;
             }
-
         }
 
-        public int CurrentPosition
+        public int CurrentWorkspaceIndex
         {
             get {
-                return currentPosition;
+                return currentWorkspaceIndex;
             } set {
-                if (workspacesList.Count() > value) {
-                    currentPosition = value;
+                if (workspacesList.Count > value) {
+                    currentWorkspaceIndex = value;
                 }
                 UpdateCollection ();
             }

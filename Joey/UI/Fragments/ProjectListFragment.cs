@@ -21,20 +21,17 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ProjectListFragment : Fragment, AppBarLayout.IOnOffsetChangedListener, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener
+    public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener
     {
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
         private TabLayout tabLayout;
-        private TogglAppBar appBarLayout;
         private Toolbar toolBar;
         private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
 
         private ProjectListViewModel viewModel;
-        private bool listLoadedAtLeastOnce;
-        private Guid focusedWorkspaceId;
 
         public ProjectListFragment ()
         {
@@ -59,7 +56,6 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
-            appBarLayout = view.FindViewById<TogglAppBar> (Resource.Id.ProjectListAppBar);
             tabLayout = view.FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
             newProjectFab = view.FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
             toolBar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
@@ -70,28 +66,10 @@ namespace Toggl.Joey.UI.Fragments
             activity.SupportActionBar.SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle);
 
             HasOptionsMenu = true;
-            appBarLayout.AddOnOffsetChangedListener (this);
             newProjectFab.Click += OnNewProjectFabClick;
+            tabLayout.SetOnTabSelectedListener (this);
 
-            SetupViews ();
             return view;
-        }
-
-        private void SetupViews ()
-        {
-            tabLayout.Visibility = viewModel.ProjectList.CountWorkspaces == 1 ? ViewStates.Gone : ViewStates.Visible;
-
-            // Setup coordinator views
-            var appBarLayoutParamaters = new CoordinatorLayout.LayoutParams (appBarLayout.LayoutParameters);
-            appBarLayoutParamaters.Behavior = new AppBarLayout.Behavior();
-            appBarLayout.LayoutParameters = appBarLayoutParamaters;
-        }
-
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
-        {
-            base.OnCreateOptionsMenu (menu, inflater);
-            inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
-            toolBar.SetOnMenuItemClickListener (this);
         }
 
         private void OnNewProjectFabClick (object sender, EventArgs e)
@@ -121,34 +99,9 @@ namespace Toggl.Joey.UI.Fragments
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.ProjectList.OnIsLoadingChanged += OnListLoaded;
+            viewModel.ProjectList.OnIsLoadingChanged += OnProjectListLoaded;
 
             await viewModel.Init ();
-        }
-
-        public override void OnResume ()
-        {
-            if (listLoadedAtLeastOnce) {
-                EnsureCorrectState ();
-            }
-            base.OnResume ();
-        }
-
-        private void GenerateTabs ()
-        {
-            int i = 0;
-            foreach (var ws in viewModel.ProjectList.Workspaces) {
-                var tab = tabLayout.NewTab().SetText (ws.Data.Name);
-                tabLayout.AddTab (tab);
-                if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
-                    viewModel.ProjectList.CurrentPosition = i;
-                    focusedWorkspaceId = ws.Data.Id;
-                    tab.Select();
-                }
-                i++;
-            }
-
-            tabLayout.SetOnTabSelectedListener (this);
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
@@ -160,22 +113,18 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public WorkspaceProjectsView.SortProjectsBy SortBy
+        private void OnProjectListLoaded (object sender, EventArgs e)
         {
-            set {
-                viewModel.ProjectList.SortBy = value;
+            if (!viewModel.ProjectList.IsLoading) {
+                EnsureCorrectState ();
+                GenerateTabs ();
             }
-        }
-
-        private void OnListLoaded (object sender, EventArgs e)
-        {
-            listLoadedAtLeastOnce = true;
-            EnsureCorrectState ();
-            GenerateTabs ();
         }
 
         private void EnsureCorrectState ()
         {
+            Console.WriteLine (viewModel.ProjectList.Workspaces.Count);
+            tabLayout.Visibility = viewModel.ProjectList.Workspaces.Count < 2 ? ViewStates.Gone : ViewStates.Visible;
             recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
             emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
         }
@@ -215,14 +164,6 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public override bool OnOptionsItemSelected (IMenuItem item)
-        {
-            if (item.ItemId == Android.Resource.Id.Home) {
-                Activity.OnBackPressed ();
-            }
-            return base.OnOptionsItemSelected (item);
-        }
-
         public override void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
@@ -243,16 +184,27 @@ namespace Toggl.Joey.UI.Fragments
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                viewModel.ProjectList.OnIsLoadingChanged -= OnListLoaded;
+                viewModel.ProjectList.OnIsLoadingChanged -= OnProjectListLoaded;
                 viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.Dispose ();
             }
             base.Dispose (disposing);
         }
 
-        public void OnOffsetChanged (AppBarLayout layout, int verticalOffset)
+        #region Option menu
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
-            tabLayout.TranslationY = -verticalOffset;
+            base.OnCreateOptionsMenu (menu, inflater);
+            inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
+            toolBar.SetOnMenuItemClickListener (this);
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            if (item.ItemId == Android.Resource.Id.Home) {
+                Activity.OnBackPressed ();
+            }
+            return base.OnOptionsItemSelected (item);
         }
 
         public bool OnMenuItemClick (IMenuItem item)
@@ -267,11 +219,31 @@ namespace Toggl.Joey.UI.Fragments
             }
             return false;
         }
+        #endregion
+
+        #region Workspace Tablayout
+        private void GenerateTabs ()
+        {
+            if (viewModel.ProjectList.Workspaces.Count < 2) {
+                return;
+            }
+
+            int i = 0;
+            foreach (var ws in viewModel.ProjectList.Workspaces) {
+                var tab = tabLayout.NewTab().SetText (ws.Data.Name);
+                tabLayout.AddTab (tab);
+
+                if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
+                    viewModel.ProjectList.CurrentPosition = i;
+                    tab.Select();
+                }
+                i++;
+            }
+        }
 
         public void OnTabSelected (TabLayout.Tab tab)
         {
             viewModel.ProjectList.CurrentPosition = tab.Position;
-            focusedWorkspaceId = viewModel.ProjectList.Workspaces[tab.Position].Data.Id;
             EnsureCorrectState();
         }
 
@@ -282,6 +254,7 @@ namespace Toggl.Joey.UI.Fragments
         public void OnTabUnselected (TabLayout.Tab tab)
         {
         }
+        #endregion
     }
 }
 

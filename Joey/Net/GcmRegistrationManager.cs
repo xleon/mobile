@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 using Android.Content;
 using Android.Gms.Common;
 using Android.Gms.Gcm;
+using Toggl.Joey.Data;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Joey.Data;
 
 namespace Toggl.Joey.Net
 {
@@ -54,7 +54,7 @@ namespace Toggl.Joey.Net
                     return false;
                 }
                 var ctx = ServiceContainer.Resolve<Context> ();
-                return GooglePlayServicesUtil.IsGooglePlayServicesAvailable (ctx) == ConnectionResult.Success;
+                return GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable (ctx) == ConnectionResult.Success;
             }
         }
 
@@ -152,7 +152,7 @@ namespace Toggl.Joey.Net
 
         private static void IgnoreTaskErrors (System.Threading.Tasks.Task task)
         {
-            task.ContinueWith ((t) => {
+            task.ContinueWith (t => {
                 var e = t.Exception;
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Info (Tag, e, "Failed to send GCM info to server.");

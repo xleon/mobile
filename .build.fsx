@@ -8,6 +8,13 @@ open BuildHelpers
 open Fake.XamarinHelper
 open Fake.FileUtils
 
+Target "clean" (fun _ ->
+    CleanDir "Joey/bin/"
+    CleanDir "Phoebe/bin/"
+    CleanDir "Emma/bin/"
+    CleanDir "Ross/bin/"
+)
+
 Target "core-build" (fun () ->
     RestorePackages "Phoebe/packages.config"
     RestorePackages "Tests/packages.config"
@@ -20,9 +27,6 @@ Target "core-tests" (fun () ->
 )
 
 Target "android-build" (fun () ->
-    // Clear previous compilation
-
-    // Copy config. file from path or use default.
     let buildParamsFile = getBuildParam "buildParamsFile"
     if (System.String.Empty <> buildParamsFile)
       then cp buildParamsFile "Phoebe/Build.cs"
@@ -36,6 +40,14 @@ Target "android-package" (fun () ->
     let keyStorePath = getBuildParamOrDefault "keyStorePath" "toggl.keystore"
     let keyStorePassword = getBuildParamOrDefault "keyStorePassword" ""
     let keyStoreAlias = getBuildParamOrDefault "keyStoreAlias" "toggl"
+
+    let path = "Joey/Properties/AndroidManifest.xml"
+    let fileName = GetAndroidFileName path
+
+    let ChangeFileName (file:#FileInfo) =
+        let newName = Path.Combine(file.DirectoryName, fileName)
+        file.MoveTo (newName)
+        newName
 
     AndroidPackage (fun defaults ->
         {defaults with
@@ -53,13 +65,16 @@ Target "android-package" (fun () ->
             // the correct path.
             // ZipalignPath = "/Users/xxx/Library/Developers/Xamarin/android-sdk-macosx/build-tools/23.0.0/zipalign"
         })
-    |> fun file -> TeamCityHelper.PublishArtifact file.FullName
+    |> ChangeFileName
+    |> TeamCityHelper.PublishArtifact
 )
 
-"core-build"
+"clean"
+  ==> "core-build"
   ==> "core-tests"
 
-"android-build"
+"clean"
+  ==> "android-build"
   ==> "android-package"
 
 RunTarget()

@@ -3,26 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/ProjectListActivityLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/BgArrowsPattern">
+    android:layout_height="match_parent">
     <android.support.design.widget.AppBarLayout
         android:id="@+id/ProjectListAppBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@null">
+        android:background="@drawable/ToolbarBgPattern"
+        android:layout_height="wrap_content">
     <!-- Toolbar placeholder for layout integrity -->
         <android.support.v7.widget.Toolbar
             android:id="@+id/ProjectListToolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:minHeight="?attr/actionBarSize"
-            app:layout_scrollFlags="scroll|enterAlways"
-            android:background="@null" />
+            android:minHeight="?attr/actionBarSize" />
         <android.support.design.widget.TabLayout
             android:id="@+id/WorkspaceTabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/TabNavigationStyle"
+            android:visibility="gone"
             app:tabIndicatorColor="#f30c16"
             app:tabMode="scrollable" />
     </android.support.design.widget.AppBarLayout>

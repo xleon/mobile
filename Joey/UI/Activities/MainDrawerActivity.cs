@@ -80,6 +80,7 @@ namespace Toggl.Joey.UI.Activities
 
             SetContentView (Resource.Layout.MainDrawerActivity);
 
+            MainToolbar = FindViewById<Toolbar> (Resource.Id.MainToolbar);
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
             DrawerUserView = LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
@@ -101,9 +102,8 @@ namespace Toggl.Joey.UI.Activities
 
             var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);
 
-            MainToolbar = FindViewById<Toolbar> (Resource.Id.MainToolbar);
+            MainToolbar.SetNavigationIcon (Resource.Drawable.ic_menu_black_24dp);
             SetSupportActionBar (MainToolbar);
-            MainToolbar.SetNavigationIcon (Resource.Drawable.IcDrawer);
             SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
             SupportActionBar.SetCustomView (Timer.Root, lp);
             SupportActionBar.SetDisplayShowCustomEnabled (true);

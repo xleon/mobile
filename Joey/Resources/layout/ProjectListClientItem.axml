@@ -1,31 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/task_highlight_focus"
     android:layout_width="match_parent"
-    android:layout_height="52dp"
-    android:clickable="true"
-    android:focusable="true">
-    <LinearLayout
-        android:orientation="horizontal"
+    android:layout_height="54dp"
+    android:orientation="vertical">
+    <toggl.joey.ui.views.FadeLinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical">
-        <toggl.joey.ui.views.FadeLinearLayout
-            android:layout_width="match_parent"
-            android:orientation="horizontal"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="35dp"
-            app:fadeLength="15dp">
-            <TextView
-                android:id="@+id/ClientTextView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:textColor="@color/group_title_dark_gray"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:singleLine="true"
-                android:ellipsize="none" />
-        </toggl.joey.ui.views.FadeLinearLayout>
-    </LinearLayout>
-</RelativeLayout>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        app:fadeLength="15dp">
+        <TextView
+            android:id="@+id/ClientTextView"
+            android:textColor="@color/group_title_dark_gray"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textSize="@dimen/normalTextSize"
+            android:gravity="center_vertical"
+            android:layout_marginLeft="@dimen/leftMargin" />
+    </toggl.joey.ui.views.FadeLinearLayout>
+</LinearLayout>

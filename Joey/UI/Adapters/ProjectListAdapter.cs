@@ -53,7 +53,7 @@ namespace Toggl.Joey.UI.Adapters
             switch (viewType) {
             case ViewTypeClient:
                 view = inflater.Inflate (Resource.Layout.ProjectListClientItem, parent, false);
-                holder = new ClientListItemHolder (this, view);
+                holder = new ClientListItemHolder (view);
                 break;
             case ViewTypeProject:
                 view = inflater.Inflate (Resource.Layout.ProjectListProjectItem, parent, false);
@@ -294,7 +294,6 @@ namespace Toggl.Joey.UI.Adapters
         public class ClientListItemHolder : RecycledBindableViewHolder<WorkspaceProjectsView.Client>
         {
             private WorkspaceProjectsView.Client model;
-            private readonly ProjectListAdapter adapter;
 
             public TextView ClientTextView { get; private set; }
 
@@ -302,10 +301,9 @@ namespace Toggl.Joey.UI.Adapters
             {
             }
 
-            public ClientListItemHolder (ProjectListAdapter adapter, View root) : base (root)
+            public ClientListItemHolder (View root) : base (root)
             {
-                this.adapter = adapter;
-                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoMedium);
             }
 
             protected override void Rebind ()

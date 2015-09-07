@@ -113,17 +113,53 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public override void OnResume ()
+        {
+            base.OnResume ();
+            EnsureCorrectState ();
+        }
+
         private void OnProjectListLoaded (object sender, EventArgs e)
         {
-            if (!viewModel.ProjectList.IsLoading) {
-                EnsureCorrectState ();
-                GenerateTabs ();
+            if (viewModel.ProjectList.IsLoading) {
+                return;
+            }
+
+            EnsureCorrectState ();
+
+            // Create tabs
+            if (viewModel.ProjectList.Workspaces.Count > 2) {
+                int i = 0;
+                foreach (var ws in viewModel.ProjectList.Workspaces) {
+                    var tab = tabLayout.NewTab().SetText (ws.Data.Name);
+                    tabLayout.AddTab (tab);
+
+                    if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
+                        viewModel.ProjectList.CurrentWorkspaceIndex = i;
+                        tab.Select();
+                    }
+                    i++;
+                }
             }
         }
 
         private void EnsureCorrectState ()
         {
-            tabLayout.Visibility = viewModel.ProjectList.Workspaces.Count < 2 ? ViewStates.Gone : ViewStates.Visible;
+            if (viewModel.ProjectList.IsLoading) {
+                return;
+            }
+
+            var _params = (AppBarLayout.LayoutParams) toolBar.LayoutParameters;
+
+            if (viewModel.ProjectList.Workspaces.Count > 2) {
+                tabLayout.Visibility = ViewStates.Visible;
+                _params.ScrollFlags  = AppBarLayout.LayoutParams.ScrollFlagScroll | AppBarLayout.LayoutParams.ScrollFlagEnterAlways;
+            } else {
+                tabLayout.Visibility = ViewStates.Gone;
+                _params.ScrollFlags = 0;
+            }
+
+            toolBar.LayoutParameters = _params;
             recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
             emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
         }
@@ -221,25 +257,6 @@ namespace Toggl.Joey.UI.Fragments
         #endregion
 
         #region Workspace Tablayout
-        private void GenerateTabs ()
-        {
-            if (viewModel.ProjectList.Workspaces.Count < 2) {
-                return;
-            }
-
-            int i = 0;
-            foreach (var ws in viewModel.ProjectList.Workspaces) {
-                var tab = tabLayout.NewTab().SetText (ws.Data.Name);
-                tabLayout.AddTab (tab);
-
-                if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
-                    viewModel.ProjectList.CurrentWorkspaceIndex = i;
-                    tab.Select();
-                }
-                i++;
-            }
-        }
-
         public void OnTabSelected (TabLayout.Tab tab)
         {
             viewModel.ProjectList.CurrentWorkspaceIndex = tab.Position;

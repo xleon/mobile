@@ -96,8 +96,8 @@ namespace Toggl.Joey.UI.Activities
         {
             var am = AccountManager.Get (this);
             var emails = am.GetAccounts ()
-                         .Select ((a) => a.Name)
-                         .Where ((a) => a.Contains ("@"))
+                         .Select (a => a.Name)
+                         .Where (a => a.Contains ("@"))
                          .Distinct ()
                          .ToList ();
             return new ArrayAdapter<string> (this, Android.Resource.Layout.SelectDialogItem, emails);
@@ -272,16 +272,16 @@ namespace Toggl.Joey.UI.Activities
             SyncPasswordVisibility ();
         }
 
-        private void OnLoginButtonClick (object sender, EventArgs e)
+        private async void OnLoginButtonClick (object sender, EventArgs e)
         {
             if (CurrentMode == Mode.Login) {
-                TryLoginPassword ();
+                await TryLoginPasswordAsync ();
             } else {
-                TrySignupPassword ();
+                await TrySignupPasswordAsync ();
             }
         }
 
-        private async void TryLoginPassword ()
+        private async Task TryLoginPasswordAsync ()
         {
             IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -305,13 +305,13 @@ namespace Toggl.Joey.UI.Activities
                 ShowAuthError (EmailEditText.Text, authRes, Mode.Login);
             } else {
                 // Start the initial sync for the user
-                ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
+                ServiceContainer.Resolve<ISyncManager> ().Run ();
             }
 
             StartAuthActivity ();
         }
 
-        private async void TrySignupPassword ()
+        private async Task TrySignupPasswordAsync ()
         {
             IsAuthenticating = true;
             var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -332,7 +332,7 @@ namespace Toggl.Joey.UI.Activities
                 ShowAuthError (EmailEditText.Text, authRes, Mode.Signup);
             } else {
                 // Start the initial sync for the user
-                ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
+                ServiceContainer.Resolve<ISyncManager> ().Run ();
             }
 
             StartAuthActivity ();
@@ -355,8 +355,8 @@ namespace Toggl.Joey.UI.Activities
             get {
                 var am = AccountManager.Get (this);
                 return am.GetAccounts ()
-                       .Where ((a) => a.Type == GoogleAuthUtil.GoogleAccountType)
-                       .Select ((a) => a.Name)
+                       .Where (a => a.Type == GoogleAuthUtil.GoogleAccountType)
+                       .Select (a => a.Name)
                        .Distinct ()
                        .ToList ();
             }
@@ -487,12 +487,12 @@ namespace Toggl.Joey.UI.Activities
             {
             }
 
-            public override void OnCreate (Bundle savedInstanceState)
+            public async override void OnCreate (Bundle savedInstanceState)
             {
                 base.OnCreate (savedInstanceState);
 
                 RetainInstance = true;
-                StartAuth ();
+                await StartAuthAsync ();
             }
 
             public override void OnActivityCreated (Bundle savedInstanceState)
@@ -506,18 +506,18 @@ namespace Toggl.Joey.UI.Activities
                 }
             }
 
-            public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+            public async override void OnActivityResult (int requestCode, int resultCode, Intent data)
             {
                 base.OnActivityResult (requestCode, resultCode, data);
 
                 if (requestCode == GoogleAuthRequestCode) {
                     if (resultCode == (int)Result.Ok) {
-                        StartAuth ();
+                        await StartAuthAsync ();
                     }
                 }
             }
 
-            private async void StartAuth ()
+            private async Task StartAuthAsync ()
             {
                 if (IsAuthenticating) {
                     return;
@@ -570,14 +570,14 @@ namespace Toggl.Joey.UI.Activities
                             var authRes = await authManager.SignupWithGoogleAsync (token);
                             if (authRes != AuthResult.Success) {
                                 ClearGoogleToken (ctx, token);
-                                activity.ShowAuthError (Email, authRes, Mode.Signup, googleAuth: true);
+                                activity.ShowAuthError (Email, authRes, Mode.Signup, true);
                             }
                         } else {
                             // Authenticate client
                             var authRes = await authManager.AuthenticateWithGoogleAsync (token);
                             if (authRes != AuthResult.Success) {
                                 ClearGoogleToken (ctx, token);
-                                activity.ShowAuthError (Email, authRes, Mode.Login, googleAuth: true);
+                                activity.ShowAuthError (Email, authRes, Mode.Login, true);
                             }
                         }
                     } catch (InvalidOperationException ex) {

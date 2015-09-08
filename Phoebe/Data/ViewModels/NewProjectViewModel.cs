@@ -69,7 +69,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                     return;
                 }
 
-                workspaceId = user.DefaultWorkspaceId;
+                workspaceId = timeEntryList[0].WorkspaceId;
                 workspaceModel = new WorkspaceModel (workspaceId);
                 await workspaceModel.LoadAsync ();
 
@@ -107,8 +107,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             // Update entry list.
             var timeEntryGroup = new TimeEntryGroup (timeEntryList);
-            timeEntryGroup.Project = new ProjectModel (model.Id);
-            timeEntryGroup.Workspace = new WorkspaceModel (workspaceModel.Id);
+            timeEntryGroup.Project = model;
+            timeEntryGroup.Workspace = workspaceModel;
             await timeEntryGroup.SaveAsync ();
         }
 

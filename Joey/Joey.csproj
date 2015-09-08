@@ -165,6 +165,8 @@
     <Compile Include="UI\Utils\DimensionsExtensions.cs" />
     <Compile Include="UI\Utils\SwipeDismissCallback.cs" />
     <Compile Include="UI\Views\StartStopFab.cs" />
+    <Compile Include="UI\Views\AddProjectFab.cs" />
+    <Compile Include="UI\Views\TogglAppBar.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -289,13 +291,9 @@
     <AndroidResource Include="Resources\layout\MainDrawerListHeader.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerActivity.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\DrawerShadow.9.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\IcDrawer.png" />
     <AndroidResource Include="Resources\drawable-mdpi\DrawerShadow.9.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\IcDrawer.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\DrawerShadow.9.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\IcDrawer.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\DrawerShadow.9.png" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\IcDrawer.png" />
     <AndroidResource Include="Resources\layout\ChangeTimeEntryDurationDialogFragment.axml" />
     <AndroidResource Include="Resources\layout\TimeEntryListLoadingItem.axml" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcSyncGray.png" />
@@ -683,6 +681,25 @@
     <AndroidResource Include="Resources\drawable-hdpi\icTasks.png" />
     <AndroidResource Include="Resources\drawable-hdpi\icTasksSelected.png" />
     <AndroidResource Include="Resources\drawable\TasksButtonBackground.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcAdd.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcAdd.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcAdd.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcAdd.png" />
+    <AndroidResource Include="Resources\layout\ProjectListClientItem.axml" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcArrowProjectEmptyState.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcTogglerProjectEmptyState.png" />
+    <AndroidResource Include="Resources\menu\ProjectListToolbarMenu.xml" />
+    <AndroidResource Include="Resources\drawable\ic_menu_black_24dp.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_menu_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_menu_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_menu_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_menu_black_24dp.png" />
   </ItemGroup>
   <Import Project="..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

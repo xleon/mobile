@@ -7,8 +7,8 @@ using Toggl.Joey.UI.Fragments;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Activity = Android.Support.V7.App.AppCompatActivity;
-using Fragment = Android.Support.V4.App.Fragment;
-using FragmentManager = Android.Support.V4.App.FragmentManager;
+using Fragment = Android.App.Fragment;
+using FragmentManager = Android.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -17,23 +17,33 @@ namespace Toggl.Joey.UI.Activities
                Theme = "@style/Theme.Toggl.App")]
     public class ProjectListActivity : BaseActivity
     {
+        private static readonly string fragmentTag = "projectlist_fragment";
         public static readonly string ExtraTimeEntriesIds = "com.toggl.timer.time_entries_ids";
         private IList<TimeEntryData> timeEntryList;
 
         protected async override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);
-
-            timeEntryList = await GetIntentTimeEntryData (Intent);
-            if (timeEntryList.Count == 0) {
-                Finish ();
-            }
-
             SetContentView (Resource.Layout.ProjectListActivityLayout);
-            SupportFragmentManager.BeginTransaction ()
-            .Add (Resource.Id.ProjectListActivityLayout, new ProjectListFragment (timeEntryList))
-            .Commit ();
 
+            // Check if fragment is still in Fragment manager.
+            var fragment = FragmentManager.FindFragmentByTag (fragmentTag);
+
+            if (fragment != null) {
+                FragmentManager.BeginTransaction ()
+                .Attach (fragment)
+                .Commit ();
+            } else {
+                timeEntryList = await GetIntentTimeEntryData (Intent);
+                if (timeEntryList.Count == 0) {
+                    Finish ();
+                }
+
+                fragment = new ProjectListFragment (timeEntryList);
+                FragmentManager.BeginTransaction ()
+                .Add (Resource.Id.ProjectListActivityLayout, fragment)
+                .Commit ();
+            }
         }
 
         public async static Task<IList<TimeEntryData>> GetIntentTimeEntryData (Android.Content.Intent intent)

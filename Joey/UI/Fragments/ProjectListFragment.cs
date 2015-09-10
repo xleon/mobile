@@ -72,16 +72,6 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        private void OnNewProjectFabClick (object sender, EventArgs e)
-        {
-            var entryList = new List<TimeEntryData> (viewModel.TimeEntryList);
-
-            // Show create project activity instead
-            var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
-                         (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
-            StartActivityForResult (intent, ProjectCreatedRequestCode);
-        }
-
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
@@ -113,18 +103,8 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public override void OnResume ()
-        {
-            base.OnResume ();
-            EnsureCorrectState ();
-        }
-
         private void OnProjectListLoaded (object sender, EventArgs e)
         {
-            if (viewModel.ProjectList.IsLoading) {
-                return;
-            }
-
             EnsureCorrectState ();
 
             // Create tabs
@@ -145,10 +125,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void EnsureCorrectState ()
         {
-            if (viewModel.ProjectList.IsLoading) {
-                return;
-            }
-
+            // Set toolbar scrollable or not.
             var _params = (AppBarLayout.LayoutParams) toolBar.LayoutParameters;
 
             if (viewModel.ProjectList.Workspaces.Count > 2) {
@@ -162,6 +139,16 @@ namespace Toggl.Joey.UI.Fragments
             toolBar.LayoutParameters = _params;
             recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
             emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
+        }
+
+        private void OnNewProjectFabClick (object sender, EventArgs e)
+        {
+            var entryList = new List<TimeEntryData> (viewModel.TimeEntryList);
+
+            // Show create project activity instead
+            var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
+                         (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
+            StartActivityForResult (intent, ProjectCreatedRequestCode);
         }
 
         private async void OnItemSelected (object m)

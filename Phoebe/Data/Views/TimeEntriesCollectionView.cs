@@ -70,11 +70,6 @@ namespace Toggl.Phoebe.Data.Views
 
             // Clean lists
             bufferBlock.Complete ();
-            ItemCollection.Clear ();
-            foreach (var dateGroup in dateGroups) {
-                dateGroup.Dispose ();
-            }
-            dateGroups.Clear ();
 
             // Release Undo timer
             // A recently deleted item will not be

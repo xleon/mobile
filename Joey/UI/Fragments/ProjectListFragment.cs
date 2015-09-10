@@ -23,6 +23,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener
     {
+        private static readonly string TimeEntryIdsArg = "time_entries_ids_param";
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private RecyclerView recyclerView;
@@ -33,6 +34,13 @@ namespace Toggl.Joey.UI.Fragments
 
         private ProjectListViewModel viewModel;
 
+        private IList<string> TimeEntryIds
+        {
+            get {
+                return Arguments.GetStringArrayList (TimeEntryIdsArg);
+            }
+        }
+
         public ProjectListFragment ()
         {
         }
@@ -41,9 +49,15 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ProjectListFragment (IList<TimeEntryData> timeEntryList)
+        public static ProjectListFragment NewInstance (IList<string> timeEntryIds)
         {
-            viewModel = new ProjectListViewModel (timeEntryList);
+            var fragment = new ProjectListFragment ();
+
+            var args = new Bundle ();
+            args.PutStringArrayList (TimeEntryIdsArg, timeEntryIds);
+            fragment.Arguments = args;
+
+            return fragment;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -76,18 +90,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            if (viewModel == null) {
-                var timeEntryList = await ProjectListActivity.GetIntentTimeEntryData (Activity.Intent);
-                if (timeEntryList.Count == 0) {
-                    Activity.Finish ();
-                    return;
-                }
-                viewModel = new ProjectListViewModel (timeEntryList);
-            }
+            viewModel = new ProjectListViewModel (TimeEntryIds);
 
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
+
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.ProjectList.OnIsLoadingChanged += OnProjectListLoaded;
 

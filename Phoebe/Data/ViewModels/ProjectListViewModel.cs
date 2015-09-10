@@ -17,6 +17,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         private ITimeEntryModel model;
         private IList<TimeEntryData> timeEntryList;
         private WorkspaceProjectsView projectList;
+        private IList<string> timeEntryIds;
 
         public ProjectListViewModel (IList<TimeEntryData> timeEntryList)
         {
@@ -24,9 +25,19 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
         }
 
+        public ProjectListViewModel (IList<string> timeEntryIds)
+        {
+            this.timeEntryIds = timeEntryIds;
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
+        }
+
         public async Task Init ()
         {
             IsLoading = true;
+
+            if (timeEntryList == null) {
+                timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (timeEntryIds);
+            }
 
             // Create model.
             if (timeEntryList.Count > 1) {

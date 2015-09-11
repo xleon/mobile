@@ -1,12 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Toggl.Joey.UI.Fragments;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -17,46 +14,51 @@ namespace Toggl.Joey.UI.Activities
          Theme = "@style/Theme.Toggl.App")]
     public class EditTimeEntryActivity : BaseActivity
     {
+        private static readonly string groupfragmentTag = "editgroup_fragment";
+        private static readonly string fragmentTag = "edit_fragment";
+
         public static readonly string IsGrouped = "com.toggl.timer.grouped_edit";
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
         public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";
 
-        protected async override void OnCreateActivity (Bundle state)
+        protected override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);
 
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 
-            var timeEntryList = await GetIntentTimeEntryData (Intent);
-            TimeEntryData timeEntry = null;
-            if (timeEntryList.Count > 0) {
-                timeEntry = timeEntryList[0];
-            } else {
-                OnBackPressed ();
-                return;
-            }
-
             var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);
-            if (isGrouped)
-                FragmentManager.BeginTransaction ()
-                .Add (Resource.Id.FrameLayout, new EditGroupedTimeEntryFragment (timeEntryList))
-                .Commit ();
-            else
-                FragmentManager.BeginTransaction ()
-                .Add (Resource.Id.FrameLayout, new EditTimeEntryFragment (timeEntry))
-                .Commit ();
-        }
+            var fragment = FragmentManager.FindFragmentByTag (fragmentTag);
+            var groupedFragment = FragmentManager.FindFragmentByTag (groupfragmentTag);
 
-        public async static Task<IList<TimeEntryData>> GetIntentTimeEntryData (Android.Content.Intent intent)
-        {
-            var guids = intent.GetStringArrayListExtra (ExtraGroupedTimeEntriesGuids);
-
-            if (guids == null || guids.Count == 0) {
-                return new List<TimeEntryData> ();
+            var guids = Intent.GetStringArrayListExtra (ExtraGroupedTimeEntriesGuids);
+            if (guids == null) {
+                Finish ();
             }
 
-            var timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (guids);
-            return timeEntryList;
+            if (isGrouped) {
+                if (groupedFragment == null) {
+                    groupedFragment = EditGroupedTimeEntryFragment.NewInstance (guids);
+                    FragmentManager.BeginTransaction ()
+                    .Add (Resource.Id.FrameLayout, groupedFragment, groupfragmentTag)
+                    .Commit ();
+                } else {
+                    FragmentManager.BeginTransaction ()
+                    .Attach (groupedFragment)
+                    .Commit ();
+                }
+            } else {
+                if (fragment == null) {
+                    fragment = EditTimeEntryFragment.NewInstance (guids[0]);
+                    FragmentManager.BeginTransaction ()
+                    .Add (Resource.Id.FrameLayout, fragment, fragmentTag)
+                    .Commit ();
+                } else {
+                    FragmentManager.BeginTransaction ()
+                    .Attach (fragment)
+                    .Commit ();
+                }
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Android.Content;
 using Android.OS;
 using Android.Support.V4.App;
@@ -27,6 +26,13 @@ namespace Toggl.Joey.UI.Fragments
         private SimpleEditTimeEntryFragment editTimeEntryFragment;
         private RecyclerView.Adapter listAdapter;
 
+        private IList<string> TimeEntryIds
+        {
+            get {
+                return Arguments != null ? Arguments.GetStringArrayList (TimeEntriesIdsArgument) : new List<string>();
+            }
+        }
+
         public EditGroupedTimeEntryFragment ()
         {
         }
@@ -35,22 +41,15 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public EditGroupedTimeEntryFragment (IList<TimeEntryData> timeEntryList)
+        public static EditGroupedTimeEntryFragment NewInstance (IList<string> timeEntryListIds)
         {
-            var ids = timeEntryList.Select ( t => t.Id.ToString ()).ToList ();
+            var fragment = new EditGroupedTimeEntryFragment ();
 
             var args = new Bundle ();
-            args.PutStringArrayList (TimeEntriesIdsArgument, ids);
-            Arguments = args;
+            args.PutStringArrayList (TimeEntriesIdsArgument, timeEntryListIds);
+            fragment.Arguments = args;
 
-            viewModel = new EditTimeEntryViewModel (timeEntryList);
-        }
-
-        private IList<string> TimeEntryIds
-        {
-            get {
-                return Arguments != null ? Arguments.GetStringArrayList (TimeEntriesIdsArgument) : new List<string>();
-            }
+            return fragment;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -70,13 +69,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            if (viewModel == null) {
-                var timeEntryList = await EditTimeEntryActivity.GetIntentTimeEntryData (Activity.Intent);
-                viewModel = new EditTimeEntryViewModel (timeEntryList);
-            }
-
+            viewModel = new EditTimeEntryViewModel (TimeEntryIds);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.Init ();
+            await viewModel.Init ();
         }
 
         public override void OnDestroyView ()

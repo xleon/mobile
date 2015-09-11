@@ -4,13 +4,17 @@ namespace Toggl.Phoebe
 {
     public static class Build
     {
-#warning Please fill in build settings and make git assume this file is unchanged.
         #region Phoebe build config
 
+        #if DEBUG
+        public static readonly Uri ApiUrl = new Uri ("https://next.toggl.com/api/");
+        public static readonly Uri ReportsApiUrl = new Uri ("https://next.toggl.com/reports/api/");
+        #else
         public static readonly Uri ApiUrl = new Uri ("https://toggl.com/api/");
         public static readonly Uri ReportsApiUrl = new Uri ("https://toggl.com/reports/api/");
-        public static readonly Uri PrivacyPolicyUrl = new Uri ("https://toggl.com/privacy");
-        public static readonly Uri TermsOfServiceUrl = new Uri ("https://toggl.com/terms");
+        #endif
+        public static readonly Uri PrivacyPolicyUrl = new Uri ("https://toggl.com/legal/privacy");
+        public static readonly Uri TermsOfServiceUrl = new Uri ("https://toggl.com/legal/terms");
         public static readonly string GoogleAnalyticsId = "";
         public static readonly int GoogleAnalyticsPlanIndex = 1;
         public static readonly int GoogleAnalyticsExperimentIndex = 2;
@@ -30,16 +34,14 @@ namespace Toggl.Phoebe
         #region Ross build configuration
 
         #if __IOS__
-        public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl/toggltimer";
         public static readonly string AppIdentifier = "TogglRoss";
+        public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl";
         public static readonly string GoogleOAuthClientId = "";
         public static readonly string GoogleOAuthSecret = "";
         public static readonly string GoogleOAuthAuthorizeUrl = "https://accounts.google.com/o/oauth2/auth";
         public static readonly string GoogleOAuthAccessTokenUrl = "https://accounts.google.com/o/oauth2/token";
         public static readonly string GoogleOAuthRedirectUrl = "com.toggl.timer:/oauth2callback";
-
         public static readonly string XamInsightsApiKey = "";
-
         #endif
         #endregion
     }

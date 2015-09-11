@@ -96,23 +96,24 @@ namespace Toggl.Joey.UI.Fragments
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
 
-            viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.ProjectList.OnIsLoadingChanged += OnProjectListLoaded;
+            viewModel.OnIsLoadingChanged += OnDataLoaded;
+            viewModel.ProjectList.OnIsLoadingChanged += OnDataLoaded;
 
             await viewModel.Init ();
         }
 
-        private void OnModelLoaded (object sender, EventArgs e)
+        private void OnDataLoaded (object sender, EventArgs e)
         {
             if (!viewModel.IsLoading) {
                 if (viewModel.Model == null) {
                     Activity.Finish ();
                 }
             }
-        }
 
-        private void OnProjectListLoaded (object sender, EventArgs e)
-        {
+            if (viewModel.ProjectList.IsLoading || viewModel.IsLoading) {
+                return;
+            }
+
             EnsureCorrectState ();
 
             // Create tabs
@@ -122,10 +123,15 @@ namespace Toggl.Joey.UI.Fragments
                     var tab = tabLayout.NewTab().SetText (ws.Data.Name);
                     tabLayout.AddTab (tab);
 
-                    if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
-                        viewModel.ProjectList.CurrentWorkspaceIndex = i;
-                        tab.Select();
+                    try {
+                        if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
+                            viewModel.ProjectList.CurrentWorkspaceIndex = i;
+                            tab.Select();
+                        }
+                    } catch (Exception ex) {
+                        Console.WriteLine ("here!");
                     }
+
                     i++;
                 }
             }
@@ -214,8 +220,8 @@ namespace Toggl.Joey.UI.Fragments
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                viewModel.ProjectList.OnIsLoadingChanged -= OnProjectListLoaded;
-                viewModel.OnIsLoadingChanged -= OnModelLoaded;
+                viewModel.ProjectList.OnIsLoadingChanged -= OnDataLoaded;
+                viewModel.OnIsLoadingChanged -= OnDataLoaded;
                 viewModel.Dispose ();
             }
             base.Dispose (disposing);

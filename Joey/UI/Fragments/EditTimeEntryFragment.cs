@@ -16,21 +16,6 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly string UseDraftKey = "com.toggl.timer.draft_used";
         private EditTimeEntryView viewModel;
 
-        public EditTimeEntryFragment ()
-        {
-        }
-
-        public EditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
-        {
-        }
-
-        public EditTimeEntryFragment (TimeEntryData timeEntry)
-        {
-            Arguments = new Bundle ();
-            Arguments.PutString (TimeEntryIdArgument, timeEntry.Id.ToString ());
-            viewModel = new EditTimeEntryView (timeEntry);
-        }
-
         private Guid TimeEntryId
         {
             get {
@@ -42,7 +27,26 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public async override void OnViewCreated (View view, Bundle savedInstanceState)
+        public EditTimeEntryFragment ()
+        {
+        }
+
+        public EditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
+        public static EditTimeEntryFragment NewInstance (string timeEntryId)
+        {
+            var fragment = new EditTimeEntryFragment ();
+
+            var bundle = new Bundle ();
+            bundle.PutString (TimeEntryIdArgument, timeEntryId);
+            fragment.Arguments = bundle;
+
+            return fragment;
+        }
+
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
@@ -51,17 +55,7 @@ namespace Toggl.Joey.UI.Fragments
                 useDraft = savedInstanceState.GetBoolean (UseDraftKey, useDraft);
             }
 
-            if (viewModel == null) {
-                var timeEntryList = await EditTimeEntryActivity.GetIntentTimeEntryData (Activity.Intent);
-
-                TimeEntryData timeEntry = null;
-                if (timeEntryList.Count > 0) {
-                    timeEntry = timeEntryList[0];
-                }
-
-                viewModel = new EditTimeEntryView (timeEntry);
-            }
-
+            viewModel = new EditTimeEntryView (TimeEntryId);
             viewModel.OnIsLoadingChanged += OnModelLoaded;
             viewModel.Init (useDraft);
         }

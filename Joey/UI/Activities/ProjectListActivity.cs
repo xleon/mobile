@@ -34,7 +34,7 @@ namespace Toggl.Joey.UI.Activities
                 var extraGuids = extras.GetStringArrayList (ExtraTimeEntriesIds);
                 fragment = ProjectListFragment.NewInstance (extraGuids);
                 FragmentManager.BeginTransaction ()
-                .Add (Resource.Id.ProjectListActivityLayout, fragment)
+                .Add (Resource.Id.ProjectListActivityLayout, fragment, fragmentTag)
                 .Commit ();
             } else {
                 FragmentManager.BeginTransaction ()

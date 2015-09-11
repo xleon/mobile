@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.ViewModels;
 using XPlatUtils;
@@ -13,11 +12,11 @@ namespace Toggl.Phoebe.Data.Views
         private ActiveTimeEntryManager timeEntryManager;
         private TimeEntryModel model;
         private bool isLoading;
-        private TimeEntryData timeEntryData;
+        private Guid timeEntryId;
 
-        public EditTimeEntryView (TimeEntryData timeEntryData)
+        public EditTimeEntryView (Guid timeEntryId)
         {
-            this.timeEntryData = timeEntryData;
+            this.timeEntryId = timeEntryId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
 
@@ -78,15 +77,15 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public async void Init (bool isDraft)
+        public void Init (bool isDraft)
         {
             IsLoading  = true;
 
             this.isDraft = isDraft;
 
             if (!isDraft) {
-                if (timeEntryData != null) {
-                    Model = new TimeEntryModel (timeEntryData);
+                if (timeEntryId != Guid.Empty) {
+                    Model = new TimeEntryModel (timeEntryId);
                 } else {
                     ResetModel ();
                 }

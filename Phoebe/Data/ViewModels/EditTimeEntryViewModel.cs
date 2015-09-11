@@ -16,6 +16,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         private bool isLoading;
         private TimeEntryGroup model;
         private IList<TimeEntryData> timeEntryList;
+        private IList<string> timeEntryIds;
 
         public EditTimeEntryViewModel (IList<TimeEntryData> timeEntryList)
         {
@@ -23,12 +24,22 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Grouped Time Entry";
         }
 
-        public void Init ()
+        public EditTimeEntryViewModel (IList<string> timeEntryIds)
+        {
+            this.timeEntryIds = timeEntryIds;
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Grouped Time Entry";
+        }
+
+        public async Task Init ()
         {
             IsLoading = true;
 
+            if (timeEntryList == null) {
+                timeEntryList = await TimeEntryGroup.GetTimeEntryDataList (timeEntryIds);
+            }
+
             model = new TimeEntryGroup (timeEntryList);
-            model.LoadAsync ();
+            await model.LoadAsync ();
             model.PropertyChanged += OnPropertyChange;
 
             // Ensure that the model exists
@@ -49,8 +60,6 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             return model.SaveAsync ();
         }
-
-
 
         public TimeEntryGroup Model
         {

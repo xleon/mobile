@@ -7,7 +7,7 @@
     <android.support.design.widget.AppBarLayout
         android:id="@+id/ProjectListAppBar"
         android:layout_width="match_parent"
-        android:background="@drawable/ToolbarBgPattern"
+        android:background="@drawable/TabsBgPattern"
         android:layout_height="wrap_content">
     <!-- Toolbar placeholder for layout integrity -->
         <android.support.v7.widget.Toolbar
@@ -20,7 +20,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/TabNavigationStyle"
-            android:visibility="gone"
             app:tabIndicatorColor="#f30c16"
             app:tabMode="scrollable" />
     </android.support.design.widget.AppBarLayout>

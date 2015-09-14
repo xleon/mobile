@@ -1,8 +1,8 @@
 using System;
 using CoreGraphics;
-using UIKit;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {
@@ -17,12 +17,11 @@ namespace Toggl.Ross.Views
         private const float VelocityTreshold = 60.0f;
 
         private readonly UIButton continueActionButton;
-
         private readonly UIView actualContentView;
 
         protected SwipableTimeEntryTableViewCell (IntPtr ptr) : base (ptr)
         {
-            continueActionButton = new UIButton () {} .Apply (Style.TimeEntryCell.SwipeActionButton).Apply (Style.TimeEntryCell.ContinueState);
+            continueActionButton = new UIButton ().Apply (Style.TimeEntryCell.SwipeActionButton).Apply (Style.TimeEntryCell.ContinueState);
 
             actualContentView = new UIView ().Apply (Style.Log.CellContentView);
 
@@ -77,46 +76,34 @@ namespace Toggl.Ross.Views
                     panDeltaX = -SwipeWidth;
                 }
 
-                UIView.Animate (0.1, 0, UIViewAnimationOptions.CurveEaseOut, LayoutActualContentView, null);
-
+                UIView.AnimateNotify (0.1, 0, UIViewAnimationOptions.CurveEaseOut, LayoutActualContentView, null);
                 break;
-            case UIGestureRecognizerState.Cancelled:
             case UIGestureRecognizerState.Ended:
                 if (Editing) {
-                    return;
+                    break;
                 }
 
                 if (!gesture.Enabled) {
                     gesture.Enabled = true;
                 }
 
-                var currentX = actualContentView.Frame.X;
                 var velocityX = gesture.VelocityInView (gesture.View).X;
-
-                float maxX = 0;
-
-                if (((int)currentX ^ (int)velocityX) > 0
-                        && (velocityX > VelocityTreshold || Math.Abs (currentX) > FallbackTreshold)
-                        && panLockInHorizDirection) {
-                    maxX = -SwipeWidth;
-                }
-
                 var absolutePanDeltaX = Math.Abs (panDeltaX);
+                var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (absolutePanDeltaX) / velocityX));
 
-                var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (Math.Abs (maxX) - absolutePanDeltaX) / velocityX));
-
-                UIView.Animate (duration, delegate {
-                    LayoutActualContentView (maxX);
-                }, delegate {
-                    if (maxX < FallbackTreshold) {
-                        return;
+                UIView.AnimateNotify (duration, () => LayoutActualContentView (0),
+                isFinished => {
+                    if (isFinished && absolutePanDeltaX > SwipeWidth - 5) {
+                        OnContinue ();
                     }
-                    OnContinue ();
-                    UIView.Animate (0.3f, () => LayoutActualContentView (0));
                 });
 
                 break;
+            case UIGestureRecognizerState.Cancelled:
+                UIView.AnimateNotify (0.3, () => LayoutActualContentView (0), isFinished => gesture.Enabled = isFinished);
+                break;
             }
+
         }
 
         private void LayoutActualContentView (float maxEdge)

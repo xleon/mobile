@@ -18,6 +18,7 @@ using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
 using XPlatUtils;
+using System.Threading.Tasks;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -325,7 +326,7 @@ namespace Toggl.Ross.ViewControllers
                 RebindTags ();
             }
 
-            protected override async void OnContinue ()
+            protected override async Task OnContinueAsync ()
             {
                 if (DataSource == null) {
                     return;

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using CoreGraphics;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
@@ -40,7 +41,7 @@ namespace Toggl.Ross.Views
             });
         }
 
-        protected abstract void OnContinue ();
+        protected abstract Task OnContinueAsync ();
 
         private CGPoint panStart;
         private nfloat panDeltaX;
@@ -92,9 +93,9 @@ namespace Toggl.Ross.Views
                 var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (absolutePanDeltaX) / velocityX));
 
                 UIView.AnimateNotify (duration, () => LayoutActualContentView (0),
-                isFinished => {
+                async isFinished =>  {
                     if (isFinished && absolutePanDeltaX > SwipeWidth - 5) {
-                        OnContinue ();
+                        await OnContinueAsync ();
                     }
                 });
 

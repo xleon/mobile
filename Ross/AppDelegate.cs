@@ -15,6 +15,7 @@ using Toggl.Ross.Views;
 using UIKit;
 using Xamarin;
 using XPlatUtils;
+using System.Threading.Tasks;
 
 namespace Toggl.Ross
 {
@@ -27,7 +28,6 @@ namespace Toggl.Ross
         private TogglWindow window;
         private int systemVersion;
         private const int minVersionWidget = 7;
-        private bool componentsInitialized = false;
 
         public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
         {
@@ -64,11 +64,13 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<APNSManager> ().FailedToRegisterForRemoteNotifications (application, error);
         }
 
-        public override void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, System.Action<UIBackgroundFetchResult> completionHandler)
+        public override void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, Action<UIBackgroundFetchResult> completionHandler)
         {
-            ServiceContainer.Resolve<APNSManager> ().DidReceiveRemoteNotification (application, userInfo, completionHandler);
+            Task.Run (async () => {
+                var service = ServiceContainer.Resolve<APNSManager> ();
+                await service.DidReceiveRemoteNotification (application, userInfo, completionHandler);
+            });
         }
-
 
         public override void OnActivated (UIApplication application)
         {
@@ -155,10 +157,6 @@ namespace Toggl.Ross
             ServiceContainer.Register<TagChipCache> ();
             ServiceContainer.Register<OAuthManager> ();
             ServiceContainer.Register<APNSManager> ();
-
-
-            // Register Phoebe services async
-            await Services.RegisterAsync ();
         }
 
         public static TogglWindow TogglWindow

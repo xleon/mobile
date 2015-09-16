@@ -53,22 +53,20 @@ namespace Toggl.Ross.Net
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
         }
 
-        public void RegisteredForRemoteNotifications (UIApplication application, NSData token)
+        public async Task RegisteredForRemoteNotificationsAsync (UIApplication application, NSData token)
         {
+            // Get new token
+            var deviceToken = ToBase64String (token);
             var authManager = ServiceContainer.Resolve<AuthManager> ();
 
-            var deviceToken = token.Description;
-            if (!string.IsNullOrWhiteSpace (deviceToken)) {
-                deviceToken = deviceToken.Trim ('<').Trim ('>').Replace (" ", string.Empty);
-            }
-
+            // Unregister old, register new.
             var oldDeviceToken = NSUserDefaults.StandardUserDefaults.StringForKey (PushDeviceTokenKey);
             if (oldDeviceToken != deviceToken) {
-                RegisterDeviceOnTogglService (deviceToken, authManager.Token);
+                await RegisterDeviceOnTogglServiceAsync (deviceToken, authManager.Token);
             }
 
             if (!string.IsNullOrEmpty (oldDeviceToken)) {
-                UnregisterDeviceFromTogglService (oldDeviceToken, authManager.Token);
+                await UnregisterDeviceFromTogglServiceAsync (oldDeviceToken, authManager.Token);
             }
 
             NSUserDefaults.StandardUserDefaults.SetString (deviceToken, PushDeviceTokenKey);
@@ -80,7 +78,7 @@ namespace Toggl.Ross.Net
             log.Info (Tag, "Failed To Register For Remote Notifications (APNS)");
         }
 
-        public async Task DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, Action<UIBackgroundFetchResult> completionHandler)
+        public async Task DidReceiveRemoteNotificationAsync (UIApplication application, NSDictionary userInfo, Action<UIBackgroundFetchResult> completionHandler)
         {
             backgroundFetchHandler = completionHandler;
 
@@ -117,49 +115,50 @@ namespace Toggl.Ross.Net
             }
         }
 
-        private void OnAuthChangedMessage (AuthChangedMessage msg)
+        private async void OnAuthChangedMessage (AuthChangedMessage msg)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
 
             if (APNsIsEnabled && SavedDeviceToken != null) {
                 if (authManager.IsAuthenticated) {
-                    RegisterDeviceOnTogglService (SavedDeviceToken, authManager.Token);
+                    await RegisterDeviceOnTogglServiceAsync (SavedDeviceToken, authManager.Token);
                     userToken = authManager.Token;
                 } else {
-                    UnregisterDeviceFromTogglService (SavedDeviceToken, userToken);
+                    await UnregisterDeviceFromTogglServiceAsync (SavedDeviceToken, userToken);
                 }
             } else if (authManager.IsAuthenticated) {
                 RegisterDeviceOnAPNs ();
             }
         }
 
-        private static void IgnoreTaskErrors (Task task)
+        private static async Task RegisterDeviceOnTogglServiceAsync (string deviceToken, string authToken)
         {
-            task.ContinueWith (t => {
-                var e = t.Exception;
+            if (string.IsNullOrEmpty (deviceToken) || string.IsNullOrEmpty (authToken)) {
+                return;
+            }
+
+            try {
+                var pushClient = ServiceContainer.Resolve<IPushClient> ();
+                await pushClient.Register (authToken, PushService.APNS, deviceToken);
+            } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger> ();
-                log.Info (Tag, e, "Failed to send APNS info/action to server.");
-            }, TaskContinuationOptions.OnlyOnFaulted);
+                log.Info (Tag, ex, "Failed to register to Uniqush.");
+            }
         }
 
-        private static void RegisterDeviceOnTogglService (string deviceToken, string authToken)
+        private static async Task UnregisterDeviceFromTogglServiceAsync (string deviceToken, string authToken)
         {
             if (string.IsNullOrEmpty (deviceToken) || string.IsNullOrEmpty (authToken)) {
                 return;
             }
 
-            var pushClient = ServiceContainer.Resolve<IPushClient> ();
-            IgnoreTaskErrors (pushClient.Register (authToken, PushService.APNS, deviceToken));
-        }
-
-        private static void UnregisterDeviceFromTogglService (string deviceToken, string authToken)
-        {
-            if (string.IsNullOrEmpty (deviceToken) || string.IsNullOrEmpty (authToken)) {
-                return;
+            try {
+                var pushClient = ServiceContainer.Resolve<IPushClient> ();
+                await pushClient.Unregister (authToken, PushService.APNS, deviceToken);
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Info (Tag, ex, "Failed to unregister from Uniqush.");
             }
-
-            var pushClient = ServiceContainer.Resolve<IPushClient> ();
-            IgnoreTaskErrors (pushClient.Unregister (authToken, PushService.APNS, deviceToken));
         }
 
         private static void RegisterDeviceOnAPNs()
@@ -189,6 +188,18 @@ namespace Toggl.Ross.Net
             if (backgroundFetchHandler != null) {
                 backgroundFetchHandler (msg.HadErrors ? UIBackgroundFetchResult.Failed : UIBackgroundFetchResult.NewData);
             }
+        }
+
+        public string ToBase64String (NSData data)
+        {
+            return Convert.ToBase64String (ToByte (data));
+        }
+
+        public byte[] ToByte (NSData data)
+        {
+            var result = new byte[data.Length];
+            System.Runtime.InteropServices.Marshal.Copy (data.Bytes, result, 0, (int) data.Length);
+            return result;
         }
 
     }

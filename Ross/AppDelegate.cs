@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Foundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
@@ -15,7 +16,6 @@ using Toggl.Ross.Views;
 using UIKit;
 using Xamarin;
 using XPlatUtils;
-using System.Threading.Tasks;
 
 namespace Toggl.Ross
 {
@@ -56,7 +56,10 @@ namespace Toggl.Ross
 
         public override void RegisteredForRemoteNotifications (UIApplication application, NSData deviceToken)
         {
-            ServiceContainer.Resolve<APNSManager> ().RegisteredForRemoteNotifications (application, deviceToken);
+            Task.Run (async () => {
+                var service = ServiceContainer.Resolve<APNSManager> ();
+                await service.RegisteredForRemoteNotificationsAsync (application, deviceToken);
+            });
         }
 
         public override void FailedToRegisterForRemoteNotifications (UIApplication application, NSError error)
@@ -68,7 +71,7 @@ namespace Toggl.Ross
         {
             Task.Run (async () => {
                 var service = ServiceContainer.Resolve<APNSManager> ();
-                await service.DidReceiveRemoteNotification (application, userInfo, completionHandler);
+                await service.DidReceiveRemoteNotificationAsync (application, userInfo, completionHandler);
             });
         }
 

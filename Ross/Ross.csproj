@@ -144,12 +144,6 @@
     <Reference Include="GoogleAnalytics.iOS">
       <HintPath>..\Components\googleanalytics-3.0.10.2\lib\ios-unified\GoogleAnalytics.iOS.dll</HintPath>
     </Reference>
-    <Reference Include="Bugsnag">
-      <HintPath>..\packages\Toggl.Bugsnag.1.0.1\lib\Xamarin.iOS10\Bugsnag.dll</HintPath>
-    </Reference>
-    <Reference Include="Bugsnag.iOS">
-      <HintPath>..\packages\Toggl.Bugsnag.1.0.1\lib\Xamarin.iOS10\Bugsnag.iOS.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
     </Reference>

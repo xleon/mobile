@@ -1,17 +1,18 @@
 using System;
+using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
-using UIKit;
+using Google.SignIn;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Ross.Net;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class WelcomeViewController : UIViewController
+    public class WelcomeViewController : UIViewController, ISignInDelegate, ISignInUIDelegate
     {
         private const string Tag = "WelcomeViewController";
 
@@ -82,14 +83,23 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnGoogleButtonTouchUpInside (object sender, EventArgs e)
         {
-            var oauthManager = ServiceContainer.Resolve<OAuthManager> ();
-            oauthManager.Authenticated = Finished;
-            PresentViewController (oauthManager.UI, true, null);
+            // Automatically sign in the user.
+            SignIn.SharedInstance.SignInUser ();
+        }
+
+        public void DidSignIn (SignIn signIn, GoogleUser user, Foundation.NSError error)
+        {
+            InvokeOnMainThread (async delegate {
+                await AuthWithGoogleTokenAsync (signIn, user, error);
+            });
         }
 
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);
+
+            SignIn.SharedInstance.Delegate = this;
+            SignIn.SharedInstance.UIDelegate = this;
 
             navController = NavigationController;
             if (navController != null) {
@@ -113,6 +123,10 @@ namespace Toggl.Ross.ViewControllers
                 navController = null;
             }
 
+            if (SignIn.SharedInstance.Delegate == this) {
+                SignIn.SharedInstance.Delegate = null;
+                SignIn.SharedInstance.UIDelegate = this;
+            }
         }
 
         private bool IsAuthenticating
@@ -137,34 +151,32 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public void Finished (string token, bool googleFailed)
+        public async Task AuthWithGoogleTokenAsync (SignIn signIn, GoogleUser user, Foundation.NSError error)
         {
-            DismissViewController (true, null);
-            InvokeOnMainThread (async delegate {
-                try {
-                    if (!googleFailed) {
-                        if (token == null) {
-                            return;
-                        }
-                        IsAuthenticating = true;
-                        var authManager = ServiceContainer.Resolve<AuthManager> ();
-                        var authRes = await authManager.AuthenticateWithGoogleAsync (token);
-                        if (authRes != AuthResult.Success) {
-                            AuthErrorAlert.Show (this, null, authRes, AuthErrorAlert.Mode.Login, googleAuth: true);
-                        } else {
-                            // Start the initial sync for the user
-                            ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
-                        }
+            try {
+                if (error == null) {
+                    IsAuthenticating = true;
+                    var token = user.Authentication.AccessToken;
+                    var authManager = ServiceContainer.Resolve<AuthManager> ();
+                    var authRes = await authManager.AuthenticateWithGoogleAsync (token);
+                    // No need to keep the users Google account access around anymore
+                    signIn.DisconnectUser ();
+                    if (authRes != AuthResult.Success) {
+                        var email = user.Profile.Email;
+                        AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Login, true);
                     } else {
-                        new UIAlertView ("WelcomeGoogleErrorTitle".Tr (), "WelcomeGoogleErrorMessage".Tr (), null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
+                        // Start the initial sync for the user
+                        ServiceContainer.Resolve<ISyncManager> ().Run ();
                     }
-                } catch (InvalidOperationException ex) {
-                    var log = ServiceContainer.Resolve<ILogger> ();
-                    log.Info (Tag, ex, "Failed to authenticate (G+) the user.");
-                } finally {
-                    IsAuthenticating = false;
+                } else if (error.Code != -5) { // Cancel error code.
+                    new UIAlertView ("WelcomeGoogleErrorTitle".Tr (), "WelcomeGoogleErrorMessage".Tr (), null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
                 }
-            });
+            } catch (InvalidOperationException ex) {
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Info (Tag, ex, "Failed to authenticate (G+) the user.");
+            } finally {
+                IsAuthenticating = false;
+            }
         }
     }
 }

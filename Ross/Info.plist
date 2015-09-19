@@ -42,6 +42,14 @@
 			<key>CFBundleURLTypes</key>
 			<string>Editor</string>
 		</dict>
+		<dict>
+			<key>CFBundleURLTypes</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string></string>
+			</array>
+		</dict>
 	</array>
 	<key>UIAppFonts</key>
 	<array>

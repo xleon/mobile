@@ -1,10 +1,12 @@
 using System;
+using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
+using Google.SignIn;
 using MonoTouch.TTTAttributedLabel;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
-using Toggl.Ross.Net;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -12,8 +14,10 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class SignupViewController : UIViewController
+    public class SignupViewController : UIViewController, ISignInDelegate, ISignInUIDelegate
     {
+        private const string Tag = "SignupViewController";
+
         private UIView inputsContainer;
         private UIView topBorder;
         private UIView middleBorder;
@@ -132,6 +136,14 @@ namespace Toggl.Ross.ViewControllers
             ResetSignupButtonState ();
         }
 
+        public override void ViewWillAppear (bool animated)
+        {
+            base.ViewWillAppear (animated);
+
+            SignIn.SharedInstance.Delegate = this;
+            SignIn.SharedInstance.UIDelegate = this;
+        }
+
         public override void ViewDidAppear (bool animated)
         {
             base.ViewDidAppear (animated);
@@ -190,9 +202,15 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnGoogleActionButtonTouchUpInside (object sender, EventArgs e)
         {
-            var oauthManager = ServiceContainer.Resolve<OAuthManager> ();
-            oauthManager.Authenticated = Finished;
-            PresentViewController (oauthManager.UI, true, null);
+            // Automatically sign in the user.
+            SignIn.SharedInstance.SignInUser ();
+        }
+
+        public void DidSignIn (SignIn signIn, GoogleUser user, NSError error)
+        {
+            InvokeOnMainThread (async delegate {
+                await AuthWithGoogleTokenAsync (signIn, user, error);
+            });
         }
 
         private async void TryPasswordSignup ()
@@ -215,33 +233,34 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public void Finished (string token, bool googleFailed)
+        public async Task AuthWithGoogleTokenAsync (SignIn signIn, GoogleUser user, Foundation.NSError error)
         {
-            DismissViewController (true, null);
-            InvokeOnMainThread (async delegate {
-                try {
-                    if (!googleFailed) {
-                        if (token == null) {
-                            return;
-                        }
-                        IsAuthenticating = true;
+            try {
+                if (error == null) {
+                    IsAuthenticating = true;
 
-                        var authManager = ServiceContainer.Resolve<AuthManager> ();
-                        var authRes = await authManager.SignupWithGoogleAsync (token);
+                    var token = user.Authentication.AccessToken;
+                    var authManager = ServiceContainer.Resolve<AuthManager> ();
+                    var authRes = await authManager.SignupWithGoogleAsync (token);
+                    // No need to keep the users Google account access around anymore
+                    signIn.DisconnectUser ();
 
-                        if (authRes != AuthResult.Success) {
-                            AuthErrorAlert.Show (this, null, authRes, AuthErrorAlert.Mode.Signup, googleAuth: true);
-                        }
-                    } else {
-                        new UIAlertView (
-                            "WelcomeGoogleErrorTitle".Tr (),
-                            "WelcomeGoogleErrorMessage".Tr (),
-                            null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
+                    if (authRes != AuthResult.Success) {
+                        var email = user.Profile.Email;
+                        AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Signup, googleAuth: true);
                     }
-                } finally {
-                    IsAuthenticating = false;
+                } else if (error.Code != -5) { // Cancel error code.
+                    new UIAlertView (
+                        "WelcomeGoogleErrorTitle".Tr (),
+                        "WelcomeGoogleErrorMessage".Tr (),
+                        null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
                 }
-            });
+            } catch (InvalidOperationException ex) {
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Info (Tag, ex, "Failed to authenticate (G+) the user.");
+            } finally {
+                IsAuthenticating = false;
+            }
         }
 
         private bool isAuthenticating;

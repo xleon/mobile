@@ -147,14 +147,17 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Xamarin.Auth.iOS">
-      <HintPath>..\Components\xamarin.auth-1.2.3.1\lib\ios-unified\Xamarin.Auth.iOS.dll</HintPath>
-    </Reference>
     <Reference Include="Xamarin.Insights">
       <HintPath>..\packages\Xamarin.Insights.1.10.6\lib\Xamarin.iOS10\Xamarin.Insights.dll</HintPath>
     </Reference>
     <Reference Include="PLCrashReporterUnifiedBinding">
       <HintPath>..\packages\Xamarin.Insights.1.10.6\lib\Xamarin.iOS10\PLCrashReporterUnifiedBinding.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.Core">
+      <HintPath>..\packages\Xamarin.Google.iOS.Core.1.0.7.0-beta1\lib\Xamarin.iOS10\Google.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.SignIn">
+      <HintPath>..\packages\Xamarin.Google.iOS.SignIn.1.0.7.0-beta1\lib\Xamarin.iOS10\Google.SignIn.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -187,6 +190,7 @@
     <BundleResource Include="Resources\btn-arrow-down%402x.png" />
     <BundleResource Include="Resources\btn-arrow-up.png" />
     <BundleResource Include="Resources\btn-arrow-up%402x.png" />
+    <BundleResource Include="GoogleService-Info.plist" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -325,7 +329,6 @@
     <Compile Include="Views\SuggestionTableViewCell.cs" />
     <Compile Include="Data\WidgetUpdateService.cs" />
     <Compile Include="Views\TableViewRefreshView.cs" />
-    <Compile Include="Net\OAuthManager.cs" />
     <Compile Include="ViewControllers\WebViewController.cs" />
     <Compile Include="Net\APNSManager.cs" />
   </ItemGroup>
@@ -380,10 +383,6 @@
   <ItemGroup>
     <XamarinComponentReference Include="googleanalytics">
       <Version>3.0.10.2</Version>
-      <Visible>False</Visible>
-    </XamarinComponentReference>
-    <XamarinComponentReference Include="xamarin.auth">
-      <Version>1.2.3.1</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
   </ItemGroup>

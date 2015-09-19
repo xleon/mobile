@@ -16,6 +16,8 @@ using Toggl.Ross.Views;
 using UIKit;
 using Xamarin;
 using XPlatUtils;
+using Google.Core;
+using Google.SignIn;
 
 namespace Toggl.Ross
 {
@@ -34,8 +36,11 @@ namespace Toggl.Ross
             var versionString = UIDevice.CurrentDevice.SystemVersion;
             systemVersion = Convert.ToInt32 ( versionString.Split ( new [] {"."}, StringSplitOptions.None)[0]);
 
-            // wait for component initialisation.
+            // Component initialisation.
             RegisterComponents ();
+
+            // Setup Google sign in
+            SetupGoogleSignIn ();
 
             Toggl.Ross.Theme.Style.Initialize ();
 
@@ -101,7 +106,7 @@ namespace Toggl.Ross
                     return true;
                 }
             }
-            return false;
+            return SignIn.SharedInstance.HandleUrl (url, sourceApplication, annotation);
         }
 
         public override void DidEnterBackground (UIApplication application)
@@ -158,8 +163,18 @@ namespace Toggl.Ross
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
-            ServiceContainer.Register<OAuthManager> ();
             ServiceContainer.Register<APNSManager> ();
+        }
+
+        private void SetupGoogleSignIn ()
+        {
+            // Set up Google sign in
+            NSError configureError;
+            Context.SharedInstance.Configure (out configureError);
+            if (configureError != null) {
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Error ("AppDelegate", "Failed to setup Google Sign In service.");
+            }
         }
 
         public static TogglWindow TogglWindow

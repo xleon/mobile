@@ -1,13 +1,12 @@
 using System;
 using Cirrious.FluentLayouts.Touch;
-using UIKit;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {

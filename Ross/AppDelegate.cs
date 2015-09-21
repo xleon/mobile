@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Foundation;
+using Google.Core;
+using Google.SignIn;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
@@ -16,8 +18,6 @@ using Toggl.Ross.Views;
 using UIKit;
 using Xamarin;
 using XPlatUtils;
-using Google.Core;
-using Google.SignIn;
 
 namespace Toggl.Ross
 {
@@ -40,7 +40,7 @@ namespace Toggl.Ross
             RegisterComponents ();
 
             // Setup Google sign in
-            SetupGoogleSignIn ();
+            SetupGoogleServices ();
 
             Toggl.Ross.Theme.Style.Initialize ();
 
@@ -166,14 +166,19 @@ namespace Toggl.Ross
             ServiceContainer.Register<APNSManager> ();
         }
 
-        private void SetupGoogleSignIn ()
+        private void SetupGoogleServices ()
         {
-            // Set up Google sign in
+            // Set up Google Analytics
+            // the tracker ID isn't detected automatically from GoogleService-info.plist
+            // so, it's passed manually. Waiting for new versions of the library.
+            var gaiInstance = Google.Analytics.Gai.SharedInstance;
+            gaiInstance.DefaultTracker = gaiInstance.GetTracker (Build.GoogleAnalyticsId);
+
             NSError configureError;
             Context.SharedInstance.Configure (out configureError);
             if (configureError != null) {
                 var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error ("AppDelegate", "Failed to setup Google Sign In service.");
+                log.Info ("AppDelegate", string.Format ("Error configuring the Google context: {0}", configureError));
             }
         }
 

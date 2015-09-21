@@ -256,7 +256,7 @@ namespace Toggl.Phoebe.Data.Views
             if (isExcluded) {
                 if (existingData != null) {
                     clientDataObjects.Remove (existingData);
-                    workspacesList[currentPosition].Clients.Remove (new Client (existingData));
+                    workspacesList[currentWorkspaceIndex].Clients.Remove (new Client (existingData));
                 }
             } else {
                 data = new ClientData (data);
@@ -273,7 +273,7 @@ namespace Toggl.Phoebe.Data.Views
                     }
                 } else {
                     clientDataObjects.Add (data);
-                    workspacesList[currentPosition].Clients.Add (new Client (data));
+                    workspacesList[currentWorkspaceIndex].Clients.Add (new Client (data));
 
                 }
             }

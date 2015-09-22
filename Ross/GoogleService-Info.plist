@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>TRACKING_ID</key>
-	<string></string>
+	<string>UA-XXXXXXXX-X</string>
 	<key>CLIENT_ID</key>
 	<string></string>
 	<key>REVERSED_CLIENT_ID</key>

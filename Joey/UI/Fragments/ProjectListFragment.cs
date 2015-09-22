@@ -132,9 +132,7 @@ namespace Toggl.Joey.UI.Fragments
                             viewModel.ProjectList.CurrentWorkspaceIndex = i;
                             tab.Select();
                         }
-                    } catch (Exception ex) {
-                        Console.WriteLine ("here!");
-                    }
+                    } catch (Exception ex) {}
 
                     i++;
                 }

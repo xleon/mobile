@@ -9,10 +9,9 @@ open Fake.XamarinHelper
 open Fake.FileUtils
 
 Target "clean" (fun _ ->
-    CleanDir "Joey/bin/"
-    CleanDir "Phoebe/bin/"
-    CleanDir "Emma/bin/"
-    CleanDir "Ross/bin/"
+    let dirs = !! "./**/bin/"
+                  ++ "./**/obj/"
+    CleanDirs dirs
 )
 
 Target "core-build" (fun () ->
@@ -31,8 +30,8 @@ Target "android-build" (fun () ->
     if (System.String.Empty <> buildParamsFile)
       then cp buildParamsFile "Phoebe/Build.cs"
 
-    RestorePackages "Joey/packages.config"
-    MSBuild "Joey/bin/Release" "Build" [ ("Configuration", "Release") ] [ "Joey/Joey.csproj" ] |> ignore
+    RestorePackages "Mobile.Android.sln"
+    MSBuild "Joey/bin/Release" "Build" [ ("Configuration", "Release") ] [ "Mobile.Android.sln" ] |> ignore
 )
 
 Target "android-package" (fun () ->
@@ -40,9 +39,7 @@ Target "android-package" (fun () ->
     let keyStorePath = getBuildParamOrDefault "keyStorePath" "toggl.keystore"
     let keyStorePassword = getBuildParamOrDefault "keyStorePassword" ""
     let keyStoreAlias = getBuildParamOrDefault "keyStoreAlias" "toggl"
-
-    let path = "Joey/Properties/AndroidManifest.xml"
-    let fileName = GetAndroidFileName path
+    let fileName = GetAndroidReleaseName "Joey/Properties/AndroidManifest.xml"
 
     let ChangeFileName (file:#FileInfo) =
         let newName = Path.Combine(file.DirectoryName, fileName)
@@ -51,7 +48,7 @@ Target "android-package" (fun () ->
 
     AndroidPackage (fun defaults ->
         {defaults with
-            ProjectPath = "Joey/Joey.csproj"
+            ProjectPath = "Joey/Joey.csproj" // Project file and not Android solution!
             Configuration = "Release"
             OutputPath = "Joey/bin/Release"
         })
@@ -69,6 +66,94 @@ Target "android-package" (fun () ->
     |> TeamCityHelper.PublishArtifact
 )
 
+Target "ios-build" (fun () ->
+    let buildParamsFile = getBuildParam "buildParamsFile"
+    if (System.String.Empty <> buildParamsFile)
+      then cp buildParamsFile "Phoebe/Build.cs"
+
+    RestorePackages "Mobile.iOS.sln"
+
+    iOSBuild (fun defaults ->
+        {defaults with
+            ProjectPath = "Mobile.iOS.sln"
+            Configuration = "Debug|iPhoneSimulator"
+            Target = "Build"
+        })
+)
+
+Target "ios-adhoc" (fun () ->
+    // Setup conf files.
+    let buildParamsFile = getBuildParam "buildParamsFile"
+    if (System.String.Empty <> buildParamsFile)
+      then cp buildParamsFile "Phoebe/Build.cs"
+
+    let googleXml = getBuildParam "googleServicesXml"
+    if (System.String.Empty <> googleXml)
+      then cp googleXml "Ross/GoogleService-Info.plist"
+
+    let infoXml = getBuildParam "infoXml"
+    if (System.String.Empty <> infoXml)
+      then cp infoXml "Ross/Info.plist"
+
+    RestorePackages "Mobile.iOS.sln"
+
+    iOSBuild (fun defaults ->
+        {defaults with
+            ProjectPath = "Mobile.iOS.sln"
+            Configuration = "Ad-Hoc|iPhone"
+            Target = "Build"
+        })
+
+    let appPath = Directory.EnumerateFiles(Path.Combine("Ross", "bin", "iPhone", "Ad-Hoc"), "*.ipa").First()
+    let newReleaseName = Path.Combine("Ross", "bin", "iPhone", "Ad-Hoc", (GetiOSReleaseName "Ross/Info.plist" + ".ipa"))
+    Rename newReleaseName appPath
+    TeamCityHelper.PublishArtifact newReleaseName
+)
+
+Target "ios-appstore" (fun () ->
+    // Setup conf files.
+    // Too many conf parameters. This will change in the future.
+    let xamApiKey = getBuildParam "xamApiKey"
+
+    let buildParamsFile = getBuildParam "buildParamsFile"
+    if (System.String.Empty <> buildParamsFile)
+      then cp buildParamsFile "Phoebe/Build.cs"
+
+    let googleXml = getBuildParam "googleServicesXml"
+    if (System.String.Empty <> googleXml)
+      then cp googleXml "Ross/GoogleService-Info.plist"
+
+    let infoXml = getBuildParam "infoXml"
+    if (System.String.Empty <> infoXml)
+      then cp infoXml "Ross/Info.plist"
+
+    RestorePackages "Mobile.iOS.sln"
+
+    iOSBuild (fun defaults ->
+        {defaults with
+            ProjectPath = "Mobile.iOS.sln"
+            Configuration = "AppStore|iPhone"
+            Target = "Build"
+        })
+
+    let outputFolder = Path.Combine("Ross", "bin", "iPhone", "AppStore")
+    let appPath = Directory.EnumerateDirectories(outputFolder, "*.app").First()
+    let zipFilePath = Path.Combine("Ross", "bin", "iPhone", "AppStore", (GetiOSReleaseName "Ross/Info.plist" + ".zip"))
+    let zipArgs = String.Format("-r -y {0} {1}", zipFilePath, appPath)
+
+    let result = Shell.Exec("zip", zipArgs)
+    if result <> 0 then failwithf "zip exited with error" result
+    else TeamCityHelper.PublishArtifact zipFilePath
+
+    // Upload dSYM to Xamarin Insights
+    let dSYMPath = Path.Combine("Ross", "bin", "iPhone", "AppStore", "Ross.app.dSYM")
+    let dSYMPathZip = Path.Combine("Ross", "bin", "iPhone", "AppStore", "Ross.app.dSYM.zip")
+    let zipArgs = String.Format("-r -y {0} {1}", dSYMPathZip, dSYMPath)
+    Shell.Exec("zip", zipArgs) |> ignore
+    let curlArgs = String.Format("-i -F 'dsym=@{0};type=application/zip' https://xaapi.xamarin.com/api/dsym?apikey={1}", dSYMPathZip, xamApiKey)
+    Shell.Exec("curl", curlArgs) |> ignore
+)
+
 "clean"
   ==> "core-build"
   ==> "core-tests"
@@ -76,5 +161,14 @@ Target "android-package" (fun () ->
 "clean"
   ==> "android-build"
   ==> "android-package"
+
+"clean"
+  ==> "ios-build"
+
+"clean"
+  ==> "ios-adhoc"
+
+"clean"
+  ==> "ios-appstore"
 
 RunTarget()

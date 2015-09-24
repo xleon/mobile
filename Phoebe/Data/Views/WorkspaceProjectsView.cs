@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
-using Android.Widget;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;

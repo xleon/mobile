@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
+using Android.Widget;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
@@ -18,6 +19,8 @@ namespace Toggl.Phoebe.Data.Views
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
+        private Workspace filteredList;
+        private bool filtered;
         private bool isLoading;
         private bool hasMore;
         private int currentWorkspaceIndex;
@@ -443,6 +446,34 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        public void ApplyFilter (string filterString)
+        {
+            filtered = filterString.Length > 0;
+            filteredList = new Workspace (workspacesList[currentWorkspaceIndex].Data);
+            var filter = filterString.ToLower();
+            var projects = workspacesList[currentWorkspaceIndex].Projects;
+            foreach (var project in projects) {
+                if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                    filteredList.Projects.Add (project);
+                }
+            }
+            var clients = workspacesList[currentWorkspaceIndex].Clients;
+            foreach (var client in clients) {
+                Client cl;
+                cl = client.Data == null ? new Client (workspacesList [currentWorkspaceIndex].Data) : new Client (client.Data);
+
+                foreach (var project in client.Projects) {
+                    if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                        cl.Projects.Add (project);
+                    }
+                }
+                if (cl.Projects.Count > 0) {
+                    filteredList.Clients.Add (cl);
+                }
+            }
+            UpdateCollection();
+        }
+
         private static void SortWorkspaces (List<Workspace> data)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
@@ -521,7 +552,9 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            var ws = workspacesList [currentWorkspaceIndex];
+            Workspace ws;
+            ws = filtered ? filteredList : workspacesList [currentWorkspaceIndex];
+
             switch (sortBy) {
             case SortProjectsBy.Clients:
                 foreach (var client in ws.Clients) {

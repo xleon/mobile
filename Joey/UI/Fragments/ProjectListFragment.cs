@@ -4,6 +4,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Support.Design.Widget;
+using Android.Support.V4.View;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
@@ -17,11 +18,12 @@ using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
+using SearchView = Android.Support.V7.Widget.SearchView;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener
+    public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener, SearchView.IOnQueryTextListener
     {
         private static readonly string TimeEntryIdsArg = "time_entries_ids_param";
         private static readonly int ProjectCreatedRequestCode = 1;
@@ -31,6 +33,7 @@ namespace Toggl.Joey.UI.Fragments
         private Toolbar toolBar;
         private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
+        private SearchView search;
 
         private ProjectListViewModel viewModel;
 
@@ -134,7 +137,7 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureCorrectState ()
         {
             // Set toolbar scrollable or not.
-            var _params = (AppBarLayout.LayoutParams) toolBar.LayoutParameters;
+            var _params = new AppBarLayout.LayoutParams (toolBar.LayoutParameters);
 
             if (viewModel.ProjectList.Workspaces.Count > 2) {
                 tabLayout.Visibility = ViewStates.Visible;
@@ -224,9 +227,22 @@ namespace Toggl.Joey.UI.Fragments
         #region Option menu
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
-            base.OnCreateOptionsMenu (menu, inflater);
             inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
-            toolBar.SetOnMenuItemClickListener (this);
+            var item = (IMenuItem) menu.FindItem (Resource.Id.projectSearch);
+            var searchView = Android.Runtime.Extensions.JavaCast<SearchView> (item.ActionView);
+
+            searchView.SetOnQueryTextListener (this);
+        }
+
+        public bool OnQueryTextChange (string newText)
+        {
+            viewModel.ProjectList.ApplyFilter (newText);
+            return true;
+        }
+
+        public bool OnQueryTextSubmit (string query)
+        {
+            return true;
         }
 
         public override bool OnOptionsItemSelected (IMenuItem item)

@@ -136,14 +136,15 @@ Target "ios-appstore" (fun () ->
             Target = "Build"
         })
 
+    // Zip .app file
     let outputFolder = Path.Combine("Ross", "bin", "iPhone", "AppStore")
-    let appPath = Directory.EnumerateDirectories(outputFolder, "*.app").First()
-    let zipFilePath = Path.Combine("Ross", "bin", "iPhone", "AppStore", (GetiOSReleaseName "Ross/Info.plist" + ".zip"))
-    let zipArgs = String.Format("-r -y {0} {1}", zipFilePath, appPath)
-
-    let result = Shell.Exec("zip", zipArgs)
+    let zipFilePath = (GetiOSReleaseName "Ross/Info.plist" + ".zip")
+    pushd outputFolder
+    let zipArgs = String.Format("-r -y {0} {1}", zipFilePath, "Ross.app")
+    let result = Shell.Exec ("zip", zipArgs)
     if result <> 0 then failwithf "zip exited with error" result
     else TeamCityHelper.PublishArtifact zipFilePath
+    popd ()
 
     // Upload dSYM to Xamarin Insights
     let dSYMPath = Path.Combine("Ross", "bin", "iPhone", "AppStore", "Ross.app.dSYM")

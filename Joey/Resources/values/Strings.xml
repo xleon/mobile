@@ -210,4 +210,5 @@
     <string name="ProjectListToolbarMenuTitle">SORT BY</string>
     <string name="ProjectListToolbarMenuProjects">Projects</string>
     <string name="ProjectListToolbarMenuClients">Clients</string>
+    <string name="ProjectListEmptySearchText">Sorry, no results were found!</string>
 </resources>

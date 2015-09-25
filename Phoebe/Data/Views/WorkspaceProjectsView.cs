@@ -446,14 +446,14 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public void ApplyFilter (string filterString)
+        public bool ApplyFilter (string filterString)
         {
             hasFilter = filterString.Length > 0;
 
             //If no string, don't filter.
             if (!hasFilter) {
                 UpdateCollection();
-                return;
+                return true;
             }
 
             Workspace source;
@@ -493,6 +493,8 @@ namespace Toggl.Phoebe.Data.Views
                 break;
             }
             UpdateCollection();
+            return filteredList.Clients.Count != 0 || filteredList.Projects.Count != 1;
+
         }
 
         private static void SortWorkspaces (List<Workspace> data)
@@ -643,10 +645,6 @@ namespace Toggl.Phoebe.Data.Views
             } set {
                 if (workspacesList.Count > value) {
                     currentWorkspaceIndex = value;
-                }
-                if (hasFilter) {
-                    ApplyFilter (filter);
-                    return;
                 }
                 UpdateCollection ();
             }

@@ -36,6 +36,7 @@ namespace Toggl.Joey.UI.Fragments
         private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
         private SearchView search;
+        private LinearLayout searchEmptyState;
 
         private ProjectListViewModel viewModel;
 
@@ -75,6 +76,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
+            searchEmptyState = view.FindViewById<LinearLayout> (Resource.Id.ProjectListSearchEmptyState);
             tabLayout = view.FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
             newProjectFab = view.FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
             toolBar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
@@ -246,7 +248,13 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SearchList()
         {
-            viewModel.ProjectList.ApplyFilter (filter);
+            bool hasResults = false;;
+            if (filter == null) {
+                return;
+            }
+            hasResults = viewModel.ProjectList.ApplyFilter (filter);
+            recyclerView.Visibility = !hasResults ? ViewStates.Gone : ViewStates.Visible;
+            searchEmptyState.Visibility = !hasResults ? ViewStates.Visible : ViewStates.Gone;
         }
 
         public bool OnQueryTextSubmit (string query)
@@ -281,6 +289,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             viewModel.ProjectList.CurrentWorkspaceIndex = tab.Position;
             EnsureCorrectState();
+            SearchList();
         }
 
         public void OnTabReselected (TabLayout.Tab tab)

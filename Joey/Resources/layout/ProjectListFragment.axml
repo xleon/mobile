@@ -57,6 +57,25 @@
             android:layout_marginRight="70dp"
             android:layout_marginTop="15dp" />
     </LinearLayout>
+    <LinearLayout
+        android:id="@+id/ProjectListSearchEmptyState"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingTop="140dp"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/ProjectListEmptySearchTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/ProjectListEmptySearchText"
+            android:gravity="center"
+            android:textColor="@color/material_black"
+            android:textSize="@dimen/largTextSize"
+            android:paddingRight="30dp"
+            android:paddingLeft="30dp"
+            android:layout_marginTop="20dp" />
+    </LinearLayout>
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

@@ -19,7 +19,8 @@ namespace Toggl.Phoebe.Data.Views
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
         private Workspace filteredList;
-        private bool filtered;
+        private string filter;
+        private bool hasFilter;
         private bool isLoading;
         private bool hasMore;
         private int currentWorkspaceIndex;
@@ -447,28 +448,49 @@ namespace Toggl.Phoebe.Data.Views
 
         public void ApplyFilter (string filterString)
         {
-            filtered = filterString.Length > 0;
-            filteredList = new Workspace (workspacesList[currentWorkspaceIndex].Data);
-            var filter = filterString.ToLower();
-            var projects = workspacesList[currentWorkspaceIndex].Projects;
-            foreach (var project in projects) {
-                if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
-                    filteredList.Projects.Add (project);
-                }
-            }
-            var clients = workspacesList[currentWorkspaceIndex].Clients;
-            foreach (var client in clients) {
-                Client cl;
-                cl = client.Data == null ? new Client (workspacesList [currentWorkspaceIndex].Data) : new Client (client.Data);
+            hasFilter = filterString.Length > 0;
 
-                foreach (var project in client.Projects) {
-                    if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
-                        cl.Projects.Add (project);
+            //If no string, don't filter.
+            if (!hasFilter) {
+                UpdateCollection();
+                return;
+            }
+
+            Workspace source;
+
+            // If old filter is contained in the new filter, search an already filtered list.
+            var searchFromPrevious = filter != null && filteredList != null && filterString.ToLower().Contains (filter);
+            source = searchFromPrevious ? filteredList : workspacesList [currentWorkspaceIndex];
+
+            filteredList = new Workspace (workspacesList[currentWorkspaceIndex].Data);
+            filter = filterString.ToLower();
+
+            switch (sortBy) {
+            case SortProjectsBy.Clients:
+
+                foreach (var client in source.Clients) {
+                    Client cl;
+                    cl = client.Data == null ? new Client (workspacesList [currentWorkspaceIndex].Data) : new Client (client.Data);
+
+                    foreach (var project in client.Projects) {
+                        if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                            cl.Projects.Add (project);
+                        }
+                    }
+                    if (cl.Projects.Count > 0) {
+                        filteredList.Clients.Add (cl);
                     }
                 }
-                if (cl.Projects.Count > 0) {
-                    filteredList.Clients.Add (cl);
+                break;
+
+            case SortProjectsBy.Projects:
+
+                foreach (var project in source.Projects) {
+                    if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                        filteredList.Projects.Add (project);
+                    }
                 }
+                break;
             }
             UpdateCollection();
         }
@@ -552,7 +574,7 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             Workspace ws;
-            ws = filtered ? filteredList : workspacesList [currentWorkspaceIndex];
+            ws = hasFilter ? filteredList : workspacesList [currentWorkspaceIndex];
 
             switch (sortBy) {
             case SortProjectsBy.Clients:

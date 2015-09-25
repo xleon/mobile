@@ -28,6 +28,8 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly string TimeEntryIdsArg = "time_entries_ids_param";
         private static readonly int ProjectCreatedRequestCode = 1;
 
+        private readonly Handler handler = new Handler ();
+        private string filter;
         private RecyclerView recyclerView;
         private TabLayout tabLayout;
         private Toolbar toolBar;
@@ -236,8 +238,15 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool OnQueryTextChange (string newText)
         {
-            viewModel.ProjectList.ApplyFilter (newText);
+            filter = newText;
+            handler.RemoveCallbacks (SearchList);
+            handler.PostDelayed (SearchList, 250);
             return true;
+        }
+
+        private void SearchList()
+        {
+            viewModel.ProjectList.ApplyFilter (filter);
         }
 
         public bool OnQueryTextSubmit (string query)

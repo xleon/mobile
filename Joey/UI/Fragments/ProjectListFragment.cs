@@ -134,7 +134,7 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureCorrectState ()
         {
             // Set toolbar scrollable or not.
-            var _params = (AppBarLayout.LayoutParams) toolBar.LayoutParameters;
+            var _params = new AppBarLayout.LayoutParams (toolBar.LayoutParameters);
 
             if (viewModel.ProjectList.Workspaces.Count > 2) {
                 tabLayout.Visibility = ViewStates.Visible;

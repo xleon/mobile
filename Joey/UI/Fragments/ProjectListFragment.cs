@@ -4,7 +4,6 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Support.Design.Widget;
-using Android.Support.V4.View;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
@@ -35,7 +34,6 @@ namespace Toggl.Joey.UI.Fragments
         private Toolbar toolBar;
         private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
-        private SearchView search;
         private LinearLayout searchEmptyState;
 
         private ProjectListViewModel viewModel;

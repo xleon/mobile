@@ -459,7 +459,7 @@ namespace Toggl.Phoebe.Data.Views
             Workspace source;
 
             // If old filter is contained in the new filter, search an already filtered list.
-            var searchFromPrevious = filter != null && filteredList != null && filterString.ToLower().Contains (filter);
+            var searchFromPrevious = filter != null && filteredList != null && workspacesList[currentWorkspaceIndex].Data.Id == filteredList.Data.Id && filterString.ToLower().Contains (filter);
             source = searchFromPrevious ? filteredList : workspacesList [currentWorkspaceIndex];
 
             filteredList = new Workspace (workspacesList[currentWorkspaceIndex].Data);
@@ -643,6 +643,10 @@ namespace Toggl.Phoebe.Data.Views
             } set {
                 if (workspacesList.Count > value) {
                     currentWorkspaceIndex = value;
+                }
+                if (hasFilter) {
+                    ApplyFilter (filter);
+                    return;
                 }
                 UpdateCollection ();
             }

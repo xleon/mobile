@@ -142,9 +142,12 @@ Target "ios-appstore" (fun () ->
     pushd outputFolder
     let zipArgs = String.Format("-r -y {0} {1}", zipFilePath, "Ross.app")
     let result = Shell.Exec ("zip", zipArgs)
-    if result <> 0 then failwithf "zip exited with error" result
-    else TeamCityHelper.PublishArtifact zipFilePath
     popd ()
+
+    // Publish on Teamcity
+    let binaryPath = Path.Combine("Ross", "bin", "iPhone", "AppStore", zipFilePath)
+    if result <> 0 then failwithf "zip exited with error" result
+    else TeamCityHelper.PublishArtifact binaryPath
 
     // Upload dSYM to Xamarin Insights
     let dSYMPath = Path.Combine("Ross", "bin", "iPhone", "AppStore", "Ross.app.dSYM")

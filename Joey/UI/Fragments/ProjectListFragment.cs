@@ -117,7 +117,7 @@ namespace Toggl.Joey.UI.Fragments
             EnsureCorrectState ();
 
             // Create tabs
-            if (viewModel.ProjectList.Workspaces.Count > 2) {
+            if (viewModel.ProjectList.Workspaces.Count > 1) {
                 int i = 0;
                 foreach (var ws in viewModel.ProjectList.Workspaces) {
                     var tab = tabLayout.NewTab().SetText (ws.Data.Name);
@@ -134,9 +134,9 @@ namespace Toggl.Joey.UI.Fragments
         private void EnsureCorrectState ()
         {
             // Set toolbar scrollable or not.
-            var _params = (AppBarLayout.LayoutParams) toolBar.LayoutParameters;
+            var _params = new AppBarLayout.LayoutParams (toolBar.LayoutParameters);
 
-            if (viewModel.ProjectList.Workspaces.Count > 2) {
+            if (viewModel.ProjectList.Workspaces.Count > 1) {
                 tabLayout.Visibility = ViewStates.Visible;
                 _params.ScrollFlags  = AppBarLayout.LayoutParams.ScrollFlagScroll | AppBarLayout.LayoutParams.ScrollFlagEnterAlways;
             } else {

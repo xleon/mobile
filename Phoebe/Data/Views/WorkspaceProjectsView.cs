@@ -15,6 +15,7 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<Workspace> workspacesList = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
         private readonly List<object> dataObjects = new List<object> ();
+        private List<ProjectData> mostUsedProjects = new List<ProjectData> ();
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
@@ -359,12 +360,16 @@ namespace Toggl.Phoebe.Data.Views
                 var workspaceTask = store.Table<WorkspaceData> ()
                                     .QueryAsync (r => r.DeletedAt == null);
                 var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
+                var mostUsedProjectsTask = store.GetMostUsedProjects (userId ?? Guid.Empty);
+
                 var tasksTask = store.Table<TaskData> ()
                                 .QueryAsync (r => r.DeletedAt == null && r.IsActive == true);
                 var clientsTask = store.Table<ClientData> ()
                                   .QueryAsync (r => r.DeletedAt == null);
 
-                await Task.WhenAll (workspaceTask, projectsTask, tasksTask, clientsTask);
+                await Task.WhenAll (mostUsedProjectsTask, workspaceTask, projectsTask, tasksTask, clientsTask);
+
+                var mostUsedProjects = mostUsedProjectsTask.Result;
 
                 var wsList = workspaceTask.Result;
                 workspacesList.Clear();
@@ -577,12 +582,16 @@ namespace Toggl.Phoebe.Data.Views
 
             Workspace ws;
             ws = hasFilter ? filteredList : workspacesList [currentWorkspaceIndex];
-
             switch (sortBy) {
             case SortProjectsBy.Clients:
                 foreach (var client in ws.Clients) {
                     if (client.Projects.Count == 0) {
                         continue;
+                    }
+                    if (mostUsedCurrentWs.Count() > 0) {
+                        foreach (var pr in mostUsedCurrentWs) {
+                            dataObjects.Add (new Project (pr));
+                        }
                     }
                     dataObjects.Add (client);
                     foreach (var project in client.Projects) {
@@ -596,6 +605,11 @@ namespace Toggl.Phoebe.Data.Views
                 }
                 break;
             default:
+                if (mostUsedProjects.Count > 0) {
+                    foreach (var pr in mostUsedProjects) {
+                        dataObjects.Add (new Project (pr));
+                    }
+                }
                 foreach (var project in ws.Projects) {
                     dataObjects.Add (project);
                     if (unfoldedTaskProject != null && project == unfoldedTaskProject) {

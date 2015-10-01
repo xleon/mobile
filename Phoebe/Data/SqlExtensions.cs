@@ -77,6 +77,21 @@ namespace Toggl.Phoebe.Data
             return ds.QueryAsync<ProjectData> (q, userId);
         }
 
+        public static Task<List<ProjectData>> GetMostUsedProjects (this IDataStore ds, Guid userId)
+        {
+            var timeEntryTbl = ds.GetTableName (typeof (TimeEntryData));
+            var projectTbl = ds.GetTableName (typeof (ProjectData));
+            var q = String.Concat (
+                        "SELECT project.* ",
+                        "FROM ", timeEntryTbl, " AS entry INNER JOIN ", projectTbl, " AS project ON entry.ProjectId = project.Id ",
+                        "WHERE entry.ProjectId != '00000000-0000-0000-0000-000000000000' ",
+                        "AND project.WorkspaceId != '00000000-0000-0000-0000-000000000000' ",
+                        "AND project.WorkspaceId IS NOT NULL ",
+                        "GROUP BY entry.ProjectId ORDER BY COUNT(*) DESC"
+                    );
+            return ds.QueryAsync<ProjectData> (q, userId);
+        }
+
         public static Task<long> CountUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
             var projectTbl = ds.GetTableName (typeof (ProjectData));

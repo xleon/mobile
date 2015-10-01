@@ -17,20 +17,24 @@ using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
+using SearchView = Android.Support.V7.Widget.SearchView;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener
+    public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener, SearchView.IOnQueryTextListener
     {
         private static readonly string TimeEntryIdsArg = "time_entries_ids_param";
         private static readonly int ProjectCreatedRequestCode = 1;
 
+        private readonly Handler handler = new Handler ();
+        private string filter;
         private RecyclerView recyclerView;
         private TabLayout tabLayout;
         private Toolbar toolBar;
         private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
+        private LinearLayout searchEmptyState;
 
         private ProjectListViewModel viewModel;
 
@@ -70,6 +74,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
+            searchEmptyState = view.FindViewById<LinearLayout> (Resource.Id.ProjectListSearchEmptyState);
             tabLayout = view.FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
             newProjectFab = view.FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
             toolBar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
@@ -224,9 +229,35 @@ namespace Toggl.Joey.UI.Fragments
         #region Option menu
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
-            base.OnCreateOptionsMenu (menu, inflater);
             inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
-            toolBar.SetOnMenuItemClickListener (this);
+            var item = (IMenuItem) menu.FindItem (Resource.Id.projectSearch);
+            var searchView = Android.Runtime.Extensions.JavaCast<SearchView> (item.ActionView);
+
+            searchView.SetOnQueryTextListener (this);
+        }
+
+        public bool OnQueryTextChange (string newText)
+        {
+            filter = newText;
+            handler.RemoveCallbacks (SearchList);
+            handler.PostDelayed (SearchList, 250);
+            return true;
+        }
+
+        private void SearchList()
+        {
+            bool hasResults = false;;
+            if (filter == null) {
+                return;
+            }
+            hasResults = viewModel.ProjectList.ApplyFilter (filter);
+            recyclerView.Visibility = !hasResults ? ViewStates.Gone : ViewStates.Visible;
+            searchEmptyState.Visibility = !hasResults ? ViewStates.Visible : ViewStates.Gone;
+        }
+
+        public bool OnQueryTextSubmit (string query)
+        {
+            return true;
         }
 
         public override bool OnOptionsItemSelected (IMenuItem item)
@@ -256,6 +287,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             viewModel.ProjectList.CurrentWorkspaceIndex = tab.Position;
             EnsureCorrectState();
+            SearchList();
         }
 
         public void OnTabReselected (TabLayout.Tab tab)

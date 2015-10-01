@@ -18,6 +18,9 @@ namespace Toggl.Phoebe.Data.Views
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
+        private Workspace filteredList;
+        private string filter;
+        private bool hasFilter;
         private bool isLoading;
         private bool hasMore;
         private int currentWorkspaceIndex;
@@ -443,6 +446,57 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        public bool ApplyFilter (string filterString)
+        {
+            hasFilter = filterString.Length > 0;
+
+            //If no string, don't filter.
+            if (!hasFilter) {
+                UpdateCollection();
+                return true;
+            }
+
+            Workspace source;
+
+            // If old filter is contained in the new filter, search an already filtered list.
+            var searchFromPrevious = filter != null && filteredList != null && workspacesList[currentWorkspaceIndex].Data.Id == filteredList.Data.Id && filterString.ToLower().Contains (filter);
+            source = searchFromPrevious ? filteredList : workspacesList [currentWorkspaceIndex];
+
+            filteredList = new Workspace (workspacesList[currentWorkspaceIndex].Data);
+            filter = filterString.ToLower();
+
+            switch (sortBy) {
+            case SortProjectsBy.Clients:
+
+                foreach (var client in source.Clients) {
+                    Client cl;
+                    cl = client.Data == null ? new Client (workspacesList [currentWorkspaceIndex].Data) : new Client (client.Data);
+
+                    foreach (var project in client.Projects) {
+                        if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                            cl.Projects.Add (project);
+                        }
+                    }
+                    if (cl.Projects.Count > 0) {
+                        filteredList.Clients.Add (cl);
+                    }
+                }
+                break;
+
+            case SortProjectsBy.Projects:
+
+                foreach (var project in source.Projects) {
+                    if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                        filteredList.Projects.Add (project);
+                    }
+                }
+                break;
+            }
+            UpdateCollection();
+            return filteredList.Clients.Count != 0 || filteredList.Projects.Count != 1;
+
+        }
+
         private static void SortWorkspaces (List<Workspace> data)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
@@ -521,7 +575,9 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            var ws = workspacesList [currentWorkspaceIndex];
+            Workspace ws;
+            ws = hasFilter ? filteredList : workspacesList [currentWorkspaceIndex];
+
             switch (sortBy) {
             case SortProjectsBy.Clients:
                 foreach (var client in ws.Clients) {

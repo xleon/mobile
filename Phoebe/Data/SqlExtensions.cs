@@ -81,11 +81,13 @@ namespace Toggl.Phoebe.Data
         {
             var timeEntryTbl = ds.GetTableName (typeof (TimeEntryData));
             var projectTbl = ds.GetTableName (typeof (ProjectData));
-            var projectUserTbl = ds.GetTableName (typeof (ProjectUserData));
             var q = String.Concat (
                         "SELECT project.* ",
                         "FROM ", timeEntryTbl, " AS entry INNER JOIN ", projectTbl, " AS project ON entry.ProjectId = project.Id ",
-                        "WHERE entry.ProjectId != '00000000-0000-0000-0000-000000000000' GROUP BY entry.ProjectId ORDER BY COUNT(*) DESC LIMIT 5"
+                        "WHERE entry.ProjectId != '00000000-0000-0000-0000-000000000000' ",
+                        "AND project.WorkspaceId != '00000000-0000-0000-0000-000000000000' ",
+                        "AND project.WorkspaceId IS NOT NULL ",
+                        "GROUP BY entry.ProjectId ORDER BY COUNT(*) DESC"
                     );
             return ds.QueryAsync<ProjectData> (q, userId);
         }

@@ -366,10 +366,7 @@ namespace Toggl.Phoebe.Data.Views
 
                 await Task.WhenAll (mostUsedProjectsTask, workspaceTask, projectsTask, tasksTask, clientsTask);
 
-                var mostUsed = mostUsedProjectsTask.Result;
-                if (mostUsed.Count() > 0) {
-                    mostUsedProjects = mostUsed;
-                }
+                var mostUsedProjects = mostUsedProjectsTask.Result;
 
                 var wsList = workspaceTask.Result;
                 workspacesList.Clear();
@@ -530,14 +527,17 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             var ws = workspacesList [currentWorkspaceIndex];
+
+            var mostUsedCurrentWs = mostUsedProjects.Where (r => r.WorkspaceId == workspacesList[currentWorkspaceIndex].Data.Id).Take (5).ToList();
+
             switch (sortBy) {
             case SortProjectsBy.Clients:
                 foreach (var client in ws.Clients) {
                     if (client.Projects.Count == 0) {
                         continue;
                     }
-                    if (mostUsedProjects.Count > 0) {
-                        foreach (var pr in mostUsedProjects) {
+                    if (mostUsedCurrentWs.Count() > 0) {
+                        foreach (var pr in mostUsedCurrentWs) {
                             dataObjects.Add (new Project (pr));
                         }
                     }

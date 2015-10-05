@@ -232,8 +232,8 @@ namespace Toggl.Joey.UI.Fragments
             inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
             var item = (IMenuItem) menu.FindItem (Resource.Id.projectSearch);
             var searchView = Android.Runtime.Extensions.JavaCast<SearchView> (item.ActionView);
-
             searchView.SetOnQueryTextListener (this);
+            toolBar.SetOnMenuItemClickListener (this);
         }
 
         public bool OnQueryTextChange (string newText)

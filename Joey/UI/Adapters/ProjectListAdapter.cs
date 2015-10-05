@@ -123,7 +123,6 @@ namespace Toggl.Joey.UI.Adapters
             if (position == DataView.Count) {
                 return ViewTypeLoaderPlaceholder;
             }
-
             var obj = GetEntry (position);
             if (obj is WorkspaceProjectsView.Project) {
                 var p = (WorkspaceProjectsView.Project)obj;
@@ -204,7 +203,6 @@ namespace Toggl.Joey.UI.Adapters
                 ColorView.SetBackgroundColor (color);
                 ProjectTextView.SetTextColor (color);
                 ClientTextView.SetTextColor (color);
-
                 ProjectTextView.Text = model.Name;
                 if (model.Client != null && displayClientText) {
                     ClientTextView.Text = model.Client.Name;
@@ -324,7 +322,9 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (model.IsNoClient) {
                     ClientTextView.SetText (Resource.String.ProjectsNoClient);
-                } else {
+                } else if (model.IsMostUsed) {
+                    ClientTextView.SetText (Resource.String.ProjectsMostUsed);
+                } else if (model.Data != null && model.Data.Name != null) {
                     ClientTextView.Text = model.Data.Name;
                 }
             }

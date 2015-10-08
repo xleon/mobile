@@ -706,6 +706,10 @@
     <AndroidResource Include="Resources\layout\ClientListClientItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListClientItem.axml" />
     <AndroidResource Include="Resources\layout\ClientListCreateItem.axml" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcManualMode.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcManualMode.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcManualMode.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcManualMode.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <Import Project="..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets')" />

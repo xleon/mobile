@@ -78,7 +78,7 @@
     <string name="ProjectsNamelessWorkspace">(nameless workspace)</string>
     <string name="NewProjectTitle">New project</string>
     <string name="NewProjectProjectFieldName">Project Name</string>
-    <string name="NewProjectSelectClientFieldName">Select client</string>    
+    <string name="NewProjectSelectClientFieldName">Select client</string>
     <string name="NewProjectClientFieldName">Client</string>
     <string name="NewProjectSaveButtonText">Save</string>
     <string name="NewProjectEmptyDialogTitle">Empty name</string>
@@ -217,4 +217,7 @@
     <string name="CreateClientDialogTitle">New client</string>
     <string name="CreateClientDialogHint">Client name...</string>
     <string name="CreateClientDialogOk">Close</string>
+    <string name="TimerComponentNoProject">(no project)</string>
+    <string name="TimerComponentNoDescription">(no description)</string>
+>>>>>>> Toolbar new layout.
 </resources>

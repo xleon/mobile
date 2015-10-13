@@ -216,5 +216,5 @@
     <string name="SelectClientTitle">Select client</string>
     <string name="CreateClientDialogTitle">New client</string>
     <string name="CreateClientDialogHint">Client name...</string>
-    <string name="CreateClientDialogOk">Create</string>
+    <string name="CreateClientDialogOk">Close</string>
 </resources>

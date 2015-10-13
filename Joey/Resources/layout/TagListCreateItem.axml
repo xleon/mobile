@@ -14,7 +14,7 @@
         android:id="@+id/CreateLabelTextView"
         android:text="@string/TagsAdapterCreateTag"
         android:textColor="@color/group_title_dark_gray"
-        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"

@@ -11,13 +11,9 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class CreateClientDialogFragment : BaseDialogFragment
     {
-        private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
-        private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entry_ids";
-
         private EditText nameEditText;
         private Button positiveButton;
         private CreateClientViewModel viewModel;
-        private Guid workspaceId;
         private ProjectModel project;
 
         public CreateClientDialogFragment ()
@@ -41,7 +37,7 @@ namespace Toggl.Joey.UI.Fragments
                 viewModel = new CreateClientViewModel (project.Workspace.Id);
             }
             viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.Init ();
+            await viewModel.Init ();
 
             ValidateClientName ();
         }

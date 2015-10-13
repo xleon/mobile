@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Client Screen";
         }
 
-        public async void Init ()
+        public async Task Init ()
         {
             try {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;

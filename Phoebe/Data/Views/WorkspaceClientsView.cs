@@ -14,7 +14,6 @@ namespace Toggl.Phoebe.Data.Views
     {
         private readonly List<WorkspaceClientsView.Client> dataObjects = new List<WorkspaceClientsView.Client> ();
         private UserData userData;
-        private Workspace currentWorkspace;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private bool isLoading;
         private bool hasMore;
@@ -25,7 +24,6 @@ namespace Toggl.Phoebe.Data.Views
             this.workspaceId = workspaceId;
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
-
             Reload ();
         }
 
@@ -55,7 +53,6 @@ namespace Toggl.Phoebe.Data.Views
             if (existingData == null || existingData.DefaultWorkspaceId != data.DefaultWorkspaceId) {
                 OnUpdated ();
             }
-
             userData = data;
         }
 
@@ -72,7 +69,6 @@ namespace Toggl.Phoebe.Data.Views
                 }
             } else {
                 var client = new Client (data);
-
                 dataObjects.Add (client);
             }
         }
@@ -109,9 +105,7 @@ namespace Toggl.Phoebe.Data.Views
 
             try {
                 var store = ServiceContainer.Resolve<IDataStore> ();
-
                 userData = ServiceContainer.Resolve<AuthManager> ().User;
-                var userId = userData != null ? userData.Id : (Guid?)null;
 
                 IsLoading = true;
                 dataObjects.Clear ();
@@ -121,7 +115,7 @@ namespace Toggl.Phoebe.Data.Views
 
                 await clientsTask;
                 var clients = clientsTask.Result;
-                dataObjects.Add (new Client (workspaceId));
+                dataObjects.Add (new Client ());
 
                 foreach (var clientData in clients) {
                     var client = new Client (clientData);
@@ -147,7 +141,7 @@ namespace Toggl.Phoebe.Data.Views
                 }
                 return String.Compare (
                            a.Data.Name ?? String.Empty,
-                           b.Data.Name ?? String.Empty,StringComparison.OrdinalIgnoreCase
+                           b.Data.Name ?? String.Empty, StringComparison.OrdinalIgnoreCase
                        );
             });
         }
@@ -205,19 +199,16 @@ namespace Toggl.Phoebe.Data.Views
 
         public class Client
         {
-            private ClientData dataObject;
-            private readonly Guid workspaceId;
+            private readonly ClientData dataObject;
 
             public Client (ClientData dataObject)
             {
                 this.dataObject = dataObject;
-                workspaceId = dataObject.WorkspaceId;
             }
 
-            public Client (Guid wsId)
+            public Client ()
             {
                 dataObject = null;
-                workspaceId = wsId;
             }
 
             public bool IsNewClient
@@ -225,54 +216,9 @@ namespace Toggl.Phoebe.Data.Views
                 get { return dataObject == null; }
             }
 
-            public Guid WorkspaceId
-            {
-                get { return dataObject != null ? dataObject.WorkspaceId : workspaceId; }
-            }
-
             public ClientData Data
             {
                 get { return dataObject; }
-                set {
-                    if (value == null) {
-                        throw new ArgumentNullException ("value");
-                    }
-
-                    if (dataObject.Id != value.Id) {
-                        throw new ArgumentException ("Cannot change Id of the project.", "value");
-                    }
-                    dataObject = value;
-                }
-            }
-        }
-
-        public class Workspace
-        {
-            private WorkspaceData dataObject;
-            private readonly List<Client> clients = new List<Client> ();
-
-            public Workspace (WorkspaceData dataObject)
-            {
-                this.dataObject = dataObject;
-            }
-
-            public WorkspaceData Data
-            {
-                get { return dataObject; }
-                set {
-                    if (value == null) {
-                        throw new ArgumentNullException ("value");
-                    }
-                    if (dataObject.Id != value.Id) {
-                        throw new ArgumentException ("Cannot change Id of the workspace.", "value");
-                    }
-                    dataObject = value;
-                }
-            }
-
-            public List<Client> Clients
-            {
-                get { return clients; }
             }
         }
     }

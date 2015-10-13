@@ -36,7 +36,6 @@ namespace Toggl.Joey.UI.Fragments
         {
             this.workspaceId = workspaceId;
             this.projectModel = projectModel;
-            Console.WriteLine ("workspaceId: {0}", workspaceId);
             viewModel = new ClientListViewModel (this.workspaceId);
         }
 
@@ -45,8 +44,12 @@ namespace Toggl.Joey.UI.Fragments
             base.OnCreate (savedInstanceState);
 
             recyclerView = new RecyclerView (Activity);
+            recyclerView.SetBackgroundColor (Android.Graphics.Color.Aqua);
+
+            var layoutP = new ViewGroup.LayoutParams (ViewGroup.LayoutParams.WrapContent,
+                    150);
+            recyclerView.LayoutParameters = layoutP;
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             if (viewModel == null) {
@@ -57,41 +60,16 @@ namespace Toggl.Joey.UI.Fragments
             adapter.HandleClientSelection = OnItemSelected;
 
             recyclerView.SetAdapter (adapter);
-
-            viewModel.OnIsLoadingChanged += OnModelLoaded;
             await viewModel.Init ();
-
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             return new AlertDialog.Builder (Activity)
                    .SetTitle (Resource.String.SelectClientTitle)
-                   .SetNegativeButton (Resource.String.ChooseTimeEntryTagsDialogCancel, OnCancelButtonClicked)
-                   .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, OnOkButtonClicked)
+                   .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, delegate {})
                    .SetView (recyclerView)
                    .Create ();
-        }
-
-        private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
-        {
-        }
-
-        private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
-        {
-        }
-
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
-        {
-            base.OnViewCreated (view, savedInstanceState);
-        }
-
-        private void OnModelLoaded (object sender, EventArgs e)
-        {
-            if (!viewModel.IsLoading) {
-                if (viewModel.Model == null) {
-                }
-            }
         }
 
         private void OnItemSelected (object m)
@@ -132,10 +110,15 @@ namespace Toggl.Joey.UI.Fragments
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                viewModel.OnIsLoadingChanged -= OnModelLoaded;
                 viewModel.Dispose ();
             }
             base.Dispose (disposing);
+        }
+
+        public override void OnStart ()
+        {
+            base.OnStart ();
+            Dialog.Window.SetLayout (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
         }
     }
 }

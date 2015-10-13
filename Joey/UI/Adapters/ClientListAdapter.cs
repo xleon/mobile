@@ -6,7 +6,6 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
@@ -20,7 +19,6 @@ namespace Toggl.Joey.UI.Adapters
         protected static readonly int ViewTypeClient = ViewTypeContent + 1;
         protected static readonly int ViewTypeLoaderPlaceholder = 0;
         public const long CreateClientId = -1;
-
 
         public Action<object> HandleClientSelection { get; set; }
 
@@ -51,10 +49,10 @@ namespace Toggl.Joey.UI.Adapters
 
         private void HandleClientItemClick (int position)
         {
-            var proj = (WorkspaceClientsView.Client)GetEntry (position);
+            var clientData = (WorkspaceClientsView.Client)GetEntry (position);
             var handler = HandleClientSelection;
             if (handler != null) {
-                handler (proj);
+                handler (clientData);
             }
             return;
         }
@@ -78,9 +76,8 @@ namespace Toggl.Joey.UI.Adapters
             if (position == DataView.Count) {
                 return ViewTypeLoaderPlaceholder;
             }
-            var obj = GetEntry (position);
-            var p = (WorkspaceClientsView.Client)obj;
-            return p.IsNewClient ? ViewTypeNewClient : ViewTypeClient;
+            var clientData = (WorkspaceClientsView.Client) GetEntry (position);
+            return clientData.IsNewClient ? ViewTypeNewClient : ViewTypeClient;
         }
 
         #region View holders
@@ -88,8 +85,6 @@ namespace Toggl.Joey.UI.Adapters
         public class ClientListItemHolder : RecycledBindableViewHolder<WorkspaceClientsView.Client>, View.IOnClickListener
         {
             private readonly ClientListAdapter adapter;
-
-            private ClientModel model;
 
             public TextView ClientTextView { get; private set; }
 
@@ -105,21 +100,13 @@ namespace Toggl.Joey.UI.Adapters
                 adapter.HandleClientSelection (DataSource);
             }
 
-            protected async override void Rebind ()
+            protected override void Rebind ()
             {
                 // Protect against Java side being GCed
                 if (Handle == IntPtr.Zero) {
                     return;
                 }
-
-                model = null;
-                if (DataSource != null) {
-                    model = (ClientModel)DataSource.Data;
-                }
-
-                await model.LoadAsync ();
-
-                ClientTextView.Text = model.Name;
+                ClientTextView.Text = DataSource.Data.Name;
             }
         }
 

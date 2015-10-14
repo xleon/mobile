@@ -464,7 +464,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public bool ApplyFilter (string filterString)
+        public bool ApplyNameFilter (string filterString)
         {
             hasFilter = filterString.Length > 0;
 

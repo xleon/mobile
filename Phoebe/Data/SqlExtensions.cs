@@ -84,8 +84,8 @@ namespace Toggl.Phoebe.Data
             var q = String.Concat (
                         "SELECT project.* ",
                         "FROM ", timeEntryTbl, " AS entry INNER JOIN ", projectTbl, " AS project ON entry.ProjectId = project.Id ",
-                        "WHERE entry.ProjectId != '00000000-0000-0000-0000-000000000000' ",
-                        "AND project.WorkspaceId != '00000000-0000-0000-0000-000000000000' ",
+                        "WHERE entry.ProjectId != '" + Guid.Empty + "'",
+                        "AND project.WorkspaceId != '" + Guid.Empty + "'",
                         "AND project.WorkspaceId IS NOT NULL ",
                         "GROUP BY entry.ProjectId ORDER BY COUNT(*) DESC"
                     );

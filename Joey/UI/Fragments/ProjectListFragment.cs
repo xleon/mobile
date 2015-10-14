@@ -230,7 +230,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
             inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
-            var item = (IMenuItem) menu.FindItem (Resource.Id.projectSearch);
+            var item = menu.FindItem (Resource.Id.projectSearch);
             var searchView = Android.Runtime.Extensions.JavaCast<SearchView> (item.ActionView);
             searchView.SetOnQueryTextListener (this);
             toolBar.SetOnMenuItemClickListener (this);
@@ -246,11 +246,11 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SearchList()
         {
-            bool hasResults = false;;
-            if (filter == null) {
+            if (string.IsNullOrEmpty (filter)) {
                 return;
             }
-            hasResults = viewModel.ProjectList.ApplyFilter (filter);
+
+            bool hasResults = viewModel.ProjectList.ApplyNameFilter (filter);
             recyclerView.Visibility = !hasResults ? ViewStates.Gone : ViewStates.Visible;
             searchEmptyState.Visibility = !hasResults ? ViewStates.Visible : ViewStates.Gone;
         }

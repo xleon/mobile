@@ -1,22 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class WorkspaceClientsView : ICollectionDataView<object>, IDisposable
+    public class WorkspaceClientsView : IDataView<ClientData>, IDisposable
     {
-        private readonly List<WorkspaceClientsView.Client> dataObjects = new List<WorkspaceClientsView.Client> ();
-        private UserData userData;
+        private readonly List<ClientData> dataObjects = new List<ClientData> ();
         private Subscription<DataChangeMessage> subscriptionDataChange;
-        private bool isLoading;
-        private bool hasMore;
         private Guid workspaceId;
 
         public WorkspaceClientsView (Guid workspaceId)
@@ -34,68 +27,72 @@ namespace Toggl.Phoebe.Data.Views
                 bus.Unsubscribe (subscriptionDataChange);
                 subscriptionDataChange = null;
             }
+
+            GC.SuppressFinalize (this);
         }
+
+        public event EventHandler Updated;
 
         private void OnDataChange (DataChangeMessage msg)
         {
-            if (msg.Data is UserData) {
-                OnDataChange ((UserData)msg.Data);
-            } else if (msg.Data is ClientData) {
-                OnDataChange ((ClientData)msg.Data, msg.Action);
+            var clientData = msg.Data as ClientData;
+            if (clientData == null) {
+                return;
             }
-        }
 
-        private void OnDataChange (UserData data)
-        {
-            var existingData = userData;
-
-            userData = data;
-            if (existingData == null || existingData.DefaultWorkspaceId != data.DefaultWorkspaceId) {
-                OnUpdated ();
-            }
-            userData = data;
-        }
-
-        private void OnDataChange (ClientData data, DataAction action)
-        {
-            var isExcluded = action == DataAction.Delete
-                             || data.DeletedAt.HasValue;
-
-            var existingData = dataObjects.FirstOrDefault (item => data.Matches (item));
+            var isExcluded = msg.Action == DataAction.Delete
+                             || clientData.DeletedAt.HasValue
+                             || clientData.WorkspaceId != workspaceId;
+            var existingData = dataObjects.FirstOrDefault (r => r.Matches (clientData));
 
             if (isExcluded) {
                 if (existingData != null) {
                     dataObjects.Remove (existingData);
+                    OnUpdated ();
                 }
             } else {
-                var client = new Client (data);
-                dataObjects.Add (client);
+                clientData = new ClientData (clientData);
+
+                if (existingData == null) {
+                    dataObjects.Add (clientData);
+                } else {
+                    dataObjects.UpdateData (clientData);
+                }
+
+                Sort ();
+                OnUpdated ();
             }
         }
 
         private void OnUpdated ()
         {
-            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
+            var handler = Updated;
+            if (handler != null) {
+                handler (this, EventArgs.Empty);
+            }
         }
 
-        public event NotifyCollectionChangedEventHandler CollectionChanged;
-
-        private void DispatchCollectionEvent (NotifyCollectionChangedEventArgs args)
+        public Guid WorkspaceId
         {
-            var handler = CollectionChanged;
-            if (handler != null) {
-                handler (this, args);
+            get { return workspaceId; }
+            set {
+                if (workspaceId == value) {
+                    return;
+                }
+                workspaceId = value;
+                Reload ();
             }
         }
 
         public async void Reload ()
         {
-            if (IsLoading) {
+            if (IsLoading && workspaceId == Guid.Empty) {
                 return;
             }
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var shouldSubscribe = subscriptionDataChange != null;
+            var store = ServiceContainer.Resolve<IDataStore> ();
 
             if (subscriptionDataChange != null) {
                 bus.Unsubscribe (subscriptionDataChange);
@@ -104,122 +101,53 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             try {
-                var store = ServiceContainer.Resolve<IDataStore> ();
-                userData = ServiceContainer.Resolve<AuthManager> ().User;
-
-                IsLoading = true;
                 dataObjects.Clear ();
+                IsLoading = true;
 
-                var clientsTask = store.Table<ClientData> ()
-                                  .QueryAsync (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
 
-                await clientsTask;
-                var clients = clientsTask.Result;
-                dataObjects.Add (new Client ());
+                var clients = await store.Table<ClientData> ()
+                              .QueryAsync (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
 
-                foreach (var clientData in clients) {
-                    var client = new Client (clientData);
-                    dataObjects.Add (client);
-                }
+                dataObjects.AddRange (clients);
 
-                SortClients (dataObjects);
+                Sort ();
             } finally {
-                IsLoading = false;
-                UpdateCollection ();
-
                 if (shouldSubscribe) {
                     subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
                 }
+                IsLoading = false;
+                OnUpdated ();
             }
         }
 
-        private static void SortClients (List<Client> data)
+        private void Sort ()
         {
-            data.Sort ((a, b) => {
-                if (a.IsNewClient != b.IsNewClient) {
-                    return a.IsNewClient ? -1 : 1;
-                }
-                return String.Compare (
-                           a.Data.Name ?? String.Empty,
-                           b.Data.Name ?? String.Empty, StringComparison.OrdinalIgnoreCase
-                       );
-            });
+            dataObjects.Sort ((a, b) => String.Compare (
+                                  a.Name ?? String.Empty,
+                                  b.Name ?? String.Empty,
+                                  StringComparison.OrdinalIgnoreCase
+                              ));
         }
 
         public void LoadMore () {}
 
-        private void UpdateCollection ()
+        public IEnumerable<ClientData> Data
         {
-            OnUpdated ();
+            get { return dataObjects; }
         }
 
-        public IEnumerable<object> Data
-        {
-            get {
-                return dataObjects;
-            }
-        }
-
-        public int Count
+        public long Count
         {
             get {
                 return dataObjects.Count;
             }
         }
 
-        public event EventHandler OnHasMoreChanged;
-
         public bool HasMore
         {
-            get {
-                return hasMore;
-            }
-            private set {
-                hasMore = value;
-                if (OnHasMoreChanged != null) {
-                    OnHasMoreChanged (this, EventArgs.Empty);
-                }
-            }
+            get { return false; }
         }
 
-        public event EventHandler OnIsLoadingChanged;
-
-        public bool IsLoading
-        {
-            get {
-                return isLoading;
-            }
-            private set {
-                isLoading = value;
-                if (OnIsLoadingChanged != null) {
-                    OnIsLoadingChanged (this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public class Client
-        {
-            private readonly ClientData dataObject;
-
-            public Client (ClientData dataObject)
-            {
-                this.dataObject = dataObject;
-            }
-
-            public Client ()
-            {
-                dataObject = null;
-            }
-
-            public bool IsNewClient
-            {
-                get { return dataObject == null; }
-            }
-
-            public ClientData Data
-            {
-                get { return dataObject; }
-            }
-        }
+        public bool IsLoading { get; private set; }
     }
 }

@@ -13,16 +13,17 @@ using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
+using Android.Widget;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class ClientListFragment : BaseDialogFragment
     {
-        private RecyclerView recyclerView;
+        private ListView listView;
         private ClientListViewModel viewModel;
-        private ClientListAdapter adapter;
         private Guid workspaceId;
-        private NewProjectViewModel projectModel;
+        private ProjectModel model;
+        private ClientsAdapter adapter;
 
         public ClientListFragment ()
         {
@@ -32,63 +33,80 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ClientListFragment (Guid workspaceId, NewProjectViewModel projectModel)
+        public ClientListFragment (Guid workspaceId, ProjectModel project)
         {
             this.workspaceId = workspaceId;
-            this.projectModel = projectModel;
-            viewModel = new ClientListViewModel (this.workspaceId);
+            this.model = project;
+            viewModel = new ClientListViewModel (this.workspaceId, model);
         }
 
         public async override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
 
-            recyclerView = new RecyclerView (Activity);
-            recyclerView.SetBackgroundColor (Android.Graphics.Color.Aqua);
-
-            var layoutP = new ViewGroup.LayoutParams (ViewGroup.LayoutParams.WrapContent,
-                    150);
-            recyclerView.LayoutParameters = layoutP;
-            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
-            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-
             if (viewModel == null) {
-                viewModel = new ClientListViewModel (workspaceId);
+                viewModel = new ClientListViewModel (workspaceId, model);
+            }
+            await viewModel.Init ();
+
+            if (viewModel.Model.Workspace == null || viewModel.Model.Workspace.Id == Guid.Empty) {
+                Dismiss ();
+            }
+        }
+
+        private void OnModelLoaded (object sender, EventArgs e)
+        {
+            if (!viewModel.IsLoading) {
+                if (viewModel.Model != null) {
+                    viewModel.ClientListDataView.Updated += OnWorkspaceClientsUpdated;
+                } else {
+                    Dismiss ();
+                }
+            }
+        }
+
+        private void OnWorkspaceClientsUpdated (object sender, EventArgs args)
+        {
+            if (!viewModel.ClientListDataView.IsLoading) {
+            }
+        }
+
+        public override void OnDestroy ()
+        {
+            if (viewModel != null) {
+                viewModel.OnIsLoadingChanged -= OnModelLoaded;
+                viewModel.ClientListDataView.Updated -= OnWorkspaceClientsUpdated;
+                viewModel.Dispose ();
+                viewModel = null;
             }
 
-            adapter = new ClientListAdapter (recyclerView, viewModel.ClientList);
-            adapter.HandleClientSelection = OnItemSelected;
-
-            recyclerView.SetAdapter (adapter);
-            await viewModel.Init ();
+            base.OnDestroy ();
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
-            return new AlertDialog.Builder (Activity)
-                   .SetTitle (Resource.String.SelectClientTitle)
-                   .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, delegate {})
-                   .SetView (recyclerView)
-                   .Create ();
+            adapter = new ClientsAdapter (viewModel.ClientListDataView);
+            var dia = new AlertDialog.Builder (Activity)
+            .SetTitle (Resource.String.SelectClientTitle)
+            .SetAdapter (new ClientsAdapter (viewModel.ClientListDataView), (IDialogInterfaceOnClickListener)null)
+            .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, delegate {})
+            .Create ();
+
+            listView = dia.ListView;
+            listView.Clickable = true;
+            listView.ItemClick += OnItemClick;
+
+            return dia;
         }
 
-        private void OnItemSelected (object m)
+        private void OnItemClick (object sender, AdapterView.ItemClickEventArgs e)
         {
-            var client = (WorkspaceClientsView.Client)m;
-            if (client.IsNewClient) {
-                new CreateClientDialogFragment (projectModel.Model).Show (FragmentManager, "new_client_dialog");
+            if (e.Id == ClientsAdapter.CreateClientId) {
+                new CreateClientDialogFragment (model).Show (FragmentManager, "new_client_dialog");
             } else {
-                projectModel.Model.Client =  new ClientModel (((WorkspaceClientsView.Client)m).Data);
+                viewModel.Model.Client = (ClientModel) adapter.GetEntry (e.Position);
             }
             Dismiss ();
-        }
-
-        public override bool OnOptionsItemSelected (IMenuItem item)
-        {
-            if (item.ItemId == Android.Resource.Id.Home) {
-                Activity.OnBackPressed ();
-            }
-            return base.OnOptionsItemSelected (item);
         }
 
         public override void OnActivityResult (int requestCode, int resultCode, Intent data)
@@ -99,26 +117,6 @@ namespace Toggl.Joey.UI.Fragments
                     Activity.Finish();
                 }
             }
-        }
-
-        public override void OnDestroyView ()
-        {
-            Dispose (true);
-            base.OnDestroyView ();
-        }
-
-        protected override void Dispose (bool disposing)
-        {
-            if (disposing) {
-                viewModel.Dispose ();
-            }
-            base.Dispose (disposing);
-        }
-
-        public override void OnStart ()
-        {
-            base.OnStart ();
-            Dialog.Window.SetLayout (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
         }
     }
 }

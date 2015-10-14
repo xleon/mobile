@@ -174,7 +174,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SelectClientBitClickedHandler (object sender, EventArgs e)
         {
-            new ClientListFragment (viewModel.Model.Data.WorkspaceId, viewModel).Show (FragmentManager, "clients_dialog");
+            new ClientListFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model).Show (FragmentManager, "clients_dialog");
         }
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)

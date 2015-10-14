@@ -169,7 +169,7 @@
     <Compile Include="UI\Views\TogglAppBar.cs" />
     <Compile Include="UI\Fragments\CreateClientDialogFragment.cs" />
     <Compile Include="UI\Fragments\ClientListFragment.cs" />
-    <Compile Include="UI\Adapters\ClientListAdapter.cs" />
+    <Compile Include="UI\Adapters\ClientsAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -706,6 +706,7 @@
     <AndroidResource Include="Resources\layout\ClientListFragment.axml" />
     <AndroidResource Include="Resources\layout\ClientListClientItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListClientItem.axml" />
+    <AndroidResource Include="Resources\layout\ClientListCreateItem.axml" />
   </ItemGroup>
   <Import Project="..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.10.6\build\MonoAndroid10\Xamarin.Insights.targets')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

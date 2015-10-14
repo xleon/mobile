@@ -2,18 +2,14 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Support.V7.Widget;
-using Android.Views;
+using Android.Widget;
 using Toggl.Joey.UI.Adapters;
-using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
-using Android.Widget;
 
 namespace Toggl.Joey.UI.Fragments
 {

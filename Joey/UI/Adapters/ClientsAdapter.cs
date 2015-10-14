@@ -4,9 +4,9 @@ using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
 using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
-using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Joey.UI.Adapters
 {

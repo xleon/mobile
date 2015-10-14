@@ -4,8 +4,8 @@ using Android.Content;
 using Android.OS;
 using Android.Text;
 using Android.Widget;
-using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {

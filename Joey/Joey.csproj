@@ -703,7 +703,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\ic_menu_black_24dp.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ic_menu_black_24dp.png" />
     <AndroidResource Include="Resources\drawable\TabsBgPattern.xml" />
-    <AndroidResource Include="Resources\layout\ClientListFragment.axml" />
     <AndroidResource Include="Resources\layout\ClientListClientItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListClientItem.axml" />
     <AndroidResource Include="Resources\layout\ClientListCreateItem.axml" />

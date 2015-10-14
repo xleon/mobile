@@ -15,9 +15,13 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<Workspace> workspacesList = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
         private readonly List<object> dataObjects = new List<object> ();
+        private List<ProjectData> mostUsedProjects = new List<ProjectData> ();
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
+        private Workspace filteredList;
+        private string filter;
+        private bool hasFilter;
         private bool isLoading;
         private bool hasMore;
         private int currentWorkspaceIndex;
@@ -356,12 +360,14 @@ namespace Toggl.Phoebe.Data.Views
                 var workspaceTask = store.Table<WorkspaceData> ()
                                     .QueryAsync (r => r.DeletedAt == null);
                 var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
+                var mostUsedProjectsTask = store.GetMostUsedProjects (userId ?? Guid.Empty);
+
                 var tasksTask = store.Table<TaskData> ()
                                 .QueryAsync (r => r.DeletedAt == null && r.IsActive == true);
                 var clientsTask = store.Table<ClientData> ()
                                   .QueryAsync (r => r.DeletedAt == null);
 
-                await Task.WhenAll (workspaceTask, projectsTask, tasksTask, clientsTask);
+                await Task.WhenAll (mostUsedProjectsTask, workspaceTask, projectsTask, tasksTask, clientsTask);
 
                 var wsList = workspaceTask.Result;
                 workspacesList.Clear();
@@ -369,15 +375,29 @@ namespace Toggl.Phoebe.Data.Views
                     var workspace = new Workspace (ws);
                     var projects = projectsTask.Result.Where (r => r.WorkspaceId == ws.Id);
                     var clients = new List<ClientData> ();
+
                     clients.Add (new ClientData());
                     clients.AddRange (clientsTask.Result.Where (r => r.WorkspaceId == ws.Id));
                     FillClientsBranchForWorkspace (workspace, clients, projects, tasksTask);
                     FillProjectsBranchForWorkspace (workspace, projects, tasksTask);
+
+                    var mostUsed = mostUsedProjectsTask.Result.Where (r => r.WorkspaceId == workspace.Data.Id).Take (5).ToList();
+                    if (mostUsed.Any ()) {
+                        var mostUsedClient = new Client (workspace.Data);
+                        mostUsedClient.IsMostUsed = true;
+                        foreach (var p in mostUsed) {
+                            var pr = new Project (p);
+                            mostUsedClient.Projects.Add (pr);
+                        }
+                        workspace.Clients.Add (mostUsedClient);
+                    }
+
                     workspacesList.Add (workspace);
                 }
 
                 clientDataObjects.AddRange (clientsTask.Result);
                 SortEverything();
+
             } finally {
                 UpdateCollection ();
                 IsLoading = false;
@@ -396,6 +416,7 @@ namespace Toggl.Phoebe.Data.Views
 
                 if (workspace.Clients.Count == 0) { // first element
                     client = new Client (workspace.Data);
+                    client.IsNoClient = true;
                     client.Projects.Add (new Project (workspace.Data));
                     projectsOfClient = projects.Where (r => r.ClientId == null);
                 } else {
@@ -431,8 +452,8 @@ namespace Toggl.Phoebe.Data.Views
         {
             SortWorkspaces (workspacesList);
             foreach (var ws in workspacesList) {
-                SortProjects (ws.Projects, clientDataObjects);
 
+                SortProjects (ws.Projects, clientDataObjects);
                 SortClients (ws.Clients);
                 foreach (var client in ws.Clients) {
                     SortProjects (client.Projects, new List<ClientData> ());
@@ -441,6 +462,67 @@ namespace Toggl.Phoebe.Data.Views
                     }
                 }
             }
+        }
+
+        public bool ApplyNameFilter (string filterString)
+        {
+            hasFilter = filterString.Length > 0;
+
+            //If no string, don't filter.
+            if (!hasFilter) {
+                UpdateCollection();
+                return true;
+            }
+
+            Workspace source;
+
+            // If old filter is contained in the new filter, search an already filtered list.
+            var searchFromPrevious = filter != null && filteredList != null && workspacesList[currentWorkspaceIndex].Data.Id == filteredList.Data.Id && filterString.ToLower().Contains (filter);
+            source = searchFromPrevious ? filteredList : workspacesList [currentWorkspaceIndex];
+
+            filteredList = new Workspace (workspacesList[currentWorkspaceIndex].Data);
+            filter = filterString.ToLower();
+
+            switch (sortBy) {
+            case SortProjectsBy.Clients:
+
+                foreach (var client in source.Clients) {
+                    Client cl;
+
+                    if (client.Data == null) {
+                        cl = new Client (workspacesList [currentWorkspaceIndex].Data);
+                        if (cl.IsMostUsed) {
+                            cl.IsMostUsed = client.IsMostUsed;
+                        } else if (cl.IsNoClient) {
+                            cl.IsNoClient = client.IsNoClient;
+                        }
+                    } else {
+                        cl = new Client (client.Data);
+                    }
+
+                    foreach (var project in client.Projects) {
+                        if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                            cl.Projects.Add (project);
+                        }
+                    }
+                    if (cl.Projects.Count > 0) {
+                        filteredList.Clients.Add (cl);
+                    }
+                }
+                break;
+
+            case SortProjectsBy.Projects:
+
+                foreach (var project in source.Projects) {
+                    if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                        filteredList.Projects.Add (project);
+                    }
+                }
+                break;
+            }
+            UpdateCollection();
+            return filteredList.Clients.Count != 0 || filteredList.Projects.Count != 1;
+
         }
 
         private static void SortWorkspaces (List<Workspace> data)
@@ -492,9 +574,18 @@ namespace Toggl.Phoebe.Data.Views
         private static void SortClients (List<Client> data)
         {
             data.Sort ((a, b) => {
+                if (data.IndexOf (a) == data.IndexOf (b)) {
+                    return 0;
+                }
+
+                if (a.IsMostUsed != b.IsMostUsed) {
+                    return a.IsMostUsed ? -1 : 1;
+                }
+
                 if (a.IsNoClient != b.IsNoClient) {
                     return a.IsNoClient ? -1 : 1;
                 }
+
                 return String.Compare (
                            a.Data.Name ?? String.Empty,
                            b.Data.Name ?? String.Empty,StringComparison.InvariantCulture
@@ -521,13 +612,16 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            var ws = workspacesList [currentWorkspaceIndex];
+            Workspace ws;
+            ws = hasFilter ? filteredList : workspacesList [currentWorkspaceIndex];
             switch (sortBy) {
             case SortProjectsBy.Clients:
+
                 foreach (var client in ws.Clients) {
                     if (client.Projects.Count == 0) {
                         continue;
                     }
+
                     dataObjects.Add (client);
                     foreach (var project in client.Projects) {
                         dataObjects.Add (project);
@@ -540,6 +634,7 @@ namespace Toggl.Phoebe.Data.Views
                 }
                 break;
             default:
+
                 foreach (var project in ws.Projects) {
                     dataObjects.Add (project);
                     if (unfoldedTaskProject != null && project == unfoldedTaskProject) {
@@ -547,6 +642,11 @@ namespace Toggl.Phoebe.Data.Views
                             dataObjects.Add (task);
                         }
                     }
+                }
+                var mostUsedClientList = ws.Clients.Where (c => c.IsMostUsed);
+                if (mostUsedClientList.Any ()) {
+                    var mostUsedClient = mostUsedClientList.First ();
+                    dataObjects.InsertRange (1, mostUsedClient.Projects);
                 }
                 break;
             }
@@ -682,11 +782,12 @@ namespace Toggl.Phoebe.Data.Views
             public Client (WorkspaceData workspaceData)
             {
                 dataObject = null;
-                IsNoClient = true;
                 workspaceId = workspaceData.Id;
             }
 
             public bool IsNoClient { get; set; }
+
+            public bool IsMostUsed { get; set; }
 
             public Guid WorkspaceId
             {

@@ -77,6 +77,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
+        public void SaveClient (ClientModel client)
+        {
+            model.Client = client;
+        }
+
         public event EventHandler OnIsLoadingChanged;
 
         public bool IsLoading

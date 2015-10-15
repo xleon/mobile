@@ -100,7 +100,7 @@ namespace Toggl.Joey.UI.Fragments
             if (e.Id == ClientsAdapter.CreateClientId) {
                 new CreateClientDialogFragment (model).Show (FragmentManager, "new_client_dialog");
             } else {
-                viewModel.Model.Client = (ClientModel) adapter.GetEntry (e.Position);
+                viewModel.SaveClient ((ClientModel) adapter.GetEntry (e.Position));
             }
             Dismiss ();
         }

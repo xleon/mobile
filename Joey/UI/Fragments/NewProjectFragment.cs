@@ -6,6 +6,7 @@ using Android.OS;
 using Android.Text;
 using Android.Views;
 using Android.Views.InputMethods;
+using Android.Widget;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
@@ -20,11 +21,15 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class NewProjectFragment : Fragment
     {
+        public static readonly int ClientSelectedRequestCode = 1;
+
         private ActionBar Toolbar;
         private bool isSaving;
         private NewProjectViewModel viewModel;
 
         public TogglField ProjectBit { get; private set; }
+        public TogglField SelectClientBit { get; private set; }
+        private EditText ClientEditText { get; set; }
         public ColorPickerRecyclerView ColorPicker { get; private set; }
 
         public NewProjectFragment ()
@@ -57,6 +62,14 @@ namespace Toggl.Joey.UI.Fragments
                          .SetName (Resource.String.NewProjectProjectFieldName);
             ProjectBit.TextField.TextChanged += ProjectBitTextChangedHandler;
 
+            SelectClientBit = view.FindViewById<TogglField> (Resource.Id.SelectClientNameBit)
+                              .DestroyAssistView().SetName (Resource.String.NewProjectSelectClientFieldName)
+                              .SimulateButton();
+
+            ClientEditText = SelectClientBit.TextField;
+            ClientEditText.Click += SelectClientBitClickedHandler;
+            SelectClientBit.Click += SelectClientBitClickedHandler;
+
             ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
             ColorPicker.SelectedColorChanged += (sender, e) => {
                 viewModel.Model.Color = e;
@@ -77,16 +90,12 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             viewModel.OnIsLoadingChanged += OnModelLoaded;
+            viewModel.OnModelChanged += OnModelChanged;
             await viewModel.Init ();
         }
 
         private void OnModelLoaded (object sender, EventArgs e)
         {
-            if (!viewModel.IsLoading) {
-                if (viewModel == null) {
-                    Activity.Finish ();
-                }
-            }
         }
 
         public override void OnStart ()
@@ -103,6 +112,22 @@ namespace Toggl.Joey.UI.Fragments
             viewModel.OnIsLoadingChanged -= OnModelLoaded;
             viewModel.Dispose ();
             base.OnDestroyView ();
+        }
+
+        private void OnModelChanged (object sender, EventArgs e)
+        {
+            Rebind ();
+        }
+
+        private void Rebind()
+        {
+            if (viewModel.Model == null) {
+                return;
+            }
+            var project = viewModel.Model;
+            if (project.Client != null) {
+                ClientEditText.Text = project.Client.Name;
+            }
         }
 
         private async void SaveButtonHandler (object sender, EventArgs e)
@@ -147,6 +172,11 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        private void SelectClientBitClickedHandler (object sender, EventArgs e)
+        {
+            new ClientListFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model).Show (FragmentManager, "clients_dialog");
+        }
+
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
             menu.Add (Resource.String.NewProjectSaveButtonText).SetShowAsAction (ShowAsAction.Always);
@@ -170,4 +200,3 @@ namespace Toggl.Joey.UI.Fragments
         }
     }
 }
-

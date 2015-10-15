@@ -78,6 +78,7 @@
     <string name="ProjectsNamelessWorkspace">(nameless workspace)</string>
     <string name="NewProjectTitle">New project</string>
     <string name="NewProjectProjectFieldName">Project Name</string>
+    <string name="NewProjectSelectClientFieldName">Select client</string>    
     <string name="NewProjectClientFieldName">Client</string>
     <string name="NewProjectSaveButtonText">Save</string>
     <string name="NewProjectEmptyDialogTitle">Empty name</string>
@@ -122,7 +123,7 @@
     <string name="ChooseTimeEntryTagsDialogTitle">Select tags</string>
     <string name="ChooseTimeEntryTagsDialogCancel">Cancel</string>
     <string name="ChooseTimeEntryTagsDialogOk">Ok</string>
-    <string name="TagsAdapterCreateTag">New&#8230;</string>
+    <string name="TagsAdapterCreateTag">New tag</string>
     <string name="ChooseTimeEntryProjectDialogTitle">Select project</string>
     <string name="ChooseTimeEntryProjectDialogCancel">Cancel</string>
     <string name="WelcomeBoxTapToStart">Tap on the start button to start tracking</string>
@@ -206,10 +207,14 @@
     <string name="SwitchViewText">or you can</string>
     <string name="LoginViewButtonText">Log in</string>
     <string name="SignupViewButtonText">Sign up</string>
-    <string name="ClientsNoClient">No client</string>
+    <string name="ClientsNewClient">New client</string>
     <string name="ProjectListEmptyStateText">You haven\'t created any projects\nin this workspace yet. <b>Create</b> one now!</string>
     <string name="ProjectListToolbarMenuTitle">SORT BY</string>
     <string name="ProjectListToolbarMenuProjects">Projects</string>
     <string name="ProjectListToolbarMenuClients">Clients</string>
     <string name="ProjectListEmptySearchText">Sorry, no results were found!</string>
+    <string name="SelectClientTitle">Select client</string>
+    <string name="CreateClientDialogTitle">New client</string>
+    <string name="CreateClientDialogHint">Client name...</string>
+    <string name="CreateClientDialogOk">Close</string>
 </resources>

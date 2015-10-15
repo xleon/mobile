@@ -44,4 +44,3 @@ namespace Toggl.Joey.UI.Activities
         }
     }
 }
-

@@ -186,9 +186,16 @@ namespace Toggl.Phoebe.Data.Views
                 } else if (FindWorkspace (data.WorkspaceId, out workspace)) {
                     project = new Project (data);
 
-                    workspace.Projects.Add (project);
-                    SortProjects (workspace.Projects, clientDataObjects);
-                    UpdateCollection ();
+                    if (project.Data.ClientId == null) {
+                        workspace.Clients.First ().Projects.Add (project);
+                    } else {
+                        workspace.Clients
+                        .Where (r => r.Data != null)
+                        .Where (r => r.Data.Id == project.Data.ClientId)
+                        .First ().Projects.Add (project);
+                    }
+                    SortEverything ();
+                    UpdateCollection();
                 }
             }
         }
@@ -249,6 +256,7 @@ namespace Toggl.Phoebe.Data.Views
             if (isExcluded) {
                 if (existingData != null) {
                     clientDataObjects.Remove (existingData);
+                    workspacesList[currentWorkspaceIndex].Clients.Remove (new Client (existingData));
                 }
             } else {
                 data = new ClientData (data);
@@ -265,6 +273,8 @@ namespace Toggl.Phoebe.Data.Views
                     }
                 } else {
                     clientDataObjects.Add (data);
+                    workspacesList[currentWorkspaceIndex].Clients.Add (new Client (data));
+
                 }
             }
         }

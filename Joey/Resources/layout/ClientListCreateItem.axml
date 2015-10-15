@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/task_highlight_focus"
+    android:layout_width="match_parent"
+    android:layout_height="52dp">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/play_button_background"
+        android:gravity="center_vertical">
+        <toggl.joey.ui.views.FadeLinearLayout
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            app:fadeLength="15dp">
+            <ImageView
+                android:src="@drawable/IcAddGrey"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="6dp" />
+            <TextView
+                android:id="@+id/CreateLabelTextView"
+                android:text="@string/ClientsNewClient"
+                android:textColor="@color/group_title_dark_gray"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginRight="12dp" />
+        </toggl.joey.ui.views.FadeLinearLayout>
+    </LinearLayout>
+</RelativeLayout>

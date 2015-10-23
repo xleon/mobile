@@ -4,15 +4,13 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class CreateClientViewModel : IViewModel<ClientModel>
+    public class CreateClientViewModel : IVModel<ClientModel>
     {
         private ClientModel model;
-        private bool isLoading;
         private Guid workspaceId;
         private WorkspaceModel workspaceModel;
 
@@ -24,88 +22,49 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public async Task Init ()
         {
-            try {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                if (user == null) {
-                    model = null;
-                    return;
-                }
+            IsLoading = true;
 
+            workspaceModel = new WorkspaceModel (workspaceId);
+            await workspaceModel.LoadAsync ();
 
-                workspaceModel = new WorkspaceModel (workspaceId);
-                await workspaceModel.LoadAsync ();
+            model = new ClientModel {
+                Workspace = workspaceModel
+            };
 
-                model = new ClientModel {
-                    Workspace = workspaceModel
-                };
-
-                if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
-                    model = null;
-                }
-            } catch (Exception ex) {
-                model = null;
-            } finally {
-                IsLoading = false;
-            }
+            IsLoading = false;
         }
 
-        public async Task AssignClient (string clientName, ProjectModel project)
+        public void Dispose ()
+        {
+            workspaceModel = null;
+            model = null;
+        }
+
+        public bool IsLoading { get; set; }
+
+        public string ClientName { get; set; }
+
+
+        public async Task SaveNewClient ()
         {
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<ClientData>()
-                           .QueryAsync (r => r.WorkspaceId == workspaceId && r.Name == clientName)
+                           .QueryAsync (r => r.WorkspaceId == workspaceId && r.Name == ClientName)
                            .ConfigureAwait (false);
 
             if (existing.Count > 0) {
                 model = new ClientModel (existing [0]);
             } else {
-                model.Name = clientName;
+                model.Name = ClientName;
             }
+
             await model.SaveAsync ();
-            project.Client = model;
         }
 
-        public void Dispose ()
+
+        public ClientData GetClientData ()
         {
-        }
-
-        public event EventHandler OnModelChanged;
-
-        public ClientModel Model
-        {
-            get {
-                return model;
-            }
-
-            private set {
-
-                model = value;
-
-                if (OnModelChanged != null) {
-                    OnModelChanged (this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public event EventHandler OnIsLoadingChanged;
-
-        public bool IsLoading
-        {
-            get {
-                return isLoading;
-            }
-            private set {
-
-                if (isLoading  == value) {
-                    return;
-                }
-
-                isLoading = value;
-
-                if (OnIsLoadingChanged != null) {
-                    OnIsLoadingChanged (this, EventArgs.Empty);
-                }
-            }
+            return model.Data;
         }
     }
 }

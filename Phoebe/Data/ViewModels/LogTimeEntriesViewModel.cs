@@ -27,7 +27,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
         }
 
-        public Task Init ()
+        public void Init ()
         {
             IsLoading = true;
 

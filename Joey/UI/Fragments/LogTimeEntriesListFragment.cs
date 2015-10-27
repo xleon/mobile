@@ -8,17 +8,14 @@ using Android.Support.V7.Widget;
 using Android.Support.V7.Widget.Helper;
 using Android.Views;
 using Android.Widget;
-using Toggl.Joey.Data;
+using Praeclarum.Bind;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
-using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -26,17 +23,52 @@ namespace Toggl.Joey.UI.Fragments
     {
         private RecyclerView recyclerView;
         private View emptyMessageView;
-        private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private LogTimeEntriesAdapter logAdapter;
         private StartStopFab startStopBtn;
         private CoordinatorLayout coordinatorLayout;
 
+        private bool isRunning;
         private TimeEntriesCollectionView collectionView;
+        private LogTimeEntriesViewModel viewModel;
+        private Binding binding;
 
         // Recycler setup
         private DividerItemDecoration dividerDecoration;
         private ShadowItemDecoration shadowDecoration;
         private ItemTouchListener itemTouchListener;
+
+        #region Binded properties
+
+        private TimeEntriesCollectionView CollectionView
+        {
+            get {
+                return collectionView;
+            } set {
+                collectionView = value;
+
+                if (collectionView.Count > 0) {
+                    recyclerView.Visibility = ViewStates.Visible;
+                    emptyMessageView.Visibility = ViewStates.Gone;
+                    logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
+                    recyclerView.SetAdapter (logAdapter);
+                } else {
+                    emptyMessageView.Visibility = ViewStates.Visible;
+                    recyclerView.Visibility = ViewStates.Gone;
+                }
+            }
+        }
+
+        public bool IsRunning
+        {
+            get {
+                return isRunning;
+            } set {
+                isRunning = value;
+                startStopBtn.ButtonAction = isRunning ? FABButtonState.Stop : FABButtonState.Start;
+            }
+        }
+
+        #endregion
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -57,54 +89,10 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            startStopBtn.Click += timerComponent.OnActionButtonClicked;
-            timerComponent.FABStateChange += OnFABChange;
-        }
-
-        private void OnFABChange (object sender, EventArgs e)
-        {
-            if (timerComponent != null) {
-                startStopBtn.ButtonAction = timerComponent.EntryState;
-            }
-        }
-
-        private TimerComponent timerComponent
-        {
-            get {
-                var activity = (MainDrawerActivity)Activity;
-                return activity.Timer ?? null;
-            }
-        }
-
-        public override void OnResume ()
-        {
-            EnsureAdapter ();
-            base.OnResume ();
-        }
-
-        public override bool UserVisibleHint
-        {
-            get { return base.UserVisibleHint; }
-            set {
-                base.UserVisibleHint = value;
-                EnsureAdapter ();
-            }
-        }
-
-        private async void EnsureAdapter ()
-        {
-            if (recyclerView.GetAdapter() == null) {
-                var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
-                collectionView = isGrouped ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
-                await collectionView.ReloadAsync ();
-
-                logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
-                recyclerView.SetAdapter (logAdapter);
-                SetupRecyclerView ();
-            }
+            viewModel = new LogTimeEntriesViewModel ();
+            viewModel.Init ();
+            binding = Binding.Create (() => CollectionView == viewModel.CollectionView);
+            startStopBtn.Click += async (sender, e) => await viewModel.StartStopTimeEntry ();
         }
 
         public override void OnDestroyView ()
@@ -114,12 +102,8 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionSettingChanged != null) {
-                bus.Unsubscribe (subscriptionSettingChanged);
-                subscriptionSettingChanged = null;
-            }
-
+            binding.Unbind ();
+            viewModel.Dispose ();
             ReleaseRecyclerView ();
 
             base.OnDestroyView ();
@@ -157,18 +141,6 @@ namespace Toggl.Joey.UI.Fragments
             itemTouchListener.Dispose ();
             dividerDecoration.Dispose ();
             shadowDecoration.Dispose ();
-        }
-
-        private void OnSettingChanged (SettingChangedMessage msg)
-        {
-            // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-
-            if (msg.Name == SettingsStore.PropertyGroupedTimeEntries) {
-                EnsureAdapter();
-            }
         }
 
         #region IDismissListener implementation

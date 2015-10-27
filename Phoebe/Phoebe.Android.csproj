@@ -68,6 +68,7 @@
     <Compile Include="..\Contrib\Bind\Bind.cs">
       <Link>Contrib\Bind\Bind.cs</Link>
     </Compile>
+    <Compile Include="Data\ViewModels\LogTimeEntriesViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

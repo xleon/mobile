@@ -33,7 +33,6 @@ namespace Toggl.Phoebe.Data.Views
             userData = ServiceContainer.Resolve<AuthManager> ().User;
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
-            Reload ();
         }
 
         public Project UnfoldedTaskProject
@@ -345,7 +344,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public async void Reload ()
+        public async Task ReloadAsync ()
         {
             if (IsLoading) {
                 return;
@@ -612,7 +611,7 @@ namespace Toggl.Phoebe.Data.Views
                        ));
         }
 
-        public void LoadMore () {}
+        public Task LoadMoreAsync () { return null; }
 
         private void UpdateCollection ()
         {

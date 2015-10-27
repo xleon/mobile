@@ -54,8 +54,6 @@ namespace Toggl.Phoebe.Data.Views
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
             HasMore = true;
 
-            Reload ();
-
             cts = new CancellationTokenSource ();
             cancellationToken = cts.Token;
         }
@@ -373,7 +371,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public void Reload ()
+        public async Task ReloadAsync ()
         {
             if (IsLoading) {
                 return;
@@ -394,16 +392,16 @@ namespace Toggl.Phoebe.Data.Views
                     subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
                 }
             } else {
-                Load (true);
+                await Load (true);
             }
         }
 
-        public void LoadMore ()
+        public async Task LoadMoreAsync ()
         {
-            Load (false);
+            await Load (false);
         }
 
-        private async void Load (bool initialLoad)
+        private async Task Load (bool initialLoad)
         {
             if (IsLoading || !HasMore) {
                 return;

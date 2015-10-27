@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
@@ -71,7 +72,9 @@ namespace Toggl.Joey.UI.Adapters
 
             // Sometimes a new call to LoadMore is needed.
             if (lastLoadingPosition + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
-                dataView.LoadMore ();
+                Task.Run ( async () => {
+                    await dataView.LoadMoreAsync ();
+                });
             }
         }
 
@@ -125,7 +128,9 @@ namespace Toggl.Joey.UI.Adapters
         {
             if (position + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
                 lastLoadingPosition = position;
-                dataView.LoadMore ();
+                Task.Run ( async () => {
+                    await dataView.LoadMoreAsync ();
+                });
             }
 
             if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {

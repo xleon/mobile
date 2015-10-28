@@ -45,12 +45,12 @@ namespace Toggl.Joey.UI.Fragments
                 return collectionView;
             } set {
                 collectionView = value;
+                logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
+                recyclerView.SetAdapter (logAdapter);
 
                 if (collectionView.Count > 0) {
                     recyclerView.Visibility = ViewStates.Visible;
                     emptyMessageView.Visibility = ViewStates.Gone;
-                    logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
-                    recyclerView.SetAdapter (logAdapter);
                 } else {
                     emptyMessageView.Visibility = ViewStates.Visible;
                     recyclerView.Visibility = ViewStates.Gone;
@@ -83,15 +83,20 @@ namespace Toggl.Joey.UI.Fragments
             coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             startStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
 
+            SetupRecyclerView ();
             return view;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
             viewModel = new LogTimeEntriesViewModel ();
-            viewModel.Init ();
-            binding = Binding.Create (() => CollectionView == viewModel.CollectionView);
+            await viewModel.Init ();
+
+            binding = Binding.Create (() =>
+                                      CollectionView == viewModel.CollectionView &&
+                                      IsRunning == viewModel.IsTimeEntryRunning);
+
             startStopBtn.Click += async (sender, e) => await viewModel.StartStopTimeEntry ();
         }
 

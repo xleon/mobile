@@ -27,12 +27,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
         }
 
-        public void Init ()
+        public async Task Init ()
         {
             IsLoading = true;
 
             SyncModel ();
-            SyncCollectionView ();
+            await SyncCollectionView ();
 
             IsLoading = false;
         }
@@ -68,14 +68,12 @@ namespace Toggl.Phoebe.Data.ViewModels
                 return;
             }
 
-            IsProcessingAction = true;
-            if (!IsTimeEntryRunning) {
-                await model.StartAsync ();
-            } else {
+            if (model.State == TimeEntryState.Running) {
                 await model.StopAsync ();
+            } else {
+                await model.StartAsync ();
             }
 
-            IsTimeEntryRunning = !IsTimeEntryRunning;
             IsProcessingAction = false;
         }
 
@@ -86,11 +84,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private void OnSettingChanged (SettingChangedMessage msg)
+        private async void OnSettingChanged (SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
             if (msg.Name == "GroupedTimeEntries") {
-                SyncCollectionView ();
+                await SyncCollectionView ();
             }
         }
 
@@ -103,13 +101,18 @@ namespace Toggl.Phoebe.Data.ViewModels
                 } else {
                     model.Data = data;
                 }
+
+                // Set if an entry is running.
+                IsTimeEntryRunning = data.State == TimeEntryState.Running;
             }
         }
 
-        private void SyncCollectionView ()
+        private async Task SyncCollectionView ()
         {
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
-            CollectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+            var collectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+            await collectionView.ReloadAsync ();
+            CollectionView = collectionView;
         }
     }
 }

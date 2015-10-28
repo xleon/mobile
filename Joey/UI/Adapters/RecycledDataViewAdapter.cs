@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Threading.Tasks;
 using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
@@ -62,7 +61,7 @@ namespace Toggl.Joey.UI.Adapters
             base.Dispose (disposing);
         }
 
-        private void OnLoading (object sender, EventArgs e)
+        private async void OnLoading (object sender, EventArgs e)
         {
             // Need to access the Handle property, else mono optimises/loses the context and we get a weird
             // low-level exception about "'jobject' must not be IntPtr.Zero".
@@ -72,9 +71,7 @@ namespace Toggl.Joey.UI.Adapters
 
             // Sometimes a new call to LoadMore is needed.
             if (lastLoadingPosition + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
-                Task.Run ( async () => {
-                    await dataView.LoadMoreAsync ();
-                });
+                await dataView.LoadMoreAsync ();
             }
         }
 
@@ -98,25 +95,19 @@ namespace Toggl.Joey.UI.Adapters
             CollectionChanged (e);
         }
 
-        public virtual T GetEntry (int position)
-        {
-            if (position >= dataView.Count ) {
-                return default (T);
-            }
-            return dataView.Data.ElementAt (position);
-        }
-
         public override long GetItemId (int position)
         {
             return -1;
         }
 
+        public virtual T GetEntry (int position)
+        {
+            return position >= dataView.Count ? default (T) : dataView.Data.ElementAt (position);
+        }
+
         public override int GetItemViewType (int position)
         {
-            if (position >= dataView.Count) {
-                return ViewTypeLoaderPlaceholder;
-            }
-            return ViewTypeContent;
+            return position >= dataView.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
@@ -124,13 +115,11 @@ namespace Toggl.Joey.UI.Adapters
             return viewType == ViewTypeLoaderPlaceholder ? new SpinnerHolder (GetLoadIndicatorView (parent)) : GetViewHolder (parent, viewType);
         }
 
-        public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        public async override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
             if (position + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
                 lastLoadingPosition = position;
-                Task.Run ( async () => {
-                    await dataView.LoadMoreAsync ();
-                });
+                await dataView.LoadMoreAsync ();
             }
 
             if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {

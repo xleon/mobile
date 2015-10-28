@@ -364,17 +364,17 @@ namespace Toggl.Phoebe.Data.Views
             DateGroups.Clear ();
             HasMore = true;
 
-            await Load (true);
+            await LoadAsync (true);
         }
 
         public async Task LoadMoreAsync ()
         {
             if (isInitialised) {
-                await Load (false);
+                await LoadAsync (false);
             }
         }
 
-        private async Task Load (bool initialLoad)
+        private async Task LoadAsync (bool initialLoad)
         {
             if (IsLoading || !HasMore) {
                 return;

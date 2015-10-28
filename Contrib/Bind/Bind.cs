@@ -213,9 +213,7 @@ namespace Praeclarum.Bind
                 #if __ANDROID__
                 var lambda = Expression.Lambda (handlerType, body, parameters);
                 return lambda.Compile();
-                #endif
-
-                #if __IOS__
+                #else
                 var lambda = Expression.Lambda (body, parameters);
                 var delegateInvokeInfo = lambda.Compile ().GetMethodInfo ();
                 return delegateInvokeInfo.CreateDelegate (handlerType, null);

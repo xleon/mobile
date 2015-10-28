@@ -33,10 +33,9 @@ namespace Toggl.Phoebe.Data.Views
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
         private Subscription<DataChangeMessage> subscriptionDataChange;
-        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 
         private System.Timers.Timer undoTimer;
-        private bool reloadScheduled;
+        private bool isInitialised;
         private bool isLoading;
         private bool hasMore;
         private int lastNumberOfItems;
@@ -81,10 +80,6 @@ namespace Toggl.Phoebe.Data.Views
             if (subscriptionDataChange != null) {
                 bus.Unsubscribe (subscriptionDataChange);
                 subscriptionDataChange = null;
-            }
-            if (subscriptionSyncFinished != null) {
-                bus.Unsubscribe (subscriptionSyncFinished);
-                subscriptionSyncFinished = null;
             }
         }
 
@@ -209,7 +204,6 @@ namespace Toggl.Phoebe.Data.Views
                     if (args.NewStartingIndex > ItemCollection.Count) {
                         return;
                     }
-                    ItemCollection [args.NewStartingIndex] = oldHolder;
                 }
             }
 
@@ -339,21 +333,6 @@ namespace Toggl.Phoebe.Data.Views
         #endregion
 
         #region Load
-        private void OnSyncFinished (SyncFinishedMessage msg)
-        {
-            if (reloadScheduled) {
-                reloadScheduled = false;
-                IsLoading = false;
-                Load (true);
-            }
-
-            if (subscriptionSyncFinished != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionSyncFinished);
-                subscriptionSyncFinished = null;
-            }
-        }
-
         private void BeginUpdate ()
         {
             if (updateMode != UpdateMode.Immediate) {
@@ -377,28 +356,22 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
+            // Temporal hack to be sure that
+            // collection is initialised.
+            isInitialised = true;
+
             startFrom = Time.UtcNow;
             DateGroups.Clear ();
             HasMore = true;
 
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-            if (syncManager.IsRunning) {
-                // Fake loading until initial sync has finished
-                IsLoading = true;
-
-                reloadScheduled = true;
-                if (subscriptionSyncFinished == null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
-                }
-            } else {
-                await Load (true);
-            }
+            await Load (true);
         }
 
         public async Task LoadMoreAsync ()
         {
-            await Load (false);
+            if (isInitialised) {
+                await Load (false);
+            }
         }
 
         private async Task Load (bool initialLoad)
@@ -414,7 +387,6 @@ namespace Toggl.Phoebe.Data.Views
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var endTime = startFrom;
                 var startTime = startFrom = endTime - TimeSpan.FromDays (4);
-
                 bool useLocal = false;
 
                 if (initialLoad) {
@@ -465,10 +437,9 @@ namespace Toggl.Phoebe.Data.Views
                                     .OrderBy (r => r.StartTime, false)
                                     .Where (r => r.State != TimeEntryState.New
                                             && r.DeletedAt == null
-                                            && r.UserId == userId);
-                    var entries = await baseQuery
-                                  .QueryAsync (r => r.StartTime <= endTime
-                                               && r.StartTime > startTime);
+                                            && r.UserId == userId).Take (20);
+                    //var entries = await baseQuery.QueryAsync (r => r.StartTime <= endTime && r.StartTime > startTime);
+                    var entries = await baseQuery.QueryAsync ();
 
                     BeginUpdate ();
                     foreach (var entry in entries) {

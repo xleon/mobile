@@ -73,11 +73,13 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void EnsureAdapter ()
+        private async void EnsureAdapter ()
         {
             if (recyclerView.GetAdapter() == null) {
                 var isGrouped = ServiceContainer.Resolve<SettingsStore> ().GroupedTimeEntries;
                 collectionView = isGrouped ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+                await collectionView.ReloadAsync ();
+
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
                 recyclerView.SetAdapter (logAdapter);
                 SetupRecyclerView ();

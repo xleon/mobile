@@ -96,15 +96,13 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             viewModel = new ProjectListViewModel (TimeEntryIds);
+            await viewModel.Init ();
 
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
 
-            viewModel.OnIsLoadingChanged += OnDataLoaded;
-            viewModel.ProjectList.OnIsLoadingChanged += OnDataLoaded;
-
-            await viewModel.Init ();
+            OnDataLoaded (null, null);
         }
 
         private void OnDataLoaded (object sender, EventArgs e)

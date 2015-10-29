@@ -15,6 +15,7 @@ namespace Toggl.Phoebe.Data.ViewModels
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private ActiveTimeEntryManager timeEntryManager;
+        private TimeEntriesCollectionView collectionView;
         private TimeEntryModel model;
 
         public LogTimeEntriesViewModel ()
@@ -58,6 +59,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         public bool IsTimeEntryRunning { get; set; }
 
         public bool IsGroupedMode { get; set; }
+
+        public int ItemCount { get; set; }
 
         public TimeEntriesCollectionView CollectionView { get; set; }
 
@@ -110,9 +113,25 @@ namespace Toggl.Phoebe.Data.ViewModels
         private async Task SyncCollectionView ()
         {
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
-            var collectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+
+            if (collectionView != null) {
+                collectionView.Dispose ();
+                collectionView.CollectionChanged -= OnCollectionChanged;
+            }
+
+            // In a near future, CollectionView will be only
+            // one object and not divided in two separated classes
+            // like that: LogTimeEntriesView and GroupedTimeEntriesView
+
+            collectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+            collectionView.CollectionChanged += OnCollectionChanged;
             await collectionView.ReloadAsync ();
             CollectionView = collectionView;
+        }
+
+        private void OnCollectionChanged (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            ItemCount = collectionView.Count;
         }
     }
 }

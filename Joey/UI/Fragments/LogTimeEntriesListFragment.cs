@@ -27,7 +27,6 @@ namespace Toggl.Joey.UI.Fragments
         private StartStopFab startStopBtn;
         private CoordinatorLayout coordinatorLayout;
 
-        private bool isRunning;
         private TimeEntriesCollectionView collectionView;
         private LogTimeEntriesViewModel viewModel;
         private Binding binding;
@@ -50,13 +49,32 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public bool IsRunning
+        private bool IsRunning
         {
             get {
-                return isRunning;
+                return false;
             } set {
-                isRunning = value;
-                startStopBtn.ButtonAction = isRunning ? FABButtonState.Stop : FABButtonState.Start;
+                startStopBtn.ButtonAction = value ? FABButtonState.Stop : FABButtonState.Start;
+            }
+        }
+
+        private int ItemCount
+        {
+            get {
+                return 0;
+            } set {
+                // if ItemCount > 0 and CollectionView.HasMore
+                // show the recycler!
+                ShowOnboardingInfo (value > 0 || viewModel.CollectionView.HasMore);
+            }
+        }
+
+        private bool HasMore
+        {
+            get {
+                return false;
+            } set {
+                ShowOnboardingInfo (viewModel.ItemCount > 0 || value);
             }
         }
 
@@ -86,6 +104,8 @@ namespace Toggl.Joey.UI.Fragments
             await viewModel.Init ();
 
             binding = Binding.Create (() =>
+                                      HasMore == viewModel.CollectionView.HasMore &&
+                                      ItemCount == viewModel.ItemCount &&
                                       CollectionView == viewModel.CollectionView &&
                                       IsRunning == viewModel.IsTimeEntryRunning);
 
@@ -138,6 +158,13 @@ namespace Toggl.Joey.UI.Fragments
             itemTouchListener.Dispose ();
             dividerDecoration.Dispose ();
             shadowDecoration.Dispose ();
+        }
+
+        private void ShowOnboardingInfo (bool showIt)
+        {
+            // TODO: animate with alpha transitions
+            recyclerView.Visibility = showIt ? ViewStates.Visible : ViewStates.Gone;
+            emptyMessageView.Visibility = showIt ? ViewStates.Gone : ViewStates.Visible;
         }
 
         #region IDismissListener implementation

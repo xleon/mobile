@@ -47,14 +47,6 @@ namespace Toggl.Joey.UI.Fragments
                 collectionView = value;
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
                 recyclerView.SetAdapter (logAdapter);
-
-                if (collectionView.Count > 0) {
-                    recyclerView.Visibility = ViewStates.Visible;
-                    emptyMessageView.Visibility = ViewStates.Gone;
-                } else {
-                    emptyMessageView.Visibility = ViewStates.Visible;
-                    recyclerView.Visibility = ViewStates.Gone;
-                }
             }
         }
 

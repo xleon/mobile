@@ -19,8 +19,8 @@ namespace Toggl.Phoebe.Data.Views
 
         bool IsLoading { get; }
 
-        event EventHandler OnIsLoadingChanged;
+        event EventHandler IsLoadingChanged;
 
-        event EventHandler OnHasMoreChanged;
+        event EventHandler HasMoreChanged;
     }
 }

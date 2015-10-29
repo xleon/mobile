@@ -228,7 +228,7 @@ namespace Toggl.Joey.UI.Fragments
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                viewModel.ProjectList.OnIsLoadingChanged -= OnDataLoaded;
+                viewModel.ProjectList.IsLoadingChanged -= OnDataLoaded;
                 viewModel.OnIsLoadingChanged -= OnDataLoaded;
                 viewModel.Dispose ();
             }

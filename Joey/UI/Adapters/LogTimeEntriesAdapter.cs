@@ -118,28 +118,29 @@ namespace Toggl.Joey.UI.Adapters
 
         protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
         {
-            if (GetItemViewType (position) == ViewTypeDateHeader) {
-                var headerHolder = (HeaderListItemHolder)holder;
-                headerHolder.Bind ((TimeEntriesCollectionView.IDateGroup) GetEntry (position));
-            } else {
-                var entryHolder = (TimeEntryListItemHolder)holder;
-                entryHolder.Bind ((TimeEntryHolder) GetEntry (position));
+            if (holder is SpinnerHolder) {
+                return;
+            }
+
+            var headerListItemHolder = holder as HeaderListItemHolder;
+            if (headerListItemHolder != null) {
+                headerListItemHolder.Bind ((TimeEntriesCollectionView.IDateGroup) GetEntry (position));
+                return;
+            }
+
+            var timeEntryListItemHolder = holder as TimeEntryListItemHolder;
+            if (timeEntryListItemHolder != null) {
+                timeEntryListItemHolder.Bind ((TimeEntryHolder) GetEntry (position));
             }
         }
 
         public override int GetItemViewType (int position)
         {
-            // TODO: investigate positio > DataView.Count
-            if (position >= DataView.Count) {
-                return ViewTypeLoaderPlaceholder;
+            var type = base.GetItemViewType (position);
+            if (type != ViewTypeLoaderPlaceholder) {
+                type = GetEntry (position) is TimeEntriesCollectionView.IDateGroup ? ViewTypeDateHeader : ViewTypeContent;
             }
-
-            var obj = GetEntry (position);
-            if (obj is TimeEntriesCollectionView.IDateGroup) {
-                return ViewTypeDateHeader;
-            }
-
-            return ViewTypeContent;
+            return type;
         }
 
         public override void OnViewDetachedFromWindow (Java.Lang.Object holder)

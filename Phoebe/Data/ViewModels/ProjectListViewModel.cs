@@ -48,6 +48,9 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             await model.LoadAsync ();
 
+            projectList = new WorkspaceProjectsView ();
+            await projectList.ReloadAsync ();
+
             if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
                 model = null;
             }
@@ -64,9 +67,6 @@ namespace Toggl.Phoebe.Data.ViewModels
         public WorkspaceProjectsView ProjectList
         {
             get {
-                if (projectList == null) {
-                    projectList = new WorkspaceProjectsView ();
-                }
                 return projectList;
             }
         }

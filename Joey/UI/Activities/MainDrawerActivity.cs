@@ -50,6 +50,7 @@ namespace Toggl.Joey.UI.Activities
         private TextView syncStatusText;
         private long lastSyncInMillis;
         private int syncStatus;
+        private ToolbarModes toolbarMode;
         private Subscription<SyncStartedMessage> drawerSyncStarted;
         private Subscription<SyncFinishedMessage> drawerSyncFinished;
         private static readonly int syncing = 0;
@@ -100,7 +101,7 @@ namespace Toggl.Joey.UI.Activities
 
             Timer.OnCreate (this);
 
-            var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);
+            var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);
 
             MainToolbar.SetNavigationIcon (Resource.Drawable.ic_menu_black_24dp);
             SetSupportActionBar (MainToolbar);
@@ -132,6 +133,30 @@ namespace Toggl.Joey.UI.Activities
 
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<ISyncManager> ().Run ();
+        }
+
+        public ToolbarModes ToolbarMode
+        {
+            get {
+                return toolbarMode;
+            } set {
+                toolbarMode = value;
+                AdjustToolbar();
+            }
+        }
+
+        private void AdjustToolbar()
+        {
+            switch (toolbarMode) {
+            case MainDrawerActivity.ToolbarModes.Timer:
+                SupportActionBar.SetDisplayShowTitleEnabled (false);
+                Timer.Hide = false;
+                break;
+            case MainDrawerActivity.ToolbarModes.Normal:
+                Timer.Hide = true;
+                SupportActionBar.SetDisplayShowTitleEnabled (true);
+                break;
+            }
         }
 
         private void OnUserChangedEvent (object sender, PropertyChangedEventArgs args)
@@ -270,7 +295,6 @@ namespace Toggl.Joey.UI.Activities
                 SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
                 OpenFragment (trackingFragment.Value);
                 drawerAdapter.ExpandCollapse (DrawerListAdapter.TimerPageId);
-                Timer.HideAction = false;
             }
             SetMenuSelection (drawerAdapter.GetItemPosition (id));
 
@@ -309,10 +333,9 @@ namespace Toggl.Joey.UI.Activities
 
             // Configure timer component for selected page:
             if (e.Id != DrawerListAdapter.TimerPageId) {
-                Timer.HideAction = true;
-                Timer.HideDuration = false;
+                ToolbarMode = MainDrawerActivity.ToolbarModes.Normal;
             } else {
-                Timer.HideAction = false;
+                ToolbarMode = MainDrawerActivity.ToolbarModes.Timer;
             }
 
             if (e.Id == DrawerListAdapter.TimerPageId) {
@@ -394,6 +417,11 @@ namespace Toggl.Joey.UI.Activities
         public TimerComponent Timer
         {
             get { return barTimer; }
+        }
+
+        public enum ToolbarModes {
+            Normal,
+            Timer
         }
     }
 }

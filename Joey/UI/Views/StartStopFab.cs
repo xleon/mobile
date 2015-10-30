@@ -14,7 +14,7 @@ namespace Toggl.Joey.UI.Views
     {
         private AnimatorSet switchAnimation;
 
-        private int action;
+        private FABButtonState action;
 
         private Drawable playDraw;
         private Drawable stopDraw;
@@ -47,7 +47,7 @@ namespace Toggl.Joey.UI.Views
             Initialize (context, attrs);
         }
 
-        public int ButtonAction
+        public FABButtonState ButtonAction
         {
             get {
                 return action;
@@ -59,10 +59,10 @@ namespace Toggl.Joey.UI.Views
                 }
                 action = value;
 
-                if (action == 0) {
-                    Switch (playDraw, backgroundTintPlay);
-                } else if (action == 1) {
-                    Switch (stopDraw, backgroundTintStop);
+                if (action == FABButtonState.Start) {
+                    Switch (playDraw, backgroundTintPlay, true);
+                } else if (action == FABButtonState.Stop) {
+                    Switch (stopDraw, backgroundTintStop, true);
                 } else {
                     Switch (saveDraw, backgroundTintSave);
                 }
@@ -84,11 +84,18 @@ namespace Toggl.Joey.UI.Views
             backgroundTintStop = new ColorStateList (states, stopColorArr);
             backgroundTintSave = new ColorStateList (states, saveColorArr);
 
-            Switch (playDraw, backgroundTintPlay);
+            Switch (playDraw, backgroundTintPlay, true);
         }
 
-        private void Switch (Drawable src, ColorStateList tint)
+        private void Switch (Drawable src, ColorStateList tint, bool withAnimation = false)
         {
+
+            if (!withAnimation) {
+                SetImageDrawable (src);
+                BackgroundTintList = tint;
+                return;
+            }
+
             const int ScaleDuration = 200;
             const int AlphaDuration = 150;
             const int AlphaInDelay = 50;
@@ -144,6 +151,11 @@ namespace Toggl.Joey.UI.Views
             switchAnimation.PlaySequentially (outSet, inSet);
             switchAnimation.Start ();
         }
+
+    }
+    public enum FABButtonState {
+        Start,
+        Stop,
+        Save
     }
 }
-

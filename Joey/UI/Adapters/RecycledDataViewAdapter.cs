@@ -39,8 +39,8 @@ namespace Toggl.Joey.UI.Adapters
         {
             this.dataView = dataView;
             this.dataView.CollectionChanged += OnCollectionChanged;
-            this.dataView.OnIsLoadingChanged += OnLoading;
-            this.dataView.OnHasMoreChanged += OnHasMore;
+            this.dataView.IsLoadingChanged += OnLoading;
+            this.dataView.HasMoreChanged += OnHasMore;
             Owner = owner;
 
             HasStableIds = false;
@@ -51,8 +51,8 @@ namespace Toggl.Joey.UI.Adapters
             if (disposing) {
                 if (dataView != null) {
                     dataView.CollectionChanged -= OnCollectionChanged;
-                    dataView.OnIsLoadingChanged -= OnLoading;
-                    dataView.OnHasMoreChanged -= OnHasMore;
+                    dataView.IsLoadingChanged -= OnLoading;
+                    dataView.HasMoreChanged -= OnHasMore;
 
                     dataView.Dispose ();
                     dataView = null;

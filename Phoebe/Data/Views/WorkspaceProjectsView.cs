@@ -703,7 +703,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public event EventHandler OnHasMoreChanged;
+        public event EventHandler HasMoreChanged;
 
         public bool HasMore
         {
@@ -712,13 +712,13 @@ namespace Toggl.Phoebe.Data.Views
             }
             private set {
                 hasMore = value;
-                if (OnHasMoreChanged != null) {
-                    OnHasMoreChanged (this, EventArgs.Empty);
+                if (HasMoreChanged != null) {
+                    HasMoreChanged (this, EventArgs.Empty);
                 }
             }
         }
 
-        public event EventHandler OnIsLoadingChanged;
+        public event EventHandler IsLoadingChanged;
 
         public bool IsLoading
         {
@@ -727,8 +727,8 @@ namespace Toggl.Phoebe.Data.Views
             }
             private set {
                 isLoading = value;
-                if (OnIsLoadingChanged != null) {
-                    OnIsLoadingChanged (this, EventArgs.Empty);
+                if (IsLoadingChanged != null) {
+                    IsLoadingChanged (this, EventArgs.Empty);
                 }
             }
         }

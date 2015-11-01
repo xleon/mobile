@@ -26,6 +26,8 @@ namespace Toggl.Phoebe.Data.DataObjects
             TrackingMode = other.TrackingMode;
             DefaultWorkspaceId = other.DefaultWorkspaceId;
             DurationFormat = other.DurationFormat;
+            ExperimentIncluded = other.ExperimentIncluded;
+            ExperimentNumber = other.ExperimentNumber;
         }
 
         public string Name { get; set; }
@@ -53,6 +55,10 @@ namespace Toggl.Phoebe.Data.DataObjects
         public TrackingMode TrackingMode { get; set; }
 
         public DurationFormat DurationFormat { get; set; }
+
+        public bool ExperimentIncluded { get; set; }
+
+        public int ExperimentNumber { get; set; }
 
         [ForeignRelation (typeof (WorkspaceData))]
         public Guid DefaultWorkspaceId { get; set; }

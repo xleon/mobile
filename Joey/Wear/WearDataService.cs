@@ -19,12 +19,13 @@ namespace Toggl.Joey.Wear
     {
         public const string Tag = "WearableTag";
         public const string DataStorePath = "/TimeEntryDataStore";
-        IGoogleApiClient googleApiClient;
+
+        GoogleApiClient googleApiClient;
 
         public override void OnCreate ()
         {
             base.OnCreate ();
-            googleApiClient = new GoogleApiClientBuilder (this)
+            googleApiClient = new GoogleApiClient.Builder (this)
             .AddApi (WearableClass.API)
             .Build ();
             googleApiClient.Connect ();
@@ -69,7 +70,7 @@ namespace Toggl.Joey.Wear
         {
             try {
                 Log.Info ("WearIntegration", "Received Message");
-                var client = new GoogleApiClientBuilder (this)
+                var client = new GoogleApiClient.Builder (this)
                 .AddApi (WearableClass.API)
                 .Build ();
 
@@ -102,7 +103,7 @@ namespace Toggl.Joey.Wear
         {
         }
 
-        private async Task UpdateSharedTimeEntryList (IGoogleApiClient client)
+        private async Task UpdateSharedTimeEntryList (GoogleApiClient client)
         {
             var entryData = await WearDataProvider.GetTimeEntryData ();
 

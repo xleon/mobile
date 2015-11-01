@@ -82,6 +82,7 @@
     </Compile>
     <Compile Include="Data\Json\OBMJson.cs" />
     <Compile Include="Data\OBMData.cs" />
+    <Compile Include="ExperimentNumbers.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

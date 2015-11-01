@@ -13,9 +13,12 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -134,6 +137,11 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ShowOnboardingInfo ()
         {
+            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            if (!userData.ExperimentIncluded && userData.ExperimentNumber != ExperimentNumbers.HomeEmptyState) {
+                return;
+            }
+
             // TODO: animate with alpha transitions
             recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
             emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;

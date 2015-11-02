@@ -123,8 +123,6 @@
     <Compile Include="StopRunningTimeEntryService.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
     <Compile Include="UI\Activities\MainDrawerActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
@@ -150,7 +148,6 @@
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
     <Compile Include="Net\NetworkPresence.cs" />
-    <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
     <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
@@ -200,6 +197,7 @@
     <Compile Include="Wear\WearDataService.cs" />
     <Compile Include="Wear\Common.cs" />
     <Compile Include="Wear\WearDataProvider.cs" />
+    <Compile Include="UI\Fragments\ChangeDateTimeDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

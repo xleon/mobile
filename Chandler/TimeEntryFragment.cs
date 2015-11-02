@@ -1,9 +1,8 @@
-﻿using Android.App;
+﻿using System;
+using Android.App;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using System;
-using Android.Gms.Common.Apis;
 
 namespace Toggl.Chandler
 {
@@ -27,8 +26,7 @@ namespace Toggl.Chandler
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
             DescriptionTextView = view.FindViewById<TextView> (Resource.Id.DescriptionTextView);
             ProjectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
-            DescriptionTextView.Text = dataObject.Description;
-            ProjectTextView.Text = dataObject.Project;
+
             Rebind();
             return view;
         }
@@ -36,16 +34,19 @@ namespace Toggl.Chandler
 
         private void Rebind()
         {
-            if (dataObject.IsRunning) {
-                var dur = dataObject.GetDuration();
-                DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
+            DescriptionTextView.Text = String.IsNullOrWhiteSpace (dataObject.Description) ? Resources.GetString (Resource.String.TimeEntryNoDescription) : dataObject.Description;
+            ProjectTextView.Text = String.IsNullOrWhiteSpace (dataObject.Project) ? Resources.GetString (Resource.String.TimeEntryNoProject) : dataObject.Project;
 
-                // Schedule next rebind:
-                handler.RemoveCallbacks (Rebind);
-                handler.PostDelayed (Rebind, 1000 - dur.Milliseconds);
-            } else {
-                DurationTextView.Visibility = ViewStates.Gone;
+            var dur = dataObject.GetDuration();
+            DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
+
+            if (!dataObject.IsRunning) {
+                return;
             }
+
+            // Schedule next rebind:
+            handler.RemoveCallbacks (Rebind);
+            handler.PostDelayed (Rebind, 1000);
         }
     }
 }

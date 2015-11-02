@@ -7,12 +7,15 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey.Wear
 {
     public static class WearDataProvider
     {
+        private const int itemCount = 5;
+
         public static async Task StartStopTimeEntry ()
         {
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
@@ -39,58 +42,39 @@ namespace Toggl.Joey.Wear
 
         public static async Task<List<SimpleTimeEntryData>> GetTimeEntryData ()
         {
-            const int itemCount = 5;
-            var items = new List<SimpleTimeEntryData> (itemCount);
-
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var endTime = Time.UtcNow;
-            var startTime = endTime - TimeSpan.FromDays (9);
-
-
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var userId = ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().GetUserId ();
+            var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
-            var baseQuery = store.Table<TimeEntryData> ()
-                            .OrderBy (r => r.StartTime, false)
-                            .Where (r => r.State != TimeEntryState.New
-                                    && r.DeletedAt == null
-                                    && r.UserId == userId);
+            var entriesQuery = store.Table<TimeEntryData> ()
+                               .Where (r => r.State != TimeEntryState.New
+                                       && r.DeletedAt == null
+                                       && r.UserId == userId)
+                               .OrderBy (r => r.StartTime, false);
+            var entries = await entriesQuery.QueryAsync();
 
-            var entries = await baseQuery
-                          .QueryAsync (r => r.StartTime <= endTime
-                                       && r.StartTime > startTime);
+            var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
+            await Task.WhenAll (projectsTask);
+            var projectsList = projectsTask.Result;
 
-            var groupedList =
-                from entry in entries
-            group entry by new {
-                entry.Description,
-                entry.ProjectId,
-                entry.WorkspaceId
-            } into newGroup
-            select newGroup;
+            var uniqueEntries = entries.GroupBy (x  => new {x.ProjectId, x.Description })
+            .Select (grp => grp.First())
+            .Take (itemCount)
+            .ToList();
 
-            for (int i = 0; i < itemCount; i++) {
-                var item = new SimpleTimeEntryData {
-                    Project = "Project " + i,
-                    Description = "D" + i,
-                    IsRunning = false,
-                    StartTime = Time.UtcNow.AddHours (-1),
-                    StopTime = Time.UtcNow
-                };
-                items.Add (item);
+            var simpleEntries = new List<SimpleTimeEntryData> ();
+            foreach (var entry in uniqueEntries) {
+                var projectName = projectsList.Exists (r => r.Id == (entry.ProjectId ?? Guid.Empty)) ? projectsList.First (r => r.Id == entry.ProjectId).Name : String.Empty;
+                simpleEntries.Add (
+                new SimpleTimeEntryData {
+                    Id = entry.Id,
+                    IsRunning = entry.State == TimeEntryState.Running,
+                    Description = entry.Description,
+                    Project = projectName,
+                    StartTime = entry.StartTime,
+                    StopTime = entry.StopTime ?? DateTime.UtcNow
+                });
             }
-
-            return items;
-        }
-
-        public static bool IsGroupableWith (TimeEntryData data, TimeEntryData other)
-        {
-            return data.ProjectId == other.ProjectId &&
-                   string.Compare (data.Description, other.Description, StringComparison.Ordinal) == 0 &&
-                   data.TaskId == other.TaskId &&
-                   data.UserId == other.UserId &&
-                   data.WorkspaceId == other.WorkspaceId;
+            return simpleEntries;
         }
     }
 }
-

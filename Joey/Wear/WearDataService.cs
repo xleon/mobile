@@ -68,8 +68,6 @@ namespace Toggl.Joey.Wear
 
         private async Task HandleMessage (IMessageEvent message)
         {
-            Console.WriteLine ("Handle message");
-
             try {
                 Log.Info ("WearIntegration", "Received Message");
                 var client = new GoogleApiClient.Builder (this)
@@ -108,14 +106,13 @@ namespace Toggl.Joey.Wear
             // Publish changes to weareable using DataItems
             var mapReq = PutDataMapRequest.Create (Common.TimeEntryListPath);
 
-            var children = new List<DataMap> (5);
+            var children = new List<DataMap> ();
 
             foreach (var entry in entryData) {
                 children.Add (entry.DataMap);
             }
-
             mapReq.DataMap.PutDataMapArrayList (Common.TimeEntryListKey, children);
-            WearableClass.DataApi.PutDataItem (client, mapReq.AsPutDataRequest ());
+            await WearableClass.DataApi.PutDataItem (client, mapReq.AsPutDataRequest ());
         }
 
         public static void LOGD (string tag, string message)

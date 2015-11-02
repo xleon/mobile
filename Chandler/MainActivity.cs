@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Android.App;
+using Android.Gms.Common;
+using Android.Gms.Common.Apis;
 using Android.Gms.Wearable;
 using Android.OS;
-using Android.Support.V4.App;
 using Android.Support.Wearable.Views;
-using Android.Widget;
-using Android.Gms.Common.Apis;
 using Android.Util;
-using Android.Gms.Common;
-using Java.Util.Concurrent;
+using Android.Widget;
 using Java.Interop;
+using Java.Util.Concurrent;
 
 namespace Toggl.Chandler
 {
@@ -115,17 +113,11 @@ namespace Toggl.Chandler
             var list = map.GetDataMapArrayList (Common.TimeEntryListKey);
             var entryList = new List<SimpleTimeEntryData> ();
             foreach (var mapItem in list) {
-                Console.WriteLine (".");
                 var en = new SimpleTimeEntryData (mapItem);
+                Console.WriteLine ("en.Desc: {0}, proj: {1}", en.Description, en.Project);
                 entryList.Add (en);
             }
-
-            string text = "";
-            foreach (var e in entryList) {
-                text += e.Description;
-                text += e.Project;
-            }
-//            adapter.UpdateEntries (itemList);
+            adapter.UpdateEntries (entryList);
         }
 
         public void OnMessageReceived (IMessageEvent messageEvent)

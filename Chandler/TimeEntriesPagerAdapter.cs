@@ -8,12 +8,10 @@ namespace Toggl.Chandler
 {
     public class TimeEntriesPagerAdapter : FragmentGridPagerAdapter
     {
-        private Context mContext;
         private List<SimpleTimeEntryData> timeEntries = new List<SimpleTimeEntryData> ();
 
         public TimeEntriesPagerAdapter (Context ctx, FragmentManager fm) : base (fm)
         {
-            mContext = ctx;
             timeEntries.Add (new SimpleTimeEntryData {
                 Project = "Wearable",
                 Description = "Dev mode",
@@ -24,7 +22,6 @@ namespace Toggl.Chandler
 
         public void UpdateEntries (List<SimpleTimeEntryData> data)
         {
-            Console.WriteLine ("Update entries");
             timeEntries = data;
             NotifyDataSetChanged();
         }

@@ -23,10 +23,10 @@ namespace Toggl.Joey.Wear
             var active = new TimeEntryModel (manager.Active);
             if (manager.Active.State == TimeEntryState.Running) {
                 await active.StopAsync ();
-                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
+//                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
             } else {
                 await active.StartAsync ();
-                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
+//                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
             }
         }
 
@@ -39,7 +39,7 @@ namespace Toggl.Joey.Wear
 
         public static async Task<List<SimpleTimeEntryData>> GetTimeEntryData ()
         {
-            var itemCount = 5;
+            const int itemCount = 5;
             var items = new List<SimpleTimeEntryData> (itemCount);
 
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
@@ -72,7 +72,7 @@ namespace Toggl.Joey.Wear
             for (int i = 0; i < itemCount; i++) {
                 var item = new SimpleTimeEntryData {
                     Project = "Project " + i,
-                    Description = "Description " + i,
+                    Description = "D" + i,
                     IsRunning = false,
                     StartTime = Time.UtcNow.AddHours (-1),
                     StopTime = Time.UtcNow

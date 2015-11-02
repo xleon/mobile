@@ -68,6 +68,8 @@ namespace Toggl.Joey.Wear
 
         private async Task HandleMessage (IMessageEvent message)
         {
+            Console.WriteLine ("Handle message");
+
             try {
                 Log.Info ("WearIntegration", "Received Message");
                 var client = new GoogleApiClient.Builder (this)
@@ -99,30 +101,20 @@ namespace Toggl.Joey.Wear
             }
         }
 
-        private async Task SendMessageToWearable (string content, string path)
-        {
-        }
-
         private async Task UpdateSharedTimeEntryList (GoogleApiClient client)
         {
             var entryData = await WearDataProvider.GetTimeEntryData ();
 
-            // Publis changes to weareable using DataItems
+            // Publish changes to weareable using DataItems
             var mapReq = PutDataMapRequest.Create (Common.TimeEntryListPath);
-            var map = mapReq.DataMap;
 
             var children = new List<DataMap> (5);
-            var serializer = new System.Xml.Serialization.XmlSerializer (typeof (SimpleTimeEntryData));
 
-            foreach (var entry in entryData ) {
-                var obj = new DataMap ();
-                using (var listStream = new System.IO.MemoryStream ()) {
-                    serializer.Serialize (listStream, entry);
-                    obj.PutByteArray (Common.SingleEntryKey, listStream.ToArray ());
-                }
-                children.Add (obj);
+            foreach (var entry in entryData) {
+                children.Add (entry.DataMap);
             }
-            map.PutDataMapArrayList (Common.TimeEntryListKey, children.ToList ());
+
+            mapReq.DataMap.PutDataMapArrayList (Common.TimeEntryListKey, children);
             WearableClass.DataApi.PutDataItem (client, mapReq.AsPutDataRequest ());
         }
 

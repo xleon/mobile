@@ -1,7 +1,7 @@
 ﻿using System;
 using Android.Gms.Wearable;
 
-namespace Toggl.Joey.Wear
+namespace Toggl.Chandler
 {
     public static class Common
     {

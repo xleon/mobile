@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.Support.Wearable.Views;
@@ -12,31 +13,20 @@ namespace Toggl.Chandler
 
         public TimeEntriesPagerAdapter (Context ctx, FragmentManager fm) : base (fm)
         {
-            mContext = ctx.ApplicationContext;
-            GenerateEntries ();
+            mContext = ctx;
+            timeEntries.Add (new SimpleTimeEntryData {
+                Project = "Wearable",
+                Description = "Dev mode",
+                StartTime = DateTime.UtcNow,
+                IsRunning = true
+            });
         }
 
-        private void GenerateEntries()
+        public void UpdateEntries (List<SimpleTimeEntryData> data)
         {
-            var entry1 = new SimpleTimeEntryData();
-            entry1.Description = "Dev wear app";
-            entry1.Project = "Madrid challenge";
-            timeEntries.Add (entry1);
-
-            var entry2 = new SimpleTimeEntryData();
-            entry2.Description = "Mobile bug fix";
-            entry2.Project = "Mobile";
-            timeEntries.Add (entry2);
-
-            var entry3 = new SimpleTimeEntryData();
-            entry3.Description = "Mezcal testing";
-            entry3.Project = "Madrid challenge";
-            timeEntries.Add (entry3);
-
-            var entry4 = new SimpleTimeEntryData();
-            entry4.Description = "Breakfast";
-            entry4.Project = "Fuencaral";
-            timeEntries.Add (entry4);
+            Console.WriteLine ("Update entries");
+            timeEntries = data;
+            NotifyDataSetChanged();
         }
 
         #region implemented abstract members of GridPagerAdapter

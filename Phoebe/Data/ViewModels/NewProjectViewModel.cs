@@ -39,7 +39,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public int ProjectColor { get; set; }
 
-        public Guid ClientId { get; set; }
+        public string ClientName { get; set; }
 
         public async Task Init ()
         {

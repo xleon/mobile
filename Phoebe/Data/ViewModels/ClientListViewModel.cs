@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
@@ -10,16 +9,13 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class ClientListViewModel : IViewModel<ProjectModel>
+    public class ClientListViewModel : IVModel<ClientModel>
     {
-        private bool isLoading;
-        private WorkspaceClientsView clientList;
-        private ProjectModel model;
+        private ClientModel model;
         private Guid workspaceId;
 
-        public ClientListViewModel (Guid workspaceId, ProjectModel projectModel)
+        public ClientListViewModel (Guid workspaceId)
         {
-            this.model = projectModel;
             this.workspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
         }
@@ -28,84 +24,34 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             IsLoading = true;
 
-            clientList = new WorkspaceClientsView (workspaceId);
-
-            if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
-                model = null;
-            }
+            ClientListDataView = new WorkspaceClientsView (workspaceId);
 
             IsLoading = false;
         }
 
         public void Dispose ()
         {
-            model.PropertyChanged -= OnModelPropertyChanged;
-            clientList.Dispose ();
             model = null;
         }
 
+        public int SelectedClientIndex { get; set; }
 
-        public Guid WorkspaceId
-        {
-            get {
-                return workspaceId;
-            }
-        }
+        public bool IsLoading { get; set; }
 
-        public IDataView<ClientData> ClientListDataView
-        {
-            get {
-                return clientList;
-            }
-        }
+        public string ClientName { get; set; }
 
-        public event EventHandler OnModelChanged;
+        public IDataView<ClientData> ClientListDataView { get; set;}
 
-        public ProjectModel Model
-        {
-            get {
-                return model;
-            }
-
-            private set {
-
-                model = value;
-
-                if (OnModelChanged != null) {
-                    OnModelChanged (this, EventArgs.Empty);
-                }
-            }
-        }
 
         public void SaveClient (ClientModel client)
         {
-            model.Client = client;
+
         }
 
-        public event EventHandler OnIsLoadingChanged;
-
-        public bool IsLoading
+        public async Task CreateNewClient ()
         {
-            get {
-                return isLoading;
-            }
-            private set {
-                isLoading = value;
 
-                if (OnIsLoadingChanged != null) {
-                    OnIsLoadingChanged (this, EventArgs.Empty);
-                }
-            }
         }
 
-        private void OnModelPropertyChanged (object sender, PropertyChangedEventArgs args)
-        {
-            if (args.PropertyName == TimeEntryModel.PropertyWorkspace) {
-                if (clientList != null) {
-                    clientList.WorkspaceId = model.Workspace.Id;
-                    workspaceId = model.Workspace.Id;
-                }
-            }
-        }
     }
 }

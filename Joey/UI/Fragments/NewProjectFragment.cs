@@ -84,6 +84,7 @@ namespace Toggl.Joey.UI.Fragments
 
             viewModel = new NewProjectViewModel (TimeEntryList);
             binding = Binding.Create (() =>
+                                      selectClientBit.TextField.Text == viewModel.ClientName &&
                                       projectBit.TextField.Text == viewModel.ProjectName &&
                                       colorPicker.Adapter.SelectedColor == viewModel.ProjectColor);
 
@@ -100,6 +101,8 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnStart ()
         {
             base.OnStart ();
+
+            // show keyboard
             var inputService = (InputMethodManager)Activity.GetSystemService (Context.InputMethodService);
             projectBit.TextField.PostDelayed (delegate {
                 inputService.ShowSoftInput (projectBit.TextField, ShowFlags.Implicit);
@@ -133,7 +136,14 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SelectClientBitClickedHandler (object sender, EventArgs e)
         {
-            new ClientListFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model).Show (FragmentManager, "clients_dialog");
+            //new ClientListDialogFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model)
+
+            //.Show (FragmentManager, "clients_dialog");
+            var dialog = new ClientListDialogFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model);
+            dialog.Dialog.DismissEvent += (object sender, EventArgs e) => {
+
+            };
+            dialog.Show ();
         }
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)

@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -15,7 +16,6 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<Workspace> workspacesList = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
         private readonly List<object> dataObjects = new List<object> ();
-        private List<ProjectData> mostUsedProjects = new List<ProjectData> ();
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
@@ -533,8 +533,25 @@ namespace Toggl.Phoebe.Data.Views
             case SortProjectsBy.Projects:
 
                 foreach (var project in source.Projects) {
-                    if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                    if (project.Data == null) {
+                        continue;
+                    }
+                    var projectModel = new ProjectModel (project.Data);
+                    if (projectModel.Name.ToLower().Contains (filter)) {
                         filteredList.Projects.Add (project);
+                        continue;
+                    }
+
+                    if (projectModel.Client != null && projectModel.Client.Name.ToLower().Contains (filter)) {
+                        filteredList.Projects.Add (project);
+                        continue;
+                    }
+
+                    foreach (var task in project.Tasks) {
+                        if (task.Name.ToLower().Contains (filter)) {
+                            filteredList.Projects.Add (project);
+                            break;
+                        }
                     }
                 }
                 break;

@@ -396,6 +396,7 @@ namespace Toggl.Phoebe.Data.Views
                         mostUsedClient.IsMostUsed = true;
                         foreach (var p in mostUsed) {
                             var pr = new Project (p);
+                            pr.Tasks.AddRange (tasksTask.Result.Where (t => t.ProjectId == p.Id).ToList());
                             mostUsedClient.Projects.Add (pr);
                         }
                         workspace.Clients.Add (mostUsedClient);

@@ -508,10 +508,19 @@ namespace Toggl.Phoebe.Data.Views
                     } else {
                         cl = new Client (client.Data);
                     }
-
-                    foreach (var project in client.Projects) {
-                        if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
-                            cl.Projects.Add (project);
+                    if (client.Data != null && client.Data.Name.ToLower().Contains (filter)) {
+                        cl.Projects.AddRange (client.Projects);
+                    } else {
+                        foreach (var project in client.Projects) {
+                            if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                                cl.Projects.Add (project);
+                            } else { // Maybe in the tasks
+                                foreach (var task in project.Tasks) {
+                                    if (task.Name != null && task.Name.ToLower().Contains (filter)) {
+                                        cl.Projects.Add (project);
+                                    }
+                                }
+                            }
                         }
                     }
                     if (cl.Projects.Count > 0) {

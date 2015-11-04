@@ -5,19 +5,12 @@ using Android.OS;
 using Android.Text;
 using Android.Widget;
 using Praeclarum.Bind;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class CreateClientDialogFragment : BaseDialogFragment
     {
-        public interface IOnClientSelectedListener
-        {
-
-            void OnClientSelected (ClientData data);
-        }
-
         private const string WorkspaceIdArgument = "workspace_id";
         private IOnClientSelectedListener listener;
         private EditText nameEditText;
@@ -61,9 +54,15 @@ namespace Toggl.Joey.UI.Fragments
 
             viewModel = new CreateClientViewModel (WorkspaceId);
             await viewModel.Init ();
-            binding = Binding.Create (() => nameEditText.Text == viewModel.ClientName);
 
             ValidateClientName ();
+        }
+
+        public override void OnDestroy ()
+        {
+            binding.Unbind ();
+            viewModel.Dispose ();
+            base.OnDestroy ();
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -72,6 +71,10 @@ namespace Toggl.Joey.UI.Fragments
             nameEditText.SetHint (Resource.String.CreateClientDialogHint);
             nameEditText.InputType = InputTypes.TextFlagCapSentences;
             nameEditText.TextChanged += OnNameEditTextTextChanged;
+
+            // Moved binding to OnCreateDialog.
+            // a better approach could be find..
+            binding = Binding.Create (() => nameEditText.Text == viewModel.ClientName);
 
             return new AlertDialog.Builder (Activity)
                    .SetTitle (Resource.String.CreateClientDialogTitle)
@@ -90,6 +93,7 @@ namespace Toggl.Joey.UI.Fragments
         public CreateClientDialogFragment SetOnClientSelectedListener (IOnClientSelectedListener listener)
         {
             this.listener = listener;
+            return this;
         }
 
         private void OnNameEditTextTextChanged (object sender, TextChangedEventArgs e)
@@ -99,9 +103,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            await viewModel.SaveNewClient ();
+            var clientData = await viewModel.SaveNewClient ();
             if (listener != null) {
-                listener.OnClientSelected (viewModel.GetClientData ());
+                listener.OnClientSelected (clientData);
             }
         }
 
@@ -119,13 +123,6 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             positiveButton.Enabled = valid;
-        }
-
-        public override void OnDestroy ()
-        {
-            binding.Unbind ();
-            viewModel.Dispose ();
-            base.OnDestroy ();
         }
     }
 }

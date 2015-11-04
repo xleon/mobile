@@ -44,8 +44,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string ClientName { get; set; }
 
-
-        public async Task SaveNewClient ()
+        public async Task<ClientData> SaveNewClient ()
         {
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<ClientData>()
@@ -59,11 +58,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             await model.SaveAsync ();
-        }
 
-
-        public ClientData GetClientData ()
-        {
             return model.Data;
         }
     }

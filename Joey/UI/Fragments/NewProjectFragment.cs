@@ -18,7 +18,7 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class NewProjectFragment : Fragment
+    public class NewProjectFragment : Fragment, IOnClientSelectedListener
     {
         public static readonly int ClientSelectedRequestCode = 1;
 
@@ -72,6 +72,9 @@ namespace Toggl.Joey.UI.Fragments
             selectClientBit = view.FindViewById<TogglField> (Resource.Id.SelectClientNameBit)
                               .DestroyAssistView().SetName (Resource.String.NewProjectSelectClientFieldName)
                               .SimulateButton();
+
+            selectClientBit.TextField.Click += SelectClientBitClickedHandler;
+            selectClientBit.Click += SelectClientBitClickedHandler;
 
             colorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
             HasOptionsMenu = true;
@@ -136,15 +139,19 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SelectClientBitClickedHandler (object sender, EventArgs e)
         {
-            //new ClientListDialogFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model)
-
-            //.Show (FragmentManager, "clients_dialog");
-            var dialog = new ClientListDialogFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model);
-            dialog.Dialog.DismissEvent += (object sender, EventArgs e) => {
-
-            };
-            dialog.Show ();
+            ClientListDialogFragment.NewInstance (timeEntryList[0].WorkspaceId)
+            .SetClientSelectListener (this)
+            .Show (FragmentManager, "clients_dialog");
         }
+
+        #region IOnClientSelectedListener implementation
+
+        public void OnClientSelected (ClientData data)
+        {
+            viewModel.SetClient (data);
+        }
+
+        #endregion
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {

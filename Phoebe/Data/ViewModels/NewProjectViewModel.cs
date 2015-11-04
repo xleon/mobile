@@ -45,31 +45,23 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             IsLoading = true;
 
-            try {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                if (user == null) {
-                    model = null;
-                    return;
-                }
+            workspaceId = timeEntryList[0].WorkspaceId;
+            workspaceModel = new WorkspaceModel (workspaceId);
+            await workspaceModel.LoadAsync ();
 
-                workspaceId = timeEntryList[0].WorkspaceId;
-                workspaceModel = new WorkspaceModel (workspaceId);
-                await workspaceModel.LoadAsync ();
-
-                model = new ProjectModel {
-                    Workspace = workspaceModel,
-                    IsActive = true,
-                    IsPrivate = true
-                };
-
-                if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
-                    model = null;
-                }
-            } catch (Exception ex) {
-                model = null;
-            }
+            model = new ProjectModel {
+                Workspace = workspaceModel,
+                IsActive = true,
+                IsPrivate = true
+            };
 
             IsLoading = false;
+        }
+
+        public void SetClient (ClientData clientData)
+        {
+            model.Client = new ClientModel (clientData);
+            ClientName = clientData.Name;
         }
 
         public async Task<SaveProjectResult> SaveProjectModel ()

@@ -33,4 +33,13 @@
         android:textSize="30sp"
         android:layout_marginTop="5dp"
         android:text="1 minute" />
+    <ImageButton
+        android:background="@drawable/roundedbutton"
+        android:id="@+id/testButton"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="@dimen/roundButtonSize"
+        android:layout_height="@dimen/roundButtonSize"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:src="@drawable/icplay" />
 </LinearLayout>

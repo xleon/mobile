@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="EntryName">Toggl</string>
     <string name="TimeEntryNoDescription">(no description)</string>
     <string name="TimeEntryNoProject">(no project)</string>
-    <string name="EntryName">Toggl</string>
+    <string name="RecentListTitle">Recents</string>
 </resources>

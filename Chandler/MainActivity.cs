@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Gms.Common;
 using Android.Gms.Common.Apis;
@@ -8,8 +7,6 @@ using Android.Gms.Wearable;
 using Android.OS;
 using Android.Support.Wearable.Views;
 using Android.Util;
-using Android.Widget;
-using Java.Interop;
 using Java.Util.Concurrent;
 
 namespace Toggl.Chandler
@@ -18,11 +15,9 @@ namespace Toggl.Chandler
     public class MainActivity : Activity, IDataApiDataListener, GoogleApiClient.IConnectionCallbacks, IMessageApiMessageListener, INodeApiNodeListener
     {
         private const string Tag = "MainActivity";
-        private ImageButton ActionButton;
         private GridViewPager ViewPager;
-        private DotsPageIndicator DotsIndicator;
         private GoogleApiClient googleApiClient;
-        private TimeEntriesPagerAdapter adapter;
+        private PagesAdapter adapter;
 
         protected override void OnCreate (Bundle savedInstanceState)
         {
@@ -31,19 +26,14 @@ namespace Toggl.Chandler
             SetContentView (Resource.Layout.Main);
 
             ViewPager = FindViewById<GridViewPager> (Resource.Id.pager);
-            DotsIndicator = FindViewById<DotsPageIndicator> (Resource.Id.indicator);
-            ActionButton = FindViewById<ImageButton> (Resource.Id.testButton);
-            adapter = new TimeEntriesPagerAdapter (this, FragmentManager);
+            adapter = new PagesAdapter (this, FragmentManager);
 
             ViewPager.Adapter = adapter;
-            DotsIndicator.SetPager (ViewPager);
-            ActionButton.Click += OnActionButtonClicked;
 
             googleApiClient = new GoogleApiClient.Builder (this)
             .AddApi (WearableClass.API)
             .AddConnectionCallbacks (this)
             .Build ();
-
             googleApiClient.Connect();
         }
 
@@ -62,24 +52,7 @@ namespace Toggl.Chandler
             googleApiClient.Disconnect ();
         }
 
-        private void OnActionButtonClicked (object sender, EventArgs e)
-        {
-            SendStartStopMessage ();
-        }
 
-        private void SendStartStopMessage ()
-        {
-            Task.Run (() => {
-                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
-                var nodes = apiResult.Nodes;
-                foreach (var node in nodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.StartTimeEntryPath,
-                                                          new byte[0]);
-                }
-            });
-            SendNewData (googleApiClient);
-        }
 
         public void SendNewData (GoogleApiClient googleApiClient)
         {
@@ -117,7 +90,6 @@ namespace Toggl.Chandler
                 Console.WriteLine ("en.Desc: {0}, proj: {1}", en.Description, en.Project);
                 entryList.Add (en);
             }
-            adapter.UpdateEntries (entryList);
         }
 
         public void OnMessageReceived (IMessageEvent messageEvent)

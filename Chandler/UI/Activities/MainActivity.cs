@@ -8,9 +8,9 @@ using Android.OS;
 using Android.Support.Wearable.Views;
 using Android.Util;
 using Java.Util.Concurrent;
-using Toggl.Chandler.Resources.UI.Adapters;
+using Toggl.Chandler.UI.Adapters;
 
-namespace Toggl.Chandler.Resources.UI.Activities
+namespace Toggl.Chandler.UI.Activities
 {
     [Activity (Label = "Toggl", MainLauncher = true, Icon = "@drawable/Icon" )]
     public class MainActivity : Activity, IDataApiDataListener, GoogleApiClient.IConnectionCallbacks, IMessageApiMessageListener, INodeApiNodeListener

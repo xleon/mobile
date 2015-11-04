@@ -66,10 +66,12 @@
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Common.cs" />
-    <Compile Include="Resources\UI\Fragments\TimerFragment.cs" />
-    <Compile Include="Resources\UI\Adapters\PagesAdapter.cs" />
-    <Compile Include="Resources\UI\Activities\MainActivity.cs" />
-    <Compile Include="Resources\UI\Fragments\RecentsListFragment.cs" />
+    <Compile Include="UI\Activities\MainActivity.cs" />
+    <Compile Include="UI\Adapters\PagesAdapter.cs" />
+    <Compile Include="UI\Adapters\RecentListAdapter.cs" />
+    <Compile Include="UI\Fragments\RecentsListFragment.cs" />
+    <Compile Include="UI\Fragments\TimerFragment.cs" />
+    <Compile Include="UI\Views\RecentListItemLayout.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -102,14 +104,10 @@
     <AndroidResource Include="Resources\layout\TimeEntryFragment.axml" />
     <AndroidResource Include="Resources\layout\ListFragment.axml" />
     <AndroidResource Include="Resources\layout\RecentListItem.axml" />
+    <AndroidResource Include="Resources\drawable\RecentListDot.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Resources\drawable\" />
-    <Folder Include="Resources\UI\" />
-    <Folder Include="Resources\UI\Fragments\" />
-    <Folder Include="Resources\UI\Views\" />
-    <Folder Include="Resources\UI\Activities\" />
-    <Folder Include="Resources\UI\Adapters\" />
   </ItemGroup>
 </Project>

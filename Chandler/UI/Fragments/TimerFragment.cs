@@ -4,7 +4,7 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 
-namespace Toggl.Chandler.Resources.UI.Fragments
+namespace Toggl.Chandler.UI.Fragments
 {
     public class TimerFragment : Fragment
     {

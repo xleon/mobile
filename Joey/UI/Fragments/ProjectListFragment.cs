@@ -255,7 +255,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SearchList()
         {
-            if (string.IsNullOrEmpty (filter)) {
+            if (filter == null) {
                 return;
             }
 

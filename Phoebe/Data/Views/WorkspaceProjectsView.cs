@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -15,7 +16,6 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<Workspace> workspacesList = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
         private readonly List<object> dataObjects = new List<object> ();
-        private List<ProjectData> mostUsedProjects = new List<ProjectData> ();
         private UserData userData;
         private Subscription<DataChangeMessage> subscriptionDataChange;
         private SortProjectsBy sortBy = SortProjectsBy.Clients;
@@ -396,6 +396,7 @@ namespace Toggl.Phoebe.Data.Views
                         mostUsedClient.IsMostUsed = true;
                         foreach (var p in mostUsed) {
                             var pr = new Project (p);
+                            pr.Tasks.AddRange (tasksTask.Result.Where (t => t.ProjectId == p.Id).ToList());
                             mostUsedClient.Projects.Add (pr);
                         }
                         workspace.Clients.Add (mostUsedClient);
@@ -508,10 +509,19 @@ namespace Toggl.Phoebe.Data.Views
                     } else {
                         cl = new Client (client.Data);
                     }
-
-                    foreach (var project in client.Projects) {
-                        if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
-                            cl.Projects.Add (project);
+                    if (client.Data != null && client.Data.Name.ToLower().Contains (filter)) {
+                        cl.Projects.AddRange (client.Projects);
+                    } else {
+                        foreach (var project in client.Projects) {
+                            if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                                cl.Projects.Add (project);
+                            } else { // Maybe in the tasks
+                                foreach (var task in project.Tasks) {
+                                    if (task.Name != null && task.Name.ToLower().Contains (filter)) {
+                                        cl.Projects.Add (project);
+                                    }
+                                }
+                            }
                         }
                     }
                     if (cl.Projects.Count > 0) {
@@ -523,8 +533,25 @@ namespace Toggl.Phoebe.Data.Views
             case SortProjectsBy.Projects:
 
                 foreach (var project in source.Projects) {
-                    if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
+                    if (project.Data == null) {
+                        continue;
+                    }
+                    var projectModel = new ProjectModel (project.Data);
+                    if (projectModel.Name.ToLower().Contains (filter)) {
                         filteredList.Projects.Add (project);
+                        continue;
+                    }
+
+                    if (projectModel.Client != null && projectModel.Client.Name.ToLower().Contains (filter)) {
+                        filteredList.Projects.Add (project);
+                        continue;
+                    }
+
+                    foreach (var task in project.Tasks) {
+                        if (task.Name.ToLower().Contains (filter)) {
+                            filteredList.Projects.Add (project);
+                            break;
+                        }
                     }
                 }
                 break;

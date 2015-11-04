@@ -1,13 +1,14 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.Support.Wearable.Views;
+using Toggl.Chandler.Resources.UI.Fragments;
 
-namespace Toggl.Chandler
+namespace Toggl.Chandler.Resources.UI.Adapters
 {
     public class PagesAdapter : FragmentGridPagerAdapter
     {
         private readonly TimerFragment timerFragment = new TimerFragment();
-        private readonly ListFragment listFragment = new ListFragment();
+        private readonly RecentsListFragment listFragment = new RecentsListFragment();
 
         public PagesAdapter (Context ctx, FragmentManager fm) : base (fm)
         {

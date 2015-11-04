@@ -34,24 +34,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             model = null;
         }
 
-        public int SelectedClientIndex { get; set; }
-
         public bool IsLoading { get; set; }
 
-        public string ClientName { get; set; }
-
         public IDataView<ClientData> ClientListDataView { get; set;}
-
-
-        public void SaveClient (ClientModel client)
-        {
-
-        }
-
-        public async Task CreateNewClient ()
-        {
-
-        }
-
     }
 }

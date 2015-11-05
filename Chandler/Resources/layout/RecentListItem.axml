@@ -26,8 +26,9 @@
             android:text="123"
             android:singleLine="true"
             android:ellipsize="end"
-            android:gravity="center"
-            android:textSize="16sp" />
+            android:gravity="bottom"
+            android:textSize="16sp"
+            android:layout_gravity="bottom" />
         <TextView
             android:id="@+id/RecentListProject"
             android:layout_width="wrap_content"
@@ -36,7 +37,7 @@
             android:ellipsize="end"
             android:textColor="@android:color/black"
             android:text="project"
-            android:gravity="center"
+            android:gravity="top"
             android:textSize="16sp" />
     </LinearLayout>
     <TextView

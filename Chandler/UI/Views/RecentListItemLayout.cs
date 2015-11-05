@@ -17,7 +17,7 @@ namespace Toggl.Chandler.UI.Views
     {
         private TextView DescriptionTextView;
         private TextView ProjectTextView;
-        private ImageView ProjectColorDot;
+        private View ColorView;
 
         private float fadedAlpha;
 
@@ -41,14 +41,14 @@ namespace Toggl.Chandler.UI.Views
 
         void Initialize ()
         {
-            fadedAlpha = 50f/100f;
+            fadedAlpha = 30f/100f;
         }
 
         protected override void OnFinishInflate ()
         {
             DescriptionTextView = FindViewById<TextView> (Resource.Id.RecentListDescription);
             ProjectTextView = FindViewById<TextView> (Resource.Id.RecentListProject);
-//            ProjectColorDot = FindViewById<ImageView> (Resource.Id.ProjectColorDot);
+            ColorView = FindViewById<View> (Resource.Id.ColorView);
             base.OnFinishInflate ();
         }
 
@@ -56,14 +56,14 @@ namespace Toggl.Chandler.UI.Views
         {
             DescriptionTextView.Alpha = 1f;
             ProjectTextView.Alpha = 1f;
-//            ProjectColorDot.Alpha = 1f;
+            ColorView.Alpha = 1f;
         }
 
         public void OnNonCenterPosition (bool p0)
         {
             DescriptionTextView.Alpha = fadedAlpha;
             ProjectTextView.Alpha = fadedAlpha;
-//            ProjectColorDot.Alpha = fadedAlpha;
+            ColorView.Alpha = fadedAlpha;
         }
     }
 }

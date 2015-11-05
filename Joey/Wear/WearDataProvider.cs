@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;

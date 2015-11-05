@@ -11,7 +11,6 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using ActionBar = Android.Support.V7.App.ActionBar;
@@ -35,7 +34,6 @@ namespace Toggl.Joey.UI.Fragments
         private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
         private LinearLayout searchEmptyState;
-
         private ProjectListViewModel viewModel;
 
         private IList<string> TimeEntryIds
@@ -102,21 +100,6 @@ namespace Toggl.Joey.UI.Fragments
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
 
-            OnDataLoaded (null, null);
-        }
-
-        private void OnDataLoaded (object sender, EventArgs e)
-        {
-            if (!viewModel.IsLoading) {
-                if (viewModel.Model == null) {
-                    Activity.Finish ();
-                }
-            }
-
-            if (viewModel.ProjectList.IsLoading || viewModel.IsLoading) {
-                return;
-            }
-
             EnsureCorrectState ();
 
             // Create tabs
@@ -125,13 +108,10 @@ namespace Toggl.Joey.UI.Fragments
                 foreach (var ws in viewModel.ProjectList.Workspaces) {
                     var tab = tabLayout.NewTab().SetText (ws.Data.Name);
                     tabLayout.AddTab (tab);
-                    try {
-                        if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
-                            viewModel.ProjectList.CurrentWorkspaceIndex = i;
-                            tab.Select();
-                        }
-                    } catch (Exception ex) {}
-
+                    if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
+                        viewModel.ProjectList.CurrentWorkspaceIndex = i;
+                        tab.Select();
+                    }
                     i++;
                 }
             }
@@ -175,14 +155,17 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnItemSelected (object m)
         {
-            ProjectModel project = null;
-            WorkspaceModel workspace = null;
+            // TODO: valorate to work only with IDs.
+            //
+
+            Guid projectId = Guid.Empty;
+            Guid workspaceId = Guid.Empty;
             TaskData task = null;
 
             if (m is WorkspaceProjectsView.Project) {
                 var wrap = (WorkspaceProjectsView.Project)m;
                 if (wrap.IsNoProject) {
-                    workspace = new WorkspaceModel (wrap.WorkspaceId);
+                    workspaceId = wrap.WorkspaceId;
                 } else if (wrap.IsNewProject) {
                     // Show create project activity instead
                     var entryList = new List<TimeEntryData> (viewModel.TimeEntryList);
@@ -190,20 +173,20 @@ namespace Toggl.Joey.UI.Fragments
                                  (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
                     StartActivityForResult (intent, ProjectCreatedRequestCode);
                 } else {
-                    project = (ProjectModel)wrap.Data;
-                    workspace = project.Workspace;
+                    projectId = wrap.Data.Id;
+                    workspaceId = wrap.Data.WorkspaceId;
                 }
             } else if (m is ProjectAndTaskView.Workspace) {
                 var wrap = (ProjectAndTaskView.Workspace)m;
-                workspace = (WorkspaceModel)wrap.Data;
+                workspaceId = wrap.Data.Id;
             } else if (m is TaskData) {
                 task = (TaskData)m;
-                project = new ProjectModel (task.ProjectId);
-                workspace = new WorkspaceModel (task.WorkspaceId);
+                projectId = task.ProjectId;
+                workspaceId = task.WorkspaceId;
             }
 
-            if (project != null || workspace != null) {
-                await viewModel.SaveModelAsync (project, workspace, task);
+            if (projectId != Guid.Empty || workspaceId != Guid.Empty) {
+                await viewModel.SaveModelAsync (projectId, workspaceId, task);
                 Activity.Finish ();
             }
         }
@@ -212,6 +195,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnActivityResult (requestCode, resultCode, data);
 
+            // Bypass to close the activity
+            // if the project is created in NewProject activity,
+            // close the Project list activity
             if (requestCode == ProjectCreatedRequestCode) {
                 if (resultCode == (int)Result.Ok) {
                     Activity.Finish();
@@ -221,18 +207,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnDestroyView ()
         {
-            Dispose (true);
+            viewModel.Dispose ();
             base.OnDestroyView ();
-        }
-
-        protected override void Dispose (bool disposing)
-        {
-            if (disposing) {
-                viewModel.ProjectList.IsLoadingChanged -= OnDataLoaded;
-                viewModel.OnIsLoadingChanged -= OnDataLoaded;
-                viewModel.Dispose ();
-            }
-            base.Dispose (disposing);
         }
 
         #region Option menu

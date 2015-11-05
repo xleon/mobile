@@ -105,6 +105,7 @@
     <AndroidResource Include="Resources\layout\ListFragment.axml" />
     <AndroidResource Include="Resources\layout\RecentListItem.axml" />
     <AndroidResource Include="Resources\drawable\RecentListDot.xml" />
+    <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

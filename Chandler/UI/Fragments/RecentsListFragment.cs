@@ -11,14 +11,9 @@ namespace Toggl.Chandler.UI.Fragments
 {
     public class RecentsListFragment : Fragment, WearableListView.IClickListener, WearableListView.IOnScrollListener
     {
-        private readonly List<SimpleTimeEntryData> dataItems = new List<SimpleTimeEntryData> ();
         private WearableListView listView;
         private TextView headerTextView;
-
-        public RecentsListFragment (List<SimpleTimeEntryData> data)
-        {
-            dataItems = data;
-        }
+        private RecentListAdapter listAdapter;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -26,11 +21,11 @@ namespace Toggl.Chandler.UI.Fragments
             headerTextView = view.FindViewById<TextView> (Resource.Id.ListTitleTextView);
 
             listView = view.FindViewById<WearableListView> (Resource.Id.RecentTimeEntriesList);
-            listView.SetAdapter (new RecentListAdapter (Activity, dataItems));
+            listAdapter = new RecentListAdapter (Activity, Activity);
+            listView.SetAdapter (listAdapter);
             listView.SetGreedyTouchMode (true);
             listView.AddOnScrollListener (this);
             listView.SetClickListener (this);
-
             return view;
         }
 

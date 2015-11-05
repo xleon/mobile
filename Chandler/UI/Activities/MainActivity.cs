@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Gms.Common;
 using Android.Gms.Common.Apis;
@@ -7,6 +8,7 @@ using Android.Gms.Wearable;
 using Android.OS;
 using Android.Support.Wearable.Views;
 using Android.Util;
+using Java.Interop;
 using Java.Util.Concurrent;
 using Toggl.Chandler.UI.Adapters;
 
@@ -19,6 +21,7 @@ namespace Toggl.Chandler.UI.Activities
         private GridViewPager ViewPager;
         private GoogleApiClient googleApiClient;
         private PagesAdapter adapter;
+        private List<SimpleTimeEntryData> timeEntries = new List<SimpleTimeEntryData> ();
 
         protected override void OnCreate (Bundle savedInstanceState)
         {
@@ -36,7 +39,20 @@ namespace Toggl.Chandler.UI.Activities
             .AddConnectionCallbacks (this)
             .Build ();
             googleApiClient.Connect();
+            if (CollectionChanged != null) {
+                CollectionChanged (this, EventArgs.Empty);
+            }
         }
+
+        public List<SimpleTimeEntryData> Data
+        {
+            get {
+                return timeEntries;
+            }
+        }
+
+        public event EventHandler CollectionChanged;
+
 
         protected override void OnResume ()
         {
@@ -52,8 +68,6 @@ namespace Toggl.Chandler.UI.Activities
             WearableClass.NodeApi.RemoveListener (googleApiClient, this);
             googleApiClient.Disconnect ();
         }
-
-
 
         public void SendNewData (GoogleApiClient googleApiClient)
         {
@@ -85,12 +99,44 @@ namespace Toggl.Chandler.UI.Activities
         {
             var map = DataMapItem.FromDataItem (dataItem).DataMap;
             var list = map.GetDataMapArrayList (Common.TimeEntryListKey);
-            var entryList = new List<SimpleTimeEntryData> ();
+            if (list == null) {
+                return;
+            }
             foreach (var mapItem in list) {
                 var en = new SimpleTimeEntryData (mapItem);
-                Console.WriteLine ("en.Desc: {0}, proj: {1}", en.Description, en.Project);
-                entryList.Add (en);
+                timeEntries.Add (en);
             }
+            if (CollectionChanged != null) {
+                CollectionChanged (this, EventArgs.Empty);
+            }
+        }
+
+        public void RequestSync ()
+        {
+            Task.Run (() => {
+                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
+                var nodes = apiResult.Nodes;
+                foreach (var node in nodes) {
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
+                                                          Common.RequestSyncPath,
+                                                          new byte[0]);
+                }
+            });
+            SendNewData (googleApiClient);
+        }
+
+        private void SendStartStopMessage ()
+        {
+            Task.Run (() => {
+                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
+                var nodes = apiResult.Nodes;
+                foreach (var node in nodes) {
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
+                                                          Common.StartTimeEntryPath,
+                                                          new byte[0]);
+                }
+            });
+            SendNewData (googleApiClient);
         }
 
         public void OnMessageReceived (IMessageEvent messageEvent)
@@ -104,6 +150,9 @@ namespace Toggl.Chandler.UI.Activities
             WearableClass.DataApi.AddListener (googleApiClient, this);
             WearableClass.MessageApi.AddListener (googleApiClient, this);
             WearableClass.NodeApi.AddListener (googleApiClient, this);
+
+            // I'm online, give me the new data & state.
+            RequestSync ();
         }
 
         public void OnConnectionSuspended (int p0)

@@ -9,6 +9,8 @@ namespace Toggl.Joey.Wear
         public static readonly string StopTimeEntryPath = "/toggl/wear/stop";
         public static readonly string RestartTimeEntryPath = "/toggl/wear/restart";
         public static readonly string TimeEntryListPath = "/toggl/wear/data";
+        public static readonly string RequestSyncPath = "/toggl/wear/sync/";
+
         public static readonly string TimeEntryListKey = "time_entry_list_key";
         public static readonly string SingleEntryKey = "time_entry_key";
     }
@@ -19,6 +21,7 @@ namespace Toggl.Joey.Wear
         private const string PropertyIsRunningKey = "isRunningKey";
         private const string PropertyDescriptionKey = "descriptionKey";
         private const string PropertyProjectNameKey = "projectKey";
+        private const string PropertyProjectColorKey = "projectColorKey";
         private const string PropertyStartTimeKey = "startTimeKey";
         private const string PropertyStopTimeKey = "stopTimeKey";
 
@@ -26,6 +29,7 @@ namespace Toggl.Joey.Wear
         private bool isRunning;
         private string description;
         private string project;
+        private string projectColor;
         private DateTime startTime;
         private DateTime stopTime;
 
@@ -40,9 +44,10 @@ namespace Toggl.Joey.Wear
             dataMap = map;
 
             id = map.ContainsKey (PropertyIdKey) ? Guid.Parse (dataMap.GetString (PropertyIdKey)) : Guid.Empty;
-            isRunning = map.ContainsKey (PropertyIsRunningKey) ? dataMap.GetBoolean (PropertyIsRunningKey) : false;
+            isRunning = map.ContainsKey (PropertyIsRunningKey) && dataMap.GetBoolean (PropertyIsRunningKey);
             description = map.ContainsKey (PropertyDescriptionKey) ? dataMap.GetString (PropertyDescriptionKey) : String.Empty;
             project = map.ContainsKey (PropertyProjectNameKey) ? dataMap.GetString (PropertyProjectNameKey) : String.Empty;
+            projectColor = map.ContainsKey (PropertyProjectColorKey) ? dataMap.GetString (PropertyProjectColorKey) : String.Empty;
             startTime = map.ContainsKey (PropertyStartTimeKey) ? DateTime.Parse (dataMap.GetString (PropertyStartTimeKey)) : DateTime.UtcNow;
             stopTime = map.ContainsKey (PropertyStopTimeKey) ? DateTime.Parse (dataMap.GetString (PropertyStopTimeKey)) : DateTime.UtcNow;
         }
@@ -57,6 +62,7 @@ namespace Toggl.Joey.Wear
                 dataMap.PutBoolean (PropertyIsRunningKey, isRunning);
                 dataMap.PutString (PropertyDescriptionKey, description);
                 dataMap.PutString (PropertyProjectNameKey, project);
+                dataMap.PutString (PropertyProjectColorKey, projectColor);
                 dataMap.PutString (PropertyStartTimeKey, startTime.ToLongTimeString());
                 dataMap.PutString (PropertyStopTimeKey, stopTime.ToLongTimeString());
 
@@ -99,6 +105,15 @@ namespace Toggl.Joey.Wear
                 return project;
             } set {
                 project = value;
+            }
+        }
+
+        public string ProjectColor
+        {
+            get {
+                return projectColor;
+            } set {
+                projectColor = value;
             }
         }
 

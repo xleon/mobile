@@ -1,32 +1,61 @@
-﻿using Android.Support.Wearable.Views;
+﻿using System;
 using System.Collections.Generic;
-using Android.Views;
+using Android.App;
 using Android.Content;
+using Android.Graphics;
+using Android.Graphics.Drawables;
+using Android.Support.Wearable.Views;
+using Android.Views;
 using Android.Widget;
-using System;
+using Toggl.Chandler.UI.Activities;
 
 namespace Toggl.Chandler.UI.Adapters
 {
     public class RecentListAdapter : WearableListView.Adapter
     {
         private List<SimpleTimeEntryData> data = new List<SimpleTimeEntryData> ();
-        private LayoutInflater inflater;
-
-        public RecentListAdapter (Context ctx, List<SimpleTimeEntryData> dataItems)
+        private LayoutInflater Inflater;
+        private List<SimpleTimeEntryData> dataObjects;
+        private MainActivity Activity;
+        private Context Context;
+        public RecentListAdapter (Context ctx, Activity activity)
         {
-            inflater = LayoutInflater.FromContext (ctx);
-            data = dataItems;
+            Inflater = LayoutInflater.FromContext (ctx);
+            Activity = (MainActivity)activity;
+            Context = ctx;
+
+            Activity.CollectionChanged += OnCollectionChanged;
+        }
+
+        private void OnCollectionChanged (object sender, EventArgs e)
+        {
+            data = Activity.Data;
+            NotifyDataSetChanged();
         }
 
         public class ItemViewHolder : WearableListView.ViewHolder
         {
             public TextView DescriptionTextView;
             public TextView ProjectTextView;
+            public View ColorView;
+
 
             public ItemViewHolder (View view) : base (view)
             {
                 DescriptionTextView = (TextView) view.FindViewById (Resource.Id.RecentListDescription);
                 ProjectTextView = (TextView) view.FindViewById (Resource.Id.RecentListProject);
+                ColorView = (View) view.FindViewById (Resource.Id.ColorView);
+            }
+
+            public void Bind (SimpleTimeEntryData data, Context ctx)
+            {
+                DescriptionTextView.Text = String.IsNullOrEmpty (data.Description) ? ctx.Resources.GetString (Resource.String.TimeEntryNoDescription) : data.Description;
+                ProjectTextView.Text = String.IsNullOrEmpty (data.Project) ? ctx.Resources.GetString (Resource.String.TimeEntryNoProject) : data.Project;
+                var color = Color.ParseColor (data.ProjectColor);
+                var shape = ColorView.Background as GradientDrawable;
+                if (shape != null) {
+                    shape.SetColor (color);
+                }
             }
         }
 
@@ -34,18 +63,13 @@ namespace Toggl.Chandler.UI.Adapters
 
         public override void OnBindViewHolder (Android.Support.V7.Widget.RecyclerView.ViewHolder holder, int position)
         {
-            var holderItem = (ItemViewHolder) holder;
-
-            holderItem.DescriptionTextView.Text = data[position].Description;
-            Console.WriteLine ("desc: {0}, project: {1}", data[position].Description, data[position].Project);
-            holderItem.ProjectTextView.Text = data[position].Project;
-
-            holderItem.ItemView.Tag = position;
+            var viewHolder = (ItemViewHolder) holder;
+            viewHolder.Bind (data[position], Context);
         }
 
         public override Android.Support.V7.Widget.RecyclerView.ViewHolder OnCreateViewHolder (Android.Views.ViewGroup parent, int viewType)
         {
-            return new ItemViewHolder (inflater.Inflate (Resource.Layout.RecentListItem, null));
+            return new ItemViewHolder (Inflater.Inflate (Resource.Layout.RecentListItem, null));
         }
 
         public override int ItemCount
@@ -56,7 +80,5 @@ namespace Toggl.Chandler.UI.Adapters
         }
 
         #endregion
-
     }
 }
-

@@ -47,17 +47,12 @@ namespace Toggl.Joey.Wear
             LOGD (Tag, "OnMessageReceived: " + messageEvent);
 
             base.OnMessageReceived (messageEvent);
-            if (messageEvent.Path != Common.StartTimeEntryPath &&
-                    messageEvent.Path != Common.StopTimeEntryPath &&
-                    messageEvent.Path != Common.RestartTimeEntryPath) {
-                return;
-            }
-
             await HandleMessage (messageEvent);
         }
 
         public override void OnPeerConnected (INode peer)
         {
+//            UpdateSharedTimeEntryList();
             LOGD (Tag, "OnPeerConnected: " + peer);
         }
 
@@ -85,11 +80,11 @@ namespace Toggl.Joey.Wear
 
                         // Start new time entry.
                         await WearDataProvider.StartStopTimeEntry ();
-                        // Refresh shared data.
-                        await UpdateSharedTimeEntryList (client);
 
                     } else if (path == Common.RestartTimeEntryPath) {
                         // Get time entry Id needed.
+                    } else if (path == Common.RequestSyncPath) {
+                        await UpdateSharedTimeEntryList (client);
                     }
                 } finally {
                     client.Disconnect ();

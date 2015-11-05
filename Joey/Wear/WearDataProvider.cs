@@ -63,13 +63,28 @@ namespace Toggl.Joey.Wear
 
             var simpleEntries = new List<SimpleTimeEntryData> ();
             foreach (var entry in uniqueEntries) {
-                var projectName = projectsList.Exists (r => r.Id == (entry.ProjectId ?? Guid.Empty)) ? projectsList.First (r => r.Id == entry.ProjectId).Name : String.Empty;
+                var model = new TimeEntryModel (entry);
+                await model.LoadAsync();
+                Console.WriteLine ("model: {0}", model);
+                Console.WriteLine ("project: {0}", model.Project);
+                int color = 0;
+                String projectName = "";
+                if (model.Project != null) {
+                    color = model.Project.Color;
+                    projectName = model.Project.Name;
+                }
+                var colorString = ProjectModel.HexColors [color % ProjectModel.HexColors.Length];
+                Console.WriteLine ("projecName : {0}", projectName);
+                Console.WriteLine ("model.Proj.Color: {0}", color);
+//                Console.WriteLine("color: {0}", model.Project.Color);
+
                 simpleEntries.Add (
                 new SimpleTimeEntryData {
                     Id = entry.Id,
                     IsRunning = entry.State == TimeEntryState.Running,
                     Description = entry.Description,
                     Project = projectName,
+                    ProjectColor = colorString,
                     StartTime = entry.StartTime,
                     StopTime = entry.StopTime ?? DateTime.UtcNow
                 });

@@ -20,7 +20,6 @@
         <android.support.wearable.view.WearableListView
             android:id="@+id/RecentTimeEntriesList"
             android:layout_height="match_parent"
-            android:layout_width="match_parent"
-            android:layout_marginLeft="20dp" />
+            android:layout_width="match_parent" />
     </FrameLayout>
 </android.support.wearable.view.BoxInsetLayout>

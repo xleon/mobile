@@ -2,62 +2,16 @@
 using Android.Content;
 using Android.Support.Wearable.Views;
 using Toggl.Chandler.UI.Fragments;
-using System.Collections.Generic;
-using System;
 
 namespace Toggl.Chandler.UI.Adapters
 {
     public class PagesAdapter : FragmentGridPagerAdapter
     {
-        private TimerFragment timerFragment = new TimerFragment();
-        private RecentsListFragment listFragment;// = new RecentsListFragment();
+        private readonly TimerFragment timerFragment = new TimerFragment();
+        private readonly RecentsListFragment listFragment = new RecentsListFragment();
 
         public PagesAdapter (Context ctx, FragmentManager fm) : base (fm)
         {
-            var dummyData = new List<SimpleTimeEntryData> ();
-            dummyData.Add ( new SimpleTimeEntryData {
-                Description = "Test",
-                Project = "project",
-                IsRunning = false,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow
-            });
-            dummyData.Add ( new SimpleTimeEntryData {
-                Description = "Test",
-                Project = "project",
-                IsRunning = false,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow
-            });
-            dummyData.Add ( new SimpleTimeEntryData {
-                Description = "Test",
-                Project = "project",
-                IsRunning = false,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow
-            });
-            dummyData.Add ( new SimpleTimeEntryData {
-                Description = "Test",
-                Project = "project",
-                IsRunning = false,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow
-            });
-            dummyData.Add ( new SimpleTimeEntryData {
-                Description = "Test",
-                Project = "project",
-                IsRunning = false,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow
-            });
-            dummyData.Add ( new SimpleTimeEntryData {
-                Description = "Test",
-                Project = "project",
-                IsRunning = false,
-                StartTime = DateTime.UtcNow,
-                StopTime = DateTime.UtcNow
-            });
-            listFragment = new RecentsListFragment (dummyData);
         }
 
         #region implemented abstract members of GridPagerAdapter
@@ -82,8 +36,9 @@ namespace Toggl.Chandler.UI.Adapters
         {
             if (col == 0) {
                 return timerFragment;
+            } else {
+                return listFragment;
             }
-            return listFragment;
         }
 
         #endregion

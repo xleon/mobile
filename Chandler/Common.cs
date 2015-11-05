@@ -63,8 +63,8 @@ namespace Toggl.Chandler
                 dataMap.PutString (PropertyDescriptionKey, description);
                 dataMap.PutString (PropertyProjectNameKey, project);
                 dataMap.PutString (PropertyProjectColorKey, projectColor);
-                dataMap.PutString (PropertyStartTimeKey, startTime.ToLongTimeString());
-                dataMap.PutString (PropertyStopTimeKey, stopTime.ToLongTimeString());
+                dataMap.PutString (PropertyStartTimeKey, startTime.ToString());
+                dataMap.PutString (PropertyStopTimeKey, stopTime.ToString());
 
                 return dataMap;
             } set {
@@ -137,7 +137,8 @@ namespace Toggl.Chandler
 
         public TimeSpan GetDuration ()
         {
-            var duration = StopTime - StartTime;
+            var stop = StopTime == DateTime.MinValue ? DateTime.UtcNow : StopTime;
+            var duration = stop - StartTime;
             if (duration <=  TimeSpan.Zero) {
                 duration = TimeSpan.Zero;
             }

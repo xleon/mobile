@@ -85,7 +85,7 @@ namespace Toggl.Joey.Wear
                     Project = projectName,
                     ProjectColor = colorString,
                     StartTime = entry.StartTime,
-                    StopTime = entry.StopTime ?? DateTime.UtcNow
+                    StopTime = entry.StopTime ?? DateTime.MinValue
                 });
             }
             return simpleEntries;

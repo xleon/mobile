@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Android.App;
+using Android.Content;
 using Android.Gms.Wearable;
+using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -12,11 +15,15 @@ namespace Toggl.Chandler.UI.Fragments
 {
     public class TimerFragment : Fragment
     {
+        private readonly string greenButtonColor = "#ee4dd965";
+        private readonly string redButtonColor = "#eeff3c47";
+
         private readonly Handler handler = new Handler ();
         private TextView DurationTextView;
         private TextView DescriptionTextView;
         private TextView ProjectTextView;
         private ImageButton ActionButton;
+        private Context context;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -29,10 +36,12 @@ namespace Toggl.Chandler.UI.Fragments
 
             ActionButton.Click += OnActionButtonClicked;
             ((MainActivity)Activity).CollectionChanged += OnCollectionChanged;
-
+            context = Activity.ApplicationContext;
 //            Rebind();
             return view;
         }
+
+        //TODO: stopped state (nothing is running)
 
         private SimpleTimeEntryData data
         {
@@ -61,11 +70,6 @@ namespace Toggl.Chandler.UI.Fragments
 
         }
 
-        private void SendStartStopMessage ()
-        {
-
-        }
-
         private void Rebind()
         {
             DescriptionTextView.Text = String.IsNullOrWhiteSpace (data.Description) ? Resources.GetString (Resource.String.TimeEntryNoDescription) : data.Description;
@@ -74,9 +78,16 @@ namespace Toggl.Chandler.UI.Fragments
             var dur = data.GetDuration();
             DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
 
-            if (!data.IsRunning) {
-                return;
+
+            if (data.IsRunning) {
+                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcStop));
+            } else {
+                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcPlay));
             }
+
+            var color = data.IsRunning ? Color.ParseColor (redButtonColor) : Color.ParseColor (greenButtonColor);
+            var shape = ActionButton.Background as GradientDrawable;
+            shape.SetColor (color);
 
             // Schedule next rebind:
             handler.RemoveCallbacks (Rebind);

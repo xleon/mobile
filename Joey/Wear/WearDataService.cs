@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Gms.Common;
@@ -80,6 +79,7 @@ namespace Toggl.Joey.Wear
 
                         // Start new time entry.
                         await WearDataProvider.StartStopTimeEntry ();
+                        await UpdateSharedTimeEntryList (client);
 
                     } else if (path == Common.RestartTimeEntryPath) {
                         // Get time entry Id needed.

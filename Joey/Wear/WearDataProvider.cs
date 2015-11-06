@@ -64,8 +64,7 @@ namespace Toggl.Joey.Wear
             foreach (var entry in uniqueEntries) {
                 var model = new TimeEntryModel (entry);
                 await model.LoadAsync();
-                Console.WriteLine ("model: {0}", model);
-                Console.WriteLine ("project: {0}", model.Project);
+
                 int color = 0;
                 String projectName = "";
                 if (model.Project != null) {
@@ -73,9 +72,6 @@ namespace Toggl.Joey.Wear
                     projectName = model.Project.Name;
                 }
                 var colorString = ProjectModel.HexColors [color % ProjectModel.HexColors.Length];
-                Console.WriteLine ("projecName : {0}", projectName);
-                Console.WriteLine ("model.Proj.Color: {0}", color);
-//                Console.WriteLine("color: {0}", model.Project.Color);
 
                 simpleEntries.Add (
                 new SimpleTimeEntryData {

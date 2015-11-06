@@ -6,23 +6,21 @@
     <TextView
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:id="@+id/DescriptionTextView"
-        android:textColor="@android:color/black"
-        android:fontFamily="sans-serif-light"
-        android:layout_marginTop="20dp"
-        android:textSize="15sp"
-        android:gravity="center_horizontal"
-        android:text="Description" />
-    <TextView
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
         android:id="@+id/ProjectTextView"
         android:textColor="@android:color/black"
         android:textStyle="bold"
+        android:textSize="15sp"
+        android:layout_marginTop="20dp"
+        android:gravity="center_horizontal" />
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:id="@+id/DescriptionTextView"
+        android:textColor="@android:color/black"
+        android:fontFamily="sans-serif-light"
         android:layout_marginBottom="10dp"
         android:textSize="15sp"
-        android:gravity="center_horizontal"
-        android:text="Project" />
+        android:gravity="center_horizontal" />
     <TextView
         android:layout_height="wrap_content"
         android:layout_width="match_parent"

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
-using Android.Gms.Wearable;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
@@ -24,6 +21,7 @@ namespace Toggl.Chandler.UI.Fragments
         private TextView ProjectTextView;
         private ImageButton ActionButton;
         private Context context;
+        private MainActivity activity;
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -35,59 +33,54 @@ namespace Toggl.Chandler.UI.Fragments
             ProjectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
 
             ActionButton.Click += OnActionButtonClicked;
-            ((MainActivity)Activity).CollectionChanged += OnCollectionChanged;
+
+            activity = ((MainActivity)Activity);
             context = Activity.ApplicationContext;
-//            Rebind();
+
+            Rebind ();
+
             return view;
         }
-
-        //TODO: stopped state (nothing is running)
 
         private SimpleTimeEntryData data
         {
             get {
-                if (((MainActivity)Activity).Data[0] != null) {
-                    return ((MainActivity)Activity).Data[0];
-                } else {
-                    return new SimpleTimeEntryData {
-                        Description = "empty",
-                        Project = "project",
-                        IsRunning = false,
-                        StartTime = DateTime.UtcNow,
-                        StopTime = DateTime.UtcNow
-                    };
-                }
+                return activity.Data[0];
             }
-        }
-        private void OnCollectionChanged (object sender, EventArgs e)
-        {
-            Rebind();
         }
 
         private void OnActionButtonClicked (object sender, EventArgs e)
         {
-            ((MainActivity)Activity).RequestSync();
-
+            activity.RequestStartStop();
         }
 
         private void Rebind()
         {
-            DescriptionTextView.Text = String.IsNullOrWhiteSpace (data.Description) ? Resources.GetString (Resource.String.TimeEntryNoDescription) : data.Description;
-            ProjectTextView.Text = String.IsNullOrWhiteSpace (data.Project) ? Resources.GetString (Resource.String.TimeEntryNoProject) : data.Project;
+            if (activity.Data.Count != 0) {
 
-            var dur = data.GetDuration();
-            DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
+                ActionButton.Visibility = ViewStates.Visible;
+                if (data.IsRunning) {
+                    ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcStop));
+                    var dur = data.GetDuration();
+                    DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
+                    DescriptionTextView.Text = String.IsNullOrWhiteSpace (data.Description) ? Resources.GetString (Resource.String.TimeEntryNoDescription) : data.Description;
+                    ProjectTextView.Text = data.Project;
+                } else {
+                    ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcPlay));
+                    DurationTextView.Text = Resources.GetString (Resource.String.DurationNotRunningState);
+                    ProjectTextView.Text = Resources.GetString (Resource.String.TimerBlankIntroduction);;
+                    DescriptionTextView.Text =  Resources.GetString (Resource.String.WearNewBlankDescription);;
+                }
 
-
-            if (data.IsRunning) {
-                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcStop));
+                var color = data.IsRunning ? Color.ParseColor (redButtonColor) : Color.ParseColor (greenButtonColor);
+                var shape = ActionButton.Background as GradientDrawable;
+                shape.SetColor (color);
             } else {
-                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcPlay));
+                DurationTextView.Text =  Resources.GetString (Resource.String.TimerLoading);;
+                DescriptionTextView.Text = String.Empty;
+                ProjectTextView.Text = String.Empty;
+                ActionButton.Visibility = ViewStates.Gone;
             }
-
-            var color = data.IsRunning ? Color.ParseColor (redButtonColor) : Color.ParseColor (greenButtonColor);
-            var shape = ActionButton.Background as GradientDrawable;
-            shape.SetColor (color);
 
             // Schedule next rebind:
             handler.RemoveCallbacks (Rebind);
@@ -95,4 +88,3 @@ namespace Toggl.Chandler.UI.Fragments
         }
     }
 }
-

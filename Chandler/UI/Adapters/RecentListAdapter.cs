@@ -15,7 +15,6 @@ namespace Toggl.Chandler.UI.Adapters
     {
         private List<SimpleTimeEntryData> data = new List<SimpleTimeEntryData> ();
         private LayoutInflater Inflater;
-        private List<SimpleTimeEntryData> dataObjects;
         private MainActivity Activity;
         private Context Context;
         public RecentListAdapter (Context ctx, Activity activity)
@@ -65,6 +64,7 @@ namespace Toggl.Chandler.UI.Adapters
         {
             var viewHolder = (ItemViewHolder) holder;
             viewHolder.Bind (data[position], Context);
+            holder.ItemView.Tag = data[position].Id.ToString();
         }
 
         public override Android.Support.V7.Widget.RecyclerView.ViewHolder OnCreateViewHolder (Android.Views.ViewGroup parent, int viewType)

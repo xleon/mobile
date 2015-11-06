@@ -7,6 +7,7 @@ using Android.Gms.Common.Apis;
 using Android.Gms.Wearable;
 using Android.Util;
 using Java.Util.Concurrent;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Joey.Wear
 {
@@ -51,7 +52,6 @@ namespace Toggl.Joey.Wear
 
         public override void OnPeerConnected (INode peer)
         {
-//            UpdateSharedTimeEntryList();
             LOGD (Tag, "OnPeerConnected: " + peer);
         }
 
@@ -82,6 +82,9 @@ namespace Toggl.Joey.Wear
                         await UpdateSharedTimeEntryList (client);
 
                     } else if (path == Common.RestartTimeEntryPath) {
+                        var guid = Guid.Parse (Common.GetString (message.GetData()));
+                        await StartEntry (guid);
+                        await UpdateSharedTimeEntryList (client);
                         // Get time entry Id needed.
                     } else if (path == Common.RequestSyncPath) {
                         await UpdateSharedTimeEntryList (client);
@@ -92,6 +95,12 @@ namespace Toggl.Joey.Wear
             } catch (Exception e) {
                 Log.Error ("WearIntegration", e.ToString ());
             }
+        }
+        private async Task StartEntry (Guid id)
+        {
+            var model = new TimeEntryModel (id);
+            await model.LoadAsync();
+            await model.ContinueAsync();
         }
 
         private async Task UpdateSharedTimeEntryList (GoogleApiClient client)

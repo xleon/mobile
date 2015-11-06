@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using Android.App;
+﻿using Android.App;
 using Android.OS;
 using Android.Support.Wearable.Views;
 using Android.Views;
-using Toggl.Chandler.UI.Adapters;
 using Android.Widget;
+using Toggl.Chandler.UI.Activities;
+using Toggl.Chandler.UI.Adapters;
 
 namespace Toggl.Chandler.UI.Fragments
 {
@@ -32,7 +31,7 @@ namespace Toggl.Chandler.UI.Fragments
         public void OnClick (WearableListView.ViewHolder v)
         {
             var tag = v.ItemView.Tag;
-            //Start this TE;
+            ((MainActivity)Activity).StartEntry (tag.ToString());
         }
 
         public void OnTopEmptyRegionClick ()

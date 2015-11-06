@@ -4,7 +4,7 @@
     <string name="TimeEntryNoDescription">(no description)</string>
     <string name="WearNewBlankDescription">Wear entry</string>
     <string name="TimeEntryNoProject">(no project)</string>
-    <string name="TimerLoading">Loading</string>
+    <string name="TimerLoading">Loading...</string>
     <string name="TimerBlankIntroduction">Press to start a</string>
     <string name="TimerBlankDescription">new wear entry</string>
     <string name="DurationNotRunningState">Timer</string>

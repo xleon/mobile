@@ -140,6 +140,21 @@ namespace Toggl.Chandler.UI.Activities
             SendNewData (googleApiClient);
         }
 
+        public void StartEntry (string guid)
+        {
+            Task.Run (() => {
+                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
+                var nodes = apiResult.Nodes;
+                foreach (var node in nodes) {
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
+                                                          Common.RestartTimeEntryPath,
+                                                          Common.GetBytes (guid));
+                }
+            });
+            SendNewData (googleApiClient);
+            ViewPager.SetCurrentItem (0, 0, true);
+        }
+
         public void OnMessageReceived (IMessageEvent messageEvent)
         {
             LOGD (Tag, "OnMessageReceived: " + messageEvent);

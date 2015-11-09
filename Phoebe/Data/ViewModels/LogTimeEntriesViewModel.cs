@@ -106,7 +106,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                 } else {
                     model.Data = data;
                 }
-
                 // Set if an entry is running.
                 IsTimeEntryRunning = data.State == TimeEntryState.Running;
             }

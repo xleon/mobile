@@ -72,6 +72,7 @@
     <Compile Include="UI\Fragments\RecentsListFragment.cs" />
     <Compile Include="UI\Fragments\TimerFragment.cs" />
     <Compile Include="UI\Views\RecentListItemLayout.cs" />
+    <Compile Include="UI\Fragments\OpenAppFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -106,6 +107,7 @@
     <AndroidResource Include="Resources\layout\RecentListItem.axml" />
     <AndroidResource Include="Resources\drawable\RecentListDot.xml" />
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
+    <AndroidResource Include="Resources\layout\OpenAppLayout.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>

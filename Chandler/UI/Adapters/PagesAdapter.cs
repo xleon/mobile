@@ -9,6 +9,8 @@ namespace Toggl.Chandler.UI.Adapters
     {
         private readonly TimerFragment timerFragment = new TimerFragment();
         private readonly RecentsListFragment listFragment = new RecentsListFragment();
+        private readonly OpenAppFragment openFragment = new OpenAppFragment();
+
 
         public PagesAdapter (Context ctx, FragmentManager fm) : base (fm)
         {
@@ -18,7 +20,7 @@ namespace Toggl.Chandler.UI.Adapters
 
         public override int GetColumnCount (int p0)
         {
-            return 2;
+            return 3;
         }
 
         public override int RowCount
@@ -36,8 +38,10 @@ namespace Toggl.Chandler.UI.Adapters
         {
             if (col == 0) {
                 return timerFragment;
-            } else {
+            } else if (col == 1) {
                 return listFragment;
+            } else {
+                return openFragment;
             }
         }
 

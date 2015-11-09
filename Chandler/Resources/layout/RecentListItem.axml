@@ -40,14 +40,4 @@
             android:gravity="top"
             android:textSize="16sp" />
     </LinearLayout>
-    <TextView
-        android:id="@+id/RecentListDuration"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:layout_marginLeft="-50dp"
-        android:text="2h 12m"
-        android:textSize="17sp"
-        android:textColor="@android:color/black"
-        android:fontFamily="sans-serif-condensed-light" />
 </Toggl.Chandler.UI.Views.RecentListItemLayout>

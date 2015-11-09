@@ -18,6 +18,7 @@ namespace Toggl.Chandler.UI.Activities
     public class MainActivity : Activity, IDataApiDataListener, GoogleApiClient.IConnectionCallbacks, IMessageApiMessageListener, INodeApiNodeListener
     {
         private const string Tag = "MainActivity";
+        private readonly Handler handler = new Handler ();
         private GridViewPager ViewPager;
         private GoogleApiClient googleApiClient;
         private PagesAdapter adapter;
@@ -39,9 +40,21 @@ namespace Toggl.Chandler.UI.Activities
             .AddApi (WearableClass.API)
             .AddConnectionCallbacks (this)
             .Build ();
-            googleApiClient.Connect();
+
+            ConnectRebind();
+
             if (CollectionChanged != null) {
                 CollectionChanged (this, EventArgs.Empty);
+            }
+        }
+
+        private void ConnectRebind()
+        {
+            if (!googleApiClient.IsConnected) {
+                googleApiClient.Connect ();
+                // Schedule next rebind:
+                handler.RemoveCallbacks (ConnectRebind);
+                handler.PostDelayed (ConnectRebind, 1000);
             }
         }
 

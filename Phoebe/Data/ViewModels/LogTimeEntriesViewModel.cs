@@ -1,5 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
+using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
@@ -11,7 +13,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.ViewModels
 {
     [ImplementPropertyChanged]
-    public class LogTimeEntriesViewModel : IVModel<TimeEntryModel>
+    public class LogTimeEntriesViewModel : ViewModelBase, IVModel<TimeEntryModel>
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private ActiveTimeEntryManager timeEntryManager;
@@ -60,7 +62,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public bool IsGroupedMode { get; set; }
 
-        public int ItemCount { get; set; }
+        public bool HasMore { get; set; }
 
         public TimeEntriesCollectionView CollectionView { get; set; }
 
@@ -117,6 +119,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             if (collectionView != null) {
                 collectionView.Dispose ();
                 collectionView.CollectionChanged -= OnCollectionChanged;
+                collectionView.HasMoreChanged -= OnCollectionChanged;
             }
 
             // In a near future, CollectionView will be only
@@ -125,13 +128,14 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             collectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
             collectionView.CollectionChanged += OnCollectionChanged;
+            collectionView.HasMoreChanged += OnCollectionChanged;
             await collectionView.ReloadAsync ();
             CollectionView = collectionView;
         }
 
-        private void OnCollectionChanged (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void OnCollectionChanged (object sender, EventArgs e)
         {
-            ItemCount = collectionView.Count;
+            HasMore = collectionView.Count > 0 || collectionView.HasMore;
         }
     }
 }

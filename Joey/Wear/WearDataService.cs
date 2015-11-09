@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Gms.Common;
@@ -7,7 +8,9 @@ using Android.Gms.Common.Apis;
 using Android.Gms.Wearable;
 using Android.Util;
 using Java.Util.Concurrent;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using XPlatUtils;
 
 namespace Toggl.Joey.Wear
 {
@@ -15,7 +18,7 @@ namespace Toggl.Joey.Wear
     /// Listens to DataItems and Messages from the local node
     /// </summary>
     [Service, IntentFilter (new [] { "com.google.android.gms.wearable.BIND_LISTENER" }) ]
-    public class WearDataService : WearableListenerService
+    public class WearDataService : WearableListenerService,  GoogleApiClient.IConnectionCallbacks
     {
         public const string Tag = "WearableTag";
         public const string DataStorePath = "/TimeEntryDataStore";
@@ -29,6 +32,19 @@ namespace Toggl.Joey.Wear
             .AddApi (WearableClass.API)
             .Build ();
             googleApiClient.Connect ();
+
+            var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            if (manager.Active == null) {
+                return;
+            }
+            manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
+        }
+
+        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
+                UpdateSharedTimeEntryList (googleApiClient);
+            }
         }
 
         public override void OnDataChanged (DataEventBuffer dataEvents)
@@ -40,6 +56,15 @@ namespace Toggl.Joey.Wear
                     return;
                 }
             }
+        }
+
+        public async void OnConnected (Android.OS.Bundle connectionHint)
+        {
+            await UpdateSharedTimeEntryList (googleApiClient);
+        }
+
+        public void OnConnectionSuspended (int cause)
+        {
         }
 
         public async override void OnMessageReceived (IMessageEvent messageEvent)
@@ -96,6 +121,7 @@ namespace Toggl.Joey.Wear
                 Log.Error ("WearIntegration", e.ToString ());
             }
         }
+
         private async Task StartEntry (Guid id)
         {
             var model = new TimeEntryModel (id);

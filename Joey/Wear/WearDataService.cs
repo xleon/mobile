@@ -40,10 +40,10 @@ namespace Toggl.Joey.Wear
             manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
         }
 
-        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
             if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
-                UpdateSharedTimeEntryList (googleApiClient);
+                await UpdateSharedTimeEntryList ();
             }
         }
 
@@ -60,7 +60,7 @@ namespace Toggl.Joey.Wear
 
         public async void OnConnected (Android.OS.Bundle connectionHint)
         {
-            await UpdateSharedTimeEntryList (googleApiClient);
+            await UpdateSharedTimeEntryList ();
         }
 
         public void OnConnectionSuspended (int cause)
@@ -89,14 +89,11 @@ namespace Toggl.Joey.Wear
         {
             try {
                 Log.Info ("WearIntegration", "Received Message");
-                var client = new GoogleApiClient.Builder (this)
-                .AddApi (WearableClass.API)
-                .Build ();
 
-                var result = client.BlockingConnect (30, TimeUnit.Seconds);
-                if (!result.IsSuccess) {
-                    return;
+                if (!googleApiClient.IsConnected) {
+                    googleApiClient.Connect();
                 }
+
                 var path = message.Path;
 
                 try {
@@ -104,18 +101,19 @@ namespace Toggl.Joey.Wear
 
                         // Start new time entry.
                         await WearDataProvider.StartStopTimeEntry ();
-                        await UpdateSharedTimeEntryList (client);
+                        await UpdateSharedTimeEntryList ();
 
                     } else if (path == Common.RestartTimeEntryPath) {
+
                         var guid = Guid.Parse (Common.GetString (message.GetData()));
                         await StartEntry (guid);
-                        await UpdateSharedTimeEntryList (client);
+                        await UpdateSharedTimeEntryList ();
                         // Get time entry Id needed.
                     } else if (path == Common.RequestSyncPath) {
-                        await UpdateSharedTimeEntryList (client);
+
+                        await UpdateSharedTimeEntryList ();
                     }
                 } finally {
-                    client.Disconnect ();
                 }
             } catch (Exception e) {
                 Log.Error ("WearIntegration", e.ToString ());
@@ -129,7 +127,7 @@ namespace Toggl.Joey.Wear
             await model.ContinueAsync();
         }
 
-        private async Task UpdateSharedTimeEntryList (GoogleApiClient client)
+        private async Task UpdateSharedTimeEntryList ()
         {
             var entryData = await WearDataProvider.GetTimeEntryData ();
 
@@ -142,7 +140,7 @@ namespace Toggl.Joey.Wear
                 children.Add (entry.DataMap);
             }
             mapReq.DataMap.PutDataMapArrayList (Common.TimeEntryListKey, children);
-            await WearableClass.DataApi.PutDataItem (client, mapReq.AsPutDataRequest ());
+            await WearableClass.DataApi.PutDataItem (googleApiClient, mapReq.AsPutDataRequest ());
         }
 
         public static void LOGD (string tag, string message)

@@ -58,7 +58,7 @@ namespace Toggl.Joey.UI.Views
         public class ColorPickerAdapter : RecyclerView.Adapter
         {
             // SelectedColorChanged is needed for binding!
-            public event EventHandler<int> SelectedColorChanged;
+            public event EventHandler SelectedColorChanged;
             public int SelectedColor { get; private set; }
 
             public ColorPickerAdapter()
@@ -96,7 +96,7 @@ namespace Toggl.Joey.UI.Views
                 SelectedColor = position;
                 NotifyDataSetChanged ();
                 if (SelectedColorChanged != null) {
-                    SelectedColorChanged (this, SelectedColor);
+                    SelectedColorChanged (this, EventArgs.Empty);
                 }
             }
 

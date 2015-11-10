@@ -8,7 +8,8 @@ namespace Toggl.Joey.UI.Views
 {
     public class TogglField : RelativeLayout
     {
-        public EditText TextField;
+        public EditText TextField { get; private set; }
+
         private TextView titleText;
         private TextView assistView;
         private ImageView arrow;

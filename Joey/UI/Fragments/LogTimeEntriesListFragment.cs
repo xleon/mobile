@@ -8,7 +8,7 @@ using Android.Support.V7.Widget;
 using Android.Support.V7.Widget.Helper;
 using Android.Views;
 using Android.Widget;
-using Praeclarum.Bind;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
@@ -24,59 +24,23 @@ namespace Toggl.Joey.UI.Fragments
         private RecyclerView recyclerView;
         private View emptyMessageView;
         private LogTimeEntriesAdapter logAdapter;
-        private StartStopFab startStopBtn;
         private CoordinatorLayout coordinatorLayout;
-
-        private TimeEntriesCollectionView collectionView;
-        private LogTimeEntriesViewModel viewModel;
-        private Binding binding;
 
         // Recycler setup
         private DividerItemDecoration dividerDecoration;
         private ShadowItemDecoration shadowDecoration;
         private ItemTouchListener itemTouchListener;
 
-        #region Binded properties
+        // binding references
+        private Binding<bool, bool> hasMoreBinding;
+        private Binding<TimeEntriesCollectionView, TimeEntriesCollectionView> collectionBinding;
+        private Binding<bool, FABButtonState> fabBinding;
 
-        private TimeEntriesCollectionView CollectionView
-        {
-            get {
-                return collectionView;
-            } set {
-                collectionView = value;
-                logAdapter = new LogTimeEntriesAdapter (recyclerView, collectionView);
-                recyclerView.SetAdapter (logAdapter);
-            }
-        }
+        #region Binding objects and properties.
 
-        private bool IsRunning
-        {
-            get {
-                return false;
-            } set {
-                startStopBtn.ButtonAction = value ? FABButtonState.Stop : FABButtonState.Start;
-            }
-        }
+        public LogTimeEntriesViewModel ViewModel { get; set;}
 
-        private int ItemCount
-        {
-            get {
-                return 0;
-            } set {
-                // if ItemCount > 0 and CollectionView.HasMore
-                // show the recycler!
-                ShowOnboardingInfo (value > 0 || viewModel.CollectionView.HasMore);
-            }
-        }
-
-        private bool HasMore
-        {
-            get {
-                return false;
-            } set {
-                ShowOnboardingInfo (viewModel.ItemCount > 0 || value);
-            }
-        }
+        public StartStopFab StartStopBtn { get; private set;}
 
         #endregion
 
@@ -91,7 +55,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
-            startStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
+            StartStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
 
             SetupRecyclerView ();
             return view;
@@ -100,16 +64,26 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            viewModel = new LogTimeEntriesViewModel ();
-            await viewModel.Init ();
+            ViewModel = new LogTimeEntriesViewModel ();
+            await ViewModel.Init ();
 
-            binding = Binding.Create (() =>
-                                      HasMore == viewModel.CollectionView.HasMore &&
-                                      ItemCount == viewModel.ItemCount &&
-                                      CollectionView == viewModel.CollectionView &&
-                                      IsRunning == viewModel.IsTimeEntryRunning);
+            hasMoreBinding = this.SetBinding (
+                                 ()=> ViewModel.HasMore)
+                             .WhenSourceChanges (ShowOnboardingInfo);
 
-            startStopBtn.Click += async (sender, e) => await viewModel.StartStopTimeEntry ();
+            collectionBinding = this.SetBinding (
+                                    ()=> ViewModel.CollectionView)
+            .WhenSourceChanges (() => {
+                logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel.CollectionView);
+                recyclerView.SetAdapter (logAdapter);
+            });
+
+            fabBinding = this.SetBinding (
+                             () => ViewModel.IsTimeEntryRunning,
+                             () => StartStopBtn.ButtonAction)
+                         .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
+
+            StartStopBtn.Click += async (sender, e) => await ViewModel.StartStopTimeEntry ();
         }
 
         public override void OnDestroyView ()
@@ -119,8 +93,7 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            binding.Unbind ();
-            viewModel.Dispose ();
+            ViewModel.Dispose ();
             ReleaseRecyclerView ();
 
             base.OnDestroyView ();
@@ -160,11 +133,11 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration.Dispose ();
         }
 
-        private void ShowOnboardingInfo (bool showIt)
+        private void ShowOnboardingInfo ()
         {
             // TODO: animate with alpha transitions
-            recyclerView.Visibility = showIt ? ViewStates.Visible : ViewStates.Gone;
-            emptyMessageView.Visibility = showIt ? ViewStates.Gone : ViewStates.Visible;
+            recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
+            emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;
         }
 
         #region IDismissListener implementation
@@ -179,11 +152,11 @@ namespace Toggl.Joey.UI.Fragments
         {
             var duration = TimeEntriesCollectionView.UndoSecondsInterval * 1000;
 
-            await collectionView.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
+            await ViewModel.CollectionView.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
             var snackBar = Snackbar
                            .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
                            .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
-                                       async v => await collectionView.RestoreItemFromUndoAsync ());
+                                       async v => await ViewModel.CollectionView.RestoreItemFromUndoAsync ());
             ChangeSnackBarColor (snackBar);
             snackBar.Show ();
         }

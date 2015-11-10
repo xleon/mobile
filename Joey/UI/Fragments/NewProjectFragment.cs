@@ -5,7 +5,7 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Views.InputMethods;
-using Praeclarum.Bind;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
@@ -23,12 +23,19 @@ namespace Toggl.Joey.UI.Fragments
         public static readonly int ClientSelectedRequestCode = 1;
 
         private ActionBar Toolbar;
-        private NewProjectViewModel viewModel;
-        private Binding binding;
         private List<TimeEntryData> timeEntryList;
-        private TogglField projectBit;
-        private TogglField selectClientBit;
-        private ColorPickerRecyclerView colorPicker;
+
+        public TogglField ProjectBit { get; private set; }
+        public TogglField SelectClientBit { get; private set; }
+        public ColorPickerRecyclerView ColorPicker { get; private set; }
+        public NewProjectViewModel ViewModel { get; private set; }
+
+        // Binding to avoid weak references
+        // to be collected by the
+        // garbage collector. Under investigation ;)
+        private Binding<int, int> colorBinding;
+        private Binding<string, string> nameBinding;
+        private Binding<string, string> clientBinding;
 
         private List<TimeEntryData> TimeEntryList
         {
@@ -65,18 +72,18 @@ namespace Toggl.Joey.UI.Fragments
             Toolbar.SetDisplayHomeAsUpEnabled (true);
             Toolbar.SetTitle (Resource.String.NewProjectTitle);
 
-            projectBit = view.FindViewById<TogglField> (Resource.Id.NewProjectProjectNameBit)
+            ProjectBit = view.FindViewById<TogglField> (Resource.Id.NewProjectProjectNameBit)
                          .DestroyAssistView().DestroyArrow()
                          .SetName (Resource.String.NewProjectProjectFieldName);
 
-            selectClientBit = view.FindViewById<TogglField> (Resource.Id.SelectClientNameBit)
+            SelectClientBit = view.FindViewById<TogglField> (Resource.Id.SelectClientNameBit)
                               .DestroyAssistView().SetName (Resource.String.NewProjectSelectClientFieldName)
                               .SimulateButton();
 
-            selectClientBit.TextField.Click += SelectClientBitClickedHandler;
-            selectClientBit.Click += SelectClientBitClickedHandler;
+            SelectClientBit.TextField.Click += SelectClientBitClickedHandler;
+            SelectClientBit.Click += SelectClientBitClickedHandler;
 
-            colorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
+            ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
             HasOptionsMenu = true;
             return view;
         }
@@ -85,19 +92,29 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            viewModel = new NewProjectViewModel (TimeEntryList);
-            binding = Binding.Create (() =>
-                                      selectClientBit.TextField.Text == viewModel.ClientName &&
-                                      projectBit.TextField.Text == viewModel.ProjectName &&
-                                      colorPicker.Adapter.SelectedColor == viewModel.ProjectColor);
+            ViewModel = new NewProjectViewModel (TimeEntryList);
 
-            await viewModel.Init ();
+            clientBinding = this.SetBinding (
+                                () => ViewModel.ClientName,
+                                () => SelectClientBit.TextField.Text);
+
+            nameBinding = this.SetBinding (
+                              () => ViewModel.ProjectName,
+                              () => ProjectBit.TextField.Text,
+                              BindingMode.TwoWay);
+
+            colorBinding = this.SetBinding (
+                               () => ViewModel.ProjectColor,
+                               () => ColorPicker.Adapter.SelectedColor,
+                               BindingMode.TwoWay)
+                           .UpdateTargetTrigger ("SelectedColorChanged");
+
+            await ViewModel.Init ();
         }
 
         public override void OnDestroyView ()
         {
-            binding.Unbind ();
-            viewModel.Dispose ();
+            ViewModel.Dispose ();
             base.OnDestroyView ();
         }
 
@@ -107,14 +124,14 @@ namespace Toggl.Joey.UI.Fragments
 
             // show keyboard
             var inputService = (InputMethodManager)Activity.GetSystemService (Context.InputMethodService);
-            projectBit.TextField.PostDelayed (delegate {
-                inputService.ShowSoftInput (projectBit.TextField, ShowFlags.Implicit);
+            ProjectBit.TextField.PostDelayed (delegate {
+                inputService.ShowSoftInput (ProjectBit.TextField, ShowFlags.Implicit);
             }, 100);
         }
 
         private async void SaveButtonHandler (object sender, EventArgs e)
         {
-            var result = await viewModel.SaveProjectModel ();
+            var result = await ViewModel.SaveProjectModel ();
 
             switch (result) {
             case NewProjectViewModel.SaveProjectResult.NameIsEmpty:
@@ -148,7 +165,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnClientSelected (ClientData data)
         {
-            viewModel.SetClient (data);
+            ViewModel.SetClient (data);
         }
 
         #endregion

@@ -4,7 +4,7 @@ using Android.Content;
 using Android.OS;
 using Android.Text;
 using Android.Widget;
-using Praeclarum.Bind;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
@@ -13,10 +13,9 @@ namespace Toggl.Joey.UI.Fragments
     {
         private const string WorkspaceIdArgument = "workspace_id";
         private IOnClientSelectedListener listener;
-        private EditText nameEditText;
         private Button positiveButton;
-        private CreateClientViewModel viewModel;
-        private Binding binding;
+        public CreateClientViewModel ViewModel { get; private set;}
+        public EditText NameEditText { get; private set;}
 
         private Guid WorkspaceId
         {
@@ -52,33 +51,35 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (savedInstanceState);
 
-            viewModel = new CreateClientViewModel (WorkspaceId);
-            await viewModel.Init ();
+            ViewModel = new CreateClientViewModel (WorkspaceId);
+            await ViewModel.Init ();
 
             ValidateClientName ();
         }
 
         public override void OnDestroy ()
         {
-            binding.Unbind ();
-            viewModel.Dispose ();
+            ViewModel.Dispose ();
             base.OnDestroy ();
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
-            nameEditText = new EditText (Activity);
-            nameEditText.SetHint (Resource.String.CreateClientDialogHint);
-            nameEditText.InputType = InputTypes.TextFlagCapSentences;
-            nameEditText.TextChanged += OnNameEditTextTextChanged;
+            NameEditText = new EditText (Activity);
+            NameEditText.SetHint (Resource.String.CreateClientDialogHint);
+            NameEditText.InputType = InputTypes.TextFlagCapSentences;
+            NameEditText.TextChanged += OnNameEditTextTextChanged;
 
             // Moved binding to OnCreateDialog.
             // a better approach could be find..
-            binding = Binding.Create (() => nameEditText.Text == viewModel.ClientName);
+            this.SetBinding (
+                () => ViewModel.ClientName,
+                () => NameEditText.Text,
+                BindingMode.TwoWay);
 
             return new AlertDialog.Builder (Activity)
                    .SetTitle (Resource.String.CreateClientDialogTitle)
-                   .SetView (nameEditText)
+                   .SetView (NameEditText)
                    .SetPositiveButton (Resource.String.CreateClientDialogOk, OnPositiveButtonClicked)
                    .Create ();
         }
@@ -103,7 +104,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            var clientData = await viewModel.SaveNewClient ();
+            var clientData = await ViewModel.SaveNewClient ();
             if (listener != null) {
                 listener.OnClientSelected (clientData);
             }
@@ -111,12 +112,12 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ValidateClientName ()
         {
-            if (positiveButton == null || nameEditText == null) {
+            if (positiveButton == null || NameEditText == null) {
                 return;
             }
 
             var valid = true;
-            var name = nameEditText.Text;
+            var name = NameEditText.Text;
 
             if (String.IsNullOrWhiteSpace (name)) {
                 valid = false;

@@ -4,17 +4,29 @@ using Android.Content;
 using Android.OS;
 using Android.Text;
 using Android.Widget;
-using Toggl.Phoebe.Data.Models;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class CreateClientDialogFragment : BaseDialogFragment
     {
-        private EditText nameEditText;
+        private const string WorkspaceIdArgument = "workspace_id";
+        private IOnClientSelectedListener listener;
         private Button positiveButton;
-        private CreateClientViewModel viewModel;
-        private ProjectModel project;
+        public CreateClientViewModel ViewModel { get; private set;}
+        public EditText NameEditText { get; private set;}
+
+        private Guid WorkspaceId
+        {
+            get {
+                var id = Guid.Empty;
+                if (Arguments != null) {
+                    Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                }
+                return id;
+            }
+        }
 
         public CreateClientDialogFragment ()
         {
@@ -24,43 +36,50 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public CreateClientDialogFragment (ProjectModel project)
+        public static CreateClientDialogFragment NewInstance (Guid workspaceId)
         {
-            this.project = project;
+            var fragment = new CreateClientDialogFragment ();
+
+            var args = new Bundle();
+            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
+            fragment.Arguments = args;
+
+            return fragment;
         }
 
         public override async void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
 
-            if (viewModel == null) {
-                viewModel = new CreateClientViewModel (project.Workspace.Id);
-            }
-            viewModel.OnIsLoadingChanged += OnModelLoaded;
-            await viewModel.Init ();
+            ViewModel = new CreateClientViewModel (WorkspaceId);
+            await ViewModel.Init ();
 
             ValidateClientName ();
         }
 
-        private void OnModelLoaded (object sender, EventArgs e)
+        public override void OnDestroy ()
         {
-            if (!viewModel.IsLoading) {
-                if (viewModel == null) {
-                    Dismiss ();
-                }
-            }
+            ViewModel.Dispose ();
+            base.OnDestroy ();
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
-            nameEditText = new EditText (Activity);
-            nameEditText.SetHint (Resource.String.CreateClientDialogHint);
-            nameEditText.InputType = InputTypes.TextFlagCapSentences;
-            nameEditText.TextChanged += OnNameEditTextTextChanged;
+            NameEditText = new EditText (Activity);
+            NameEditText.SetHint (Resource.String.CreateClientDialogHint);
+            NameEditText.InputType = InputTypes.TextFlagCapSentences;
+            NameEditText.TextChanged += OnNameEditTextTextChanged;
+
+            // Moved binding to OnCreateDialog.
+            // a better approach could be find..
+            this.SetBinding (
+                () => ViewModel.ClientName,
+                () => NameEditText.Text,
+                BindingMode.TwoWay);
 
             return new AlertDialog.Builder (Activity)
                    .SetTitle (Resource.String.CreateClientDialogTitle)
-                   .SetView (nameEditText)
+                   .SetView (NameEditText)
                    .SetPositiveButton (Resource.String.CreateClientDialogOk, OnPositiveButtonClicked)
                    .Create ();
         }
@@ -72,6 +91,12 @@ namespace Toggl.Joey.UI.Fragments
             ValidateClientName ();
         }
 
+        public CreateClientDialogFragment SetOnClientSelectedListener (IOnClientSelectedListener listener)
+        {
+            this.listener = listener;
+            return this;
+        }
+
         private void OnNameEditTextTextChanged (object sender, TextChangedEventArgs e)
         {
             ValidateClientName ();
@@ -79,33 +104,26 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            await viewModel.AssignClient (nameEditText.Text, project);
+            var clientData = await ViewModel.SaveNewClient ();
+            if (listener != null) {
+                listener.OnClientSelected (clientData);
+            }
         }
 
         private void ValidateClientName ()
         {
-            if (positiveButton == null || nameEditText == null) {
+            if (positiveButton == null || NameEditText == null) {
                 return;
             }
 
             var valid = true;
-            var name = nameEditText.Text;
+            var name = NameEditText.Text;
 
             if (String.IsNullOrWhiteSpace (name)) {
                 valid = false;
             }
 
             positiveButton.Enabled = valid;
-        }
-
-        public override void OnDestroy ()
-        {
-            if (viewModel != null) {
-                viewModel.OnIsLoadingChanged += OnModelLoaded;
-                viewModel.Dispose ();
-            }
-
-            base.OnDestroy ();
         }
     }
 }

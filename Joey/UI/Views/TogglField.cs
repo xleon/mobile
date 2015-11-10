@@ -1,6 +1,4 @@
-﻿using System;
-using Android.Content;
-using Android.Text;
+﻿using Android.Content;
 using Android.Util;
 using Android.Views;
 using Android.Views.InputMethods;
@@ -10,7 +8,8 @@ namespace Toggl.Joey.UI.Views
 {
     public class TogglField : RelativeLayout
     {
-        public EditText TextField;
+        public EditText TextField { get; private set; }
+
         private TextView titleText;
         private TextView assistView;
         private ImageView arrow;

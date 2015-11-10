@@ -180,8 +180,8 @@
     <Compile Include="UI\Views\AddProjectFab.cs" />
     <Compile Include="UI\Views\TogglAppBar.cs" />
     <Compile Include="UI\Fragments\CreateClientDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ClientListFragment.cs" />
     <Compile Include="UI\Adapters\ClientsAdapter.cs" />
+    <Compile Include="UI\Fragments\ClientListDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

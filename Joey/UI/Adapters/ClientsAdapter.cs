@@ -17,6 +17,8 @@ namespace Toggl.Joey.UI.Adapters
 
         public Action<object> HandleClientSelection { get; set; }
 
+        public int SelectedClientIndex { get; set; }
+
         public ClientsAdapter (IDataView<ClientData> view) : base (view)
         {
         }
@@ -92,13 +94,6 @@ namespace Toggl.Joey.UI.Adapters
 
             protected override void ResetTrackedObservables ()
             {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleClientPropertyChanged);
-                }
-
-                Tracker.ClearStale ();
             }
 
             protected override void Rebind ()
@@ -108,20 +103,11 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                ResetTrackedObservables ();
-
                 if (DataSource == null) {
                     return;
                 }
 
                 ClientTextView.Text = DataSource.Name;
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == ClientModel.PropertyName) {
-                    Rebind ();
-                }
             }
         }
         #endregion

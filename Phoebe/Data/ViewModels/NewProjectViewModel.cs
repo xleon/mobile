@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -10,9 +11,9 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class NewProjectViewModel : IViewModel<ProjectModel>
+    [ImplementPropertyChanged]
+    public class NewProjectViewModel : IVModel<ProjectModel>
     {
-        private bool isLoading;
         private ProjectModel model;
         private WorkspaceModel workspaceModel;
         private Guid workspaceId;
@@ -30,77 +31,59 @@ namespace Toggl.Phoebe.Data.ViewModels
             model = null;
         }
 
-        public ProjectModel Model
-        {
-            get {
-                return model;
-            }
-        }
+        public bool IsLoading { get; set; }
 
-        public event EventHandler OnIsLoadingChanged;
+        public bool IsSaving { get; set; }
 
-        public event EventHandler OnModelChanged;
+        public string ProjectName { get; set; }
 
-        public bool IsLoading
-        {
-            get {
-                return isLoading;
-            }
-            private set {
+        public int ProjectColor { get; set; }
 
-                if (isLoading  == value) {
-                    return;
-                }
-
-                isLoading = value;
-
-                if (OnIsLoadingChanged != null) {
-                    OnIsLoadingChanged (this, EventArgs.Empty);
-                }
-            }
-        }
+        public string ClientName { get; set; }
 
         public async Task Init ()
         {
             IsLoading = true;
 
-            try {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                if (user == null) {
-                    model = null;
-                    return;
-                }
+            workspaceId = timeEntryList[0].WorkspaceId;
+            workspaceModel = new WorkspaceModel (workspaceId);
+            await workspaceModel.LoadAsync ();
 
-                workspaceId = timeEntryList[0].WorkspaceId;
-                workspaceModel = new WorkspaceModel (workspaceId);
-                await workspaceModel.LoadAsync ();
+            model = new ProjectModel {
+                Workspace = workspaceModel,
+                IsActive = true,
+                IsPrivate = true
+            };
 
-                model = new ProjectModel {
-                    Workspace = workspaceModel,
-                    IsActive = true,
-                    IsPrivate = true
-                };
-
-                if (model.Workspace == null || model.Workspace.Id == Guid.Empty) {
-                    model = null;
-                }
-            } catch (Exception ex) {
-                model = null;
-            } finally {
-                model.PropertyChanged += OnModelChange;
-                IsLoading = false;
-            }
+            IsLoading = false;
         }
 
-        private void OnModelChange (object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        public void SetClient (ClientData clientData)
         {
-            if (OnModelChanged != null) {
-                OnModelChanged (this, EventArgs.Empty);
-            }
+            model.Client = new ClientModel (clientData);
+            ClientName = clientData.Name;
         }
 
-        public async Task SaveProjectModel ()
+        public async Task<SaveProjectResult> SaveProjectModel ()
         {
+            IsSaving = true;
+
+            // Project name is empty
+            if (string.IsNullOrEmpty (ProjectName)) {
+                IsSaving = false;
+                return SaveProjectResult.NameIsEmpty;
+            }
+
+            // Project name is used
+            var exists = await ExistProjectWithName (ProjectName);
+            if (exists) {
+                IsSaving = false;
+                return SaveProjectResult.NameExists;
+            }
+
+            model.Name = ProjectName;
+            model.Color = ProjectColor;
+
             // Save new project.
             await model.SaveAsync();
 
@@ -120,15 +103,25 @@ namespace Toggl.Phoebe.Data.ViewModels
             timeEntryGroup.Project = model;
             timeEntryGroup.Workspace = workspaceModel;
             await timeEntryGroup.SaveAsync ();
+
+            IsSaving = false;
+
+            return SaveProjectResult.SaveOk;
         }
 
-        public async Task<bool> ExistProjectWithName (string projectName)
+        private async Task<bool> ExistProjectWithName (string projectName)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             Guid clientId = (model.Client == null) ? Guid.Empty : model.Client.Id;
             var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync (projectName, clientId);
 
             return existWithName;
+        }
+
+        public enum SaveProjectResult {
+            SaveOk = 0,
+            NameIsEmpty = 1,
+            NameExists = 2
         }
     }
 }

@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Text;
 using Android.Views;
 using Android.Views.InputMethods;
-using Android.Widget;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
@@ -19,18 +18,34 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class NewProjectFragment : Fragment
+    public class NewProjectFragment : Fragment, IOnClientSelectedListener
     {
         public static readonly int ClientSelectedRequestCode = 1;
 
         private ActionBar Toolbar;
-        private bool isSaving;
-        private NewProjectViewModel viewModel;
+        private List<TimeEntryData> timeEntryList;
 
         public TogglField ProjectBit { get; private set; }
         public TogglField SelectClientBit { get; private set; }
-        private EditText ClientEditText { get; set; }
         public ColorPickerRecyclerView ColorPicker { get; private set; }
+        public NewProjectViewModel ViewModel { get; private set; }
+
+        // Binding to avoid weak references
+        // to be collected by the
+        // garbage collector. Under investigation ;)
+        private Binding<int, int> colorBinding;
+        private Binding<string, string> nameBinding;
+        private Binding<string, string> clientBinding;
+
+        private List<TimeEntryData> TimeEntryList
+        {
+            get {
+                if (timeEntryList == null)
+                    timeEntryList = BaseActivity.GetDataFromIntent <List<TimeEntryData>>
+                                    (Activity.Intent, NewProjectActivity.ExtraTimeEntryDataListId);
+                return timeEntryList;
+            }
+        }
 
         public NewProjectFragment ()
         {
@@ -40,9 +55,9 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public NewProjectFragment (List<TimeEntryData> timeEntryList)
+        public static NewProjectFragment NewInstance ()
         {
-            viewModel = new NewProjectViewModel (timeEntryList);
+            return new NewProjectFragment ();
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -60,21 +75,15 @@ namespace Toggl.Joey.UI.Fragments
             ProjectBit = view.FindViewById<TogglField> (Resource.Id.NewProjectProjectNameBit)
                          .DestroyAssistView().DestroyArrow()
                          .SetName (Resource.String.NewProjectProjectFieldName);
-            ProjectBit.TextField.TextChanged += ProjectBitTextChangedHandler;
 
             SelectClientBit = view.FindViewById<TogglField> (Resource.Id.SelectClientNameBit)
                               .DestroyAssistView().SetName (Resource.String.NewProjectSelectClientFieldName)
                               .SimulateButton();
 
-            ClientEditText = SelectClientBit.TextField;
-            ClientEditText.Click += SelectClientBitClickedHandler;
+            SelectClientBit.TextField.Click += SelectClientBitClickedHandler;
             SelectClientBit.Click += SelectClientBitClickedHandler;
 
             ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
-            ColorPicker.SelectedColorChanged += (sender, e) => {
-                viewModel.Model.Color = e;
-            };
-
             HasOptionsMenu = true;
             return view;
         }
@@ -83,99 +92,83 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            if (viewModel == null) {
-                var timeEntryList = BaseActivity.GetDataFromIntent <List<TimeEntryData>>
-                                    (Activity.Intent, NewProjectActivity.ExtraTimeEntryDataListId);
-                viewModel = new NewProjectViewModel (timeEntryList);
-            }
+            ViewModel = new NewProjectViewModel (TimeEntryList);
 
-            viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.OnModelChanged += OnModelChanged;
-            await viewModel.Init ();
+            clientBinding = this.SetBinding (
+                                () => ViewModel.ClientName,
+                                () => SelectClientBit.TextField.Text);
+
+            nameBinding = this.SetBinding (
+                              () => ViewModel.ProjectName,
+                              () => ProjectBit.TextField.Text,
+                              BindingMode.TwoWay);
+
+            colorBinding = this.SetBinding (
+                               () => ViewModel.ProjectColor,
+                               () => ColorPicker.Adapter.SelectedColor,
+                               BindingMode.TwoWay)
+                           .UpdateTargetTrigger ("SelectedColorChanged");
+
+            await ViewModel.Init ();
         }
 
-        private void OnModelLoaded (object sender, EventArgs e)
+        public override void OnDestroyView ()
         {
+            ViewModel.Dispose ();
+            base.OnDestroyView ();
         }
 
         public override void OnStart ()
         {
             base.OnStart ();
+
+            // show keyboard
             var inputService = (InputMethodManager)Activity.GetSystemService (Context.InputMethodService);
             ProjectBit.TextField.PostDelayed (delegate {
                 inputService.ShowSoftInput (ProjectBit.TextField, ShowFlags.Implicit);
             }, 100);
         }
 
-        public override void OnDestroyView ()
-        {
-            viewModel.OnIsLoadingChanged -= OnModelLoaded;
-            viewModel.Dispose ();
-            base.OnDestroyView ();
-        }
-
-        private void OnModelChanged (object sender, EventArgs e)
-        {
-            Rebind ();
-        }
-
-        private void Rebind()
-        {
-            if (viewModel.Model == null) {
-                return;
-            }
-            var project = viewModel.Model;
-            if (project.Client != null) {
-                ClientEditText.Text = project.Client.Name;
-            }
-        }
-
         private async void SaveButtonHandler (object sender, EventArgs e)
         {
-            if (String.IsNullOrWhiteSpace (viewModel.Model.Name)) {
+            var result = await ViewModel.SaveProjectModel ();
+
+            switch (result) {
+            case NewProjectViewModel.SaveProjectResult.NameIsEmpty:
                 new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.NewProjectEmptyDialogTitle)
                 .SetMessage (Resource.String.NewProjectEmptyDialogMessage)
                 .SetPositiveButton (Resource.String.NewProjectEmptyDialogPositiveButtonTitle, (EventHandler<DialogClickEventArgs>)null)
-                .Show();
-                return;
-            }
-
-            if (isSaving) {
-                return;
-            }
-
-            isSaving = true;
-
-            try {
-                var existWithName = await viewModel.ExistProjectWithName (ProjectBit.TextField.Text);
-                if (existWithName) {
-                    new AlertDialog.Builder (Activity)
-                    .SetTitle (Resource.String.NewProjectDuplicateDialogTitle)
-                    .SetMessage (Resource.String.NewProjectDuplicateDialogMessage)
-                    .SetPositiveButton (Resource.String.NewProjectEmptyDialogPositiveButtonTitle, (EventHandler<DialogClickEventArgs>)null)
-                    .Show();
-                } else {
-                    await viewModel.SaveProjectModel ();
-                    FinishActivity (true);
-                }
-            } finally {
-                isSaving = false;
-            }
-        }
-
-        private void ProjectBitTextChangedHandler (object sender, TextChangedEventArgs e)
-        {
-            var t = ProjectBit.TextField.Text;
-            if (t != viewModel.Model.Name) {
-                viewModel.Model.Name = t;
+                .Show ();
+                break;
+            case NewProjectViewModel.SaveProjectResult.NameExists:
+                new AlertDialog.Builder (Activity)
+                .SetTitle (Resource.String.NewProjectDuplicateDialogTitle)
+                .SetMessage (Resource.String.NewProjectDuplicateDialogMessage)
+                .SetPositiveButton (Resource.String.NewProjectEmptyDialogPositiveButtonTitle, (EventHandler<DialogClickEventArgs>)null)
+                .Show ();
+                break;
+            case NewProjectViewModel.SaveProjectResult.SaveOk:
+                FinishActivity (true);
+                break;
             }
         }
 
         private void SelectClientBitClickedHandler (object sender, EventArgs e)
         {
-            new ClientListFragment (viewModel.Model.Data.WorkspaceId, viewModel.Model).Show (FragmentManager, "clients_dialog");
+            ClientListDialogFragment.NewInstance (timeEntryList[0].WorkspaceId)
+            .SetClientSelectListener (this)
+            .Show (FragmentManager, "clients_dialog");
         }
+
+        #region IOnClientSelectedListener implementation
+
+        public void OnClientSelected (ClientData data)
+        {
+            ViewModel.SetClient (data);
+        }
+
+        #endregion
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {

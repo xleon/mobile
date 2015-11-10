@@ -4,7 +4,7 @@ using Android.Content;
 using Android.OS;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
@@ -13,75 +13,74 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ClientListFragment : BaseDialogFragment
+    public interface IOnClientSelectedListener
     {
+        void OnClientSelected (ClientData data);
+    }
+
+    public class ClientListDialogFragment : BaseDialogFragment
+    {
+        private const string WorkspaceIdArgument = "workspace_id";
         private ListView listView;
         private ClientListViewModel viewModel;
-        private Guid workspaceId;
-        private ProjectModel model;
         private ClientsAdapter adapter;
+        private IOnClientSelectedListener listener;
 
-        public ClientListFragment ()
+        private Guid WorkspaceId
+        {
+            get {
+                var id = Guid.Empty;
+                if (Arguments != null) {
+                    Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                }
+                return id;
+            }
+        }
+
+        public ClientListDialogFragment ()
         {
         }
 
-        public ClientListFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        public ClientListDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
         {
         }
 
-        public ClientListFragment (Guid workspaceId, ProjectModel project)
+        public static ClientListDialogFragment NewInstance (Guid workspaceId)
         {
-            this.workspaceId = workspaceId;
-            this.model = project;
-            viewModel = new ClientListViewModel (this.workspaceId, model);
+            var fragment = new ClientListDialogFragment ();
+
+            var args = new Bundle();
+            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
+            fragment.Arguments = args;
+
+            return fragment;
         }
 
         public async override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
 
-            if (viewModel == null) {
-                viewModel = new ClientListViewModel (workspaceId, model);
-            }
+            viewModel = new ClientListViewModel (WorkspaceId);
             await viewModel.Init ();
-
-            if (viewModel.Model.Workspace == null || viewModel.Model.Workspace.Id == Guid.Empty) {
-                Dismiss ();
-            }
-        }
-
-        private void OnModelLoaded (object sender, EventArgs e)
-        {
-            if (!viewModel.IsLoading) {
-                if (viewModel.Model != null) {
-                    viewModel.ClientListDataView.Updated += OnWorkspaceClientsUpdated;
-                } else {
-                    Dismiss ();
-                }
-            }
-        }
-
-        private void OnWorkspaceClientsUpdated (object sender, EventArgs args)
-        {
-            if (!viewModel.ClientListDataView.IsLoading) {
-            }
         }
 
         public override void OnDestroy ()
         {
-            if (viewModel != null) {
-                viewModel.OnIsLoadingChanged -= OnModelLoaded;
-                viewModel.ClientListDataView.Updated -= OnWorkspaceClientsUpdated;
-                viewModel.Dispose ();
-                viewModel = null;
-            }
-
+            viewModel.Dispose ();
+            viewModel = null;
             base.OnDestroy ();
+        }
+
+        public ClientListDialogFragment SetClientSelectListener (IOnClientSelectedListener listener)
+        {
+            this.listener = listener;
+            return this;
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             adapter = new ClientsAdapter (viewModel.ClientListDataView);
+
             var dia = new AlertDialog.Builder (Activity)
             .SetTitle (Resource.String.SelectClientTitle)
             .SetAdapter (new ClientsAdapter (viewModel.ClientListDataView), (IDialogInterfaceOnClickListener)null)
@@ -98,9 +97,11 @@ namespace Toggl.Joey.UI.Fragments
         private void OnItemClick (object sender, AdapterView.ItemClickEventArgs e)
         {
             if (e.Id == ClientsAdapter.CreateClientId) {
-                new CreateClientDialogFragment (model).Show (FragmentManager, "new_client_dialog");
+                CreateClientDialogFragment.NewInstance (WorkspaceId)
+                .SetOnClientSelectedListener (listener)
+                .Show (FragmentManager, "new_client_dialog");
             } else {
-                viewModel.SaveClient ((ClientModel) adapter.GetEntry (e.Position));
+                listener.OnClientSelected (adapter.GetEntry (e.Position));
             }
             Dismiss ();
         }

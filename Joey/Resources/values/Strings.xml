@@ -220,4 +220,5 @@
     <string name="CreateClientDialogOk">Close</string>
     <string name="TimerComponentNoProject">(no project)</string>
     <string name="TimerComponentNoDescription">(no description)</string>
+    <string name="WearEntryDefaultDescription">wear entry</string>
 </resources>

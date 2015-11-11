@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Android.Content;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -15,7 +16,7 @@ namespace Toggl.Joey.Wear
     {
         private const int itemCount = 5;
 
-        public static async Task StartStopTimeEntry ()
+        public static async Task StartStopTimeEntry (Context ctx)
         {
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             if (manager.Active == null) {
@@ -27,6 +28,7 @@ namespace Toggl.Joey.Wear
                 await active.StopAsync ();
 //                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
             } else {
+                active.Data.Description = ctx.Resources.GetString (Resource.String.WearEntryDefaultDescription);
                 await active.StartAsync ();
 //                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
             }
@@ -50,10 +52,6 @@ namespace Toggl.Joey.Wear
                                        && r.UserId == userId)
                                .OrderBy (r => r.StartTime, false);
             var entries = await entriesQuery.QueryAsync();
-
-            var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
-            await Task.WhenAll (projectsTask);
-            var projectsList = projectsTask.Result;
 
             var uniqueEntries = entries.GroupBy (x  => new {x.ProjectId, x.Description })
             .Select (grp => grp.First())

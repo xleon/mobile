@@ -20,6 +20,7 @@ namespace Toggl.Chandler.UI.Fragments
         private TextView DescriptionTextView;
         private TextView ProjectTextView;
         private ImageButton ActionButton;
+        private bool userLoggedIn = true;
         private Context context;
         private MainActivity activity;
 
@@ -42,6 +43,16 @@ namespace Toggl.Chandler.UI.Fragments
             return view;
         }
 
+        public bool UserLoggedIn
+        {
+            get {
+                return userLoggedIn;
+            } set {
+                userLoggedIn = value;
+                Rebind();
+            }
+        }
+
         private SimpleTimeEntryData data
         {
             get {
@@ -56,6 +67,10 @@ namespace Toggl.Chandler.UI.Fragments
 
         private void Rebind()
         {
+            if (!IsAdded) {
+                return;
+            }
+
             if (activity.Data.Count != 0) {
 
                 ActionButton.Visibility = ViewStates.Visible;
@@ -76,12 +91,19 @@ namespace Toggl.Chandler.UI.Fragments
                 var shape = ActionButton.Background as GradientDrawable;
                 shape.SetColor (color);
             } else {
-                DurationTextView.Text =  Resources.GetString (Resource.String.TimerLoading);;
-                DescriptionTextView.Text = String.Empty;
+                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.Icon));
+                var shape = ActionButton.Background as GradientDrawable;
+                var color = Color.Transparent;
+                shape.SetColor (color);
                 ProjectTextView.Text = String.Empty;
-                ActionButton.Visibility = ViewStates.Gone;
+                if (!userLoggedIn) {
+                    DurationTextView.Text = Resources.GetString (Resource.String.TimerWaiting);
+                    DescriptionTextView.Text = Resources.GetString (Resource.String.TimerNotLoggedIn);
+                } else {
+                    DurationTextView.Text = Resources.GetString (Resource.String.TimerLoading);
+                    DescriptionTextView.Text = String.Empty;
+                }
             }
-
             // Schedule next rebind:
             handler.RemoveCallbacks (Rebind);
             handler.PostDelayed (Rebind, 1000);

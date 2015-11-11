@@ -10,6 +10,8 @@ namespace Toggl.Joey.Wear
         public static readonly string RestartTimeEntryPath = "/toggl/wear/restart";
         public static readonly string TimeEntryListPath = "/toggl/wear/data";
         public static readonly string RequestSyncPath = "/toggl/wear/sync/";
+        public static readonly string UserNotLoggedIn = "/toggl/wear/login/";
+        public static readonly string StartHandheldApp = "/toggl/wear/startapp/";
 
         public static readonly string TimeEntryListKey = "time_entry_list_key";
         public static readonly string SingleEntryKey = "time_entry_key";

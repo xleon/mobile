@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Gms.Common;
@@ -40,21 +41,10 @@ namespace Toggl.Chandler.UI.Activities
             .AddApi (WearableClass.API)
             .AddConnectionCallbacks (this)
             .Build ();
-
-            ConnectRebind();
+            googleApiClient.Connect ();
 
             if (CollectionChanged != null) {
                 CollectionChanged (this, EventArgs.Empty);
-            }
-        }
-
-        private void ConnectRebind()
-        {
-            if (!googleApiClient.IsConnected) {
-                googleApiClient.Connect ();
-                // Schedule next rebind:
-                handler.RemoveCallbacks (ConnectRebind);
-                handler.PostDelayed (ConnectRebind, 1000);
             }
         }
 
@@ -82,15 +72,6 @@ namespace Toggl.Chandler.UI.Activities
             googleApiClient.Disconnect ();
         }
 
-        public void SendNewData (GoogleApiClient googleApiClient)
-        {
-            // Publis changes to weareable using DataItems
-            var mapReq = PutDataMapRequest.Create (Common.TimeEntryListPath);
-            var map = mapReq.DataMap;
-            map.PutBoolean (Common.SingleEntryKey, true);
-            WearableClass.DataApi.PutDataItem (googleApiClient, mapReq.AsPutDataRequest ());
-        }
-
         public void OnDataChanged (DataEventBuffer dataEvents)
         {
             if (!googleApiClient.IsConnected) {
@@ -101,11 +82,13 @@ namespace Toggl.Chandler.UI.Activities
                 }
             }
 
+            adapter.Timer.UserLoggedIn = true;
             foreach (var data in dataEvents) {
                 if (data != null && data.Type == DataEvent.TypeChanged && data.DataItem.Uri.Path == Common.TimeEntryListPath) {
                     OnDataChanged (data.DataItem);
                 }
             }
+
             if (CollectionChanged != null) {
                 CollectionChanged (this, EventArgs.Empty);
             }
@@ -136,7 +119,6 @@ namespace Toggl.Chandler.UI.Activities
                                                           new byte[0]);
                 }
             });
-            SendNewData (googleApiClient);
         }
 
         public void RequestStartStop ()
@@ -150,7 +132,6 @@ namespace Toggl.Chandler.UI.Activities
                                                           new byte[0]);
                 }
             });
-            SendNewData (googleApiClient);
         }
 
         public void StartEntry (string guid)
@@ -164,13 +145,36 @@ namespace Toggl.Chandler.UI.Activities
                                                           Common.GetBytes (guid));
                 }
             });
-            SendNewData (googleApiClient);
+            ViewPager.SetCurrentItem (0, 0, true);
+        }
+
+        public void StartHandheldApp ()
+        {
+
+            Console.WriteLine ("StartHandheld");
+
+            Task.Run (() => {
+                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
+                var nodes = apiResult.Nodes;
+                foreach (var node in nodes) {
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
+                                                          Common.StartHandheldApp,
+                                                          new byte[0]);
+                }
+            });
             ViewPager.SetCurrentItem (0, 0, true);
         }
 
         public void OnMessageReceived (IMessageEvent messageEvent)
         {
             LOGD (Tag, "OnMessageReceived: " + messageEvent);
+            if (messageEvent.Path == Common.UserNotLoggedIn) {
+                adapter.Timer.UserLoggedIn = false;
+                Task.Run (() => {
+                    Thread.Sleep (1000);
+                    RequestSync();
+                });
+            }
         }
 
         public void OnConnected (Bundle bundle)

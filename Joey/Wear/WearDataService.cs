@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Android.App;
+using Android.Content;
 using Android.Gms.Common;
 using Android.Gms.Common.Apis;
 using Android.Gms.Wearable;
 using Android.Util;
+using Java.Interop;
 using Java.Util.Concurrent;
+using Toggl.Joey.UI.Activities;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey.Wear
@@ -22,17 +26,34 @@ namespace Toggl.Joey.Wear
     {
         public const string Tag = "WearableTag";
         public const string DataStorePath = "/TimeEntryDataStore";
-
         GoogleApiClient googleApiClient;
+
+        public WearDataService()
+        {
+        }
+
+        public WearDataService (Context ctx)
+        {
+            Init (ctx);
+        }
+
+        private void Init (Context ctx)
+        {
+            googleApiClient = new GoogleApiClient.Builder (ctx)
+            .AddApi (WearableClass.API)
+            .Build ();
+            googleApiClient.Connect ();
+        }
+
+        public async void Sync ()
+        {
+            await UpdateSharedTimeEntryList ();
+        }
 
         public override void OnCreate ()
         {
             base.OnCreate ();
-            googleApiClient = new GoogleApiClient.Builder (this)
-            .AddApi (WearableClass.API)
-            .Build ();
-            googleApiClient.Connect ();
-
+            Init (this);
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             if (manager.Active == null) {
                 return;
@@ -70,7 +91,6 @@ namespace Toggl.Joey.Wear
         public async override void OnMessageReceived (IMessageEvent messageEvent)
         {
             LOGD (Tag, "OnMessageReceived: " + messageEvent);
-
             base.OnMessageReceived (messageEvent);
             await HandleMessage (messageEvent);
         }
@@ -94,13 +114,19 @@ namespace Toggl.Joey.Wear
                     googleApiClient.Connect();
                 }
 
+                var authManager = ServiceContainer.Resolve<AuthManager> ();
+                if (!authManager.IsAuthenticated) {
+                    NotifyNotLoggedIn();
+                    return;
+                }
+
                 var path = message.Path;
 
                 try {
                     if (path == Common.StartTimeEntryPath || path == Common.StopTimeEntryPath) {
 
                         // Start new time entry.
-                        await WearDataProvider.StartStopTimeEntry ();
+                        await WearDataProvider.StartStopTimeEntry (BaseContext);
                         await UpdateSharedTimeEntryList ();
 
                     } else if (path == Common.RestartTimeEntryPath) {
@@ -108,16 +134,45 @@ namespace Toggl.Joey.Wear
                         var guid = Guid.Parse (Common.GetString (message.GetData()));
                         await StartEntry (guid);
                         await UpdateSharedTimeEntryList ();
-                        // Get time entry Id needed.
                     } else if (path == Common.RequestSyncPath) {
 
                         await UpdateSharedTimeEntryList ();
+                    } else if (path == Common.StartHandheldApp) {
+                        Console.WriteLine ("Start handheld");
+
+                        StartMainActivity ();
                     }
                 } finally {
                 }
             } catch (Exception e) {
                 Log.Error ("WearIntegration", e.ToString ());
             }
+        }
+
+        private void NotifyNotLoggedIn()
+        {
+            Task.Run (() => {
+                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
+                var nodes = apiResult.Nodes;
+                foreach (var node in nodes) {
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
+                                                          Common.UserNotLoggedIn,
+                                                          new byte[0]);
+                }
+            });
+        }
+
+        private void StartMainActivity ()
+        {
+            Console.WriteLine ("Start main activity");
+
+            var intent = new Intent (this, typeof (MainDrawerActivity));
+            intent.AddFlags (ActivityFlags.NewTask);
+//            intent.PutExtra(ConfirmationActivity.ExtraAnimationType, ConfirmationActivity.OpenOnPhoneAnimation);
+            StartActivity (intent);
+//            var intent = new Intent(this, typeof(ConfirmationActivity));
+//            intent.PutExtra(ConfirmationActivity.ExtraAnimationType, ConfirmationActivity.OpenOnPhoneAnimation);
+//            StartActivity(intent);
         }
 
         private async Task StartEntry (Guid id)
@@ -127,7 +182,7 @@ namespace Toggl.Joey.Wear
             await model.ContinueAsync();
         }
 
-        private async Task UpdateSharedTimeEntryList ()
+        public async Task UpdateSharedTimeEntryList ()
         {
             var entryData = await WearDataProvider.GetTimeEntryData ();
 

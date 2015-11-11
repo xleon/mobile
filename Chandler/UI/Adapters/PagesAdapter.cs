@@ -32,6 +32,13 @@ namespace Toggl.Chandler.UI.Adapters
 
         #endregion
 
+        public TimerFragment Timer
+        {
+            get {
+                return timerFragment;
+            }
+        }
+
         #region implemented abstract members of FragmentGridPagerAdapter
 
         public override Fragment GetFragment (int row, int col)

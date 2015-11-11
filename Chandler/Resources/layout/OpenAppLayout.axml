@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="#80000000">
     <TextView
+        android:id="@+id/OpenApp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:text="Open on phone"

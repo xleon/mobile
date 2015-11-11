@@ -112,8 +112,8 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            ViewModel.Dispose ();
             ReleaseRecyclerView ();
+            ViewModel.Dispose ();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
 

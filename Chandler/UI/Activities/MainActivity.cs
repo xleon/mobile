@@ -25,7 +25,6 @@ namespace Toggl.Chandler.UI.Activities
         private PagesAdapter adapter;
         private List<SimpleTimeEntryData> timeEntries = new List<SimpleTimeEntryData> ();
 
-
         protected override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
@@ -46,6 +45,7 @@ namespace Toggl.Chandler.UI.Activities
             if (CollectionChanged != null) {
                 CollectionChanged (this, EventArgs.Empty);
             }
+
         }
 
         public List<SimpleTimeEntryData> Data
@@ -74,6 +74,8 @@ namespace Toggl.Chandler.UI.Activities
 
         public void OnDataChanged (DataEventBuffer dataEvents)
         {
+            Console.WriteLine ("ONData changed dataEvent");
+
             if (!googleApiClient.IsConnected) {
                 ConnectionResult connectionResult = googleApiClient.BlockingConnect (30, TimeUnit.Seconds);
                 if (!connectionResult.IsSuccess) {
@@ -118,6 +120,10 @@ namespace Toggl.Chandler.UI.Activities
                                                           Common.RequestSyncPath,
                                                           new byte[0]);
                 }
+                Thread.Sleep (2000);
+                if (Data.Count == 0) {
+                    RequestSync();
+                }
             });
         }
 
@@ -150,9 +156,6 @@ namespace Toggl.Chandler.UI.Activities
 
         public void StartHandheldApp ()
         {
-
-            Console.WriteLine ("StartHandheld");
-
             Task.Run (() => {
                 var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
                 var nodes = apiResult.Nodes;

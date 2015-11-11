@@ -26,7 +26,10 @@ namespace Toggl.Joey.Wear
     {
         public const string Tag = "WearableTag";
         public const string DataStorePath = "/TimeEntryDataStore";
-        GoogleApiClient googleApiClient;
+        private GoogleApiClient googleApiClient;
+        private List<SimpleTimeEntryData> entryData;
+        private PutDataMapRequest mapReq;
+        private List<DataMap> currentDataMap;
 
         public WearDataService()
         {
@@ -44,12 +47,6 @@ namespace Toggl.Joey.Wear
             .Build ();
             googleApiClient.Connect ();
         }
-
-        public async void Sync ()
-        {
-            await UpdateSharedTimeEntryList ();
-        }
-
         public override void OnCreate ()
         {
             base.OnCreate ();
@@ -81,7 +78,7 @@ namespace Toggl.Joey.Wear
 
         public async void OnConnected (Android.OS.Bundle connectionHint)
         {
-            await UpdateSharedTimeEntryList ();
+            await UpdateSharedTimeEntryList();
         }
 
         public void OnConnectionSuspended (int cause)
@@ -91,8 +88,8 @@ namespace Toggl.Joey.Wear
         public async override void OnMessageReceived (IMessageEvent messageEvent)
         {
             LOGD (Tag, "OnMessageReceived: " + messageEvent);
-            base.OnMessageReceived (messageEvent);
             await HandleMessage (messageEvent);
+            base.OnMessageReceived (messageEvent);
         }
 
         public override void OnPeerConnected (INode peer)
@@ -125,10 +122,8 @@ namespace Toggl.Joey.Wear
                 try {
                     if (path == Common.StartTimeEntryPath || path == Common.StopTimeEntryPath) {
 
-                        // Start new time entry.
                         await WearDataProvider.StartStopTimeEntry (BaseContext);
                         await UpdateSharedTimeEntryList ();
-
                     } else if (path == Common.RestartTimeEntryPath) {
 
                         var guid = Guid.Parse (Common.GetString (message.GetData()));
@@ -138,11 +133,11 @@ namespace Toggl.Joey.Wear
 
                         await UpdateSharedTimeEntryList ();
                     } else if (path == Common.StartHandheldApp) {
-                        Console.WriteLine ("Start handheld");
 
                         StartMainActivity ();
                     }
-                } finally {
+                } catch (Exception e) {
+                    Log.Error ("WearIntegration", e.ToString ());
                 }
             } catch (Exception e) {
                 Log.Error ("WearIntegration", e.ToString ());
@@ -164,15 +159,9 @@ namespace Toggl.Joey.Wear
 
         private void StartMainActivity ()
         {
-            Console.WriteLine ("Start main activity");
-
             var intent = new Intent (this, typeof (MainDrawerActivity));
             intent.AddFlags (ActivityFlags.NewTask);
-//            intent.PutExtra(ConfirmationActivity.ExtraAnimationType, ConfirmationActivity.OpenOnPhoneAnimation);
             StartActivity (intent);
-//            var intent = new Intent(this, typeof(ConfirmationActivity));
-//            intent.PutExtra(ConfirmationActivity.ExtraAnimationType, ConfirmationActivity.OpenOnPhoneAnimation);
-//            StartActivity(intent);
         }
 
         private async Task StartEntry (Guid id)
@@ -184,17 +173,16 @@ namespace Toggl.Joey.Wear
 
         public async Task UpdateSharedTimeEntryList ()
         {
-            var entryData = await WearDataProvider.GetTimeEntryData ();
+            entryData = await WearDataProvider.GetTimeEntryData ();
 
-            // Publish changes to weareable using DataItems
-            var mapReq = PutDataMapRequest.Create (Common.TimeEntryListPath);
+            mapReq = PutDataMapRequest.Create (Common.TimeEntryListPath);
 
-            var children = new List<DataMap> ();
+            currentDataMap = new List<DataMap> ();
 
             foreach (var entry in entryData) {
-                children.Add (entry.DataMap);
+                currentDataMap.Add (entry.DataMap);
             }
-            mapReq.DataMap.PutDataMapArrayList (Common.TimeEntryListKey, children);
+            mapReq.DataMap.PutDataMapArrayList (Common.TimeEntryListKey, currentDataMap);
             await WearableClass.DataApi.PutDataItem (googleApiClient, mapReq.AsPutDataRequest ());
         }
 

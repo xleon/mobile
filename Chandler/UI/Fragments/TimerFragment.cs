@@ -91,6 +91,7 @@ namespace Toggl.Chandler.UI.Fragments
                 var shape = ActionButton.Background as GradientDrawable;
                 shape.SetColor (color);
             } else {
+
                 ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.Icon));
                 var shape = ActionButton.Background as GradientDrawable;
                 var color = Color.Transparent;

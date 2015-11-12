@@ -16,14 +16,14 @@ using Toggl.Chandler.UI.Adapters;
 namespace Toggl.Chandler.UI.Activities
 {
     [Activity (Label = "Toggl", MainLauncher = true, Icon = "@drawable/Icon" )]
-    public class MainActivity : Activity, IDataApiDataListener, GoogleApiClient.IConnectionCallbacks, IMessageApiMessageListener, INodeApiNodeListener
+    public class MainActivity : Activity, IDataApiDataListener, GoogleApiClient.IConnectionCallbacks, IMessageApiMessageListener
     {
         private const string Tag = "MainActivity";
-        private readonly Handler handler = new Handler ();
         private GridViewPager ViewPager;
         private GoogleApiClient googleApiClient;
         private PagesAdapter adapter;
         private List<SimpleTimeEntryData> timeEntries = new List<SimpleTimeEntryData> ();
+        private const int RebindTime = 2000;
 
         protected override void OnCreate (Bundle savedInstanceState)
         {
@@ -45,7 +45,6 @@ namespace Toggl.Chandler.UI.Activities
             if (CollectionChanged != null) {
                 CollectionChanged (this, EventArgs.Empty);
             }
-
         }
 
         public List<SimpleTimeEntryData> Data
@@ -68,14 +67,11 @@ namespace Toggl.Chandler.UI.Activities
             base.OnPause ();
             WearableClass.DataApi.RemoveListener (googleApiClient, this);
             WearableClass.MessageApi.RemoveListener (googleApiClient, this);
-            WearableClass.NodeApi.RemoveListener (googleApiClient, this);
             googleApiClient.Disconnect ();
         }
 
         public void OnDataChanged (DataEventBuffer dataEvents)
         {
-            Console.WriteLine ("ONData changed dataEvent");
-
             if (!googleApiClient.IsConnected) {
                 ConnectionResult connectionResult = googleApiClient.BlockingConnect (30, TimeUnit.Seconds);
                 if (!connectionResult.IsSuccess) {
@@ -120,8 +116,8 @@ namespace Toggl.Chandler.UI.Activities
                                                           Common.RequestSyncPath,
                                                           new byte[0]);
                 }
-                Thread.Sleep (2000);
-                if (Data.Count == 0) {
+                Thread.Sleep (RebindTime);
+                if (Data.Count == 0 && adapter.Timer.UserLoggedIn) {
                     RequestSync();
                 }
             });
@@ -174,7 +170,7 @@ namespace Toggl.Chandler.UI.Activities
             if (messageEvent.Path == Common.UserNotLoggedIn) {
                 adapter.Timer.UserLoggedIn = false;
                 Task.Run (() => {
-                    Thread.Sleep (1000);
+                    Thread.Sleep (RebindTime);
                     RequestSync();
                 });
             }
@@ -185,30 +181,14 @@ namespace Toggl.Chandler.UI.Activities
             LOGD (Tag, "OnConnected(): Successfully connected to Google API client");
             WearableClass.DataApi.AddListener (googleApiClient, this);
             WearableClass.MessageApi.AddListener (googleApiClient, this);
-            WearableClass.NodeApi.AddListener (googleApiClient, this);
 
             // I'm online, give me the new data & state.
             RequestSync ();
         }
 
-        public void OnConnectionSuspended (int p0)
+        public void OnConnectionSuspended (int cause)
         {
-            LOGD (Tag, "OnConnectionSuspended(): Connection to Google API clinet was suspended");
-        }
-
-        public void OnConnectionFailed (Android.Gms.Common.ConnectionResult result)
-        {
-            LOGD (Tag, "OnConnectionFailed(): Failed to connect, with result: " + result);
-        }
-
-        public void OnPeerConnected (INode peer)
-        {
-            LOGD (Tag, "OnPeerConnected: " + peer);
-        }
-
-        public void OnPeerDisconnected (INode peer)
-        {
-            LOGD (Tag, "OnPeerDisconnected: " + peer);
+            LOGD (Tag, "OnConnectionSuspended(): Disconnected Google API client");
         }
 
         public static void LOGD (string tag, string message)

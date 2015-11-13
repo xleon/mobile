@@ -58,5 +58,6 @@ namespace Toggl.Phoebe.Net
 
         Task CreateFeedback (FeedbackJson jsonObject);
 
+        Task CreateExperimentAction (ActionJson jsonObject);
     }
 }

@@ -85,7 +85,20 @@ namespace Toggl.Joey.UI.Fragments
                              () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
-            StartStopBtn.Click += async (sender, e) => await ViewModel.StartStopTimeEntry ();
+            startStopBtn.Click += StartStopClick;
+        }
+
+        public async void StartStopClick (object sender, EventArgs e)
+        {
+            await viewModel.StartStopTimeEntry ();
+            if (ExperimentIsIncluded) {
+                var experimentAction = new ExperimentAction () {
+                    ExperimentId = ExperimentNumbers.HomeEmptyState,
+                    ActionKey = "startButton",
+                    ActionValue = "click"
+                };
+                await experimentAction.Send ();
+            }
         }
 
         public override void OnDestroyView ()
@@ -135,14 +148,24 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration.Dispose ();
         }
 
+        private void OnRecyclerDataChanged (object sender, EventArgs e)
+        {
+            emptyMessageView.Visibility = collectionView.Count == 0 ? ViewStates.Visible : ViewStates.Gone;
+        }
+
+        private bool ExperimentIsIncluded
+        {
+            get {
+                var userData = ServiceContainer.Resolve<AuthManager> ().User;
+                return userData.ExperimentIncluded && userData.ExperimentNumber != ExperimentNumbers.HomeEmptyState;
+            }
+        }
+
         private void ShowOnboardingInfo ()
         {
-            var userData = ServiceContainer.Resolve<AuthManager> ().User;
-            if (!userData.ExperimentIncluded && userData.ExperimentNumber != ExperimentNumbers.HomeEmptyState) {
+            if (!ExperimentIsIncluded) {
                 return;
             }
-
-            // TODO: animate with alpha transitions
             recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
             emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;
         }

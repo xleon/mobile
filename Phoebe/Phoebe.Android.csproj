@@ -80,9 +80,8 @@
     <Compile Include="..\Contrib\Bind\Bind.cs">
       <Link>Contrib\Bind\Bind.cs</Link>
     </Compile>
-    <Compile Include="Data\Json\OBMJson.cs" />
-    <Compile Include="Data\OBMData.cs" />
-    <Compile Include="ExperimentNumbers.cs" />
+    <Compile Include="Data\Json\ActionJson.cs" />
+    <Compile Include="Net\ExperimentAction.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

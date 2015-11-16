@@ -197,7 +197,6 @@
     <Compile Include="UI\Fragments\CreateClientDialogFragment.cs" />
     <Compile Include="UI\Adapters\ClientsAdapter.cs" />
     <Compile Include="UI\Fragments\ClientListDialogFragment.cs" />
-    <Compile Include="Wear\WearService.cs" />
     <Compile Include="Wear\WearDataService.cs" />
     <Compile Include="Wear\Common.cs" />
     <Compile Include="Wear\WearDataProvider.cs" />

@@ -71,7 +71,7 @@ namespace Toggl.Joey.UI.Fragments
 
             hasMoreBinding = this.SetBinding (
                                  ()=> ViewModel.HasMore)
-                             .WhenSourceChanges (ShowOnboardingInfo);
+                             .WhenSourceChanges (ShowEmptyState);
 
             collectionBinding = this.SetBinding (
                                     ()=> ViewModel.CollectionView)
@@ -85,12 +85,13 @@ namespace Toggl.Joey.UI.Fragments
                              () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
-            startStopBtn.Click += StartStopClick;
+            StartStopBtn.Click += StartStopClick;
         }
 
         public async void StartStopClick (object sender, EventArgs e)
         {
-            await viewModel.StartStopTimeEntry ();
+            await ViewModel.StartStopTimeEntry ();
+
             if (ExperimentIsIncluded) {
                 var experimentAction = new ExperimentAction () {
                     ExperimentId = ExperimentNumbers.HomeEmptyState,
@@ -161,11 +162,12 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void ShowOnboardingInfo ()
+        private void ShowEmptyState ()
         {
-            if (!ExperimentIsIncluded) {
+            if (!ExperimentIsIncluded) { //Empty state is experimental.
                 return;
             }
+
             recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
             emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;
         }

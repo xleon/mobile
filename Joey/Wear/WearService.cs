@@ -17,12 +17,12 @@ namespace Toggl.Joey.Wear
     {
         public const string Tag = "WearableTag";
         public const string DataStorePath = "/TimeEntryDataStore";
-        IGoogleApiClient googleApiClient;
+        GoogleApiClient googleApiClient;
 
         public override void OnCreate ()
         {
             base.OnCreate ();
-            googleApiClient = new GoogleApiClientBuilder (this)
+            googleApiClient = new GoogleApiClient.Builder (this)
             .AddApi (WearableClass.Api)
             .Build ();
             googleApiClient.Connect ();

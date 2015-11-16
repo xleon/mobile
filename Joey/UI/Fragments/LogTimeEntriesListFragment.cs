@@ -92,7 +92,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             await ViewModel.StartStopTimeEntry ();
 
-            if (ExperimentIsIncluded && ViewModel.HasMore) {
+            if (UserInExperimentGroups && ViewModel.HasMore) {
                 var experimentAction = new ExperimentAction () {
                     ExperimentId = ExperimentNumbers.HomeEmptyState,
                     ActionKey = "startButton",
@@ -153,7 +153,15 @@ namespace Toggl.Joey.UI.Fragments
         {
             get {
                 var userData = ServiceContainer.Resolve<AuthManager> ().User;
-                return userData.ExperimentIncluded && userData.ExperimentNumber != ExperimentNumbers.HomeEmptyState;
+                return userData.ExperimentIncluded && userData.ExperimentNumber == ExperimentNumbers.HomeEmptyState;
+            }
+        }
+
+        private bool UserInExperimentGroups
+        {
+            get {
+                var userData = ServiceContainer.Resolve<AuthManager> ().User;
+                return userData.ExperimentNumber == ExperimentNumbers.HomeEmptyState;
             }
         }
 

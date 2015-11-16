@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Toggl.Phoebe
+﻿namespace Toggl.Phoebe
 {
     public static class ExperimentNumbers
     {

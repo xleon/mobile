@@ -92,7 +92,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             await ViewModel.StartStopTimeEntry ();
 
-            if (ExperimentIsIncluded) {
+            if (ExperimentIsIncluded && ViewModel.HasMore) {
                 var experimentAction = new ExperimentAction () {
                     ExperimentId = ExperimentNumbers.HomeEmptyState,
                     ActionKey = "startButton",
@@ -147,11 +147,6 @@ namespace Toggl.Joey.UI.Fragments
             itemTouchListener.Dispose ();
             dividerDecoration.Dispose ();
             shadowDecoration.Dispose ();
-        }
-
-        private void OnRecyclerDataChanged (object sender, EventArgs e)
-        {
-            emptyMessageView.Visibility = collectionView.Count == 0 ? ViewStates.Visible : ViewStates.Gone;
         }
 
         private bool ExperimentIsIncluded

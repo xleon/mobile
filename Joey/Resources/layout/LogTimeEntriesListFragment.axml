@@ -15,7 +15,7 @@
         android:orientation="vertical"
         android:layout_gravity="center_vertical|bottom"
         android:gravity="bottom"
-        android:paddingBottom="70dp"
+        android:paddingBottom="90dp"
         android:visibility="gone">
         <TextView
             android:id="@+id/EmptyTitleTextView"

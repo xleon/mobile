@@ -15,21 +15,17 @@
         android:orientation="vertical"
         android:layout_gravity="center_vertical|bottom"
         android:gravity="bottom"
-        android:paddingBottom="90dp"
+        android:paddingBottom="70dp"
         android:visibility="gone">
-        <ImageView
-            android:id="@+id/LittleTogglerImageView"
-            android:src="@drawable/IcTogglerProjectEmptyState"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
         <TextView
             android:id="@+id/EmptyTitleTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/NoItemsTitle"
             android:gravity="left"
-            android:textColor="@color/material_black"
-            android:textSize="@dimen/extraLargeTextSize"
+            android:textColor="@color/material_red"
+            android:textSize="30sp"
+            android:textAllCaps="true"
             android:layout_marginTop="20dp" />
         <TextView
             android:id="@+id/EmptyTextTextView"
@@ -38,7 +34,7 @@
             android:text="@string/NoItemsText"
             android:gravity="left"
             android:textColor="@color/material_black"
-            android:textSize="@dimen/extraLargeTextSize"
+            android:textSize="20sp"
             android:layout_marginTop="4dp" />
         <ImageView
             android:id="@+id/EmtpyStateArrowImageView"
@@ -46,7 +42,7 @@
             android:layout_height="wrap_content"
             android:src="@drawable/IcArrowProjectEmptyState"
             android:layout_gravity="right"
-            android:layout_marginTop="15dp" />
+            android:layout_marginTop="20dp" />
     </LinearLayout>
     <Toggl.Joey.UI.Views.StartStopFab
         android:id="@+id/StartStopBtn"

@@ -4,8 +4,9 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using System.Timers;
+using System.Reactive;
+using System.Reactive.Linq;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
@@ -39,22 +40,21 @@ namespace Toggl.Phoebe.Data.Views
         private bool isLoading;
         private bool hasMore;
         private int lastNumberOfItems;
-        private bool isUpdatingCollection;
 
-        // BufferBlock is an element introduced to
-        // deal with the fast producer, slow consumer effect.
-        private BufferBlock<DataChangeMessage> bufferBlock = new BufferBlock<DataChangeMessage> ();
         private CancellationTokenSource cts;
         private CancellationToken cancellationToken;
 
         public TimeEntriesCollectionView ()
         {
+            var dispatcher = new EventDispatcher<DataChangeMessage> ();
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (dispatcher.Dispatch);
             HasMore = true;
 
             cts = new CancellationTokenSource ();
             cancellationToken = cts.Token;
+
+            StartListening (dispatcher);
         }
 
         public void Dispose ()
@@ -65,8 +65,6 @@ namespace Toggl.Phoebe.Data.Views
             }
             cts.Dispose ();
 
-            // Clean lists
-            bufferBlock.Complete ();
 
             // Release Undo timer
             // A recently deleted item will not be
@@ -86,29 +84,7 @@ namespace Toggl.Phoebe.Data.Views
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private async void OnDataChange (DataChangeMessage msg)
         {
-            var entry = msg.Data as TimeEntryData;
-            if (entry == null) {
-                return;
-            }
-
-            // Save message to async buffer
-            await bufferBlock.SendAsync (msg);
-
-            if (isUpdatingCollection) {
-                return;
-            }
-
-            isUpdatingCollection = true;
-
-            // Get messages from async buffer
-            while (bufferBlock.Count > 0) {
-                var receivedMsg = await bufferBlock.ReceiveAsync ();
-                await ProcessUpdateMessage (receivedMsg);
-            }
-
-            isUpdatingCollection = false;
         }
 
         private async Task ProcessUpdateMessage (DataChangeMessage msg)

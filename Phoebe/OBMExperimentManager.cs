@@ -1,6 +1,7 @@
-﻿using Toggl.Phoebe.Net;
+﻿using System;
+using System.Threading.Tasks;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
-using System;
 
 namespace Toggl.Phoebe
 {
@@ -16,7 +17,7 @@ namespace Toggl.Phoebe
                     ActionKey = actionKey,
                     ActionValue = actionValue
                 };
-                await experimentAction.Send ();
+                Task.Run (async () => { await experimentAction.Send (); });
             }
         }
 

@@ -810,7 +810,7 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            await SendAsync (httpReq).ConfigureAwait (continueOnCapturedContext: false);
+            await SendAsync (httpReq).ConfigureAwait (false);
         }
 
         public async Task CreateExperimentAction (ActionJson jsonObject)
@@ -823,7 +823,7 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json")
             });
-            var response = await SendAsync (httpReq).ConfigureAwait (true);
+            var response = await SendAsync (httpReq).ConfigureAwait (false);
         }
 
         private class Wrapper<T>

@@ -94,14 +94,11 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
-            ViewModel = new NewProjectViewModel (WorkspaceId);
+            ViewModel = await NewProjectViewModel.Init (WorkspaceId);
 
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => SelectClientBit.TextField.Text);
             nameBinding = this.SetBinding (() => ViewModel.ProjectName, () => ProjectBit.TextField.Text, BindingMode.TwoWay);
             colorBinding = this.SetBinding (() => ViewModel.ProjectColor, () => ColorPicker.Adapter.SelectedColor, BindingMode.TwoWay).UpdateTargetTrigger ("SelectedColorChanged");
-
-            await ViewModel.Init ();
         }
 
         public override void OnDestroyView ()

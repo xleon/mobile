@@ -8,39 +8,29 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class CreateClientViewModel : IViewModel<ClientModel>
+    public class CreateClientViewModel : IDisposable
     {
         private ClientModel model;
-        private Guid workspaceId;
-        private WorkspaceModel workspaceModel;
 
-        public CreateClientViewModel (Guid workspaceId)
+        public CreateClientViewModel (WorkspaceModel workspaceModel)
         {
-            this.workspaceId = workspaceId;
+            this.model = new ClientModel {
+                Workspace = workspaceModel
+            };
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Client Screen";
         }
 
-        public async Task Init ()
+        public static async Task<CreateClientViewModel> Init (Guid workspaceId)
         {
-            IsLoading = true;
-
-            workspaceModel = new WorkspaceModel (workspaceId);
+            var workspaceModel = new WorkspaceModel (workspaceId);
             await workspaceModel.LoadAsync ();
-
-            model = new ClientModel {
-                Workspace = workspaceModel
-            };
-
-            IsLoading = false;
+            return new CreateClientViewModel (workspaceModel);
         }
 
         public void Dispose ()
         {
-            workspaceModel = null;
             model = null;
         }
-
-        public bool IsLoading { get; set; }
 
         public string ClientName { get; set; }
 
@@ -48,7 +38,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<ClientData>()
-                           .Where (r => r.WorkspaceId == workspaceId && r.Name == ClientName)
+                           .Where (r => r.WorkspaceId == model.Workspace.Id && r.Name == ClientName)
                            .ToListAsync().ConfigureAwait (false);
 
             if (existing.Count > 0) {

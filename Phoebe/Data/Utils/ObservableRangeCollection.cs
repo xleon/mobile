@@ -12,6 +12,24 @@ namespace Toggl.Phoebe.Data.Utils
     /// <typeparam name="T"></typeparam>
     public class ObservableRangeCollection<T> : ObservableCollection<T>
     {
+        public void Reset (IEnumerable<T> collection)
+        {
+            if (collection == null) { throw new ArgumentNullException ("collection"); }
+
+            Items.Clear ();
+            foreach (var i in collection) { Items.Add (i); }
+            OnCollectionChanged (new NotifyCollectionChangedEventArgs (
+                                     NotifyCollectionChangedAction.Reset));
+        }
+
+        public void Move (int oldIndex, int newIndex, T updatedItem)
+        {
+            Items.RemoveAt (oldIndex);
+            Items.Insert (newIndex, updatedItem);
+            OnCollectionChanged (new NotifyCollectionChangedEventArgs (
+                                     NotifyCollectionChangedAction.Move, updatedItem, newIndex, oldIndex));
+        }
+
         public void AddRange (IEnumerable<T> collection)
         {
             if (collection == null) { throw new ArgumentNullException ("collection"); }

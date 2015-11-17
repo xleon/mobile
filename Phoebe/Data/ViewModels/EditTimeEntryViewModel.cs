@@ -16,43 +16,42 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.ViewModels
 {
     [ImplementPropertyChanged]
-    public class EditTimeEntryViewModel : ViewModelBase, IViewModel<TimeEntryModel>
+    public class EditTimeEntryViewModel : ViewModelBase, IDisposable
     {
         internal static readonly string DefaultTag = "mobile";
 
         private TimeEntryModel model;
-        private Guid timeEntryId;
         private Timer durationTimer;
 
-        public EditTimeEntryViewModel (Guid timeEntryId)
+        EditTimeEntryViewModel (TimeEntryModel model, List<TagData> tagList)
         {
-            this.timeEntryId = timeEntryId;
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
-        }
+            this.model = model;
+            this.durationTimer = new Timer ();
+            this.TagList = tagList;
 
-        public async Task Init ()
-        {
-            IsLoading  = true;
-            durationTimer = new Timer ();
+            model.PropertyChanged += OnPropertyChange;
             durationTimer.Elapsed += DurationTimerCallback;
 
-            var tagsView = new TimeEntryTagCollectionView (timeEntryId);
-            await tagsView.ReloadAsync ();
-            TagList = tagsView.Data.ToList ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
+            UpdateView ();
+        }
 
-            model = new TimeEntryModel (timeEntryId);
-            model.PropertyChanged += OnPropertyChange;
+        public static async Task<EditTimeEntryViewModel> Init (Guid timeEntryId)
+        {
+            var model = new TimeEntryModel (timeEntryId);
             await model.LoadAsync ();
+
+            var tagsView = await TimeEntryTagCollectionView.Init (timeEntryId);
+            var tagList = tagsView.Data.ToList ();
 
             // If the entry is new, setup it a bit.
             if (model.State == TimeEntryState.New) {
                 model.StartTime = Time.UtcNow.AddMinutes (-5);
                 model.StopTime = Time.UtcNow;
-                TagList = await GetDefaultTagList (model.Workspace.Id);
+                tagList = await GetDefaultTagList (model.Workspace.Id);
             }
 
-            UpdateView ();
-            IsLoading = false;
+            return new EditTimeEntryViewModel (model, tagList);
         }
 
         public void Dispose ()
@@ -65,9 +64,6 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
 
         #region viewModel State properties
-
-        public bool IsLoading { get; set; }
-
         public bool IsPremium { get; set; }
 
         public bool IsRunning { get; set; }
@@ -236,7 +232,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private async Task<List<TagData>> GetDefaultTagList (Guid workspaceId)
+        private static async Task<List<TagData>> GetDefaultTagList (Guid workspaceId)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var defaultTagList = await dataStore.Table<TagData> ()

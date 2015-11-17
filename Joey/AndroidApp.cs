@@ -19,6 +19,7 @@ using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Xamarin;
 using XPlatUtils;
+using Toggl.Joey.UI.Activities;
 
 namespace Toggl.Joey
 {
@@ -161,7 +162,9 @@ namespace Toggl.Joey
 
         public void DispatchOnUIThread (Action action)
         {
-            BaseActivity.CurrentActivity.RunOnUiThread (action);
+            if (BaseActivity.CurrentActivity != null) {
+                BaseActivity.CurrentActivity.RunOnUiThread (action);
+            }
         }
     }
 }

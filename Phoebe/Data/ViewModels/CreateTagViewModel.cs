@@ -8,28 +8,15 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class CreateTagViewModel : IViewModel<TagModel>
+    public class CreateTagViewModel : IDisposable
     {
-        private Guid workspaceId;
         private WorkspaceModel workspace;
 
         public CreateTagViewModel (Guid workspaceId)
         {
-            this.workspaceId = workspaceId;
+            this.workspace = new WorkspaceModel (workspaceId);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Tag Screen";
         }
-
-        public void Init ()
-        {
-            IsLoading = true;
-
-            // Create workspace.
-            workspace = new WorkspaceModel (workspaceId);
-
-            IsLoading = false;
-        }
-
-        public bool IsLoading { get; set; }
 
         public string TagName { get; set; }
 

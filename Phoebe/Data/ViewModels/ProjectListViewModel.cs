@@ -10,22 +10,19 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.ViewModels
 {
     [ImplementPropertyChanged]
-    public class ProjectListViewModel : IViewModel<ITimeEntryModel>
+    public class ProjectListViewModel : IDisposable
     {
-        public ProjectListViewModel (Guid workspaceId)
+        ProjectListViewModel (Guid workspaceId, WorkspaceProjectsView projectList)
         {
             CurrentWorkspaceId = workspaceId;
+            ProjectList = projectList;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
         }
 
-        public async Task Init ()
+        public static async Task<ProjectListViewModel> Init (Guid workspaceId)
         {
-            IsLoading = true;
-
-            ProjectList = new WorkspaceProjectsView ();
-            await ProjectList.ReloadAsync ();
-
-            IsLoading = false;
+            var projectList = await WorkspaceProjectsView.Init ();
+            return new ProjectListViewModel (workspaceId, projectList);
         }
 
         public void Dispose ()
@@ -40,7 +37,5 @@ namespace Toggl.Phoebe.Data.ViewModels
         public Guid CurrentWorkspaceId { get; set; }
 
         public Guid CurrentTaskId { get; set; }
-
-        public bool IsLoading { get; set; }
     }
 }

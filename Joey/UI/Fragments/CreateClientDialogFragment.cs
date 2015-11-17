@@ -50,10 +50,7 @@ namespace Toggl.Joey.UI.Fragments
         public override async void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-
-            ViewModel = new CreateClientViewModel (WorkspaceId);
-            await ViewModel.Init ();
-
+            ViewModel = await CreateClientViewModel.Init (WorkspaceId);
             ValidateClientName ();
         }
 

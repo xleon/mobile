@@ -16,47 +16,35 @@ namespace Toggl.Phoebe.Data.Views
         private List<TagData> tagsList = new List<TagData> ();
         private List<string> tagNames = new List<string> ();
 
-        public TimeEntryTagCollectionView (Guid timeEntryId)
+        TimeEntryTagCollectionView (Guid timeEntryId)
         {
             this.timeEntryId = timeEntryId;
         }
 
-        public async Task ReloadAsync ()
+        public static async Task<TimeEntryTagCollectionView> Init (Guid timeEntryId)
         {
-            if (IsLoading) {
-                return;
-            }
-
-            IsLoading = true;
-            tagIds.Clear ();
-            tagsList.Clear ();
-            OnUpdated ();
+            var v = new TimeEntryTagCollectionView (timeEntryId);
+            v.tagIds.Clear ();
+            v.tagsList.Clear ();
+            v.OnUpdated ();
 
             try {
                 var store = ServiceContainer.Resolve<IDataStore> ();
-                tagsList = await store.GetTimeEntryTags (timeEntryId);
-                foreach (var tag in tagsList) {
-                    tagIds.Add (tag.Id);
+                v.tagsList = await store.GetTimeEntryTags (timeEntryId);
+                foreach (var tag in v.tagsList) {
+                    v.tagIds.Add (tag.Id);
                 }
             } finally {
-                IsLoading = false;
-                OnUpdated ();
+                v.OnUpdated ();
             }
+
+            return v;
         }
-
-        public event EventHandler IsLoadingChanged;
-
-        public event EventHandler HasMoreChanged;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
         public void Dispose ()
         {
-        }
-
-        public Task LoadMoreAsync ()
-        {
-            return null;
         }
 
         private void SortTags ()
@@ -95,7 +83,10 @@ namespace Toggl.Phoebe.Data.Views
             get { return false; }
         }
 
-        public bool IsLoading { get; private set; }
+        public void LoadMore ()
+        {
+            // Do nothing
+        }
 
         private void OnUpdated ()
         {

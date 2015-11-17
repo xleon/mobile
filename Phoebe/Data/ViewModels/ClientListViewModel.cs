@@ -10,37 +10,31 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class ClientListViewModel : IViewModel<ClientModel>
+    public class ClientListViewModel : IDisposable
     {
-        private Guid workspaceId;
-
-        public ClientListViewModel (Guid workspaceId)
+        ClientListViewModel ()
         {
-            this.workspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
         }
 
-        public async Task Init ()
+        public static async Task<ClientListViewModel> Init (Guid workspaceId)
         {
-            IsLoading = true;
-
-            ClientDataCollection = new ObservableRangeCollection<ClientData> ();
+            var vm = new ClientListViewModel ();
+            vm.ClientDataCollection = new ObservableRangeCollection<ClientData> ();
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var clients = await store.Table<ClientData> ()
                           .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
                           .ToListAsync();
-            Sort (clients);
 
-            ClientDataCollection.AddRange (clients);
-            IsLoading = false;
+            vm.Sort (clients);
+            vm.ClientDataCollection.AddRange (clients);
+            return vm;
         }
 
         public void Dispose ()
         {
         }
-
-        public bool IsLoading { get; set; }
 
         public ObservableRangeCollection<ClientData> ClientDataCollection { get; set;}
 

@@ -10,39 +10,34 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public class TagListViewModel : IViewModel<WorkspaceModel>
+    public class TagListViewModel : IDisposable
     {
         // This viewMode is apparently simple but
         // it needs the code related with the update of
         // the list. (subscription and reload of data
         // everytime a tag is changed/created/deleted
 
-        private Guid workspaceId;
-        private List<Guid> previousSelectedIds;
+        private readonly Guid workspaceId;
+        private readonly List<Guid> previousSelectedIds;
 
-        public TagListViewModel (Guid workspaceId, List<Guid> previousSelectedIds)
+        TagListViewModel (Guid workspaceId, List<Guid> previousSelectedIds)
         {
             this.previousSelectedIds = previousSelectedIds;
             this.workspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";
         }
 
-        public async Task Init ()
+        public static async Task<TagListViewModel> Init (Guid workspaceId, List<Guid> previousSelectedIds)
         {
-            IsLoading = true;
-
-            // Create tag list.
-            await LoadTagsAsync ();
-
-            IsLoading = false;
+            var vm = new TagListViewModel (workspaceId, previousSelectedIds);
+            await vm.LoadTagsAsync ();
+            return vm;
         }
 
         public void Dispose ()
         {
             TagCollection = null;
         }
-
-        public bool IsLoading { get; set; }
 
         public ObservableRangeCollection<TagData> TagCollection { get; set; }
 

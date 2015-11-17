@@ -65,7 +65,6 @@ namespace Toggl.Phoebe.Data.Views
             }
             cts.Dispose ();
 
-
             // Release Undo timer
             // A recently deleted item will not be
             // removed
@@ -84,7 +83,26 @@ namespace Toggl.Phoebe.Data.Views
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
+        private void StartListening (EventDispatcher<DataChangeMessage> dispatcher)
         {
+            Observable.FromEventPattern<DataChangeMessage> (
+                addHandler: h => dispatcher.Handler += h,
+                removeHandler: h => dispatcher.Handler -= h)
+                
+                .Scan (
+                seed: new List<DataChangeMessage> (),
+                accumulator: (acc, ev) => {
+                    var msg = ev.EventArgs as DataChangeMessage;
+                    var entry = msg != null ? msg.Data as TimeEntryData : null;
+                    if (entry != null)
+                        acc.Add (msg);
+                    return acc;
+                })
+                .Throttle (TimeSpan.FromMilliseconds (500)) // TODO: Move the constant somewhere else
+
+                .SelectMany (msgs => msgs.Select (msg => ProcessUpdateMessage (msg)))
+
+                .Subscribe();            
         }
 
         private async Task ProcessUpdateMessage (DataChangeMessage msg)

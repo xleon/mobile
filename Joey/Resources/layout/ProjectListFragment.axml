@@ -44,7 +44,7 @@
             android:text="@string/ProjectListEmptyStateText"
             android:gravity="center"
             android:textColor="@color/material_black"
-            android:textSize="@dimen/largTextSize"
+            android:textSize="@dimen/largeTextSize"
             android:paddingRight="30dp"
             android:paddingLeft="30dp"
             android:layout_marginTop="20dp" />
@@ -71,7 +71,7 @@
             android:text="@string/ProjectListEmptySearchText"
             android:gravity="center"
             android:textColor="@color/material_black"
-            android:textSize="@dimen/largTextSize"
+            android:textSize="@dimen/largeTextSize"
             android:paddingRight="30dp"
             android:paddingLeft="30dp"
             android:layout_marginTop="20dp" />

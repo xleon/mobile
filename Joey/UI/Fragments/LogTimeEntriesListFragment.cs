@@ -13,9 +13,12 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Net;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -47,7 +50,6 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
-            view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView).SetFont (Font.Roboto);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
 
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
@@ -69,7 +71,7 @@ namespace Toggl.Joey.UI.Fragments
 
             hasMoreBinding = this.SetBinding (
                                  ()=> ViewModel.HasMore)
-                             .WhenSourceChanges (ShowOnboardingInfo);
+                             .WhenSourceChanges (ShowEmptyState);
 
             collectionBinding = this.SetBinding (
                                     ()=> ViewModel.CollectionView)
@@ -83,7 +85,15 @@ namespace Toggl.Joey.UI.Fragments
                              () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
-            StartStopBtn.Click += async (sender, e) => await ViewModel.StartStopTimeEntry ();
+            StartStopBtn.Click += StartStopClick;
+        }
+
+        public async void StartStopClick (object sender, EventArgs e)
+        {
+            await ViewModel.StartStopTimeEntry ();
+            if (ViewModel.HasMore) {
+                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+            }
         }
 
         public override void OnDestroyView ()
@@ -133,9 +143,12 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration.Dispose ();
         }
 
-        private void ShowOnboardingInfo ()
+        private void ShowEmptyState ()
         {
-            // TODO: animate with alpha transitions
+            if (!OBMExperimentManager.InExperimentGroups (OBMExperimentManager.HomeEmptyState)) { //Empty state is experimental.
+                return;
+            }
+
             recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
             emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;
         }

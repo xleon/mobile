@@ -52,7 +52,8 @@
     <string name="RecentTimeEntryContinueDialogMessage">Tapping on recent entries continues them. Use log view to see entry details and edit them.</string>
     <string name="RecentTimeEntryContinueDialogOk">Continue</string>
     <string name="RecentTimeEntryContinueDialogCancel">Cancel</string>
-    <string name="NoItemsText">Start tracking and your activity will appear here.</string>
+    <string name="NoItemsTitle">Welcome!</string>
+    <string name="NoItemsText">Start you timer here.</string>
     <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
     <string name="TimerStartButtonText">Start</string>
     <string name="TimerStopButtonText">Stop</string>

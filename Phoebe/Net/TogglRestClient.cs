@@ -19,10 +19,13 @@ namespace Toggl.Phoebe.Net
     {
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri v8Url;
+        private readonly Uri v9Url;
+
 
         public TogglRestClient (Uri url)
         {
             v8Url = new Uri (url, "v8/");
+            v9Url = new Uri (url, "v9/");
         }
 
         private HttpClient MakeHttpClient ()
@@ -807,7 +810,20 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            await SendAsync (httpReq).ConfigureAwait (continueOnCapturedContext: false);
+            await SendAsync (httpReq).ConfigureAwait (false);
+        }
+
+        public async Task CreateExperimentAction (ActionJson jsonObject)
+        {
+            var url = new Uri (v9Url, "obm/actions");
+            var json = JsonConvert.SerializeObject (jsonObject);
+
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Post,
+                RequestUri = url,
+                Content = new StringContent (json, Encoding.UTF8, "application/json")
+            });
+            var response = await SendAsync (httpReq).ConfigureAwait (false);
         }
 
         private class Wrapper<T>

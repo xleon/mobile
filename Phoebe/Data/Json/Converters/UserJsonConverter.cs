@@ -52,6 +52,8 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.TrackingMode = json.StoreStartAndStopTime ? TrackingMode.StartNew : TrackingMode.Continue;
             data.DefaultWorkspaceId = defaultWorkspaceId;
             data.DurationFormat = json.DurationFormat;
+            data.ExperimentIncluded = json.OBM.Included;
+            data.ExperimentNumber = json.OBM.Number;
 
             ImportCommonJson (data, json);
         }

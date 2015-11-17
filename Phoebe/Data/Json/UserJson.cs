@@ -58,5 +58,8 @@ namespace Toggl.Phoebe.Data.Json
 
         [JsonProperty ("duration_format")]
         public DurationFormat DurationFormat { get; set; }
+
+        [JsonProperty ("obm")]
+        public OBMJson OBM { get; set; }
     }
 }

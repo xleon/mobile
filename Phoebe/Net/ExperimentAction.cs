@@ -19,7 +19,6 @@ namespace Toggl.Phoebe.Net
         public async Task<bool> Send ()
         {
             var client = ServiceContainer.Resolve<ITogglClient> ();
-
             try {
                 var json = MakeActionJson();
                 await client.CreateExperimentAction (json).ConfigureAwait (false);

@@ -91,14 +91,8 @@ namespace Toggl.Joey.UI.Fragments
         public async void StartStopClick (object sender, EventArgs e)
         {
             await ViewModel.StartStopTimeEntry ();
-
-            if (UserInExperimentGroups && ViewModel.HasMore) {
-                var experimentAction = new ExperimentAction () {
-                    ExperimentId = ExperimentNumbers.HomeEmptyState,
-                    ActionKey = "startButton",
-                    ActionValue = "click"
-                };
-                await experimentAction.Send ();
+            if (ViewModel.HasMore) {
+                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
             }
         }
 
@@ -149,25 +143,9 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration.Dispose ();
         }
 
-        private bool ExperimentIsIncluded
-        {
-            get {
-                var userData = ServiceContainer.Resolve<AuthManager> ().User;
-                return userData.ExperimentIncluded && userData.ExperimentNumber == ExperimentNumbers.HomeEmptyState;
-            }
-        }
-
-        private bool UserInExperimentGroups
-        {
-            get {
-                var userData = ServiceContainer.Resolve<AuthManager> ().User;
-                return userData.ExperimentNumber == ExperimentNumbers.HomeEmptyState;
-            }
-        }
-
         private void ShowEmptyState ()
         {
-            if (!ExperimentIsIncluded) { //Empty state is experimental.
+            if (!OBMExperimentManager.InExperimentGroups (OBMExperimentManager.HomeEmptyState)) { //Empty state is experimental.
                 return;
             }
 

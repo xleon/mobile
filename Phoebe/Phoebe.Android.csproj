@@ -91,7 +91,7 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
-    <Compile Include="EventDispatcher.cs" />
+    <Compile Include="Feed.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

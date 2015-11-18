@@ -86,7 +86,7 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
-    <Compile Include="Feed.cs" />
+    <Compile Include="ReactiveExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

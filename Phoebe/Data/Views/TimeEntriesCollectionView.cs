@@ -25,6 +25,7 @@ namespace Toggl.Phoebe.Data.Views
     public class TimeEntriesCollectionView : ICollectionDataView<object>, IDisposable
     {
         public static int UndoSecondsInterval = 5;
+        public static int BufferMilliseconds = 500;
 
         protected string Tag = "TimeEntriesCollectionView";
         protected TimeEntryHolder LastRemovedItem;
@@ -33,7 +34,7 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<IDateGroup> dateGroups = new List<IDateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
-        private Feed<DataChangeMessage> feed;
+        private IDisposable subscription;
 
         private System.Timers.Timer undoTimer;
         private bool isInitialised;
@@ -46,23 +47,26 @@ namespace Toggl.Phoebe.Data.Views
 
         public TimeEntriesCollectionView ()
         {
-            feed = new Feed<DataChangeMessage> (); 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            var subscription = bus.Subscribe<DataChangeMessage> (feed.Push);
-
-            feed.Disposed += (sender, e) => {
-                var bus2 = ServiceContainer.Resolve<MessageBus> ();
-                if (bus2 != null &&subscription != null) {
-                    bus2.Unsubscribe (subscription);
-                    subscription = null;
-                }
-            };
+            var observable = Observable.Create<DataChangeMessage>(
+                obs => {
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    var subs = bus.Subscribe<DataChangeMessage> (obs.OnNext);
+                    return () => bus.Unsubscribe(subs);
+                });
 
             HasMore = true;
             cts = new CancellationTokenSource ();
             cancellationToken = cts.Token;
 
-            StartObserving (feed.Observe());
+            subscription = observable
+                .TimedBuffer(
+                    milliseconds: BufferMilliseconds,
+                    filter: msg => msg != null && msg.Data is TimeEntryData
+                )
+                .SelectMany((IList<DataChangeMessage> msgs, CancellationToken _) =>
+                            ProcessUpdateMessage(msgs)
+                )
+                .Subscribe();
         }
 
         public void Dispose ()
@@ -81,41 +85,31 @@ namespace Toggl.Phoebe.Data.Views
                 undoTimer.Close ();
             }
 
-            feed.Dispose ();
+            if (subscription != null) {
+                subscription.Dispose ();
+                subscription = null;
+            }
         }
 
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private void StartObserving (IObservable<DataChangeMessage> observable)
+        private async Task<bool> ProcessUpdateMessage (IList<DataChangeMessage> msgs)
         {
-            observable.Scan (
-                seed: new List<DataChangeMessage> (),
-                accumulator: (acc, msg) => {
-                    var entry = msg != null ? msg.Data as TimeEntryData : null;
-                    if (entry != null)
-                        acc.Add (msg);
-                    return acc;
-                })
-                .Throttle (TimeSpan.FromMilliseconds (500)) // TODO: Move the constant somewhere else
+            foreach (var msg in msgs) {
+                var entry = msg.Data as TimeEntryData;
+                var isExcluded = entry.DeletedAt != null
+                                 || msg.Action == DataAction.Delete
+                                 || entry.State == TimeEntryState.New;
 
-                .SelectMany (msgs => msgs.Select (msg => ProcessUpdateMessage (msg)))
-
-                .Subscribe();            
-        }
-
-        private async Task ProcessUpdateMessage (DataChangeMessage msg)
-        {
-            var entry = msg.Data as TimeEntryData;
-            var isExcluded = entry.DeletedAt != null
-                             || msg.Action == DataAction.Delete
-                             || entry.State == TimeEntryState.New;
-
-            if (isExcluded) {
-                await RemoveEntryAsync (entry);
-            } else {
-                await AddOrUpdateEntryAsync (new TimeEntryData (entry));
+                if (isExcluded) {
+                    await RemoveEntryAsync (entry);
+                } else {
+                    await AddOrUpdateEntryAsync (new TimeEntryData (entry));
+                }
             }
+
+            return true;
         }
 
         protected virtual Task AddOrUpdateEntryAsync (TimeEntryData entry)

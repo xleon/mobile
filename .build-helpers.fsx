@@ -1,4 +1,4 @@
-module BuildHelpers
+#r @"packages/FAKE.4.4.2/tools/FakeLib.dll"
 
 open Fake
 open Fake.XamarinHelper
@@ -41,7 +41,7 @@ let GetiOSReleaseName (xmlPath:string) =
     let buildNode = xmlDoc.SelectSingleNode ("//plist/dict/key[.='CFBundleVersion']/following-sibling::*[1]")
     (bundleNode.InnerText + "_" + versionNode.InnerText + "_" + buildNode.InnerText)
 
-let ChangeFileName (file:#FileInfo, fileName:string) =
+let ChangeFileName (file:FileInfo, fileName:string) =
     let newName = Path.Combine (file.DirectoryName, fileName)
     mv file.FullName newName
     newName

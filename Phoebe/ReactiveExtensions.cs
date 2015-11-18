@@ -10,12 +10,10 @@ namespace Toggl.Phoebe
         public static IObservable<IList<T>> TimedBuffer<T>(
             this IObservable<T> observable, int milliseconds, Func<T, bool> filter = null)
         {
-            return observable.Scan (
-                seed: new List<T> (),
-                accumulator: (acc, item) => {
-                    if (filter == null || filter (item)) {
-                        acc.Add (item);
-                    }
+            return observable
+                .Where(x => filter == null || filter(x))
+                .Scan (new List<T> (), (acc, item) => {
+                    acc.Add (item);
                     return acc;
                 })
                 .Throttle (TimeSpan.FromMilliseconds (milliseconds));

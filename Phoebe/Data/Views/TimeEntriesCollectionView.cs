@@ -61,11 +61,11 @@ namespace Toggl.Phoebe.Data.Views
             subscription = observable
                 .TimedBuffer(
                     milliseconds: BufferMilliseconds,
-                    filter: msg => msg != null && msg.Data is TimeEntryData
+                    filter: msg => msg != null && msg.Data != null && msg.Data is TimeEntryData
                 )
-                .SelectMany((IList<DataChangeMessage> msgs, CancellationToken _) =>
-                            ProcessUpdateMessage(msgs)
-                )
+                // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
+                .Select(msgs => Observable.FromAsync(() => ProcessUpdateMessage(msgs)))
+                .Concat()
                 .Subscribe();
         }
 
@@ -96,19 +96,31 @@ namespace Toggl.Phoebe.Data.Views
 
         private async Task<bool> ProcessUpdateMessage (IList<DataChangeMessage> msgs)
         {
-            foreach (var msg in msgs) {
-                var entry = msg.Data as TimeEntryData;
-                var isExcluded = entry.DeletedAt != null
-                                 || msg.Action == DataAction.Delete
-                                 || entry.State == TimeEntryState.New;
+            try
+            {
+                foreach (var msg in msgs)
+                {
+                    var entry = msg.Data as TimeEntryData;
+                    var isExcluded = entry.DeletedAt != null
+                                     || msg.Action == DataAction.Delete
+                                     || entry.State == TimeEntryState.New;
 
-                if (isExcluded) {
-                    await RemoveEntryAsync (entry);
-                } else {
-                    await AddOrUpdateEntryAsync (new TimeEntryData (entry));
+                    if (isExcluded)
+                    {
+                        await RemoveEntryAsync(entry);
+                    }
+                    else
+                    {
+                        await AddOrUpdateEntryAsync(new TimeEntryData(entry));
+                    }
                 }
             }
-
+            catch (Exception ex)
+            {
+                // TODO: Log exception
+                System.Diagnostics.Debug.WriteLine("Error: " + ex.Message);
+                return false;
+            }
             return true;
         }
 

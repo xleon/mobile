@@ -41,51 +41,66 @@ namespace Toggl.Joey.UI.Adapters
 
         protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Reset) {
-                NotifyDataSetChanged();
-            }
-
-            if (e.Action == NotifyCollectionChangedAction.Add) {
-
-                if (e.NewItems.Count == 0) {
-                    return;
-                }
-
-                // First items are inserterd with a reset
-                // to fix the top scroll position
-                if (e.NewItems.Count == DataView.Count && e.NewStartingIndex == 0) {
+            // TODO: Replace with ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread in Phoebe
+            var context = Owner.Context as Android.App.Activity;
+            context.RunOnUiThread(() =>
+            {
+                if (e.Action == NotifyCollectionChangedAction.Reset)
+                {
                     NotifyDataSetChanged();
-                    return;
                 }
 
-                if (e.NewItems.Count == 1) {
+                if (e.Action == NotifyCollectionChangedAction.Add)
+                {
 
-                    // If new TE is started,
-                    // we should move the scroll to top position
-                    Owner.SmoothScrollToPosition (0);
+                    if (e.NewItems.Count == 0)
+                    {
+                        return;
+                    }
 
-                    // After some investigation, this action breaks
-                    // RecyclerView layout. Under investigation.
-                    // For the moment, the NotifyItemRangeInserted will be
-                    // replaced by the generic NotifyDataSetChanged.
-                    NotifyItemInserted (e.NewStartingIndex);
-                } else {
-                    // NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
-                    NotifyDataSetChanged ();
+                    // First items are inserterd with a reset
+                    // to fix the top scroll position
+                    if (e.NewItems.Count == DataView.Count && e.NewStartingIndex == 0)
+                    {
+                        NotifyDataSetChanged();
+                        return;
+                    }
+
+                    if (e.NewItems.Count == 1)
+                    {
+
+                        // If new TE is started,
+                        // we should move the scroll to top position
+                        Owner.SmoothScrollToPosition(0);
+
+                        // After some investigation, this action breaks
+                        // RecyclerView layout. Under investigation.
+                        // For the moment, the NotifyItemRangeInserted will be
+                        // replaced by the generic NotifyDataSetChanged.
+                        NotifyItemInserted(e.NewStartingIndex);
+                    }
+                    else
+                    {
+                        // NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                        NotifyDataSetChanged();
+                    }
                 }
-            }
 
-            if (e.Action == NotifyCollectionChangedAction.Replace) {
-                NotifyItemChanged (e.NewStartingIndex);
-            }
+                if (e.Action == NotifyCollectionChangedAction.Replace)
+                {
+                    NotifyItemChanged(e.NewStartingIndex);
+                }
 
-            if (e.Action == NotifyCollectionChangedAction.Remove) {
-                NotifyItemRemoved (e.OldStartingIndex);
-            }
+                if (e.Action == NotifyCollectionChangedAction.Remove)
+                {
+                    NotifyItemRemoved(e.OldStartingIndex);
+                }
 
-            if (e.Action == NotifyCollectionChangedAction.Move) {
-                NotifyItemMoved (e.OldStartingIndex, e.NewStartingIndex);
-            }
+                if (e.Action == NotifyCollectionChangedAction.Move)
+                {
+                    NotifyItemMoved(e.OldStartingIndex, e.NewStartingIndex);
+                }
+            });
         }
 
         private void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)

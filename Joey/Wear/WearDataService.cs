@@ -132,7 +132,7 @@ namespace Toggl.Joey.Wear
                     } else if (path == Common.RequestSyncPath) {
 
                         await UpdateSharedTimeEntryList ();
-                    } else if (path == Common.StartHandheldApp) {
+                    } else if (path == Common.OpenHandheldPath) {
 
                         StartMainActivity ();
                     }
@@ -151,7 +151,7 @@ namespace Toggl.Joey.Wear
                 var nodes = apiResult.Nodes;
                 foreach (var node in nodes) {
                     WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.UserNotLoggedIn,
+                                                          Common.UserNotLoggedInPath,
                                                           new byte[0]);
                 }
             });

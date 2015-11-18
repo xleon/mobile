@@ -130,15 +130,15 @@ namespace Toggl.Chandler.UI.Activities
             SendMessage (Common.StartStopTimeEntryPath, new byte[0]);
         }
 
-        public void StartEntry (string guid)
+        public void RequestStartEntry (string guid)
         {
             SendMessage (Common.ContinueTimeEntryPath, Common.GetBytes (guid));
             ViewPager.SetCurrentItem (0, 0, true);
         }
 
-        public void StartHandheldApp ()
+        public void RequestHandheldOpen ()
         {
-            SendMessage (Common.StartHandheldApp, new byte[0]);
+            SendMessage (Common.OpenHandheldPath, new byte[0]);
             ViewPager.SetCurrentItem (0, 0, true);
         }
 
@@ -160,7 +160,7 @@ namespace Toggl.Chandler.UI.Activities
 
         public void OnMessageReceived (IMessageEvent messageEvent)
         {
-            if (messageEvent.Path == Common.UserNotLoggedIn) {
+            if (messageEvent.Path == Common.UserNotLoggedInPath) {
                 adapter.Timer.UserLoggedIn = false;
                 Task.Run (() => {
                     Thread.Sleep (RebindTime);

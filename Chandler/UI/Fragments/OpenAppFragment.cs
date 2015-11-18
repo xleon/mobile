@@ -20,7 +20,7 @@ namespace Toggl.Chandler.UI.Fragments
 
         private void OpenAppClick (object sender, System.EventArgs e)
         {
-            ((MainActivity)Activity).StartHandheldApp();
+            ((MainActivity)Activity).RequestHandheldOpen();
         }
     }
 }

@@ -31,7 +31,7 @@ namespace Toggl.Chandler.UI.Fragments
         public void OnClick (WearableListView.ViewHolder v)
         {
             var tag = v.ItemView.Tag;
-            ((MainActivity)Activity).StartEntry (tag.ToString());
+            ((MainActivity)Activity).RequestStartEntry (tag.ToString());
         }
 
         public void OnTopEmptyRegionClick ()

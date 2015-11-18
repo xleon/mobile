@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirrious.FluentLayouts.Touc
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Trie", "Contrib\Trie\Trie.shproj", "{E91F64FF-FF63-4604-9E61-FB331CD55867}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chandler", "Chandler\Chandler.csproj", "{76D0B75F-C05C-4852-A9AA-8151618256EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86

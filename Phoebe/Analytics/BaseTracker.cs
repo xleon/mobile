@@ -160,6 +160,12 @@ namespace Toggl.Phoebe.Analytics
             case TimerStartSource.WidgetNew:
                 label = "Widget (continue)";
                 break;
+            case TimerStartSource.WatchStart:
+                lable = "Watch (new)";
+                break;
+            case TimerStartSource.WatchContinue:
+                label = "Watch (continue)";
+                break;
             default:
                 #if DEBUG
                 throw new ArgumentException ("Invalid value", "startSource");
@@ -184,6 +190,9 @@ namespace Toggl.Phoebe.Analytics
                 break;
             case TimerStopSource.Widget:
                 label = "Widget";
+                break;
+            case TimerStopSource.Watch:
+                label = "Watch";
                 break;
             default:
                 #if DEBUG

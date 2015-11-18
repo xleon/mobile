@@ -14,7 +14,7 @@ namespace Toggl.Joey.Wear
 {
     public static class WearDataProvider
     {
-        private const int itemCount = 5;
+        private const int itemCount = 10;
 
         public static async Task StartStopTimeEntry (Context ctx)
         {
@@ -26,11 +26,11 @@ namespace Toggl.Joey.Wear
             var active = new TimeEntryModel (manager.Active);
             if (manager.Active.State == TimeEntryState.Running) {
                 await active.StopAsync ();
-//                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
+                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
             } else {
                 active.Data.Description = ctx.Resources.GetString (Resource.String.WearEntryDefaultDescription);
                 await active.StartAsync ();
-//                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
+                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
             }
         }
 

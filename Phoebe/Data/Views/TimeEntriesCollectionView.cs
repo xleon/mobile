@@ -33,7 +33,7 @@ namespace Toggl.Phoebe.Data.Views
         private readonly List<IDateGroup> dateGroups = new List<IDateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
-        private Subscription<DataChangeMessage> subscriptionDataChange;
+        private Feed<DataChangeMessage> feed;
 
         private System.Timers.Timer undoTimer;
         private bool isInitialised;
@@ -46,15 +46,23 @@ namespace Toggl.Phoebe.Data.Views
 
         public TimeEntriesCollectionView ()
         {
-            var dispatcher = new EventDispatcher<DataChangeMessage> ();
+            feed = new Feed<DataChangeMessage> (); 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (dispatcher.Dispatch);
-            HasMore = true;
+            var subscription = bus.Subscribe<DataChangeMessage> (feed.Push);
 
+            feed.Disposed += (sender, e) => {
+                var bus2 = ServiceContainer.Resolve<MessageBus> ();
+                if (bus2 != null &&subscription != null) {
+                    bus2.Unsubscribe (subscription);
+                    subscription = null;
+                }
+            };
+
+            HasMore = true;
             cts = new CancellationTokenSource ();
             cancellationToken = cts.Token;
 
-            StartListening (dispatcher);
+            StartObserving (feed.Observe());
         }
 
         public void Dispose ()
@@ -73,26 +81,17 @@ namespace Toggl.Phoebe.Data.Views
                 undoTimer.Close ();
             }
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionDataChange != null) {
-                bus.Unsubscribe (subscriptionDataChange);
-                subscriptionDataChange = null;
-            }
+            feed.Dispose ();
         }
 
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private void StartListening (EventDispatcher<DataChangeMessage> dispatcher)
+        private void StartObserving (IObservable<DataChangeMessage> observable)
         {
-            Observable.FromEventPattern<DataChangeMessage> (
-                addHandler: h => dispatcher.Handler += h,
-                removeHandler: h => dispatcher.Handler -= h)
-                
-                .Scan (
+            observable.Scan (
                 seed: new List<DataChangeMessage> (),
-                accumulator: (acc, ev) => {
-                    var msg = ev.EventArgs as DataChangeMessage;
+                accumulator: (acc, msg) => {
                     var entry = msg != null ? msg.Data as TimeEntryData : null;
                     if (entry != null)
                         acc.Add (msg);

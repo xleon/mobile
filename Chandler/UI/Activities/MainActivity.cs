@@ -73,7 +73,7 @@ namespace Toggl.Chandler.UI.Activities
         public void OnDataChanged (DataEventBuffer dataEvents)
         {
             if (!googleApiClient.IsConnected) {
-                ConnectionResult connectionResult = googleApiClient.BlockingConnect (30, TimeUnit.Seconds);
+                var connectionResult = googleApiClient.BlockingConnect (30, TimeUnit.Seconds);
                 if (!connectionResult.IsSuccess) {
                     Log.Error (Tag, "DataLayerListenerService failed to connect to GoogleApiClient");
                     return;
@@ -95,23 +95,25 @@ namespace Toggl.Chandler.UI.Activities
         private void OnDataChanged (IDataItem dataItem)
         {
             var map = DataMapItem.FromDataItem (dataItem).DataMap;
-            var list = map.GetDataMapArrayList (Common.TimeEntryListKey);
-            if (list == null) {
-                return;
-            }
-            timeEntries.Clear();
-            foreach (var mapItem in list) {
-                var en = new SimpleTimeEntryData (mapItem);
-                timeEntries.Add (en);
+            if (map.ContainsKey (Common.TimeEntryListKey)) {
+                var list = map.GetDataMapArrayList (Common.TimeEntryListKey);
+
+                if (list.Count == 0) {
+                    return;
+                }
+
+                timeEntries.Clear();
+                foreach (var mapItem in list) {
+                    var en = new SimpleTimeEntryData (mapItem);
+                    timeEntries.Add (en);
+                }
             }
         }
 
         public void RequestSync ()
         {
             Task.Run (() => {
-                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
-                var nodes = apiResult.Nodes;
-                foreach (var node in nodes) {
+                foreach (var node in clientNodes) {
                     WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
                                                           Common.RequestSyncPath,
                                                           new byte[0]);
@@ -125,48 +127,39 @@ namespace Toggl.Chandler.UI.Activities
 
         public void RequestStartStop ()
         {
-            Task.Run (() => {
-                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
-                var nodes = apiResult.Nodes;
-                foreach (var node in nodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.StartTimeEntryPath,
-                                                          new byte[0]);
-                }
-            });
+            SendMessage (Common.StartStopTimeEntryPath, new byte[0]);
         }
 
         public void StartEntry (string guid)
         {
-            Task.Run (() => {
-                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
-                var nodes = apiResult.Nodes;
-                foreach (var node in nodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.RestartTimeEntryPath,
-                                                          Common.GetBytes (guid));
-                }
-            });
+            SendMessage (Common.ContinueTimeEntryPath, Common.GetBytes (guid));
             ViewPager.SetCurrentItem (0, 0, true);
         }
 
         public void StartHandheldApp ()
         {
+            SendMessage (Common.StartHandheldApp, new byte[0]);
+            ViewPager.SetCurrentItem (0, 0, true);
+        }
+
+        private void SendMessage (string messageKey, byte[] data)
+        {
             Task.Run (() => {
-                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
-                var nodes = apiResult.Nodes;
-                foreach (var node in nodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.StartHandheldApp,
-                                                          new byte[0]);
+                foreach (var node in clientNodes) {
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id, messageKey, data);
                 }
             });
-            ViewPager.SetCurrentItem (0, 0, true);
+        }
+
+        private IList<INode> clientNodes
+        {
+            get {
+                return WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ().Nodes;
+            }
         }
 
         public void OnMessageReceived (IMessageEvent messageEvent)
         {
-            LOGD (Tag, "OnMessageReceived: " + messageEvent);
             if (messageEvent.Path == Common.UserNotLoggedIn) {
                 adapter.Timer.UserLoggedIn = false;
                 Task.Run (() => {
@@ -178,24 +171,14 @@ namespace Toggl.Chandler.UI.Activities
 
         public void OnConnected (Bundle bundle)
         {
-            LOGD (Tag, "OnConnected(): Successfully connected to Google API client");
             WearableClass.DataApi.AddListener (googleApiClient, this);
             WearableClass.MessageApi.AddListener (googleApiClient, this);
 
-            // I'm online, give me the new data & state.
             RequestSync ();
         }
 
         public void OnConnectionSuspended (int cause)
         {
-            LOGD (Tag, "OnConnectionSuspended(): Disconnected Google API client");
-        }
-
-        public static void LOGD (string tag, string message)
-        {
-            if (Log.IsLoggable (tag, LogPriority.Debug)) {
-                Log.Debug (tag, message);
-            }
         }
     }
 }

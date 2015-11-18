@@ -30,8 +30,6 @@ namespace Toggl.Chandler.UI.Adapters
             }
         }
 
-        #endregion
-
         public TimerFragment Timer
         {
             get {
@@ -39,15 +37,14 @@ namespace Toggl.Chandler.UI.Adapters
             }
         }
 
-        #region implemented abstract members of FragmentGridPagerAdapter
-
         public override Fragment GetFragment (int row, int col)
         {
-            if (col == 0) {
+            switch (col) {
+            case 0:
                 return timerFragment;
-            } else if (col == 1) {
+            case 1:
                 return listFragment;
-            } else {
+            default:
                 return openFragment;
             }
         }

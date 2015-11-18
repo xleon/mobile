@@ -21,27 +21,24 @@ namespace Toggl.Chandler.UI.Views
 
         private float fadedAlpha;
 
-        public RecentListItemLayout (Context context) :
-        base (context)
+        public RecentListItemLayout (Context context) : base (context)
         {
             Initialize ();
         }
 
-        public RecentListItemLayout (Context context, IAttributeSet attrs) :
-        base (context, attrs)
+        public RecentListItemLayout (Context context, IAttributeSet attrs) : base (context, attrs)
         {
             Initialize ();
         }
 
-        public RecentListItemLayout (Context context, IAttributeSet attrs, int defStyle) :
-        base (context, attrs, defStyle)
+        public RecentListItemLayout (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
         {
             Initialize ();
         }
 
         void Initialize ()
         {
-            fadedAlpha = 30f/100f;
+            fadedAlpha = 0.3f;
         }
 
         protected override void OnFinishInflate ()

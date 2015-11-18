@@ -5,9 +5,8 @@ namespace Toggl.Chandler
 {
     public static class Common
     {
-        public static readonly string StartTimeEntryPath = "/toggl/wear/start";
-        public static readonly string StopTimeEntryPath = "/toggl/wear/stop";
-        public static readonly string RestartTimeEntryPath = "/toggl/wear/restart";
+        public static readonly string StartStopTimeEntryPath = "/toggl/wear/start";
+        public static readonly string ContinueTimeEntryPath = "/toggl/wear/restart";
         public static readonly string TimeEntryListPath = "/toggl/wear/data";
         public static readonly string RequestSyncPath = "/toggl/wear/sync/";
         public static readonly string UserNotLoggedIn = "/toggl/wear/login/";

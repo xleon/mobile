@@ -120,11 +120,11 @@ namespace Toggl.Joey.Wear
                 var path = message.Path;
 
                 try {
-                    if (path == Common.StartTimeEntryPath || path == Common.StopTimeEntryPath) {
+                    if (path == Common.StartStopTimeEntryPath) {
 
                         await WearDataProvider.StartStopTimeEntry (BaseContext);
                         await UpdateSharedTimeEntryList ();
-                    } else if (path == Common.RestartTimeEntryPath) {
+                    } else if (path == Common.ContinueTimeEntryPath) {
 
                         var guid = Guid.Parse (Common.GetString (message.GetData()));
                         await StartEntry (guid);

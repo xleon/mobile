@@ -38,12 +38,11 @@ namespace Toggl.Chandler.UI.Adapters
             public TextView ProjectTextView;
             public View ColorView;
 
-
             public ItemViewHolder (View view) : base (view)
             {
-                DescriptionTextView = (TextView) view.FindViewById (Resource.Id.RecentListDescription);
-                ProjectTextView = (TextView) view.FindViewById (Resource.Id.RecentListProject);
-                ColorView = (View) view.FindViewById (Resource.Id.ColorView);
+                DescriptionTextView = view.FindViewById<TextView> (Resource.Id.RecentListDescription);
+                ProjectTextView = view.FindViewById<TextView> (Resource.Id.RecentListProject);
+                ColorView = view.FindViewById (Resource.Id.ColorView);
             }
 
             public void Bind (SimpleTimeEntryData data, Context ctx)

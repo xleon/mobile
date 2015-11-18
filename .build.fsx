@@ -1,10 +1,10 @@
-#r @"packages/FAKE.4.1.4/tools/FakeLib.dll"
+#r @"packages/FAKE.4.4.2/tools/FakeLib.dll"
 #load ".build-helpers.fsx"
 open Fake
 open System
 open System.IO
 open System.Linq
-open BuildHelpers
+open ``build-helpers``
 open Fake.XamarinHelper
 open Fake.FileUtils
 
@@ -41,7 +41,7 @@ Target "android-package" (fun () ->
     let keyStoreAlias = getBuildParamOrDefault "keyStoreAlias" "toggl"
     let fileName = GetAndroidReleaseName "Joey/Properties/AndroidManifest.xml"
 
-    let ChangeFileName (file:#FileInfo) =
+    let ChangeFileName (file:FileInfo) =
         let newName = Path.Combine(file.DirectoryName, fileName)
         file.MoveTo (newName)
         newName
@@ -146,7 +146,7 @@ Target "ios-appstore" (fun () ->
 
     // Publish on Teamcity
     let binaryPath = Path.Combine("Ross", "bin", "iPhone", "AppStore", zipFilePath)
-    if result <> 0 then failwithf "zip exited with error" result
+    if result <> 0 then failwithf "zip exited with error %i" result
     else TeamCityHelper.PublishArtifact binaryPath
 
     // Upload dSYM to Xamarin Insights

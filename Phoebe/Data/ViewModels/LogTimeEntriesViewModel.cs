@@ -146,7 +146,10 @@ namespace Toggl.Phoebe.Data.ViewModels
             // one object and not divided in two separated classes
             // like that: LogTimeEntriesView and GroupedTimeEntriesView
 
-            collectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+            // TODO: Bring back GroupedTimeEntriesView
+            //collectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+            collectionView = (TimeEntriesCollectionView)new LogTimeEntriesView ();
+
             collectionView.CollectionChanged += OnCollectionChanged;
             collectionView.HasMoreChanged += OnCollectionChanged;
             await collectionView.ReloadAsync ();

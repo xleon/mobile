@@ -22,47 +22,38 @@ namespace Toggl.Phoebe.Data.Views
     /// This view combines ICollectionDataView data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
-    public class TimeEntriesCollectionView : ICollectionDataView<object>, IDisposable
+    public abstract class TimeEntriesCollectionView : ICollectionDataView<object>, IDisposable
     {
         public static int UndoSecondsInterval = 5;
         public static int BufferMilliseconds = 500;
 
         protected string Tag = "TimeEntriesCollectionView";
         protected TimeEntryHolder LastRemovedItem;
-        protected readonly List<object> ItemCollection = new List<object> ();
+        protected IList<object> ItemCollection { get; set; } = new List<object> ();
 
         private readonly List<IDateGroup> dateGroups = new List<IDateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
         private IDisposable subscription;
-
         private System.Timers.Timer undoTimer;
         private bool isInitialised;
         private bool isLoading;
         private bool hasMore;
         private int lastNumberOfItems;
-
         private CancellationTokenSource cts;
-        private CancellationToken cancellationToken;
 
         public TimeEntriesCollectionView ()
         {
-            var observable = Observable.Create<DataChangeMessage>(
+			HasMore = true;
+			cts = new CancellationTokenSource ();
+			subscription = Observable.Create<DataChangeMessage>(
                 obs => {
                     var bus = ServiceContainer.Resolve<MessageBus> ();
                     var subs = bus.Subscribe<DataChangeMessage> (obs.OnNext);
                     return () => bus.Unsubscribe(subs);
-                });
-
-            HasMore = true;
-            cts = new CancellationTokenSource ();
-            cancellationToken = cts.Token;
-
-            subscription = observable
-                .TimedBuffer(
-                    milliseconds: BufferMilliseconds,
-                    filter: msg => msg != null && msg.Data != null && msg.Data is TimeEntryData
-                )
+                })
+                .Where(msg => msg != null && msg.Data != null && msg.Data is TimeEntryData)
+                .TimedBuffer(BufferMilliseconds)
                 // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
                 .Select(msgs => Observable.FromAsync(() => ProcessUpdateMessage(msgs)))
                 .Concat()
@@ -91,47 +82,98 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
+        #region Abstract Methods
+        protected abstract Task AddOrUpdateEntryAsync(TimeEntryData entry);
+        protected abstract Task RemoveEntryAsync(TimeEntryData entry);
+
+        protected abstract int GetTimeEntryHolderIndex(
+            IList<TimeEntryHolder> holders, TimeEntryData entry);
+
+        protected abstract IList<object> CreateItemCollection(
+            IList<TimeEntryHolder> holders);
+
+        protected abstract Task<TimeEntryHolder> CreateTimeEntryHolder(
+            TimeEntryData entry, TimeEntryHolder previousHolder = null);
+        #endregion
+
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
         private async Task<bool> ProcessUpdateMessage (IList<DataChangeMessage> msgs)
         {
-            try
-            {
-                foreach (var msg in msgs)
-                {
+            try {
+                // 1. Get only TimeEntryHolders from current collection
+                var holders = ItemCollection
+                    .Where(x => x is TimeEntryHolder)
+                    .Cast<TimeEntryHolder>()
+                    .ToList();
+
+                // 2. Remove, replace or add items from messages
+                // TODO: Use some cache to improve performance of GetTimeEntryHolderIndex
+                // TODO: Is it more performant to run CreateTimeEntryHolder tasks in parallel?
+                foreach (var msg in msgs) {
                     var entry = msg.Data as TimeEntryData;
                     var isExcluded = entry.DeletedAt != null
-                                     || msg.Action == DataAction.Delete
-                                     || entry.State == TimeEntryState.New;
+                                          || msg.Action == DataAction.Delete
+                                          || entry.State == TimeEntryState.New;
 
-                    if (isExcluded)
-                    {
-                        await RemoveEntryAsync(entry);
+                    var i = GetTimeEntryHolderIndex(holders, entry);
+                    if (i > -1) {
+                        if (isExcluded)
+                            holders.RemoveAt(i); // Remove
+                        else
+                            holders[i] = await CreateTimeEntryHolder(entry, holders[i]); // Replace
                     }
-                    else
-                    {
-                        await AddOrUpdateEntryAsync(new TimeEntryData(entry));
+                    else {
+                        // If no match is found, insert non-excluded entries
+                        if (!isExcluded)
+                            holders.Add(await CreateTimeEntryHolder(entry)); // Insert
                     }
                 }
+
+                // 3. Sort new list
+                holders = holders.OrderBy(x => x.TimeEntryData.StartTime).ToList();
+
+                // 4. Create the new item collection from holders (add headers...)
+                var newItemCollection = CreateItemCollection(holders);
+
+                // 5. Check diffs and notify changes // TODO: Add move diff
+                Diff.Calculate(ItemCollection, newItemCollection)
+                    .Select(diff => {
+                        object item = newItemCollection[diff.NewIndex]; ;
+                        switch (diff.Type) {
+                            case DiffSectionType.Add:
+                                return new NotifyCollectionChangedEventArgs(
+                                    NotifyCollectionChangedAction.Add, item, diff.NewIndex);
+
+                            case DiffSectionType.Remove:
+                                return new NotifyCollectionChangedEventArgs(
+                                    NotifyCollectionChangedAction.Remove, item, diff.NewIndex);
+
+                            case DiffSectionType.Replace:
+                                var oldItem = ItemCollection[diff.OldIndex];
+                                return new NotifyCollectionChangedEventArgs(
+                                    NotifyCollectionChangedAction.Replace, item, oldItem, diff.NewIndex);
+
+                            default:
+                                return null;
+                        }
+                    })
+                    .ForEach(arg => {
+    					if (arg != null && CollectionChanged != null) {
+    						CollectionChanged(this, arg);
+    					}
+                    });
+
+                // 6. Replace the old list with the new one
+                ItemCollection = newItemCollection;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 // TODO: Log exception
                 System.Diagnostics.Debug.WriteLine("Error: " + ex.Message);
                 return false;
             }
             return true;
-        }
-
-        protected virtual Task AddOrUpdateEntryAsync (TimeEntryData entry)
-        {
-            throw new NotImplementedException ("You can't call this method in base class " + GetType ().Name);
-        }
-
-        protected virtual Task RemoveEntryAsync (TimeEntryData entry)
-        {
-            throw new NotImplementedException ("You can't call this method in base class " + GetType ().Name);
         }
 
         protected virtual async Task UpdateCollectionAsync (object data, NotifyCollectionChangedAction action, int newIndex, int oldIndex = -1, bool isRange = false)
@@ -398,7 +440,7 @@ namespace Toggl.Phoebe.Data.Views
                     const int numDays = 5;
                     try {
                         var minStart = endTime;
-                        var jsonEntries = await client.ListTimeEntries (endTime, numDays, cancellationToken);
+                        var jsonEntries = await client.ListTimeEntries (endTime, numDays, cts.Token);
 
                         BeginUpdate ();
                         var entries = await dataStore.ExecuteInTransactionAsync (ctx =>

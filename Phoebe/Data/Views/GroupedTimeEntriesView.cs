@@ -19,6 +19,21 @@ namespace Toggl.Phoebe.Data.Views
             Tag = "GroupedTimeEntriesView";
         }
 
+        protected override IList<object> CreateItemCollection(IList<TimeEntryHolder> holders)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Task<TimeEntryHolder> CreateTimeEntryHolder(TimeEntryData entry, TimeEntryHolder previousHolder = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override int GetTimeEntryHolderIndex(IList<TimeEntryHolder> holders, TimeEntryData entry)
+        {
+            throw new NotImplementedException();
+        }
+
         protected async override Task AddOrUpdateEntryAsync (TimeEntryData entry)
         {
             // Avoid a removed item (Undoable)

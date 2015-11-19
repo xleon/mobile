@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Data.Views
 
         protected string Tag = "TimeEntriesCollectionView";
         protected TimeEntryHolder LastRemovedItem;
-        protected IList<object> ItemCollection { get; set; } = new List<object> ();
+        protected readonly IList<object> ItemCollection = new List<object> ();
 
         private readonly List<IDateGroup> dateGroups = new List<IDateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
@@ -124,49 +124,56 @@ namespace Toggl.Phoebe.Data.Views
                         else
                             holders[i] = await CreateTimeEntryHolder(entry, holders[i]); // Replace
                     }
-                    else {
-                        // If no match is found, insert non-excluded entries
-                        if (!isExcluded)
-                            holders.Add(await CreateTimeEntryHolder(entry)); // Insert
+                    // If no match is found, insert non-excluded entries
+                    else if (!isExcluded) {
+                        holders.Add(await CreateTimeEntryHolder(entry)); // Insert
                     }
                 }
 
                 // 3. Sort new list
-                holders = holders.OrderBy(x => x.TimeEntryData.StartTime).ToList();
+                holders = holders.OrderByDescending(x => x.TimeEntryData.StartTime).ToList();
 
                 // 4. Create the new item collection from holders (add headers...)
                 var newItemCollection = CreateItemCollection(holders);
 
-                // 5. Check diffs and notify changes // TODO: Add move diff
+                // 5. Check diffs, modify ItemCollection and notify changes // TODO: Add move diff
+				int offset = 0;
                 Diff.Calculate(ItemCollection, newItemCollection)
+                    .Where(x => x.Type != DiffSectionType.Copy)
+                    .OrderBy(x => x.OldIndex)
                     .Select(diff => {
-                        object item = newItemCollection[diff.NewIndex]; ;
+    					object item = null;
+                        int index = diff.OldIndex + offset;
                         switch (diff.Type) {
                             case DiffSectionType.Add:
+    			                item = newItemCollection[diff.NewIndex];
+                                ItemCollection.Insert(index, item);
+    							offset++;
                                 return new NotifyCollectionChangedEventArgs(
-                                    NotifyCollectionChangedAction.Add, item, diff.NewIndex);
+                                    NotifyCollectionChangedAction.Add, item, index);
 
                             case DiffSectionType.Remove:
+    			                item = ItemCollection[index];
+                                ItemCollection.RemoveAt(index);
+                                offset--;
                                 return new NotifyCollectionChangedEventArgs(
-                                    NotifyCollectionChangedAction.Remove, item, diff.NewIndex);
+                                    NotifyCollectionChangedAction.Remove, item, index);
 
                             case DiffSectionType.Replace:
-                                var oldItem = ItemCollection[diff.OldIndex];
+                                var oldItem = ItemCollection[index];
+                                ItemCollection[index] = newItemCollection[diff.NewIndex];
                                 return new NotifyCollectionChangedEventArgs(
-                                    NotifyCollectionChangedAction.Replace, item, oldItem, diff.NewIndex);
+                                    NotifyCollectionChangedAction.Replace, item, oldItem, index);
 
                             default:
                                 return null;
                         }
                     })
                     .ForEach(arg => {
-    					if (arg != null && CollectionChanged != null) {
-    						CollectionChanged(this, arg);
-    					}
+        				if (arg != null && CollectionChanged != null) {
+        					CollectionChanged(this, arg);
+        				}
                     });
-
-                // 6. Replace the old list with the new one
-                ItemCollection = newItemCollection;
             }
             catch (Exception ex) {
                 // TODO: Log exception

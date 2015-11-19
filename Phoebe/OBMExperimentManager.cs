@@ -21,7 +21,7 @@ namespace Toggl.Phoebe
             }
         }
 
-        public static bool InludedInExperiment (int experimentNumber)
+        public static bool IncludedInExperiment (int experimentNumber)
         {
             var userData = ServiceContainer.Resolve<AuthManager> ().User;
             return userData.ExperimentIncluded && userData.ExperimentNumber == experimentNumber;

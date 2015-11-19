@@ -23,7 +23,10 @@ namespace Toggl.Phoebe.Data.Views
         {
             return holders
                 .GroupBy(x => x.TimeEntryData.StartTime.ToLocalTime().Date)
-                .SelectMany(g => g.Cast<object>().Prepend(new DateGroup(g.Key)))
+                .SelectMany(gr => {
+                    var timeEntries = gr.Select(x => x.TimeEntryData).ToList();
+                    return gr.Cast<object>().Prepend(new DateGroup(gr.Key, timeEntries));
+                })
                 .ToList();
         }
 
@@ -237,11 +240,23 @@ namespace Toggl.Phoebe.Data.Views
         public class DateGroup : IDateGroup
         {
             private readonly DateTime date;
-            private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
+            private readonly List<TimeEntryData> dataObjects;
 
-            public DateGroup (DateTime date)
+            public DateGroup(DateTime date, List<TimeEntryData> dataObjects = null)
             {
                 this.date = date.Date;
+                this.dataObjects = dataObjects ?? new List<TimeEntryData>();
+            }
+
+            public override int GetHashCode()
+            {
+                return date.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                var other = obj as DateGroup;
+                return other != null && other.date == date;
             }
 
             public void Dispose ()

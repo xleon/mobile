@@ -4,6 +4,7 @@ using Android.Content;
 using Android.OS;
 using Android.Support.Design.Widget;
 using Android.Support.V4.App;
+using Android.Support.V4.Widget;
 using Android.Support.V7.Widget;
 using Android.Support.V7.Widget.Helper;
 using Android.Views;
@@ -22,12 +23,14 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : Fragment, SwipeDismissCallback.IDismissListener, ItemTouchListener.IItemTouchListener
+    public class LogTimeEntriesListFragment : Fragment, SwipeDismissCallback.IDismissListener, ItemTouchListener.IItemTouchListener, SwipeRefreshLayout.IOnRefreshListener
     {
         private RecyclerView recyclerView;
+        private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
         private LogTimeEntriesAdapter logAdapter;
         private CoordinatorLayout coordinatorLayout;
+        private Subscription<SyncFinishedMessage> drawerSyncFinished;
 
         // Recycler setup
         private DividerItemDecoration dividerDecoration;
@@ -56,8 +59,13 @@ namespace Toggl.Joey.UI.Fragments
             emptyMessageView.Visibility = ViewStates.Gone;
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
+            swipeLayout = view.FindViewById<SwipeRefreshLayout> (Resource.Id.LogSwipeContainer);
+            swipeLayout.SetOnRefreshListener (this);
             coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             StartStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
 
             SetupRecyclerView ();
             return view;
@@ -201,6 +209,17 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         #endregion
+
+        public void OnRefresh ()
+        {
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
+            syncManager.Run ();
+        }
+
+        private void SyncFinished (SyncFinishedMessage msg)
+        {
+            swipeLayout.Refreshing = false;
+        }
 
         // Temporal hack to change the
         // action color in snack bar

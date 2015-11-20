@@ -86,14 +86,10 @@ namespace Toggl.Phoebe.Data.Views
         protected abstract Task AddOrUpdateEntryAsync(TimeEntryData entry);
         protected abstract Task RemoveEntryAsync(TimeEntryData entry);
 
-        protected abstract int GetTimeEntryHolderIndex(
-            IList<TimeEntryHolder> holders, TimeEntryData entry);
-
-        protected abstract IList<object> CreateItemCollection(
-            IList<TimeEntryHolder> holders);
-
-        protected abstract Task<TimeEntryHolder> CreateTimeEntryHolder(
-            TimeEntryData entry, TimeEntryHolder previousHolder = null);
+        protected abstract int GetTimeEntryHolderIndex(IList<object> holders, TimeEntryData entry);
+        protected abstract IList<object> SortTimeEntryHolders(IList<object> holders);
+        protected abstract IList<object> CreateItemCollection(IList<object> holders);
+        protected abstract Task<object> CreateTimeEntryHolder(TimeEntryData entry, object previousHolder = null);
         #endregion
 
         #region Update List
@@ -103,9 +99,8 @@ namespace Toggl.Phoebe.Data.Views
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
-                var holders = ItemCollection
-                    .Where(x => x is TimeEntryHolder)
-                    .Cast<TimeEntryHolder>()
+                IList<object> holders = ItemCollection
+                    .Where(x => x is IDateGroup == false)
                     .ToList();
 
                 // 2. Remove, replace or add items from messages
@@ -131,7 +126,7 @@ namespace Toggl.Phoebe.Data.Views
                 }
 
                 // 3. Sort new list
-                holders = holders.OrderByDescending(x => x.TimeEntryData.StartTime).ToList();
+                holders = SortTimeEntryHolders(holders);
 
                 // 4. Create the new item collection from holders (add headers...)
                 var newItemCollection = CreateItemCollection(holders);
@@ -162,6 +157,8 @@ namespace Toggl.Phoebe.Data.Views
                             case DiffSectionType.Replace:
                                 var oldItem = ItemCollection[index];
                                 ItemCollection[index] = newItemCollection[diff.NewIndex];
+
+                                // TODO: Check if this is Move action instead
                                 return new NotifyCollectionChangedEventArgs(
                                     NotifyCollectionChangedAction.Replace, item, oldItem, index);
 

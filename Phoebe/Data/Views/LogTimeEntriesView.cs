@@ -19,9 +19,10 @@ namespace Toggl.Phoebe.Data.Views
             Tag = "LogTimeEntriesView";
         }
 
-        protected override IList<object> CreateItemCollection(IList<TimeEntryHolder> holders)
+        protected override IList<object> CreateItemCollection(IList<object> holders)
         {
             return holders
+                .Cast<TimeEntryHolder>()
                 .GroupBy(x => x.TimeEntryData.StartTime.ToLocalTime().Date)
                 .SelectMany(gr => {
                     var timeEntries = gr.Select(x => x.TimeEntryData).ToList();
@@ -30,7 +31,16 @@ namespace Toggl.Phoebe.Data.Views
                 .ToList();
         }
 
-        protected override async Task<TimeEntryHolder> CreateTimeEntryHolder(TimeEntryData entry, TimeEntryHolder previousHolder = null)
+        protected override IList<object> SortTimeEntryHolders(IList<object> holders)
+        {
+            return holders
+                .Cast<TimeEntryHolder>()
+                .OrderByDescending(x => x.TimeEntryData.StartTime)
+                .Cast<object>()
+                .ToList();
+        }
+
+        protected override async Task<object> CreateTimeEntryHolder(TimeEntryData entry, object previousHolder = null)
         {
             // Ignore previousHolder
             var holder = new TimeEntryHolder(new List<TimeEntryData>() { entry });
@@ -38,10 +48,11 @@ namespace Toggl.Phoebe.Data.Views
             return holder;
         }
 
-        protected override int GetTimeEntryHolderIndex(IList<TimeEntryHolder> holders, TimeEntryData entry)
+        protected override int GetTimeEntryHolderIndex(IList<object> holders, TimeEntryData entry)
         {
             for (var i = 0; i < holders.Count; i++) {
-                if (holders[i].TimeEntryData.Id == entry.Id)
+                var holder = holders[i] as TimeEntryHolder;
+                if (holder != null && holder.TimeEntryData.Id == entry.Id)
                     return i;
             }
             return -1;

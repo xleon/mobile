@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -13,7 +12,7 @@ namespace Toggl.Phoebe.Data.Views
     /// </summary>
     public class LogTimeEntriesView : TimeEntriesCollectionView
     {
-        private readonly List<TEDataGroup> dateGroups = new List<TEDataGroup> ();
+        private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
 
         public LogTimeEntriesView ()
         {
@@ -26,7 +25,7 @@ namespace Toggl.Phoebe.Data.Views
                 .GroupBy(x => x.TimeEntryData.StartTime.ToLocalTime().Date)
                 .SelectMany(gr => {
                     var timeEntries = gr.Select(x => x.TimeEntryData).ToList();
-                    return gr.Cast<object>().Prepend(new TEDataGroup(gr.Key, timeEntries));
+                    return gr.Cast<object>().Prepend(new DateGroup(gr.Key, timeEntries));
                 })
                 .ToList();
         }
@@ -55,7 +54,7 @@ namespace Toggl.Phoebe.Data.Views
             NotifyCollectionChangedAction groupAction;
 
             TimeEntryData existingEntry;
-            TEDataGroup grp;
+            DateGroup grp;
             bool isNewGroup;
 
             if (FindExistingEntry (entry, out grp, out existingEntry)) {
@@ -63,15 +62,15 @@ namespace Toggl.Phoebe.Data.Views
                     var date = entry.StartTime.ToLocalTime ().Date;
                     var oldIndex = GetTimeEntryIndex (existingEntry);
 
-                    // Move TimeEntry to another TEDataGroup
+                    // Move TimeEntry to another DateGroup
                     if (grp.Date != date) {
 
-                        // Remove entry from previous TEDataGroup: //TODO: remove dateGroup too?
+                        // Remove entry from previous DateGroup: //TODO: remove dateGroup too?
                         grp.Remove (existingEntry);
                         groupIndex = GetDateGroupIndex (grp);
                         await UpdateCollectionAsync (grp, NotifyCollectionChangedAction.Replace, groupIndex);
 
-                        // Move entry to new TEDataGroup
+                        // Move entry to new DateGroup
                         grp = GetGroupFor (entry, out isNewGroup);
                         grp.Add (entry);
                         Sort ();
@@ -79,7 +78,7 @@ namespace Toggl.Phoebe.Data.Views
                         newIndex = GetTimeEntryIndex (entry);
                         await UpdateCollectionAsync (entry, NotifyCollectionChangedAction.Move, newIndex, oldIndex);
 
-                        // Update new container TEDataGroup
+                        // Update new container DateGroup
                         groupIndex = GetDateGroupIndex (grp);
                         groupAction = isNewGroup ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Replace;
                         await UpdateCollectionAsync (grp, groupAction, groupIndex);
@@ -87,7 +86,7 @@ namespace Toggl.Phoebe.Data.Views
                         return;
                     }
 
-                    // Move TimeEntry inside TEDataGroup
+                    // Move TimeEntry inside DateGroup
                     grp.TimeEntryList.UpdateData (entry);
                     Sort ();
 
@@ -135,7 +134,7 @@ namespace Toggl.Phoebe.Data.Views
             int groupIndex;
             int entryIndex;
             NotifyCollectionChangedAction groupAction = NotifyCollectionChangedAction.Replace;
-            TEDataGroup grp;
+            DateGroup grp;
             TimeEntryData oldEntry;
 
             if (FindExistingEntry (entry, out grp, out oldEntry)) {
@@ -153,9 +152,9 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        protected override IList<DateGroup> DateGroups
+        protected override IList<IDateGroup> DateGroups
         {
-            get { return dateGroups.ToList<DateGroup> (); }
+            get { return dateGroups.ToList<IDateGroup> (); }
         }
 
         #region Undo
@@ -171,7 +170,7 @@ namespace Toggl.Phoebe.Data.Views
         #endregion
 
         #region Utils
-        private bool FindExistingEntry (TimeEntryData dataObject, out TEDataGroup dateGroup, out TimeEntryData existingDataObject)
+        private bool FindExistingEntry (TimeEntryData dataObject, out DateGroup dateGroup, out TimeEntryData existingDataObject)
         {
             foreach (var grp in dateGroups) {
                 foreach (var obj in grp.TimeEntryList) {
@@ -204,7 +203,7 @@ namespace Toggl.Phoebe.Data.Views
             return -1;
         }
 
-        private int GetDateGroupIndex (TEDataGroup dateGroup)
+        private int GetDateGroupIndex (DateGroup dateGroup)
         {
             var count = 0;
             foreach (var grp in dateGroups) {
@@ -216,13 +215,13 @@ namespace Toggl.Phoebe.Data.Views
             return -1;
         }
 
-        private TEDataGroup GetGroupFor (TimeEntryData dataObject, out bool isNewGroup)
+        private DateGroup GetGroupFor (TimeEntryData dataObject, out bool isNewGroup)
         {
             isNewGroup = false;
             var date = dataObject.StartTime.ToLocalTime ().Date;
             var grp = dateGroups.FirstOrDefault (g => g.Date == date);
             if (grp == null) {
-                grp = new TEDataGroup (date);
+                grp = new DateGroup (date);
                 dateGroups.Add (grp);
                 isNewGroup = true;
             }
@@ -238,41 +237,97 @@ namespace Toggl.Phoebe.Data.Views
         }
         #endregion
 
-        public class TEDataGroup : DateGroup
+        public class DateGroup : IDateGroup
         {
-            public readonly List<TimeEntryData> TimeEntryList;
+            private readonly DateTime date;
+            private readonly List<TimeEntryData> dataObjects;
 
-            public TEDataGroup(DateTime date, List<TimeEntryData> dataObjects = null) : base(date)
+            public DateGroup(DateTime date, List<TimeEntryData> dataObjects = null)
             {
-                TimeEntryList = dataObjects ?? new List<TimeEntryData>();
+                this.date = date.Date;
+                this.dataObjects = dataObjects ?? new List<TimeEntryData>();
             }
 
-            public override IEnumerable<ITimeEntryModelBase> DataObjects
+            public override int GetHashCode()
             {
-                get
-                {
-                    return TimeEntryList.Cast<ITimeEntryModelBase>();
+                return date.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                var other = obj as DateGroup;
+                return other != null && other.date == date;
+            }
+
+            public void Dispose ()
+            {
+                dataObjects.Clear ();
+            }
+
+            public DateTime Date
+            {
+                get { return date; }
+            }
+
+            public bool IsRunning
+            {
+                get {
+                    return dataObjects.Any (g => g.State == TimeEntryState.Running);
+                }
+            }
+
+            public TimeSpan TotalDuration
+            {
+                get {
+                    TimeSpan totalDuration = TimeSpan.Zero;
+                    foreach (var item in dataObjects) {
+                        totalDuration += Toggl.Phoebe.Data.Models.TimeEntryModel.GetDuration (item, Time.UtcNow);
+                    }
+                    return totalDuration;
+                }
+            }
+
+            public IEnumerable<object> DataObjects
+            {
+                get {
+                    return dataObjects;
+                }
+            }
+
+            public List<TimeEntryData> TimeEntryList
+            {
+                get {
+                    return dataObjects;
+                }
+            }
+
+            public event EventHandler Updated;
+
+            private void OnUpdated ()
+            {
+                var handler = Updated;
+                if (handler != null) {
+                    handler (this, EventArgs.Empty);
                 }
             }
 
             public void Add (TimeEntryData dataObject)
             {
-                TimeEntryList.Add (dataObject);
+                dataObjects.Add (dataObject);
                 OnUpdated ();
             }
 
             public void Remove (TimeEntryData dataObject)
             {
-                TimeEntryList.Remove (dataObject);
+                dataObjects.Remove (dataObject);
                 OnUpdated ();
             }
 
             public void Sort ()
             {
-                TimeEntryList.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
+                dataObjects.Sort ((a, b) => b.StartTime.CompareTo (a.StartTime));
                 OnUpdated ();
             }
-
         }
     }
 }

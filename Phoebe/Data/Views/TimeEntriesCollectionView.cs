@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Data.Views
         protected TimeEntryHolder LastRemovedItem;
         protected readonly IList<object> ItemCollection = new List<object> ();
 
-        private readonly List<IDateGroup> dateGroups = new List<IDateGroup> ();
+        private readonly List<DateGroup> dateGroups = new List<DateGroup> ();
         private UpdateMode updateMode = UpdateMode.Batch;
         private DateTime startFrom;
         private IDisposable subscription;
@@ -199,7 +199,7 @@ namespace Toggl.Phoebe.Data.Views
             // Update collection.
             if (args.Action == NotifyCollectionChangedAction.Add) {
                 if (args.NewItems.Count == 1 && data != null) {
-                    if (data is IDateGroup) {
+                    if (data is DateGroup) {
                         ItemCollection.Insert (args.NewStartingIndex, data);
                     } else {
                         var timeEntryList = GetListOfTimeEntries (data);
@@ -217,7 +217,7 @@ namespace Toggl.Phoebe.Data.Views
 
                     for (int i = args.NewStartingIndex; i < args.NewStartingIndex + args.NewItems.Count; i++) {
                         var item = currentItems [i];
-                        if (item is IDateGroup) {
+                        if (item is DateGroup) {
                             ItemCollection.Insert (i, item);
                         } else {
                             var timeEntryList = GetListOfTimeEntries (item);
@@ -241,7 +241,7 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             if (args.Action == NotifyCollectionChangedAction.Replace) {
-                if (data is IDateGroup) {
+                if (data is DateGroup) {
                     ItemCollection [args.NewStartingIndex] = data;
                 } else {
                     var oldHolder = (TimeEntryHolder)ItemCollection.ElementAt (args.NewStartingIndex);
@@ -558,7 +558,7 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        protected virtual IList<IDateGroup> DateGroups
+        protected virtual IList<DateGroup> DateGroups
         {
             get { return dateGroups; }
         }
@@ -592,15 +592,60 @@ namespace Toggl.Phoebe.Data.Views
 
         #endregion
 
-        public interface IDateGroup : IDisposable
+        public abstract class DateGroup
         {
-            DateTime Date {  get; }
+            protected readonly DateTime date;
 
-            bool IsRunning { get; }
+            protected DateGroup(DateTime date)
+            {
+                this.date = date.Date;
+            }
 
-            TimeSpan TotalDuration { get; }
+            public override int GetHashCode()
+            {
+                return date.GetHashCode();
+            }
 
-            IEnumerable<object> DataObjects { get; }
+            public override bool Equals(object obj)
+            {
+                var other = obj as DateGroup;
+                return other != null && other.date == date;
+            }
+
+            public abstract IEnumerable<ITimeEntryModelBase> DataObjects { get; }
+
+            public DateTime Date
+            {
+                get { return date; }
+            }
+
+            public bool IsRunning
+            {
+                get {
+                    return DataObjects.Any (x => x.State == TimeEntryState.Running);
+                }
+            }
+
+            public TimeSpan TotalDuration
+            {
+                get {
+                    TimeSpan totalDuration = TimeSpan.Zero;
+                    foreach (var item in DataObjects) {
+                        totalDuration += item.GetDuration();
+                    }
+                    return totalDuration;
+                }
+            }
+
+            public event EventHandler Updated;
+
+            protected void OnUpdated ()
+            {
+                var handler = Updated;
+                if (handler != null) {
+                    handler (this, EventArgs.Empty);
+                }
+            }
         }
 
         private enum UpdateMode {

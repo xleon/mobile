@@ -4,10 +4,8 @@ using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public interface ITimeEntryModel : IModel
+    public interface ITimeEntryModelBase
     {
-        TimeEntryData Data { get; set; }
-
         TimeEntryState State { get; set; }
 
         string Description { get; set; }
@@ -18,6 +16,14 @@ namespace Toggl.Phoebe.Data.Models
 
         bool IsBillable { get; set; }
 
+        TimeSpan GetDuration ();
+    }
+
+
+    public interface ITimeEntryModel : ITimeEntryModelBase, IModel
+    {
+        TimeEntryData Data { get; set; }
+
         UserModel User { get; set; }
 
         WorkspaceModel Workspace { get; set; }
@@ -25,8 +31,6 @@ namespace Toggl.Phoebe.Data.Models
         ProjectModel Project { get; set; }
 
         TaskModel Task { get; set; }
-
-        TimeSpan GetDuration ();
 
         void SetDuration (TimeSpan value);
 

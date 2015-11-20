@@ -1,10 +1,12 @@
 using System;
 using SQLite.Net.Attributes;
+using SQLite;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.DataObjects
 {
     [Table ("TimeEntryModel")]
-    public class TimeEntryData : CommonData
+    public class TimeEntryData : CommonData, ITimeEntryModelBase
     {
         public TimeEntryData ()
         {
@@ -23,6 +25,11 @@ namespace Toggl.Phoebe.Data.DataObjects
             WorkspaceId = other.WorkspaceId;
             ProjectId = other.ProjectId;
             TaskId = other.TaskId;
+        }
+
+        public TimeSpan GetDuration()
+        {
+            return TimeEntryModel.GetDuration(this, Time.UtcNow);
         }
 
         public TimeEntryState State { get; set; }

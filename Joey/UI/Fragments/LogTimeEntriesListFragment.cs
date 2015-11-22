@@ -125,13 +125,6 @@ namespace Toggl.Joey.UI.Fragments
             ReleaseRecyclerView ();
             ViewModel.Dispose ();
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-
-            if (drawerSyncFinished != null) {
-                bus.Unsubscribe (drawerSyncFinished);
-                drawerSyncFinished = null;
-            }
-
             base.OnDestroyView ();
         }
 
@@ -181,8 +174,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
-            inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
-            AddNewMenuItem = menu.FindItem (Resource.Id.saveItem);
+            inflater.Inflate (Resource.Menu.NewItemMenu, menu);
+            AddNewMenuItem = menu.FindItem (Resource.Id.newItem);
             AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
         }
 

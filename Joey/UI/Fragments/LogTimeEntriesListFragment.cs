@@ -114,6 +114,13 @@ namespace Toggl.Joey.UI.Fragments
             ViewModel.Dispose ();
             ReleaseRecyclerView ();
 
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+
+            if (drawerSyncFinished != null) {
+                bus.Unsubscribe (drawerSyncFinished);
+                drawerSyncFinished = null;
+            }
+
             base.OnDestroyView ();
         }
 

@@ -145,7 +145,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void ShowEmptyState ()
         {
-            if (!OBMExperimentManager.InExperimentGroups (OBMExperimentManager.HomeEmptyState)) { //Empty state is experimental.
+            if (!OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) { //Empty state is experimental.
                 return;
             }
 

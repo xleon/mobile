@@ -47,8 +47,14 @@ namespace Toggl.Chandler.UI.Adapters
 
             public void Bind (SimpleTimeEntryData data, Context ctx)
             {
-                DescriptionTextView.Text = String.IsNullOrEmpty (data.Description) ? ctx.Resources.GetString (Resource.String.TimeEntryNoDescription) : data.Description;
-                ProjectTextView.Text = String.IsNullOrEmpty (data.Project) ? ctx.Resources.GetString (Resource.String.TimeEntryNoProject) : data.Project;
+                DescriptionTextView.Text = String.IsNullOrEmpty (data.Description)
+                    ? ctx.Resources.GetString (Resource.String.TimeEntryNoDescription)
+                    : data.Description;
+                
+                ProjectTextView.Text = String.IsNullOrEmpty (data.Project)
+                    ? ctx.Resources.GetString (Resource.String.TimeEntryNoProject)
+                    : data.Project;
+
                 var color = Color.ParseColor (data.ProjectColor);
                 var shape = ColorView.Background as GradientDrawable;
                 if (shape != null) {

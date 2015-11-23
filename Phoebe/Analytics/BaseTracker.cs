@@ -161,7 +161,7 @@ namespace Toggl.Phoebe.Analytics
                 label = "Widget (continue)";
                 break;
             case TimerStartSource.WatchStart:
-                lable = "Watch (new)";
+                label = "Watch (new)";
                 break;
             case TimerStartSource.WatchContinue:
                 label = "Watch (continue)";

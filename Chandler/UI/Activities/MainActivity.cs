@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,16 @@ namespace Toggl.Chandler.UI.Activities
         private PagesAdapter adapter;
         private List<SimpleTimeEntryData> timeEntries = new List<SimpleTimeEntryData> ();
         private const int RebindTime = 2000;
+
+        // Send messages to all client nodes in parallel
+        private Task _sendMessage(string message, byte[] data)
+        {
+            return Task.WhenAll(
+                from node in clientNodes.AsParallel()
+                select WearableClass.MessageApi.SendMessage(
+                    googleApiClient, node.Id, message, data).AsAsync()
+            );
+        }
 
         protected override void OnCreate (Bundle savedInstanceState)
         {
@@ -110,19 +121,20 @@ namespace Toggl.Chandler.UI.Activities
             }
         }
 
-        public void RequestSync ()
+        public async Task RequestSync ()
         {
-            Task.Run (() => {
-                foreach (var node in clientNodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.RequestSyncPath,
-                                                          new byte[0]);
+            Exception error = null;
+            do {
+                try {
+                    await Common.TimedAwait(
+                        RebindTime,
+                        _sendMessage(Common.RequestSyncPath, new byte[0]));
                 }
-                Thread.Sleep (RebindTime);
-                if (Data.Count == 0 && adapter.Timer.UserLoggedIn) {
-                    RequestSync();
+                catch (Exception tempEx) {
+                    error = tempEx;
+                    Log.Error (Tag, error.Message);
                 }
-            });
+            } while (error != null && adapter.Timer.UserLoggedIn);
         }
 
         public void RequestStartStop ()
@@ -144,37 +156,35 @@ namespace Toggl.Chandler.UI.Activities
 
         private void SendMessage (string messageKey, byte[] data)
         {
-            Task.Run (() => {
-                foreach (var node in clientNodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id, messageKey, data);
-                }
-            });
+            _sendMessage(messageKey, data).Start();
         }
 
         private IList<INode> clientNodes
         {
             get {
-                return WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ().Nodes;
+                return WearableClass
+                    .NodeApi
+                    .GetConnectedNodes (googleApiClient)
+                    .Await ()
+                    .JavaCast<INodeApiGetConnectedNodesResult> ()
+                    .Nodes;
             }
         }
 
-        public void OnMessageReceived (IMessageEvent messageEvent)
+        public async void OnMessageReceived (IMessageEvent messageEvent)
         {
             if (messageEvent.Path == Common.UserNotLoggedInPath) {
                 adapter.Timer.UserLoggedIn = false;
-                Task.Run (() => {
-                    Thread.Sleep (RebindTime);
-                    RequestSync();
-                });
+                await Task.Delay(RebindTime);
+                await RequestSync();
             }
         }
 
-        public void OnConnected (Bundle bundle)
+        public async void OnConnected (Bundle bundle)
         {
-            WearableClass.DataApi.AddListener (googleApiClient, this);
-            WearableClass.MessageApi.AddListener (googleApiClient, this);
-
-            RequestSync ();
+            await WearableClass.DataApi.AddListener (googleApiClient, this);
+            await WearableClass.MessageApi.AddListener (googleApiClient, this);
+            await RequestSync();
         }
 
         public void OnConnectionSuspended (int cause)

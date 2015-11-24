@@ -131,46 +131,48 @@ namespace Toggl.Phoebe.Data.Views
                 // 4. Create the new item collection from holders (add headers...)
                 var newItemCollection = CreateItemCollection(holders);
 
-                // 5. Check diffs, modify ItemCollection and notify changes // TODO: Add move diff
-				int offset = 0;
-                Diff.Calculate(ItemCollection, newItemCollection)
-                    .Where(x => x.Type != DiffSectionType.Copy)
-                    .OrderBy(x => x.OldIndex)
+                // 5. Check diffs, modify ItemCollection and notify changes
+                var offset = 0;
+                var args = Diff
+                    .Calculate(ItemCollection, newItemCollection)
+                    .Where(diff => diff.Type != DiffSectionType.Copy)
+                    .OrderBy(diff => diff.OldIndex)
                     .Select(diff => {
-    					object item = null;
-                        int index = diff.OldIndex + offset;
+                        var newItem = diff.NewIndex < newItemCollection.Count
+                                          ? newItemCollection[diff.NewIndex]
+                                          : null;
+                        var oldItem = diff.OldIndex + offset < ItemCollection.Count
+                                          ? ItemCollection[diff.OldIndex + offset]
+                                          : null;
                         switch (diff.Type) {
                             case DiffSectionType.Add:
-    			                item = newItemCollection[diff.NewIndex];
-                                ItemCollection.Insert(index, item);
-    							offset++;
+                                ItemCollection.Insert(diff.OldIndex + offset, newItem);
                                 return new NotifyCollectionChangedEventArgs(
-                                    NotifyCollectionChangedAction.Add, item, index);
+                                    NotifyCollectionChangedAction.Add, newItem, diff.OldIndex + offset++);
 
                             case DiffSectionType.Remove:
-    			                item = ItemCollection[index];
-                                ItemCollection.RemoveAt(index);
-                                offset--;
+                                ItemCollection.RemoveAt(diff.OldIndex + offset);
                                 return new NotifyCollectionChangedEventArgs(
-                                    NotifyCollectionChangedAction.Remove, item, index);
+                                    NotifyCollectionChangedAction.Remove, oldItem, diff.OldIndex + offset--);
 
                             case DiffSectionType.Replace:
-                                var oldItem = ItemCollection[index];
-                                ItemCollection[index] = newItemCollection[diff.NewIndex];
-
+                                ItemCollection[diff.OldIndex + offset] = newItem;
                                 // TODO: Check if this is Move action instead
                                 return new NotifyCollectionChangedEventArgs(
-                                    NotifyCollectionChangedAction.Replace, item, oldItem, index);
+                                    NotifyCollectionChangedAction.Replace, newItem, oldItem, diff.OldIndex + offset);
 
                             default:
                                 return null;
                         }
-                    })
-                    .ForEach(arg => {
-        				if (arg != null && CollectionChanged != null) {
-        					CollectionChanged(this, arg);
-        				}
                     });
+
+                foreach (var arg in args) {
+                    if (arg != null && CollectionChanged != null) {
+                        CollectionChanged(this, arg);
+                        // TODO: Temporary solution, this code should run on UI thread
+                        await Task.Delay(500);
+                    }
+                }
             }
             catch (Exception ex) {
                 // TODO: Log exception

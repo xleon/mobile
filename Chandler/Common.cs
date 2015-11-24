@@ -24,69 +24,61 @@ namespace Toggl.Chandler
         }
 
         public static string GetString (byte[] bytes)
-        {   
+        {
             char[] chars = new char[bytes.Length / sizeof (char)];
             System.Buffer.BlockCopy (bytes, 0, chars, 0, bytes.Length);
             return new string (chars);
         }
 
-        public static T Get<T>(this DataMap dataMap, string propertyName, T defaultValue)
+        public static T Get<T> (this DataMap dataMap, string propertyName, T defaultValue)
         {
             var key = propertyName + "Key";
-            if (!dataMap.ContainsKey(key)) {
+            if (!dataMap.ContainsKey (key)) {
                 return defaultValue;
+            } else {
+                var t = typeof (T);
+                if (t == typeof (bool)) {
+                    return (T) (object)dataMap.GetBoolean (key);
+                } else if (typeof (T) == typeof (string)) {
+                    return (T) (object)dataMap.GetString (key);
+                } else if (t == typeof (Guid)) {
+                    var s = dataMap.GetString (key);
+                    return (T) (object)Guid.Parse (s);
+                } else if (t == typeof (DateTime)) {
+                    var s = dataMap.GetString (key);
+                    return (T) (object)DateTime.Parse (s);
+                } else {
+                    throw new NotSupportedException (typeof (T).Name);
+                }
             }
-            else {
-                var t = typeof(T);
-                if (t == typeof(bool)) {
-                    return (T)(object)dataMap.GetBoolean(key);
-                }
-                else if (typeof(T) == typeof(string)) {
-                    return (T)(object)dataMap.GetString(key);
-                }
-                else if (t == typeof(Guid)) {
-                    var s = dataMap.GetString(key);
-                    return (T)(object)Guid.Parse(s);
-                }
-                else if (t == typeof(DateTime)) {
-                    var s = dataMap.GetString(key);
-                    return (T)(object)DateTime.Parse(s);
-                }
-                else {
-                    throw new NotSupportedException(typeof(T).Name);
-                }
-			}
         }
 
-        public static void Put<T>(this DataMap dataMap, string propertyName, T value)
+        public static void Put<T> (this DataMap dataMap, string propertyName, T value)
         {
             var key = propertyName + "Key";
-            var t = typeof(T);
-            if (t == typeof(bool)) {
-                dataMap.PutBoolean(key, (bool)(object)value);
-            }
-            else if (typeof(T) == typeof(string)) {
-                dataMap.PutString(key, (string)(object)value);
-            }
-            else if (t == typeof(Guid)) {
-                dataMap.PutString(key, value.ToString());
-            }
-            else if (t == typeof(DateTime)) {
-                dataMap.PutString(key, value.ToString());
-            }
-            else {
-                throw new NotSupportedException(typeof(T).Name);
+            var t = typeof (T);
+            if (t == typeof (bool)) {
+                dataMap.PutBoolean (key, (bool) (object)value);
+            } else if (typeof (T) == typeof (string)) {
+                dataMap.PutString (key, (string) (object)value);
+            } else if (t == typeof (Guid)) {
+                dataMap.PutString (key, value.ToString());
+            } else if (t == typeof (DateTime)) {
+                dataMap.PutString (key, value.ToString());
+            } else {
+                throw new NotSupportedException (typeof (T).Name);
             }
         }
 
         /// <summary>
         /// Throws a TimeoutException if the task within the specified time (milliseconds)
         /// </summary>
-        public static async Task TimedAwait(int timeout, Task task)
+        public static async Task TimedAwait (int timeout, Task task)
         {
-            var firstTask = await Task.WhenAny(task, Task.Delay(timeout));
-            if (firstTask != task)
+            var firstTask = await Task.WhenAny (task, Task.Delay (timeout));
+            if (firstTask != task) {
                 throw new TimeoutException();
+            }
         }
     }
 
@@ -110,13 +102,13 @@ namespace Toggl.Chandler
         {
             dataMap = map;
 
-            id = map.Get(nameof(id), Guid.Empty);
-            isRunning = map.Get(nameof(isRunning), false);
-            description = map.Get(nameof(description), string.Empty);
-            project = map.Get(nameof(project), string.Empty);
-            projectColor = map.Get(nameof(projectColor), string.Empty);
-            startTime = map.Get(nameof(startTime), DateTime.UtcNow);
-            stopTime = map.Get(nameof(stopTime), DateTime.UtcNow);
+            id = map.Get (nameof (id), Guid.Empty);
+            isRunning = map.Get (nameof (isRunning), false);
+            description = map.Get (nameof (description), string.Empty);
+            project = map.Get (nameof (project), string.Empty);
+            projectColor = map.Get (nameof (projectColor), string.Empty);
+            startTime = map.Get (nameof (startTime), DateTime.UtcNow);
+            stopTime = map.Get (nameof (stopTime), DateTime.UtcNow);
         }
 
         public DataMap DataMap
@@ -125,13 +117,13 @@ namespace Toggl.Chandler
 
                 dataMap = new DataMap();
 
-                dataMap.Put(nameof(id), id);
-                dataMap.Put(nameof(isRunning), isRunning);
-                dataMap.Put(nameof(description), description);
-                dataMap.Put(nameof(project), project);
-                dataMap.Put(nameof(projectColor), projectColor);
-                dataMap.Put(nameof(startTime), startTime);
-                dataMap.Put(nameof(stopTime), stopTime);
+                dataMap.Put (nameof (id), id);
+                dataMap.Put (nameof (isRunning), isRunning);
+                dataMap.Put (nameof (description), description);
+                dataMap.Put (nameof (project), project);
+                dataMap.Put (nameof (projectColor), projectColor);
+                dataMap.Put (nameof (startTime), startTime);
+                dataMap.Put (nameof (stopTime), stopTime);
 
                 return dataMap;
             } set {

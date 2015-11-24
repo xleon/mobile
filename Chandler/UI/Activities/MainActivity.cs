@@ -26,16 +26,6 @@ namespace Toggl.Chandler.UI.Activities
         private List<SimpleTimeEntryData> timeEntries = new List<SimpleTimeEntryData> ();
         private const int RebindTime = 2000;
 
-        // Send messages to all client nodes in parallel
-        private Task _sendMessage(string message, byte[] data)
-        {
-            return Task.WhenAll(
-                from node in clientNodes.AsParallel()
-                select WearableClass.MessageApi.SendMessage(
-                    googleApiClient, node.Id, message, data).AsAsync()
-            );
-        }
-
         protected override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
@@ -126,15 +116,13 @@ namespace Toggl.Chandler.UI.Activities
             Exception error = null;
             do {
                 try {
-                    await Common.TimedAwait(
-                        RebindTime,
-                        _sendMessage(Common.RequestSyncPath, new byte[0]));
-                }
-                catch (Exception tempEx) {
+                    await SendMessage (Common.RequestSyncPath, new byte[0]);
+                } catch (Exception tempEx) {
                     error = tempEx;
                     Log.Error (Tag, error.Message);
                 }
-            } while (error != null && adapter.Timer.UserLoggedIn);
+                await Task.Delay (RebindTime);
+            } while (error != null || Data.Count == 0);
         }
 
         public void RequestStartStop ()
@@ -154,37 +142,46 @@ namespace Toggl.Chandler.UI.Activities
             ViewPager.SetCurrentItem (0, 0, true);
         }
 
-        private void SendMessage (string messageKey, byte[] data)
+        // Send messages to all client nodes in parallel
+        private Task SendMessage (string message, byte[] data)
         {
-            _sendMessage(messageKey, data).Start();
+            return Task.Run (() => {
+                foreach (var node in clientNodes) {
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
+                                                          Common.RequestSyncPath,
+                                                          new byte[0]);
+                }
+            });
         }
 
         private IList<INode> clientNodes
         {
             get {
                 return WearableClass
-                    .NodeApi
-                    .GetConnectedNodes (googleApiClient)
-                    .Await ()
-                    .JavaCast<INodeApiGetConnectedNodesResult> ()
-                    .Nodes;
+                       .NodeApi
+                       .GetConnectedNodes (googleApiClient)
+                       .Await ()
+                       .JavaCast<INodeApiGetConnectedNodesResult> ()
+                       .Nodes;
             }
         }
 
-        public async void OnMessageReceived (IMessageEvent messageEvent)
+        public void OnMessageReceived (IMessageEvent messageEvent)
         {
             if (messageEvent.Path == Common.UserNotLoggedInPath) {
                 adapter.Timer.UserLoggedIn = false;
-                await Task.Delay(RebindTime);
-                await RequestSync();
+                Task.Run (() => {
+                    Task.Delay (RebindTime);
+                    RequestSync();
+                });
             }
         }
 
-        public async void OnConnected (Bundle bundle)
+        public void OnConnected (Bundle bundle)
         {
-            await WearableClass.DataApi.AddListener (googleApiClient, this);
-            await WearableClass.MessageApi.AddListener (googleApiClient, this);
-            await RequestSync();
+            WearableClass.DataApi.AddListener (googleApiClient, this);
+            WearableClass.MessageApi.AddListener (googleApiClient, this);
+            Task.Run (() => { RequestSync(); });
         }
 
         public void OnConnectionSuspended (int cause)

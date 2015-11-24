@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -24,7 +21,6 @@ namespace Toggl.Phoebe
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionHttpResponseMessage = bus.Subscribe<TogglHttpResponseMessage> (OnHttpResponse);
-            Task.Run (async () => await LoadMeasurements ());
         }
 
         public void Dispose ()
@@ -36,7 +32,7 @@ namespace Toggl.Phoebe
             }
         }
 
-        private async void OnHttpResponse (TogglHttpResponseMessage msg)
+        private void OnHttpResponse (TogglHttpResponseMessage msg)
         {
             if (msg.ServerTime == null || msg.Latency == null) {
                 return;
@@ -46,13 +42,13 @@ namespace Toggl.Phoebe
             var serverTime = msg.ServerTime.Value + TimeSpan.FromTicks (msg.Latency.Value.Ticks / 2);
             var correction = serverTime - localTime;
 
-            await AddMeasurement (new TimeCorrectionData {
+            AddMeasurement (new TimeCorrectionData {
                 MeasuredAt = serverTime,
                 Correction = correction.Ticks,
             });
         }
 
-        public async Task AddMeasurement (TimeCorrectionData data)
+        public void AddMeasurement (TimeCorrectionData data)
         {
             lock (syncRoot) {
                 sample.Enqueue (data);
@@ -61,44 +57,6 @@ namespace Toggl.Phoebe
                 while (sample.Count >= SampleSize) {
                     sample.Dequeue ();
                 }
-            }
-
-            await SaveMeasurement (data);
-        }
-
-        private async Task SaveMeasurement (TimeCorrectionData data)
-        {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            await dataStore.ExecuteInTransactionAsync (ctx => {
-                ctx.PurgeDatedTimeCorrections (data.MeasuredAt - TimeSpan.FromDays (1));
-                ctx.Put (data);
-            }).ConfigureAwait (false);
-        }
-
-        private async Task LoadMeasurements ()
-        {
-            try {
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var rows = await dataStore.Table<TimeCorrectionData> ()
-                           .OrderBy (r => r.MeasuredAt, false)
-                           .Take (SampleSize)
-                           .QueryAsync ()
-                           .ConfigureAwait (false);
-
-                rows.Reverse ();
-
-                lock (syncRoot) {
-                    foreach (var measurement in rows) {
-                        sample.Enqueue (measurement);
-                    }
-                    lastCorrection = null;
-                }
-            } catch (InvalidCastException ex) {
-                // For whatever reason an InvalidCastException is thrown in the above code occasionally.
-                // As it's not clear where or how, it's better to just log this warning and not let it
-                // crash the whole app.
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Warning (LogTag, ex, "Failed to load previous measurements.");
             }
         }
 

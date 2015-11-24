@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Logging;
@@ -23,8 +24,7 @@ namespace Toggl.Phoebe
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionHttpResponseMessage = bus.Subscribe<TogglHttpResponseMessage> (OnHttpResponse);
-
-            LoadMeasurements ();
+            Task.Run (async () => await LoadMeasurements ());
         }
 
         public void Dispose ()
@@ -36,7 +36,7 @@ namespace Toggl.Phoebe
             }
         }
 
-        private void OnHttpResponse (TogglHttpResponseMessage msg)
+        private async void OnHttpResponse (TogglHttpResponseMessage msg)
         {
             if (msg.ServerTime == null || msg.Latency == null) {
                 return;
@@ -46,13 +46,13 @@ namespace Toggl.Phoebe
             var serverTime = msg.ServerTime.Value + TimeSpan.FromTicks (msg.Latency.Value.Ticks / 2);
             var correction = serverTime - localTime;
 
-            AddMeasurement (new TimeCorrectionData () {
+            await AddMeasurement (new TimeCorrectionData {
                 MeasuredAt = serverTime,
                 Correction = correction.Ticks,
             });
         }
 
-        public void AddMeasurement (TimeCorrectionData data)
+        public async Task AddMeasurement (TimeCorrectionData data)
         {
             lock (syncRoot) {
                 sample.Enqueue (data);
@@ -63,10 +63,10 @@ namespace Toggl.Phoebe
                 }
             }
 
-            SaveMeasurement (data);
+            await SaveMeasurement (data);
         }
 
-        private async void SaveMeasurement (TimeCorrectionData data)
+        private async Task SaveMeasurement (TimeCorrectionData data)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             await dataStore.ExecuteInTransactionAsync (ctx => {
@@ -75,12 +75,12 @@ namespace Toggl.Phoebe
             }).ConfigureAwait (false);
         }
 
-        private async void LoadMeasurements ()
+        private async Task LoadMeasurements ()
         {
             try {
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var rows = await dataStore.Table<TimeCorrectionData> ()
-                           .OrderBy (r => r.MeasuredAt, asc: false)
+                           .OrderBy (r => r.MeasuredAt, false)
                            .Take (SampleSize)
                            .QueryAsync ()
                            .ConfigureAwait (false);

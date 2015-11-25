@@ -143,9 +143,11 @@ namespace Toggl.Phoebe.Tests.Data
                 }
 
                 data = await DataStore.Table<WorkspaceData> ()
-                       .OrderBy ((m) => m.Name)
+                       .Where (m => m.Name.StartsWith ("Test"))
+                       .OrderBy (m => m.Name)
                        .Take (1).Skip (1)
-                       .QueryAsync ((m) => m.Name.StartsWith ("Test"));
+                       .QueryAsync ();
+
                 Assert.AreEqual (1, data.Count, "Should've received only a single result");
                 Assert.AreEqual ("Test #2", data [0].Name, "Invalid item returned");
 

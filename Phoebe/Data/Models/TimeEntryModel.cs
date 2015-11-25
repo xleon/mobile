@@ -670,14 +670,17 @@ namespace Toggl.Phoebe.Data.Models
                 if (user.DefaultWorkspaceId == Guid.Empty) {
                     // User data has not yet been loaded by AuthManager, duplicate the effort and load ourselves:
                     var userRows = await store.Table<UserData> ()
-                                   .Take (1).QueryAsync (m => m.Id == user.Id);
+                                   .Where (m => m.Id == user.Id)
+                                   .Take (1)
+                                   .QueryAsync ();
                     user = userRows.First ();
                 }
 
                 var rows = await store.Table<TimeEntryData> ()
                            .Where (m => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
                            .OrderBy (m => m.ModifiedAt)
-                           .Take (1).QueryAsync ();
+                           .Take (1)
+                           .QueryAsync ();
                 data = rows.FirstOrDefault ();
 
                 if (data == null) {

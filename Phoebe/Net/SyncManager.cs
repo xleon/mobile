@@ -150,12 +150,13 @@ namespace Toggl.Phoebe.Net
             // Purge excess time entries. Do it 200 items at a time, to avoid allocating too much memory to the
             // models to be deleted. If there are more than 200 entries, they will be removed in the next purge.
             var timeEntryRows = await store.Table<TimeEntryData> ()
-                                .Skip (1000).Take (200)
+                                .Where (r => (!r.IsDirty && r.RemoteId != null)
+                                        || (r.RemoteId == null && r.DeletedAt != null))
                                 .OrderBy (r => r.StartTime, false)
-                                .QueryAsync (r => (r.IsDirty != true && r.RemoteId != null)
-                                             || (r.RemoteId == null && r.DeletedAt != null))
+                                .Skip (1000)
+                                .Take (200)
+                                .QueryAsync ()
                                 .ConfigureAwait (false);
-
             await Task.WhenAll (timeEntryRows.Select (store.DeleteAsync)).ConfigureAwait (false);
         }
 

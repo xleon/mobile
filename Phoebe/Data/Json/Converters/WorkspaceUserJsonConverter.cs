@@ -14,7 +14,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
         public WorkspaceUserJson Export (IDataStoreContext ctx, WorkspaceUserData data)
         {
             var userRows = ctx.Connection.Table<UserData> ()
-                           .Take (1).Where (m => m.Id == data.UserId).ToList ();
+                           .Where (m => m.Id == data.UserId).Take (1).ToList ();
             if (userRows.Count == 0) {
                 throw new InvalidOperationException (String.Format (
                         "Cannot export data with invalid local relation ({0}#{1}) to JSON.",

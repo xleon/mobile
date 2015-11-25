@@ -7,8 +7,7 @@ namespace Toggl.Phoebe.Data
     {
         Copy,
         Add,
-        Remove,
-        Replace
+        Remove
     }
 
     public struct DiffSection
@@ -114,24 +113,14 @@ namespace Toggl.Phoebe.Data
             }
 
             // if we get here, no LCS
-            var deleted = firstEnd - firstStart;
-            var inserted = secondEnd - secondStart;
-            var replaced = Math.Max(0, Math.Min (deleted, inserted));
-
-            if (replaced >= 0) {
-                // we got content from first collection --> replaced
-                for (int i = 0; i < replaced; i++)
-                    yield return new DiffSection (DiffSectionType.Replace, firstStart + i, secondStart + i);
-            }
-
             if (firstStart < firstEnd) {
                 // we got content from first collection --> deleted
-                for (int i = replaced; i < (firstEnd - firstStart); i++)
+                for (int i = 0; i < (firstEnd - firstStart); i++)
                     yield return new DiffSection (DiffSectionType.Remove, firstStart + i, secondStart);
             }
             if (secondStart < secondEnd) {
                 // we got content from second collection --> inserted
-                for (int i = replaced; i < (secondEnd - secondStart); i++)
+                for (int i = 0; i < (secondEnd - secondStart); i++)
                     yield return new DiffSection (DiffSectionType.Add, firstStart, secondStart + i);
             }
         }

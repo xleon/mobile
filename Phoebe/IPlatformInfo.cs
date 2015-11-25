@@ -1,3 +1,5 @@
+using System;
+
 
 namespace Toggl.Phoebe
 {
@@ -23,5 +25,10 @@ namespace Toggl.Phoebe
         /// <value>Detect if widget is available or not</value>
         bool IsWidgetAvailable { get; }
 
+        /// <summary>
+        /// Run an action using the UI thread.
+        /// </summary>
+        /// <value>Detect if widget is available or not</value>
+        void DispatchOnUIThread  (Action action);
     }
 }

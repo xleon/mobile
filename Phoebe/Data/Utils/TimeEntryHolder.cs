@@ -30,6 +30,16 @@ namespace Toggl.Phoebe.Data.Utils
             taskData = new TaskData ();
         }
 
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as TimeEntryHolder;
+            return other != null && other.Id == Id;
+        }
         public void Dispose ()
         {
             timeEntryDataList.Clear ();

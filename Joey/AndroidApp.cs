@@ -4,6 +4,8 @@ using System.Diagnostics;
 using Android.App;
 using Android.Content;
 using Android.Net;
+using SQLite.Net.Interop;
+using SQLite.Net.Platform.XamarinAndroid;
 using Toggl.Joey.Analytics;
 using Toggl.Joey.Data;
 using Toggl.Joey.Logging;
@@ -31,7 +33,7 @@ namespace Toggl.Joey
         private bool componentsInitialized;
         private Stopwatch startTimeMeasure = Stopwatch.StartNew();
 
-        public AndroidApp () : base ()
+        public AndroidApp ()
         {
         }
 
@@ -144,9 +146,17 @@ namespace Toggl.Joey
             get { return true; }
         }
 
+        public ISQLitePlatform SQLiteInfo
+        {
+            get {
+                return new SQLitePlatformAndroid ();
+            }
+        }
+
         public bool ComponentsInitialized
         {
             get { return componentsInitialized; }
         }
+
     }
 }

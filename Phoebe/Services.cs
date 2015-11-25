@@ -50,9 +50,10 @@ namespace Toggl.Phoebe
 
         private static IDataStore CreateDataStore ()
         {
+
             string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
             var path = System.IO.Path.Combine (folder, "toggl.db");
-            return new SqliteDataStore (path);
+            return new SqliteDataStore (path, ServiceContainer.Resolve<IPlatformInfo> ().SQLiteInfo);
         }
     }
 }

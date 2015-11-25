@@ -32,6 +32,17 @@ namespace Toggl.Phoebe.Data.Utils
             Add (dataList);
         }
 
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as TimeEntryGroup;
+            return other != null && other.Id == Id;
+        }
+
         public static async Task<IList<TimeEntryData>> GetTimeEntryDataList (IList<string> ids)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();

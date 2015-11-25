@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using SQLite;
+using SQLite.Net;
+using SQLite.Net.Interop;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -18,10 +19,10 @@ namespace Toggl.Phoebe.Data
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
 #pragma warning restore 0414
 
-        public SqliteDataStore (string dbPath)
+        public SqliteDataStore (string dbPath, ISQLitePlatform platformInfo)
         {
             scheduler.Idle += HandleSchedulerIdle;
-            ctx = new Context (this, dbPath);
+            ctx = new Context (this, dbPath, platformInfo);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
@@ -96,7 +97,7 @@ namespace Toggl.Phoebe.Data
         }
 
         public Task<T> PutAsync<T> (T obj)
-        where T : new()
+        where T : class, new()
         {
             obj = Clone (obj);
             return scheduler.Enqueue (delegate {
@@ -127,14 +128,14 @@ namespace Toggl.Phoebe.Data
             });
         }
 
-        public Task<List<T>> QueryAsync<T> (string query, params object[] args) where T : new()
+        public Task<List<T>> QueryAsync<T> (string query, params object[] args) where T : class, new()
         {
             return scheduler.Enqueue (delegate {
                 return ctx.Connection.Query<T> (query, args);
             });
         }
 
-        public IDataQuery<T> Table<T> () where T : new()
+        public IDataQuery<T> Table<T> () where T : class, new()
         {
             return new QueryBuilder<T> (this, ctx.Connection.Table<T> ());
         }
@@ -236,12 +237,13 @@ namespace Toggl.Phoebe.Data
         {
             private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
             private readonly SqliteDataStore store;
-            private readonly SQLiteConnection conn;
+            private readonly SQLiteConnectionWithLock conn;
 
-            public Context (SqliteDataStore store, string dbPath)
+            public Context (SqliteDataStore store, string dbPath, ISQLitePlatform platformInfo)
             {
+                var connectionString = new SQLiteConnectionString (dbPath, true);
                 this.store = store;
-                conn = new SQLiteConnection (dbPath);
+                conn = new SQLiteConnectionWithLock (platformInfo, connectionString);
             }
 
             public T Put<T> (T obj)

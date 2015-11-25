@@ -7,17 +7,17 @@ namespace Toggl.Phoebe.Data
     public interface IDataStore
     {
         Task<T> PutAsync<T> (T obj)
-        where T : new();
+        where T : class, new();
 
         Task<bool> DeleteAsync (object obj);
 
         Task<T> ExecuteScalarAsync<T> (string query, params object[] args);
 
         Task<List<T>> QueryAsync<T> (string query, params object[] args)
-        where T : new();
+        where T : class, new();
 
         IDataQuery<T> Table<T> ()
-        where T : new();
+        where T : class, new();
 
         string GetTableName (Type mappingType);
 

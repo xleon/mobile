@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SQLite.Net;
 using SQLite.Net.Async;
 using SQLite.Net.Interop;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -27,6 +25,7 @@ namespace Toggl.Phoebe.Data
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
             CreateTables ().RunSynchronously();
+            //Task.Run (async () => await CreateTables ());
         }
 
         internal static IEnumerable<Type> DiscoverDataObjectTypes ()

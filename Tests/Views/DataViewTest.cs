@@ -19,7 +19,7 @@ namespace Toggl.Phoebe.Tests.Views
         protected async Task<T> GetByRemoteId<T> (long remoteId)
         where T : CommonData, new()
         {
-            var rows = await DataStore.Table<T> ().QueryAsync (r => r.RemoteId == remoteId);
+            var rows = await DataStore.Table<T> ().Where (r => r.RemoteId == remoteId).ToListAsync ();
             return rows.Single ();
         }
 

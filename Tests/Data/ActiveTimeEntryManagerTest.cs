@@ -63,7 +63,7 @@ namespace Toggl.Phoebe.Tests.Data
 
         private async Task<TimeEntryData> GetEntry (Guid id)
         {
-            return (await DataStore.Table<TimeEntryData> ().QueryAsync (r => r.Id == id)).Single ();
+            return (await DataStore.Table<TimeEntryData> ().Where (r => r.Id == id).ToListAsync ()).Single ();
         }
 
         private async Task WhenDataStoreIdle ()

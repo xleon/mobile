@@ -361,7 +361,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 await deleteTask;
 
                 // Check that the item has been deleted from the datastore
-                Assert.IsNull (await GetDataById (data.GetType (), data.Id));
+                Assert.IsNull (await GetDataById <T> (data.Id));
 
                 // Make sure that the underlying data in the model has reset the IDs
                 data = (CommonData)type.GetProperty ("Data").GetValue (inst);
@@ -387,7 +387,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 await deleteTask;
 
                 // Check that the item has been marked for deletion in the database
-                data = await GetDataById (data.GetType (), data.Id);
+                data = await GetDataById <T> (data.Id);
                 Assert.IsNotNull (data);
                 Assert.IsNotNull (data.DeletedAt);
 
@@ -422,12 +422,12 @@ namespace Toggl.Phoebe.Tests.Data.Models
             return (CommonData)putTask.GetType ().GetProperty ("Result").GetValue (putTask);
         }
 
-        private async Task<CommonData> GetDataById (Type dataType, Guid id)
+        private async Task<CommonData> GetDataById <T> (Guid id)
         {
-            var tbl = DataStore.GetTableName (dataType);
+            var tbl = await DataStore.GetTableNameAsync <T> ();
             var sql = String.Concat ("SELECT * FROM ", tbl, " WHERE Id=?");
             var rowsTask = (Task)DataStore.GetType ().GetMethod ("QueryAsync")
-                           .MakeGenericMethod (dataType)
+                           .MakeGenericMethod (typeof (T))
                            .Invoke (DataStore, new object[] { sql, new object[] { id } });
             await rowsTask;
 

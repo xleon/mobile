@@ -77,10 +77,10 @@ namespace Toggl.Phoebe.Tests
                 Assert.AreEqual (platformInfo.AppVersion, settingStore.LastAppVersion);
                 Assert.IsNull (settingStore.SyncLastRun);
 
-                workspaceData = (await DataStore.Table<WorkspaceData> ().QueryAsync (r => r.Id == workspaceData.Id)).Single ();
-                userData = (await DataStore.Table<UserData> ().QueryAsync (r => r.Id == userData.Id)).Single ();
-                timeEntry1 = (await DataStore.Table<TimeEntryData> ().QueryAsync (r => r.Id == timeEntry1.Id)).Single ();
-                timeEntry2 = (await DataStore.Table<TimeEntryData> ().QueryAsync (r => r.Id == timeEntry2.Id)).Single ();
+                workspaceData = (await DataStore.Table<WorkspaceData> ().Where (r => r.Id == workspaceData.Id).ToListAsync ()).Single ();
+                userData = (await DataStore.Table<UserData> ().Where (r => r.Id == userData.Id).ToListAsync ()).Single ();
+                timeEntry1 = (await DataStore.Table<TimeEntryData> ().Where (r => r.Id == timeEntry1.Id).ToListAsync ()).Single ();
+                timeEntry2 = (await DataStore.Table<TimeEntryData> ().Where (r => r.Id == timeEntry2.Id).ToListAsync ()).Single ();
 
                 Assert.AreEqual (DateTime.MinValue, workspaceData.ModifiedAt);
                 Assert.AreEqual (DateTime.MinValue, userData.ModifiedAt);

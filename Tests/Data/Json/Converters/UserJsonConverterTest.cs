@@ -287,7 +287,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, userJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<UserData> ().QueryAsync (m => m.Id == userData.Id);
+                var rows = await DataStore.Table<UserData> ().Where (m => m.Id == userData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }
@@ -310,7 +310,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, userJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<UserData> ().QueryAsync (m => m.Id == userData.Id);
+                var rows = await DataStore.Table<UserData> ().Where (m => m.Id == userData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }

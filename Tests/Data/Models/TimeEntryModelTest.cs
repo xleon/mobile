@@ -176,7 +176,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 var entry = await TimeEntryModel.GetDraftAsync ();
 
                 var rows = await DataStore.Table<TimeEntryTagData> ()
-                           .QueryAsync (r => r.TimeEntryId == entry.Id);
+                           .Where (r => r.TimeEntryId == entry.Id).ToListAsync ();
                 Assert.That (rows, Has.Count.EqualTo (1));
                 var firstTagId = rows [0].TagId;
 
@@ -193,14 +193,14 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 entry = await TimeEntryModel.GetDraftAsync ();
 
                 rows = await DataStore.Table<TimeEntryTagData> ()
-                       .QueryAsync (r => r.TimeEntryId == entry.Id);
+                       .Where (r => r.TimeEntryId == entry.Id).ToListAsync ();
                 Assert.That (rows, Has.Count.EqualTo (1));
                 Assert.AreNotEqual (firstTagId, rows [0].TagId);
 
                 // Make sure that we don't add duplicate tags when starting:
                 await entry.StartAsync ();
                 rows = await DataStore.Table<TimeEntryTagData> ()
-                       .QueryAsync (r => r.TimeEntryId == entry.Id);
+                       .Where (r => r.TimeEntryId == entry.Id).ToListAsync ();
                 Assert.That (rows, Has.Count.EqualTo (1));
             });
         }

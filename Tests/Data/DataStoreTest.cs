@@ -134,10 +134,10 @@ namespace Toggl.Phoebe.Tests.Data
                 var count = await DataStore.Table<WorkspaceData> ().CountAsync ();
                 Assert.AreEqual (3, count, "Query returned false count for items.");
 
-                count = await DataStore.Table<WorkspaceData> ().Where ((m) => m.Name.StartsWith ("Foo")).CountAsync ();
+                count = await DataStore.Table<WorkspaceData> ().Where (m => m.Name.StartsWith ("Foo")).CountAsync ();
                 Assert.AreEqual (1, count, "Query returned false count for items starting with Foo");
 
-                var data = await DataStore.Table<WorkspaceData> ().QueryAsync ((m) => m.Name.StartsWith ("Test"));
+                var data = await DataStore.Table<WorkspaceData> ().Where (m => m.Name.StartsWith ("Test")).ToListAsync ();
                 foreach (var obj in data) {
                     Assert.AreNotEqual ("Foo #1", obj.Name);
                 }
@@ -146,7 +146,7 @@ namespace Toggl.Phoebe.Tests.Data
                        .Where (m => m.Name.StartsWith ("Test"))
                        .OrderBy (m => m.Name)
                        .Take (1).Skip (1)
-                       .QueryAsync ();
+                       .ToListAsync ();
 
                 Assert.AreEqual (1, data.Count, "Should've received only a single result");
                 Assert.AreEqual ("Test #2", data [0].Name, "Invalid item returned");

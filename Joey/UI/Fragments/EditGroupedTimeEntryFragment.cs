@@ -1,19 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Android.Content;
+using Android.Graphics;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
 using Android.Views;
+using Android.Widget;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
-using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
+using Android.App;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -21,10 +29,21 @@ namespace Toggl.Joey.UI.Fragments
     {
         private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entries_ids";
 
-        private EditTimeEntryViewModel viewModel;
-        private RecyclerView recyclerView;
-        private SimpleEditTimeEntryFragment editTimeEntryFragment;
-        private RecyclerView.Adapter listAdapter;
+        // to avoid weak references to be removed
+        private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding;
+        private Binding<DateTime, string> startTimeBinding, stopTimeBinding;
+        private Binding<bool, bool> isRunningBinding;
+
+        public EditTimeEntryGroupViewModel ViewModel { get; private set; }
+        public TextView DurationTextView { get; private set; }
+        public EditText StartTimeEditText { get; private set; }
+        public EditText StopTimeEditText { get; private set; }
+        public TogglField ProjectField { get; private set; }
+        public TogglField DescriptionField { get; private set; }
+
+        private TextView stopTimeEditLabel;
+        private ActionBar toolbar;
+        private ListView timeEntriesListView;
 
         private IList<string> TimeEntryIds
         {
@@ -55,13 +74,38 @@ namespace Toggl.Joey.UI.Fragments
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.EditGroupedTimeEntryFragment, container, false);
-            editTimeEntryFragment = (SimpleEditTimeEntryFragment) ChildFragmentManager.FindFragmentById (Resource.Id.TimeEntryEditChildFragment);
+            var activityToolbar = view.FindViewById<Android.Support.V7.Widget.Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
+            var activity = (Activity)Activity;
+
+            activity.SetSupportActionBar (activityToolbar);
+            toolbar = activity.SupportActionBar;
+            toolbar.SetDisplayHomeAsUpEnabled (true);
+
+            var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
+            DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
+
+            toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams ((int)GravityFlags.Center));
+            toolbar.SetDisplayShowCustomEnabled (true);
+            toolbar.SetDisplayShowTitleEnabled (false);
+
+            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
+            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
+            stopTimeEditLabel = view.FindViewById<TextView> (Resource.Id.StopTimeEditLabel);
+
+            DescriptionField = view.FindViewById<TogglField> (Resource.Id.Description)
+                               .DestroyAssistView().DestroyArrow()
+                               .SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+
+            ProjectField = view.FindViewById<TogglField> (Resource.Id.Project)
+                           .SetName (Resource.String.BaseEditTimeEntryFragmentProject)
+                           .SimulateButton();
+
+            ProjectField.TextField.Click += OnProjectEditTextClick;
+            ProjectField.Click += OnProjectEditTextClick;
+
+            timeEntriesListView = view.FindViewById<ListView> (Resource.Id.timeEntryGroupListView);
+
             HasOptionsMenu = true;
-
-            recyclerView = view.FindViewById<RecyclerView> (Resource.Id.recyclerView);
-            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
-            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
-
             return view;
         }
 
@@ -69,51 +113,36 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            viewModel = new EditTimeEntryViewModel (TimeEntryIds);
-            viewModel.OnIsLoadingChanged += OnModelLoaded;
-            await viewModel.Init ();
+            ViewModel = new EditTimeEntryGroupViewModel (TimeEntryIds.ToList ());
+            await ViewModel.Init ();
+
+            durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
+            startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => StartTimeEditText.Text).ConvertSourceToTarget (dateTime => dateTime.ToDeviceTimeString ());
+            stopTimeBinding = this.SetBinding (() => ViewModel.StopDate, () => StopTimeEditText.Text).ConvertSourceToTarget (dateTime => dateTime.ToDeviceTimeString ());
+            projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => ProjectField.TextField.Text);
+            clientBinding = this.SetBinding (() => ViewModel.ClientName, () => ProjectField.AssistViewTitle);
+            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => DescriptionField.TextField.Text, BindingMode.TwoWay);
+            isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {
+                StopTimeEditText.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
+                stopTimeEditLabel.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
+            });
+            // Set adapter using Mvvm light utils.
+            timeEntriesListView.Adapter = ViewModel.TimeEntryCollection.GetAdapter (GetTimeEntryView);
+            timeEntriesListView.ItemClick += (sender, e) => HandleTimeEntryClick (ViewModel.TimeEntryCollection [e.Position]);
         }
 
         public override void OnDestroyView ()
         {
-            if (viewModel != null) {
-                // TimeEntry property must be nullified to
-                // stop event listeners on BaseEditTimeEntryFragment.
-                editTimeEntryFragment.TimeEntry = null;
-
-                viewModel.OnProjectListChanged -= OnProjectListChanged;
-                viewModel.OnIsLoadingChanged -= OnModelLoaded;
-                viewModel.Dispose ();
-                viewModel = null;
-            }
+            ViewModel.Dispose ();
             base.OnDestroyView ();
         }
 
-        private void OnModelLoaded (object sender, EventArgs e)
+        public override void OnPause ()
         {
-            if (!viewModel.IsLoading) {
-                if (viewModel != null) {
-                    editTimeEntryFragment.TimeEntry = viewModel.Model;
-                    editTimeEntryFragment.OnPressedProjectSelector += OnProjectSelected;
-                    editTimeEntryFragment.OnPressedTagSelector += OnTagSelected;
-                    viewModel.OnProjectListChanged += OnProjectListChanged;
-
-                    // Set adapter
-                    listAdapter = new GroupedEditAdapter (viewModel.Model);
-                    (listAdapter as GroupedEditAdapter).HandleTapTimeEntry = HandleTimeEntryClick;
-                    recyclerView.SetAdapter (listAdapter);
-                } else {
-                    Activity.Finish ();
-                }
-            }
-        }
-
-        private void OnProjectListChanged (object sender, EventArgs e)
-        {
-            if (listAdapter != null) {
-                // Refresh adapter
-                listAdapter.NotifyDataSetChanged ();
-            }
+            // Save Time entry state every time
+            // the fragment is paused.
+            Task.Run (async () => await ViewModel.SaveModel ());
+            base.OnPause ();
         }
 
         private void HandleTimeEntryClick (TimeEntryData timeEntry)
@@ -123,23 +152,68 @@ namespace Toggl.Joey.UI.Fragments
             StartActivity (intent);
         }
 
-        private void OnProjectSelected (object sender, EventArgs e)
+        private void OnProjectEditTextClick (object sender, EventArgs e)
         {
-            if (viewModel.Model == null) {
-                return;
-            }
-
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, TimeEntryIds);
-            StartActivity (intent);
+            intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
+            StartActivityForResult (intent, 0);
         }
 
-        private void OnTagSelected (object sender, EventArgs e)
+        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
-            if (viewModel.Model == null) {
-                return;
+            base.OnActivityResult (requestCode, resultCode, data);
+            if (resultCode == (int)Result.Ok) {
+                var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
+                var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
+                ViewModel.SetProjectAndTask (projectId, taskId);
             }
-            new ChooseTimeEntryTagsDialogFragment (viewModel.Model.Workspace.Id, viewModel.Model.TimeEntryList).Show (FragmentManager, "tags_dialog");
+        }
+
+        private View GetTimeEntryView (int position, TimeEntryData timeEntryData, View convertView)
+        {
+            View view = convertView ?? LayoutInflater.FromContext (Activity).Inflate (Resource.Layout.EditGroupedTimeEntryItem, null);
+
+            var colorView = view.FindViewById<View> (Resource.Id.GroupedEditTimeEntryItemTimeColorView);
+            var periodTextView = view.FindViewById<TextView> (Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
+            var durationTextView = view.FindViewById<TextView> (Resource.Id.GroupedEditTimeEntryItemDurationTextView);
+
+            // Set color.
+            Color color;
+            string [] colours = ProjectModel.HexColors;
+            color = ViewModel.ProjectColor > 0 ? Color.ParseColor (colours [ViewModel.ProjectColor % colours.Length]) : Color.Transparent;
+            colorView.SetBackgroundColor (color);
+
+            // Set rest of data.
+            var stopTime = timeEntryData.StopTime.HasValue ? " – " + timeEntryData.StopTime.Value.ToLocalTime().ToShortTimeString () : "";
+            periodTextView.Text = timeEntryData.StartTime.ToLocalTime().ToShortTimeString () + stopTime;
+            durationTextView.Text = GetDuration (timeEntryData, Time.UtcNow).ToString (@"hh\:mm\:ss");
+
+            return view;
+        }
+
+        private TimeSpan GetDuration (TimeEntryData data, DateTime now)
+        {
+            if (data.StartTime.IsMinValue ()) {
+                return TimeSpan.Zero;
+            }
+            var duration = (data.StopTime ?? now) - data.StartTime;
+            if (duration < TimeSpan.Zero) {
+                duration = TimeSpan.Zero;
+            }
+            return duration;
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            Activity.OnBackPressed ();
+            return base.OnOptionsItemSelected (item);
+        }
+
+        private Guid GetGuidFromIntent (Intent data, string id)
+        {
+            Guid result;
+            Guid.TryParse (data.GetStringExtra (id), out result);
+            return result;
         }
     }
 }

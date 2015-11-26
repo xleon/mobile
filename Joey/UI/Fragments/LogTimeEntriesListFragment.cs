@@ -13,6 +13,7 @@ using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
@@ -32,6 +33,7 @@ namespace Toggl.Joey.UI.Fragments
         private LogTimeEntriesAdapter logAdapter;
         private CoordinatorLayout coordinatorLayout;
         private Subscription<SyncFinishedMessage> drawerSyncFinished;
+        private TimerComponent timerComponent;
 
         // Recycler setup
         private DividerItemDecoration dividerDecoration;
@@ -39,14 +41,14 @@ namespace Toggl.Joey.UI.Fragments
         private ItemTouchListener itemTouchListener;
 
         // binding references
-        private Binding<bool, bool> hasMoreBinding;
+        private Binding<bool, bool> hasMoreBinding, newMenuBinding;
         private Binding<TimeEntriesCollectionView, TimeEntriesCollectionView> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.
 
         public LogTimeEntriesViewModel ViewModel { get; set;}
-
+        public IMenuItem AddNewMenuItem { get; private set; }
         public StartStopFab StartStopBtn { get; private set;}
 
         #endregion
@@ -64,11 +66,14 @@ namespace Toggl.Joey.UI.Fragments
             swipeLayout.SetOnRefreshListener (this);
             coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             StartStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
+            timerComponent = ((MainDrawerActivity)Activity).Timer; // TODO: a better way to do this?
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
 
             SetupRecyclerView ();
+            HasOptionsMenu = true;
+
             return view;
         }
 
@@ -78,22 +83,23 @@ namespace Toggl.Joey.UI.Fragments
             ViewModel = new LogTimeEntriesViewModel ();
             await ViewModel.Init ();
 
-            hasMoreBinding = this.SetBinding (
-                                 ()=> ViewModel.HasMore)
-                             .WhenSourceChanges (ShowEmptyState);
-
-            collectionBinding = this.SetBinding (
-                                    ()=> ViewModel.CollectionView)
-            .WhenSourceChanges (() => {
+            hasMoreBinding = this.SetBinding (()=> ViewModel.HasMore).WhenSourceChanges (ShowEmptyState);
+            collectionBinding = this.SetBinding (()=> ViewModel.CollectionView).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel.CollectionView);
                 recyclerView.SetAdapter (logAdapter);
             });
-
-            fabBinding = this.SetBinding (
-                             () => ViewModel.IsTimeEntryRunning,
-                             () => StartStopBtn.ButtonAction)
+            fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
+            newMenuBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning)
+            .WhenSourceChanges (() => {
+                if (AddNewMenuItem != null) {
+                    AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
+                }
+            });
+
+            // Pass ViewModel to TimerComponent.
+            timerComponent.SetViewModel (ViewModel);
             StartStopBtn.Click += StartStopClick;
         }
 
@@ -112,15 +118,12 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            ViewModel.Dispose ();
+            // TODO: Remove bindings to ViewModel
+            // check if it is needed or not.
+            timerComponent.DetachBindind ();
+
             ReleaseRecyclerView ();
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-
-            if (drawerSyncFinished != null) {
-                bus.Unsubscribe (drawerSyncFinished);
-                drawerSyncFinished = null;
-            }
+            ViewModel.Dispose ();
 
             base.OnDestroyView ();
         }
@@ -167,6 +170,22 @@ namespace Toggl.Joey.UI.Fragments
 
             recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
             emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;
+        }
+
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            inflater.Inflate (Resource.Menu.NewItemMenu, menu);
+            AddNewMenuItem = menu.FindItem (Resource.Id.newItem);
+            AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
+            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
+            Activity.StartActivity (i);
+
+            return base.OnOptionsItemSelected (item);
         }
 
         #region IDismissListener implementation

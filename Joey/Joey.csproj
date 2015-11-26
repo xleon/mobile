@@ -123,15 +123,12 @@
     <Compile Include="StopRunningTimeEntryService.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
     <Compile Include="UI\Activities\MainDrawerActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="UI\Views\ProfileImageView.cs" />
     <Compile Include="UI\Utils\CachingUtil.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryTagsDialogFragment.cs" />
-    <Compile Include="UI\Adapters\TagsAdapter.cs" />
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
     <Compile Include="UI\Utils\ModelViewHolder.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
@@ -150,9 +147,7 @@
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
     <Compile Include="Net\NetworkPresence.cs" />
-    <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
-    <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="UI\Views\PieChart.cs" />
@@ -175,7 +170,6 @@
     <Compile Include="UI\Fragments\NewProjectFragment.cs" />
     <Compile Include="UI\Views\ColorPickerRecyclerView.cs" />
     <Compile Include="UI\Views\TogglField.cs" />
-    <Compile Include="UI\Adapters\GroupedEditAdapter.cs" />
     <Compile Include="UI\Views\DividerItemDecoration.cs" />
     <Compile Include="UI\Adapters\RecycledDataViewAdapter.cs" />
     <Compile Include="UI\Utils\RecycledBindableViewHolder.cs" />
@@ -200,6 +194,7 @@
     <Compile Include="Wear\WearDataService.cs" />
     <Compile Include="Wear\Common.cs" />
     <Compile Include="Wear\WearDataProvider.cs" />
+    <Compile Include="UI\Fragments\ChangeDateTimeDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -739,6 +734,16 @@
     <AndroidResource Include="Resources\drawable-hdpi\IcManualMode.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcManualMode.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcManualMode.png" />
+    <AndroidResource Include="Resources\menu\SaveItemMenu.axml" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\menu\NewItemMenu.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_add_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_add_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_add_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_add_black_24dp.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <Import Project="..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets')" />

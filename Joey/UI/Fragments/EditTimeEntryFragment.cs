@@ -1,26 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Android.App;
 using Android.Content;
 using Android.OS;
+using Android.Support.V4.App;
 using Android.Views;
-using Toggl.Joey.Data;
+using Android.Widget;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
+using Toggl.Phoebe.Data.ViewModels;
+using ActionBar = Android.Support.V7.App.ActionBar;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
+using MeasureSpec = Android.Views.View.MeasureSpec;
+using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class EditTimeEntryFragment : BaseEditTimeEntryFragment
+    public class EditTimeEntryFragment : Fragment,
+        ChangeTimeEntryDurationDialogFragment.IChangeDuration,
+        ChangeDateTimeDialogFragment.IChangeDateTime,
+        IUpdateTagList
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
-        private static readonly string UseDraftKey = "com.toggl.timer.draft_used";
-        private bool isProcessingAction;
-        private EditTimeEntryView viewModel;
+
+        // to avoid weak references to be removed
+        private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding;
+        private Binding<DateTime, string> startTimeBinding, stopTimeBinding;
+        private Binding<List<TagData>, List<string>> tagBinding;
+        private Binding<bool, ViewStates> isPremiumBinding;
+        private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, saveMenuBinding;
+
+        public EditTimeEntryViewModel ViewModel { get; private set; }
+        public TextView DurationTextView { get; private set; }
+        public EditText StartTimeEditText { get; private set; }
+        public EditText StopTimeEditText { get; private set; }
+        public CheckBox BillableCheckBox { get; private set; }
+        public TogglField ProjectField { get; private set; }
+        public TogglField DescriptionField { get; private set; }
+        public TogglTagsField TagsField { get; private set; }
+        public IMenuItem SaveMenuItem { get; private set; }
+
+        private TextView stopTimeEditLabel;
+        private ActionBar toolbar;
 
         private Guid TimeEntryId
         {
@@ -52,120 +79,186 @@ namespace Toggl.Joey.UI.Fragments
             return fragment;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        {
+            var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
+            var activityToolbar = view.FindViewById<Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
+            var activity = (Activity)Activity;
+
+            activity.SetSupportActionBar (activityToolbar);
+            toolbar = activity.SupportActionBar;
+            toolbar.SetDisplayHomeAsUpEnabled (true);
+
+            var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
+            DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
+
+            toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams ((int)GravityFlags.Center));
+            toolbar.SetDisplayShowCustomEnabled (true);
+            toolbar.SetDisplayShowTitleEnabled (false);
+
+            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
+            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
+            stopTimeEditLabel = view.FindViewById<TextView> (Resource.Id.StopTimeEditLabel);
+
+            DescriptionField = view.FindViewById<TogglField> (Resource.Id.Description)
+                               .DestroyAssistView().DestroyArrow()
+                               .SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+
+            ProjectField = view.FindViewById<TogglField> (Resource.Id.Project)
+                           .SetName (Resource.String.BaseEditTimeEntryFragmentProject)
+                           .SimulateButton();
+
+            TagsField = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);
+            BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
+
+            DurationTextView.Click += (sender, e) =>
+                                      ChangeTimeEntryDurationDialogFragment.NewInstance (ViewModel.StopDate, ViewModel.StartDate)
+                                      .SetChangeDurationHandler (this)
+                                      .Show (FragmentManager, "duration_dialog");
+
+            StartTimeEditText.Click += (sender, e) => {
+                var title = GetString (Resource.String.ChangeTimeEntryStartTimeDialogTitle);
+                ChangeDateTimeDialogFragment.NewInstance (ViewModel.StartDate, title)
+                .SetOnChangeTimeHandler (this)
+                .Show (FragmentManager, "start_time_dialog");
+            };
+
+            StopTimeEditText.Click += (sender, e) => {
+                var title = GetString (Resource.String.ChangeTimeEntryStopTimeDialogTitle);
+                ChangeDateTimeDialogFragment.NewInstance (ViewModel.StopDate, title)
+                .SetOnChangeTimeHandler (this)
+                .Show (FragmentManager, "stop_time_dialog");
+            };
+
+            ProjectField.TextField.Click += OnProjectEditTextClick;
+            ProjectField.Click += OnProjectEditTextClick;
+            TagsField.OnPressTagField += OnTagsEditTextClick;
+
+            HasOptionsMenu = true;
+            return view;
+        }
+
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            bool useDraft = false;
-            if (savedInstanceState != null) {
-                useDraft = savedInstanceState.GetBoolean (UseDraftKey, useDraft);
-            }
+            ViewModel = new EditTimeEntryViewModel (TimeEntryId);
+            await ViewModel.Init ();
 
-            viewModel = new EditTimeEntryView (TimeEntryId);
-            viewModel.OnIsLoadingChanged += OnModelLoaded;
-            viewModel.Init (useDraft);
+            durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
+            startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => StartTimeEditText.Text)
+                               .ConvertSourceToTarget (dateTime => dateTime.ToDeviceTimeString ());
+            stopTimeBinding = this.SetBinding (() => ViewModel.StopDate, () => StopTimeEditText.Text)
+                              .ConvertSourceToTarget (dateTime => dateTime.ToDeviceTimeString ());
+            projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => ProjectField.TextField.Text);
+            clientBinding = this.SetBinding (() => ViewModel.ClientName, () => ProjectField.AssistViewTitle);
+            tagBinding = this.SetBinding (() => ViewModel.TagList, () => TagsField.TagNames)
+                         .ConvertSourceToTarget (tagList => tagList.Select (tag => tag.Name).ToList ());
+            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => DescriptionField.TextField.Text, BindingMode.TwoWay);
+            isPremiumBinding = this.SetBinding (() => ViewModel.IsPremium, () => BillableCheckBox.Visibility)
+                               .ConvertSourceToTarget (isVisible => isVisible ? ViewStates.Visible : ViewStates.Gone);
+            isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {
+                StopTimeEditText.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
+                stopTimeEditLabel.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
+            });
+            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => BillableCheckBox.Checked, BindingMode.TwoWay);
+            billableBinding = this.SetBinding (() => ViewModel.IsBillable)
+            .WhenSourceChanges (() => {
+                var label = ViewModel.IsBillable ? GetString (Resource.String.CurrentTimeEntryEditBillableChecked) : GetString (Resource.String.CurrentTimeEntryEditBillableUnchecked);
+                BillableCheckBox.Text = label;
+            });
+            saveMenuBinding = this.SetBinding (() => ViewModel.IsManual)
+            .WhenSourceChanges (() => {
+                if (SaveMenuItem != null) {
+                    SaveMenuItem.SetVisible (ViewModel.IsManual);
+                }
+            });
         }
 
         public override void OnDestroyView ()
         {
-            if (viewModel != null) {
-                // TimeEntry property must be nullified to
-                // stop event listeners on BaseEditTimeEntryFragment.
-                TimeEntry = null;
-                viewModel.OnIsLoadingChanged -= OnModelLoaded;
-                viewModel.OnModelChanged -= OnModelChanged;
-                viewModel.Dispose ();
-            }
+            ViewModel.Dispose ();
             base.OnDestroyView ();
         }
 
-        private void OnModelLoaded (object sender, EventArgs e)
+        public override void OnPause ()
         {
-            if (!viewModel.IsLoading) {
-                if (viewModel != null) {
-                    TimeEntry = viewModel.Model;
-                    viewModel.OnModelChanged += OnModelChanged;
-                    OnPressedProjectSelector += OnProjectSelected;
-                    OnPressedTagSelector += OnTagSelected;
-                    OnPressedFABButton += OnFABButtonPress;
-                } else {
-                    Activity.Finish ();
-                }
-            }
+            // Save Time entry state every time
+            // the fragment is paused.
+            Task.Run (async () => await ViewModel.SaveModel ());
+            base.OnPause ();
         }
 
-
-        public async void OnFABButtonPress (object sender, EventArgs e)
+        private void OnProjectEditTextClick (object sender, EventArgs e)
         {
-            // Protect from double clicks
-            if (isProcessingAction) {
-                return;
-            }
-
-            isProcessingAction = true;
-            try {
-                try {
-
-                    if (TimeEntry.State == TimeEntryState.New && TimeEntry.StopTime.HasValue) {
-                        await TimeEntry.StoreAsync ();
-
-                        // Ping analytics
-                        ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppManual);
-                    } else if (TimeEntry.State == TimeEntryState.Running) {
-                        await TimeEntry.StopAsync ();
-
-                        // Ping analytics
-                        ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
-                    } else {
-                        await TimeEntry.StartAsync ();
-
-                        // Ping analytics
-                        ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppNew);
-                    }
-                } catch (Exception ex) {
-                }
-
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Send (new UserTimeEntryStateChangeMessage (this, TimeEntry.Data));
-            } finally {
-                isProcessingAction = false;
-                Activity.OnBackPressed ();
-            }
-        }
-
-        private void OnModelChanged (object sender, EventArgs e)
-        {
-            TimeEntry = viewModel.Model;
-        }
-
-        private void OnProjectSelected (object sender, EventArgs e)
-        {
-            if (TimeEntry == null) {
-                return;
-            }
-
             var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutStringArrayListExtra (ProjectListActivity.ExtraTimeEntriesIds, new List<string> {TimeEntry.Id.ToString ()});
-            StartActivity (intent);
+            intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
+            StartActivityForResult (intent, 0);
         }
 
-        private void OnTagSelected (object sender, EventArgs e)
+        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
-            if (TimeEntry == null) {
-                return;
+            base.OnActivityResult (requestCode, resultCode, data);
+            if (resultCode == (int)Result.Ok) {
+                var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
+                var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
+                ViewModel.SetProjectAndTask (projectId, taskId);
             }
-            new ChooseTimeEntryTagsDialogFragment (TimeEntry.Workspace.Id, new List<TimeEntryData> {TimeEntry.Data}).Show (FragmentManager, "tags_dialog");
         }
 
-        public override void OnSaveInstanceState (Bundle outState)
+        private void OnTagsEditTextClick (object sender, EventArgs e)
         {
-            outState.PutBoolean (UseDraftKey, viewModel.IsDraft);
-            base.OnSaveInstanceState (outState);
+            ChooseTimeEntryTagsDialogFragment.NewInstance (ViewModel.WorkspaceId, ViewModel.TagList.Select (tag => tag.Id).ToList ())
+            .SetOnModifyTagListHandler (this)
+            .Show (FragmentManager, "tags_dialog");
         }
 
-        protected override void ResetModel ()
+        public void OnChangeDateTime (TimeSpan timeDiff, string dialogTag)
         {
-            viewModel.ResetModel ();
+            if (dialogTag == "start_time_dialog") {
+                ViewModel.ChangeTimeEntryStart (timeDiff);
+            } else {
+                ViewModel.ChangeTimeEntryStop (timeDiff);
+            }
+        }
+
+        public void OnCreateNewTag (TagData newTagData)
+        {
+            ViewModel.AddTag (newTagData);
+        }
+
+        public void OnModifyTagList (List<TagData> newTagList)
+        {
+            ViewModel.ChangeTagList (newTagList);
+        }
+
+        public void OnChangeDuration (TimeSpan newDuration)
+        {
+            ViewModel.ChangeTimeEntryDuration (newDuration);
+        }
+
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
+            SaveMenuItem = menu.FindItem (Resource.Id.saveItem);
+            SaveMenuItem.SetVisible (ViewModel.IsManual);
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            if (item == SaveMenuItem) {
+                Task.Run (async () => await ViewModel.SaveModelManual ());
+            }
+
+            Activity.OnBackPressed ();
+            return base.OnOptionsItemSelected (item);
+        }
+
+        private Guid GetGuidFromIntent (Intent data, string id)
+        {
+            Guid result;
+            Guid.TryParse (data.GetStringExtra (id), out result);
+            return result;
         }
     }
 }

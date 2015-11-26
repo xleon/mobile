@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Timers;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
@@ -13,12 +14,13 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.ViewModels
 {
     [ImplementPropertyChanged]
-    public class LogTimeEntriesViewModel : ViewModelBase, IVModel<TimeEntryModel>
+    public class LogTimeEntriesViewModel : ViewModelBase, IViewModel<TimeEntryModel>
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private ActiveTimeEntryManager timeEntryManager;
         private TimeEntriesCollectionView collectionView;
         private TimeEntryModel model;
+        private Timer durationTimer;
 
         public LogTimeEntriesViewModel ()
         {
@@ -34,7 +36,12 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             IsLoading = true;
 
-            SyncModel ();
+            // durationTimer will update the Duration
+            // value if ActiveTimeEntry is running
+            durationTimer = new Timer ();
+            durationTimer.Elapsed += DurationTimerCallback;
+
+            await SyncModel ();
             await SyncCollectionView ();
 
             IsLoading = false;
@@ -48,11 +55,14 @@ namespace Toggl.Phoebe.Data.ViewModels
                 subscriptionSettingChanged = null;
             }
 
+            collectionView.Dispose ();
             timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
             timeEntryManager = null;
 
             model = null;
         }
+
+        #region Properties for ViewModel binding
 
         public bool IsLoading  { get; set; }
 
@@ -64,13 +74,21 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public bool HasMore { get; set; }
 
+        public string Description { get; set; }
+
+        public string ProjectName { get; set; }
+
+        public string Duration { get; set; }
+
         public TimeEntriesCollectionView CollectionView { get; set; }
 
-        public async Task StartStopTimeEntry ()
+        #endregion
+
+        public async Task<TimeEntryData> StartStopTimeEntry ()
         {
             // Protect from double clicks
             if (IsProcessingAction) {
-                return;
+                return model.Data;
             }
 
             if (model.State == TimeEntryState.Running) {
@@ -80,12 +98,19 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             IsProcessingAction = false;
+
+            return model.Data;
         }
 
-        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        public TimeEntryData GetActiveTimeEntry ()
+        {
+            return model.Data;
+        }
+
+        private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
             if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
-                SyncModel ();
+                await SyncModel ();
             }
         }
 
@@ -97,17 +122,13 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private void SyncModel ()
+        private async Task SyncModel ()
         {
             var data = timeEntryManager.Active;
             if (data != null) {
-                if (model == null) {
-                    model = new TimeEntryModel (data);
-                } else {
-                    model.Data = data;
-                }
-                // Set if an entry is running.
-                IsTimeEntryRunning = data.State == TimeEntryState.Running;
+                model = new TimeEntryModel (data);
+                await model.LoadAsync ();
+                UpdateView ();
             }
         }
 
@@ -132,9 +153,36 @@ namespace Toggl.Phoebe.Data.ViewModels
             CollectionView = collectionView;
         }
 
+        private void UpdateView ()
+        {
+            Description = model.Description;
+            ProjectName = model.Project != null ? model.Project.Name : string.Empty;
+
+            // Check if an entry is running.
+            if (model.State == TimeEntryState.Running && !IsTimeEntryRunning) {
+                IsTimeEntryRunning = true;
+                durationTimer.Start ();
+            } else if (model.State != TimeEntryState.Running) {
+                IsTimeEntryRunning = false;
+                durationTimer.Stop ();
+                Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
+            }
+        }
+
         private void OnCollectionChanged (object sender, EventArgs e)
         {
             HasMore = collectionView.Count > 0 || collectionView.HasMore;
+        }
+
+        private void DurationTimerCallback (object sender, ElapsedEventArgs e)
+        {
+            var duration = model.GetDuration ();
+            durationTimer.Interval = 1000 - duration.Milliseconds;
+
+            // Update on UI Thread
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
+            });
         }
     }
 }

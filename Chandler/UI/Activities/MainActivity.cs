@@ -148,8 +148,8 @@ namespace Toggl.Chandler.UI.Activities
             return Task.Run (() => {
                 foreach (var node in clientNodes) {
                     WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.RequestSyncPath,
-                                                          new byte[0]);
+                                                          message,
+                                                          data);
                 }
             });
         }

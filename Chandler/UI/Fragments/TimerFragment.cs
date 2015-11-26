@@ -14,13 +14,16 @@ namespace Toggl.Chandler.UI.Fragments
     {
         private readonly string greenButtonColor = "#ee4dd965";
         private readonly string redButtonColor = "#eeff3c47";
+        private readonly string grayButtonColor= "#ee8f8f8f";
 
         private readonly Handler handler = new Handler ();
         private TextView DurationTextView;
         private TextView DescriptionTextView;
         private TextView ProjectTextView;
+        private ProgressBar ProgressBar;
         private ImageButton ActionButton;
         private bool userLoggedIn = true;
+        private bool timerEnabled = true;
         private Context context;
         private MainActivity activity;
 
@@ -32,6 +35,7 @@ namespace Toggl.Chandler.UI.Fragments
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
             DescriptionTextView = view.FindViewById<TextView> (Resource.Id.DescriptionTextView);
             ProjectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
+            ProgressBar = view.FindViewById<ProgressBar> (Resource.Id.TimerProgressBar);
 
             ActionButton.Click += OnActionButtonClicked;
 
@@ -49,6 +53,16 @@ namespace Toggl.Chandler.UI.Fragments
                 return userLoggedIn;
             } set {
                 userLoggedIn = value;
+                Rebind();
+            }
+        }
+
+        public bool TimerEnabled
+        {
+            get {
+                return timerEnabled;
+            } set {
+                timerEnabled = value;
                 Rebind();
             }
         }
@@ -71,43 +85,81 @@ namespace Toggl.Chandler.UI.Fragments
                 return;
             }
 
-            if (activity.Data.Count != 0) {
+            switch (CurrentState) {
 
-                ActionButton.Visibility = ViewStates.Visible;
-                if (data.IsRunning) {
-                    ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcStop));
-                    var dur = data.GetDuration();
-                    DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
-                    DescriptionTextView.Text = String.IsNullOrWhiteSpace (data.Description) ? Resources.GetString (Resource.String.TimeEntryNoDescription) : data.Description;
-                    ProjectTextView.Text = data.Project;
-                } else {
-                    ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcPlay));
-                    DurationTextView.Text = Resources.GetString (Resource.String.DurationNotRunningState);
-                    ProjectTextView.Text = Resources.GetString (Resource.String.TimerBlankIntroduction);;
-                    DescriptionTextView.Text =  Resources.GetString (Resource.String.WearNewBlankDescription);;
-                }
+            case TimerState.New:
+                ButtonColor = Color.ParseColor (greenButtonColor);
+                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcPlay));
+                DurationTextView.Text = Resources.GetString (Resource.String.DurationNotRunningState);
+                ProjectTextView.Text = Resources.GetString (Resource.String.TimerBlankIntroduction);
+                DescriptionTextView.Text =  Resources.GetString (Resource.String.WearNewBlankDescription);
+                break;
 
-                var color = data.IsRunning ? Color.ParseColor (redButtonColor) : Color.ParseColor (greenButtonColor);
-                var shape = ActionButton.Background as GradientDrawable;
-                shape.SetColor (color);
-            } else {
+            case TimerState.Running:
+                ButtonColor = Color.ParseColor (redButtonColor);
+                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcStop));
+                var dur = data.GetDuration();
+                DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
+                ProjectTextView.Text = data.Project;
+                DescriptionTextView.Text = String.IsNullOrWhiteSpace (data.Description)
+                                           ? Resources.GetString (Resource.String.TimeEntryNoDescription)
+                                           : data.Description;
+                break;
 
-                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.Icon));
-                var shape = ActionButton.Background as GradientDrawable;
-                var color = Color.Transparent;
-                shape.SetColor (color);
+            case TimerState.Loading:
+                ActionButton.Visibility = ViewStates.Gone;
+                ProgressBar.Visibility = ViewStates.Visible;
+                DurationTextView.Text = userLoggedIn
+                                        ? Resources.GetString (Resource.String.TimerLoading)
+                                        : Resources.GetString (Resource.String.TimerWaiting);
+                DescriptionTextView.Text = userLoggedIn
+                                           ? String.Empty
+                                           : Resources.GetString (Resource.String.TimerNotLoggedIn);
+                break;
+
+            case TimerState.Waiting:
                 ProjectTextView.Text = String.Empty;
-                if (!userLoggedIn) {
-                    DurationTextView.Text = Resources.GetString (Resource.String.TimerWaiting);
-                    DescriptionTextView.Text = Resources.GetString (Resource.String.TimerNotLoggedIn);
-                } else {
-                    DurationTextView.Text = Resources.GetString (Resource.String.TimerLoading);
-                    DescriptionTextView.Text = String.Empty;
-                }
+                DescriptionTextView.Text = Resources.GetString (Resource.String.TimerRequestSent);
+                DurationTextView.Text = String.Empty;
+                ActionButton.Visibility = ViewStates.Gone;
+                ProgressBar.Visibility = ViewStates.Visible;
+                break;
             }
-            // Schedule next rebind:
+
             handler.RemoveCallbacks (Rebind);
             handler.PostDelayed (Rebind, 1000);
+        }
+
+        private Color ButtonColor
+        {
+            set {
+                ProgressBar.Visibility = ViewStates.Gone;
+                ActionButton.Visibility = ViewStates.Visible;
+                var shape = ActionButton.Background as GradientDrawable;
+                shape.SetColor (value);
+            }
+        }
+
+        private TimerState CurrentState
+        {
+            get {
+                if (activity.Data.Count == 0) {
+                    return TimerState.Loading;
+                }
+
+                if (!timerEnabled) {
+                    return TimerState.Waiting;
+                }
+
+                return data.IsRunning ? TimerState.Running : TimerState.New;
+            }
+        }
+
+        private enum TimerState {
+            New,
+            Running,
+            Loading,
+            Waiting
         }
     }
 }

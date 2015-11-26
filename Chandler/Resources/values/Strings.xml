@@ -6,6 +6,7 @@
     <string name="TimeEntryNoProject">(no project)</string>
     <string name="TimerLoading">Loading...</string>
     <string name="TimerWaiting">Waiting</string>
+    <string name="TimerRequestSent">Request sent!</string>
     <string name="TimerNotLoggedIn">Log in via app</string>
     <string name="TimerBlankIntroduction">Press to start a</string>
     <string name="TimerBlankDescription">new wear entry</string>

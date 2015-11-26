@@ -108,6 +108,7 @@ namespace Toggl.Chandler.UI.Activities
                     var en = new SimpleTimeEntryData (mapItem);
                     timeEntries.Add (en);
                 }
+                adapter.Timer.TimerEnabled = true;
             }
         }
 
@@ -127,11 +128,13 @@ namespace Toggl.Chandler.UI.Activities
 
         public void RequestStartStop ()
         {
+            adapter.Timer.TimerEnabled = false;
             SendMessage (Common.StartStopTimeEntryPath, new byte[0]);
         }
 
         public void RequestStartEntry (string guid)
         {
+            adapter.Timer.TimerEnabled = false;
             SendMessage (Common.ContinueTimeEntryPath, Common.GetBytes (guid));
             ViewPager.SetCurrentItem (0, 0, true);
         }
@@ -147,9 +150,7 @@ namespace Toggl.Chandler.UI.Activities
         {
             return Task.Run (() => {
                 foreach (var node in clientNodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          message,
-                                                          data);
+                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id, message, data);
                 }
             });
         }

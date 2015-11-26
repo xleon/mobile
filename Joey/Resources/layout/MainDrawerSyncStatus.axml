@@ -4,8 +4,7 @@
     android:orientation="horizontal"
     android:layout_width="fill_parent"
     android:layout_height="48dp"
-    android:layout_gravity="bottom"
-    android:background="@color/drawer_sync_status_box">
+    android:layout_gravity="bottom">
     <TextView
         android:id="@+id/SyncStatusText"
         android:text="Last sync now"
@@ -13,12 +12,5 @@
         android:layout_height="match_parent"
         android:paddingLeft="15dp"
         android:gravity="center_vertical"
-        android:textColor="@android:color/white" />
-    <ImageButton
-        android:src="@drawable/SyncRetryButton"
-        android:layout_width="50dp"
-        android:layout_height="match_parent"
-        android:id="@+id/SyncRetryButton"
-        android:layout_gravity="right"
-        android:background="@drawable/ButtonNoFrame" />
+        android:textColor="@color/material_black" />
 </FrameLayout>

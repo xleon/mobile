@@ -309,16 +309,16 @@ namespace Toggl.Phoebe.Data.Views
                 OnUpdated ();
 
                 var workspacesTask = store.Table<WorkspaceData> ()
-                    .Where (r => r.DeletedAt == null)
-                    .ToListAsync();
+                                     .Where (r => r.DeletedAt == null)
+                                     .ToListAsync();
                 var projectsTask = store
-                    .GetUserAccessibleProjects (userId ?? Guid.Empty);
+                                   .GetUserAccessibleProjects (userId ?? Guid.Empty);
                 var tasksTask = store.Table<TaskData> ()
-                    .Where (r => r.DeletedAt == null && r.IsActive == true)
-                    .ToListAsync();
+                                .Where (r => r.DeletedAt == null && r.IsActive == true)
+                                .ToListAsync();
                 var clientsTask = store.Table<ClientData> ()
-                    .Where (r => r.DeletedAt == null)
-                    .ToListAsync();
+                                  .Where (r => r.DeletedAt == null)
+                                  .ToListAsync();
 
                 await Task.WhenAll (workspacesTask, projectsTask, tasksTask, clientsTask);
 

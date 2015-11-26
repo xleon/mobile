@@ -56,8 +56,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<TagData>()
-                .Where (r => r.WorkspaceId == workspace.Id && r.Name == tagName)
-                .ToListAsync().ConfigureAwait (false);
+                           .Where (r => r.WorkspaceId == workspace.Id && r.Name == tagName)
+                           .ToListAsync().ConfigureAwait (false);
 
             var checkRelation = true;
             TagModel tag;
@@ -79,8 +79,8 @@ namespace Toggl.Phoebe.Data.ViewModels
                 if (checkRelation) {
                     // Check if the relation already exists before adding it
                     var relations = await store.Table<TimeEntryTagData> ()
-                        .Where (r => r.TimeEntryId == model.Id && r.TagId == tag.Id && r.DeletedAt == null)
-                        .CountAsync().ConfigureAwait (false);
+                                    .Where (r => r.TimeEntryId == model.Id && r.TagId == tag.Id && r.DeletedAt == null)
+                                    .CountAsync().ConfigureAwait (false);
                     if (relations < 1) {
                         assignTag = false;
                     }

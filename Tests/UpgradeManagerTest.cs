@@ -5,6 +5,8 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using XPlatUtils;
+using SQLite.Net.Interop;
+using SQLite.Net.Platform.Generic;
 
 namespace Toggl.Phoebe.Tests
 {
@@ -95,6 +97,12 @@ namespace Toggl.Phoebe.Tests
 
             public bool IsWidgetAvailable { get; set; }
 
+            public ISQLitePlatform SQLiteInfo
+            {
+                get {
+                    return new SQLitePlatformGeneric ();
+                }
+            }
         }
 
         private class SettingStore : ISettingsStore

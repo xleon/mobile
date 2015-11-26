@@ -106,8 +106,8 @@ namespace Toggl.Phoebe.Data.Views
 
 
                 var clients = await store.Table<ClientData> ()
-                    .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
-                    .ToListAsync();
+                              .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
+                              .ToListAsync();
 
                 dataObjects.AddRange (clients);
 

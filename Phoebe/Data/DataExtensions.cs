@@ -85,12 +85,12 @@ namespace Toggl.Phoebe.Data
             List<ProjectData> existingProjects;
             if ( clientId != Guid.Empty) {
                 existingProjects = await query
-                    .Where (r => r.Name == projectName && r.ClientId == clientId)
-                    .ToListAsync().ConfigureAwait (false);
+                                   .Where (r => r.Name == projectName && r.ClientId == clientId)
+                                   .ToListAsync().ConfigureAwait (false);
             } else {
                 existingProjects = await query
-                    .Where (r => r.Name == projectName && r.ClientId == null)
-                    .ToListAsync().ConfigureAwait (false);
+                                   .Where (r => r.Name == projectName && r.ClientId == null)
+                                   .ToListAsync().ConfigureAwait (false);
             }
             return existingProjects.Count != 0;
         }

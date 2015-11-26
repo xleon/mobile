@@ -279,13 +279,13 @@ namespace Toggl.Phoebe.Data.Views
                     var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
                     var baseQuery = store.Table<TimeEntryData> ()
-                        .OrderByDescending (r => r.StartTime)
-                        .Where (r => r.State != TimeEntryState.New
-                                    && r.DeletedAt == null
-                                    && r.UserId == userId);
+                                    .OrderByDescending (r => r.StartTime)
+                                    .Where (r => r.State != TimeEntryState.New
+                                            && r.DeletedAt == null
+                                            && r.UserId == userId);
                     var entries = await baseQuery
-                        .Where (r => r.StartTime <= endTime && r.StartTime > startTime)
-                        .ToListAsync();
+                                  .Where (r => r.StartTime <= endTime && r.StartTime > startTime)
+                                  .ToListAsync();
 
                     BeginUpdate ();
                     foreach (var entry in entries) {
@@ -294,8 +294,8 @@ namespace Toggl.Phoebe.Data.Views
 
                     if (!initialLoad) {
                         var count = await baseQuery
-                            .Where (r => r.StartTime <= startTime)
-                            .CountAsync();
+                                    .Where (r => r.StartTime <= startTime)
+                                    .CountAsync();
                         HasMore = count > 0;
                     }
                 }

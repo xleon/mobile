@@ -355,8 +355,8 @@ namespace Toggl.Phoebe.Net
             }
 
             return ((AsyncTableQuery<T>)query)
-                .Where (r => r.IsDirty || r.RemoteId == null || r.DeletedAt != null)
-                .ToListAsync ();
+                   .Where (r => r.IsDirty || r.RemoteId == null || r.DeletedAt != null)
+                   .ToListAsync ();
         }
 
         private static async Task<Exception> PushDataObject (CommonData dataObject)

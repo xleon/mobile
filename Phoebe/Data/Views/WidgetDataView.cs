@@ -100,7 +100,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var project = await store.Table<ProjectData> ()
-                .Where (r => r.Id == projectId).ToListAsync();
+                          .Where (r => r.Id == projectId).ToListAsync();
 
             return projectId == Guid.Empty ? new ProjectData() : project[0];
         }

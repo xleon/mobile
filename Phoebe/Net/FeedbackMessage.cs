@@ -85,14 +85,14 @@ namespace Toggl.Phoebe.Net
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             var total = await dataStore.Table<TimeEntryData> ()
-                .Where (r => r.UserId == userId)
-                .CountAsync().ConfigureAwait (false);
+                        .Where (r => r.UserId == userId)
+                        .CountAsync().ConfigureAwait (false);
             var dirty = await dataStore.Table<TimeEntryData> ()
-                .Where (r => r.UserId == userId && r.IsDirty == true && r.RemoteRejected == false)
-                .CountAsync().ConfigureAwait (false);
+                        .Where (r => r.UserId == userId && r.IsDirty == true && r.RemoteRejected == false)
+                        .CountAsync().ConfigureAwait (false);
             var rejected = await dataStore.Table<TimeEntryData> ()
-                .Where (r => r.UserId == userId && r.RemoteRejected == true)
-                .CountAsync().ConfigureAwait (false);
+                           .Where (r => r.UserId == userId && r.RemoteRejected == true)
+                           .CountAsync().ConfigureAwait (false);
 
             sb.AppendLine ("Time entries:");
             sb.AppendFormat (" - {0} total", total);

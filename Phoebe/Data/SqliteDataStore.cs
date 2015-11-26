@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data
         private async Task CreateTables ()
         {
             var dataObjects = DiscoverDataObjectTypes ();
-            await ctx.Connection.CreateTablesAsync(dataObjects.ToArray());
+            await ctx.Connection.CreateTablesAsync (dataObjects.ToArray());
         }
 
         private async Task WipeTables ()
@@ -111,7 +111,7 @@ namespace Toggl.Phoebe.Data
 
         public async Task<List<T>> QueryAsync<T> (string query, params object[] args) where T : class, new()
         {
-            return await ctx.Connection.QueryAsync<T>(query, args);
+            return await ctx.Connection.QueryAsync<T> (query, args);
         }
 
         public AsyncTableQuery<T> Table<T> () where T : class, new()
@@ -127,15 +127,14 @@ namespace Toggl.Phoebe.Data
 
         public async Task<T> ExecuteInTransactionAsync<T> (Func<IDataStoreContextSync, T> worker)
         {
-            var result = default(T);
+            var result = default (T);
             try {
                 await ctx.Connection.RunInTransactionAsync (trans => {
-                    result = worker(new ContextSync(ctx, trans));
+                    result = worker (new ContextSync (ctx, trans));
                 });
                 ctx.SendMessages ();
                 return result;
-            }
-            catch {
+            } catch {
                 ctx.ClearMessages ();
                 throw;
             }
@@ -144,10 +143,9 @@ namespace Toggl.Phoebe.Data
         public async Task ExecuteInTransactionAsync (Action<IDataStoreContextSync> worker)
         {
             try {
-                await ctx.Connection.RunInTransactionAsync (trans => worker(new ContextSync(ctx, trans)));
+                await ctx.Connection.RunInTransactionAsync (trans => worker (new ContextSync (ctx, trans)));
                 ctx.SendMessages ();
-            }
-            catch {
+            } catch {
                 ctx.ClearMessages ();
                 throw;
             }
@@ -193,7 +191,7 @@ namespace Toggl.Phoebe.Data
 
             public SQLiteAsyncConnection Connection
             {
-                get { return new SQLiteAsyncConnection(() => conn); }
+                get { return new SQLiteAsyncConnection (() => conn); }
             }
 
             public void SendMessages ()
@@ -210,8 +208,9 @@ namespace Toggl.Phoebe.Data
                 messages.Clear ();
             }
 
-            public void AddMessage(object data, DataAction action) {
-                messages.Add(new DataChangeMessage(store, data, action));
+            public void AddMessage (object data, DataAction action)
+            {
+                messages.Add (new DataChangeMessage (store, data, action));
             }
         }
 
@@ -236,7 +235,7 @@ namespace Toggl.Phoebe.Data
                 conn.InsertOrReplace (obj);
 
                 // Schedule message to be sent about this update post transaction
-                parent.AddMessage(obj, DataAction.Put);
+                parent.AddMessage (obj, DataAction.Put);
 
                 return obj;
             }
@@ -248,7 +247,7 @@ namespace Toggl.Phoebe.Data
 
                 // Schedule message to be sent about this delete post transaction
                 if (success) {
-                    parent.AddMessage(obj, DataAction.Delete);
+                    parent.AddMessage (obj, DataAction.Delete);
                 }
 
                 return success;

@@ -108,8 +108,8 @@ namespace Toggl.Phoebe.Data.Views
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var rows = await store.Table<TagData> ()
-                .Where (r => r.Id == id && r.DeletedAt == null)
-                .ToListAsync();
+                       .Where (r => r.Id == id && r.DeletedAt == null)
+                       .ToListAsync();
             var tag = rows.FirstOrDefault ();
 
             if (tag != null && tagIds.Contains (tag.Id)) {

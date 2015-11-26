@@ -48,8 +48,8 @@ namespace Toggl.Phoebe.Data
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var rows = await store.Table<T> ()
-                .Where (r => r.Id == id)
-                .ToListAsync().ConfigureAwait (false);
+                       .Where (r => r.Id == id)
+                       .ToListAsync().ConfigureAwait (false);
             return rows.FirstOrDefault ();
         }
 

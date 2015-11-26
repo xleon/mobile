@@ -116,8 +116,8 @@ namespace Toggl.Phoebe.Data.Views
                 OnUpdated ();
 
                 var tags = await store.Table<TagData> ()
-                    .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
-                    .ToListAsync();
+                           .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
+                           .ToListAsync();
                 dataObjects.AddRange (tags);
                 Sort ();
             } finally {

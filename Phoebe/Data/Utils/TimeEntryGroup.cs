@@ -40,8 +40,8 @@ namespace Toggl.Phoebe.Data.Utils
             foreach (var stringGuid in ids) {
                 var guid = new Guid (stringGuid);
                 var rows = await store.Table<TimeEntryData> ()
-                    .Where (r => r.Id == guid && r.DeletedAt == null)
-                    .ToListAsync();
+                           .Where (r => r.Id == guid && r.DeletedAt == null)
+                           .ToListAsync();
                 var data = rows.FirstOrDefault ();
                 list.Add (data);
             }

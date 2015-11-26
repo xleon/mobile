@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
+using SQLite.Net.Platform.Generic;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
@@ -38,7 +39,7 @@ namespace Toggl.Phoebe.Tests
             ServiceContainer.Register<TimeCorrectionManager> ();
             ServiceContainer.Register<IDataStore> (delegate {
                 databasePath = Path.GetTempFileName ();
-                return new SqliteDataStore (databasePath);
+                return new SqliteDataStore (databasePath, new SQLitePlatformGeneric ());
             });
             ServiceContainer.Register<LogStore> ((LogStore)null);
             ServiceContainer.Register<ILoggerClient> ((ILoggerClient)null);

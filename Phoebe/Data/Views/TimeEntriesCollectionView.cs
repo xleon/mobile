@@ -448,8 +448,8 @@ namespace Toggl.Phoebe.Data.Views
 
                     if (!initialLoad) {
                         var count = await baseQuery
-                            .Where (r => r.StartTime <= startTime)
-                            .CountAsync();
+                                    .Where (r => r.StartTime <= startTime)
+                                    .CountAsync();
                         HasMore = count > 0;
                     }
                 }

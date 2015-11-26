@@ -26,7 +26,10 @@ namespace Toggl.Phoebe.Data
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
-            CreateTables ();
+            var dataObjects = DiscoverDataObjectTypes ();
+            foreach (var t in dataObjects) {
+                ctx.Connection.CreateTable (t);
+            }
         }
 
         private void HandleSchedulerIdle (object sender, EventArgs args)

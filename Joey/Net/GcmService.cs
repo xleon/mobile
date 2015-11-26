@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.Content;
@@ -107,8 +106,7 @@ namespace Toggl.Joey.Net
                     var modifiedAt = ParseDate (extras.GetString ("updated_at", String.Empty));
 
                     var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                    var rows = await dataStore.Table<TimeEntryData> ()
-                               .QueryAsync (r => r.RemoteId == entryId);
+                    var rows = await dataStore.Table<TimeEntryData> ().Where (r => r.RemoteId == entryId).ToListAsync ();
                     var entry = rows.FirstOrDefault ();
 
                     // Make sure that we need to start sync

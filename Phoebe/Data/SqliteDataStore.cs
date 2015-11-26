@@ -90,7 +90,8 @@ namespace Toggl.Phoebe.Data
             try {
                 // TODO: need some checking like in DeleteAsync
                 await sqliteAsyncConnection.InsertOrReplaceAsync (obj);
-                ctx.AddMessage (new DataChangeMessage (this, obj, DataAction.Put));
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                bus.Send (new DataChangeMessage (this, obj, DataAction.Put));
                 return obj;
             } finally {
                 ctx.SendMessages ();
@@ -103,7 +104,8 @@ namespace Toggl.Phoebe.Data
             try {
                 var result = await sqliteAsyncConnection.DeleteAsync (obj);
                 if (result == 1) {
-                    ctx.AddMessage (new DataChangeMessage (this, obj, DataAction.Delete));
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    bus.Send (new DataChangeMessage (this, obj, DataAction.Delete));
                 }
                 return result == 1;
             } finally {
@@ -215,11 +217,6 @@ namespace Toggl.Phoebe.Data
             public void ClearMessages ()
             {
                 messages.Clear ();
-            }
-
-            public void AddMessage (DataChangeMessage msg)
-            {
-                messages.Add (msg);
             }
         }
 

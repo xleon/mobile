@@ -53,7 +53,8 @@ namespace Toggl.Joey
 
             // Find running tasks:
             var runningEntries = await dataStore.Table<TimeEntryData> ()
-                                 .QueryAsync (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId)
+                                 .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId)
+                                 .ToListAsync ()
                                  .ConfigureAwait (false);
 
             var stopTasks = runningEntries

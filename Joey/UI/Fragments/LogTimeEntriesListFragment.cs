@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Android.Content;
 using Android.OS;
 using Android.Support.Design.Widget;
@@ -225,7 +226,23 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SyncFinished (SyncFinishedMessage msg)
         {
+            if (!swipeLayout.Refreshing) {
+                return;
+            }
+
             swipeLayout.Refreshing = false;
+
+            if (msg.HadErrors) {
+                int msgId = Resource.String.LastSyncHadErrors;
+
+                if (msg.FatalError.IsNetworkFailure ()) {
+                    msgId = Resource.String.LastSyncNoConnection;
+                } else if (msg.FatalError is TaskCanceledException) {
+                    msgId = Resource.String.LastSyncFatalError;
+                }
+
+                Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
+            }
         }
 
         // Temporal hack to change the

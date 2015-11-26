@@ -161,6 +161,7 @@
     <string name="LastSyncJustNow">just now</string>
     <string name="LastSyncFatalError">Sync failed</string>
     <string name="LastSyncHadErrors">Synced with errors</string>
+    <string name="LastSyncNoConnection">No connection</string>
     <string name="FeedbackHeaderTextView">FEEDBACK</string>
     <string name="FeedbackSmallHeaderTextView">How are you feeling?</string>
     <string name="FeedbackMessageHint">Your message&#8230;</string>

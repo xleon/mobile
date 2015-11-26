@@ -75,12 +75,12 @@ namespace Toggl.Phoebe.Data.Views
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
                 var baseQuery = store.Table<TimeEntryData> ()
-                                .OrderBy (r => r.StartTime, false)
+                                .OrderByDescending (r => r.StartTime)
                                 .Where (r => r.State != TimeEntryState.New
                                         && r.DeletedAt == null
                                         && r.UserId == userId
                                         && r.Description != null);
-                var entries = await baseQuery.QueryAsync ();
+                var entries = await baseQuery.ToListAsync ();
                 TimeEntries.AddRange (entries.ToList());
                 foreach (var entry in TimeEntries) {
                     var description = entry.Description;

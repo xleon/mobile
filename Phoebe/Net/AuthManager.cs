@@ -53,7 +53,8 @@ namespace Toggl.Phoebe.Net
                 return;
             }
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var rows = await store.Table<UserData> ().QueryAsync (r => r.Id == User.Id);
+            var rows = await store.Table<UserData> ()
+                .Where (r => r.Id == User.Id).ToListAsync();
             User = rows.FirstOrDefault ();
         }
 

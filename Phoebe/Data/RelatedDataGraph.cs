@@ -178,7 +178,7 @@ namespace Toggl.Phoebe.Data
                 // and give other code chance to have intermediate queries.
                 var relatedObject = cache.FirstOrDefault (d => d.Id == relation.Id && d.GetType () == relation.Type);
                 if (relatedObject == null) {
-                    relatedObject = await relation.QueryAsync ().ConfigureAwait (false);
+                    relatedObject = await relation.ToListAsync ().ConfigureAwait (false);
                     if (relatedObject != null) {
                         cache.Add (relatedObject);
                     }

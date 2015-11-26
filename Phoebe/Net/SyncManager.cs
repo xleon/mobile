@@ -8,6 +8,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
+using SQLite.Net.Async;
 
 namespace Toggl.Phoebe.Net
 {
@@ -152,10 +153,10 @@ namespace Toggl.Phoebe.Net
             var timeEntryRows = await store.Table<TimeEntryData> ()
                                 .Where (r => (!r.IsDirty && r.RemoteId != null)
                                         || (r.RemoteId == null && r.DeletedAt != null))
-                                .OrderBy (r => r.StartTime, false)
+                                .OrderByDescending (r => r.StartTime)
                                 .Skip (1000)
                                 .Take (200)
-                                .QueryAsync ()
+                                .ToListAsync ()
                                 .ConfigureAwait (false);
             await Task.WhenAll (timeEntryRows.Select (store.DeleteAsync)).ConfigureAwait (false);
         }
@@ -330,32 +331,32 @@ namespace Toggl.Phoebe.Net
         where T : CommonData, new()
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            IDataQuery<T> query;
+            object query;
 
             if (typeof (T) == typeof (WorkspaceUserData)) {
                 // Exclude intermediate models which we've created from assumptions (for current user
                 // and without remote id) from returned models.
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-                query = (IDataQuery<T>)store.Table<WorkspaceUserData> ()
+                query = store.Table<WorkspaceUserData> ()
                         .Where (r => r.UserId != userId || r.RemoteId != null);
             } else if (typeof (T) == typeof (ProjectUserData)) {
                 // Exclude intermediate models which we've created from assumptions (for current user
                 // and without remote id) from returned models.
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-                query = (IDataQuery<T>)store.Table<ProjectUserData> ()
+                query = store.Table<ProjectUserData> ()
                         .Where (r => r.UserId != userId || r.RemoteId != null);
             } else if (typeof (T) == typeof (TimeEntryData)) {
                 // Only sync non-draft time entries for current user:
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-                query = (IDataQuery<T>)store.Table<TimeEntryData> ()
+                query = store.Table<TimeEntryData> ()
                         .Where (r => r.UserId == userId && r.State != TimeEntryState.New);
             } else {
                 query = store.Table<T> ();
             }
 
-            query = query.Where (r => r.IsDirty || r.RemoteId == null || r.DeletedAt != null);
-
-            return query.QueryAsync ();
+            return ((AsyncTableQuery<T>)query)
+                .Where (r => r.IsDirty || r.RemoteId == null || r.DeletedAt != null)
+                .ToListAsync ();
         }
 
         private static async Task<Exception> PushDataObject (CommonData dataObject)

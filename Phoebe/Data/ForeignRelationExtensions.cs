@@ -13,10 +13,10 @@ namespace Toggl.Phoebe.Data
             return manager.GetRelations (data);
         }
 
-        public static Task<CommonData> QueryAsync (this ForeignRelation relation)
+        public static Task<CommonData> ToListAsync (this ForeignRelation relation)
         {
             var manager = ServiceContainer.Resolve<ForeignRelationManager> ();
-            return manager.QueryAsync (relation);
+            return manager.ToListAsync (relation);
         }
     }
 }

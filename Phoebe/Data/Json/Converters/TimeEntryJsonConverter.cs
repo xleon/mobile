@@ -12,7 +12,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
     {
         private const string Tag = "TimeEntryJsonConverter";
 
-        public TimeEntryJson Export (IDataStoreContext ctx, TimeEntryData data)
+        public TimeEntryJson Export (IDataStoreContextSync ctx, TimeEntryData data)
         {
             var userId = GetRemoteId<UserData> (ctx, data.UserId);
             var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);
@@ -37,7 +37,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private List<string> GetTimeEntryTags (IDataStoreContext ctx, Guid id)
+        private List<string> GetTimeEntryTags (IDataStoreContextSync ctx, Guid id)
         {
             if (id == Guid.Empty) {
                 return new List<string> (0);
@@ -92,7 +92,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             }
         }
 
-        private static Guid GetUserLocalId (IDataStoreContext ctx, long id)
+        private static Guid GetUserLocalId (IDataStoreContextSync ctx, long id)
         {
             if (id == 0) {
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -104,7 +104,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return GetLocalId<UserData> (ctx, id);
         }
 
-        private static void ImportJson (IDataStoreContext ctx, TimeEntryData data, TimeEntryJson json)
+        private static void ImportJson (IDataStoreContextSync ctx, TimeEntryData data, TimeEntryJson json)
         {
             var userId = GetUserLocalId (ctx, json.UserId);
             var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
@@ -123,7 +123,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             ImportCommonJson (data, json);
         }
 
-        private static void ResetTags (IDataStoreContext ctx, TimeEntryData timeEntryData, TimeEntryJson json)
+        private static void ResetTags (IDataStoreContextSync ctx, TimeEntryData timeEntryData, TimeEntryJson json)
         {
             // Don't touch the tags when the field is null
             if (json.Tags == null) {
@@ -181,7 +181,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             }
         }
 
-        public TimeEntryData Import (IDataStoreContext ctx, TimeEntryJson json, Guid? localIdHint = null, TimeEntryData mergeBase = null)
+        public TimeEntryData Import (IDataStoreContextSync ctx, TimeEntryJson json, Guid? localIdHint = null, TimeEntryData mergeBase = null)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using SQLite.Net.Async;
 
 namespace Toggl.Phoebe.Data
 {
@@ -73,19 +74,23 @@ namespace Toggl.Phoebe.Data
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
 
-        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ClientData> query, string name)
+        public static async Task<bool> ExistWithNameAsync ( this AsyncTableQuery<ClientData> query, string name)
         {
-            var rows = await query.QueryAsync (r => r.Name == name).ConfigureAwait (false);
+            var rows = await query.Where (r => r.Name == name).ToListAsync().ConfigureAwait (false);
             return rows.Count != 0;
         }
 
-        public static async Task<bool> ExistWithNameAsync ( this IDataQuery<ProjectData> query, string projectName, Guid clientId)
+        public static async Task<bool> ExistWithNameAsync ( this AsyncTableQuery<ProjectData> query, string projectName, Guid clientId)
         {
             List<ProjectData> existingProjects;
             if ( clientId != Guid.Empty) {
-                existingProjects = await query.QueryAsync (r => r.Name == projectName && r.ClientId == clientId).ConfigureAwait (false);
+                existingProjects = await query
+                    .Where (r => r.Name == projectName && r.ClientId == clientId)
+                    .ToListAsync().ConfigureAwait (false);
             } else {
-                existingProjects = await query.QueryAsync (r => r.Name == projectName && r.ClientId == null).ConfigureAwait (false);
+                existingProjects = await query
+                    .Where (r => r.Name == projectName && r.ClientId == null)
+                    .ToListAsync().ConfigureAwait (false);
             }
             return existingProjects.Count != 0;
         }

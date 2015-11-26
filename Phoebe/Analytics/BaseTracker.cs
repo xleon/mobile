@@ -253,7 +253,8 @@ namespace Toggl.Phoebe.Analytics
         {
             // Check if the user has access to any premium workspaces
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var numPremium = await store.Table<WorkspaceData> ().CountAsync (r => r.IsPremium);
+            var numPremium = await store.Table<WorkspaceData> ()
+                .Where (r => r.IsPremium).CountAsync();
 
             UserPlan = numPremium > 0 ? Plan.Pro : Plan.Free;
         }

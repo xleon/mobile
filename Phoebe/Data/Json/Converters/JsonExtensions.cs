@@ -7,7 +7,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
 {
     public static class JsonExtensions
     {
-        public static CommonData Import (this CommonJson json, IDataStoreContext ctx,
+        public static CommonData Import (this CommonJson json, IDataStoreContextSync ctx,
                                          Guid? localIdHint = null, CommonData mergeBase = null)
         {
             var type = json.GetType ();
@@ -33,7 +33,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
 
-        public static CommonJson Export (this CommonData data, IDataStoreContext ctx)
+        public static CommonJson Export (this CommonData data, IDataStoreContextSync ctx)
         {
             var type = data.GetType ();
             if (type == typeof (ClientData)) {
@@ -58,118 +58,118 @@ namespace Toggl.Phoebe.Data.Json.Converters
             throw new InvalidOperationException (String.Format ("Unknown type of {0}", type));
         }
 
-        public static ClientData Import (this ClientJson json, IDataStoreContext ctx,
+        public static ClientData Import (this ClientJson json, IDataStoreContextSync ctx,
                                          Guid? localIdHint = null, ClientData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<ClientJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static ClientJson Export (this ClientData data, IDataStoreContext ctx)
+        public static ClientJson Export (this ClientData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<ClientJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static ProjectData Import (this ProjectJson json, IDataStoreContext ctx,
+        public static ProjectData Import (this ProjectJson json, IDataStoreContextSync ctx,
                                           Guid? localIdHint = null, ProjectData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<ProjectJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static ProjectJson Export (this ProjectData data, IDataStoreContext ctx)
+        public static ProjectJson Export (this ProjectData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<ProjectJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static ProjectUserData Import (this ProjectUserJson json, IDataStoreContext ctx,
+        public static ProjectUserData Import (this ProjectUserJson json, IDataStoreContextSync ctx,
                                               Guid? localIdHint = null, ProjectUserData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<ProjectUserJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static ProjectUserJson Export (this ProjectUserData data, IDataStoreContext ctx)
+        public static ProjectUserJson Export (this ProjectUserData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<ProjectUserJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static TagData Import (this TagJson json, IDataStoreContext ctx,
+        public static TagData Import (this TagJson json, IDataStoreContextSync ctx,
                                       Guid? localIdHint = null, TagData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<TagJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static TagJson Export (this TagData data, IDataStoreContext ctx)
+        public static TagJson Export (this TagData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<TagJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static TaskData Import (this TaskJson json, IDataStoreContext ctx,
+        public static TaskData Import (this TaskJson json, IDataStoreContextSync ctx,
                                        Guid? localIdHint = null, TaskData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<TaskJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static TaskJson Export (this TaskData data, IDataStoreContext ctx)
+        public static TaskJson Export (this TaskData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<TaskJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static TimeEntryData Import (this TimeEntryJson json, IDataStoreContext ctx,
+        public static TimeEntryData Import (this TimeEntryJson json, IDataStoreContextSync ctx,
                                             Guid? localIdHint = null, TimeEntryData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<TimeEntryJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static TimeEntryJson Export (this TimeEntryData data, IDataStoreContext ctx)
+        public static TimeEntryJson Export (this TimeEntryData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<TimeEntryJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static UserData Import (this UserJson json, IDataStoreContext ctx,
+        public static UserData Import (this UserJson json, IDataStoreContextSync ctx,
                                        Guid? localIdHint = null, UserData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<UserJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static UserJson Export (this UserData data, IDataStoreContext ctx)
+        public static UserJson Export (this UserData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<UserJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static WorkspaceData Import (this WorkspaceJson json, IDataStoreContext ctx,
+        public static WorkspaceData Import (this WorkspaceJson json, IDataStoreContextSync ctx,
                                             Guid? localIdHint = null, WorkspaceData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<WorkspaceJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static WorkspaceJson Export (this WorkspaceData data, IDataStoreContext ctx)
+        public static WorkspaceJson Export (this WorkspaceData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<WorkspaceJsonConverter> ();
             return converter.Export (ctx, data);
         }
 
-        public static WorkspaceUserData Import (this WorkspaceUserJson json, IDataStoreContext ctx,
+        public static WorkspaceUserData Import (this WorkspaceUserJson json, IDataStoreContextSync ctx,
                                                 Guid? localIdHint = null, WorkspaceUserData mergeBase = null)
         {
             var converter = ServiceContainer.Resolve<WorkspaceUserJsonConverter> ();
             return converter.Import (ctx, json, localIdHint, mergeBase);
         }
 
-        public static WorkspaceUserJson Export (this WorkspaceUserData data, IDataStoreContext ctx)
+        public static WorkspaceUserJson Export (this WorkspaceUserData data, IDataStoreContextSync ctx)
         {
             var converter = ServiceContainer.Resolve<WorkspaceUserJsonConverter> ();
             return converter.Export (ctx, data);

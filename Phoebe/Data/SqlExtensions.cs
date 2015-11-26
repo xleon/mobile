@@ -11,7 +11,7 @@ namespace Toggl.Phoebe.Data
     /// </summary>
     public static class SqlExtensions
     {
-        public static long? GetRemoteId<T> (this IDataStoreContext ctx, Guid id)
+        public static long? GetRemoteId<T> (this IDataStoreContextSync ctx, Guid id)
         where T : CommonData
         {
             var tbl = ctx.Connection.GetMapping<T> ().TableName;
@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        public static Guid GetLocalId<T> (this IDataStoreContext ctx, long remoteId)
+        public static Guid GetLocalId<T> (this IDataStoreContextSync ctx, long remoteId)
         where T : CommonData
         {
             var tbl = ctx.Connection.GetMapping<T> ().TableName;
@@ -37,7 +37,7 @@ namespace Toggl.Phoebe.Data
             return ctx.Connection.ExecuteScalar<Guid> (q, remoteId);
         }
 
-        public static List<string> GetTimeEntryTagNames (this IDataStoreContext ctx, Guid timeEntryId)
+        public static List<string> GetTimeEntryTagNames (this IDataStoreContextSync ctx, Guid timeEntryId)
         {
             var tagTbl = ctx.Connection.GetMapping<TagData> ().TableName;
             var timeEntryTagTbl = ctx.Connection.GetMapping<TimeEntryTagData> ().TableName;
@@ -49,7 +49,7 @@ namespace Toggl.Phoebe.Data
             return res.Select (v => v.Value).ToList ();
         }
 
-        public static Guid GetTagIdFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
+        public static Guid GetTagIdFromName (this IDataStoreContextSync ctx, Guid workspaceId, string name)
         {
             var con = ctx.Connection;
             var tagTbl = con.GetMapping (typeof (TagData)).TableName;
@@ -57,7 +57,7 @@ namespace Toggl.Phoebe.Data
             return con.ExecuteScalar<Guid> (q, workspaceId, name);
         }
 
-        public static int GetProjectColorFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
+        public static int GetProjectColorFromName (this IDataStoreContextSync ctx, Guid workspaceId, string name)
         {
             var con = ctx.Connection;
             var tagTbl = con.GetMapping (typeof (ProjectData)).TableName;
@@ -65,22 +65,22 @@ namespace Toggl.Phoebe.Data
             return con.ExecuteScalar<int> (q, workspaceId, name);
         }
 
-        public static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
+        public async static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
-            var projectTbl = ds.GetTableName (typeof (ProjectData));
-            var projectUserTbl = ds.GetTableName (typeof (ProjectUserData));
+            var projectTbl = await ds.GetTableNameAsync<ProjectData>();
+            var projectUserTbl = await ds.GetTableNameAsync<ProjectUserData>();
             var q = String.Concat (
                         "SELECT p.* FROM ", projectTbl, " AS p ",
                         "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
                         "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
                         "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)");
-            return ds.QueryAsync<ProjectData> (q, userId);
+            return await ds.QueryAsync<ProjectData> (q, userId);
         }
 
-        public static Task<List<ProjectData>> GetMostUsedProjects (this IDataStore ds, Guid userId)
+        public async static Task<List<ProjectData>> GetMostUsedProjects (this IDataStore ds, Guid userId)
         {
-            var timeEntryTbl = ds.GetTableName (typeof (TimeEntryData));
-            var projectTbl = ds.GetTableName (typeof (ProjectData));
+            var timeEntryTbl = await ds.GetTableNameAsync<TimeEntryData>();
+            var projectTbl = await ds.GetTableNameAsync<ProjectData>();
             var q = String.Concat (
                         "SELECT project.* ",
                         "FROM ", timeEntryTbl, " AS entry INNER JOIN ", projectTbl, " AS project ON entry.ProjectId = project.Id ",
@@ -89,31 +89,31 @@ namespace Toggl.Phoebe.Data
                         "AND project.WorkspaceId IS NOT NULL ",
                         "GROUP BY entry.ProjectId ORDER BY COUNT(*) DESC"
                     );
-            return ds.QueryAsync<ProjectData> (q, userId);
+            return await ds.QueryAsync<ProjectData> (q, userId);
         }
 
-        public static Task<long> CountUserAccessibleProjects (this IDataStore ds, Guid userId)
+        public async static Task<long> CountUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
-            var projectTbl = ds.GetTableName (typeof (ProjectData));
-            var projectUserTbl = ds.GetTableName (typeof (ProjectUserData));
+            var projectTbl = await ds.GetTableNameAsync<ProjectData>();
+            var projectUserTbl = await ds.GetTableNameAsync<ProjectUserData>();
             var q = String.Concat (
                         "SELECT COUNT(*) FROM ", projectTbl, " AS p ",
                         "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
                         "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
                         "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)");
-            return ds.ExecuteScalarAsync<long> (q, userId);
+            return await ds.ExecuteScalarAsync<long> (q, userId);
         }
 
-        public static Task<List<TagData>> GetTimeEntryTags (this IDataStore ds, Guid timeEntryId)
+        public async static Task<List<TagData>> GetTimeEntryTags (this IDataStore ds, Guid timeEntryId)
         {
-            var tagTbl = ds.GetTableName (typeof (TagData));
-            var timeEntryTagTbl = ds.GetTableName (typeof (TimeEntryTagData));
+            var tagTbl = await ds.GetTableNameAsync<TagData>();
+            var timeEntryTagTbl = await ds.GetTableNameAsync<TimeEntryTagData>();
             var q = String.Concat (
                         "SELECT t.* FROM ", tagTbl, " AS t ",
                         "INNER JOIN ", timeEntryTagTbl, " AS tet ON tet.TagId = t.Id ",
                         "WHERE t.DeletedAt IS NULL AND tet.DeletedAt IS NULL ",
                         "AND tet.TimeEntryId=?");
-            return ds.QueryAsync<TagData> (q, timeEntryId);
+            return await ds.QueryAsync<TagData> (q, timeEntryId);
         }
 
         public static Task ResetAllModificationTimes (this IDataStore ds)
@@ -134,7 +134,7 @@ namespace Toggl.Phoebe.Data
             });
         }
 
-        public static int PurgeDatedTimeCorrections (this IDataStoreContext ctx, DateTime time)
+        public static int PurgeDatedTimeCorrections (this IDataStoreContextSync ctx, DateTime time)
         {
             var tbl = ctx.Connection.GetMapping<TimeCorrectionData> ().TableName;
             var q = String.Concat ("DELETE FROM ", tbl, " WHERE MeasuredAt < ?");

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SQLite.Net.Async;
 
 namespace Toggl.Phoebe.Data
 {
@@ -16,10 +17,10 @@ namespace Toggl.Phoebe.Data
         Task<List<T>> QueryAsync<T> (string query, params object[] args)
         where T : class, new();
 
-        IDataQuery<T> Table<T> ()
+        AsyncTableQuery<T> Table<T> ()
         where T : class, new();
 
-        string GetTableName (Type mappingType);
+        Task<string> GetTableNameAsync<T> ();
 
         /// <summary>
         /// Executes a function on the SQLite background thread giving access to the raw SQLiteConnection.
@@ -29,7 +30,7 @@ namespace Toggl.Phoebe.Data
         /// <returns>The task for the result of your function.</returns>
         /// <param name="worker">Worker function that is executed on the background thread.</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        Task<T> ExecuteInTransactionAsync<T> (Func<IDataStoreContext, T> worker);
+        Task<T> ExecuteInTransactionAsync<T> (Func<IDataStoreContextSync, T> worker);
 
         /// <summary>
         /// Executes a function on the SQLite background thread giving access to the raw SQLiteConnection.
@@ -38,6 +39,6 @@ namespace Toggl.Phoebe.Data
         /// </summary>
         /// <returns>The task for the async transaction.</returns>
         /// <param name="worker">Worker function that is executed on the background thread.</param>
-        Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker);
+        Task ExecuteInTransactionAsync (Action<IDataStoreContextSync> worker);
     }
 }

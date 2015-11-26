@@ -48,7 +48,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             foreach (var timeEntryData in timeEntryList) {
                 var tags = await dataStore.Table<TimeEntryTagData> ()
-                           .QueryAsync (r => r.TimeEntryId == timeEntryData.Id && r.DeletedAt == null);
+                    .Where (r => r.TimeEntryId == timeEntryData.Id && r.DeletedAt == null)
+                    .ToListAsync();     // TODO: ConfigureAwait(false)?
                 modelTags.AddRange (tags);
             }
 

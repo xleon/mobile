@@ -80,9 +80,9 @@ namespace Toggl.Phoebe
             try {
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var rows = await dataStore.Table<TimeCorrectionData> ()
-                           .OrderBy (r => r.MeasuredAt, asc: false)
+                           .OrderByDescending (r => r.MeasuredAt)
                            .Take (SampleSize)
-                           .QueryAsync ()
+                           .ToListAsync ()
                            .ConfigureAwait (false);
 
                 rows.Reverse ();

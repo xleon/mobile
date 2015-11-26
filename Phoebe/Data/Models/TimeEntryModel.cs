@@ -427,7 +427,7 @@ namespace Toggl.Phoebe.Data.Models
             .ConfigureAwait (false);
         }
 
-        private static void AddDefaultTags (IDataStoreContext ctx, Guid workspaceId, Guid timeEntryId)
+        private static void AddDefaultTags (IDataStoreContextSync ctx, Guid workspaceId, Guid timeEntryId)
         {
             // Check that there aren't any tags set yet:
             var tagCount = ctx.Connection.Table<TimeEntryTagData> ()
@@ -606,11 +606,13 @@ namespace Toggl.Phoebe.Data.Models
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             var oldTags = await dataStore.Table<TimeEntryTagData> ()
-                          .QueryAsync (r => r.TimeEntryId == Id && r.DeletedAt == null);
+                .Where (r => r.TimeEntryId == Id && r.DeletedAt == null)
+                .ToListAsync();
             var task1 = oldTags.Select (d => new TimeEntryTagModel (d).DeleteAsync ()).ToList();
 
             var modelTags = await dataStore.Table<TimeEntryTagData> ()
-                            .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+                .Where (r => r.TimeEntryId == model.Id && r.DeletedAt == null)
+                .ToListAsync();
             var task2 = modelTags.Select (d => new TimeEntryTagModel () { TimeEntry = this, Tag = new TagModel (d.TagId) } .SaveAsync()).ToList();
 
             await System.Threading.Tasks.Task.WhenAll (task1.Concat (task2));
@@ -672,7 +674,7 @@ namespace Toggl.Phoebe.Data.Models
                     var userRows = await store.Table<UserData> ()
                                    .Where (m => m.Id == user.Id)
                                    .Take (1)
-                                   .QueryAsync ();
+                                   .ToListAsync ();
                     user = userRows.First ();
                 }
 
@@ -680,7 +682,7 @@ namespace Toggl.Phoebe.Data.Models
                            .Where (m => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
                            .OrderBy (m => m.ModifiedAt)
                            .Take (1)
-                           .QueryAsync ();
+                           .ToListAsync ();
                 data = rows.FirstOrDefault ();
 
                 if (data == null) {

@@ -48,8 +48,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<ClientData>()
-                           .QueryAsync (r => r.WorkspaceId == workspaceId && r.Name == ClientName)
-                           .ConfigureAwait (false);
+                .Where (r => r.WorkspaceId == workspaceId && r.Name == ClientName)
+                .ToListAsync().ConfigureAwait (false);
 
             if (existing.Count > 0) {
                 model = new ClientModel (existing [0]);

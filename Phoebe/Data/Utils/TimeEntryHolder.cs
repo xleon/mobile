@@ -178,7 +178,7 @@ namespace Toggl.Phoebe.Data.Utils
             var projectList = await store.Table<ProjectData> ()
                               .Where (m => m.Id == projectGuid)
                               .Take (1)
-                              .QueryAsync ();
+                              .ToListAsync ();
             return projectList.First ();
         }
 
@@ -188,7 +188,7 @@ namespace Toggl.Phoebe.Data.Utils
             var taskList = await store.Table<TaskData> ()
                            .Where (m => m.Id == taskId)
                            .Take (1)
-                           .QueryAsync ();
+                           .ToListAsync ();
             return taskList.First ();
         }
 
@@ -198,7 +198,7 @@ namespace Toggl.Phoebe.Data.Utils
             var clientList = await store.Table<ClientData> ()
                              .Where (m => m.Id == clientId)
                              .Take (1)
-                             .QueryAsync ();
+                             .ToListAsync ();
             return clientList.First ();
         }
 

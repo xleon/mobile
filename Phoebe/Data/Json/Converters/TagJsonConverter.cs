@@ -10,7 +10,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
     {
         private const string Tag = "TagJsonConverter";
 
-        public TagJson Export (IDataStoreContextSync ctx, TagData data)
+        public TagJson Export (IDataStoreContext ctx, TagData data)
         {
             var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);
 
@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static TagData ImportJson (IDataStoreContextSync ctx, TagData data, TagJson json)
+        private static TagData ImportJson (IDataStoreContext ctx, TagData data, TagJson json)
         {
             var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
 
@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return data;
         }
 
-        public TagData Import (IDataStoreContextSync ctx, TagJson json, Guid? localIdHint = null, TagData mergeBase = null)
+        public TagData Import (IDataStoreContext ctx, TagJson json, Guid? localIdHint = null, TagData mergeBase = null)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
 

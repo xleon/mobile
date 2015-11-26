@@ -10,7 +10,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
     {
         private const string Tag = "TaskJsonConverter";
 
-        public TaskJson Export (IDataStoreContextSync ctx, TaskData data)
+        public TaskJson Export (IDataStoreContext ctx, TaskData data)
         {
             var projectId = GetRemoteId<ProjectData> (ctx, data.ProjectId);
             var workspaceId = GetRemoteId<WorkspaceData> (ctx, data.WorkspaceId);
@@ -26,7 +26,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static void ImportJson (IDataStoreContextSync ctx, TaskData data, TaskJson json)
+        private static void ImportJson (IDataStoreContext ctx, TaskData data, TaskJson json)
         {
             var projectId = GetLocalId<ProjectData> (ctx, json.ProjectId);
             var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             ImportCommonJson (data, json);
         }
 
-        public TaskData Import (IDataStoreContextSync ctx, TaskJson json, Guid? localIdHint = null, TaskData mergeBase = null)
+        public TaskData Import (IDataStoreContext ctx, TaskJson json, Guid? localIdHint = null, TaskData mergeBase = null)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
 

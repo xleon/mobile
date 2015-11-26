@@ -427,7 +427,7 @@ namespace Toggl.Phoebe.Data.Models
             .ConfigureAwait (false);
         }
 
-        private static void AddDefaultTags (IDataStoreContextSync ctx, Guid workspaceId, Guid timeEntryId)
+        private static void AddDefaultTags (IDataStoreContext ctx, Guid workspaceId, Guid timeEntryId)
         {
             // Check that there aren't any tags set yet:
             var tagCount = ctx.Connection.Table<TimeEntryTagData> ()

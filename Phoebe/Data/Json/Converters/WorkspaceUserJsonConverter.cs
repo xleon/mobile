@@ -11,7 +11,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
     {
         private const string Tag = "WorkspaceUserJsonConverter";
 
-        public WorkspaceUserJson Export (IDataStoreContextSync ctx, WorkspaceUserData data)
+        public WorkspaceUserJson Export (IDataStoreContext ctx, WorkspaceUserData data)
         {
             var userRows = ctx.Connection.Table<UserData> ()
                            .Where (m => m.Id == data.UserId).Take (1).ToList ();
@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             };
         }
 
-        private static void ImportJson (IDataStoreContextSync ctx, WorkspaceUserData data, WorkspaceUserJson json)
+        private static void ImportJson (IDataStoreContext ctx, WorkspaceUserData data, WorkspaceUserJson json)
         {
             var workspaceId = GetLocalId<WorkspaceData> (ctx, json.WorkspaceId);
             var user = GetByRemoteId<UserData> (ctx, json.UserId, null);
@@ -68,7 +68,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             ImportCommonJson (data, json);
         }
 
-        public WorkspaceUserData Import (IDataStoreContextSync ctx, WorkspaceUserJson json, Guid? localIdHint = null, WorkspaceUserData mergeBase = null)
+        public WorkspaceUserData Import (IDataStoreContext ctx, WorkspaceUserJson json, Guid? localIdHint = null, WorkspaceUserData mergeBase = null)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
 

@@ -11,7 +11,7 @@ namespace Toggl.Phoebe.Data
     /// </summary>
     public static class SqlExtensions
     {
-        public static long? GetRemoteId<T> (this IDataStoreContextSync ctx, Guid id)
+        public static long? GetRemoteId<T> (this IDataStoreContext ctx, Guid id)
         where T : CommonData
         {
             var tbl = ctx.Connection.GetMapping<T> ().TableName;
@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        public static Guid GetLocalId<T> (this IDataStoreContextSync ctx, long remoteId)
+        public static Guid GetLocalId<T> (this IDataStoreContext ctx, long remoteId)
         where T : CommonData
         {
             var tbl = ctx.Connection.GetMapping<T> ().TableName;
@@ -37,7 +37,7 @@ namespace Toggl.Phoebe.Data
             return ctx.Connection.ExecuteScalar<Guid> (q, remoteId);
         }
 
-        public static List<string> GetTimeEntryTagNames (this IDataStoreContextSync ctx, Guid timeEntryId)
+        public static List<string> GetTimeEntryTagNames (this IDataStoreContext ctx, Guid timeEntryId)
         {
             var tagTbl = ctx.Connection.GetMapping<TagData> ().TableName;
             var timeEntryTagTbl = ctx.Connection.GetMapping<TimeEntryTagData> ().TableName;
@@ -49,7 +49,7 @@ namespace Toggl.Phoebe.Data
             return res.Select (v => v.Value).ToList ();
         }
 
-        public static Guid GetTagIdFromName (this IDataStoreContextSync ctx, Guid workspaceId, string name)
+        public static Guid GetTagIdFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
         {
             var con = ctx.Connection;
             var tagTbl = con.GetMapping (typeof (TagData)).TableName;
@@ -57,7 +57,7 @@ namespace Toggl.Phoebe.Data
             return con.ExecuteScalar<Guid> (q, workspaceId, name);
         }
 
-        public static int GetProjectColorFromName (this IDataStoreContextSync ctx, Guid workspaceId, string name)
+        public static int GetProjectColorFromName (this IDataStoreContext ctx, Guid workspaceId, string name)
         {
             var con = ctx.Connection;
             var tagTbl = con.GetMapping (typeof (ProjectData)).TableName;
@@ -134,7 +134,7 @@ namespace Toggl.Phoebe.Data
             });
         }
 
-        public static int PurgeDatedTimeCorrections (this IDataStoreContextSync ctx, DateTime time)
+        public static int PurgeDatedTimeCorrections (this IDataStoreContext ctx, DateTime time)
         {
             var tbl = ctx.Connection.GetMapping<TimeCorrectionData> ().TableName;
             var q = String.Concat ("DELETE FROM ", tbl, " WHERE MeasuredAt < ?");

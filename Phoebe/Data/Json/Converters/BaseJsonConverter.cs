@@ -15,7 +15,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             data.IsDirty = false;
         }
 
-        protected static T GetByRemoteId<T> (IDataStoreContextSync ctx, long remoteId, Guid? localIdHint)
+        protected static T GetByRemoteId<T> (IDataStoreContext ctx, long remoteId, Guid? localIdHint)
         where T : CommonData, new()
         {
             var query = ctx.Connection.Table<T> ();
@@ -30,7 +30,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return res.FirstOrDefault (data => data.RemoteId == remoteId) ?? res.FirstOrDefault ();
         }
 
-        protected static long GetRemoteId<T> (IDataStoreContextSync ctx, Guid id)
+        protected static long GetRemoteId<T> (IDataStoreContext ctx, Guid id)
         where T : CommonData
         {
             var remoteId = ctx.GetRemoteId<T> (id);
@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return remoteId.Value;
         }
 
-        protected static long? GetRemoteId<T> (IDataStoreContextSync ctx, Guid? id)
+        protected static long? GetRemoteId<T> (IDataStoreContext ctx, Guid? id)
         where T : CommonData, new()
         {
             if (id == null) {
@@ -57,7 +57,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return remoteId;
         }
 
-        protected static Guid GetLocalId<T> (IDataStoreContextSync ctx, long remoteId)
+        protected static Guid GetLocalId<T> (IDataStoreContext ctx, long remoteId)
         where T : CommonData, new()
         {
             if (remoteId == 0) {
@@ -70,7 +70,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return id;
         }
 
-        protected static Guid? GetLocalId<T> (IDataStoreContextSync ctx, long? remoteId)
+        protected static Guid? GetLocalId<T> (IDataStoreContext ctx, long? remoteId)
         where T : CommonData, new()
         {
             if (remoteId == null) {
@@ -83,7 +83,7 @@ namespace Toggl.Phoebe.Data.Json.Converters
             return id;
         }
 
-        private static Guid CreatePlaceholder<T> (IDataStoreContextSync ctx, long remoteId)
+        private static Guid CreatePlaceholder<T> (IDataStoreContext ctx, long remoteId)
         where T : CommonData, new()
         {
             var data = ctx.Put (new T () {

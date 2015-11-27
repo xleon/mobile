@@ -111,6 +111,13 @@ namespace Toggl.Joey.UI.Fragments
             TagsField = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
 
+            // TODO: in theory, this event could be binded but
+            // the event "CheckedChange" isn't found when
+            // the app is compiled for release. Investigate!
+            BillableCheckBox.CheckedChange += (sender, e) => {
+                ViewModel.IsBillable = BillableCheckBox.Checked;
+            };
+
             DurationTextView.Click += (sender, e) =>
                                       ChangeTimeEntryDurationDialogFragment.NewInstance (ViewModel.StopDate, ViewModel.StartDate)
                                       .SetChangeDurationHandler (this)
@@ -161,7 +168,7 @@ namespace Toggl.Joey.UI.Fragments
                 StopTimeEditText.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
                 stopTimeEditLabel.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
             });
-            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => BillableCheckBox.Checked, BindingMode.TwoWay);
+            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => BillableCheckBox.Checked);
             billableBinding = this.SetBinding (() => ViewModel.IsBillable)
             .WhenSourceChanges (() => {
                 var label = ViewModel.IsBillable ? GetString (Resource.String.CurrentTimeEntryEditBillableChecked) : GetString (Resource.String.CurrentTimeEntryEditBillableUnchecked);

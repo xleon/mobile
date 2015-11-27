@@ -2,8 +2,11 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
+using Android.Views;
 using Android.Widget;
-using Toggl.Joey.UI.Adapters;
+using GalaSoft.MvvmLight.Helpers;
+using Toggl.Joey.UI.Utils;
+using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
@@ -13,7 +16,7 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public interface IOnClientSelectedListener
+    public interface IOnClientSelectedHandler
     {
         void OnClientSelected (ClientData data);
     }
@@ -23,8 +26,7 @@ namespace Toggl.Joey.UI.Fragments
         private const string WorkspaceIdArgument = "workspace_id";
         private ListView listView;
         private ClientListViewModel viewModel;
-        private ClientsAdapter adapter;
-        private IOnClientSelectedListener listener;
+        private IOnClientSelectedHandler clientSelectedHandler;
 
         private Guid WorkspaceId
         {
@@ -71,20 +73,23 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroy ();
         }
 
-        public ClientListDialogFragment SetClientSelectListener (IOnClientSelectedListener listener)
+        public ClientListDialogFragment SetClientSelectListener (IOnClientSelectedHandler handler)
         {
-            this.listener = listener;
+            clientSelectedHandler = handler;
             return this;
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
-            adapter = new ClientsAdapter (viewModel.ClientListDataView);
+            // Mvvm ligth utility to generate an adapter from
+            // an Observable collection.
+            var clientsAdapter = viewModel.ClientDataCollection.GetAdapter (GetClientView);
 
             var dia = new AlertDialog.Builder (Activity)
             .SetTitle (Resource.String.SelectClientTitle)
-            .SetAdapter (new ClientsAdapter (viewModel.ClientListDataView), (IDialogInterfaceOnClickListener)null)
-            .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, delegate {})
+            .SetAdapter (clientsAdapter, (IDialogInterfaceOnClickListener)null)
+            .SetPositiveButton (Resource.String.CreateClientDialogOk, delegate {})
+            .SetNeutralButton (Resource.String.ClientsNewClient, OnCreateButtonClicked)
             .Create ();
 
             listView = dia.ListView;
@@ -94,15 +99,25 @@ namespace Toggl.Joey.UI.Fragments
             return dia;
         }
 
+        private View GetClientView (int position, ClientData clientData, View convertView)
+        {
+            View view = convertView ?? LayoutInflater.FromContext (Activity).Inflate (Resource.Layout.TagListItem, null);
+            var nameCheckedTextView = view.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView).SetFont (Font.Roboto);
+            nameCheckedTextView.Text = clientData.Name;
+            return view;
+        }
+
         private void OnItemClick (object sender, AdapterView.ItemClickEventArgs e)
         {
-            if (e.Id == ClientsAdapter.CreateClientId) {
-                CreateClientDialogFragment.NewInstance (WorkspaceId)
-                .SetOnClientSelectedListener (listener)
-                .Show (FragmentManager, "new_client_dialog");
-            } else {
-                listener.OnClientSelected (adapter.GetEntry (e.Position));
-            }
+            clientSelectedHandler.OnClientSelected (viewModel.ClientDataCollection [e.Position]);
+            Dismiss ();
+        }
+
+        private void OnCreateButtonClicked (object sender, DialogClickEventArgs args)
+        {
+            CreateClientDialogFragment.NewInstance (WorkspaceId)
+            .SetOnClientSelectedListener (clientSelectedHandler)
+            .Show (FragmentManager, "new_client_dialog");
             Dismiss ();
         }
 

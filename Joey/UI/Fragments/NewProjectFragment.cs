@@ -17,7 +17,7 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class NewProjectFragment : Fragment, IOnClientSelectedListener
+    public class NewProjectFragment : Fragment, IOnClientSelectedHandler
     {
         private static readonly string WorkspaceIdArgument = "workspace_id_param";
         public static readonly int ClientSelectedRequestCode = 1;

@@ -126,13 +126,13 @@ namespace Toggl.Phoebe.Data.ViewModels
         public void ChangeTagList (List<TagData> newTagList)
         {
             TagList = new List<TagData> (newTagList);
-            UpdateView ();
+            RaisePropertyChanged (() => TagList);
         }
 
         public void AddTag (TagData tagData)
         {
             TagList.Add (tagData);
-            UpdateView ();
+            RaisePropertyChanged (() => TagList);
         }
 
         public async Task SaveModel ()

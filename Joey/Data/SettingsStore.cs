@@ -33,7 +33,7 @@ namespace Toggl.Joey.Data
         private const string ReadContinueDialogKey = "readContinueDialog";
         private const string ReportsCurrentItemKey = "reportsCurrentItem";
         private const string JoeyShowNotificationKey = "disableNotificationKey";
-
+        private const string JoeyProjectSortKey = "projectSortKey";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -319,6 +319,17 @@ namespace Toggl.Joey.Data
                 SetInt (JoeyShowNotificationKey, value ? 1 : 0);
                 OnSettingChanged (PropertyShowNotification);
                 ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent (SettingName.ShowNotification);
+            }
+        }
+
+        public static readonly string PropertyProjectSort = GetPropertyName (s => s.ProjectSortCategory);
+
+        public string ProjectSortCategory
+        {
+            get { return (GetString (JoeyProjectSortKey)); }
+            set {
+                SetString (JoeyProjectSortKey, value);
+                OnSettingChanged (PropertyProjectSort);
             }
         }
     }

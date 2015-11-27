@@ -6,12 +6,14 @@ using Android.Support.Design.Widget;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -97,6 +99,13 @@ namespace Toggl.Joey.UI.Fragments
             viewModel = new ProjectListViewModel (WorkspaceId);
             await viewModel.Init ();
 
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+
+            if (settingsStore.ProjectSortCategory == WorkspaceProjectsView.SortProjectsBy.Projects.ToString()) {
+                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
+            } else {
+                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
+            }
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
@@ -237,12 +246,15 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool OnMenuItemClick (IMenuItem item)
         {
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             switch (item.ItemId) {
             case Resource.Id.SortByClients:
                 viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
+                settingsStore.ProjectSortCategory = WorkspaceProjectsView.SortProjectsBy.Clients.ToString();
                 return true;
             case Resource.Id.SortByProjects:
                 viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
+                settingsStore.ProjectSortCategory = WorkspaceProjectsView.SortProjectsBy.Projects.ToString();
                 return true;
             }
             return false;

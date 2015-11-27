@@ -72,7 +72,7 @@ namespace Toggl.Phoebe.Tests
                     ModifiedAt = new DateTime (2014, 1, 2),
                 });
 
-                upgradeManager.TryUpgrade ();
+                await upgradeManager.TryUpgrade ();
 
                 Assert.AreEqual (platformInfo.AppVersion, settingStore.LastAppVersion);
                 Assert.IsNull (settingStore.SyncLastRun);

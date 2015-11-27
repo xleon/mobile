@@ -14,14 +14,17 @@ namespace Toggl.Phoebe.Data
     {
         private readonly SQLiteAsyncConnection sqliteAsyncConnection;
         private readonly Context ctx;
-#pragma warning disable 0414
+        #pragma warning disable 0414
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
-#pragma warning restore 0414
+        #pragma warning restore 0414
 
         public SqliteDataStore (string dbPath, ISQLitePlatform platformInfo)
         {
+            // When using this constructor, Context will create a connection with lock
+            // so we can safely make the cast
             ctx = new Context (this, dbPath, platformInfo);
-            sqliteAsyncConnection = new SQLiteAsyncConnection (() => ctx.Connection);
+            sqliteAsyncConnection = new SQLiteAsyncConnection (() =>
+                ctx.Connection as SQLiteConnectionWithLock);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
@@ -33,8 +36,8 @@ namespace Toggl.Phoebe.Data
         {
             var dataType = typeof (Toggl.Phoebe.Data.DataObjects.TimeEntryData);
             return from t in dataType.Assembly.GetTypes ()
-                   where t.Namespace == dataType.Namespace && !t.IsAbstract
-                   select t;
+                    where t.Namespace == dataType.Namespace && !t.IsAbstract
+                select t;
         }
 
         private void CreateTables ()
@@ -138,16 +141,16 @@ namespace Toggl.Phoebe.Data
         {
             var result = default (T);
             try {
-                // We need to define the type SQLiteConnection
-                // to avoid a call to the obsolete version
-                // of RunInTransactionAsync
-                await sqliteAsyncConnection.RunInTransactionAsync ((SQLiteConnection conn) => {
-                    result = worker (ctx);
+                Context tempCtx = null;
+                await sqliteAsyncConnection.RunInTransactionAsync (conn => {
+                    tempCtx = new Context(this, conn);
+                    result = worker (tempCtx);
                 });
-                ctx.SendMessages ();
+                tempCtx.SendMessages ();
                 return result;
             } catch {
-                ctx.ClearMessages ();
+                // The temp context gets discarded, we don't need to clear the messages
+                //                ctx.ClearMessages ();
                 throw;
             }
         }
@@ -155,10 +158,13 @@ namespace Toggl.Phoebe.Data
         public async Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker)
         {
             try {
-                await sqliteAsyncConnection.RunInTransactionAsync ((SQLiteConnection conn) => worker (ctx));
-                ctx.SendMessages ();
+                Context tempCtx = null;
+                await sqliteAsyncConnection.RunInTransactionAsync (conn => {
+                    tempCtx = new Context(this, conn);
+                    worker (tempCtx);
+                });
+                tempCtx.SendMessages ();
             } catch {
-                ctx.ClearMessages ();
                 throw;
             }
         }
@@ -167,7 +173,7 @@ namespace Toggl.Phoebe.Data
         {
             private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
             private readonly SqliteDataStore store;
-            private readonly SQLiteConnectionWithLock conn;
+            private readonly SQLiteConnection conn;
 
             public Context (SqliteDataStore store, string dbPath, ISQLitePlatform platformInfo)
             {
@@ -176,8 +182,14 @@ namespace Toggl.Phoebe.Data
                 conn = new SQLiteConnectionWithLock (platformInfo, connectionString);
             }
 
+            public Context (SqliteDataStore store, SQLiteConnection conn)
+            {
+                this.store = store;
+                this.conn = conn;
+            }
+
             public T Put<T> (T obj)
-            where T : new()
+                where T : new()
             {
                 conn.InsertOrReplace (obj);
 
@@ -200,7 +212,7 @@ namespace Toggl.Phoebe.Data
                 return success;
             }
 
-            public SQLiteConnectionWithLock Connection
+            public SQLiteConnection Connection
             {
                 get { return conn; }
             }

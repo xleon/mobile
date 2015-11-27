@@ -8,6 +8,6 @@ namespace Toggl.Phoebe.Data
 
         bool Delete (object obj);
 
-        SQLiteConnectionWithLock Connection { get; }
+        SQLiteConnection Connection { get; }
     }
 }

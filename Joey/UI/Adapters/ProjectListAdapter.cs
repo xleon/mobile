@@ -22,7 +22,7 @@ namespace Toggl.Joey.UI.Adapters
         protected const int ViewTypeClient = ViewTypeContent + 1;
         protected const int ViewTypeProject = ViewTypeContent + 2;
         protected const int ViewTypeTask = ViewTypeContent + 3;
-        protected const int ViewTypeLoaderPlaceholder = 0;
+        protected const int ViewTypeFooter = 0;
 
         public Action<object> HandleProjectSelection { get; set; }
 
@@ -62,6 +62,10 @@ namespace Toggl.Joey.UI.Adapters
             case ViewTypeTask:
                 view = inflater.Inflate (Resource.Layout.ProjectListTaskItem, parent, false);
                 holder = new ProjectListTaskItemHolder (this, view);
+                break;
+            case ViewTypeFooter:
+                view = inflater.Inflate (Resource.Layout.EmptyFooter, parent, false);
+                holder = new FooterViewHolder (view);
                 break;
             default:
                 view = inflater.Inflate (Resource.Layout.ProjectListNoProjectItem, parent, false);
@@ -105,6 +109,7 @@ namespace Toggl.Joey.UI.Adapters
                 var data = (WorkspaceProjectsView.Client)GetEntry (position);
                 var clientHolder = (ClientListItemHolder)holder;
                 clientHolder.Bind (data);
+            } else if (viewType == ViewTypeFooter) {
             } else {
 
                 var data = (WorkspaceProjectsView.Project) GetEntry (position);
@@ -121,8 +126,8 @@ namespace Toggl.Joey.UI.Adapters
 
         public override int GetItemViewType (int position)
         {
-            if (position == DataView.Count) {
-                return ViewTypeLoaderPlaceholder;
+            if (position == (ItemCount)) {
+                return ViewTypeFooter;
             }
             var obj = GetEntry (position);
             if (obj is WorkspaceProjectsView.Project) {
@@ -133,6 +138,13 @@ namespace Toggl.Joey.UI.Adapters
                 return ViewTypeClient;
             }
             return ViewTypeTask;
+        }
+
+        public override int ItemCount
+        {
+            get {
+                return base.ItemCount + 1;
+            }
         }
 
         #region View holders
@@ -327,6 +339,17 @@ namespace Toggl.Joey.UI.Adapters
                 } else if (model.Data != null && model.Data.Name != null) {
                     ClientTextView.Text = model.Data.Name;
                 }
+            }
+        }
+
+        public class FooterViewHolder : RecyclerView.ViewHolder
+        {
+            public FooterViewHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
+
+            public FooterViewHolder (View root) : base (root)
+            {
             }
         }
         #endregion

@@ -109,8 +109,8 @@
     <AndroidResource Include="Resources\drawable\ColoredSideShape.xml" />
     <AndroidResource Include="Resources\layout\OpenAppLayout.axml" />
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Resources\drawable\" />
   </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>

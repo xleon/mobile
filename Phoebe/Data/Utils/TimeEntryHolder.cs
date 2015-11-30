@@ -8,7 +8,19 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Utils
 {
-    public class TimeEntryHolder : IDisposable
+    public interface IHolder : IEquatable<IHolder>
+    {
+    }
+
+    public interface ITimeHolder : IHolder
+    {
+        bool IsRunning { get; }
+        TimeSpan TotalDuration { get; }
+        DateTime StartTime { get; }
+        bool Matches (TimeEntryData data);
+    }
+
+    public class TimeEntryHolder : IDisposable, ITimeHolder
     {
         private List<TimeEntryData> timeEntryDataList = new List<TimeEntryData> ();
         private TimeEntryData timeEntryData;
@@ -16,6 +28,11 @@ namespace Toggl.Phoebe.Data.Utils
         private ClientData clientData;
         private TaskData taskData;
         private int numberOfTags;
+
+        public DateTime StartTime
+        {
+            get { return timeEntryData.StartTime; }
+        }
 
         public TimeEntryHolder (IEnumerable<TimeEntryData> timeEntryGroup)
         {
@@ -30,16 +47,17 @@ namespace Toggl.Phoebe.Data.Utils
             taskData = new TaskData ();
         }
 
-        public override int GetHashCode()
-        {
-            return Id.GetHashCode();
-        }
-
-        public override bool Equals (object obj)
+        public bool Equals (IHolder obj)
         {
             var other = obj as TimeEntryHolder;
             return other != null && other.Id == Id;
         }
+
+        public bool Matches (TimeEntryData data)
+        {
+            return data.Id == Id;
+        }
+
         public void Dispose ()
         {
             timeEntryDataList.Clear ();
@@ -49,15 +67,14 @@ namespace Toggl.Phoebe.Data.Utils
             taskData = new TaskData ();
         }
 
+        public bool IsRunning
+        {
+            get { return timeEntryData.State == TimeEntryState.Running; }
+        }
+
         public TimeSpan TotalDuration
         {
-            get {
-                TimeSpan totalDuration = TimeSpan.Zero;
-                foreach (var item in timeEntryDataList) {
-                    totalDuration += TimeEntryModel.GetDuration (item, Time.UtcNow);
-                }
-                return totalDuration;
-            }
+            get { return TimeEntryModel.GetDuration (timeEntryData, Time.UtcNow); }
         }
 
         public IList<string> TimeEntryGuids

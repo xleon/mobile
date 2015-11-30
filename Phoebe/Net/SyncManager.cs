@@ -58,16 +58,18 @@ namespace Toggl.Phoebe.Net
                 return;
             }
 
+            var bus = ServiceContainer.Resolve<MessageBus> ();
             var network = ServiceContainer.Resolve<INetworkPresence> ();
 
             if (!network.IsNetworkPresent) {
                 network.RegisterSyncWhenNetworkPresent ();
+
+                // Notify views that sync ended because a network failure.
+                bus.Send (new SyncFinishedMessage (this, mode, true, new System.Net.Http.HttpRequestException ()));
                 return;
-            } else {
-                network.UnregisterSyncWhenNetworkPresent ();
             }
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
+            network.UnregisterSyncWhenNetworkPresent ();
             IsRunning = true;
 
             // Unsubscribe from models commited messages (our actions trigger them as well,

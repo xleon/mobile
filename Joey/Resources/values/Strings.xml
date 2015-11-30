@@ -124,6 +124,7 @@
     <string name="ChooseTimeEntryTagsDialogTitle">Select tags</string>
     <string name="ChooseTimeEntryTagsDialogCancel">Cancel</string>
     <string name="ChooseTimeEntryTagsDialogOk">Ok</string>
+    <string name="ChooseTimeEntryTagsDialogCreate">New tag</string>
     <string name="TagsAdapterCreateTag">New tag</string>
     <string name="ChooseTimeEntryProjectDialogTitle">Select project</string>
     <string name="ChooseTimeEntryProjectDialogCancel">Cancel</string>
@@ -161,6 +162,7 @@
     <string name="LastSyncJustNow">just now</string>
     <string name="LastSyncFatalError">Sync failed</string>
     <string name="LastSyncHadErrors">Synced with errors</string>
+    <string name="LastSyncNoConnection">No connection</string>
     <string name="FeedbackHeaderTextView">FEEDBACK</string>
     <string name="FeedbackSmallHeaderTextView">How are you feeling?</string>
     <string name="FeedbackMessageHint">Your message&#8230;</string>
@@ -217,7 +219,8 @@
     <string name="SelectClientTitle">Select client</string>
     <string name="CreateClientDialogTitle">New client</string>
     <string name="CreateClientDialogHint">Client name...</string>
-    <string name="CreateClientDialogOk">Close</string>
+    <string name="CreateClientDialogOk">Create</string>
     <string name="TimerComponentNoProject">(no project)</string>
     <string name="TimerComponentNoDescription">(no description)</string>
+    <string name="WearEntryDefaultDescription">wear entry</string>
 </resources>

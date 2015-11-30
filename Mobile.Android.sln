@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirrious.FluentLayouts.Touc
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Trie", "Contrib\Trie\Trie.shproj", "{E91F64FF-FF63-4604-9E61-FB331CD55867}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chandler", "Chandler\Chandler.csproj", "{76D0B75F-C05C-4852-A9AA-8151618256EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -54,6 +56,10 @@ Global
 		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|x86.ActiveCfg = Release|Any CPU
 		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Release|x86.Build.0 = Release|Any CPU
 		{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{76D0B75F-C05C-4852-A9AA-8151618256EF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{76D0B75F-C05C-4852-A9AA-8151618256EF}.Debug|x86.Build.0 = Debug|Any CPU
+		{76D0B75F-C05C-4852-A9AA-8151618256EF}.Release|x86.ActiveCfg = Release|Any CPU
+		{76D0B75F-C05C-4852-A9AA-8151618256EF}.Release|x86.Build.0 = Release|Any CPU
 		{FF67B529-C11B-4FE0-AA1B-CD77141816BB}.Ad-Hoc|iPhone.ActiveCfg = Release|Any CPU
 		{FF67B529-C11B-4FE0-AA1B-CD77141816BB}.AppStore|iPhone.ActiveCfg = Release|Any CPU
 		{FF67B529-C11B-4FE0-AA1B-CD77141816BB}.Debug|iPhone.ActiveCfg = Debug|Any CPU

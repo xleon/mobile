@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -23,8 +23,6 @@ namespace Toggl.Phoebe
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionHttpResponseMessage = bus.Subscribe<TogglHttpResponseMessage> (OnHttpResponse);
-
-            LoadMeasurements ();
         }
 
         public void Dispose ()
@@ -46,7 +44,7 @@ namespace Toggl.Phoebe
             var serverTime = msg.ServerTime.Value + TimeSpan.FromTicks (msg.Latency.Value.Ticks / 2);
             var correction = serverTime - localTime;
 
-            AddMeasurement (new TimeCorrectionData () {
+            AddMeasurement (new TimeCorrectionData {
                 MeasuredAt = serverTime,
                 Correction = correction.Ticks,
             });

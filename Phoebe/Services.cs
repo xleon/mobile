@@ -17,14 +17,14 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<ActiveTimeEntryManager> ();
             ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
-            ServiceContainer.Register<TimeCorrectionManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
-            if (ServiceContainer.Resolve<IPlatformInfo> ().IsWidgetAvailable) {
+            if (ServiceContainer.Resolve<IPlatformUtils> ().IsWidgetAvailable) {
                 ServiceContainer.Register<WidgetSyncManager> (() => new WidgetSyncManager ());
             }
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
             ServiceContainer.Register<IDataStore> (CreateDataStore);
             ServiceContainer.Register<LogStore> ();
+            ServiceContainer.Register<TimeCorrectionManager> ();
 
             // Core services that are most likelly to be overriden by UI code:
             ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
@@ -53,7 +53,7 @@ namespace Toggl.Phoebe
 
             string folder = Environment.GetFolderPath (Environment.SpecialFolder.Personal);
             var path = System.IO.Path.Combine (folder, "toggl.db");
-            return new SqliteDataStore (path, ServiceContainer.Resolve<IPlatformInfo> ().SQLiteInfo);
+            return new SqliteDataStore (path, ServiceContainer.Resolve<IPlatformUtils> ().SQLiteInfo);
         }
     }
 }

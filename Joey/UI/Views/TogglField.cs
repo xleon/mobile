@@ -10,6 +10,15 @@ namespace Toggl.Joey.UI.Views
     {
         public EditText TextField { get; private set; }
 
+        public string AssistViewTitle
+        {
+            get {
+                return assistView.Text;
+            } set {
+                SetAssistViewTitle (value);
+            }
+        }
+
         private TextView titleText;
         private TextView assistView;
         private ImageView arrow;
@@ -29,7 +38,16 @@ namespace Toggl.Joey.UI.Views
             var inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
             inflater.Inflate (Resource.Layout.TogglField, this);
 
-            TextField = FindViewById<EditText> (Resource.Id.EditTimeEntryBitText);
+            // Workaround because the duplicated names
+            // inside the component breaks the
+            // databinding.
+            var layout =  FindViewById<RelativeLayout> (Resource.Id.EditTimeEntryBit);
+            for (int i = 0; i < layout.ChildCount; i++) {
+                if (layout.GetChildAt (i) is EditText) {
+                    TextField = (EditText)layout.GetChildAt (i);
+                }
+            }
+
             titleText= FindViewById<TextView> (Resource.Id.EditTimeEntryBitTitle);
             assistView = FindViewById<TextView> (Resource.Id.EditTimeEntryBitAssistView);
             arrow = FindViewById<ImageView> (Resource.Id.EditTimeEntryBitArrow);
@@ -64,8 +82,8 @@ namespace Toggl.Joey.UI.Views
 
         public TogglField SetAssistViewTitle (string title)
         {
+            assistView.Visibility = !string.IsNullOrEmpty (title) ? ViewStates.Visible : ViewStates.Gone;
             assistView.Text = title;
-            assistView.Visibility = ViewStates.Visible;
             ClipText();
             return this;
         }

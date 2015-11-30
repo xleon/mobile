@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Toggl.Chandler.UI.Views.RecentListItemLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_height="70dp"
+    android:layout_marginBottom="2dp">
+    <View
+        android:id="@+id/ColorView"
+        android:layout_width="10dp"
+        android:layout_height="72dp"
+        android:background="@drawable/ColoredSideShape" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginRight="20dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="5dp"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/RecentListDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:fontFamily="sans-serif-condensed-light"
+            android:textColor="@android:color/black"
+            android:text="123"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:gravity="bottom"
+            android:textSize="16sp"
+            android:layout_gravity="bottom" />
+        <TextView
+            android:id="@+id/RecentListProject"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="@android:color/black"
+            android:text="project"
+            android:gravity="top"
+            android:textSize="16sp" />
+    </LinearLayout>
+</Toggl.Chandler.UI.Views.RecentListItemLayout>

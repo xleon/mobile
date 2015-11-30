@@ -31,7 +31,7 @@ Target "android-build" (fun () ->
       then cp buildParamsFile "Phoebe/Build.cs"
 
     RestorePackages "Mobile.Android.sln"
-    MSBuild "Joey/bin/Release" "Build" [ ("Configuration", "Release") ] [ "Mobile.Android.sln" ] |> ignore
+    MSBuild "" "Build" [ ("Configuration", "Release") ] [ "Mobile.Android.sln" ] |> ignore
 )
 
 Target "android-package" (fun () ->

@@ -46,7 +46,6 @@ namespace Toggl.Joey.UI.Activities
         private readonly List<int> pageStack = new List<int> ();
         private readonly Handler handler = new Handler ();
         private DrawerListAdapter drawerAdapter;
-        private ImageButton syncRetryButton;
         private TextView syncStatusText;
         private long lastSyncInMillis;
         private int syncStatus;
@@ -114,9 +113,6 @@ namespace Toggl.Joey.UI.Activities
             drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
 
             DrawerSyncView = FindViewById<FrameLayout> (Resource.Id.DrawerSyncStatus);
-
-            syncRetryButton = DrawerSyncView.FindViewById<ImageButton> (Resource.Id.SyncRetryButton);
-            syncRetryButton.Click += OnSyncRetryClick;
 
             syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
 
@@ -198,22 +194,8 @@ namespace Toggl.Joey.UI.Activities
             return DrawerToggle.OnOptionsItemSelected (item) || base.OnOptionsItemSelected (item);
         }
 
-        protected override void OnStart ()
-        {
-            base.OnStart ();
-            Timer.OnStart ();
-        }
-
-        protected override void OnStop ()
-        {
-            base.OnStop ();
-            Timer.OnStop ();
-        }
-
         protected override void OnDestroy ()
         {
-            Timer.OnDestroy (this);
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
 
             if (drawerSyncStarted != null) {
@@ -365,14 +347,12 @@ namespace Toggl.Joey.UI.Activities
 
         protected void SyncStarted (SyncStartedMessage msg)
         {
-            syncRetryButton.Enabled = false;
             syncStatus = syncing;
             syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
         }
 
         private void SyncFinished (SyncFinishedMessage msg)
         {
-            syncRetryButton.Enabled = true;
             if (msg.FatalError != null) {
                 syncStatus = syncFatalError;
             } else if (msg.HadErrors) {
@@ -382,12 +362,6 @@ namespace Toggl.Joey.UI.Activities
             }
             lastSyncInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
             UpdateSyncStatus ();
-        }
-
-        private void OnSyncRetryClick (object sender, EventArgs e)
-        {
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-            syncManager.Run ();
         }
 
         private void UpdateSyncStatus ()

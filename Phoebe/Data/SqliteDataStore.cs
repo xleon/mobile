@@ -27,7 +27,7 @@ namespace Toggl.Phoebe.Data
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
-            CreateTables ();
+            CreateTables();
         }
 
         internal static IEnumerable<Type> DiscoverDataObjectTypes ()

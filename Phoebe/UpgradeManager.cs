@@ -14,7 +14,7 @@ namespace Toggl.Phoebe
         public async Task TryUpgrade ()
         {
             var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
-            var platformInfo = ServiceContainer.Resolve<IPlatformInfo> ();
+            var platformInfo = ServiceContainer.Resolve<IPlatformUtils> ();
             var log = ServiceContainer.Resolve<ILogger> ();
 
             var oldVersion = settingsStore.LastAppVersion;

@@ -12,8 +12,7 @@ namespace Toggl.Phoebe.Data
 {
     public class SqliteDataStore : IDataStore
     {
-        private readonly SQLiteAsyncConnection sqliteAsyncConnection;
-        private readonly Context ctx;
+        private readonly SQLiteConnectionWithLock cnn;
         #pragma warning disable 0414
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
         #pragma warning restore 0414
@@ -22,9 +21,8 @@ namespace Toggl.Phoebe.Data
         {
             // When using this constructor, Context will create a connection with lock
             // so we can safely make the cast
-            ctx = new Context (this, dbPath, platformInfo);
-            sqliteAsyncConnection = new SQLiteAsyncConnection (() =>
-                ctx.Connection as SQLiteConnectionWithLock);
+            var cnnString = new SQLiteConnectionString (dbPath, true);
+            cnn = new SQLiteConnectionWithLock (platformInfo, cnnString);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
@@ -44,7 +42,7 @@ namespace Toggl.Phoebe.Data
         {
             var dataObjects = DiscoverDataObjectTypes ();
             foreach (var t in dataObjects) {
-                ctx.Connection.CreateTable (t);
+                cnn.CreateTable (t);
             }
         }
 
@@ -53,9 +51,9 @@ namespace Toggl.Phoebe.Data
             var dataObjects = DiscoverDataObjectTypes ();
 
             foreach (var t in dataObjects) {
-                var map = ctx.Connection.GetMapping (t);
+                var map = cnn.GetMapping (t);
                 var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
-                ctx.Connection.Execute (query);
+                cnn.Execute (query);
             }
         }
 
@@ -87,53 +85,63 @@ namespace Toggl.Phoebe.Data
             return other;
         }
 
+        private void SendMessage (DataChangeMessage message)
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (message);
+        }
+
+        private void SendMessages (IList<DataChangeMessage> messages)
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            foreach (var msg in messages) {
+                bus.Send (msg);
+            }
+        }
+
+        private SQLiteAsyncConnection CreateAsyncCnn()
+        {
+            return new SQLiteAsyncConnection(() => cnn);
+        }            
+
         public async Task<T> PutAsync<T> (T obj) where T : class, new()
         {
             obj = Clone (obj);
-            try {
-                // TODO: need some checking like in DeleteAsync
-                await sqliteAsyncConnection.InsertOrReplaceAsync (obj);
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Send (new DataChangeMessage (this, obj, DataAction.Put));
-                return obj;
-            } finally {
-                ctx.SendMessages ();
+            var success = await CreateAsyncCnn().InsertOrReplaceAsync (obj) == 1;
+            if (success) {
+                SendMessage(new DataChangeMessage(this, obj, DataAction.Put));
             }
+            return obj;
         }
 
         public async Task<bool> DeleteAsync (object obj)
         {
             obj = Clone (obj);
-            try {
-                var result = await sqliteAsyncConnection.DeleteAsync (obj);
-                if (result == 1) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    bus.Send (new DataChangeMessage (this, obj, DataAction.Delete));
-                }
-                return result == 1;
-            } finally {
-                ctx.SendMessages ();
+            var success = await CreateAsyncCnn().DeleteAsync (obj) == 1;
+            if (success) {
+                SendMessage (new DataChangeMessage (this, obj, DataAction.Delete));
             }
+            return success;
         }
 
         public Task<T> ExecuteScalarAsync<T> (string query, params object[] args)
         {
-            return sqliteAsyncConnection.ExecuteScalarAsync<T> (query, args);
+            return CreateAsyncCnn().ExecuteScalarAsync<T> (query, args);
         }
 
         public Task<List<T>> QueryAsync<T> (string query, params object[] args) where T : class, new()
         {
-            return sqliteAsyncConnection.QueryAsync<T> (query, args);
+            return CreateAsyncCnn().QueryAsync<T> (query, args);
         }
 
         public AsyncTableQuery<T> Table<T> () where T : class, new()
         {
-            return sqliteAsyncConnection.Table<T> ();
+            return CreateAsyncCnn().Table<T> ();
         }
 
         public async Task<string> GetTableNameAsync<T> ()
         {
-            var mapping = await sqliteAsyncConnection.GetMappingAsync<T> ();
+            var mapping = await CreateAsyncCnn().GetMappingAsync<T> ();
             return mapping == null ? null : mapping.TableName;
         }
 
@@ -141,16 +149,14 @@ namespace Toggl.Phoebe.Data
         {
             var result = default (T);
             try {
-                Context tempCtx = null;
-                await sqliteAsyncConnection.RunInTransactionAsync (conn => {
-                    tempCtx = new Context(this, conn);
-                    result = worker (tempCtx);
+                Context ctx = null;
+                await CreateAsyncCnn().RunInTransactionAsync (conn => {
+                    ctx = new Context(this, conn);
+                    result = worker (ctx);
                 });
-                tempCtx.SendMessages ();
+                SendMessages (ctx.Messages);
                 return result;
             } catch {
-                // The temp context gets discarded, we don't need to clear the messages
-                //                ctx.ClearMessages ();
                 throw;
             }
         }
@@ -158,12 +164,12 @@ namespace Toggl.Phoebe.Data
         public async Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker)
         {
             try {
-                Context tempCtx = null;
-                await sqliteAsyncConnection.RunInTransactionAsync (conn => {
-                    tempCtx = new Context(this, conn);
-                    worker (tempCtx);
+                Context ctx = null;
+                await CreateAsyncCnn().RunInTransactionAsync (conn => {
+                    ctx = new Context(this, conn);
+                    worker (ctx);
                 });
-                tempCtx.SendMessages ();
+                SendMessages (ctx.Messages);
             } catch {
                 throw;
             }
@@ -171,44 +177,36 @@ namespace Toggl.Phoebe.Data
 
         private class Context : IDataStoreContext
         {
-            private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
             private readonly SqliteDataStore store;
             private readonly SQLiteConnection conn;
 
-            public Context (SqliteDataStore store, string dbPath, ISQLitePlatform platformInfo)
-            {
-                var connectionString = new SQLiteConnectionString (dbPath, true);
-                this.store = store;
-                conn = new SQLiteConnectionWithLock (platformInfo, connectionString);
-            }
+            public List<DataChangeMessage> Messages { get; private set; }
 
             public Context (SqliteDataStore store, SQLiteConnection conn)
             {
                 this.store = store;
                 this.conn = conn;
+                Messages =  new List<DataChangeMessage> ();
             }
 
             public T Put<T> (T obj)
                 where T : new()
             {
-                conn.InsertOrReplace (obj);
-
-                // Schedule message to be sent about this update post transaction
-                messages.Add (new DataChangeMessage (store, obj, DataAction.Put));
-
+                var success = conn.InsertOrReplace (obj) == 1;
+                if (success) {
+					// Schedule message to be sent about this update post transaction
+				Messages.Add(new DataChangeMessage(store, obj, DataAction.Put));
+                }
                 return obj;
             }
 
             public bool Delete (object obj)
             {
-                var count = conn.Delete (obj);
-                var success = count > 0;
-
-                // Schedule message to be sent about this delete post transaction
+                var success = conn.Delete (obj) == 1;
                 if (success) {
-                    messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
+					// Schedule message to be sent about this delete post transaction
+                   Messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
                 }
-
                 return success;
             }
 
@@ -216,21 +214,6 @@ namespace Toggl.Phoebe.Data
             {
                 get { return conn; }
             }
-
-            public void SendMessages ()
-            {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                foreach (var msg in messages) {
-                    bus.Send (msg);
-                }
-                messages.Clear ();
-            }
-
-            public void ClearMessages ()
-            {
-                messages.Clear ();
-            }
         }
-
     }
 }

@@ -84,7 +84,7 @@ namespace Toggl.Joey.UI.Views
             backgroundTintStop = new ColorStateList (states, stopColorArr);
             backgroundTintSave = new ColorStateList (states, saveColorArr);
 
-            Switch (playDraw, backgroundTintPlay, true);
+            Switch (playDraw, backgroundTintPlay);
         }
 
         private void Switch (Drawable src, ColorStateList tint, bool withAnimation = false)
@@ -97,8 +97,6 @@ namespace Toggl.Joey.UI.Views
             }
 
             const int ScaleDuration = 200;
-            const int AlphaDuration = 150;
-            const int AlphaInDelay = 50;
             const int InitialDelay = 100;
 
             if (switchAnimation != null) {
@@ -115,11 +113,11 @@ namespace Toggl.Joey.UI.Views
             circleAnimOutY.SetDuration (ScaleDuration);
 
             // Alpha out of the icon
-            var iconAnimOut = ObjectAnimator.OfInt (currentSrc, "alpha", 255, 0);
-            iconAnimOut.SetDuration (AlphaDuration);
+            //var iconAnimOut = ObjectAnimator.OfInt (currentSrc, "alpha", 255, 0);
+            //iconAnimOut.SetDuration (AlphaDuration);
 
             var outSet = new AnimatorSet ();
-            outSet.PlayTogether (circleAnimOutX, circleAnimOutY, iconAnimOut);
+            outSet.PlayTogether (circleAnimOutX, circleAnimOutY);
             outSet.SetInterpolator (AnimationUtils.LoadInterpolator (Context,
                                     Android.Resource.Animation.AccelerateInterpolator));
             outSet.StartDelay = InitialDelay;
@@ -136,14 +134,8 @@ namespace Toggl.Joey.UI.Views
             circleAnimInX.SetDuration (ScaleDuration);
             circleAnimInY.SetDuration (ScaleDuration);
 
-            // Alpha in of the icon
-            src.Alpha = 0;
-            var iconAnimIn = ObjectAnimator.OfInt (src, "alpha", 0, 255);
-            iconAnimIn.SetDuration (AlphaDuration);
-            iconAnimIn.StartDelay = AlphaInDelay;
-
             var inSet = new AnimatorSet ();
-            inSet.PlayTogether (circleAnimInX, circleAnimInY, iconAnimIn);
+            inSet.PlayTogether (circleAnimInX, circleAnimInY);
             inSet.SetInterpolator (AnimationUtils.LoadInterpolator (Context,
                                    Android.Resource.Animation.DecelerateInterpolator));
 

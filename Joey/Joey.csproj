@@ -54,18 +54,6 @@
     <Reference Include="Xamarin.Insights">
       <HintPath>..\packages\Xamarin.Insights.1.11.1\lib\MonoAndroid10\Xamarin.Insights.dll</HintPath>
     </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Base">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Base.26.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Base.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Plus">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Plus.26.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Plus.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Gcm">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Gcm.26.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Gcm.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Analytics">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Analytics.26.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Analytics.dll</HintPath>
-    </Reference>
     <Reference Include="Xamarin.Android.Support.v4">
       <HintPath>..\packages\Xamarin.Android.Support.v4.23.0.1.3\lib\MonoAndroid403\Xamarin.Android.Support.v4.dll</HintPath>
     </Reference>
@@ -93,6 +81,33 @@
     <Reference Include="GalaSoft.MvvmLight.Platform">
       <HintPath>..\packages\MvvmLightLibs.5.2.0.0\lib\monoandroid1\GalaSoft.MvvmLight.Platform.dll</HintPath>
     </Reference>
+    <Reference Include="Xamarin.Android.Wearable">
+      <HintPath>..\packages\Xamarin.Android.Wear.1.3.0.1\lib\MonoAndroid50\Xamarin.Android.Wearable.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Basement">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Basement.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Basement.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Base">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Base.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Wearable">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Wearable.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Wearable.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Plus">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Plus.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Plus.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Gcm">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Gcm.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Gcm.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.AppIndexing">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.AppIndexing.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.AppIndexing.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Ads">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Ads.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Ads.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Analytics">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Analytics.27.0.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Analytics.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -103,20 +118,16 @@
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
     <Compile Include="Net\GcmRegistrationManager.cs" />
-    <Compile Include="UI\Fragments\DeleteTimeEntriesPromptDialogFragment.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopRunningTimeEntryService.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
     <Compile Include="UI\Fragments\ChangeTimeEntryDurationDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ChangeTimeEntryStartTimeDialogFragment.cs" />
-    <Compile Include="UI\Fragments\ChangeTimeEntryStopTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\DrawerListAdapter.cs" />
     <Compile Include="UI\Activities\MainDrawerActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="UI\Views\ProfileImageView.cs" />
     <Compile Include="UI\Utils\CachingUtil.cs" />
     <Compile Include="UI\Fragments\ChooseTimeEntryTagsDialogFragment.cs" />
-    <Compile Include="UI\Adapters\TagsAdapter.cs" />
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
     <Compile Include="UI\Utils\ModelViewHolder.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
@@ -135,9 +146,7 @@
     <Compile Include="UI\Adapters\BaseDataViewAdapter.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
     <Compile Include="Net\NetworkPresence.cs" />
-    <Compile Include="UI\Fragments\BaseDateTimeDialogFragment.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
-    <Compile Include="UI\Fragments\BaseEditTimeEntryFragment.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />
     <Compile Include="UI\Views\PieChart.cs" />
@@ -160,7 +169,6 @@
     <Compile Include="UI\Fragments\NewProjectFragment.cs" />
     <Compile Include="UI\Views\ColorPickerRecyclerView.cs" />
     <Compile Include="UI\Views\TogglField.cs" />
-    <Compile Include="UI\Adapters\GroupedEditAdapter.cs" />
     <Compile Include="UI\Views\DividerItemDecoration.cs" />
     <Compile Include="UI\Adapters\RecycledDataViewAdapter.cs" />
     <Compile Include="UI\Utils\RecycledBindableViewHolder.cs" />
@@ -180,8 +188,11 @@
     <Compile Include="UI\Views\AddProjectFab.cs" />
     <Compile Include="UI\Views\TogglAppBar.cs" />
     <Compile Include="UI\Fragments\CreateClientDialogFragment.cs" />
-    <Compile Include="UI\Adapters\ClientsAdapter.cs" />
     <Compile Include="UI\Fragments\ClientListDialogFragment.cs" />
+    <Compile Include="Wear\WearDataService.cs" />
+    <Compile Include="Wear\Common.cs" />
+    <Compile Include="Wear\WearDataProvider.cs" />
+    <Compile Include="UI\Fragments\ChangeDateTimeDialogFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -721,6 +732,17 @@
     <AndroidResource Include="Resources\drawable-hdpi\IcManualMode.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\IcManualMode.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcManualMode.png" />
+    <AndroidResource Include="Resources\menu\SaveItemMenu.axml" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_done_black_24dp.png" />
+    <AndroidResource Include="Resources\menu\NewItemMenu.axml" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_add_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_add_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_add_black_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_add_black_24dp.png" />
+    <AndroidResource Include="Resources\layout\EmptyFooter.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <Import Project="..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets')" />
@@ -728,6 +750,11 @@
     <ProjectReference Include="..\Phoebe\Phoebe.Android.csproj">
       <Project>{FF67B529-C11B-4FE0-AA1B-CD77141816BB}</Project>
       <Name>Phoebe.Android</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Chandler\Chandler.csproj">
+      <Project>{76D0B75F-C05C-4852-A9AA-8151618256EF}</Project>
+      <Name>Chandler</Name>
+      <IsAppExtension>True</IsAppExtension>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -755,6 +782,7 @@
     <Folder Include="Widget\" />
     <Folder Include="Resources\values-v21\" />
     <Folder Include="Resources\drawable-v21\" />
+    <Folder Include="Wear\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

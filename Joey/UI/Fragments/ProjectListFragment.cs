@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -7,12 +6,14 @@ using Android.Support.Design.Widget;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -23,7 +24,7 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener, SearchView.IOnQueryTextListener
     {
-        private static readonly string TimeEntryIdsArg = "time_entries_ids_param";
+        private static readonly string WorkspaceIdArgument = "workspace_id_param";
         private static readonly int ProjectCreatedRequestCode = 1;
 
         private readonly Handler handler = new Handler ();
@@ -36,10 +37,12 @@ namespace Toggl.Joey.UI.Fragments
         private LinearLayout searchEmptyState;
         private ProjectListViewModel viewModel;
 
-        private IList<string> TimeEntryIds
+        private Guid WorkspaceId
         {
             get {
-                return Arguments.GetStringArrayList (TimeEntryIdsArg);
+                Guid id;
+                Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                return id;
             }
         }
 
@@ -51,12 +54,12 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public static ProjectListFragment NewInstance (IList<string> timeEntryIds)
+        public static ProjectListFragment NewInstance (string workspaceId)
         {
             var fragment = new ProjectListFragment ();
 
             var args = new Bundle ();
-            args.PutStringArrayList (TimeEntryIdsArg, timeEntryIds);
+            args.PutString (WorkspaceIdArgument, workspaceId);
             fragment.Arguments = args;
 
             return fragment;
@@ -93,9 +96,16 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
 
-            viewModel = new ProjectListViewModel (TimeEntryIds);
+            viewModel = new ProjectListViewModel (WorkspaceId);
             await viewModel.Init ();
 
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+
+            if (settingsStore.ProjectSortCategory == WorkspaceProjectsView.SortProjectsBy.Projects.ToString()) {
+                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
+            } else {
+                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
+            }
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleProjectSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
@@ -108,7 +118,7 @@ namespace Toggl.Joey.UI.Fragments
                 foreach (var ws in viewModel.ProjectList.Workspaces) {
                     var tab = tabLayout.NewTab().SetText (ws.Data.Name);
                     tabLayout.AddTab (tab);
-                    if (ws.Data.Id == viewModel.TimeEntryList[0].WorkspaceId) {
+                    if (ws.Data.Id == viewModel.CurrentWorkspaceId) {
                         viewModel.ProjectList.CurrentWorkspaceIndex = i;
                         tab.Select();
                     }
@@ -137,58 +147,37 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnNewProjectFabClick (object sender, EventArgs e)
         {
-            var entryList = new List<TimeEntryData> (viewModel.TimeEntryList);
-            ChangeListWorkspace (entryList, viewModel.ProjectList.Workspaces[viewModel.ProjectList.CurrentWorkspaceIndex].Data.Id);
-
             // Show create project activity instead
-            var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
-                         (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
+            var intent = new Intent (Activity, typeof (NewProjectActivity));
+            intent.PutExtra (NewProjectActivity.WorkspaceIdArgument, viewModel.CurrentWorkspaceId.ToString ());
             StartActivityForResult (intent, ProjectCreatedRequestCode);
         }
 
-        private void ChangeListWorkspace (List<TimeEntryData> list, Guid wsId)
-        {
-            foreach (var entry in list) {
-                entry.WorkspaceId = wsId;
-            }
-        }
-
-        private async void OnItemSelected (object m)
+        private void OnItemSelected (object m)
         {
             // TODO: valorate to work only with IDs.
-            //
-
             Guid projectId = Guid.Empty;
-            Guid workspaceId = Guid.Empty;
-            TaskData task = null;
+            Guid taskId = Guid.Empty;
 
             if (m is WorkspaceProjectsView.Project) {
                 var wrap = (WorkspaceProjectsView.Project)m;
-                if (wrap.IsNoProject) {
-                    workspaceId = wrap.WorkspaceId;
-                } else if (wrap.IsNewProject) {
-                    // Show create project activity instead
-                    var entryList = new List<TimeEntryData> (viewModel.TimeEntryList);
-                    var intent = BaseActivity.CreateDataIntent<NewProjectActivity, List<TimeEntryData>>
-                                 (Activity, entryList, NewProjectActivity.ExtraTimeEntryDataListId);
-                    StartActivityForResult (intent, ProjectCreatedRequestCode);
-                } else {
+                if (!wrap.IsNoProject) {
                     projectId = wrap.Data.Id;
-                    workspaceId = wrap.Data.WorkspaceId;
                 }
-            } else if (m is ProjectAndTaskView.Workspace) {
-                var wrap = (ProjectAndTaskView.Workspace)m;
-                workspaceId = wrap.Data.Id;
             } else if (m is TaskData) {
-                task = (TaskData)m;
+                var task = (TaskData)m;
                 projectId = task.ProjectId;
-                workspaceId = task.WorkspaceId;
+                taskId = task.Id;
             }
 
-            if (projectId != Guid.Empty || workspaceId != Guid.Empty) {
-                await viewModel.SaveModelAsync (projectId, workspaceId, task);
-                Activity.Finish ();
-            }
+            // Return selected data inside the
+            // intent.
+            var resultIntent = new Intent ();
+
+            resultIntent.PutExtra (BaseActivity.IntentProjectIdArgument, projectId.ToString ());
+            resultIntent.PutExtra (BaseActivity.IntentTaskIdArgument, taskId.ToString ());
+            Activity.SetResult (Result.Ok, resultIntent);
+            Activity.Finish();
         }
 
         public override void OnActivityResult (int requestCode, int resultCode, Intent data)
@@ -200,6 +189,8 @@ namespace Toggl.Joey.UI.Fragments
             // close the Project list activity
             if (requestCode == ProjectCreatedRequestCode) {
                 if (resultCode == (int)Result.Ok) {
+                    data.PutExtra (BaseActivity.IntentTaskIdArgument, Guid.Empty.ToString ());
+                    Activity.SetResult (Result.Ok, data);
                     Activity.Finish();
                 }
             }
@@ -255,12 +246,15 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool OnMenuItemClick (IMenuItem item)
         {
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             switch (item.ItemId) {
             case Resource.Id.SortByClients:
                 viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
+                settingsStore.ProjectSortCategory = WorkspaceProjectsView.SortProjectsBy.Clients.ToString();
                 return true;
             case Resource.Id.SortByProjects:
                 viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
+                settingsStore.ProjectSortCategory = WorkspaceProjectsView.SortProjectsBy.Projects.ToString();
                 return true;
             }
             return false;

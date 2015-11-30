@@ -3,7 +3,7 @@ using System;
 
 namespace Toggl.Phoebe
 {
-    public interface IPlatformInfo
+    public interface IPlatformUtils
     {
         /// <summary>
         /// Gets the app identifier. The app identifier and app version are used for model CreatedWith fields, and also

@@ -83,7 +83,6 @@
     <Compile Include="Data\Merge\UserMergerTest.cs" />
     <Compile Include="Data\Merge\WorkspaceMergerTest.cs" />
     <Compile Include="Data\Merge\WorkspaceUserMergerTest.cs" />
-    <Compile Include="PropertyChangeTrackerTest.cs" />
     <Compile Include="Analytics\ExperimentManagerTest.cs" />
     <Compile Include="VoidLogger.cs" />
     <Compile Include="Views\SummaryReportViewTest.cs" />

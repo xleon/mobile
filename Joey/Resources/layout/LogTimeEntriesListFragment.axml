@@ -4,10 +4,15 @@
     android:id="@+id/logCoordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/LogRecyclerView"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/LogSwipeContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/LogRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </android.support.v4.widget.SwipeRefreshLayout>
     <LinearLayout
         android:id="@+id/EmptyMessageView"
         android:layout_width="wrap_content"
@@ -15,16 +20,16 @@
         android:orientation="vertical"
         android:layout_gravity="center_vertical|bottom"
         android:gravity="bottom"
-        android:paddingBottom="90dp"
+        android:paddingBottom="80dp"
         android:visibility="gone">
         <TextView
             android:id="@+id/EmptyTitleTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/NoItemsTitle"
-            android:gravity="left"
-            android:textColor="@color/material_red"
-            android:textSize="30sp"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/material_green"
+            android:textSize="40sp"
             android:textAllCaps="true"
             android:layout_marginTop="20dp" />
         <TextView
@@ -32,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/NoItemsText"
-            android:gravity="left"
+            android:layout_gravity="center_horizontal"
             android:textColor="@color/material_black"
             android:textSize="20sp"
             android:layout_marginTop="4dp" />

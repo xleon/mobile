@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -23,8 +21,6 @@ namespace Toggl.Phoebe
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionHttpResponseMessage = bus.Subscribe<TogglHttpResponseMessage> (OnHttpResponse);
-
-            LoadMeasurements ();
         }
 
         public void Dispose ()
@@ -46,7 +42,7 @@ namespace Toggl.Phoebe
             var serverTime = msg.ServerTime.Value + TimeSpan.FromTicks (msg.Latency.Value.Ticks / 2);
             var correction = serverTime - localTime;
 
-            AddMeasurement (new TimeCorrectionData () {
+            AddMeasurement (new TimeCorrectionData {
                 MeasuredAt = serverTime,
                 Correction = correction.Ticks,
             });
@@ -61,44 +57,6 @@ namespace Toggl.Phoebe
                 while (sample.Count >= SampleSize) {
                     sample.Dequeue ();
                 }
-            }
-
-            SaveMeasurement (data);
-        }
-
-        private async void SaveMeasurement (TimeCorrectionData data)
-        {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            await dataStore.ExecuteInTransactionAsync (ctx => {
-                ctx.PurgeDatedTimeCorrections (data.MeasuredAt - TimeSpan.FromDays (1));
-                ctx.Put (data);
-            }).ConfigureAwait (false);
-        }
-
-        private async void LoadMeasurements ()
-        {
-            try {
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var rows = await dataStore.Table<TimeCorrectionData> ()
-                           .OrderBy (r => r.MeasuredAt, asc: false)
-                           .Take (SampleSize)
-                           .QueryAsync ()
-                           .ConfigureAwait (false);
-
-                rows.Reverse ();
-
-                lock (syncRoot) {
-                    foreach (var measurement in rows) {
-                        sample.Enqueue (measurement);
-                    }
-                    lastCorrection = null;
-                }
-            } catch (InvalidCastException ex) {
-                // For whatever reason an InvalidCastException is thrown in the above code occasionally.
-                // As it's not clear where or how, it's better to just log this warning and not let it
-                // crash the whole app.
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Warning (LogTag, ex, "Failed to load previous measurements.");
             }
         }
 

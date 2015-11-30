@@ -13,6 +13,10 @@ namespace Toggl.Joey.UI.Activities
 {
     public abstract class BaseActivity : Activity
     {
+        public static readonly string IntentProjectIdArgument = "project_id_param";
+        public static readonly string IntentTaskIdArgument = "task_id_param";
+        public static readonly string IntentWorkspaceIdArgument = "workspace_id_param";
+
         private const int SyncErrorMenuItemId = 0;
         protected readonly Handler Handler = new Handler ();
         private Subscription<SyncStartedMessage> subscriptionSyncStarted;
@@ -117,6 +121,7 @@ namespace Toggl.Joey.UI.Activities
 
             // Make sure that the components are initialized (and that this initialisation wouldn't cause a lag)
             var app = (AndroidApp)Application;
+
             if (!app.ComponentsInitialized) {
                 Handler.PostDelayed (delegate {
                     app.InitializeComponents ();

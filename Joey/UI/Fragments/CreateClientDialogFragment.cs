@@ -12,7 +12,7 @@ namespace Toggl.Joey.UI.Fragments
     public class CreateClientDialogFragment : BaseDialogFragment
     {
         private const string WorkspaceIdArgument = "workspace_id";
-        private IOnClientSelectedListener listener;
+        private IOnClientSelectedHandler clientSelectedHandler;
         private Button positiveButton;
         public CreateClientViewModel ViewModel { get; private set;}
         public EditText NameEditText { get; private set;}
@@ -91,9 +91,9 @@ namespace Toggl.Joey.UI.Fragments
             ValidateClientName ();
         }
 
-        public CreateClientDialogFragment SetOnClientSelectedListener (IOnClientSelectedListener listener)
+        public CreateClientDialogFragment SetOnClientSelectedListener (IOnClientSelectedHandler handler)
         {
-            this.listener = listener;
+            clientSelectedHandler = handler;
             return this;
         }
 
@@ -105,8 +105,8 @@ namespace Toggl.Joey.UI.Fragments
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
             var clientData = await ViewModel.SaveNewClient ();
-            if (listener != null) {
-                listener.OnClientSelected (clientData);
+            if (clientSelectedHandler != null) {
+                clientSelectedHandler.OnClientSelected (clientData);
             }
         }
 

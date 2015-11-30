@@ -3,20 +3,18 @@ using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Data
 {
-    public enum DiffSectionType
-    {
+    public enum DiffSectionType {
         Copy,
         Add,
         Remove
     }
 
-    public struct DiffSection
-    {
+    public struct DiffSection {
         public readonly DiffSectionType Type;
         public readonly int OldIndex;
         public readonly int NewIndex;
 
-        public DiffSection(DiffSectionType type, int oldIndex, int newIndex)
+        public DiffSection (DiffSectionType type, int oldIndex, int newIndex)
         {
             Type = type;
             OldIndex = oldIndex;
@@ -25,18 +23,17 @@ namespace Toggl.Phoebe.Data
 
         public override string ToString ()
         {
-            return string.Format ("[{0}, NewIndex={1}, OldIndex={2}]", Enum.GetName(typeof(DiffSectionType), Type), NewIndex, OldIndex);
+            return string.Format ("[{0}, NewIndex={1}, OldIndex={2}]", Enum.GetName (typeof (DiffSectionType), Type), NewIndex, OldIndex);
         }
     }
 
-    public struct LongestCommonSubstringResult
-    {
+    public struct LongestCommonSubstringResult {
         private readonly bool _success;
         private readonly int _posA;
         private readonly int _posB;
         private readonly int _length;
 
-        public LongestCommonSubstringResult(int posA, int posB, int length)
+        public LongestCommonSubstringResult (int posA, int posB, int length)
         {
             _success = true;
             _posA = posA;
@@ -67,47 +64,50 @@ namespace Toggl.Phoebe.Data
         public override string ToString()
         {
             return _success
-                ? string.Format("LCS ({0}, {1} x{2})", _posA, _posB, _length)
-                : "LCS (-)";
+                   ? string.Format ("LCS ({0}, {1} x{2})", _posA, _posB, _length)
+                   : "LCS (-)";
         }
     }
 
     // Adapted from http://devdirective.com/post/115/creating-a-reusable-though-simple-diff-implementation-in-csharp-part-3
     public static class Diff
     {
-        public static IEnumerable<DiffSection> Calculate<T>(
+        public static IEnumerable<DiffSection> Calculate<T> (
             IList<T> collectionA, IList<T> collectionB, Func<T,T,bool> equals = null,
             int firstStart = 0, int firstEnd = -1, int secondStart = 0, int secondEnd = -1)
         {
-            equals = equals ?? new Func<T,T,bool>((x,y) => object.Equals(x,y));
+            equals = equals ?? new Func<T,T,bool> ((x,y) => object.Equals (x,y));
             firstEnd = firstEnd > -1 ? firstEnd : collectionA.Count;
             secondEnd = secondEnd > -1 ? secondEnd : collectionB.Count;
 
-            var lcs = FindLongestCommonSubstring(
-                collectionA, collectionB, equals,
-                firstStart, firstEnd, secondStart, secondEnd);
+            var lcs = FindLongestCommonSubstring (
+                          collectionA, collectionB, equals,
+                          firstStart, firstEnd, secondStart, secondEnd);
 
             if (lcs.Success) {
                 // deal with the section before
                 var sectionsBefore = Calculate (
-                    collectionA, collectionB, equals,
-                    firstStart, lcs.PositionA, secondStart, lcs.PositionB);
+                                         collectionA, collectionB, equals,
+                                         firstStart, lcs.PositionA, secondStart, lcs.PositionB);
 
-                foreach (var section in sectionsBefore)
+                foreach (var section in sectionsBefore) {
                     yield return section;
+                }
 
                 // output the copy operation
-                for (int i = 0; i < lcs.Length; i++)
+                for (int i = 0; i < lcs.Length; i++) {
                     yield return new DiffSection (DiffSectionType.Copy, lcs.PositionA + i, lcs.PositionB + i);
+                }
 
                 // deal with the section after
                 var sectionsAfter = Calculate (
-                    collectionA, collectionB, equals,
-                    lcs.PositionA + lcs.Length, firstEnd,
-                    lcs.PositionB + lcs.Length, secondEnd);
+                                        collectionA, collectionB, equals,
+                                        lcs.PositionA + lcs.Length, firstEnd,
+                                        lcs.PositionB + lcs.Length, secondEnd);
 
-                foreach (var section in sectionsAfter)
+                foreach (var section in sectionsAfter) {
                     yield return section;
+                }
 
                 yield break;
             }
@@ -115,17 +115,19 @@ namespace Toggl.Phoebe.Data
             // if we get here, no LCS
             if (firstStart < firstEnd) {
                 // we got content from first collection --> deleted
-                for (int i = 0; i < (firstEnd - firstStart); i++)
+                for (int i = 0; i < (firstEnd - firstStart); i++) {
                     yield return new DiffSection (DiffSectionType.Remove, firstStart + i, secondStart);
+                }
             }
             if (secondStart < secondEnd) {
                 // we got content from second collection --> inserted
-                for (int i = 0; i < (secondEnd - secondStart); i++)
+                for (int i = 0; i < (secondEnd - secondStart); i++) {
                     yield return new DiffSection (DiffSectionType.Add, firstStart, secondStart + i);
+                }
             }
         }
 
-        static LongestCommonSubstringResult FindLongestCommonSubstring<T>(
+        static LongestCommonSubstringResult FindLongestCommonSubstring<T> (
             IList<T> collectionA, IList<T> collectionB, Func<T,T,bool> equals,
             int firstStart, int firstEnd,int secondStart, int secondEnd)
         {
@@ -134,10 +136,10 @@ namespace Toggl.Phoebe.Data
 
             for (int index1 = firstStart; index1 < firstEnd; index1++) {
                 for (int index2 = secondStart; index2 < secondEnd; index2++) {
-                    if (equals(collectionA [index1], collectionB [index2])) {
+                    if (equals (collectionA [index1], collectionB [index2])) {
                         int length = CountEqual (
-                            collectionA, collectionB, equals,
-                            index1, firstEnd, index2, secondEnd);
+                                         collectionA, collectionB, equals,
+                                         index1, firstEnd, index2, secondEnd);
 
                         // Is longer than what we already have --> record new LCS
                         if (length > result.Length) {
@@ -150,14 +152,15 @@ namespace Toggl.Phoebe.Data
             return result;
         }
 
-        static int CountEqual<T>(
+        static int CountEqual<T> (
             IList<T> collectionA, IList<T> collectionB, Func<T,T,bool> equals,
             int firstStart, int firstEnd, int secondStart, int secondEnd)
         {
             int length = 0;
             while (firstStart < firstEnd && secondStart < secondEnd) {
-                if (!equals(collectionA[firstStart], collectionB[secondStart]))
+                if (!equals (collectionA[firstStart], collectionB[secondStart])) {
                     break;
+                }
 
                 firstStart++;
                 secondStart++;

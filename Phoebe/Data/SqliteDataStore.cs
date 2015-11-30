@@ -13,9 +13,9 @@ namespace Toggl.Phoebe.Data
     public class SqliteDataStore : IDataStore
     {
         private readonly SQLiteConnectionWithLock cnn;
-        #pragma warning disable 0414
+#pragma warning disable 0414
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        #pragma warning restore 0414
+#pragma warning restore 0414
 
         public SqliteDataStore (string dbPath, ISQLitePlatform platformInfo)
         {
@@ -34,8 +34,8 @@ namespace Toggl.Phoebe.Data
         {
             var dataType = typeof (Toggl.Phoebe.Data.DataObjects.TimeEntryData);
             return from t in dataType.Assembly.GetTypes ()
-                    where t.Namespace == dataType.Namespace && !t.IsAbstract
-                select t;
+                   where t.Namespace == dataType.Namespace && !t.IsAbstract
+                   select t;
         }
 
         private void CreateTables ()
@@ -101,15 +101,15 @@ namespace Toggl.Phoebe.Data
 
         private SQLiteAsyncConnection CreateAsyncCnn()
         {
-            return new SQLiteAsyncConnection(() => cnn);
-        }            
+            return new SQLiteAsyncConnection (() => cnn);
+        }
 
         public async Task<T> PutAsync<T> (T obj) where T : class, new()
         {
             obj = Clone (obj);
             var success = await CreateAsyncCnn().InsertOrReplaceAsync (obj) == 1;
             if (success) {
-                SendMessage(new DataChangeMessage(this, obj, DataAction.Put));
+                SendMessage (new DataChangeMessage (this, obj, DataAction.Put));
             }
             return obj;
         }
@@ -151,7 +151,7 @@ namespace Toggl.Phoebe.Data
             try {
                 Context ctx = null;
                 await CreateAsyncCnn().RunInTransactionAsync (conn => {
-                    ctx = new Context(this, conn);
+                    ctx = new Context (this, conn);
                     result = worker (ctx);
                 });
                 SendMessages (ctx.Messages);
@@ -166,7 +166,7 @@ namespace Toggl.Phoebe.Data
             try {
                 Context ctx = null;
                 await CreateAsyncCnn().RunInTransactionAsync (conn => {
-                    ctx = new Context(this, conn);
+                    ctx = new Context (this, conn);
                     worker (ctx);
                 });
                 SendMessages (ctx.Messages);
@@ -190,12 +190,12 @@ namespace Toggl.Phoebe.Data
             }
 
             public T Put<T> (T obj)
-                where T : new()
+            where T : new()
             {
                 var success = conn.InsertOrReplace (obj) == 1;
                 if (success) {
-					// Schedule message to be sent about this update post transaction
-				Messages.Add(new DataChangeMessage(store, obj, DataAction.Put));
+                    // Schedule message to be sent about this update post transaction
+                    Messages.Add (new DataChangeMessage (store, obj, DataAction.Put));
                 }
                 return obj;
             }
@@ -204,8 +204,8 @@ namespace Toggl.Phoebe.Data
             {
                 var success = conn.Delete (obj) == 1;
                 if (success) {
-					// Schedule message to be sent about this delete post transaction
-                   Messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
+                    // Schedule message to be sent about this delete post transaction
+                    Messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
                 }
                 return success;
             }

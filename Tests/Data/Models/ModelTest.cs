@@ -426,8 +426,8 @@ namespace Toggl.Phoebe.Tests.Data.Models
         {
             var storeType = DataStore.GetType ();
             var tblTask = (Task<string>)storeType.GetMethod ("GetTableNameAsync")
-                            .MakeGenericMethod (dataType)
-                            .Invoke (DataStore, null);
+                          .MakeGenericMethod (dataType)
+                          .Invoke (DataStore, null);
             var tbl = await tblTask;
             var sql = String.Concat ("SELECT * FROM ", tbl, " WHERE Id=?");
             var rowsTask = (Task)DataStore.GetType ().GetMethod ("QueryAsync")

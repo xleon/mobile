@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -59,44 +57,6 @@ namespace Toggl.Phoebe
                 while (sample.Count >= SampleSize) {
                     sample.Dequeue ();
                 }
-            }
-
-            SaveMeasurement (data);
-        }
-
-        private async void SaveMeasurement (TimeCorrectionData data)
-        {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            await dataStore.ExecuteInTransactionAsync (ctx => {
-                ctx.PurgeDatedTimeCorrections (data.MeasuredAt - TimeSpan.FromDays (1));
-                ctx.Put (data);
-            }).ConfigureAwait (false);
-        }
-
-        private async void LoadMeasurements ()
-        {
-            try {
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var rows = await dataStore.Table<TimeCorrectionData> ()
-                           .OrderByDescending (r => r.MeasuredAt)
-                           .Take (SampleSize)
-                           .ToListAsync ()
-                           .ConfigureAwait (false);
-
-                rows.Reverse ();
-
-                lock (syncRoot) {
-                    foreach (var measurement in rows) {
-                        sample.Enqueue (measurement);
-                    }
-                    lastCorrection = null;
-                }
-            } catch (InvalidCastException ex) {
-                // For whatever reason an InvalidCastException is thrown in the above code occasionally.
-                // As it's not clear where or how, it's better to just log this warning and not let it
-                // crash the whole app.
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Warning (LogTag, ex, "Failed to load previous measurements.");
             }
         }
 

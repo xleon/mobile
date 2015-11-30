@@ -17,7 +17,7 @@ namespace Toggl.Phoebe.Data.Utils
     // the Views created but actually manage a list of TimeEntryData
     /// </summary>
     [DoNotNotify]
-    public class TimeEntryGroup : ITimeEntryModel
+    public class TimeEntryGroup : ITimeEntryModel, ITimeHolder
     {
         private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
         private TimeEntryModel model;
@@ -32,15 +32,15 @@ namespace Toggl.Phoebe.Data.Utils
             Add (dataList);
         }
 
-        public override int GetHashCode()
-        {
-            return Id.GetHashCode();
-        }
-
-        public override bool Equals (object obj)
+        public bool Equals (IHolder obj)
         {
             var other = obj as TimeEntryGroup;
             return other != null && other.Id == Id;
+        }
+
+        public bool Matches (TimeEntryData data)
+        {
+            return dataObjects.Any (x => x.Id == data.Id);
         }
 
         public static async Task<IList<TimeEntryData>> GetTimeEntryDataList (IList<string> ids)
@@ -58,19 +58,29 @@ namespace Toggl.Phoebe.Data.Utils
             return list;
         }
 
+        public bool IsRunning
+        {
+            get { return State == TimeEntryState.Running; }
+        }
+
+        public TimeSpan TotalDuration
+        {
+            get { return Duration; }
+        }
+
         public TimeEntryModel Model
         {
             get {
                 if (model == null) {
-                    model = (TimeEntryModel)dataObjects.Last();
+                    model = (TimeEntryModel)dataObjects.Last ();
                     model.PropertyChanged += (sender, e) => {
                         if (PropertyChanged != null) {
                             PropertyChanged.Invoke (sender, e);
                         }
                     };
                 } else {
-                    if (!model.Data.Matches (dataObjects.Last())) {
-                        model.Data = dataObjects.Last();
+                    if (!model.Data.Matches (dataObjects.Last ())) {
+                        model.Data = dataObjects.Last ();
                     }
                 }
                 return model;
@@ -112,14 +122,14 @@ namespace Toggl.Phoebe.Data.Utils
         public DateTime LastStartTime
         {
             get {
-                return dataObjects.Last().StartTime;
+                return dataObjects.Last ().StartTime;
             }
         }
 
         public int DistinctDays
         {
             get {
-                return dataObjects.GroupBy (e => e.StartTime.Date).Count();
+                return dataObjects.GroupBy (e => e.StartTime.Date).Count ();
             }
         }
 
@@ -155,14 +165,14 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public void Sort()
+        public void Sort ()
         {
             dataObjects.Sort ((a, b) => a.StartTime.CompareTo (b.StartTime));
         }
 
         public bool CanContain (TimeEntryData data)
         {
-            return dataObjects.Last().IsGroupableWith (data);
+            return dataObjects.Last ().IsGroupableWith (data);
         }
 
         public bool Contains (TimeEntryData entry, out TimeEntryData existingTimeEntry)
@@ -177,7 +187,7 @@ namespace Toggl.Phoebe.Data.Utils
             return false;
         }
 
-        public void Dispose()
+        public void Dispose ()
         {
             model = null;
         }
@@ -232,7 +242,7 @@ namespace Toggl.Phoebe.Data.Utils
         public void Touch ()
         {
             for (int i = 0; i < dataObjects.Count; i++) {
-                var newData = new TimeEntryData (dataObjects[i]);;
+                var newData = new TimeEntryData (dataObjects[i]); ;
                 Model<TimeEntryData>.MarkDirty (newData);
                 dataObjects[i] = newData;
             }
@@ -339,7 +349,7 @@ namespace Toggl.Phoebe.Data.Utils
         public string Description
         {
             get {
-                return dataObjects.Last().Description;
+                return dataObjects.Last ().Description;
             }
 
             set {
@@ -377,7 +387,7 @@ namespace Toggl.Phoebe.Data.Utils
         public Guid Id
         {
             get {
-                return dataObjects.Last().Id;
+                return dataObjects.Last ().Id;
             }
         }
 
@@ -403,7 +413,7 @@ namespace Toggl.Phoebe.Data.Utils
         public Task<int> GetNumberOfTagsAsync ()
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            return store.Table<TimeEntryTagData>()
+            return store.Table<TimeEntryTagData> ()
                    .Where (t => t.TimeEntryId == Id)
                    .CountAsync ();
         }

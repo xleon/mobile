@@ -37,7 +37,7 @@ namespace Toggl.Phoebe.Data.Utils
             return Id.GetHashCode();
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals (object obj)
         {
             var other = obj as TimeEntryGroup;
             return other != null && other.Id == Id;

@@ -44,20 +44,20 @@ namespace Toggl.Phoebe.Data.Views
 
         public TimeEntriesCollectionView ()
         {
-			HasMore = true;
-			cts = new CancellationTokenSource ();
-			subscription = Observable.Create<DataChangeMessage>(
-                obs => {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    var subs = bus.Subscribe<DataChangeMessage> (obs.OnNext);
-                    return () => bus.Unsubscribe(subs);
-                })
-                .Where(msg => msg != null && msg.Data != null && msg.Data is TimeEntryData)
-                .TimedBuffer(BufferMilliseconds)
-                // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
-                .Select(msgs => Observable.FromAsync(() => ProcessUpdateMessage(msgs)))
-                .Concat()
-                .Subscribe();
+            HasMore = true;
+            cts = new CancellationTokenSource ();
+            subscription = Observable.Create<DataChangeMessage> (
+            obs => {
+                var bus = ServiceContainer.Resolve<MessageBus> ();
+                var subs = bus.Subscribe<DataChangeMessage> (obs.OnNext);
+                return () => bus.Unsubscribe (subs);
+            })
+            .Where (msg => msg != null && msg.Data != null && msg.Data is TimeEntryData)
+            .TimedBuffer (BufferMilliseconds)
+            // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
+            .Select (msgs => Observable.FromAsync (() => ProcessUpdateMessage (msgs)))
+            .Concat()
+            .Subscribe();
         }
 
         public void Dispose ()
@@ -83,13 +83,13 @@ namespace Toggl.Phoebe.Data.Views
         }
 
         #region Abstract Methods
-        protected abstract Task AddOrUpdateEntryAsync(TimeEntryData entry);
-        protected abstract Task RemoveEntryAsync(TimeEntryData entry);
+        protected abstract Task AddOrUpdateEntryAsync (TimeEntryData entry);
+        protected abstract Task RemoveEntryAsync (TimeEntryData entry);
 
-        protected abstract int GetTimeEntryHolderIndex(IList<object> holders, TimeEntryData entry);
-        protected abstract IList<object> SortTimeEntryHolders(IList<object> holders);
-        protected abstract IList<object> CreateItemCollection(IList<object> holders);
-        protected abstract Task<object> CreateTimeEntryHolder(TimeEntryData entry, object previousHolder = null);
+        protected abstract int GetTimeEntryHolderIndex (IList<object> holders, TimeEntryData entry);
+        protected abstract IList<object> SortTimeEntryHolders (IList<object> holders);
+        protected abstract IList<object> CreateItemCollection (IList<object> holders);
+        protected abstract Task<object> CreateTimeEntryHolder (TimeEntryData entry, object previousHolder = null);
         #endregion
 
         #region Update List
@@ -100,8 +100,8 @@ namespace Toggl.Phoebe.Data.Views
             try {
                 // 1. Get only TimeEntryHolders from current collection
                 IList<object> holders = ItemCollection
-                    .Where(x => x is IDateGroup == false)
-                    .ToList();
+                                        .Where (x => x is IDateGroup == false)
+                                        .ToList();
 
                 // 2. Remove, replace or add items from messages
                 // TODO: Use some cache to improve performance of GetTimeEntryHolderIndex
@@ -109,70 +109,71 @@ namespace Toggl.Phoebe.Data.Views
                 foreach (var msg in msgs) {
                     var entry = msg.Data as TimeEntryData;
                     var isExcluded = entry.DeletedAt != null
-                                          || msg.Action == DataAction.Delete
-                                          || entry.State == TimeEntryState.New;
+                                     || msg.Action == DataAction.Delete
+                                     || entry.State == TimeEntryState.New;
 
-                    var i = GetTimeEntryHolderIndex(holders, entry);
+                    var i = GetTimeEntryHolderIndex (holders, entry);
                     if (i > -1) {
-                        if (isExcluded)
-                            holders.RemoveAt(i); // Remove
-                        else
-                            holders[i] = await CreateTimeEntryHolder(entry, holders[i]); // Replace
+                        if (isExcluded) {
+                            holders.RemoveAt (i);    // Remove
+                        } else {
+                            holders[i] = await CreateTimeEntryHolder (entry, holders[i]);    // Replace
+                        }
                     }
                     // If no match is found, insert non-excluded entries
                     else if (!isExcluded) {
-                        holders.Add(await CreateTimeEntryHolder(entry)); // Insert
+                        holders.Add (await CreateTimeEntryHolder (entry)); // Insert
                     }
                 }
 
                 // 3. Sort new list
-                holders = SortTimeEntryHolders(holders);
+                holders = SortTimeEntryHolders (holders);
 
                 // 4. Create the new item collection from holders (add headers...)
-                var newItemCollection = CreateItemCollection(holders);
+                var newItemCollection = CreateItemCollection (holders);
 
                 // 5. Check diffs, modify ItemCollection and notify changes
-                var diffs = Diff.Calculate(ItemCollection, newItemCollection)
-                    .OrderBy(diff => diff.OldIndex)
-                    .ToList();
+                var diffs = Diff.Calculate (ItemCollection, newItemCollection)
+                            .OrderBy (diff => diff.OldIndex)
+                            .ToList();
 
                 // CollectionChanged events must be fired on UI thread
-                ServiceContainer.Resolve<IPlatformInfo> ().DispatchOnUIThread (() => {
+                ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                     var offset = 0;
-                    diffs.Select(diff => {
-                        System.Diagnostics.Debug.WriteLine(diff);
+                    diffs.Select (diff => {
+                        System.Diagnostics.Debug.WriteLine (diff);
                         var newItem = newItemCollection[diff.NewIndex];
                         var oldItem = ItemCollection[diff.OldIndex + offset];
                         switch (diff.Type) {
                         case DiffSectionType.Add:
-                            ItemCollection.Insert(diff.OldIndex + offset, newItem);
-                            return new NotifyCollectionChangedEventArgs(
-                                NotifyCollectionChangedAction.Add, newItem, diff.OldIndex + offset++);
+                            ItemCollection.Insert (diff.OldIndex + offset, newItem);
+                            return new NotifyCollectionChangedEventArgs (
+                                       NotifyCollectionChangedAction.Add, newItem, diff.OldIndex + offset++);
                         case DiffSectionType.Remove:
-                            ItemCollection.RemoveAt(diff.OldIndex + offset);
-                            return new NotifyCollectionChangedEventArgs(
-                                NotifyCollectionChangedAction.Remove, oldItem, diff.OldIndex + offset--);
+                            ItemCollection.RemoveAt (diff.OldIndex + offset);
+                            return new NotifyCollectionChangedEventArgs (
+                                       NotifyCollectionChangedAction.Remove, oldItem, diff.OldIndex + offset--);
 
                         case DiffSectionType.Copy:
                         default:
                             // TODO: Check if this is Move action instead
-                            var isUpdated = !(newItem is IDateGroup) && !object.ReferenceEquals(oldItem, newItem);
+                            var isUpdated = ! (newItem is IDateGroup) && !object.ReferenceEquals (oldItem, newItem);
                             ItemCollection[diff.OldIndex + offset] = newItem;
                             return isUpdated
-                                ? new NotifyCollectionChangedEventArgs(
-                                    NotifyCollectionChangedAction.Replace, newItem, oldItem, diff.OldIndex + offset)
-                                : null;
+                                   ? new NotifyCollectionChangedEventArgs (
+                                       NotifyCollectionChangedAction.Replace, newItem, oldItem, diff.OldIndex + offset)
+                                   : null;
                         }
                     })
-                    .ForEach(arg => {
-                        if (arg != null && CollectionChanged != null)
-                            CollectionChanged(this, arg);
+                    .ForEach (arg => {
+                        if (arg != null && CollectionChanged != null) {
+                            CollectionChanged (this, arg);
+                        }
                     });
                 });
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 // TODO: Log exception
-                System.Diagnostics.Debug.WriteLine("Error: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine ("Error: " + ex.Message);
                 return false;
             }
             return true;

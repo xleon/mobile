@@ -125,6 +125,8 @@ namespace Toggl.Phoebe.Tests.Data
                 });
                 Assert.AreEqual (te2.Id, ActiveManager.Running.Id);
 
+                StopSync ();
+
                 // Check against latest data:
                 await WhenDataStoreIdle ();
                 te1 = await GetEntry (te1.Id);

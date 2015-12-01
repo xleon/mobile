@@ -220,7 +220,7 @@ namespace Toggl.Joey.UI.Adapters
             private readonly Handler handler;
             private readonly LogTimeEntriesAdapter owner;
 
-            public TimeEntryHolder DataSource { get; set; }
+            public ITimeEntryHolder DataSource { get; set; }
 
             public View ColorView { get; private set; }
 
@@ -272,7 +272,7 @@ namespace Toggl.Joey.UI.Adapters
                 return false;
             }
 
-            public void Bind (TimeEntryHolder datasource)
+            public void Bind (ITimeEntryHolder datasource)
             {
                 DataSource = datasource;
 
@@ -283,38 +283,39 @@ namespace Toggl.Joey.UI.Adapters
                 var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (!String.IsNullOrWhiteSpace (DataSource.ProjectName)) {
-                    color = Color.ParseColor (ProjectModel.HexColors [DataSource.Color % ProjectModel.HexColors.Length]);
+                var info = DataSource.Info;
+                if (!String.IsNullOrWhiteSpace (info.ProjectData.Name)) {
+                    color = Color.ParseColor (ProjectModel.HexColors [info.Color % ProjectModel.HexColors.Length]);
                     ProjectTextView.SetTextColor (color);
-                    ProjectTextView.Text = DataSource.ProjectName;
+                    ProjectTextView.Text = info.ProjectData.Name;
                 } else {
                     ProjectTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoProject);
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
 
-                if (String.IsNullOrWhiteSpace (DataSource.ClientName)) {
+                if (String.IsNullOrWhiteSpace (info.ClientData.Name)) {
                     ClientTextView.Text = String.Empty;
                     ClientTextView.Visibility = ViewStates.Gone;
                 } else {
-                    ClientTextView.Text = String.Format ("{0} • ", DataSource.ClientName);
+                    ClientTextView.Text = String.Format ("{0} • ", info.ClientData.Name);
                     ClientTextView.Visibility = ViewStates.Visible;
                 }
 
-                if (String.IsNullOrWhiteSpace (DataSource.TaskName)) {
+                if (String.IsNullOrWhiteSpace (info.TaskData.Name)) {
                     TaskTextView.Text = String.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 } else {
-                    TaskTextView.Text = String.Format ("{0} • ", DataSource.TaskName);
+                    TaskTextView.Text = String.Format ("{0} • ", info.TaskData.Name);
                     TaskTextView.Visibility = ViewStates.Visible;
                 }
 
-                if (String.IsNullOrWhiteSpace (DataSource.Description)) {
+                if (String.IsNullOrWhiteSpace (info.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                 } else {
-                    DescriptionTextView.Text = DataSource.Description;
+                    DescriptionTextView.Text = info.Description;
                 }
 
-                BillableView.Visibility = DataSource.IsBillable ? ViewStates.Visible : ViewStates.Gone;
+                BillableView.Visibility = info.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
 
                 var shape = ColorView.Background as GradientDrawable;
@@ -332,10 +333,10 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var duration = DataSource.TotalDuration;
+                var duration = DataSource.GetDuration ();
                 DurationTextView.Text = TimeEntryModel.GetFormattedDuration (duration);
 
-                if (DataSource.State == TimeEntryState.Running) {
+                if (DataSource.Data.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
                 } else {
@@ -351,7 +352,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                if (DataSource.State == TimeEntryState.Running) {
+                if (DataSource.Data.State == TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
                 } else {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
@@ -365,7 +366,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var numberOfTags = DataSource.NumberOfTags;
+                var numberOfTags = DataSource.Info.NumberOfTags;
                 TagsView.BubbleCount = numberOfTags;
                 TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
             }

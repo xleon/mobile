@@ -17,21 +17,21 @@ namespace Toggl.Phoebe.Data.Views
             Tag = "GroupedTimeEntriesView";
         }
 
-        protected override IList<IHolder> CreateItemCollection (IList<ITimeHolder> holders)
+        protected override IList<IHolder> CreateItemCollection (IList<ITimeEntryHolder> timeHolders)
         {
-            return holders
+            return timeHolders
                    .Cast<TimeEntryGroup> ()
-                   .GroupBy (x => x.StartTime.ToLocalTime ().Date)
+                   .GroupBy (x => x.GetStartTime ().ToLocalTime ().Date)
                    .SelectMany (gr => gr.Cast<IHolder> ().Prepend (new DateHolder (gr.Key, gr)))
                    .ToList();
         }
 
-        protected override async Task<ITimeHolder> CreateTimeHolder (TimeEntryData entry, ITimeHolder previousHolder = null)
+        protected override async Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previousHolder = null)
         {
             var holder = previousHolder as TimeEntryGroup;
             if (holder != null) {
-                holder = new TimeEntryGroup (holder.TimeEntryList);
-                holder.TimeEntryList.Add (entry);
+                holder = new TimeEntryGroup (holder.Group);
+                holder.Group.Add (entry);
             } else {
                 holder = new TimeEntryGroup (entry);
             }

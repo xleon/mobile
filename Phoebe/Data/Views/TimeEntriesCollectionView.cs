@@ -28,7 +28,7 @@ namespace Toggl.Phoebe.Data.Views
         public static int BufferMilliseconds = 500;
 
         protected string Tag = "TimeEntriesCollectionView";
-        protected ITimeHolder LastRemovedItem;
+        protected ITimeEntryHolder LastRemovedItem;
 
         private IList<IHolder> ItemCollection = new List<IHolder> ();
         private DateTime startFrom;
@@ -85,38 +85,39 @@ namespace Toggl.Phoebe.Data.Views
         }
 
         #region Abstract Methods
-        protected abstract IList<IHolder> CreateItemCollection (IList<ITimeHolder> timeEntryHolders);
-        protected abstract Task<ITimeHolder> CreateTimeHolder (TimeEntryData entry, ITimeHolder previousHolder = null);
+        protected abstract IList<IHolder> CreateItemCollection (IList<ITimeEntryHolder> timeHolders);
+        protected abstract Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previousHolder = null);
         #endregion
 
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-//        private Task<bool> UpdateAsync (TimeEntryData entry, DataAction action)
-//        {
-//            return UpdateAsync (new List<Tuple<TimeEntryData, DataAction>>() { Tuple.Create (entry, action) });
-//        }
+        private Task<bool> UpdateAsync (TimeEntryData entry, DataAction action)
+        {
+            return UpdateAsync (new List<Tuple<TimeEntryData, DataAction>>() { Tuple.Create (entry, action) });
+        }
 
         /// <summary>
         /// The caller only needs to add or delete time holders.
         /// The list will later be sorted and date headers created.
         /// </summary>
-        private async Task<bool> BatchUpdateAsync (Func<IList<ITimeHolder>, Task> update)
+        private async Task<bool> BatchUpdateAsync (Func<IList<ITimeEntryHolder>, Task> update)
         {
-            var timeHolders = ItemCollection.OfType<ITimeHolder> ().ToList ();
+            var timeHolders = ItemCollection.OfType<ITimeEntryHolder> ().ToList ();
             try {
                 await update (timeHolders);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger>();
                 log.Error (Tag, ex, "Failed to fetch time entries");
                 return false;
-            }
-            finally {
+            } finally {
                 // Sort & update ItemCollection
-                ItemCollection = CreateItemCollection (timeHolders.OrderByDescending(x => x.StartTime).ToList ());
+                ItemCollection = CreateItemCollection (timeHolders.OrderByDescending (x =>
+                                                       x.GetStartTime ()).ToList ());
                 if (CollectionChanged != null) {
-                    CollectionChanged (this, new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Reset));
+                    ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() =>
+                            CollectionChanged (this, new NotifyCollectionChangedEventArgs (
+                                                   NotifyCollectionChangedAction.Reset)));
                 }
             }
             return true;
@@ -126,7 +127,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
-                var timeHolders = ItemCollection.OfType<ITimeHolder> ().ToList ();
+                var timeHolders = ItemCollection.OfType<ITimeEntryHolder> ().ToList ();
 
                 // 2. Remove, replace or add items from messages
                 // TODO: Use some cache to improve performance of GetTimeEntryHolderIndex
@@ -155,7 +156,8 @@ namespace Toggl.Phoebe.Data.Views
                 }
 
                 // 3. Sort new list
-                timeHolders = timeHolders.OrderByDescending (x => x.StartTime).ToList ();
+                timeHolders = timeHolders.OrderByDescending (x =>
+                              x.GetStartTime ()).ToList ();
 
                 // 4. Create the new item collection from holders (add headers...)
                 var newItemCollection = CreateItemCollection (timeHolders);
@@ -212,16 +214,16 @@ namespace Toggl.Phoebe.Data.Views
         public async void ContinueTimeEntry (int index)
         {
             // Get data holder
-            var timeEntryHolder = ItemCollection.ElementAtOrDefault (index) as ITimeHolder;
+            var timeEntryHolder = ItemCollection.ElementAtOrDefault (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
                 return;
             }
 
-            if (timeEntryHolder.IsRunning) {
-                await TimeEntryModel.StopAsync (timeEntryHolder.TimeEntryData);
+            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
+                await TimeEntryModel.StopAsync (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.TimeEntryData);
+                await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
         }
@@ -231,7 +233,7 @@ namespace Toggl.Phoebe.Data.Views
         public async Task RemoveItemWithUndoAsync (int index)
         {
             // Get data holder
-            var timeEntryHolder = ItemCollection.ElementAtOrDefault (index) as ITimeHolder;
+            var timeEntryHolder = ItemCollection.ElementAtOrDefault (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
                 return;
             }
@@ -241,13 +243,13 @@ namespace Toggl.Phoebe.Data.Views
                 await RemoveItemPermanentlyAsync (LastRemovedItem);
             }
 
-            if (timeEntryHolder.IsRunning) {
-                await TimeEntryModel.StopAsync (timeEntryHolder.TimeEntryData);
+            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
+                await TimeEntryModel.StopAsync (timeEntryHolder.Data);
             }
             LastRemovedItem = timeEntryHolder;
 
             // Remove item only from list
-            await RemoveTimeEntryHolderAsync (timeEntryHolder);
+            await UpdateAsync (timeEntryHolder.Data, DataAction.Delete);
 
             // Create Undo timer
             if (undoTimer != null) {
@@ -264,22 +266,12 @@ namespace Toggl.Phoebe.Data.Views
         public async Task RestoreItemFromUndoAsync()
         {
             if (LastRemovedItem != null) {
-                await AddTimeEntryHolderAsync (LastRemovedItem);
+                await UpdateAsync (LastRemovedItem.Data, DataAction.Put);
                 LastRemovedItem = null;
             }
         }
 
-        protected virtual Task AddTimeEntryHolderAsync (ITimeHolder holder)
-        {
-            throw new NotImplementedException ("You can't call this method in base class " + GetType().Name);
-        }
-
-        protected virtual Task RemoveTimeEntryHolderAsync (ITimeHolder holder)
-        {
-            throw new NotImplementedException ("You can't call this method in base class " + GetType().Name);
-        }
-
-        private async Task RemoveItemPermanentlyAsync (ITimeHolder holder)
+        private async Task RemoveItemPermanentlyAsync (ITimeEntryHolder holder)
         {
             if (holder != null) {
                 await holder.DeleteAsync ();
@@ -357,13 +349,11 @@ namespace Toggl.Phoebe.Data.Views
 
                         startTime = minStart;
                         HasMore = (endTime.Date - minStart.Date).Days > 0;
-                    }
-                    catch (Exception exc) {
+                    } catch (Exception exc) {
                         var log = ServiceContainer.Resolve<ILogger> ();
                         if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
                             log.Info (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
-                        }
-                        else {
+                        } else {
                             log.Warning (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
                         }
 
@@ -379,8 +369,8 @@ namespace Toggl.Phoebe.Data.Views
                     var baseQuery = store.Table<TimeEntryData> ()
                                     .OrderByDescending (r => r.StartTime)
                                     .Where (r => r.State != TimeEntryState.New
-                                    && r.DeletedAt == null
-                                    && r.UserId == userId).Take (20);
+                                            && r.DeletedAt == null
+                                            && r.UserId == userId).Take (20);
                     //var entries = await baseQuery.ToListAsync (r => r.StartTime <= endTime && r.StartTime > startTime);
                     var entries = await baseQuery.ToListAsync ();
 
@@ -455,11 +445,11 @@ namespace Toggl.Phoebe.Data.Views
         public class DateHolder : IHolder
         {
             public DateTime Date { get; }
-            public IList<ITimeHolder> DataObjects { get; private set; }
+            public IList<ITimeEntryHolder> DataObjects { get; private set; }
 
             public bool IsRunning
             {
-                get { return DataObjects.Any (g => g.IsRunning); }
+                get { return DataObjects.Any (g => g.Data.State == TimeEntryState.Running); }
             }
 
             public TimeSpan TotalDuration
@@ -467,13 +457,13 @@ namespace Toggl.Phoebe.Data.Views
                 get {
                     TimeSpan totalDuration = TimeSpan.Zero;
                     foreach (var item in DataObjects) {
-                        totalDuration += item.TotalDuration;
+                        totalDuration += item.GetDuration ();
                     }
                     return totalDuration;
                 }
             }
 
-            public DateHolder (DateTime date, IEnumerable<ITimeHolder> timeHolders)
+            public DateHolder (DateTime date, IEnumerable<ITimeEntryHolder> timeHolders)
             {
                 Date = date;
                 DataObjects = timeHolders.ToList ();

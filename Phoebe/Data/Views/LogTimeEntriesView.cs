@@ -17,19 +17,19 @@ namespace Toggl.Phoebe.Data.Views
             Tag = "LogTimeEntriesView";
         }
 
-        protected override IList<IHolder> CreateItemCollection (IList<ITimeHolder> holders)
+        protected override IList<IHolder> CreateItemCollection (IList<ITimeEntryHolder> timeHolders)
         {
-            return holders
+            return timeHolders
                    .Cast<TimeEntryHolder>()
-                   .GroupBy (x => x.TimeEntryData.StartTime.ToLocalTime().Date)
+                   .GroupBy (x => x.Data.StartTime.ToLocalTime().Date)
                    .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
                    .ToList ();
         }
 
-        protected override async Task<ITimeHolder> CreateTimeHolder (TimeEntryData entry, ITimeHolder previousHolder = null)
+        protected override async Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previousHolder = null)
         {
             // Ignore previousHolder
-            var holder = new TimeEntryHolder (new List<TimeEntryData>() { entry });
+            var holder = new TimeEntryHolder (entry);
             await holder.LoadAsync();
             return holder;
         }

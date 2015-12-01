@@ -162,7 +162,9 @@ namespace Toggl.Joey
 
         public void DispatchOnUIThread (Action action)
         {
-            BaseActivity.CurrentActivity.RunOnUiThread (action);
+            if (BaseActivity.CurrentActivity != null) {
+                BaseActivity.CurrentActivity.RunOnUiThread (action);
+            }
         }
     }
 }

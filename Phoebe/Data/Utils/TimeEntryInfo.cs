@@ -23,51 +23,46 @@ namespace Toggl.Phoebe.Data.Utils
 
         public static async Task<TimeEntryInfo> LoadAsync (TimeEntryData timeEntryData)
         {
-            var info = new TimeEntryInfo ();
-            if (timeEntryData.ProjectId.HasValue) {
-                info.ProjectData = await GetProjectDataAsync (timeEntryData.ProjectId.Value);
-                if (info.ProjectData.ClientId.HasValue) {
-                    info.ClientData = await GetClientDataAsync (info.ProjectData.ClientId.Value);
-                }
-            }
-
-            if (timeEntryData.TaskId.HasValue) {
-                info.TaskData = await GetTaskDataAsync (timeEntryData.TaskId.Value);
-            }
-
-            info.NumberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id);
-
-            return info;
+            var projectData = timeEntryData.ProjectId.HasValue
+                              ? await GetProjectDataAsync (timeEntryData.ProjectId.Value)
+                              : new ProjectData ();
+            return new TimeEntryInfo () {
+                ProjectData = projectData,
+                ClientData = projectData.ClientId.HasValue
+                             ? await GetClientDataAsync (projectData.ClientId.Value)
+                             : new ClientData (),
+                TaskData = timeEntryData.TaskId.HasValue
+                           ? await GetTaskDataAsync (timeEntryData.TaskId.Value)
+                           : new TaskData (),
+                Description = timeEntryData.Description,
+                Color = (projectData.Id != Guid.Empty) ? projectData.Color : -1,
+                IsBillable = timeEntryData.IsBillable,
+                NumberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id)
+            };
         }
 
         private static async Task<ProjectData> GetProjectDataAsync (Guid projectGuid)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var projectList = await store.Table<ProjectData> ()
-                              .Where (m => m.Id == projectGuid)
-                              .Take (1)
-                              .ToListAsync ();
-            return projectList.First ();
+            return await store.Table<ProjectData> ()
+                   .Where (m => m.Id == projectGuid)
+                   .FirstAsync ();
         }
 
         private static async Task<TaskData> GetTaskDataAsync (Guid taskId)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var taskList = await store.Table<TaskData> ()
-                           .Where (m => m.Id == taskId)
-                           .Take (1)
-                           .ToListAsync ();
-            return taskList.First ();
+            return await store.Table<TaskData> ()
+                   .Where (m => m.Id == taskId)
+                   .FirstAsync ();
         }
 
         private static async Task<ClientData> GetClientDataAsync (Guid clientId)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var clientList = await store.Table<ClientData> ()
-                             .Where (m => m.Id == clientId)
-                             .Take (1)
-                             .ToListAsync ();
-            return clientList.First ();
+            return await store.Table<ClientData> ()
+                   .Where (m => m.Id == clientId)
+                   .FirstAsync ();
         }
 
         private static Task<int> GetNumberOfTagsAsync (Guid timeEntryGuid)

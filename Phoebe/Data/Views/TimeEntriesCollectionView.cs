@@ -24,6 +24,7 @@ namespace Toggl.Phoebe.Data.Views
     /// </summary>
     public abstract class TimeEntriesCollectionView : ICollectionDataView<object>, IDisposable
     {
+        public static int MaxInitLocalEntries = 20;
         public static int UndoSecondsInterval = 5;
         public static int BufferMilliseconds = 500;
 
@@ -103,6 +104,7 @@ namespace Toggl.Phoebe.Data.Views
         /// </summary>
         private async Task<bool> BatchUpdateAsync (Func<IList<ITimeEntryHolder>, Task> update)
         {
+            IsLoading = true;
             var timeHolders = ItemCollection.OfType<ITimeEntryHolder> ().ToList ();
             try {
                 await update (timeHolders);
@@ -119,6 +121,7 @@ namespace Toggl.Phoebe.Data.Views
                             CollectionChanged (this, new NotifyCollectionChangedEventArgs (
                                                    NotifyCollectionChangedAction.Reset)));
                 }
+                IsLoading = false;
             }
             return true;
         }
@@ -315,9 +318,6 @@ namespace Toggl.Phoebe.Data.Views
                 return;
             }
 
-            IsLoading = true;
-            var client = ServiceContainer.Resolve<ITogglClient>();
-
             await BatchUpdateAsync (async timeHolders => {
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var endTime = startFrom;
@@ -334,6 +334,7 @@ namespace Toggl.Phoebe.Data.Views
                     const int numDays = 5;
                     try {
                         var minStart = endTime;
+                        var client = ServiceContainer.Resolve<ITogglClient>();
                         var jsonEntries = await client.ListTimeEntries (endTime, numDays, cts.Token);
 
                         var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
@@ -367,12 +368,14 @@ namespace Toggl.Phoebe.Data.Views
                     var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
                     var baseQuery = store.Table<TimeEntryData> ()
-                                    .OrderByDescending (r => r.StartTime)
                                     .Where (r => r.State != TimeEntryState.New
                                             && r.DeletedAt == null
-                                            && r.UserId == userId).Take (20);
-                    //var entries = await baseQuery.ToListAsync (r => r.StartTime <= endTime && r.StartTime > startTime);
-                    var entries = await baseQuery.ToListAsync ();
+                                            && r.UserId == userId);
+
+                    var entries = await baseQuery
+                                  .Take (MaxInitLocalEntries)
+                                  .OrderByDescending (r => r.StartTime)
+                                  .ToListAsync ();
 
                     foreach (var entry in entries) {
                         timeHolders.Add (await CreateTimeHolder (entry));
@@ -382,6 +385,7 @@ namespace Toggl.Phoebe.Data.Views
                         var count = await baseQuery
                                     .Where (r => r.StartTime <= startTime)
                                     .CountAsync ();
+                        // TODO: Should this be count > MaxInitLocalEntries?
                         HasMore = count > 0;
                     }
                 }

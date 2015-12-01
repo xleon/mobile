@@ -29,12 +29,9 @@ namespace Toggl.Phoebe.Data.Views
         protected override async Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previousHolder = null)
         {
             var holder = previousHolder as TimeEntryGroup;
-            if (holder != null) {
-                holder = new TimeEntryGroup (holder.Group);
-                holder.Group.Add (entry);
-            } else {
-                holder = new TimeEntryGroup (entry);
-            }
+            holder = holder != null
+                     ? new TimeEntryGroup (holder.Group.Append (entry))
+                     :new TimeEntryGroup (entry);
             await holder.LoadAsync();
             return holder;
         }

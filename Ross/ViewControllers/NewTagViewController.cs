@@ -105,7 +105,8 @@ namespace Toggl.Ross.ViewControllers
         {
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<TagData>()
-                           .QueryAsync (r => r.WorkspaceId == model.Workspace.Id && r.Name == model.Name)
+                           .Where (r => r.WorkspaceId == model.Workspace.Id && r.Name == model.Name)
+                           .ToListAsync ()
                            .ConfigureAwait (false);
 
             TagModel tag;

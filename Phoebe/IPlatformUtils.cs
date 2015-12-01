@@ -27,21 +27,14 @@ namespace Toggl.Phoebe
         bool IsWidgetAvailable { get; }
 
         /// <summary>
-<<<<<<< 9347f477fd254df232933204828aaeddaaf82aaa:Phoebe/IPlatformUtils.cs
         /// Get info about SQLite platform implementation
         /// </summary>
         ISQLitePlatform SQLiteInfo { get; }
 
         /// <summary>
-=======
->>>>>>> #1033:Phoebe/IPlatformInfo.cs
         /// Run an action using the UI thread.
         /// </summary>
         /// <value>Detect if widget is available or not</value>
         void DispatchOnUIThread  (Action action);
-<<<<<<< 9347f477fd254df232933204828aaeddaaf82aaa:Phoebe/IPlatformUtils.cs
-
-=======
->>>>>>> #1033:Phoebe/IPlatformInfo.cs
     }
 }

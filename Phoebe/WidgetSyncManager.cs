@@ -90,7 +90,7 @@ namespace Toggl.Phoebe
                                     && r.Id == stringGuid)
                             .Take (1);
 
-            var entries = await baseQuery.QueryAsync ().ConfigureAwait (false);
+            var entries = await baseQuery.ToListAsync ().ConfigureAwait (false);
             if (entries.Count > 0) {
                 entryModel = (TimeEntryModel)entries.FirstOrDefault();
             } else {
@@ -148,14 +148,14 @@ namespace Toggl.Phoebe
                 var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
                 var baseQuery = store.Table<TimeEntryData> ()
-                                .OrderBy (r => r.StartTime, false)
+                                .OrderByDescending (r => r.StartTime)
                                 .Where (r => r.DeletedAt == null
                                         && r.UserId == userId
                                         && r.State != TimeEntryState.New
                                         && r.StartTime >= queryStartDate)
                                 .Take (4);
 
-                var entries = await baseQuery.QueryAsync ().ConfigureAwait (false);
+                var entries = await baseQuery.ToListAsync ().ConfigureAwait (false);
                 var widgetEntries = new List<WidgetEntryData>();
 
                 foreach (var entry in entries) {
@@ -164,7 +164,7 @@ namespace Toggl.Phoebe
 
                     if (entry.ProjectId != null) {
                         var q = store.Table<ProjectData>().Where (p => p.Id == entry.ProjectId.Value);
-                        var l = await q.QueryAsync ().ConfigureAwait (false);
+                        var l = await q.ToListAsync ().ConfigureAwait (false);
                         project = l.FirstOrDefault();
                     } else {
                         project = new ProjectData {

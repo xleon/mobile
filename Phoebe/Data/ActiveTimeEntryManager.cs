@@ -125,7 +125,8 @@ namespace Toggl.Phoebe.Data
             // Load data:
             var draftTask = TimeEntryModel.GetDraftAsync ();
             var runningTask = store.Table<TimeEntryData> ()
-                              .QueryAsync (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId);
+                              .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null && r.UserId == userId)
+                              .ToListAsync ();
 
             await Task.WhenAll (draftTask, runningTask);
 

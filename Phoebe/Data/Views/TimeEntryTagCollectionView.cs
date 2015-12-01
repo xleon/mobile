@@ -117,7 +117,9 @@ namespace Toggl.Phoebe.Data.Views
         private async Task LoadTagData (Guid id)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var rows = await store.Table<TagData> ().QueryAsync (r => r.Id == id && r.DeletedAt == null);
+            var rows = await store.Table<TagData> ()
+                       .Where (r => r.Id == id && r.DeletedAt == null)
+                       .ToListAsync();
             var tag = rows.FirstOrDefault ();
 
             if (tag != null && tagIds.Contains (tag.Id)) {

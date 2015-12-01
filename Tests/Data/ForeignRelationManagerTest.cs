@@ -62,14 +62,14 @@ namespace Toggl.Phoebe.Tests.Data
                     Type = dataType,
                     Id = null,
                 };
-                Assert.IsNull (await mgr.QueryAsync (relation));
+                Assert.IsNull (await mgr.ToListAsync (relation));
 
                 // Test missing relation
                 relation = new ForeignRelation () {
                     Type = dataType,
                     Id = Guid.NewGuid (),
                 };
-                Assert.IsNull (await mgr.QueryAsync (relation));
+                Assert.IsNull (await mgr.ToListAsync (relation));
 
                 // Create dummy data:
                 var inst = (CommonData)Activator.CreateInstance (dataType);
@@ -77,7 +77,7 @@ namespace Toggl.Phoebe.Tests.Data
 
                 var putAsyncMethod = DataStore.GetType ().GetMethod ("PutAsync").MakeGenericMethod (dataType);
                 await (Task)putAsyncMethod.Invoke (DataStore, new object[] { inst });
-                Assert.IsNotNull (await mgr.QueryAsync (relation));
+                Assert.IsNotNull (await mgr.ToListAsync (relation));
             });
         }
 

@@ -65,22 +65,22 @@ namespace Toggl.Phoebe.Data
             return con.ExecuteScalar<int> (q, workspaceId, name);
         }
 
-        public static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
+        public async static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
-            var projectTbl = ds.GetTableName (typeof (ProjectData));
-            var projectUserTbl = ds.GetTableName (typeof (ProjectUserData));
+            var projectTbl = await ds.GetTableNameAsync<ProjectData>();
+            var projectUserTbl = await ds.GetTableNameAsync<ProjectUserData>();
             var q = String.Concat (
                         "SELECT p.* FROM ", projectTbl, " AS p ",
                         "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
                         "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
                         "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)");
-            return ds.QueryAsync<ProjectData> (q, userId);
+            return await ds.QueryAsync<ProjectData> (q, userId);
         }
 
-        public static Task<List<ProjectData>> GetMostUsedProjects (this IDataStore ds, Guid userId)
+        public async static Task<List<ProjectData>> GetMostUsedProjects (this IDataStore ds, Guid userId)
         {
-            var timeEntryTbl = ds.GetTableName (typeof (TimeEntryData));
-            var projectTbl = ds.GetTableName (typeof (ProjectData));
+            var timeEntryTbl = await ds.GetTableNameAsync<TimeEntryData>();
+            var projectTbl = await ds.GetTableNameAsync<ProjectData>();
             var q = String.Concat (
                         "SELECT project.* ",
                         "FROM ", timeEntryTbl, " AS entry INNER JOIN ", projectTbl, " AS project ON entry.ProjectId = project.Id ",
@@ -89,31 +89,31 @@ namespace Toggl.Phoebe.Data
                         "AND project.WorkspaceId IS NOT NULL ",
                         "GROUP BY entry.ProjectId ORDER BY COUNT(*) DESC"
                     );
-            return ds.QueryAsync<ProjectData> (q, userId);
+            return await ds.QueryAsync<ProjectData> (q, userId);
         }
 
-        public static Task<long> CountUserAccessibleProjects (this IDataStore ds, Guid userId)
+        public async static Task<long> CountUserAccessibleProjects (this IDataStore ds, Guid userId)
         {
-            var projectTbl = ds.GetTableName (typeof (ProjectData));
-            var projectUserTbl = ds.GetTableName (typeof (ProjectUserData));
+            var projectTbl = await ds.GetTableNameAsync<ProjectData>();
+            var projectUserTbl = await ds.GetTableNameAsync<ProjectUserData>();
             var q = String.Concat (
                         "SELECT COUNT(*) FROM ", projectTbl, " AS p ",
                         "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
                         "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
                         "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)");
-            return ds.ExecuteScalarAsync<long> (q, userId);
+            return await ds.ExecuteScalarAsync<long> (q, userId);
         }
 
-        public static Task<List<TagData>> GetTimeEntryTags (this IDataStore ds, Guid timeEntryId)
+        public async static Task<List<TagData>> GetTimeEntryTags (this IDataStore ds, Guid timeEntryId)
         {
-            var tagTbl = ds.GetTableName (typeof (TagData));
-            var timeEntryTagTbl = ds.GetTableName (typeof (TimeEntryTagData));
+            var tagTbl = await ds.GetTableNameAsync<TagData>();
+            var timeEntryTagTbl = await ds.GetTableNameAsync<TimeEntryTagData>();
             var q = String.Concat (
                         "SELECT t.* FROM ", tagTbl, " AS t ",
                         "INNER JOIN ", timeEntryTagTbl, " AS tet ON tet.TagId = t.Id ",
                         "WHERE t.DeletedAt IS NULL AND tet.DeletedAt IS NULL ",
                         "AND tet.TimeEntryId=?");
-            return ds.QueryAsync<TagData> (q, timeEntryId);
+            return await ds.QueryAsync<TagData> (q, timeEntryId);
         }
 
         public static Task ResetAllModificationTimes (this IDataStore ds)

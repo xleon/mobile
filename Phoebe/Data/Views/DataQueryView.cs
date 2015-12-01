@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SQLite.Net.Async;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -8,13 +9,13 @@ namespace Toggl.Phoebe.Data.Views
     /// Query view wraps IDataQuery and retrieves only required amount of data at once.
     /// </summary>
     public sealed class DataQueryView<T> : IDataView<T>
-        where T : new()
+        where T : class, new()
     {
-        private readonly IDataQuery<T> query;
+        private readonly AsyncTableQuery<T> query;
         private readonly int batchSize;
         private readonly List<T> data = new List<T> ();
 
-        public DataQueryView (IDataQuery<T> query, int batchSize) {
+        public DataQueryView (AsyncTableQuery<T> query, int batchSize) {
             this.query = query;
             this.batchSize = batchSize;
             Reload ();
@@ -32,7 +33,7 @@ namespace Toggl.Phoebe.Data.Views
             OnUpdated ();
 
             try {
-                var queryTask = query.Skip (data.Count).Take (batchSize).QueryAsync ();
+                var queryTask = query.Skip (data.Count).Take (batchSize).ToListAsync ();
                 var countTask = query.CountAsync ();
                 await Task.WhenAll (queryTask, countTask);
 
@@ -55,7 +56,7 @@ namespace Toggl.Phoebe.Data.Views
             OnUpdated ();
 
             try {
-                var queryTask = query.Skip (data.Count).Take (batchSize).QueryAsync ();
+                var queryTask = query.Skip (data.Count).Take (batchSize).ToListAsync ();
                 var countTask = query.CountAsync ();
                 await Task.WhenAll (queryTask, countTask);
 

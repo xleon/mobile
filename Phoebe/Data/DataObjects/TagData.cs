@@ -1,5 +1,5 @@
 using System;
-using SQLite;
+using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe.Data.DataObjects
 {

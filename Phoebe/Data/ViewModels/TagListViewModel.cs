@@ -52,10 +52,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             var store = ServiceContainer.Resolve<IDataStore> ();
 
             var workspaceTags = await store.Table<TagData> ()
-                                .QueryAsync (r => r.DeletedAt == null
-                                             && r.WorkspaceId == workspaceId);
+                                .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
+                                .ToListAsync();
             var currentSelectedTags = await store.Table<TagData> ()
-                                      .QueryAsync (r => r.DeletedAt == null && previousSelectedIds.Contains (r.Id));
+                                      .Where (r => r.DeletedAt == null && previousSelectedIds.Contains (r.Id))
+                                      .ToListAsync();
 
             // TODO:
             // There is an strange case, tags are created again across

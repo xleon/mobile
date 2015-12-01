@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
-using SQLite;
-using Toggl.Phoebe.Logging;
+using SQLite.Net;
+using SQLite.Net.Async;
+using SQLite.Net.Interop;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -12,30 +12,22 @@ namespace Toggl.Phoebe.Data
 {
     public class SqliteDataStore : IDataStore
     {
-        private readonly Scheduler scheduler = new Scheduler ();
-        private readonly Context ctx;
+        private readonly SQLiteConnectionWithLock cnn;
 #pragma warning disable 0414
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
 #pragma warning restore 0414
 
-        public SqliteDataStore (string dbPath)
+        public SqliteDataStore (string dbPath, ISQLitePlatform platformInfo)
         {
-            scheduler.Idle += HandleSchedulerIdle;
-            ctx = new Context (this, dbPath);
+            // When using this constructor, Context will create a connection with lock
+            // so we can safely make the cast
+            var cnnString = new SQLiteConnectionString (dbPath, true);
+            cnn = new SQLiteConnectionWithLock (platformInfo, cnnString);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
-            var dataObjects = DiscoverDataObjectTypes ();
-            foreach (var t in dataObjects) {
-                ctx.Connection.CreateTable (t);
-            }
-        }
-
-        private void HandleSchedulerIdle (object sender, EventArgs args)
-        {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Send (new DataStoreIdleMessage (this));
+            CreateTables();
         }
 
         internal static IEnumerable<Type> DiscoverDataObjectTypes ()
@@ -46,28 +38,23 @@ namespace Toggl.Phoebe.Data
                    select t;
         }
 
-        private async void CreateTables ()
+        private void CreateTables ()
         {
-            await ExecuteInTransactionAsync (delegate {
-                var dataObjects = DiscoverDataObjectTypes ();
-
-                foreach (var t in dataObjects) {
-                    ctx.Connection.CreateTable (t);
-                }
-            });
+            var dataObjects = DiscoverDataObjectTypes ();
+            foreach (var t in dataObjects) {
+                cnn.CreateTable (t);
+            }
         }
 
-        private async void WipeTables ()
+        private void WipeTables ()
         {
-            await ExecuteInTransactionAsync (delegate {
-                var dataObjects = DiscoverDataObjectTypes ();
+            var dataObjects = DiscoverDataObjectTypes ();
 
-                foreach (var t in dataObjects) {
-                    var map = ctx.Connection.GetMapping (t);
-                    var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
-                    ctx.Connection.Execute (query);
-                }
-            });
+            foreach (var t in dataObjects) {
+                var map = cnn.GetMapping (t);
+                var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
+                cnn.Execute (query);
+            }
         }
 
         private void OnAuthChanged (AuthChangedMessage msg)
@@ -98,289 +85,134 @@ namespace Toggl.Phoebe.Data
             return other;
         }
 
-        public Task<T> PutAsync<T> (T obj)
-        where T : new()
+        private void SendMessage (DataChangeMessage message)
         {
-            obj = Clone (obj);
-            return scheduler.Enqueue (delegate {
-                try {
-                    return ctx.Put<T> (obj);
-                } finally {
-                    ctx.SendMessages ();
-                }
-            });
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bus.Send (message);
         }
 
-        public Task<bool> DeleteAsync (object obj)
+        private void SendMessages (IList<DataChangeMessage> messages)
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            foreach (var msg in messages) {
+                bus.Send (msg);
+            }
+        }
+
+        private SQLiteAsyncConnection CreateAsyncCnn()
+        {
+            return new SQLiteAsyncConnection (() => cnn);
+        }
+
+        public async Task<T> PutAsync<T> (T obj) where T : class, new()
         {
             obj = Clone (obj);
-            return scheduler.Enqueue (delegate {
-                try {
-                    return ctx.Delete (obj);
-                } finally {
-                    ctx.SendMessages ();
-                }
-            });
+            var success = await CreateAsyncCnn().InsertOrReplaceAsync (obj) == 1;
+            if (success) {
+                SendMessage (new DataChangeMessage (this, obj, DataAction.Put));
+            }
+            return obj;
+        }
+
+        public async Task<bool> DeleteAsync (object obj)
+        {
+            obj = Clone (obj);
+            var success = await CreateAsyncCnn().DeleteAsync (obj) == 1;
+            if (success) {
+                SendMessage (new DataChangeMessage (this, obj, DataAction.Delete));
+            }
+            return success;
         }
 
         public Task<T> ExecuteScalarAsync<T> (string query, params object[] args)
         {
-            return scheduler.Enqueue (delegate {
-                return ctx.Connection.ExecuteScalar<T> (query, args);
-            });
+            return CreateAsyncCnn().ExecuteScalarAsync<T> (query, args);
         }
 
-        public Task<List<T>> QueryAsync<T> (string query, params object[] args) where T : new()
+        public Task<List<T>> QueryAsync<T> (string query, params object[] args) where T : class, new()
         {
-            return scheduler.Enqueue (delegate {
-                return ctx.Connection.Query<T> (query, args);
-            });
+            return CreateAsyncCnn().QueryAsync<T> (query, args);
         }
 
-        public IDataQuery<T> Table<T> () where T : new()
+        public AsyncTableQuery<T> Table<T> () where T : class, new()
         {
-            return new QueryBuilder<T> (this, ctx.Connection.Table<T> ());
+            return CreateAsyncCnn().Table<T> ();
         }
 
-        public string GetTableName (Type mappingType)
+        public async Task<string> GetTableNameAsync<T> ()
         {
-            var mapping = ctx.Connection.GetMapping (mappingType);
-            if (mapping == null) {
-                return null;
+            var mapping = await CreateAsyncCnn().GetMappingAsync<T> ();
+            return mapping == null ? null : mapping.TableName;
+        }
+
+        public async Task<T> ExecuteInTransactionAsync<T> (Func<IDataStoreContext, T> worker)
+        {
+            var result = default (T);
+            try {
+                Context ctx = null;
+                await CreateAsyncCnn().RunInTransactionAsync (conn => {
+                    ctx = new Context (this, conn);
+                    result = worker (ctx);
+                });
+                SendMessages (ctx.Messages);
+                return result;
+            } catch {
+                throw;
             }
-            return mapping.TableName;
         }
 
-        public Task<T> ExecuteInTransactionAsync<T> (Func<IDataStoreContext, T> worker)
+        public async Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker)
         {
-            return scheduler.Enqueue (delegate {
-                T ret;
-
-                ctx.Connection.BeginTransaction ();
-                try {
-                    ret = worker (ctx);
-                    ctx.Connection.Commit ();
-                    ctx.SendMessages ();
-                } catch {
-                    ctx.Connection.Rollback ();
-                    ctx.ClearMessages ();
-                    throw;
-                }
-
-                return ret;
-            });
-        }
-
-        public Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker)
-        {
-            return scheduler.Enqueue (delegate {
-                ctx.Connection.BeginTransaction ();
-                try {
+            try {
+                Context ctx = null;
+                await CreateAsyncCnn().RunInTransactionAsync (conn => {
+                    ctx = new Context (this, conn);
                     worker (ctx);
-                    ctx.Connection.Commit ();
-                    ctx.SendMessages ();
-                } catch {
-                    ctx.Connection.Rollback ();
-                    ctx.ClearMessages ();
-                    throw;
-                }
-            });
-        }
-
-        private class QueryBuilder<T> : IDataQuery<T>
-            where T : new()
-        {
-            private readonly SqliteDataStore store;
-            private readonly TableQuery<T> query;
-
-            public QueryBuilder (SqliteDataStore store, TableQuery<T> query) {
-                this.store = store;
-                this.query = query;
-            }
-
-            public IDataQuery<T> Where (Expression<Func<T, bool>> predicate) {
-                return new QueryBuilder<T> (store, query.Where (predicate));
-            }
-
-            public IDataQuery<T> OrderBy<U> (Expression<Func<T, U>> orderExpr, bool asc = true) {
-                if (asc) {
-                    return new QueryBuilder<T> (store, query.OrderBy (orderExpr));
-                } else {
-                    return new QueryBuilder<T> (store, query.OrderByDescending (orderExpr));
-                }
-            }
-
-            public IDataQuery<T> Take (int n) {
-                return new QueryBuilder<T> (store, query.Take (n));
-            }
-
-            public IDataQuery<T> Skip (int n) {
-                return new QueryBuilder<T> (store, query.Skip (n));
-            }
-
-            public Task<int> CountAsync () {
-                return store.scheduler.Enqueue (() => query.Count ());
-            }
-
-            public Task<int> CountAsync (Expression<Func<T, bool>> predicate) {
-                return new QueryBuilder<T> (store, query.Where (predicate)).CountAsync ();
-            }
-
-            public Task<List<T>> QueryAsync () {
-                return store.scheduler.Enqueue (() => query.ToList ());
-            }
-
-            public Task<List<T>> QueryAsync (Expression<Func<T, bool>> predicate) {
-                return new QueryBuilder<T> (store, query.Where (predicate)).QueryAsync ();
+                });
+                SendMessages (ctx.Messages);
+            } catch {
+                throw;
             }
         }
 
         private class Context : IDataStoreContext
         {
-            private readonly List<DataChangeMessage> messages = new List<DataChangeMessage> ();
             private readonly SqliteDataStore store;
             private readonly SQLiteConnection conn;
 
-            public Context (SqliteDataStore store, string dbPath)
+            public List<DataChangeMessage> Messages { get; private set; }
+
+            public Context (SqliteDataStore store, SQLiteConnection conn)
             {
                 this.store = store;
-                conn = new SQLiteConnection (dbPath);
+                this.conn = conn;
+                Messages =  new List<DataChangeMessage> ();
             }
 
             public T Put<T> (T obj)
             where T : new()
             {
-                conn.InsertOrReplace (obj);
-
-                // Schedule message to be sent about this update post transaction
-                messages.Add (new DataChangeMessage (store, obj, DataAction.Put));
-
+                var success = conn.InsertOrReplace (obj) == 1;
+                if (success) {
+                    // Schedule message to be sent about this update post transaction
+                    Messages.Add (new DataChangeMessage (store, obj, DataAction.Put));
+                }
                 return obj;
             }
 
             public bool Delete (object obj)
             {
-                var count = conn.Delete (obj);
-                var success = count > 0;
-
-                // Schedule message to be sent about this delete post transaction
+                var success = conn.Delete (obj) == 1;
                 if (success) {
-                    messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
+                    // Schedule message to be sent about this delete post transaction
+                    Messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
                 }
-
                 return success;
             }
 
             public SQLiteConnection Connection
             {
                 get { return conn; }
-            }
-
-            public void SendMessages ()
-            {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                foreach (var msg in messages) {
-                    bus.Send (msg);
-                }
-                messages.Clear ();
-            }
-
-            public void ClearMessages ()
-            {
-                messages.Clear ();
-            }
-        }
-
-        private class Scheduler
-        {
-            private const string Tag = "SQLiteDataStore.Scheduler";
-            private readonly object syncRoot = new Object ();
-            private readonly Queue<Action> workQueue = new Queue<Action> ();
-            private bool isWorking;
-
-            private async void EnsureProcessing ()
-            {
-                lock (syncRoot) {
-                    if (isWorking) {
-                        return;
-                    }
-                    isWorking = true;
-                }
-
-                try {
-                    await Task.Factory.StartNew (ProcessQueue);
-                } catch (Exception ex) {
-                    var log = ServiceContainer.Resolve<ILogger> ();
-                    log.Error (Tag, ex, "Something exploded on the SQLite background thread.");
-                } finally {
-                    OnIdle ();
-                }
-            }
-
-            private void ProcessQueue ()
-            {
-                while (true) {
-                    Action act;
-
-                    lock (syncRoot) {
-                        if (workQueue.Count == 0) {
-                            isWorking = false;
-                            return;
-                        }
-                        act = workQueue.Dequeue ();
-                    }
-
-                    act ();
-                }
-            }
-
-            private void OnIdle ()
-            {
-                var handler = Idle;
-                if (handler != null) {
-                    handler (this, EventArgs.Empty);
-                }
-            }
-
-            public event EventHandler Idle;
-
-            public Task<T> Enqueue<T> (Func<T> task)
-            {
-                var tcs = new TaskCompletionSource<T> ();
-
-                lock (syncRoot) {
-                    workQueue.Enqueue (delegate {
-                        try {
-                            tcs.SetResult (task ());
-                        } catch (Exception exc) {
-                            tcs.SetException (exc);
-                        }
-                    });
-                }
-
-                EnsureProcessing ();
-
-                return tcs.Task;
-            }
-
-            public Task Enqueue (Action task)
-            {
-                var tcs = new TaskCompletionSource<object> ();
-
-                lock (syncRoot) {
-                    workQueue.Enqueue (delegate {
-                        try {
-                            task ();
-                            tcs.SetResult (null);
-                        } catch (Exception exc) {
-                            tcs.SetException (exc);
-                        }
-                    });
-                }
-
-                EnsureProcessing ();
-
-                return tcs.Task;
             }
         }
     }

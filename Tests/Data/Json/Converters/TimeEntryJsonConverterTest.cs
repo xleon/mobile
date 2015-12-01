@@ -491,13 +491,13 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.AreNotEqual (Guid.Empty, timeEntryData.WorkspaceId);
 
-                var workspaceRows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == timeEntryData.WorkspaceId);
+                var workspaceRows = await DataStore.Table<WorkspaceData> ().Where (m => m.Id == timeEntryData.WorkspaceId).ToListAsync ();
                 var workspaceData = workspaceRows.FirstOrDefault ();
                 Assert.IsNotNull (workspaceData);
                 Assert.IsNotNull (workspaceData.RemoteId);
                 Assert.AreEqual (DateTime.MinValue, workspaceData.ModifiedAt);
 
-                var userRows = await DataStore.Table<UserData> ().QueryAsync (m => m.Id == timeEntryData.UserId);
+                var userRows = await DataStore.Table<UserData> ().Where (m => m.Id == timeEntryData.UserId).ToListAsync ();
                 var userData = userRows.FirstOrDefault ();
                 Assert.IsNotNull (userData);
                 Assert.IsNotNull (userData.RemoteId);
@@ -536,7 +536,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<TimeEntryData> ().QueryAsync (m => m.Id == timeEntryData.Id);
+                var rows = await DataStore.Table<TimeEntryData> ().Where (m => m.Id == timeEntryData.Id).ToListAsync ();
                 Assert.That (rows, Has.Count.EqualTo (0));
             });
         }
@@ -572,7 +572,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<TimeEntryData> ().QueryAsync (m => m.Id == timeEntryData.Id);
+                var rows = await DataStore.Table<TimeEntryData> ().Where (m => m.Id == timeEntryData.Id).ToListAsync ();
                 Assert.That (rows, Has.Count.EqualTo (0));
             });
         }
@@ -627,7 +627,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
 
                 timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
 
-                var tags = await DataStore.Table<TimeEntryTagData> ().QueryAsync (m => m.TimeEntryId == timeEntryData.Id);
+                var tags = await DataStore.Table<TimeEntryTagData> ().Where (m => m.TimeEntryId == timeEntryData.Id).ToListAsync ();
                 Assert.That (tags, Has.Count.EqualTo (2));
                 Assert.That (tags, Has.Exactly (1).Matches<TimeEntryTagData> (t => t.TagId == tag1Data.Id));
                 Assert.That (tags, Has.Exactly (1).Matches<TimeEntryTagData> (t => t.TagId == tag2Data.Id));
@@ -688,7 +688,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
 
                 timeEntryData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, timeEntryJson));
 
-                var timeEntryTagRows = await DataStore.Table<TimeEntryTagData> ().QueryAsync (m => m.TimeEntryId == timeEntryData.Id);
+                var timeEntryTagRows = await DataStore.Table<TimeEntryTagData> ().Where (m => m.TimeEntryId == timeEntryData.Id).ToListAsync ();
                 var tags = timeEntryTagRows.Select (r => r.TagId).ToList ();
                 Assert.That (tags, Has.Count.EqualTo (2));
                 Assert.That (tags, Has.Exactly (1).Matches<Guid> (id => id == tag1Data.Id));

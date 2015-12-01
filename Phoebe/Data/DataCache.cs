@@ -226,8 +226,9 @@ namespace Toggl.Phoebe.Data
                 try {
                     var dataStore = ServiceContainer.Resolve<IDataStore> ();
                     var rows = await dataStore.Table<T> ()
+                               .Where (r => r.Id == Id)
                                .Take (1)
-                               .QueryAsync (r => r.Id == Id)
+                               .ToListAsync ()
                                .ConfigureAwait (false);
 
                     data = rows.FirstOrDefault ();

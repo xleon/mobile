@@ -28,13 +28,13 @@ namespace Toggl.Phoebe.Data.Views
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
                 var recentEntries = await store.Table<TimeEntryData> ()
-                                    .OrderBy (r => r.StartTime, false)
+                                    .OrderByDescending (r => r.StartTime)
                                     .Take (maxCount)
                                     .Where (r => r.DeletedAt == null
                                             && r.UserId == userData.Id
                                             && r.State != TimeEntryState.New
                                             && r.StartTime >= queryStartDate)
-                                    .QueryAsync()
+                                    .ToListAsync()
                                     .ConfigureAwait (false);
 
                 dataObject = new List<ListEntryData> ();
@@ -47,7 +47,7 @@ namespace Toggl.Phoebe.Data.Views
                                    .Where (r => r.DeletedAt == null
                                            && r.UserId == userData.Id
                                            && r.State == TimeEntryState.Running)
-                                   .QueryAsync()
+                                   .ToListAsync()
                                    .ConfigureAwait (false);
 
                 hasRunning = runningEntry.Count > 0;
@@ -100,7 +100,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var project = await store.Table<ProjectData> ()
-                          .QueryAsync (r => r.Id == projectId);
+                          .Where (r => r.Id == projectId).ToListAsync();
 
             return projectId == Guid.Empty ? new ProjectData() : project[0];
         }

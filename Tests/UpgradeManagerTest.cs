@@ -5,6 +5,8 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using XPlatUtils;
+using SQLite.Net.Interop;
+using SQLite.Net.Platform.Generic;
 
 namespace Toggl.Phoebe.Tests
 {
@@ -70,15 +72,15 @@ namespace Toggl.Phoebe.Tests
                     ModifiedAt = new DateTime (2014, 1, 2),
                 });
 
-                upgradeManager.TryUpgrade ();
+                await upgradeManager.TryUpgrade ();
 
                 Assert.AreEqual (platformUtils.AppVersion, settingStore.LastAppVersion);
                 Assert.IsNull (settingStore.SyncLastRun);
 
-                workspaceData = (await DataStore.Table<WorkspaceData> ().QueryAsync (r => r.Id == workspaceData.Id)).Single ();
-                userData = (await DataStore.Table<UserData> ().QueryAsync (r => r.Id == userData.Id)).Single ();
-                timeEntry1 = (await DataStore.Table<TimeEntryData> ().QueryAsync (r => r.Id == timeEntry1.Id)).Single ();
-                timeEntry2 = (await DataStore.Table<TimeEntryData> ().QueryAsync (r => r.Id == timeEntry2.Id)).Single ();
+                workspaceData = (await DataStore.Table<WorkspaceData> ().Where (r => r.Id == workspaceData.Id).ToListAsync ()).Single ();
+                userData = (await DataStore.Table<UserData> ().Where (r => r.Id == userData.Id).ToListAsync ()).Single ();
+                timeEntry1 = (await DataStore.Table<TimeEntryData> ().Where (r => r.Id == timeEntry1.Id).ToListAsync ()).Single ();
+                timeEntry2 = (await DataStore.Table<TimeEntryData> ().Where (r => r.Id == timeEntry2.Id).ToListAsync ()).Single ();
 
                 Assert.AreEqual (DateTime.MinValue, workspaceData.ModifiedAt);
                 Assert.AreEqual (DateTime.MinValue, userData.ModifiedAt);
@@ -95,8 +97,14 @@ namespace Toggl.Phoebe.Tests
 
             public bool IsWidgetAvailable { get; set; }
 
-            public void DispatchOnUIThread (Action action) {}
+            public ISQLitePlatform SQLiteInfo
+            {
+                get {
+                    return new SQLitePlatformGeneric ();
+                }
+            }
 
+            public void DispatchOnUIThread (Action action) {}
         }
 
         private class SettingStore : ISettingsStore

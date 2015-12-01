@@ -6,6 +6,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using SQLite.Net.Async;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -128,7 +129,7 @@ namespace Toggl.Phoebe.Data.Views
             // Group only items in the past 9 days
             queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
             var query = store.Table<TimeEntryData> ()
-                        .OrderBy (r => r.StartTime, false)
+                        .OrderByDescending (r => r.StartTime)
                         .Where (r => r.DeletedAt == null
                                 && r.UserId == userId
                                 && r.State != TimeEntryState.New
@@ -183,12 +184,12 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        private static async Task<GroupContainer> FromQuery (IDataQuery<TimeEntryData> query)
+        private static async Task<GroupContainer> FromQuery (AsyncTableQuery<TimeEntryData> query)
         {
             var groups = new GroupContainer ();
 
             try {
-                var entries = await query.QueryAsync ().ConfigureAwait (false);
+                var entries = await query.ToListAsync().ConfigureAwait (false);
 
                 // Find unique time entries and add them to the list
                 foreach (var entry in entries) {

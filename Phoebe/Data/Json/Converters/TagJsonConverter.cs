@@ -28,8 +28,9 @@ namespace Toggl.Phoebe.Data.Json.Converters
 
             if (data == null) {
                 // Fallback to name lookup for unsynced tags:
-                var rows = ctx.Connection.Table<TagData> ().Take (1)
-                           .Where (r => r.WorkspaceId == workspaceId && r.Name == json.Name && r.RemoteId == null);
+                var rows = ctx.Connection.Table<TagData> ()
+                           .Where (r => r.WorkspaceId == workspaceId && r.Name == json.Name && r.RemoteId == null)
+                           .Take (1);
                 data = rows.FirstOrDefault ();
             }
 

@@ -28,7 +28,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var clients = await store.Table<ClientData> ()
-                          .QueryAsync (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+                          .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
+                          .ToListAsync();
             Sort (clients);
 
             ClientDataCollection.AddRange (clients);

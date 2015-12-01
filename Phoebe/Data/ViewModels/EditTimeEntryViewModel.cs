@@ -213,7 +213,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             var existingTagRelations = new List<TimeEntryTagData> ();
 
             var tags = await dataStore.Table<TimeEntryTagData> ()
-                       .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+                       .Where (r => r.TimeEntryId == model.Id && r.DeletedAt == null)
+                       .ToListAsync();
             existingTagRelations.AddRange (tags);
 
             // Delete unused tag relations:
@@ -238,7 +239,9 @@ namespace Toggl.Phoebe.Data.ViewModels
         private async Task<List<TagData>> GetDefaultTagList (Guid workspaceId)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var defaultTagList = await dataStore.Table<TagData> ().QueryAsync (r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null);
+            var defaultTagList = await dataStore.Table<TagData> ()
+                                 .Where (r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null)
+                                 .ToListAsync();
 
             if (defaultTagList.Count == 0) {
                 defaultTagList = new List<TagData> ();

@@ -3,6 +3,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe
 {
@@ -10,7 +11,7 @@ namespace Toggl.Phoebe
     {
         private const string Tag = "UpgradeManager";
 
-        public void TryUpgrade ()
+        public async Task TryUpgrade ()
         {
             var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
             var platformInfo = ServiceContainer.Resolve<IPlatformUtils> ();
@@ -27,19 +28,19 @@ namespace Toggl.Phoebe
 
             log.Info (Tag, "App has been upgraded from '{0}' to '{1}'", oldVersion, newVersion);
 
-            UpgradeAlaways ();
+            await UpgradeAlways ();
             ChooseExperiment (isFreshInstall);
 
             settingsStore.LastAppVersion = newVersion;
         }
 
-        private void UpgradeAlaways ()
+        private async Task UpgradeAlways ()
         {
             var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             // Mark all non-dirty remote items as never having been modified:
-            dataStore.ResetAllModificationTimes ().Wait ();
+            await dataStore.ResetAllModificationTimes ();
 
             // Reset sync last run
             settingsStore.SyncLastRun = null;

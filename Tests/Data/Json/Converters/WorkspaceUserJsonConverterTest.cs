@@ -313,13 +313,13 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 Assert.AreNotEqual (Guid.Empty, workspaceUserData.WorkspaceId);
                 Assert.AreNotEqual (Guid.Empty, workspaceUserData.UserId);
 
-                var projectRows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == workspaceUserData.WorkspaceId);
+                var projectRows = await DataStore.Table<WorkspaceData> ().Where (m => m.Id == workspaceUserData.WorkspaceId).ToListAsync ();
                 var workspaceData = projectRows.FirstOrDefault ();
                 Assert.IsNotNull (workspaceData);
                 Assert.IsNotNull (workspaceData.RemoteId);
                 Assert.AreEqual (DateTime.MinValue, workspaceData.ModifiedAt);
 
-                var userRows = await DataStore.Table<UserData> ().QueryAsync (m => m.Id == workspaceUserData.UserId);
+                var userRows = await DataStore.Table<UserData> ().Where (m => m.Id == workspaceUserData.UserId).ToListAsync ();
                 var userData = userRows.FirstOrDefault ();
                 Assert.IsNotNull (userData);
                 Assert.IsNotNull (userData.RemoteId);
@@ -354,7 +354,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, workspaceUserJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<WorkspaceUserData> ().QueryAsync (m => m.Id == workspaceUserData.Id);
+                var rows = await DataStore.Table<WorkspaceUserData> ().Where (m => m.Id == workspaceUserData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }
@@ -386,7 +386,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, workspaceUserJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<WorkspaceUserData> ().QueryAsync (m => m.Id == workspaceUserData.Id);
+                var rows = await DataStore.Table<WorkspaceUserData> ().Where (m => m.Id == workspaceUserData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }

@@ -314,13 +314,13 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 Assert.AreNotEqual (Guid.Empty, projectUserData.ProjectId);
                 Assert.AreNotEqual (Guid.Empty, projectUserData.UserId);
 
-                var projectRows = await DataStore.Table<ProjectData> ().QueryAsync (m => m.Id == projectUserData.ProjectId);
+                var projectRows = await DataStore.Table<ProjectData> ().Where (m => m.Id == projectUserData.ProjectId).ToListAsync ();
                 var projectData = projectRows.FirstOrDefault ();
                 Assert.IsNotNull (projectData);
                 Assert.IsNotNull (projectData.RemoteId);
                 Assert.AreEqual (DateTime.MinValue, projectData.ModifiedAt);
 
-                var userRows = await DataStore.Table<UserData> ().QueryAsync (m => m.Id == projectUserData.UserId);
+                var userRows = await DataStore.Table<UserData> ().Where (m => m.Id == projectUserData.UserId).ToListAsync ();
                 var userData = userRows.FirstOrDefault ();
                 Assert.IsNotNull (userData);
                 Assert.IsNotNull (userData.RemoteId);
@@ -355,7 +355,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<ProjectUserData> ().QueryAsync (m => m.Id == projectUserData.Id);
+                var rows = await DataStore.Table<ProjectUserData> ().Where (m => m.Id == projectUserData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }
@@ -387,7 +387,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, projectUserJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<ProjectUserData> ().QueryAsync (m => m.Id == projectUserData.Id);
+                var rows = await DataStore.Table<ProjectUserData> ().Where (m => m.Id == projectUserData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }

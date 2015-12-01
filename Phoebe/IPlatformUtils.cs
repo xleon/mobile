@@ -1,5 +1,5 @@
+using SQLite.Net.Interop;
 using System;
-
 
 namespace Toggl.Phoebe
 {
@@ -24,6 +24,11 @@ namespace Toggl.Phoebe
         /// </summary>
         /// <value>Detect if widget is available or not</value>
         bool IsWidgetAvailable { get; }
+
+        /// <summary>
+        /// Get info about SQLite platform implementation
+        /// </summary>
+        ISQLitePlatform SQLiteInfo { get; }
 
         /// <summary>
         /// Run an action using the UI thread.

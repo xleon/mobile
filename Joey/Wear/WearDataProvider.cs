@@ -46,12 +46,12 @@ namespace Toggl.Joey.Wear
             var store = ServiceContainer.Resolve<IDataStore> ();
             var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
-            var entriesQuery = store.Table<TimeEntryData> ()
-                               .Where (r => r.State != TimeEntryState.New
-                                       && r.DeletedAt == null
-                                       && r.UserId == userId)
-                               .OrderBy (r => r.StartTime, false);
-            var entries = await entriesQuery.QueryAsync();
+            var entries = await store.Table<TimeEntryData>()
+                          .Where (r => r.State != TimeEntryState.New
+                                  && r.DeletedAt == null
+                                  && r.UserId == userId)
+                          .OrderByDescending (r => r.StartTime)
+                          .ToListAsync();
 
             var uniqueEntries = entries.GroupBy (x  => new {x.ProjectId, x.Description })
             .Select (grp => grp.First())

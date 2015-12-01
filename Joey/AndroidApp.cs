@@ -4,6 +4,8 @@ using System.Diagnostics;
 using Android.App;
 using Android.Content;
 using Android.Net;
+using SQLite.Net.Interop;
+using SQLite.Net.Platform.XamarinAndroid;
 using Toggl.Joey.Analytics;
 using Toggl.Joey.Data;
 using Toggl.Joey.Logging;
@@ -143,6 +145,13 @@ namespace Toggl.Joey
         public bool IsWidgetAvailable
         {
             get { return true; }
+        }
+
+        public ISQLitePlatform SQLiteInfo
+        {
+            get {
+                return new SQLitePlatformAndroid ();
+            }
         }
 
         public bool ComponentsInitialized

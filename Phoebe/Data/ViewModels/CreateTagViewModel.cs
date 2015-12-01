@@ -42,8 +42,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<TagData>()
-                           .QueryAsync (r => r.WorkspaceId == workspace.Id && r.Name == TagName)
-                           .ConfigureAwait (false);
+                           .Where (r => r.WorkspaceId == workspace.Id && r.Name == TagName)
+                           .ToListAsync().ConfigureAwait (false);
 
             TagModel tag;
             if (existing.Count > 0) {
@@ -59,4 +59,3 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
     }
 }
-

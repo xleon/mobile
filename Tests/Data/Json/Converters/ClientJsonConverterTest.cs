@@ -287,7 +287,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var clientData = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
                 Assert.AreNotEqual (Guid.Empty, clientData.WorkspaceId);
 
-                var rows = await DataStore.Table<WorkspaceData> ().QueryAsync (m => m.Id == clientData.WorkspaceId);
+                var rows = await DataStore.Table<WorkspaceData> ().Where (m => m.Id == clientData.WorkspaceId).ToListAsync ();
                 var workspaceData = rows.FirstOrDefault ();
                 Assert.IsNotNull (workspaceData);
                 Assert.IsNotNull (workspaceData.RemoteId);
@@ -319,7 +319,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<ClientData> ().QueryAsync (m => m.Id == clientData.Id);
+                var rows = await DataStore.Table<ClientData> ().Where (m => m.Id == clientData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }
@@ -348,7 +348,7 @@ namespace Toggl.Phoebe.Tests.Data.Json.Converters
                 var ret = await DataStore.ExecuteInTransactionAsync (ctx => converter.Import (ctx, clientJson));
                 Assert.IsNull (ret);
 
-                var rows = await DataStore.Table<ClientData> ().QueryAsync (m => m.Id == clientData.Id);
+                var rows = await DataStore.Table<ClientData> ().Where (m => m.Id == clientData.Id).ToListAsync ();
                 Assert.That (rows, Has.Exactly (0).Count);
             });
         }

@@ -25,10 +25,10 @@ namespace Toggl.Phoebe.Tests.Data
         public void TestTreeRemoval ()
         {
             RunAsync (async delegate {
-                var dirty = await DataStore.Table<TimeEntryData> ().QueryAsync ();
+                var dirty = await DataStore.Table<TimeEntryData> ().ToListAsync ();
                 var graph = await RelatedDataGraph.FromDirty (dirty);
 
-                var projectRows = await DataStore.Table<ProjectData> ().QueryAsync (r => r.RemoteId == 1);
+                var projectRows = await DataStore.Table<ProjectData> ().Where (r => r.RemoteId == 1).ToListAsync ();
                 var project = projectRows [0];
                 graph.Remove (project);
             });

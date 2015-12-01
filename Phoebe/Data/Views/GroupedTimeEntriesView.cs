@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Data.Views
             var holder = previousHolder as TimeEntryGroup;
             if (holder != null) {
                 holder = new TimeEntryGroup (holder.TimeEntryList);
-                holder.Add (entry);
+                holder.TimeEntryList.Add (entry);
             } else {
                 holder = new TimeEntryGroup (entry);
             }

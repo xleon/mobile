@@ -17,7 +17,9 @@ namespace Toggl.Phoebe.Data.Utils
         bool IsRunning { get; }
         TimeSpan TotalDuration { get; }
         DateTime StartTime { get; }
+        TimeEntryData TimeEntryData { get; }
         bool Matches (TimeEntryData data);
+        Task DeleteAsync();
     }
 
     public class TimeEntryHolder : IDisposable, ITimeHolder
@@ -197,6 +199,11 @@ namespace Toggl.Phoebe.Data.Utils
             clientData = await UpdateClient (projectData, ClientData);
             taskData = await UpdateTask (timeEntryData, TaskData);
             numberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id);
+        }
+
+        public async Task DeleteAsync()
+        {
+            await TimeEntryModel.DeleteTimeEntryDataAsync (timeEntryData);
         }
 
         private async Task<ProjectData> GetProjectDataAsync (Guid projectGuid)

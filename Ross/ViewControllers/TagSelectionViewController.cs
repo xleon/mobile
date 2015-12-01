@@ -38,7 +38,8 @@ namespace Toggl.Ross.ViewControllers
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             modelTags = await dataStore.Table<TimeEntryTagData> ()
-                        .QueryAsync (r => r.TimeEntryId == model.Id && r.DeletedAt == null);
+                        .Where (r => r.TimeEntryId == model.Id && r.DeletedAt == null)
+                        .ToListAsync ();
             SetupDataSource ();
         }
 

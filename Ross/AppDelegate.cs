@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Foundation;
 using Google.Core;
 using Google.SignIn;
+using SQLite.Net.Interop;
+using SQLite.Net.Platform.XamarinIOS;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
@@ -25,7 +27,7 @@ namespace Toggl.Ross
     // User Interface of the application, as well as listening (and optionally responding) to
     // application events from iOS.
     [Register ("AppDelegate")]
-    public class AppDelegate : UIApplicationDelegate, IPlatformInfo
+    public class AppDelegate : UIApplicationDelegate, IPlatformUtils
     {
         private TogglWindow window;
         private int systemVersion;
@@ -128,7 +130,7 @@ namespace Toggl.Ross
         private void RegisterComponents ()
         {
             // Register platform info first.
-            ServiceContainer.Register<IPlatformInfo> (this);
+            ServiceContainer.Register<IPlatformUtils> (this);
 
             // Register Phoebe services
             Services.Register ();
@@ -189,14 +191,16 @@ namespace Toggl.Ross
             }
         }
 
-        string IPlatformInfo.AppIdentifier
+        #region IPlatformUtil implementation
+
+        string IPlatformUtils.AppIdentifier
         {
             get { return Build.AppIdentifier; }
         }
 
         private string appVersion;
 
-        string IPlatformInfo.AppVersion
+        public string AppVersion
         {
             get {
                 if (appVersion == null) {
@@ -207,12 +211,26 @@ namespace Toggl.Ross
             }
         }
 
-        bool IPlatformInfo.IsWidgetAvailable
+        public bool IsWidgetAvailable
         {
             get {
                 // iOS 8 is the version where Today Widgets are availables.
                 return systemVersion > minVersionWidget;
             }
         }
+
+        public ISQLitePlatform SQLiteInfo
+        {
+            get {
+                return new SQLitePlatformIOS ();
+            }
+        }
+
+        public void DispatchOnUIThread (Action action)
+        {
+            InvokeOnMainThread (action);
+        }
+
+        #endregion
     }
 }

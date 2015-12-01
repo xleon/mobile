@@ -93,7 +93,8 @@ namespace Toggl.Ross.Net
 
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var rows = await dataStore.Table<TimeEntryData> ()
-                           .QueryAsync (r => r.RemoteId == entryId);
+                           .Where (r => r.RemoteId == entryId)
+                           .ToListAsync ();
                 var entry = rows.FirstOrDefault();
 
                 var modifiedAt = ParseDate (modifiedAtObj.ToString());

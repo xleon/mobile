@@ -140,7 +140,7 @@ namespace Toggl.Ross.Data
 
         public void UpdateWidgetContent()
         {
-            if (ServiceContainer.Resolve<IPlatformInfo> ().IsWidgetAvailable) {
+            if (ServiceContainer.Resolve<IPlatformUtils> ().IsWidgetAvailable) {
                 var controller = NCWidgetController.GetWidgetController ();
                 controller.SetHasContent (true, NSBundle.MainBundle.BundleIdentifier + ".today");
             }

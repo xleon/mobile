@@ -56,7 +56,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public bool Matches (TimeEntryData data)
         {
-            return Group.Any (x => x.Id == data.Id);
+            return Group.Any (x => x.IsGroupableWith (data));
         }
 
         public DateTime GetStartTime()

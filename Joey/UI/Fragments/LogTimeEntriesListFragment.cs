@@ -217,7 +217,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
 
-            IList<string> guids = ((TimeEntryHolder)logAdapter.GetEntry (position)).Guids;
+            IList<string> guids = ((ITimeEntryHolder)logAdapter.GetEntry (position)).Guids;
             intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
             intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
 

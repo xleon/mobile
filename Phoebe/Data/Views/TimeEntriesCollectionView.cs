@@ -93,16 +93,11 @@ namespace Toggl.Phoebe.Data.Views
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private Task<bool> UpdateAsync (TimeEntryData entry, DataAction action)
-        {
-            return UpdateAsync (new List<Tuple<TimeEntryData, DataAction>>() { Tuple.Create (entry, action) });
-        }
-
         /// <summary>
         /// The caller only needs to add or delete time holders.
         /// The list will later be sorted and date headers created.
         /// </summary>
-        private async Task<bool> BatchUpdateAsync (Func<IList<ITimeEntryHolder>, Task> update)
+        private async Task BatchUpdateAsync (Func<IList<ITimeEntryHolder>, Task> update)
         {
             IsLoading = true;
             var timeHolders = ItemCollection.OfType<ITimeEntryHolder> ().ToList ();
@@ -111,7 +106,6 @@ namespace Toggl.Phoebe.Data.Views
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger>();
                 log.Error (Tag, ex, "Failed to fetch time entries");
-                return false;
             } finally {
                 // Sort & update ItemCollection
                 ItemCollection = CreateItemCollection (timeHolders.OrderByDescending (x =>
@@ -123,39 +117,48 @@ namespace Toggl.Phoebe.Data.Views
                 }
                 IsLoading = false;
             }
-            return true;
         }
 
-        private async Task<bool> UpdateAsync (IEnumerable<Tuple<TimeEntryData, DataAction>> actions)
+        private async Task UpdateTimeHoldersAsync (
+            IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
+        {
+            var i = -1;
+            // TODO: Use some cache to improve performance of this
+            for (var j = 0; j < timeHolders.Count; j++) {
+                if (timeHolders[j].Matches (entry)) {
+                    i = j;
+                    break;
+                }
+            }
+
+            if (i > -1) {
+                if (action == DataAction.Delete) {
+                    timeHolders.RemoveAt (i);   // Remove
+                } else {
+                    timeHolders[i] = await CreateTimeHolder (entry, timeHolders[i]);   // Replace
+                }
+            }
+            // If no match is found, insert non-excluded entries
+            else if (action == DataAction.Put) {
+                timeHolders.Add (await CreateTimeHolder (entry)); // Insert
+            }
+        }
+
+        private Task UpdateAsync (TimeEntryData entry, DataAction action)
+        {
+            return UpdateAsync (new List<Tuple<TimeEntryData, DataAction>>() { Tuple.Create (entry, action) });
+        }
+
+        private async Task UpdateAsync (IEnumerable<Tuple<TimeEntryData, DataAction>> actions)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
                 var timeHolders = ItemCollection.OfType<ITimeEntryHolder> ().ToList ();
 
                 // 2. Remove, replace or add items from messages
-                // TODO: Use some cache to improve performance of GetTimeEntryHolderIndex
                 // TODO: Is it more performant to run CreateTimeEntryHolder tasks in parallel?
                 foreach (var action in actions) {
-                    var i = -1;
-                    var entry = action.Item1;
-                    for (var j = 0; j < timeHolders.Count; j++) {
-                        if (timeHolders[j].Matches (entry)) {
-                            i = j;
-                            break;
-                        }
-                    }
-
-                    if (i > -1) {
-                        if (action.Item2 == DataAction.Delete) {
-                            timeHolders.RemoveAt (i);   // Remove
-                        } else {
-                            timeHolders[i] = await CreateTimeHolder (entry, timeHolders[i]);   // Replace
-                        }
-                    }
-                    // If no match is found, insert non-excluded entries
-                    else if (action.Item2 == DataAction.Put) {
-                        timeHolders.Add (await CreateTimeHolder (entry)); // Insert
-                    }
+                    await UpdateTimeHoldersAsync (timeHolders, action.Item1, action.Item2);
                 }
 
                 // 3. Sort new list
@@ -207,9 +210,7 @@ namespace Toggl.Phoebe.Data.Views
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger>();
                 log.Error (Tag, ex, "Failed to update collection");
-                return false;
             }
-            return true;
         }
         #endregion
 
@@ -342,7 +343,7 @@ namespace Toggl.Phoebe.Data.Views
 
                         // Add entries to list:
                         foreach (var entry in entries) {
-                            timeHolders.Add (await CreateTimeHolder (entry));
+                            await UpdateTimeHoldersAsync (timeHolders, entry, DataAction.Put);
                             if (entry.StartTime < minStart) {
                                 minStart = entry.StartTime;
                             }
@@ -378,7 +379,7 @@ namespace Toggl.Phoebe.Data.Views
                                   .ToListAsync ();
 
                     foreach (var entry in entries) {
-                        timeHolders.Add (await CreateTimeHolder (entry));
+                        await UpdateTimeHoldersAsync (timeHolders, entry, DataAction.Put);
                     }
 
                     if (!initialLoad) {

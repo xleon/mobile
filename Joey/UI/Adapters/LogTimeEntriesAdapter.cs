@@ -130,7 +130,7 @@ namespace Toggl.Joey.UI.Adapters
 
             var timeEntryListItemHolder = holder as TimeEntryListItemHolder;
             if (timeEntryListItemHolder != null) {
-                timeEntryListItemHolder.Bind ((TimeEntryHolder) GetEntry (position));
+                timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetEntry (position));
             }
         }
 

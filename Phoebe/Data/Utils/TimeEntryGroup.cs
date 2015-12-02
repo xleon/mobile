@@ -1,20 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using PropertyChanged;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
-using TTask = System.Threading.Tasks.Task;
 
 namespace Toggl.Phoebe.Data.Utils
 {
     /// <summary>
     // Wrapper to manage groups of TimeEntryData objects
     /// </summary>
-    [DoNotNotify]
     public class TimeEntryGroup : ITimeEntryHolder
     {
         public TimeEntryInfo Info { get; private set; }
@@ -32,16 +27,12 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public TimeEntryGroup ()
-        {
-        }
-
         public async Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous)
         {
             var prev = previous as TimeEntryGroup;
             Group = previous != null
                     ? prev.Group.Append (data).OrderBy (x => x.StartTime).ToList ()
-                    : new List<TimeEntryData> () { data };
+            : new List<TimeEntryData> () { data };
             Info = await TimeEntryInfo.LoadAsync (Data);
         }
 
@@ -77,7 +68,7 @@ namespace Toggl.Phoebe.Data.Utils
                 var m = new TimeEntryModel (item);
                 deleteTasks.Add (m.DeleteAsync ());
             }
-            await TTask.WhenAll (deleteTasks);
+            await Task.WhenAll (deleteTasks);
         }
     }
 }

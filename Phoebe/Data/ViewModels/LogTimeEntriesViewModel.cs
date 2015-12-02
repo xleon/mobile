@@ -142,7 +142,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 collectionView.HasMoreChanged -= OnCollectionChanged;
             }
 
-            collectionView = new TimeEntriesCollectionView(IsGroupedMode);
+            collectionView = new TimeEntriesCollectionView (IsGroupedMode);
             collectionView.CollectionChanged += OnCollectionChanged;
             collectionView.HasMoreChanged += OnCollectionChanged;
             await collectionView.ReloadAsync ();

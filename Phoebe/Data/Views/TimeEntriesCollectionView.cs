@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using System.Reactive;
-using System.Reactive.Linq;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
@@ -40,7 +39,7 @@ namespace Toggl.Phoebe.Data.Views
         private bool isGrouped;
         private CancellationTokenSource cts;
 
-        public TimeEntriesCollectionView(bool isGroupedMode)
+        public TimeEntriesCollectionView (bool isGroupedMode)
         {
             HasMore = true;
             isGrouped = isGroupedMode;
@@ -90,16 +89,16 @@ namespace Toggl.Phoebe.Data.Views
         private IList<IHolder> CreateItemCollection (IList<ITimeEntryHolder> timeHolders)
         {
             return timeHolders
-                .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
-                .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
-                .ToList ();
+                   .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
+                   .ToList ();
         }
 
-        private async Task<ITimeEntryHolder> CreateTimeHolder(TimeEntryData entry, ITimeEntryHolder previous = null)
+        private async Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previous = null)
         {
             var holder = isGrouped
-                ? (ITimeEntryHolder)new TimeEntryGroup ()
-                : (ITimeEntryHolder)new TimeEntryHolder ();
+                         ? (ITimeEntryHolder)new TimeEntryGroup ()
+                         : new TimeEntryHolder ();
             await holder.LoadAsync (entry, previous);
             return holder;
         }

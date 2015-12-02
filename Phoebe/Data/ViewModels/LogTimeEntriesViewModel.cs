@@ -142,11 +142,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 collectionView.HasMoreChanged -= OnCollectionChanged;
             }
 
-            // In a near future, CollectionView will be only
-            // one object and not divided in two separated classes
-            // like that: LogTimeEntriesView and GroupedTimeEntriesView
-
-            collectionView = IsGroupedMode ? (TimeEntriesCollectionView)new GroupedTimeEntriesView () : new LogTimeEntriesView ();
+            collectionView = new TimeEntriesCollectionView(IsGroupedMode);
             collectionView.CollectionChanged += OnCollectionChanged;
             collectionView.HasMoreChanged += OnCollectionChanged;
             await collectionView.ReloadAsync ();

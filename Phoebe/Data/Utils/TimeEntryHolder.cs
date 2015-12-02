@@ -19,10 +19,11 @@ namespace Toggl.Phoebe.Data.Utils
         TimeEntryInfo Info { get; }
         IList<string> Guids { get; }
 
-        Task DeleteAsync();
-        TimeSpan GetDuration();
-        DateTime GetStartTime();
+        Task DeleteAsync ();
+        TimeSpan GetDuration ();
+        DateTime GetStartTime ();
         bool Matches (TimeEntryData data);
+        Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous);
     }
 
     public class TimeEntryHolder : ITimeEntryHolder
@@ -37,19 +38,15 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        TimeEntryHolder (TimeEntryData timeEntry)
+        public TimeEntryHolder ()
         {
-            if (timeEntry == null) {
-                throw new ArgumentNullException ("timeEntry");
-            }
-            Data = new TimeEntryData (timeEntry);
         }
 
-        public static async Task<TimeEntryHolder> LoadAsync (TimeEntryData data)
+        public async Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous)
         {
-            var holder = new TimeEntryHolder (data);
-            holder.Info = await TimeEntryInfo.LoadAsync (holder.Data);
-            return holder;
+            // Ignore previous
+            Data = data;
+            Info = await TimeEntryInfo.LoadAsync (data);
         }
 
         public bool Equals (IHolder obj)

@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.Data.Views
     /// This view combines ICollectionDataView data and data from ITogglClient for time views. It tries to load data from
     /// web, but always falls back to data from the local store.
     /// </summary>
-    public abstract class TimeEntriesCollectionView : ICollectionDataView<object>, IDisposable
+    public class TimeEntriesCollectionView : ICollectionDataView<object>, IDisposable
     {
         public static int MaxInitLocalEntries = 20;
         public static int UndoSecondsInterval = 5;
@@ -37,11 +37,13 @@ namespace Toggl.Phoebe.Data.Views
         private System.Timers.Timer undoTimer;
         private bool isInitialised;
         private bool hasMore;
+        private bool isGrouped;
         private CancellationTokenSource cts;
 
-        protected TimeEntriesCollectionView()
+        public TimeEntriesCollectionView(bool isGroupedMode)
         {
             HasMore = true;
+            isGrouped = isGroupedMode;
             cts = new CancellationTokenSource();
             subscription = Observable.Create<DataChangeMessage> (
             obs => {
@@ -85,10 +87,22 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        #region Abstract Methods
-        protected abstract IList<IHolder> CreateItemCollection (IList<ITimeEntryHolder> timeHolders);
-        protected abstract Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previousHolder = null);
-        #endregion
+        private IList<IHolder> CreateItemCollection (IList<ITimeEntryHolder> timeHolders)
+        {
+            return timeHolders
+                .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
+                .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
+                .ToList ();
+        }
+
+        private async Task<ITimeEntryHolder> CreateTimeHolder(TimeEntryData entry, ITimeEntryHolder previous = null)
+        {
+            var holder = isGrouped
+                ? (ITimeEntryHolder)new TimeEntryGroup ()
+                : (ITimeEntryHolder)new TimeEntryHolder ();
+            await holder.LoadAsync (entry, previous);
+            return holder;
+        }
 
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;

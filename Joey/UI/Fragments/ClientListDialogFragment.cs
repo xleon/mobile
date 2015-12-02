@@ -86,8 +86,7 @@ namespace Toggl.Joey.UI.Fragments
             var dia = new AlertDialog.Builder (Activity)
             .SetTitle (Resource.String.SelectClientTitle)
             .SetAdapter (clientsAdapter, (IDialogInterfaceOnClickListener)null)
-            .SetPositiveButton (Resource.String.CreateClientDialogOk, delegate {})
-            .SetNeutralButton (Resource.String.ClientsNewClient, OnCreateButtonClicked)
+            .SetPositiveButton (Resource.String.ClientsNewClient, OnCreateButtonClicked)
             .Create ();
 
             listView = dia.ListView;

@@ -29,9 +29,7 @@ namespace Toggl.Phoebe.Data.Views
         protected override async Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previousHolder = null)
         {
             // Ignore previousHolder
-            var holder = new TimeEntryHolder (entry);
-            await holder.LoadAsync();
-            return holder;
+            return await TimeEntryHolder.LoadAsync (entry);
         }
     }
 }

@@ -32,20 +32,18 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public TimeEntryGroup (TimeEntryData data)
+        TimeEntryGroup ()
         {
-            Group = new List<TimeEntryData> () { data };
         }
 
-        public TimeEntryGroup (IEnumerable<TimeEntryData> dataList)
+        public static async Task<TimeEntryGroup> LoadAsync (TimeEntryData data, TimeEntryGroup previous)
         {
-            Group = dataList.OrderBy (x => x.StartTime).ToList ();
-        }
-
-        public void Dispose ()
-        {
-            Group.Clear ();
-            Info = null;
+            var holder = new TimeEntryGroup ();
+            holder.Group = previous != null
+                           ? previous.Group.Append (data).OrderBy (x => x.StartTime).ToList ()
+            : new List<TimeEntryData> () { data };
+            holder.Info = await TimeEntryInfo.LoadAsync (holder.Data);
+            return holder;
         }
 
         public bool Equals (IHolder obj)
@@ -73,11 +71,6 @@ namespace Toggl.Phoebe.Data.Utils
             return duration;
         }
 
-        public async Task LoadAsync ()
-        {
-            Info = await TimeEntryInfo.LoadAsync (Data);
-        }
-
         public async Task DeleteAsync ()
         {
             var deleteTasks = new List<Task> ();
@@ -86,7 +79,6 @@ namespace Toggl.Phoebe.Data.Utils
                 deleteTasks.Add (m.DeleteAsync ());
             }
             await TTask.WhenAll (deleteTasks);
-            Dispose ();
         }
     }
 }

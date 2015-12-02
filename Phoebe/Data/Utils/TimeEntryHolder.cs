@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Data.Utils
     }
 
     // TODO: Check if this really needs to implement IDisposable
-    public interface ITimeEntryHolder : IHolder, IDisposable
+    public interface ITimeEntryHolder : IHolder
     {
         TimeEntryData Data { get; }
         TimeEntryInfo Info { get; }
@@ -37,12 +37,19 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public TimeEntryHolder (TimeEntryData timeEntry)
+        TimeEntryHolder (TimeEntryData timeEntry)
         {
             if (timeEntry == null) {
                 throw new ArgumentNullException ("timeEntry");
             }
             Data = new TimeEntryData (timeEntry);
+        }
+
+        public static async Task<TimeEntryHolder> LoadAsync (TimeEntryData data)
+        {
+            var holder = new TimeEntryHolder (data);
+            holder.Info = await TimeEntryInfo.LoadAsync (holder.Data);
+            return holder;
         }
 
         public bool Equals (IHolder obj)
@@ -56,12 +63,6 @@ namespace Toggl.Phoebe.Data.Utils
             return data.Id == Data.Id;
         }
 
-        public void Dispose ()
-        {
-            Data = new TimeEntryData ();
-            Info = null;
-        }
-
         public DateTime GetStartTime()
         {
             return Data.StartTime;
@@ -70,11 +71,6 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeSpan GetDuration()
         {
             return TimeEntryModel.GetDuration (Data, Time.UtcNow);
-        }
-
-        public async Task LoadAsync ()
-        {
-            Info = await TimeEntryInfo.LoadAsync (Data);
         }
 
         public async Task DeleteAsync()

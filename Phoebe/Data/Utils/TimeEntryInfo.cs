@@ -23,22 +23,21 @@ namespace Toggl.Phoebe.Data.Utils
 
         public static async Task<TimeEntryInfo> LoadAsync (TimeEntryData timeEntryData)
         {
-            var projectData = timeEntryData.ProjectId.HasValue
-                              ? await GetProjectDataAsync (timeEntryData.ProjectId.Value)
-                              : new ProjectData ();
-            return new TimeEntryInfo () {
-                ProjectData = projectData,
-                ClientData = projectData.ClientId.HasValue
-                             ? await GetClientDataAsync (projectData.ClientId.Value)
-                             : new ClientData (),
-                TaskData = timeEntryData.TaskId.HasValue
-                           ? await GetTaskDataAsync (timeEntryData.TaskId.Value)
-                           : new TaskData (),
-                Description = timeEntryData.Description,
-                Color = (projectData.Id != Guid.Empty) ? projectData.Color : -1,
-                IsBillable = timeEntryData.IsBillable,
-                NumberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id)
-            };
+            var info = new TimeEntryInfo ();
+            info.ProjectData = timeEntryData.ProjectId.HasValue
+                               ? await GetProjectDataAsync (timeEntryData.ProjectId.Value)
+                               : new ProjectData ();
+            info.ClientData = info.ProjectData.ClientId.HasValue
+                              ? await GetClientDataAsync (info.ProjectData.ClientId.Value)
+                              : new ClientData ();
+            info.TaskData = timeEntryData.TaskId.HasValue
+                            ? await GetTaskDataAsync (timeEntryData.TaskId.Value)
+                            : new TaskData ();
+            info.Description = timeEntryData.Description;
+            info.Color = (info.ProjectData.Id != Guid.Empty) ? info.ProjectData.Color : -1;
+            info.IsBillable = timeEntryData.IsBillable;
+            info.NumberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id);
+            return info;
         }
 
         private static async Task<ProjectData> GetProjectDataAsync (Guid projectGuid)

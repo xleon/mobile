@@ -26,6 +26,11 @@ namespace Toggl.Phoebe.Data.ViewModels
                           .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
                           .ToListAsync();
 
+            Sort (clients);
+            if (clients.Count == 0) {
+                clients.Add (new ClientData () { Name = "No client" });
+            }
+
             vm.Sort (clients);
             vm.ClientDataCollection.AddRange (clients);
             return vm;

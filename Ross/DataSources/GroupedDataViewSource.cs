@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
-using CoreGraphics;
 using System.Linq;
 using CoreFoundation;
+using CoreGraphics;
 using Foundation;
-using UIKit;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
+using UIKit;
 
 namespace Toggl.Ross.DataSources
 {
@@ -37,6 +38,8 @@ namespace Toggl.Ross.DataSources
         }
 
         public UIView EmptyView { get; set; }
+
+        public UIView OBMEmptyView { get; set; }
 
         public virtual void Attach ()
         {
@@ -195,10 +198,10 @@ namespace Toggl.Ross.DataSources
                 }
                 tableView.TableFooterView = defaultFooterView;
                 defaultFooterView.StartAnimating ();
+            } else if (IsEmpty  && OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+                tableView.TableFooterView = OBMEmptyView;
             } else if (IsEmpty) {
                 tableView.TableFooterView = EmptyView;
-            } else {
-                tableView.TableFooterView = null;
             }
         }
 

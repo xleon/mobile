@@ -381,14 +381,6 @@ namespace Toggl.Phoebe.Data.Views
                     foreach (var entry in entries) {
                         await UpdateTimeHoldersAsync (timeHolders, entry, DataAction.Put);
                     }
-
-                    if (!initialLoad) {
-                        var count = await baseQuery
-                                    .Where (r => r.StartTime <= startTime)
-                                    .CountAsync ();
-                        // TODO: Should this be count > MaxInitLocalEntries?
-                        HasMore = count > 0;
-                    }
                 }
             });
         }

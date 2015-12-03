@@ -346,6 +346,10 @@
     <Compile Include="Views\SimpleEmptyView.cs" />
     <Compile Include="Views\OBMEmptyView.cs" />
     <Compile Include="Views\ReloadTableViewFooter.cs" />
+    <Compile Include="ViewControllers\LeftViewController.cs" />
+    <Compile Include="Theme\Style.Left.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

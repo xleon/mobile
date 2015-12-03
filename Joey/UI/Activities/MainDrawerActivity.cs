@@ -98,6 +98,12 @@ namespace Toggl.Joey.UI.Activities
             DrawerLayout.SetDrawerShadow (Resource.Drawable.drawershadow, (int)GravityFlags.Start);
             DrawerLayout.SetDrawerListener (DrawerToggle);
 
+            var drawerFrameLayout = FindViewById<FrameLayout> (Resource.Id.DrawerFrameLayout);
+            drawerFrameLayout.Touch += (sender, e) => {
+                // Do nothing, just absorb the event
+                // TODO: Improve this dirty solution?
+            };
+
             Timer.OnCreate (this);
 
             var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);

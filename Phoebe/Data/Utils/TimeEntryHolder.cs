@@ -6,12 +6,8 @@ using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.Utils
 {
-    public interface IHolder : IEquatable<IHolder>
-    {
-    }
-
     // TODO: Check if this really needs to implement IDisposable
-    public interface ITimeEntryHolder : IHolder
+    public interface ITimeEntryHolder : IDiffComparable
     {
         TimeEntryData Data { get; }
         TimeEntryInfo Info { get; }
@@ -36,10 +32,6 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public TimeEntryHolder ()
-        {
-        }
-
         public async Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous)
         {
             // Ignore previous
@@ -47,10 +39,15 @@ namespace Toggl.Phoebe.Data.Utils
             Info = await TimeEntryInfo.LoadAsync (data);
         }
 
-        public bool Equals (IHolder obj)
+        public DiffComparison Compare (IDiffComparable other)
         {
-            var other = obj as TimeEntryHolder;
-            return other != null && other.Data.Id == Data.Id;
+            if (object.ReferenceEquals (this, other)) {
+                return DiffComparison.Same;
+            } else {
+                var other2 = other as TimeEntryHolder;
+                return other2 != null && other2.Data.Id == Data.Id
+                       ? DiffComparison.Updated : DiffComparison.Different;
+            }
         }
 
         public bool Matches (TimeEntryData data)

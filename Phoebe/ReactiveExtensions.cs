@@ -31,6 +31,18 @@ namespace Toggl.Phoebe
             }
         }
 
+        public static int IndexOf<T> (this IEnumerable<T> items, Func<T, bool> predicate)
+        {
+            var i = 0;
+            foreach (var item in items) {
+                if (predicate (item)) {
+                    return i;
+                }
+                i++;
+            }
+            return -1;
+        }
+
         public static IEnumerable<T> Prepend<T> (this IEnumerable<T> items, T head)
         {
             yield return head;

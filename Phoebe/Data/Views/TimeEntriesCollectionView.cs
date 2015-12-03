@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Data.Views
         protected string Tag = "TimeEntriesCollectionView";
         protected ITimeEntryHolder LastRemovedItem;
 
-        private ObservableCollection<IHolder> ItemCollection;
+        private ObservableRangeCollection<IDiffComparable> ItemCollection;
         private DateTime startFrom;
         private IDisposable subscription;
         private System.Timers.Timer undoTimer;
@@ -42,9 +42,16 @@ namespace Toggl.Phoebe.Data.Views
 
         public TimeEntriesCollectionView (bool isGroupedMode)
         {
+            ItemCollection = new ObservableRangeCollection<IDiffComparable> ();
+            // The code modifying the collection is responsible to do it in UI thread
+            ItemCollection.CollectionChanged += (sender, e) => {
+                if (CollectionChanged != null) {
+                    CollectionChanged (this, e);
+                }
+            };
+
             cts = new CancellationTokenSource();
             isGrouped = isGroupedMode;
-            ResetItemCollection ();
             HasMore = true;
 
             subscription = Observable.Create<DataChangeMessage> (obs => {
@@ -91,11 +98,11 @@ namespace Toggl.Phoebe.Data.Views
         #region Update List
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        private IList<IHolder> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
+        private IList<IDiffComparable> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
         {
             return timeHolders
                    .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
-                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
+                   .SelectMany (gr => gr.Cast<IDiffComparable>().Prepend (new DateHolder (gr.Key, gr)))
                    .ToList ();
         }
 
@@ -106,28 +113,6 @@ namespace Toggl.Phoebe.Data.Views
                          : new TimeEntryHolder ();
             await holder.LoadAsync (entry, previous);
             return holder;
-        }
-
-        private void ResetItemCollection (IList<ITimeEntryHolder> timeHolders = null)
-        {
-            ItemCollection =
-                timeHolders == null
-                ? new ObservableCollection<IHolder> ()
-                : new ObservableRangeCollection<IHolder> (
-                    CreateItemCollection (timeHolders.OrderByDescending (x => x.GetStartTime ())));
-
-            if (CollectionChanged != null) {
-                ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() =>
-                        this.CollectionChanged (this, new NotifyCollectionChangedEventArgs (
-                                                    NotifyCollectionChangedAction.Reset)));
-            }
-
-            // The code modifying the collection is responsible to do it in UI thread
-            ItemCollection.CollectionChanged += (sender, e) => {
-                if (this.CollectionChanged != null) {
-                    this.CollectionChanged (this, e);
-                }
-            };
         }
 
         /// <summary>
@@ -144,7 +129,10 @@ namespace Toggl.Phoebe.Data.Views
                 var log = ServiceContainer.Resolve<ILogger>();
                 log.Error (Tag, ex, "Failed to fetch time entries");
             } finally {
-                ResetItemCollection (timeHolders);
+                var newItemCollection = CreateItemCollection (
+                                            timeHolders.OrderByDescending (x => x.GetStartTime ()));
+                ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() =>
+                        ItemCollection.Reset (newItemCollection));
                 IsLoading = false;
             }
         }
@@ -152,20 +140,20 @@ namespace Toggl.Phoebe.Data.Views
         private async Task UpdateTimeHoldersAsync (
             IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
         {
-            var i = -1;
+            var foundIndex = -1;
             // TODO: Use some cache to improve performance of this
             for (var j = 0; j < timeHolders.Count; j++) {
                 if (timeHolders[j].Matches (entry)) {
-                    i = j;
+                    foundIndex = j;
                     break;
                 }
             }
 
-            if (i > -1) {
+            if (foundIndex > -1) {
                 if (action == DataAction.Delete) {
-                    timeHolders.RemoveAt (i);   // Remove
+                    timeHolders.RemoveAt (foundIndex);   // Remove
                 } else {
-                    timeHolders[i] = await CreateTimeHolder (entry, timeHolders[i]);   // Replace
+                    timeHolders[foundIndex] = await CreateTimeHolder (entry, timeHolders[foundIndex]);   // Replace
                 }
             }
             // If no match is found, insert non-excluded entries
@@ -199,30 +187,32 @@ namespace Toggl.Phoebe.Data.Views
                 var newItemCollection = CreateItemCollection (timeHolders);
 
                 // 5. Check diffs, modify ItemCollection and notify changes
-                var diffs = Diff.Calculate (ItemCollection, newItemCollection)
-                            .OrderBy (diff => diff.OldIndex)
-                            .ToList();
+                var diffs = Diff.CalculateExtra (ItemCollection, newItemCollection).ToList ();
 
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
-                    var offset = 0;
-                    foreach (var diff in diffs) {
-                        var newItem = newItemCollection.ElementAtOrDefault (diff.NewIndex);
-                        var oldItem = ItemCollection.ElementAtOrDefault (diff.OldIndex + offset);
+                    foreach (var diff in diffs.OrderBy (x => x.NewIndex)) {
                         switch (diff.Type) {
-                        case DiffSectionType.Add:
-                            ItemCollection.Insert (diff.OldIndex + offset++, newItem);
+                        case DiffType.Add: {
+                            ItemCollection.Insert (diff.NewIndex, diff.NewItem);
                             break;
-                        case DiffSectionType.Remove:
-                            ItemCollection.RemoveAt (diff.OldIndex + offset--);
+                        }
+                        case DiffType.Remove: {
+                            ItemCollection.Remove (diff.OldItem);
                             break;
-                        case DiffSectionType.Copy:
-                        default:
-                            // TODO: Check if this is Move action instead
-                            if (!object.ReferenceEquals (oldItem, newItem)) {
-                                ItemCollection[diff.OldIndex + offset] = newItem;
-                            }
+                        }
+                        case DiffType.Move: {
+                            var oldIndex = ItemCollection.IndexOf (diff.OldItem);
+                            ItemCollection.Move (oldIndex, diff.NewIndex, diff.NewItem);
                             break;
+                        }
+                        case DiffType.Replace: {
+                            var oldIndex = ItemCollection.IndexOf (diff.OldItem);
+                            ItemCollection[oldIndex] = diff.NewItem;
+                            break;
+                        }
+//                        case DiffType.Copy:
+                            // Do nothing
                         }
                     }
                 });
@@ -451,37 +441,34 @@ namespace Toggl.Phoebe.Data.Views
         }
         #endregion
 
-        public class DateHolder : IHolder
+        public class DateHolder : IDiffComparable
         {
             public DateTime Date { get; }
-            public IList<ITimeEntryHolder> DataObjects { get; private set; }
-
-            public bool IsRunning
-            {
-                get { return DataObjects.Any (g => g.Data.State == TimeEntryState.Running); }
-            }
-
-            public TimeSpan TotalDuration
-            {
-                get {
-                    TimeSpan totalDuration = TimeSpan.Zero;
-                    foreach (var item in DataObjects) {
-                        totalDuration += item.GetDuration ();
-                    }
-                    return totalDuration;
-                }
-            }
+            public bool IsRunning { get; private set; }
+            public TimeSpan TotalDuration { get; private set; }
 
             public DateHolder (DateTime date, IEnumerable<ITimeEntryHolder> timeHolders)
             {
+                var dataObjects = timeHolders.ToList ();
+                var totalDuration = TimeSpan.Zero;
+                foreach (var item in dataObjects) {
+                    totalDuration += item.GetDuration ();
+                }
+
                 Date = date;
-                DataObjects = timeHolders.ToList ();
+                TotalDuration = totalDuration;
+                IsRunning = dataObjects.Any (g => g.Data.State == TimeEntryState.Running);
             }
 
-            public bool Equals (IHolder other)
+            public DiffComparison Compare (IDiffComparable other)
             {
                 var other2 = other as DateHolder;
-                return other2 != null && other2.Date == Date;
+                if (other2 == null || other2.Date != Date) {
+                    return DiffComparison.Different;
+                } else {
+                    var same = other2.TotalDuration == TotalDuration && other2.IsRunning == IsRunning;
+                    return same ? DiffComparison.Same : DiffComparison.Updated;
+                }
             }
         }
     }

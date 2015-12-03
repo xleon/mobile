@@ -36,10 +36,15 @@ namespace Toggl.Phoebe.Data.Utils
             Info = await TimeEntryInfo.LoadAsync (Data);
         }
 
-        public bool Equals (IHolder obj)
+        public DiffComparison Compare (IDiffComparable other)
         {
-            var other = obj as TimeEntryGroup;
-            return other != null && other.Data.Id == Data.Id;
+            if (object.ReferenceEquals (this, other)) {
+                return DiffComparison.Same;
+            } else {
+                var other2 = other as TimeEntryGroup;
+                return other2 != null && other2.Group.First ().Id == Group.First ().Id
+                       ? DiffComparison.Updated : DiffComparison.Different;
+            }
         }
 
         public bool Matches (TimeEntryData data)

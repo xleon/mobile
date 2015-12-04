@@ -191,28 +191,22 @@ namespace Toggl.Phoebe.Data.Views
 
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
-                    foreach (var diff in diffs.OrderBy (x => x.NewIndex)) {
+                    foreach (var diff in diffs.OrderBy (x => x.NewIndex).ThenBy (x => x.OldIndex)) {
                         switch (diff.Type) {
-                        case DiffType.Add: {
+                        case DiffType.Add:
                             ItemCollection.Insert (diff.NewIndex, diff.NewItem);
                             break;
-                        }
-                        case DiffType.Remove: {
-                            ItemCollection.Remove (diff.OldItem);
+                        case DiffType.Remove:
+                            ItemCollection.RemoveAt (diff.NewIndex);
                             break;
-                        }
-                        case DiffType.Move: {
+                        case DiffType.Move:
                             var oldIndex = ItemCollection.IndexOf (diff.OldItem);
                             ItemCollection.Move (oldIndex, diff.NewIndex, diff.NewItem);
                             break;
-                        }
-                        case DiffType.Replace: {
-                            var oldIndex = ItemCollection.IndexOf (diff.OldItem);
-                            ItemCollection[oldIndex] = diff.NewItem;
+                        case DiffType.Replace:
+                            ItemCollection[diff.NewIndex] = diff.NewItem;
                             break;
-                        }
-//                        case DiffType.Copy:
-                            // Do nothing
+//                        case DiffType.Copy: // Do nothing
                         }
                     }
                 });

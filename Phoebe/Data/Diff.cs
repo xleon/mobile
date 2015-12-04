@@ -23,12 +23,12 @@ namespace Toggl.Phoebe.Data
         DiffComparison Compare (IDiffComparable other);
     }
 
-    public struct DiffSection<T> {
-        public readonly DiffType Type;
-        public readonly int OldIndex;
-        public readonly int NewIndex;
-        public readonly T OldItem;
-        public readonly T NewItem;
+    public class DiffSection<T> {
+        public DiffType Type { get; private set; }
+        public int OldIndex { get; private set; }
+        public int NewIndex { get; private set; }
+        public T OldItem { get; private set; }
+        public T NewItem { get; private set; }
 
         public DiffSection (DiffType type, int oldIndex, T oldItem, int newIndex, T newItem)
         {
@@ -70,6 +70,14 @@ namespace Toggl.Phoebe.Data
     // Adapted from http://devdirective.com/post/115/creating-a-reusable-though-simple-diff-implementation-in-csharp-part-3
     public static class Diff
     {
+        private static void AddKeys<T> (IDictionary<DiffType, List<DiffSection<T>>> diffs, params DiffType[] diffTypes)
+            where T : IDiffComparable
+        {
+            foreach (var diffType in diffTypes)
+                if (!diffs.ContainsKey (diffType))
+                    diffs.Add (diffType, new List<DiffSection<T>> ());
+        }
+
         /// <summary>
         /// Calculates move and replace operation besides add, remove and copy diffs
         /// </summary>
@@ -81,6 +89,7 @@ namespace Toggl.Phoebe.Data
             var diffs = Calculate (listA, listB)
                         .GroupBy (diff => diff.Type)
                         .ToDictionary (gr => gr.Key, gr => gr.ToList ());
+            AddKeys (diffs, DiffType.Add, DiffType.Remove, DiffType.Copy);
 
             foreach (var addDiff in diffs[DiffType.Add]) {
                 var rmDiffIndex = diffs[DiffType.Remove].IndexOf (rmDiff =>
@@ -122,8 +131,8 @@ namespace Toggl.Phoebe.Data
 
             if (lcs.Success) {
                 // deal with the section before
-                var sectionsBefore = Calculate (
-                                         listA, listB, startA, lcs.PositionA, startB, lcs.PositionB);
+                var sectionsBefore =
+                    Calculate (listA, listB, startA, lcs.PositionA, startB, lcs.PositionB);
 
                 foreach (var section in sectionsBefore) {
                     yield return section;

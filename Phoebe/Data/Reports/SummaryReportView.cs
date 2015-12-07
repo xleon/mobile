@@ -14,8 +14,6 @@ namespace Toggl.Phoebe.Data.Reports
     public class SummaryReportView
     {
         private static readonly string Tag = "SummaryReportsView";
-        private DateTime startDate;
-        private DateTime endDate;
         private ReportData dataObject;
         private DayOfWeek startOfWeek;
         private IReportsClient reportClient;
@@ -36,9 +34,9 @@ namespace Toggl.Phoebe.Data.Reports
                 await Initialize ();
             }
 
-            startDate = ResolveStartDate (backDate);
-            endDate = ResolveEndDate (startDate);
-            await FetchData ();
+            var startDate = ResolveStartDate (backDate);
+            var endDate = ResolveEndDate (startDate);
+            await FetchData (startDate, endDate);
             IsLoading = false;
         }
 
@@ -58,9 +56,9 @@ namespace Toggl.Phoebe.Data.Reports
             startOfWeek = user.StartOfWeek;
         }
 
-        private async Task FetchData ()
+        private async Task FetchData (DateTime startDate, DateTime endDate)
         {
-            dataObject = CreateEmptyReport ();
+            dataObject = CreateEmptyReport (startDate);
 
             try {
                 _isError = false;
@@ -355,7 +353,7 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private ReportData CreateEmptyReport()
+        private ReportData CreateEmptyReport (DateTime startDate)
         {
             var activityList = new List<ReportActivity> ();
 

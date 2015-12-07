@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Android.Animation;
 using Android.Content;
 using Android.OS;
@@ -127,7 +128,7 @@ namespace Toggl.Joey.UI.Fragments
 
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
-            syncRetry.Click += (sender, e) => ReloadCurrent();
+            syncRetry.Click += async (sender, e) => await ReloadCurrent ();
 
             ResetAdapter ();
             UpdatePeriod ();
@@ -201,11 +202,11 @@ namespace Toggl.Joey.UI.Fragments
             backDate = 0;
         }
 
-        private void ReloadCurrent()
+        private async Task ReloadCurrent()
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
             var frag = (ReportsFragment)adapter.GetItem (viewPager.CurrentItem);
-            frag.ReloadData ();
+            await frag.ReloadData ();
         }
 
         private void UpdatePeriod ()
@@ -218,13 +219,12 @@ namespace Toggl.Joey.UI.Fragments
             ShowSyncError (e.IsError);
         }
 
-        private void OnPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
+        private async void OnPageSelected (object sender, ViewPager.PageSelectedEventArgs e)
         {
             var adapter = (MainPagerAdapter)viewPager.Adapter;
-
             var frag = (ReportsFragment)adapter.GetItem (e.Position);
             if (frag.IsError) {
-                frag.ReloadData();
+                await frag.ReloadData();
             }
             frag.UserVisibleHint = true;
             backDate = e.Position - StartPage;
@@ -321,13 +321,11 @@ namespace Toggl.Joey.UI.Fragments
         {
             private readonly List<ReportsFragment> currentFragments = new List<ReportsFragment>();
             private readonly ZoomLevel zoomLevel;
-            private readonly FragmentManager fragmentManager;
             private int snapPosition;
             public event EventHandler<ReportsFragment.LoadReadyEventArgs> LoadReady;
 
             public MainPagerAdapter (FragmentManager fragmentManager, ZoomLevel zoomLevel) : base (fragmentManager)
             {
-                this.fragmentManager = fragmentManager;
                 this.zoomLevel = zoomLevel;
             }
 
@@ -346,9 +344,9 @@ namespace Toggl.Joey.UI.Fragments
                 return frag;
             }
 
-            public override void DestroyItem (ViewGroup container, int position, Java.Lang.Object @object)
+            public override void DestroyItem (ViewGroup container, int position, Java.Lang.Object @objectValue)
             {
-                var frag = (ReportsFragment)@object;
+                var frag = (ReportsFragment)@objectValue;
                 frag.PositionChanged -= ChangeReportsPosition;
                 frag.LoadReady -= ShowSyncError;
                 currentFragments.Remove (frag);
@@ -365,6 +363,12 @@ namespace Toggl.Joey.UI.Fragments
             public override Fragment GetItem (int position)
             {
                 var period = position - StartPage;
+
+                // TODO: when the adapter is define the first time
+                // the position used is 0 and 1. This position generate
+                // a wrong date calculation.
+                // A solution could be don't reset but rehuse the
+                // FragmentPagerAdapter.
                 return currentFragments.Find (frag => frag.Period == period)
                        ?? new ReportsFragment (period, zoomLevel);
             }

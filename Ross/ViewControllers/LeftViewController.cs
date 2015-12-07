@@ -1,61 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
-using UIKit;
-using Toggl.Ross.Theme;
 using Cirrious.FluentLayouts.Touch;
+using Toggl.Phoebe.Net;
+using Toggl.Ross.Data;
+using Toggl.Ross.Theme;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
     public sealed class LeftViewController : UIViewController
     {
-        public LeftViewController () : base ()
-        {
-        }
-
-        private void CloseMenu()
-        {
-            Console.WriteLine ("Close menu");
-        }
-
-        public override void DidReceiveMemoryWarning ()
-        {
-            // Releases the view if it doesn't have a superview.
-            base.DidReceiveMemoryWarning ();
-
-            // Release any cached data, images, etc that aren't in use.
-        }
-
+        private TogglWindow window;
         private UIButton logButton;
         private UIButton reportsButton;
         private UIButton settingsButton;
         private UIButton feedbackButton;
         private UIButton signOutButton;
+        private UIButton[] menuButtons;
 
         public override void LoadView ()
         {
             base.LoadView ();
-
-            //View = new UIView ();
+            window = AppDelegate.TogglWindow;
             View.BackgroundColor = UIColor.White;
 
-            logButton = new UIButton ();
-            logButton.SetTitle ("Log", UIControlState.Normal);
+            menuButtons = new[] {
+                (logButton = new UIButton ()),
+                (reportsButton = new UIButton ()),
+                (settingsButton = new UIButton ()),
+                (feedbackButton = new UIButton ()),
+                (signOutButton = new UIButton ()),
+            };
+            logButton.SetTitle ("NavMenuLog".Tr (), UIControlState.Normal);
+            reportsButton.SetTitle ("NavMenuReports".Tr (), UIControlState.Normal);
+            settingsButton.SetTitle ("NavMenuSettings".Tr (), UIControlState.Normal);
+            feedbackButton.SetTitle ("NavMenuFeedback".Tr (), UIControlState.Normal);
+            signOutButton.SetTitle ("NavMenuSignOut".Tr (), UIControlState.Normal);
 
-            reportsButton = new UIButton ();
-            reportsButton.SetTitle ("Reports", UIControlState.Normal);
+            logButton.HorizontalAlignment = reportsButton.HorizontalAlignment = settingsButton.HorizontalAlignment =
+                                                feedbackButton.HorizontalAlignment = signOutButton.HorizontalAlignment = UIControlContentHorizontalAlignment.Left;
 
-            settingsButton = new UIButton ();
-            settingsButton.SetTitle ("Settings", UIControlState.Normal);
-
-            feedbackButton = new UIButton ();
-            feedbackButton.SetTitle ("Feedback", UIControlState.Normal);
-
-            signOutButton = new UIButton ();
-            signOutButton.SetTitle ("Sign out", UIControlState.Normal);
-
-            var buttons = new [] { logButton, reportsButton, settingsButton, feedbackButton, signOutButton };
-            foreach (var button in buttons) {
+            foreach (var button in menuButtons) {
                 button.Apply (Style.Left.Button);
+                button.TouchUpInside += OnMenuButtonTouchUpInside;
                 View.AddSubview (button);
             }
 
@@ -86,11 +74,30 @@ namespace Toggl.Ross.ViewControllers
                 }
 
                 yield return view.AtLeftOf (container, horizMargin);
-                // TODO: 20 == menu offset, refactor
                 yield return view.AtRightOf (container, horizMargin + 20);
 
                 prev = view;
             }
+        }
+
+        private void OnMenuButtonTouchUpInside (object sender, EventArgs e)
+        {
+            var main = window.RootViewController as MainViewController;
+            if (sender == logButton) {
+                ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
+                main.SetViewControllers (new[] {
+                    new LogViewController ()
+                }, true);
+            } else if (sender == reportsButton) {
+                main.PushViewController (new ReportsViewController (), true);
+            } else if (sender == settingsButton) {
+                main.PushViewController (new SettingsViewController (), true);
+            } else if (sender == feedbackButton) {
+                main.PushViewController (new FeedbackViewController (), true);
+            } else {
+                ServiceContainer.Resolve<AuthManager> ().Forget ();
+            }
+            main.CloseMenu();
         }
     }
 }

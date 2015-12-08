@@ -104,23 +104,24 @@ namespace Toggl.Ross.ViewControllers
             if (!MenuEnabled) {
                 return;
             }
-
             var translation = recognizer.TranslationInView (recognizer.View);
-            var velocity = recognizer.TranslationInView (recognizer.View);
             var movement = translation.X - draggingPoint.X;
 
-            if (recognizer.State == UIGestureRecognizerState.Began) {
+            switch (recognizer.State) {
+            case UIGestureRecognizerState.Began:
                 draggingPoint = translation;
-            } else if (recognizer.State == UIGestureRecognizerState.Changed) {
+                break;
+            case UIGestureRecognizerState.Changed:
                 var newX = CurrentX;
                 newX += movement;
                 if (newX > MinDraggingX && newX < MaxDraggingX) {
                     MoveToLocation (newX);
                 }
                 draggingPoint = translation;
-            } else if (recognizer.State == UIGestureRecognizerState.Ended) {
-                if (Math.Abs (velocity.X) >= velocityTreshold) {
-                    if (velocity.X < 0) {
+                break;
+            case UIGestureRecognizerState.Ended:
+                if (Math.Abs (translation.X) >= velocityTreshold) {
+                    if (translation.X < 0) {
                         CloseMenu ();
                     } else {
                         OpenMenu ();
@@ -132,6 +133,7 @@ namespace Toggl.Ross.ViewControllers
                         OpenMenu ();
                     }
                 }
+                break;
             }
         }
 
@@ -162,7 +164,7 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void MoveToLocation (nfloat x)
+        public void MoveToLocation (nfloat x)
         {
             var rect = View.Frame;
             rect.Y = 0;

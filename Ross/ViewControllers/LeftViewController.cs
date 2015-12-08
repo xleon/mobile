@@ -6,6 +6,7 @@ using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 using UIKit;
 using XPlatUtils;
+using CoreGraphics;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -19,11 +20,20 @@ namespace Toggl.Ross.ViewControllers
         private UIButton signOutButton;
         private UIButton[] menuButtons;
 
+        private UIPanGestureRecognizer _panGesture;
+        private CGPoint draggingPoint;
+        private const int menuOffset = 60;
+        private const int velocityTreshold = 100;
+
         public override void LoadView ()
         {
             base.LoadView ();
             window = AppDelegate.TogglWindow;
             View.BackgroundColor = UIColor.White;
+
+            _panGesture = new UIPanGestureRecognizer (OnPanGesture) {
+                CancelsTouchesInView = true
+            };
 
             menuButtons = new[] {
                 (logButton = new UIButton ()),
@@ -48,8 +58,70 @@ namespace Toggl.Ross.ViewControllers
             }
 
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
-
             View.AddConstraints (MakeConstraints (View));
+            View.AddGestureRecognizer (_panGesture);
+        }
+
+        public nfloat Width
+        {
+            get {
+                return View.Frame.Width;
+            }
+        }
+
+        public nfloat MaxDraggingX
+        {
+            get {
+                return Width - menuOffset;
+            }
+        }
+
+        public nfloat MinDraggingX
+        {
+            get {
+                return 0;
+            }
+        }
+
+        private void OnPanGesture (UIPanGestureRecognizer recognizer)
+        {
+            var translation = recognizer.TranslationInView (recognizer.View);
+            var movement = translation.X - draggingPoint.X;
+            var main = window.RootViewController as MainViewController;
+            var currentX = main.View.Frame.X;
+
+            switch (recognizer.State) {
+            case UIGestureRecognizerState.Began:
+                draggingPoint = translation;
+                break;
+
+            case UIGestureRecognizerState.Changed:
+                var newX = currentX;
+                newX += movement;
+                if (newX > MinDraggingX && newX < MaxDraggingX) {
+                    main.MoveToLocation (newX);
+                }
+                draggingPoint = translation;
+                break;
+
+            case UIGestureRecognizerState.Ended:
+                if (Math.Abs (translation.X) >= velocityTreshold) {
+                    if (translation.X < 0) {
+                        main.CloseMenu ();
+                    } else {
+                        main.OpenMenu ();
+                    }
+                } else {
+                    if (Math.Abs (currentX) < (Width - menuOffset) / 2) {
+                        Console.WriteLine ("close");
+                        main.CloseMenu ();
+                    } else {
+                        Console.WriteLine ("open");
+                        main.OpenMenu ();
+                    }
+                }
+                break;
+            }
         }
 
         private static IEnumerable<FluentLayout> MakeConstraints (UIView container)

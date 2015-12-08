@@ -12,9 +12,9 @@ namespace Toggl.Phoebe.Data.ViewModels
     {
         private ClientModel model;
 
-        public CreateClientViewModel (WorkspaceModel workspaceModel)
+        CreateClientViewModel (WorkspaceModel workspaceModel)
         {
-            this.model = new ClientModel {
+            model = new ClientModel {
                 Workspace = workspaceModel
             };
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Client Screen";
@@ -24,6 +24,11 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             var workspaceModel = new WorkspaceModel (workspaceId);
             await workspaceModel.LoadAsync ();
+            return new CreateClientViewModel (workspaceModel);
+        }
+
+        public static CreateClientViewModel Init (WorkspaceModel workspaceModel)
+        {
             return new CreateClientViewModel (workspaceModel);
         }
 

@@ -3,124 +3,73 @@ using System.Collections.Generic;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
-using UIKit;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class NewClientViewController : UIViewController
     {
-        private readonly ClientModel model;
-        private TextField nameTextField;
-        private bool shouldRebindOnAppear;
-        private bool isSaving;
+        public Action<ClientData> ClientCreated { get; set; }
+        protected CreateClientViewModel ViewModel {get; set;}
+        protected TextField NameTextField { get; set; }
+        private WorkspaceModel workspace;
 
         public NewClientViewController (WorkspaceModel workspace)
         {
-            this.model = new ClientModel () {
-                Workspace = workspace,
-                Name = "",
-
-            };
             Title = "NewClientTitle".Tr ();
+            this.workspace = workspace;
         }
 
-        public Action<ClientModel> ClientCreated { get; set; }
-
-        private void BindNameField (TextField v)
+        public async override void ViewDidLoad ()
         {
-            if (v.Text != model.Name) {
-                v.Text = model.Name;
-            }
+            base.ViewDidLoad ();
+            ViewModel = new CreateClientViewModel (workspace);
+            await ViewModel.Init ();
+
+            this.SetBinding (() => ViewModel.ClientName, () => NameTextField.Text, BindingMode.TwoWay)
+            .UpdateTargetTrigger ("EditingChanged");
         }
 
-        private void Rebind ()
+        public override void ViewDidAppear (bool animated)
         {
-            nameTextField.Apply (BindNameField);
+            base.ViewDidAppear (animated);
+            NameTextField.BecomeFirstResponder ();
         }
 
         public override void LoadView ()
         {
             var view = new UIView ().Apply (Style.Screen);
 
-            view.Add (nameTextField = new TextField () {
+            view.Add (NameTextField = new TextField {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 AttributedPlaceholder = new NSAttributedString (
                     "NewClientNameHint".Tr (),
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder (),
-            } .Apply (Style.NewProject.NameField).Apply (BindNameField));
-            nameTextField.EditingChanged += OnNameFieldEditingChanged;
+            } .Apply (Style.NewProject.NameField));
 
+            NameTextField.EditingChanged += (sender, e) => ValidateClientName ();
             view.AddConstraints (VerticalLinearLayout (view));
-
             EdgesForExtendedLayout = UIRectEdge.None;
             View = view;
 
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "NewClientAdd".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
-            .Apply (Style.NavLabelButton);
-        }
-
-        private void OnNameFieldEditingChanged (object sender, EventArgs e)
-        {
-            model.Name = nameTextField.Text;
+            .Apply (Style.DisableNavLabelButton);
         }
 
         private async void OnNavigationBarAddClicked (object sender, EventArgs e)
         {
-            if (String.IsNullOrWhiteSpace (model.Name)) {
-                // TODO: Show error dialog?
-                return;
-            }
-
-            if (isSaving) {
-                return;
-            }
-
-            isSaving = true;
-
-            try {
-
-                // Check for existing name
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var existWithName = await dataStore.Table<ClientData>().ExistWithNameAsync ( model.Name);
-
-                if (existWithName) {
-                    var alert = new UIAlertView (
-                        "NewClientNameExistTitle".Tr (),
-                        "NewClientNameExistMessage".Tr (),
-                        null,
-                        "NewClientNameExistOk".Tr (),
-                        null);
-                    alert.Clicked += async (s, ev) => {
-                        if (ev.ButtonIndex == 0) {
-                            nameTextField.BecomeFirstResponder ();
-                        }
-                    };
-                    alert.Show ();
-                } else {
-
-                    // Create new client:
-                    await model.SaveAsync ();
-
-                    // Invoke callback hook
-                    var cb = ClientCreated;
-                    if (cb != null) {
-                        cb (model);
-                    } else {
-                        NavigationController.PopViewController (true);
-                    }
-                }
-            } finally {
-                isSaving = false;
+            var clientData = await ViewModel.SaveNewClient ();
+            if (ClientCreated != null) {
+                ClientCreated.Invoke (clientData);
             }
         }
 
@@ -144,23 +93,23 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public override void ViewWillAppear (bool animated)
+        private void ValidateClientName ()
         {
-            base.ViewWillAppear (animated);
+            var valid = true;
+            var name = NameTextField.Text;
 
-            if (shouldRebindOnAppear) {
-                Rebind ();
-            } else {
-                shouldRebindOnAppear = true;
+            if (String.IsNullOrWhiteSpace (name)) {
+                valid = false;
             }
-        }
 
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-            nameTextField.BecomeFirstResponder ();
+            if (valid) {
+                NavigationItem.RightBarButtonItem.Apply (Style.NavLabelButton);
+            } else {
+                NavigationItem.RightBarButtonItem.Apply (Style.DisableNavLabelButton);
+            }
 
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Client";
+            NavigationItem.RightBarButtonItem.Enabled = valid;
+
         }
     }
 }

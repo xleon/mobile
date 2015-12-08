@@ -1,22 +1,19 @@
 using System;
 using CoreGraphics;
 using Foundation;
-using UIKit;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
-using Toggl.Ross.DataSources;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Ross.Theme;
+using UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class ClientSelectionViewController : UITableViewController
+    public class ClientSelectionViewController : ObservableTableViewController<ClientData>
     {
-        private const float CellSpacing = 4f;
         private readonly WorkspaceModel workspace;
+        private ClientListViewModel viewModel;
 
         public ClientSelectionViewController (WorkspaceModel workspace) : base (UITableViewStyle.Plain)
         {
@@ -24,98 +21,78 @@ namespace Toggl.Ross.ViewControllers
             Title = "ClientTitle".Tr ();
         }
 
-        public override void ViewDidLoad ()
+        public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-            new Source (this).Attach ();
+
+            viewModel = new ClientListViewModel (workspace.Id);
+            await viewModel.Init ();
+
+            // Set ObservableTableViewController settings
+            // ObservableTableViewController is a helper class
+            // from Mvvm light package.
+
+            TableView.RowHeight = 60f;
+            TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
+            CreateCellDelegate = CreateClientCell;
+            BindCellDelegate = BindCell;
+            DataSource = viewModel.ClientDataCollection;
+
+            PropertyChanged += (sender, e) => {
+                if (e.PropertyName == SelectedItemPropertyName && ClientSelected != null)
+
+                    // TODO: Keep previous version calling
+                    // a handler. Later it can be changed.
+                {
+                    ClientSelected.Invoke (SelectedItem);
+                }
+            };
 
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "ClientNewClient".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
             .Apply (Style.NavLabelButton);
         }
 
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
-        }
-
         private void OnNavigationBarAddClicked (object sender, EventArgs e)
         {
             // Show create client screen
             var next = new NewClientViewController (workspace) {
-                ClientCreated = (c) => ClientSelected (c),
+                ClientCreated = ClientSelected,
             };
-            this.NavigationController.PushViewController (next, true);
+            NavigationController.PushViewController (next, true);
         }
 
-        public Action<ClientModel> ClientSelected { get; set; }
-
-        private class Source : PlainDataViewSource<ClientData>
+        private UITableViewCell CreateClientCell (NSString cellIdentifier)
         {
-            private readonly static NSString ClientCellId = new NSString ("ClientCellId");
-            private readonly ClientSelectionViewController controller;
-
-            public Source (ClientSelectionViewController controller)
-            : base (controller.TableView, GetClientView (controller.workspace))
-            {
-                this.controller = controller;
-            }
-
-            private static IDataView<ClientData> GetClientView (WorkspaceModel model)
-            {
-                var workspaceId = model.Id;
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var q = dataStore.Table<ClientData> ()
-                        .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
-                return new DataQueryView<ClientData> (q, 50);
-            }
-
-            public override void Attach ()
-            {
-                base.Attach ();
-
-                controller.TableView.RegisterClassForCellReuse (typeof (ClientCell), ClientCellId);
-                controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
-            }
-
-            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
-            {
-                return 60f;
-            }
-
-            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
-            {
-                return EstimatedHeight (tableView, indexPath);
-            }
-
-            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
-            {
-                var cell = (ClientCell)tableView.DequeueReusableCell (ClientCellId, indexPath);
-                cell.Bind ((ClientModel)GetRow (indexPath));
-                return cell;
-            }
-
-            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
-            {
-                var client = (ClientModel)GetRow (indexPath);
-                var cb = controller.ClientSelected;
-                if (client != null && cb != null) {
-                    cb (client);
-                }
-            }
+            return new ClientCell (cellIdentifier);
         }
+
+        private void BindCell (UITableViewCell cell, ClientData clientData, NSIndexPath path)
+        {
+            ((ClientCell)cell).Bind (clientData.Name);
+        }
+
+        public Action<ClientData> ClientSelected { get; set; }
 
         private class ClientCell : UITableViewCell
         {
-            private readonly UILabel nameLabel;
-            private ClientModel model;
+            const float cellSpacing = 4f;
+            private UILabel nameLabel;
+
+            public ClientCell (NSString cellIdentifier) : base (UITableViewCellStyle.Default, cellIdentifier)
+            {
+                InitView ();
+            }
 
             public ClientCell (IntPtr handle) : base (handle)
+            {
+                InitView ();
+            }
+
+            private void InitView ()
             {
                 this.Apply (Style.Screen);
                 ContentView.Add (nameLabel = new UILabel ().Apply (Style.ClientList.NameLabel));
@@ -126,7 +103,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 base.LayoutSubviews ();
 
-                var contentFrame = new CGRect (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
+                var contentFrame = new CGRect (0, cellSpacing / 2, Frame.Width, Frame.Height - cellSpacing);
                 SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
 
                 contentFrame.X = 15f;
@@ -136,16 +113,16 @@ namespace Toggl.Ross.ViewControllers
                 nameLabel.Frame = contentFrame;
             }
 
-            public void Bind (ClientModel model)
+            public void Bind (string labelString)
             {
-                this.model = model;
-
-                if (String.IsNullOrWhiteSpace (model.Name)) {
+                if (String.IsNullOrWhiteSpace (labelString)) {
                     nameLabel.Text = "ClientNoNameClient".Tr ();
                 } else {
-                    nameLabel.Text = model.Name;
+                    nameLabel.Text = labelString;
                 }
             }
         }
+
+
     }
 }

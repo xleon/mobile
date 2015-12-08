@@ -105,13 +105,6 @@ namespace Toggl.Ross.ViewControllers
 
         protected override void Dispose (bool disposing)
         {
-            if (disposing) {
-                if (navMenuController != null) {
-                    navMenuController.Detach ();
-                    navMenuController = null;
-                }
-            }
-
             ViewModel.Dispose ();
             base.Dispose (disposing);
         }

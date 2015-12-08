@@ -26,10 +26,12 @@ namespace Toggl.Ross.ViewControllers
             this.workspace = workspace;
         }
 
+
         public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
             ViewModel = CreateClientViewModel.Init (workspace);
+
             this.SetBinding (() => ViewModel.ClientName, () => NameTextField.Text, BindingMode.TwoWay)
             .UpdateTargetTrigger ("EditingChanged");
         }

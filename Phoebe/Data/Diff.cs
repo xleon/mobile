@@ -23,7 +23,8 @@ namespace Toggl.Phoebe.Data
         DiffComparison Compare (IDiffComparable other);
     }
 
-    public class DiffSection<T> {
+    public class DiffSection<T>
+    {
         public DiffType Type { get; private set; }
         public int OldIndex { get; private set; }
         public int NewIndex { get; private set; }
@@ -71,11 +72,12 @@ namespace Toggl.Phoebe.Data
     public static class Diff
     {
         private static void AddKeys<T> (IDictionary<DiffType, List<DiffSection<T>>> diffs, params DiffType[] diffTypes)
-            where T : IDiffComparable
+        where T : IDiffComparable
         {
             foreach (var diffType in diffTypes)
-                if (!diffs.ContainsKey (diffType))
+                if (!diffs.ContainsKey (diffType)) {
                     diffs.Add (diffType, new List<DiffSection<T>> ());
+                }
         }
 
         /// <summary>

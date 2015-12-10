@@ -39,8 +39,6 @@ namespace Toggl.Joey.UI.Adapters
         {
             this.dataView = dataView;
             this.dataView.CollectionChanged += OnCollectionChanged;
-            this.dataView.IsLoadingChanged += OnLoading;
-            this.dataView.HasMoreChanged += OnHasMore;
             Owner = owner;
 
             HasStableIds = false;
@@ -51,36 +49,9 @@ namespace Toggl.Joey.UI.Adapters
             if (disposing) {
                 if (dataView != null) {
                     dataView.CollectionChanged -= OnCollectionChanged;
-                    dataView.IsLoadingChanged -= OnLoading;
-                    dataView.HasMoreChanged -= OnHasMore;
                 }
             }
             base.Dispose (disposing);
-        }
-
-        private async void OnLoading (object sender, EventArgs e)
-        {
-            // Need to access the Handle property, else mono optimises/loses the context and we get a weird
-            // low-level exception about "'jobject' must not be IntPtr.Zero".
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-
-            // Sometimes a new call to LoadMore is needed.
-            if (lastLoadingPosition + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
-                await dataView.LoadMoreAsync ();
-            }
-        }
-
-        private void OnHasMore (object sender, EventArgs e)
-        {
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-
-            if (!dataView.HasMore) {
-                NotifyItemChanged (ItemCount - 1);
-            }
         }
 
         private void OnCollectionChanged (object sender, NotifyCollectionChangedEventArgs e)
@@ -112,11 +83,11 @@ namespace Toggl.Joey.UI.Adapters
             return viewType == ViewTypeLoaderPlaceholder ? new SpinnerHolder (GetLoadIndicatorView (parent)) : GetViewHolder (parent, viewType);
         }
 
-        public async override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
-            if (position + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
+            if (position + LoadMoreOffset > ItemCount && dataView.HasMore) {
                 lastLoadingPosition = position;
-                await dataView.LoadMoreAsync ();
+                dataView.LoadMore ();
             }
 
             if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {

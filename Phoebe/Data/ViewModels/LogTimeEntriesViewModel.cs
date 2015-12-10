@@ -14,7 +14,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.ViewModels
 {
     [ImplementPropertyChanged]
-    public class LogTimeEntriesViewModel : ViewModelBase, IViewModel<TimeEntryModel>
+    public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private ActiveTimeEntryManager timeEntryManager;
@@ -22,8 +22,12 @@ namespace Toggl.Phoebe.Data.ViewModels
         private TimeEntryModel model;
         private Timer durationTimer;
 
-        public LogTimeEntriesViewModel ()
+        LogTimeEntriesViewModel ()
         {
+            // durationTimer will update the Duration value if ActiveTimeEntry is running
+            durationTimer = new Timer ();
+            durationTimer.Elapsed += DurationTimerCallback;
+
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
             timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             timeEntryManager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
@@ -32,19 +36,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
         }
 
-        public async Task Init ()
+        public static async Task<LogTimeEntriesViewModel> Init ()
         {
-            IsLoading = true;
-
-            // durationTimer will update the Duration
-            // value if ActiveTimeEntry is running
-            durationTimer = new Timer ();
-            durationTimer.Elapsed += DurationTimerCallback;
-
-            await SyncModel ();
-            await SyncCollectionView ();
-
-            IsLoading = false;
+            var vm = new LogTimeEntriesViewModel ();
+            await vm.SyncModel ();
+            vm.SyncCollectionView ();
+            return vm;
         }
 
         public void Dispose ()
@@ -63,16 +60,11 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
 
         #region Properties for ViewModel binding
-
-        public bool IsLoading  { get; set; }
-
         public bool IsProcessingAction { get; set; }
 
         public bool IsTimeEntryRunning { get; set; }
 
         public bool IsGroupedMode { get; set; }
-
-        public bool HasMore { get; set; }
 
         public string Description { get; set; }
 
@@ -114,11 +106,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private async void OnSettingChanged (SettingChangedMessage msg)
+        private void OnSettingChanged (SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
             if (msg.Name == "GroupedTimeEntries") {
-                await SyncCollectionView ();
+                SyncCollectionView ();
             }
         }
 
@@ -132,20 +124,15 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private async Task SyncCollectionView ()
+        private void SyncCollectionView ()
         {
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
             if (collectionView != null) {
                 collectionView.Dispose ();
-                collectionView.CollectionChanged -= OnCollectionChanged;
-                collectionView.HasMoreChanged -= OnCollectionChanged;
             }
 
             collectionView = new TimeEntriesCollectionView (IsGroupedMode);
-            collectionView.CollectionChanged += OnCollectionChanged;
-            collectionView.HasMoreChanged += OnCollectionChanged;
-            await collectionView.ReloadAsync ();
             CollectionView = collectionView;
         }
 
@@ -163,11 +150,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                 durationTimer.Stop ();
                 Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
             }
-        }
-
-        private void OnCollectionChanged (object sender, EventArgs e)
-        {
-            HasMore = collectionView.Count > 0 || collectionView.HasMore;
         }
 
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)

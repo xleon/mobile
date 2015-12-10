@@ -80,10 +80,8 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            ViewModel = new LogTimeEntriesViewModel ();
-            await ViewModel.Init ();
+            ViewModel = await LogTimeEntriesViewModel.Init();
 
-            hasMoreBinding = this.SetBinding (()=> ViewModel.HasMore).WhenSourceChanges (ShowEmptyState);
             collectionBinding = this.SetBinding (()=> ViewModel.CollectionView).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel.CollectionView);
                 recyclerView.SetAdapter (logAdapter);
@@ -106,9 +104,7 @@ namespace Toggl.Joey.UI.Fragments
         public async void StartStopClick (object sender, EventArgs e)
         {
             await ViewModel.StartStopTimeEntry ();
-            if (ViewModel.HasMore) {
-                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
-            }
+            OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
         }
 
         public override void OnDestroyView ()
@@ -160,16 +156,6 @@ namespace Toggl.Joey.UI.Fragments
             itemTouchListener.Dispose ();
             dividerDecoration.Dispose ();
             shadowDecoration.Dispose ();
-        }
-
-        private void ShowEmptyState ()
-        {
-            if (!OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) { //Empty state is experimental.
-                return;
-            }
-
-            recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
-            emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;
         }
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)

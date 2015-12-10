@@ -6,8 +6,12 @@ using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.Utils
 {
+    public interface IHolder : IDiffComparable
+    {
+    }
+
     // TODO: Check if this really needs to implement IDisposable
-    public interface ITimeEntryHolder : IDiffComparable
+    public interface ITimeEntryHolder : IHolder
     {
         TimeEntryData Data { get; }
         TimeEntryInfo Info { get; }

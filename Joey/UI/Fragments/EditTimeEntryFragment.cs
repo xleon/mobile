@@ -148,9 +148,7 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
-            ViewModel = new EditTimeEntryViewModel (TimeEntryId);
-            await ViewModel.Init ();
+            ViewModel = await EditTimeEntryViewModel.Init (TimeEntryId);
 
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
             startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => StartTimeEditText.Text)

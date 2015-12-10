@@ -18,7 +18,7 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<object>
+    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<IHolder>
     {
         public static readonly int ViewTypeLoaderPlaceholder = 0;
         public static readonly int ViewTypeContent = 1;

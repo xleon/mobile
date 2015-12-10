@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
+using CoreGraphics;
+using Foundation;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 using UIKit;
 using XPlatUtils;
-using CoreGraphics;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -19,11 +21,25 @@ namespace Toggl.Ross.ViewControllers
         private UIButton feedbackButton;
         private UIButton signOutButton;
         private UIButton[] menuButtons;
+        private UILabel usernameLabel;
+        private UILabel syncStatusLabel;
+        private UIImageView userAvatarImage;
+        private const int horizMargin = 15;
+
 
         private UIPanGestureRecognizer _panGesture;
         private CGPoint draggingPoint;
         private const int menuOffset = 60;
         private const int velocityTreshold = 100;
+
+        private Subscription<SyncStartedMessage> drawerSyncStarted;
+        private Subscription<SyncFinishedMessage> drawerSyncFinished;
+        private long lastSyncInMillis;
+        private int syncStatus;
+        private const int syncing = 0;
+        private const int syncSuccessful = 1;
+        private const int syncHadErrors = 2;
+        private const int syncFatalError = 3;
 
         public override void LoadView ()
         {
@@ -42,17 +58,24 @@ namespace Toggl.Ross.ViewControllers
                 (feedbackButton = new UIButton ()),
                 (signOutButton = new UIButton ()),
             };
-            logButton.SetTitle ("NavMenuLog".Tr (), UIControlState.Normal);
-            reportsButton.SetTitle ("NavMenuReports".Tr (), UIControlState.Normal);
-            settingsButton.SetTitle ("NavMenuSettings".Tr (), UIControlState.Normal);
-            feedbackButton.SetTitle ("NavMenuFeedback".Tr (), UIControlState.Normal);
-            signOutButton.SetTitle ("NavMenuSignOut".Tr (), UIControlState.Normal);
+            logButton.SetTitle ("LeftPanelMenuLog".Tr (), UIControlState.Normal);
+            reportsButton.SetTitle ("LeftPanelMenuReports".Tr (), UIControlState.Normal);
+            settingsButton.SetTitle ("LeftPanelMenuSettings".Tr (), UIControlState.Normal);
+            feedbackButton.SetTitle ("LeftPanelMenuFeedback".Tr (), UIControlState.Normal);
+            signOutButton.SetTitle ("LeftPanelMenuSignOut".Tr (), UIControlState.Normal);
 
             logButton.HorizontalAlignment = reportsButton.HorizontalAlignment = settingsButton.HorizontalAlignment =
                                                 feedbackButton.HorizontalAlignment = signOutButton.HorizontalAlignment = UIControlContentHorizontalAlignment.Left;
 
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            authManager.PropertyChanged += OnUserLoad;
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            drawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
+            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
+
             foreach (var button in menuButtons) {
-                button.Apply (Style.Left.Button);
+                button.Apply (Style.LeftView.Button);
                 button.TouchUpInside += OnMenuButtonTouchUpInside;
                 View.AddSubview (button);
             }
@@ -62,17 +85,43 @@ namespace Toggl.Ross.ViewControllers
             View.AddGestureRecognizer (_panGesture);
         }
 
-        public nfloat Width
+        public override void ViewDidLoad ()
         {
-            get {
-                return View.Frame.Width;
-            }
+            base.ViewDidLoad ();
+
+            usernameLabel = new UILabel ().Apply (Style.LeftView.UserLabel);
+            usernameLabel.Frame = new CGRect (60, 60, height: 50f, width: View.Frame.Width);
+            View.AddSubview (usernameLabel);
+
+            userAvatarImage = new UIImageView (new CGRect (horizMargin, 70, 30, 30));
+            userAvatarImage.Layer.CornerRadius=15f;
+            userAvatarImage.Layer.MasksToBounds = true;
+            View.AddSubview (userAvatarImage);
+
+            syncStatusLabel = new UILabel ().Apply (Style.LeftView.UserLabel);
+            syncStatusLabel.Text = String.Format (
+                                       "LeftPanelSyncTime".Tr(),
+                                       "5 minutes"
+                                   );
+            syncStatusLabel.Frame = new CGRect (horizMargin, View.Frame.Height - 50f, height: 50f, width: View.Frame.Width);
+            View.AddSubview (syncStatusLabel);
+        }
+
+        private void OnUserLoad (object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            usernameLabel.Text = userData.Name;
+
+            var url = new NSUrl (userData.ImageUrl);
+            var data = NSData.FromUrl (url);
+            var image = UIImage.LoadFromData (data);
+            userAvatarImage.Image = image;
         }
 
         public nfloat MaxDraggingX
         {
             get {
-                return Width - menuOffset;
+                return View.Frame.Width - menuOffset;
             }
         }
 
@@ -112,11 +161,9 @@ namespace Toggl.Ross.ViewControllers
                         main.OpenMenu ();
                     }
                 } else {
-                    if (Math.Abs (currentX) < (Width - menuOffset) / 2) {
-                        Console.WriteLine ("close");
+                    if (Math.Abs (currentX) < (View.Frame.Width - menuOffset) / 2) {
                         main.CloseMenu ();
                     } else {
-                        Console.WriteLine ("open");
                         main.OpenMenu ();
                     }
                 }
@@ -127,16 +174,12 @@ namespace Toggl.Ross.ViewControllers
         private static IEnumerable<FluentLayout> MakeConstraints (UIView container)
         {
             UIView prev = null;
+            const float startTopMargin = 120.0f;
+            const float topMargin = 7f;
 
             foreach (var view in container.Subviews) {
-
-                var startTopMargin = 50.0f;
-                var topMargin = 0f;
-                var horizMargin = 0f;
-
-                if (view is UIButton) {
-                    topMargin = 7f;
-                    horizMargin = 15f;
+                if (! (view is UIButton)) {
+                    continue;
                 }
 
                 if (prev == null) {
@@ -170,6 +213,57 @@ namespace Toggl.Ross.ViewControllers
                 ServiceContainer.Resolve<AuthManager> ().Forget ();
             }
             main.CloseMenu();
+        }
+
+        protected void SyncStarted (SyncStartedMessage msg)
+        {
+            syncStatus = syncing;
+            UpdateSyncStatus();
+        }
+
+        private void SyncFinished (SyncFinishedMessage msg)
+        {
+            if (msg.FatalError != null) {
+                syncStatus = syncFatalError;
+            } else if (msg.HadErrors) {
+                syncStatus = syncHadErrors;
+            } else {
+                syncStatus = syncSuccessful;
+            }
+            lastSyncInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            UpdateSyncStatus ();
+        }
+
+        private void UpdateSyncStatus ()
+        {
+            switch (syncStatus) {
+            case syncing:
+                syncStatusLabel.Text = "LeftPanelSyncing".Tr();
+                break;
+            case syncHadErrors:
+                syncStatusLabel.Text = "LeftPanelSyncHadErrors".Tr();
+                break;
+            case syncFatalError:
+                syncStatusLabel.Text = "LeftPanelSyncFailed".Tr();
+                break;
+            default:
+                syncStatusLabel.Text = ResolveLastSyncTime ();
+                break;
+            }
+        }
+
+        private String ResolveLastSyncTime ()
+        {
+            const int minuteInMillis = 60 * 1000;
+            var NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            if (NowInMillis - lastSyncInMillis < minuteInMillis) {
+                return "LeftPanelSyncJustNow".Tr();
+            }
+
+            return String.Format (
+                       "LeftPanelSyncTime".Tr(),
+                       (NowInMillis - lastSyncInMillis) / minuteInMillis
+                   );
         }
     }
 }

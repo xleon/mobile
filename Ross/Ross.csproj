@@ -347,7 +347,7 @@
     <Compile Include="Views\OBMEmptyView.cs" />
     <Compile Include="Views\ReloadTableViewFooter.cs" />
     <Compile Include="ViewControllers\LeftViewController.cs" />
-    <Compile Include="Theme\Style.Left.cs">
+    <Compile Include="Theme\Style.LeftView.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
   </ItemGroup>

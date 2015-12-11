@@ -99,10 +99,6 @@ namespace Toggl.Ross.ViewControllers
             View.AddSubview (userAvatarImage);
 
             syncStatusLabel = new UILabel ().Apply (Style.LeftView.UserLabel);
-            syncStatusLabel.Text = String.Format (
-                                       "LeftPanelSyncTime".Tr(),
-                                       "5 minutes"
-                                   );
             syncStatusLabel.Frame = new CGRect (horizMargin, View.Frame.Height - 50f, height: 50f, width: View.Frame.Width);
             View.AddSubview (syncStatusLabel);
         }

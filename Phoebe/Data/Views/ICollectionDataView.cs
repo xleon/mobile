@@ -13,6 +13,6 @@ namespace Toggl.Phoebe.Data.Views
 
         bool HasMore { get; }
 
-        void LoadMore();
+        Task LoadMore (bool isInit = false);
     }
 }

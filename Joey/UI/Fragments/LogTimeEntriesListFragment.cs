@@ -80,7 +80,7 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            ViewModel = await LogTimeEntriesViewModel.Init();
+            ViewModel = await LogTimeEntriesViewModel.Init ();
 
             collectionBinding = this.SetBinding (()=> ViewModel.CollectionView).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel.CollectionView);
@@ -190,7 +190,7 @@ namespace Toggl.Joey.UI.Fragments
             var snackBar = Snackbar
                            .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
                            .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
-                                       async v => await ViewModel.CollectionView.RestoreItemFromUndoAsync ());
+                                       _ => ViewModel.CollectionView.RestoreItemFromUndo ());
             ChangeSnackBarColor (snackBar);
             snackBar.Show ();
         }

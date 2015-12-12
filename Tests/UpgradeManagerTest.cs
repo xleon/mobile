@@ -89,7 +89,7 @@ namespace Toggl.Phoebe.Tests
             });
         }
 
-        private class PlatformUtils : IPlatformUtils
+        public class PlatformUtils : IPlatformUtils
         {
             public string AppIdentifier { get; set; }
 
@@ -104,7 +104,10 @@ namespace Toggl.Phoebe.Tests
                 }
             }
 
-            public void DispatchOnUIThread (Action action) {}
+            public void DispatchOnUIThread (Action action)
+            {
+                action ();
+            }
         }
 
         private class SettingStore : ISettingsStore

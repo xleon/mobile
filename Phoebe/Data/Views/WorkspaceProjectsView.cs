@@ -685,9 +685,9 @@ namespace Toggl.Phoebe.Data.Views
             get { return false; }
         }
 
-        public void LoadMore ()
+        public Task LoadMore (bool isInit = false)
         {
-            // Do nothing
+            return null;
         }
 
         public IEnumerable<object> Data

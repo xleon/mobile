@@ -7,6 +7,7 @@ using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
 using Toggl.Phoebe.Data.Views;
+using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -82,10 +83,10 @@ namespace Toggl.Joey.UI.Adapters
             return viewType == ViewTypeLoaderPlaceholder ? new SpinnerHolder (GetLoadIndicatorView (parent)) : GetViewHolder (parent, viewType);
         }
 
-        public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        public override async void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
             if (position + LoadMoreOffset > ItemCount && dataView.HasMore) {
-                dataView.LoadMore ();
+                await dataView.LoadMore (); // TODO: Check if this is blocking the start of spinner animation
             }
 
             if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {

@@ -10,10 +10,15 @@ namespace Toggl.Phoebe
     {
         public static IObservable<IList<T>> TimedBuffer<T> (this IObservable<T> observable, int milliseconds)
         {
-            // TODO: This is firing up even if there're no events. Can it be improved?
-            return observable
-                .Buffer (TimeSpan.FromMilliseconds (milliseconds))
-                .Where (b => b.Count > 0);
+            if (milliseconds > 0) {
+                // TODO: This is firing up even if there're no events. Can it be improved?
+                return observable
+                       .Buffer (TimeSpan.FromMilliseconds (milliseconds))
+                       .Where (b => b.Count > 0);
+            } else {
+                return observable
+                .Select (x => new List<T> () { x });
+            }
         }
 
         public static void ForEach<T> (this IEnumerable<T> items, Action<T> action)

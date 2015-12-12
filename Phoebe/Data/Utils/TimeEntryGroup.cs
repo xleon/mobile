@@ -27,12 +27,24 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public async Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous)
+        private void LoadGroup (TimeEntryData data = null, ITimeEntryHolder previous = null)
         {
             var prev = previous as TimeEntryGroup;
             Group = previous != null
                     ? prev.Group.Append (data).OrderBy (x => x.StartTime).ToList ()
             : new List<TimeEntryData> () { data };
+        }
+
+        public TimeEntryGroup (TimeEntryData data = null, ITimeEntryHolder previous = null)
+        {
+            if (data != null) {
+                LoadGroup (data, previous);
+            }
+        }
+
+        public async Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous)
+        {
+            LoadGroup (data, previous);
             Info = await TimeEntryInfo.LoadAsync (Data);
         }
 

@@ -36,6 +36,11 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
+        public TimeEntryHolder (TimeEntryData data = null)
+        {
+            Data = data;
+        }
+
         public async Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous)
         {
             // Ignore previous

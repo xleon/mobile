@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -14,7 +16,6 @@ using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using System.Collections.ObjectModel;
 
 namespace Toggl.Phoebe.Data.Views
 {
@@ -27,53 +28,57 @@ namespace Toggl.Phoebe.Data.Views
         #region Fields
         public static int MaxInitLocalEntries = 20;
         public static int UndoSecondsInterval = 5;
-        public static int BufferMilliseconds = 500;
 
-        protected string Tag = "TimeEntriesCollectionView";
-        protected ITimeEntryHolder LastRemovedItem;
+        private const string Tag = "TimeEntriesCollectionView";
 
-        private event EventHandler<TimeEntryAction> Update;
-
-        public readonly ObservableRangeCollection<IHolder> Items = new ObservableRangeCollection<IHolder> ();
+        private readonly ObservableRangeCollection<IHolder> items = new ObservableRangeCollection<IHolder> ();
+        private readonly Subject<DataChangeMessage> observable = new Subject<DataChangeMessage> ();
         private readonly CancellationTokenSource cts = new CancellationTokenSource ();
-        private readonly Action disposeSubscription;
         private readonly bool isGrouped;
+        private readonly IFeed feed;
 
         private DateTime startFrom = Time.UtcNow;
+        private ITimeEntryHolder LastRemovedItem;
         private System.Timers.Timer undoTimer;
         #endregion
 
         #region Life Cycle
-        public TimeEntriesCollectionView (bool isGrouped)
+        TimeEntriesCollectionView (bool isGrouped, IFeed feed = null)
         {
+            feed = feed ?? new Feed ();
             this.isGrouped = isGrouped;
+            this.feed = feed;
             HasMore = true;
 
             // The code modifying the collection is responsible to do it in UI thread
-            Items.CollectionChanged += (sender, e) => {
+            items.CollectionChanged += (sender, e) => {
                 if (CollectionChanged != null) {
                     CollectionChanged (this, e);
                 }
             };
 
-            // Subscribe to MessageBus
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            var subscription = bus.Subscribe<DataChangeMessage> (UpdateFromMessageBus);
-            disposeSubscription = () => bus.Unsubscribe (subscription);
+            observable.Synchronize (feed.MessageScheduler)
+            .TimedBuffer (feed.BufferMilliseconds)
+            .Subscribe (UpdateItemsAsync);
 
-            Observable.FromEventPattern<TimeEntryAction> (
-                handler => Update += handler,
-                handler => Update -= handler,
-                System.Reactive.Concurrency.Scheduler.Default
-            )
-            .Select (ev => ev.EventArgs)
-            .TimedBuffer (BufferMilliseconds)
-            // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
-            .Select (msgs => Observable.FromAsync (() => UpdateAsync (msgs)))
-            .Concat()
-            .Subscribe();
+            feed.SubscribeToMessageBus (UpdateFromMessageBus);
+        }
 
-            Update (this, TimeEntryAction.Load.New (isInitial: true));
+        public static async Task<TimeEntriesCollectionView> Init (bool isGrouped)
+        {
+            var v = new TimeEntriesCollectionView (isGrouped);
+            await v.LoadMore (isInit: true);
+            return v;
+        }
+
+        /// <summary>
+        /// Only for testing purposes
+        /// </summary>
+        public static TimeEntriesCollectionView InitEmpty (bool isGrouped, IFeed feed = null)
+        {
+            var v = new TimeEntriesCollectionView (isGrouped, feed);
+            v.HasMore = false;
+            return v;
         }
 
         public void Dispose()
@@ -92,8 +97,8 @@ namespace Toggl.Phoebe.Data.Views
                 undoTimer.Close();
             }
 
-            if (disposeSubscription != null) {
-                disposeSubscription();
+            if (feed != null) {
+                feed.Dispose ();
             }
         }
         #endregion
@@ -101,19 +106,14 @@ namespace Toggl.Phoebe.Data.Views
         #region ICollectionDataView implementation
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        public void LoadMore ()
-        {
-            Update (this, TimeEntryAction.Load.New ());
-        }
-
         public IEnumerable<IHolder> Data
         {
-            get { return Items; }
+            get { return items; }
         }
 
         public int Count
         {
-            get { return Items.Count; }
+            get { return items.Count; }
         }
 
         public bool HasMore
@@ -121,163 +121,31 @@ namespace Toggl.Phoebe.Data.Views
             get;
             private set;
         }
-        #endregion
 
-        #region Utility
-        private IList<IHolder> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
+        public async Task LoadMore (bool isInit = false)
         {
-            return timeHolders
-                   .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
-                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
-                   .ToList ();
-        }
-
-        private async Task<ITimeEntryHolder> CreateTimeHolder (TimeEntryData entry, ITimeEntryHolder previous = null)
-        {
-            var holder = isGrouped
-                         ? (ITimeEntryHolder)new TimeEntryGroup ()
-                         : new TimeEntryHolder ();
-            await holder.LoadAsync (entry, previous);
-            return holder;
-        }
-
-        private int FindIndex (IList<ITimeEntryHolder> timeHolders, TimeEntryData entry)
-        {
-            var foundIndex = -1;
-            for (var j = 0; j < timeHolders.Count; j++) {
-                if (timeHolders [j].Matches (entry)) {
-                    foundIndex = j;
-                    break;
-                }
-            }
-            return foundIndex;
-        }
-
-        private void UpdateFromMessageBus (DataChangeMessage msg)
-        {
-            var entry = msg != null ? msg.Data as TimeEntryData : null;
-            if (entry != null && Update != null) {
-                var isExcluded = entry.DeletedAt != null
-                                 || msg.Action == DataAction.Delete
-                                 || entry.State == TimeEntryState.New;
-                Update (this, isExcluded ? TimeEntryAction.Delete.New (entry) : TimeEntryAction.Put.New (entry));
-            }
-        }
-        #endregion
-
-        #region Update Items
-        private Task UpdateAsync (TimeEntryData entry, bool delete = false)
-        {
-            var li = new List<TimeEntryAction> ();
-            li.Add (delete ? TimeEntryAction.Delete.New (entry) : TimeEntryAction.Put.New (entry));
-            return UpdateAsync (li);
-        }
-
-        private async Task UpdateAsync (IEnumerable<TimeEntryAction> actions)
-        {
-            try {
-                // 1. Get only TimeEntryHolders from current collection
-                var timeHolders = Items.OfType<ITimeEntryHolder> ().ToList ();
-
-                // 2. Remove, replace or add items from messages
-                // TODO: Is it more performant to run CreateTimeEntryHolder tasks in parallel?
-                foreach (var action in actions) {
-                    await UpdateTimeHoldersAsync (timeHolders, action);
-                }
-
-                // 3. Sort new list
-                timeHolders = timeHolders.OrderByDescending (x => x.GetStartTime ()).ToList ();
-
-                // 4. Create the new item collection from holders (add headers...)
-                var newItemCollection = CreateItemCollection (timeHolders);
-
-                // 5. Check diffs, modify ItemCollection and notify changes
-                var diffs = Diff.CalculateExtra (Items, newItemCollection).ToList ();
-
-                // CollectionChanged events must be fired on UI thread
-                ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
-                    foreach (var diff in diffs.OrderBy (x => x.NewIndex).ThenBy (x => x.OldIndex)) {
-                        switch (diff.Type) {
-                        case DiffType.Add:
-                            Items.Insert (diff.NewIndex, diff.NewItem);
-                            break;
-                        case DiffType.Remove:
-                            Items.RemoveAt (diff.NewIndex);
-                            break;
-                        case DiffType.Move:
-                            var oldIndex = Items.IndexOf (diff.OldItem);
-                            Items.Move (oldIndex, diff.NewIndex, diff.NewItem);
-                            break;
-                        case DiffType.Replace:
-                            Items[diff.NewIndex] = diff.NewItem;
-                            break;
-                            //                        case DiffType.Copy: // Do nothing
-                        }
-                    }
-                });
-            } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<ILogger>();
-                log.Error (Tag, ex, "Failed to update collection");
-            }
-        }
-
-        private async Task UpdateTimeHoldersAsync (
-            IList<ITimeEntryHolder> timeHolders, TimeEntryAction action)
-        {
-            await action.Match (
-                put: async x => {
-                    var foundIndex = FindIndex (timeHolders, x.Data);
-                    if (foundIndex > -1) {
-                        timeHolders[foundIndex] = await CreateTimeHolder (x.Data, timeHolders[foundIndex]); // Replace
-                    } else {
-                        timeHolders.Add (await CreateTimeHolder (x.Data)); // Insert
-                    }
-                },
-                delete: x => Task.Run(() => {
-                    var foundIndex = FindIndex (timeHolders, x.Data);
-                    if (foundIndex > -1) {
-                        timeHolders.RemoveAt (foundIndex); // Remove
-                    }
-                }),
-                batch: x => LoadTimeHoldersAsync (timeHolders, x.IsInitial)
-           );
-        }
-
-        private async Task LoadTimeHoldersAsync (IList<ITimeEntryHolder> timeHolders, bool isInitialLoad)
-        {
-            if (!HasMore)
+            if (!HasMore) {
                 return;
+            }
 
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var endTime = startFrom;
-            var useLocal = isInitialLoad;
+            var useLocal = isInit;
 
             // Try with latest data from server first:
             if (!useLocal) {
                 const int numDays = 5;
                 try {
-                    var minStart = endTime;
-                    var client = ServiceContainer.Resolve<ITogglClient>();
-                    var jsonEntries = await client.ListTimeEntries (endTime, numDays, cts.Token);
-
-                    var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
-                                  jsonEntries.Select (json => json.Import (ctx)).ToList ());
-
-                    // Add entries to list:
-                    foreach (var entry in entries) {
-                        await UpdateTimeHoldersAsync (timeHolders, TimeEntryAction.Put.New (entry));
-                        if (entry.StartTime < minStart) {
-                            minStart = entry.StartTime;
-                        }
-                    }
-
+                    var entries = await feed.DownloadTimeEntries (endTime, numDays, cts.Token);
+                    var minStart = entries.Min (x => x.StartTime);
                     HasMore = (endTime.Date - minStart.Date).Days > 0;
                 } catch (Exception exc) {
                     var log = ServiceContainer.Resolve<ILogger> ();
+                    const string msg = "Failed to fetch time entries {1} days up to {0}";
+
                     if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                        log.Info (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
+                        log.Info (Tag, exc, msg, endTime, numDays);
                     } else {
-                        log.Warning (Tag, exc, "Failed to fetch time entries {1} days up to {0}", endTime, numDays);
+                        log.Warning (Tag, exc, msg, endTime, numDays);
                     }
 
                     useLocal = true;
@@ -300,7 +168,101 @@ namespace Toggl.Phoebe.Data.Views
                               .ToListAsync ();
 
                 foreach (var entry in entries) {
-                    await UpdateTimeHoldersAsync (timeHolders, TimeEntryAction.Put.New (entry));
+                    observable.OnNext (new DataChangeMessage (null, entry, DataAction.Put));
+                }
+            }
+        }
+        #endregion
+
+        #region Utility
+        private IList<IHolder> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
+        {
+            return timeHolders
+                   .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
+                   .ToList ();
+        }
+
+        private void UpdateFromMessageBus (DataChangeMessage msg)
+        {
+            var entry = msg != null ? msg.Data as TimeEntryData : null;
+            if (entry != null) {
+                var isExcluded = entry.DeletedAt != null
+                                 || msg.Action == DataAction.Delete
+                                 || entry.State == TimeEntryState.New;
+                observable.OnNext (new DataChangeMessage (null, entry, isExcluded ? DataAction.Delete : DataAction.Put));
+            }
+        }
+        #endregion
+
+        #region Update Items
+        private async void UpdateItemsAsync (IEnumerable<DataChangeMessage> msgs)
+        {
+            try {
+                // 1. Get only TimeEntryHolders from current collection
+                var timeHolders = items.OfType<ITimeEntryHolder> ().ToList ();
+
+                // 2. Remove, replace or add items from messages
+                // TODO: Is it more performant to run CreateTimeEntryHolder tasks in parallel?
+                foreach (var msg in msgs) {
+                    await UpdateTimeHoldersAsync (timeHolders, msg.Data as TimeEntryData, msg.Action);
+                }
+
+                // 3. Sort new list
+                timeHolders = timeHolders.OrderByDescending (x => x.GetStartTime ()).ToList ();
+
+                // 4. Create the new item collection from holders (add headers...)
+                var newItemCollection = CreateItemCollection (timeHolders);
+
+                // 5. Check diffs, modify ItemCollection and notify changes
+                var diffs = Diff.CalculateExtra (items, newItemCollection).ToList ();
+
+                // CollectionChanged events must be fired on UI thread
+                ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
+                    foreach (var diff in diffs.OrderBy (x => x.NewIndex).ThenBy (x => x.OldIndex)) {
+                        switch (diff.Type) {
+                        case DiffType.Add:
+                            items.Insert (diff.NewIndex, diff.NewItem);
+                            break;
+                        case DiffType.Remove:
+                            items.RemoveAt (diff.NewIndex);
+                            break;
+                        case DiffType.Move:
+                            var oldIndex = items.IndexOf (diff.OldItem);
+                            items.Move (oldIndex, diff.NewIndex, diff.NewItem);
+                            break;
+                        case DiffType.Replace:
+                            items[diff.NewIndex] = diff.NewItem;
+                            break;
+                            //                        case DiffType.Copy: // Do nothing
+                        }
+                    }
+                });
+            } catch (Exception ex) {
+                var log = ServiceContainer.Resolve<ILogger>();
+                log.Error (Tag, ex, "Failed to update collection");
+            }
+        }
+
+        private async Task UpdateTimeHoldersAsync (IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
+        {
+            var foundIndex = -1;
+            for (var j = 0; j < timeHolders.Count; j++) {
+                if (timeHolders [j].Matches (entry)) {
+                    foundIndex = j;
+                    break;
+                }
+            }
+
+            if (foundIndex > -1) {
+                if (action == DataAction.Put) {
+                    timeHolders [foundIndex] = await feed.CreateTimeHolder (isGrouped, entry, timeHolders [foundIndex]);    // Replace
+                } else {
+                    timeHolders.RemoveAt (foundIndex);    // Remove
+                }
+            } else {
+                if (action == DataAction.Put) {
+                    timeHolders.Add (await feed.CreateTimeHolder (isGrouped, entry));    // Insert
                 }
             }
         }
@@ -310,7 +272,7 @@ namespace Toggl.Phoebe.Data.Views
         public async void ContinueTimeEntry (int index)
         {
             // Get data holder
-            var timeEntryHolder = Items.ElementAtOrDefault (index) as ITimeEntryHolder;
+            var timeEntryHolder = items.ElementAtOrDefault (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
                 return;
             }
@@ -327,7 +289,7 @@ namespace Toggl.Phoebe.Data.Views
         public async Task RemoveItemWithUndoAsync (int index)
         {
             // Get data holder
-            var timeEntryHolder = Items.ElementAtOrDefault (index) as ITimeEntryHolder;
+            var timeEntryHolder = items.ElementAtOrDefault (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
                 return;
             }
@@ -343,7 +305,7 @@ namespace Toggl.Phoebe.Data.Views
             LastRemovedItem = timeEntryHolder;
 
             // Remove item only from list
-            await UpdateAsync (timeEntryHolder.Data, delete: true);
+            observable.OnNext (new DataChangeMessage (null, timeEntryHolder.Data, DataAction.Delete));
 
             // Create Undo timer
             if (undoTimer != null) {
@@ -357,10 +319,10 @@ namespace Toggl.Phoebe.Data.Views
             undoTimer.Start();
         }
 
-        public async Task RestoreItemFromUndoAsync()
+        public void RestoreItemFromUndo()
         {
             if (LastRemovedItem != null) {
-                await UpdateAsync (LastRemovedItem.Data);
+                observable.OnNext (new DataChangeMessage (null, LastRemovedItem.Data, DataAction.Put));
                 LastRemovedItem = null;
             }
         }
@@ -408,6 +370,123 @@ namespace Toggl.Phoebe.Data.Views
                     var same = other2.TotalDuration == TotalDuration && other2.IsRunning == IsRunning;
                     return same ? DiffComparison.Same : DiffComparison.Updated;
                 }
+            }
+        }
+
+        public interface IFeed : IDisposable
+        {
+            int BufferMilliseconds { get; }
+
+            IScheduler MessageScheduler { get; }
+
+            void SubscribeToMessageBus (Action<DataChangeMessage> action);
+
+            Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct);
+
+            Task<ITimeEntryHolder> CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null);
+        }
+
+        public class Feed : IFeed
+        {
+            MessageBus bus;
+            Subscription<DataChangeMessage> subscription;
+
+            public int BufferMilliseconds
+            {
+                get { return 500; }
+            }
+
+            public IScheduler MessageScheduler
+            {
+                get { return Scheduler.Default; }
+            }
+
+            public async Task<ITimeEntryHolder> CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
+            {
+                var holder = isGrouped
+                             ? (ITimeEntryHolder)new TimeEntryGroup ()
+                             : new TimeEntryHolder ();
+                await holder.LoadAsync (entry, previous);
+                return holder;
+            }
+
+            public void SubscribeToMessageBus (Action<DataChangeMessage> action)
+            {
+                bus = ServiceContainer.Resolve<MessageBus> ();
+                subscription = bus.Subscribe<DataChangeMessage> (action);
+            }
+
+            public async Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct)
+            {
+                // Download new Entries
+                var client = ServiceContainer.Resolve<ITogglClient>();
+                var jsonEntries = await client.ListTimeEntries (endTime, numDays, ct);
+
+                // Store them in the local data store
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
+                              jsonEntries.Select (json => json.Import (ctx)).ToList ());
+
+                return entries;
+            }
+
+            public void Dispose ()
+            {
+                if (bus != null && subscription != null) {
+                    bus.Unsubscribe (subscription);
+                    subscription = null;
+                    bus = null;
+                }
+            }
+        }
+
+        public class TestFeed : IFeed
+        {
+            public IList<Action<DataChangeMessage>> Listeners { get; private set; }
+            public IScheduler MessageScheduler { get; private set; }
+
+            public TestFeed ()
+            {
+                MessageScheduler = Scheduler.CurrentThread;
+                Listeners = new List<Action<DataChangeMessage>> ();
+            }
+
+            public int BufferMilliseconds
+            {
+                get { return 0; }
+            }
+
+            public void Push (TimeEntryData data, DataAction action)
+            {
+                foreach (var listener in Listeners) {
+                    listener (new DataChangeMessage (null, data, action));
+                }
+            }
+
+            public Task<ITimeEntryHolder> CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
+            {
+                return Task.Run (() => {
+                    var holder = isGrouped
+                                 ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
+                                 : new TimeEntryHolder (entry);
+//                    await holder.LoadAsync (entry, previous);
+                    return holder;
+                });
+            }
+
+            public void SubscribeToMessageBus (Action<DataChangeMessage> action)
+            {
+                Listeners.Add (action);
+            }
+
+            public Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct)
+            {
+                return Task.Run<IList<TimeEntryData>> (() => new List<TimeEntryData> ());
+            }
+
+            public void Dispose ()
+            {
+                Listeners.Clear ();
             }
         }
         #endregion

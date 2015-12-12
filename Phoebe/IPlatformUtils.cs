@@ -1,6 +1,5 @@
+using System;
 using SQLite.Net.Interop;
-using System;
-using System;
 
 namespace Toggl.Phoebe
 {

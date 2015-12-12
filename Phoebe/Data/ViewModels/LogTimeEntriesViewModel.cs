@@ -18,7 +18,6 @@ namespace Toggl.Phoebe.Data.ViewModels
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private ActiveTimeEntryManager timeEntryManager;
-        private TimeEntriesCollectionView collectionView;
         private TimeEntryModel model;
         private Timer durationTimer;
 
@@ -40,7 +39,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             var vm = new LogTimeEntriesViewModel ();
             await vm.SyncModel ();
-            vm.SyncCollectionView ();
+            await vm.SyncCollectionView ();
             return vm;
         }
 
@@ -52,10 +51,13 @@ namespace Toggl.Phoebe.Data.ViewModels
                 subscriptionSettingChanged = null;
             }
 
-            collectionView.Dispose ();
+            if (CollectionView != null) {
+                CollectionView.Dispose ();
+                CollectionView = null;
+            }
+
             timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
             timeEntryManager = null;
-
             model = null;
         }
 
@@ -106,11 +108,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private void OnSettingChanged (SettingChangedMessage msg)
+        private async void OnSettingChanged (SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
             if (msg.Name == "GroupedTimeEntries") {
-                SyncCollectionView ();
+                await SyncCollectionView ();
             }
         }
 
@@ -124,16 +126,15 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private void SyncCollectionView ()
+        private async Task SyncCollectionView ()
         {
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
-            if (collectionView != null) {
-                collectionView.Dispose ();
+            if (CollectionView != null) {
+                CollectionView.Dispose ();
             }
 
-            collectionView = new TimeEntriesCollectionView (IsGroupedMode);
-            CollectionView = collectionView;
+            CollectionView = await TimeEntriesCollectionView.Init (IsGroupedMode);
         }
 
         private void UpdateView ()

@@ -1,35 +1,28 @@
 using System;
 using System.Threading.Tasks;
 using CoreGraphics;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
 using UIKit;
 
 namespace Toggl.Ross.Views
 {
-    public abstract class SwipableTimeEntryTableViewCell : ModelTableViewCell<TimeEntryModel>
+    public abstract class SwipableTimeEntryTableViewCell : UITableViewCell
     {
         private const float SwipeWidth = 100f;
-
         private const float MinDuration = 0.2f;
         private const float MaxDuration = 0.6f;
-
         private const float FallbackTreshold = 40.0f;
         private const float VelocityTreshold = 60.0f;
-
         private readonly UIButton continueActionButton;
         private readonly UIView actualContentView;
 
         protected SwipableTimeEntryTableViewCell (IntPtr ptr) : base (ptr)
         {
             continueActionButton = new UIButton ().Apply (Style.TimeEntryCell.SwipeActionButton).Apply (Style.TimeEntryCell.ContinueState);
-
             actualContentView = new UIView ().Apply (Style.Log.CellContentView);
-
             continueActionButton.SetTitle ("SwipeTimeEntryContinue".Tr (), UIControlState.Normal);
 
             BackgroundView = new UIView ();
-
             SelectedBackgroundView = new UIView ().Apply (Style.CellSelectedBackground);
             ContentView.AddSubviews (
                 continueActionButton,

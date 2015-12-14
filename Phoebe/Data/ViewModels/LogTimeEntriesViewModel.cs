@@ -18,13 +18,13 @@ namespace Toggl.Phoebe.Data.ViewModels
     [ImplementPropertyChanged]
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
+        private readonly Timer durationTimer;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
         private ActiveTimeEntryManager timeEntryManager;
         private TimeEntryModel model;
         private TimeEntriesFeed collectionFeed;
-        private readonly Timer durationTimer;
 
         LogTimeEntriesViewModel ()
         {

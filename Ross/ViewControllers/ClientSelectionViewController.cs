@@ -57,7 +57,7 @@ namespace Toggl.Ross.ViewControllers
         private void OnNavigationBarAddClicked (object sender, EventArgs e)
         {
             // Show create client screen
-            var next = new CreateClientViewController (workspace) {
+            var next = new NewClientViewController (workspace) {
                 ClientCreated = ClientSelected,
             };
             NavigationController.PushViewController (next, true);

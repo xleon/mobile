@@ -11,7 +11,7 @@ namespace Toggl.Phoebe.Data
     }
 
     public enum DiffType {
-//        Copy,
+        Copy,
         Add,
         Remove,
         Move,
@@ -89,33 +89,41 @@ namespace Toggl.Phoebe.Data
             IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1)
         where T : IDiffComparable
         {
-            var diffs = Calculate (listA, listB)
-                        // Calculate Replace diffs
-                        .CollapsePairs ((x, y) => x.Type == DiffType.Remove && y.Type == DiffType.Add &&
-                                        x.OldItem.Compare (y.NewItem) != DiffComparison.Different
-                                        ? DiffSection<T>.Replace (x, y) : null)
-                        .GroupBy (diff => diff.Type)
-                        .ToDictionary (gr => gr.Key, gr => gr.ToList ());
+            var diffs = Calculate (listA, listB, startA, endA, startB, endB);
+
+            var diffsWithReplace = diffs
+                .Select (x => x.Type == DiffType.Copy && x.OldItem.Compare (x.NewItem) != DiffComparison.Same
+                    ? DiffSection<T>.Replace (x, x) : x)
+
+                // TODO: Check if this is necessary
+                .CollapsePairs ((x, y) =>
+                    x.Type == DiffType.Remove && y.Type == DiffType.Add &&
+                    x.OldItem.Compare (y.NewItem) != DiffComparison.Different
+                    ? DiffSection<T>.Replace (x, y) : null);
+
+            var diffsDic = diffsWithReplace
+                .GroupBy (diff => diff.Type)
+                .ToDictionary (gr => gr.Key, gr => gr.ToList ());
 
             // Calculate Move diffs
-            if (diffs.ContainsKey (DiffType.Add) && diffs.ContainsKey (DiffType.Remove)) {
-                diffs.Add (DiffType.Move, new List<DiffSection<T>> ());
+            if (diffsDic.ContainsKey (DiffType.Add) && diffsDic.ContainsKey (DiffType.Remove)) {
+                diffsDic.Add (DiffType.Move, new List<DiffSection<T>> ());
 
-                for (var addDiffIndex = diffs[DiffType.Add].Count - 1; addDiffIndex >= 0; addDiffIndex--) {
-                    var addDiff = diffs [DiffType.Add] [addDiffIndex];
-                    var rmDiffIndex = diffs [DiffType.Remove].IndexOf (rmDiff =>
+                for (var addDiffIndex = diffsDic[DiffType.Add].Count - 1; addDiffIndex >= 0; addDiffIndex--) {
+                    var addDiff = diffsDic [DiffType.Add] [addDiffIndex];
+                    var rmDiffIndex = diffsDic [DiffType.Remove].IndexOf (rmDiff =>
                                       listA [rmDiff.OldIndex].Compare (addDiff.NewItem) != DiffComparison.Different);
 
                     if (rmDiffIndex != -1) {
-                        var rmDiff = diffs [DiffType.Remove] [rmDiffIndex];
-                        diffs [DiffType.Add].RemoveAt (addDiffIndex);
-                        diffs [DiffType.Remove].RemoveAt (rmDiffIndex);
-                        diffs [DiffType.Move].Add (DiffSection<T>.Move (rmDiff, addDiff));
+                        var rmDiff = diffsDic [DiffType.Remove] [rmDiffIndex];
+                        diffsDic [DiffType.Add].RemoveAt (addDiffIndex);
+                        diffsDic [DiffType.Remove].RemoveAt (rmDiffIndex);
+                        diffsDic [DiffType.Move].Add (DiffSection<T>.Move (rmDiff, addDiff));
                     }
                 }
             }
 
-            return diffs.SelectMany (x => x.Value).OrderBy (x => x.NewIndex).ThenBy (x => x.OldIndex).ToList ();
+            return diffsDic.SelectMany (x => x.Value).OrderBy (x => x.NewIndex).ThenBy (x => x.OldIndex).ToList ();
         }
 
         public static IEnumerable<DiffSection<T>> Calculate<T> (
@@ -138,10 +146,10 @@ namespace Toggl.Phoebe.Data
                 }
 
                 // output the copy operation
-//                for (int i = 0; i < lcs.Length; i++) {
-//                    int indexA = lcs.PositionA + i, indexB = lcs.PositionB + i;
-//                    yield return new DiffSection<T> (DiffType.Copy, indexA, listA[indexA], indexB, listB[indexB]);
-//                }
+                for (int i = 0; i < lcs.Length; i++) {
+                    int indexA = lcs.PositionA + i, indexB = lcs.PositionB + i;
+                    yield return new DiffSection<T> (DiffType.Copy, indexA, listA[indexA], indexB, listB[indexB]);
+                }
 
                 // deal with the section after
                 var sectionsAfter =
@@ -182,7 +190,7 @@ namespace Toggl.Phoebe.Data
 
             for (int index1 = startA; index1 < endA; index1++) {
                 for (int index2 = startB; index2 < endB; index2++) {
-                    if (listA[index1].Compare (listB[index2]) == DiffComparison.Same) {
+                    if (listA[index1].Compare (listB[index2]) != DiffComparison.Different) {
                         int length = CountEqual (
                                          listA, listB, index1, endA, index2, endB);
 
@@ -202,7 +210,7 @@ namespace Toggl.Phoebe.Data
         {
             int length = 0;
             while (startA < endA && startB < endB) {
-                if (listA[startA].Compare (listB[startB]) != DiffComparison.Same) {
+                if (listA[startA].Compare (listB[startB]) == DiffComparison.Different) {
                     break;
                 }
                 startA++;

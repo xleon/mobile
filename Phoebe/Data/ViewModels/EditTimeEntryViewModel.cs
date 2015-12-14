@@ -110,12 +110,14 @@ namespace Toggl.Phoebe.Data.ViewModels
         public void ChangeTimeEntryStart (TimeSpan diffTime)
         {
             model.StartTime += diffTime;
+            model.StartTime = GetTrunkedTime (model.StartTime);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
             model.StopTime += diffTime;
+            model.StopTime = GetTrunkedTime ((DateTime)model.StopTime);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
@@ -248,6 +250,11 @@ namespace Toggl.Phoebe.Data.ViewModels
                 defaultTagList.Add (defaultTag);
             }
             return defaultTagList;
+        }
+
+        private static DateTime GetTrunkedTime (DateTime time)
+        {
+            return new DateTime (time.Year, time.Month, time.Day, time.Hour, time.Minute, 0);
         }
     }
 }

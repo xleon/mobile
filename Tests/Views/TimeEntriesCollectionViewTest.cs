@@ -120,5 +120,3 @@ namespace Toggl.Phoebe.Tests.Views
         }
     }
 }
-
-    

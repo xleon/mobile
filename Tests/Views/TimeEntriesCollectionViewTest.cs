@@ -114,9 +114,41 @@ namespace Toggl.Phoebe.Tests.Views
             AssertEvent (evs[3], "add",     (newItem, _) => newItem is TimeEntryHolder);
         }
 
+        [Test]
+        public async void TestChangeDateHeaderToFuture ()
+        {
+            var feed = new TimeEntriesCollectionView.TestFeed ();
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
+
+            var entry1 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 11, 0)); // First at list
+            feed.Push (entry1, DataAction.Put);
+            await Task.Delay (100);
+
+            // Order check before update
+            var holderList = singleView.Data.ToList ();
+            Assert.IsTrue (IsDateHeader (holderList [0]));
+            Assert.AreEqual (((TimeEntryHolder)holderList [1]).Data.Id, entry1.Id);
+            var dateValue = ((TimeEntriesCollectionView.DateHolder)holderList [0]).Date;
+
+            var evs = await GetEvents (3, singleView, () => {
+                // Move first entry to previous day
+                entry1.StartTime = entry1.StartTime.AddDays (1);
+                feed.Push (entry1, DataAction.Put);
+            });
+
+            // Check if date has changed
+            holderList = singleView.Data.ToList ();
+            var newDateValue = ((TimeEntriesCollectionView.DateHolder)holderList [0]).Date;
+            Assert.AreNotEqual (dateValue, newDateValue);
+
+            // Events after first push
+            Assert.LessOrEqual (evs.Count, 2);
+            AssertEvent (evs[0], "replace", (newItem, _) => IsDateHeader (newItem));
+        }
+
 
         [Test]
-        public async void TestChangeDateHeader ()
+        public async void TestChangeDateHeaderToPast ()
         {
             var feed = new TimeEntriesCollectionView.TestFeed ();
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
@@ -221,7 +253,7 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry3.Id);
             Assert.AreEqual (((TimeEntryHolder)holderList [4]).Data.Id, entry4.Id);
 
-            var evs = await GetEvents (2, singleView, () => {
+            await GetEvents (2, singleView, () => {
                 // Move first entry to previous day
                 entry1.StartTime = entry1.StartTime.AddDays (-1);
                 feed.Push (entry1, DataAction.Put);
@@ -235,6 +267,39 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry4.Id);
             Assert.IsTrue (IsDateHeader (holderList [4]));
             Assert.AreEqual (((TimeEntryHolder)holderList [5]).Data.Id, entry1.Id);
+
+            // TODO: check events
+        }
+
+        [Test]
+        public async void TestTripleTimeMovement ()
+        {
+            var feed = new TimeEntriesCollectionView.TestFeed ();
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
+
+            var entry1 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 11, 0)); // First at list
+            var entry2 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 10, 0)); // Second at list
+            var entry3 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 9, 0));  // Third at list
+            feed.Push (entry1, DataAction.Put);
+            feed.Push (entry2, DataAction.Put);
+            feed.Push (entry3, DataAction.Put);
+
+            await Task.Delay (100);
+
+            await GetEvents (3, singleView, () => {
+                // Move first entry to previous day
+                entry1.StartTime = entry2.StartTime;
+                entry2.StartTime = entry3.StartTime;
+                entry3.StartTime = entry1.StartTime;
+                feed.Push (entry1, DataAction.Put);
+            });
+
+            // Order check after update
+            var holderList = singleView.Data.ToList ();
+            Assert.IsTrue (IsDateHeader (holderList [0]));
+            Assert.AreEqual (((TimeEntryHolder)holderList [1]).Data.Id, entry3.Id);
+            Assert.AreEqual (((TimeEntryHolder)holderList [2]).Data.Id, entry1.Id);
+            Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry2.Id);
 
             // TODO: check events
         }

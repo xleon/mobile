@@ -1,402 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using PropertyChanged;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
-using TTask = System.Threading.Tasks.Task;
 
 namespace Toggl.Phoebe.Data.Utils
 {
     /// <summary>
     // Wrapper to manage groups of TimeEntryData objects
-    // The class presents a TimeEntryModel (the last time entry added) to work correclty with
-    // the Views created but actually manage a list of TimeEntryData
     /// </summary>
-    [DoNotNotify]
-    public class TimeEntryGroup : ITimeEntryModel
+    public class TimeEntryGroup : ITimeEntryHolder
     {
-        private readonly List<TimeEntryData> dataObjects = new List<TimeEntryData> ();
-        private TimeEntryModel model;
+        public TimeEntryInfo Info { get; private set; }
+        public List<TimeEntryData> Group { get; private set; }
 
-        public TimeEntryGroup (TimeEntryData data)
+        public TimeEntryData Data
         {
-            Add (data);
+            get { return Group.Last (); }
         }
 
-        public TimeEntryGroup (IList<TimeEntryData> dataList)
-        {
-            Add (dataList);
-        }
-
-        public static async Task<IList<TimeEntryData>> GetTimeEntryDataList (IList<string> ids)
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            var list = new List<TimeEntryData> (ids.Count);
-
-            foreach (var stringGuid in ids) {
-                var guid = new Guid (stringGuid);
-                var rows = await store.Table<TimeEntryData> ()
-                           .Where (r => r.Id == guid && r.DeletedAt == null)
-                           .ToListAsync();
-                var data = rows.FirstOrDefault ();
-                list.Add (data);
-            }
-            return list;
-        }
-
-        public TimeEntryModel Model
+        public IList<string> Guids
         {
             get {
-                if (model == null) {
-                    model = (TimeEntryModel)dataObjects.Last();
-                    model.PropertyChanged += (sender, e) => {
-                        if (PropertyChanged != null) {
-                            PropertyChanged.Invoke (sender, e);
-                        }
-                    };
-                } else {
-                    if (!model.Data.Matches (dataObjects.Last())) {
-                        model.Data = dataObjects.Last();
-                    }
-                }
-                return model;
+                return Group.AsEnumerable ().Select (r => r.Id.ToString ()).ToList ();
             }
         }
 
-        public IList<string> TimeEntryGuids
+        public TimeEntryGroup (TimeEntryData data, ITimeEntryHolder previous = null)
         {
-            get {
-                return dataObjects.AsEnumerable ().Select (r => r.Id.ToString ()).ToList ();
-            }
+            var prev = previous as TimeEntryGroup;
+            Group = previous != null
+                    ? prev.Group.Append (data).OrderBy (x => x.StartTime).ToList ()
+            : new List<TimeEntryData> () { data };
         }
 
-        public List<TimeEntryData> TimeEntryList
+        public async Task LoadInfoAsync ()
         {
-            get {
-                return dataObjects;
-            }
+            Info = await TimeEntryInfo.LoadAsync (Data);
         }
 
-        public int Count
+        public DiffComparison Compare (IDiffComparable other)
         {
-            get {
-                return dataObjects.Count;
-            }
-        }
-
-        public TimeSpan Duration
-        {
-            get {
-                TimeSpan duration = TimeSpan.Zero;
-                foreach (var item in dataObjects) {
-                    duration += TimeEntryModel.GetDuration (item, Time.UtcNow);
-                }
-                return duration;
-            }
-        }
-
-        public DateTime LastStartTime
-        {
-            get {
-                return dataObjects.Last().StartTime;
-            }
-        }
-
-        public int DistinctDays
-        {
-            get {
-                return dataObjects.GroupBy (e => e.StartTime.Date).Count();
-            }
-        }
-
-        public void Add (IList<TimeEntryData> dataList)
-        {
-            dataObjects.AddRange (dataList);
-        }
-
-        public void Add (TimeEntryData data)
-        {
-            dataObjects.Add (data);
-        }
-
-        public void Update (TimeEntryData data)
-        {
-            dataObjects.UpdateData (data);
-            Sort ();
-        }
-
-        public void UpdateIfPossible (TimeEntryData entry)
-        {
-            if (CanContain (entry)) {
-                Add (entry);
-            }
-        }
-
-        public void Remove (TimeEntryData entry)
-        {
-            if (dataObjects.Contains<TimeEntryData> (entry)) {
-                dataObjects.Remove (entry);
+            if (object.ReferenceEquals (this, other)) {
+                return DiffComparison.Same;
             } else {
-                dataObjects.RemoveAll (d => d.Id == entry.Id);
+                var other2 = other as TimeEntryGroup;
+                return other2 != null && other2.Group.First ().Id == Group.First ().Id
+                       ? DiffComparison.Updated : DiffComparison.Different;
             }
         }
 
-        public void Sort()
+        public bool Matches (TimeEntryData data)
         {
-            dataObjects.Sort ((a, b) => a.StartTime.CompareTo (b.StartTime));
+            return Group.Any (x => x.IsGroupableWith (data));
         }
 
-        public bool CanContain (TimeEntryData data)
+        public DateTime GetStartTime()
         {
-            return dataObjects.Last().IsGroupableWith (data);
+            return Group.FirstOrDefault ().StartTime;
         }
-
-        public bool Contains (TimeEntryData entry, out TimeEntryData existingTimeEntry)
-        {
-            foreach (var item in dataObjects)
-                if (item.Matches (entry)) {
-                    existingTimeEntry = item;
-                    return true;
-                }
-
-            existingTimeEntry = null;
-            return false;
-        }
-
-        public void Dispose()
-        {
-            model = null;
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         public TimeSpan GetDuration ()
         {
-            return Duration;
-        }
-
-        public void SetDuration (TimeSpan value)
-        {
-        }
-
-        public Task StartAsync ()
-        {
-            return Model.StartAsync ();
-        }
-
-        public Task StoreAsync ()
-        {
-            return Model.StoreAsync ();
-        }
-
-        public Task StopAsync ()
-        {
-            return Model.StopAsync ();
+            TimeSpan duration = TimeSpan.Zero;
+            foreach (var item in Group) {
+                duration += TimeEntryModel.GetDuration (item, Time.UtcNow);
+            }
+            return duration;
         }
 
         public async Task DeleteAsync ()
         {
             var deleteTasks = new List<Task> ();
-            foreach (var item in dataObjects) {
+            foreach (var item in Group) {
                 var m = new TimeEntryModel (item);
                 deleteTasks.Add (m.DeleteAsync ());
             }
-            await TTask.WhenAll (deleteTasks);
-            Dispose ();
-        }
-
-        public async Task SaveAsync ()
-        {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var saveTasks = new List<Task> ();
-            foreach (var item in dataObjects) {
-                saveTasks.Add (dataStore.PutAsync (item));
-            }
-            await TTask.WhenAll (saveTasks);
-        }
-
-        public void Touch ()
-        {
-            for (int i = 0; i < dataObjects.Count; i++) {
-                var newData = new TimeEntryData (dataObjects[i]);;
-                Model<TimeEntryData>.MarkDirty (newData);
-                dataObjects[i] = newData;
-            }
-        }
-
-        public TimeEntryData Data
-        {
-            get {
-                return TimeEntryList.Last ();
-            }
-
-            set {
-                Model.Data = value;
-            }
-        }
-
-        public Task<TimeEntryModel> ContinueAsync ()
-        {
-            return Model.ContinueAsync ();
-        }
-
-        public Task MapTagsFromModel (TimeEntryModel model)
-        {
-            return Model.MapTagsFromModel (model);
-        }
-
-        public Task MapMinorsFromModel (TimeEntryModel model)
-        {
-            return Model.MapMinorsFromModel (model);
-        }
-
-        public TimeEntryState State
-        {
-            get {
-                return TimeEntryList.Last ().State;
-            } set {
-                Model.State = value;
-            }
-        }
-
-        public DateTime StartTime
-        {
-            get {
-                return TimeEntryList.FirstOrDefault ().StartTime;
-            } set {
-                if (TimeEntryList.Count == 1) {
-                    Model.StartTime = value;
-                } else {
-                    var startModel = new TimeEntryModel (TimeEntryList.FirstOrDefault ());
-                    startModel.StartTime = value;
-                }
-            }
-        }
-
-        public DateTime? StopTime
-        {
-            get {
-                return Model.StopTime;
-            } set {
-                Model.StopTime = value;
-            }
-        }
-
-        public bool IsBillable
-        {
-            get {
-                return TimeEntryList.Last ().IsBillable;
-            }
-
-            set {
-                foreach (var item in dataObjects) {
-                    item.IsBillable = value;
-                }
-                Touch ();
-            }
-        }
-
-        public UserModel User
-        {
-            get {
-                return Model.User;
-            }
-
-            set {
-                foreach (var item in dataObjects) {
-                    item.UserId = value.Id;
-                }
-                Touch ();
-            }
-        }
-
-        public WorkspaceModel Workspace
-        {
-            get {
-                return Model.Workspace;
-            } set {
-                foreach (var item in dataObjects) {
-                    item.WorkspaceId = value.Id;
-                }
-                Touch ();
-            }
-        }
-
-        public string Description
-        {
-            get {
-                return dataObjects.Last().Description;
-            }
-
-            set {
-                if (string.IsNullOrEmpty (Description) && string.IsNullOrEmpty (value)) {
-                    return;
-                }
-
-                if (Description != value) {
-                    foreach (var item in dataObjects) {
-                        item.Description = value;
-                    }
-                    Touch ();
-                }
-            }
-        }
-
-        public ProjectModel Project
-        {
-            get {
-                return Model.Project;
-            }
-
-            set {
-                foreach (var item in dataObjects) {
-                    if (value != null) {
-                        item.ProjectId = value.Id;
-                    } else {
-                        item.ProjectId = null;
-                    }
-                }
-                Touch ();
-            }
-        }
-
-        public Guid Id
-        {
-            get {
-                return dataObjects.Last().Id;
-            }
-        }
-
-        public TaskModel Task
-        {
-            get {
-                return Model.Task;
-            }
-
-            set {
-                foreach (var item in dataObjects) {
-                    item.TaskId = value.Id;
-                }
-                Touch ();
-            }
-        }
-
-        public TTask LoadAsync ()
-        {
-            return Model.LoadAsync ();
-        }
-
-        public Task<int> GetNumberOfTagsAsync ()
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            return store.Table<TimeEntryTagData>()
-                   .Where (t => t.TimeEntryId == Id)
-                   .CountAsync ();
+            await Task.WhenAll (deleteTasks);
         }
     }
 }
-

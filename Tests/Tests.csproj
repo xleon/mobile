@@ -100,6 +100,7 @@
     <Compile Include="Views\SummaryReportViewTest.cs" />
     <Compile Include="Analytics\TestTracker.cs" />
     <Compile Include="Analytics\BaseTrackerTest.cs" />
+    <Compile Include="Views\TimeEntriesCollectionViewTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

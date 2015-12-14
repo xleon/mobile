@@ -80,10 +80,8 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            ViewModel = new LogTimeEntriesViewModel ();
-            await ViewModel.Init ();
+            ViewModel = await LogTimeEntriesViewModel.Init ();
 
-            hasMoreBinding = this.SetBinding (()=> ViewModel.HasMore).WhenSourceChanges (ShowEmptyState);
             collectionBinding = this.SetBinding (()=> ViewModel.CollectionView).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel.CollectionView);
                 recyclerView.SetAdapter (logAdapter);
@@ -106,9 +104,7 @@ namespace Toggl.Joey.UI.Fragments
         public async void StartStopClick (object sender, EventArgs e)
         {
             await ViewModel.StartStopTimeEntry ();
-            if (ViewModel.HasMore) {
-                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
-            }
+            OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
         }
 
         public override void OnDestroyView ()
@@ -162,16 +158,6 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration.Dispose ();
         }
 
-        private void ShowEmptyState ()
-        {
-            if (!OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) { //Empty state is experimental.
-                return;
-            }
-
-            recyclerView.Visibility = ViewModel.HasMore ? ViewStates.Visible : ViewStates.Gone;
-            emptyMessageView.Visibility = ViewModel.HasMore ? ViewStates.Gone : ViewStates.Visible;
-        }
-
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
             inflater.Inflate (Resource.Menu.NewItemMenu, menu);
@@ -204,7 +190,7 @@ namespace Toggl.Joey.UI.Fragments
             var snackBar = Snackbar
                            .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
                            .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
-                                       async v => await ViewModel.CollectionView.RestoreItemFromUndoAsync ());
+                                       _ => ViewModel.CollectionView.RestoreItemFromUndo ());
             ChangeSnackBarColor (snackBar);
             snackBar.Show ();
         }
@@ -217,7 +203,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
 
-            IList<string> guids = ((TimeEntryHolder)logAdapter.GetEntry (position)).TimeEntryGuids;
+            IList<string> guids = ((ITimeEntryHolder)logAdapter.GetEntry (position)).Guids;
             intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
             intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
 

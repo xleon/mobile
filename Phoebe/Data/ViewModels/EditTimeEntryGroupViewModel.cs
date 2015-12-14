@@ -16,43 +16,31 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.ViewModels
 {
     [ImplementPropertyChanged]
-    public class EditTimeEntryGroupViewModel : ViewModelBase, IViewModel<TimeEntryModel>
+    public class EditTimeEntryGroupViewModel : ViewModelBase, IDisposable
     {
         private TimeEntryModel model;
         private Timer durationTimer;
         private List<TimeEntryData> timeEntryList;
-        private List<string> timeEntryIds;
 
-        public EditTimeEntryGroupViewModel (List<TimeEntryData> timeEntryList)
+        EditTimeEntryGroupViewModel (TimeEntryModel model, List<TimeEntryData> timeEntryList)
         {
+            this.model = model;
             this.timeEntryList = timeEntryList;
+            this.durationTimer = new Timer();
+
+            this.model.PropertyChanged += OnPropertyChange;
+            this.durationTimer.Elapsed += DurationTimerCallback;
+
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Grouped Time Entry";
-        }
-
-        public EditTimeEntryGroupViewModel (List<string> timeEntryIds)
-        {
-            this.timeEntryIds = timeEntryIds;
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Grouped Time Entry";
-        }
-
-        public async Task Init ()
-        {
-            IsLoading  = true;
-
-            durationTimer = new Timer ();
-            durationTimer.Elapsed += DurationTimerCallback;
-
-            if (timeEntryList == null) {
-                timeEntryList = await GetTimeEntryDataList (timeEntryIds);
-            }
-
-            model = new TimeEntryModel (timeEntryList.Last ());
-            model.PropertyChanged += OnPropertyChange;
-            await model.LoadAsync ();
-
             UpdateView ();
+        }
 
-            IsLoading = false;
+        public static async Task<EditTimeEntryGroupViewModel> Init (List<string> timeEntryIds)
+        {
+            var timeEntryList = await GetTimeEntryDataList (timeEntryIds);
+            var model = new TimeEntryModel (timeEntryList.Last ());
+            await model.LoadAsync ();
+            return new EditTimeEntryGroupViewModel (model, timeEntryList);
         }
 
         public void Dispose ()
@@ -65,9 +53,6 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
 
         #region viewModel State properties
-
-        public bool IsLoading { get; set; }
-
         public bool IsRunning { get; set; }
 
         public string Duration { get; set; }
@@ -190,8 +175,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
 
         #region Time Entry list utils
-
-        private async Task<List<TimeEntryData>> GetTimeEntryDataList (List<string> ids)
+        private static async Task<List<TimeEntryData>> GetTimeEntryDataList (List<string> ids)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var list = new List<TimeEntryData> (ids.Count);
@@ -201,8 +185,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 var rows = await store.Table<TimeEntryData> ()
                            .Where (r => r.Id == guid && r.DeletedAt == null)
                            .ToListAsync();
-                var data = rows.FirstOrDefault ();
-                list.Add (data);
+                list.Add (rows.FirstOrDefault ());
             }
             return list;
         }
@@ -215,7 +198,6 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
             return duration;
         }
-
         #endregion
     }
 }

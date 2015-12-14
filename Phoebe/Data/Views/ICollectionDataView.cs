@@ -13,14 +13,6 @@ namespace Toggl.Phoebe.Data.Views
 
         bool HasMore { get; }
 
-        Task ReloadAsync ();
-
-        Task LoadMoreAsync ();
-
-        bool IsLoading { get; }
-
-        event EventHandler IsLoadingChanged;
-
-        event EventHandler HasMoreChanged;
+        Task LoadMore (bool isInit = false);
     }
 }

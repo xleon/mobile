@@ -7,6 +7,7 @@ using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
 using Toggl.Phoebe.Data.Views;
+using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -16,7 +17,6 @@ namespace Toggl.Joey.UI.Adapters
         private readonly int ViewTypeContent = 1;
         private readonly int LoadMoreOffset = 3;
         private ICollectionDataView<T> dataView;
-        private int lastLoadingPosition;
 
         protected RecyclerView Owner;
 
@@ -39,8 +39,6 @@ namespace Toggl.Joey.UI.Adapters
         {
             this.dataView = dataView;
             this.dataView.CollectionChanged += OnCollectionChanged;
-            this.dataView.IsLoadingChanged += OnLoading;
-            this.dataView.HasMoreChanged += OnHasMore;
             Owner = owner;
 
             HasStableIds = false;
@@ -51,36 +49,9 @@ namespace Toggl.Joey.UI.Adapters
             if (disposing) {
                 if (dataView != null) {
                     dataView.CollectionChanged -= OnCollectionChanged;
-                    dataView.IsLoadingChanged -= OnLoading;
-                    dataView.HasMoreChanged -= OnHasMore;
                 }
             }
             base.Dispose (disposing);
-        }
-
-        private async void OnLoading (object sender, EventArgs e)
-        {
-            // Need to access the Handle property, else mono optimises/loses the context and we get a weird
-            // low-level exception about "'jobject' must not be IntPtr.Zero".
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-
-            // Sometimes a new call to LoadMore is needed.
-            if (lastLoadingPosition + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
-                await dataView.LoadMoreAsync ();
-            }
-        }
-
-        private void OnHasMore (object sender, EventArgs e)
-        {
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-
-            if (!dataView.HasMore) {
-                NotifyItemChanged (ItemCount - 1);
-            }
         }
 
         private void OnCollectionChanged (object sender, NotifyCollectionChangedEventArgs e)
@@ -112,11 +83,10 @@ namespace Toggl.Joey.UI.Adapters
             return viewType == ViewTypeLoaderPlaceholder ? new SpinnerHolder (GetLoadIndicatorView (parent)) : GetViewHolder (parent, viewType);
         }
 
-        public async override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        public override async void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
-            if (position + LoadMoreOffset > ItemCount && dataView.HasMore && !dataView.IsLoading) {
-                lastLoadingPosition = position;
-                await dataView.LoadMoreAsync ();
+            if (position + LoadMoreOffset > ItemCount && dataView.HasMore) {
+                await dataView.LoadMore (); // TODO: Check if this is blocking the start of spinner animation
             }
 
             if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {

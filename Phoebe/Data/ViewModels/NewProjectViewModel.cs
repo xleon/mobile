@@ -10,27 +10,32 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.ViewModels
 {
     [ImplementPropertyChanged]
-    public class NewProjectViewModel : IViewModel<ProjectModel>
+    public class NewProjectViewModel : IDisposable
     {
         private ProjectModel model;
-        private WorkspaceModel workspaceModel;
-        private Guid workspaceId;
 
-        public NewProjectViewModel (Guid workspaceId)
+        public NewProjectViewModel (ProjectModel model)
         {
-            this.workspaceId = workspaceId;
+            this.model = model;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
+        }
+
+        public static async Task<NewProjectViewModel> Init (Guid workspaceId)
+        {
+            var workspaceModel = new WorkspaceModel (workspaceId);
+            await workspaceModel.LoadAsync ();
+
+            return new NewProjectViewModel (new ProjectModel {
+                Workspace = workspaceModel,
+                IsActive = true,
+                IsPrivate = true
+            });
         }
 
         public void Dispose ()
         {
-            workspaceModel = null;
             model = null;
         }
-
-        public bool IsLoading { get; set; }
-
-        public bool IsSaving { get; set; }
 
         public string ProjectName { get; set; }
 
@@ -40,22 +45,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public Guid ProjectId {  get { return model.Id; } } // TODO: not good :(
 
-        public async Task Init ()
-        {
-            IsLoading = true;
-
-            workspaceModel = new WorkspaceModel (workspaceId);
-            await workspaceModel.LoadAsync ();
-
-            model = new ProjectModel {
-                Workspace = workspaceModel,
-                IsActive = true,
-                IsPrivate = true
-            };
-
-            IsLoading = false;
-        }
-
         public void SetClient (ClientData clientData)
         {
             model.Client = new ClientModel (clientData);
@@ -64,18 +53,14 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public async Task<SaveProjectResult> SaveProjectModel ()
         {
-            IsSaving = true;
-
             // Project name is empty
             if (string.IsNullOrEmpty (ProjectName)) {
-                IsSaving = false;
                 return SaveProjectResult.NameIsEmpty;
             }
 
             // Project name is used
             var exists = await ExistProjectWithName (ProjectName);
             if (exists) {
-                IsSaving = false;
                 return SaveProjectResult.NameExists;
             }
 
@@ -95,7 +80,6 @@ namespace Toggl.Phoebe.Data.ViewModels
             // Save relationship.
             await projectUserModel.SaveAsync ();
 
-            IsSaving = false;
             return SaveProjectResult.SaveOk;
         }
 

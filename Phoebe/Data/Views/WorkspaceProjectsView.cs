@@ -22,13 +22,11 @@ namespace Toggl.Phoebe.Data.Views
         private Workspace filteredList;
         private string filter;
         private bool hasFilter;
-        private bool isLoading;
-        private bool hasMore;
         private int currentWorkspaceIndex;
         private int unfoldedProjectIndex;
         private Project unfoldedTaskProject;
 
-        public WorkspaceProjectsView ()
+        WorkspaceProjectsView ()
         {
             userData = ServiceContainer.Resolve<AuthManager> ().User;
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -189,9 +187,8 @@ namespace Toggl.Phoebe.Data.Views
                         workspace.Clients.First ().Projects.Add (project);
                     } else {
                         workspace.Clients
-                        .Where (r => r.Data != null)
-                        .Where (r => r.Data.Id == project.Data.ClientId)
-                        .First ().Projects.Add (project);
+                        .First (r => r.Data != null && r.Data.Id == project.Data.ClientId)
+                        .Projects.Add (project);
                     }
                     SortEverything ();
                     UpdateCollection();
@@ -344,27 +341,23 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public async Task ReloadAsync ()
+        public static async Task<WorkspaceProjectsView> Init ()
         {
-            if (IsLoading) {
-                return;
-            }
-
+            var v = new WorkspaceProjectsView ();
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            var shouldSubscribe = subscriptionDataChange != null;
+            var shouldSubscribe = v.subscriptionDataChange != null;
 
-            if (subscriptionDataChange != null) {
-                bus.Unsubscribe (subscriptionDataChange);
-                subscriptionDataChange = null;
+            if (v.subscriptionDataChange != null) {
+                bus.Unsubscribe (v.subscriptionDataChange);
+                v.subscriptionDataChange = null;
                 shouldSubscribe = true;
             }
 
             try {
                 var store = ServiceContainer.Resolve<IDataStore> ();
-                var userId = userData != null ? userData.Id : (Guid?)null;
+                var userId = v.userData != null ? v.userData.Id : (Guid?)null;
 
-                IsLoading = true;
-                clientDataObjects.Clear ();
+                v.clientDataObjects.Clear ();
 
                 var workspaceTask = store.Table<WorkspaceData> ()
                                     .Where (r => r.DeletedAt == null).ToListAsync();
@@ -372,14 +365,14 @@ namespace Toggl.Phoebe.Data.Views
                 var mostUsedProjectsTask = store.GetMostUsedProjects (userId ?? Guid.Empty);
 
                 var tasksTask = store.Table<TaskData> ()
-                                .Where (r => r.DeletedAt == null && r.IsActive == true).ToListAsync();
+                                .Where (r => r.DeletedAt == null && r.IsActive).ToListAsync();
                 var clientsTask = store.Table<ClientData> ()
                                   .Where (r => r.DeletedAt == null).ToListAsync();
 
                 await Task.WhenAll (mostUsedProjectsTask, workspaceTask, projectsTask, tasksTask, clientsTask);
 
                 var wsList = workspaceTask.Result;
-                workspacesList.Clear();
+                v.workspacesList.Clear();
                 foreach (var ws in wsList) {
                     var workspace = new Workspace (ws);
                     var projects = projectsTask.Result.Where (r => r.WorkspaceId == ws.Id);
@@ -387,8 +380,8 @@ namespace Toggl.Phoebe.Data.Views
 
                     clients.Add (new ClientData());
                     clients.AddRange (clientsTask.Result.Where (r => r.WorkspaceId == ws.Id));
-                    FillClientsBranchForWorkspace (workspace, clients, projects, tasksTask);
-                    FillProjectsBranchForWorkspace (workspace, projects, tasksTask);
+                    v.FillClientsBranchForWorkspace (workspace, clients, projects, tasksTask);
+                    v.FillProjectsBranchForWorkspace (workspace, projects, tasksTask);
 
                     var mostUsed = mostUsedProjectsTask.Result.Where (r => r.WorkspaceId == workspace.Data.Id).Take (5).ToList();
                     if (mostUsed.Any ()) {
@@ -402,39 +395,39 @@ namespace Toggl.Phoebe.Data.Views
                         workspace.Clients.Add (mostUsedClient);
                     }
 
-                    workspacesList.Add (workspace);
+                    v.workspacesList.Add (workspace);
                 }
 
-                clientDataObjects.AddRange (clientsTask.Result);
-                SortEverything();
+                v.clientDataObjects.AddRange (clientsTask.Result);
+                v.SortEverything();
 
             } finally {
-                UpdateCollection ();
-                IsLoading = false;
+                v.UpdateCollection ();
 
                 if (shouldSubscribe) {
-                    subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+                    v.subscriptionDataChange = bus.Subscribe<DataChangeMessage> (v.OnDataChange);
                 }
             }
+
+            return v;
         }
 
         private void FillClientsBranchForWorkspace (Workspace workspace, List<ClientData> clients, IEnumerable<ProjectData> projects, Task<List<TaskData>> tasksTask)
         {
             foreach (var clientData in clients) {
                 Client client;
-                IEnumerable<ProjectData> projectsOfClient;
+                Guid? clientId = null;
 
                 if (workspace.Clients.Count == 0) { // first element
                     client = new Client (workspace.Data);
                     client.IsNoClient = true;
                     client.Projects.Add (new Project (workspace.Data));
-                    projectsOfClient = projects.Where (r => r.ClientId == null);
                 } else {
                     client = new Client (clientData);
-                    projectsOfClient = projects.Where (r => r.ClientId == clientData.Id);
+                    clientId = clientData.Id;
                 }
 
-                foreach (var projectData in projectsOfClient) {
+                foreach (var projectData in projects.Where (r => r.ClientId == clientId)) {
                     var project = new Project (projectData);
 
                     var tasks = tasksTask.Result.Where (r => r.ProjectId == projectData.Id);
@@ -638,8 +631,6 @@ namespace Toggl.Phoebe.Data.Views
                        ));
         }
 
-        public Task LoadMoreAsync () { return null; }
-
         private void UpdateCollection ()
         {
             dataObjects.Clear ();
@@ -679,15 +670,24 @@ namespace Toggl.Phoebe.Data.Views
                         }
                     }
                 }
-                var mostUsedClientList = ws.Clients.Where (c => c.IsMostUsed);
-                if (mostUsedClientList.Any ()) {
-                    var mostUsedClient = mostUsedClientList.First ();
+                var mostUsedClient = ws.Clients.FirstOrDefault (c => c.IsMostUsed);
+                if (mostUsedClient != null) {
                     dataObjects.InsertRange (1, mostUsedClient.Projects);
                 }
                 break;
             }
 
             OnUpdated ();
+        }
+
+        public bool HasMore
+        {
+            get { return false; }
+        }
+
+        public Task LoadMore (bool isInit = false)
+        {
+            return null;
         }
 
         public IEnumerable<object> Data
@@ -727,36 +727,6 @@ namespace Toggl.Phoebe.Data.Views
                     currentWorkspaceIndex = value;
                 }
                 UpdateCollection ();
-            }
-        }
-
-        public event EventHandler HasMoreChanged;
-
-        public bool HasMore
-        {
-            get {
-                return hasMore;
-            }
-            private set {
-                hasMore = value;
-                if (HasMoreChanged != null) {
-                    HasMoreChanged (this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public event EventHandler IsLoadingChanged;
-
-        public bool IsLoading
-        {
-            get {
-                return isLoading;
-            }
-            private set {
-                isLoading = value;
-                if (IsLoadingChanged != null) {
-                    IsLoadingChanged (this, EventArgs.Empty);
-                }
             }
         }
 

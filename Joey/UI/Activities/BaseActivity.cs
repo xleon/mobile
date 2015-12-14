@@ -90,6 +90,7 @@ namespace Toggl.Joey.UI.Activities
         protected sealed override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
+            CurrentActivity = this;
 
             if (!StartAuthActivity ()) {
                 OnCreateActivity (savedInstanceState);
@@ -108,7 +109,6 @@ namespace Toggl.Joey.UI.Activities
         protected sealed override void OnResume ()
         {
             base.OnResume ();
-            CurrentActivity = this;
 
             if (!StartAuthActivity ()) {
                 OnResumeActivity ();

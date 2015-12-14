@@ -75,9 +75,7 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-
-            viewModel = new TagListViewModel (WorkspaceId, ExistingTagIds);
-            await viewModel.Init ();
+            viewModel = await TagListViewModel.Init (WorkspaceId, ExistingTagIds);
             SetPreviousSelectedTags ();
         }
 
@@ -161,7 +159,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetPreviousSelectedTags ()
         {
-            if (viewModel.IsLoading || listView == null || listView.Adapter == null) {
+            if (listView == null || listView.Adapter == null) {
                 return;
             }
 

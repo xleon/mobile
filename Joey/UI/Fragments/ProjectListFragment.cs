@@ -95,9 +95,7 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-
-            viewModel = new ProjectListViewModel (WorkspaceId);
-            await viewModel.Init ();
+            viewModel = await ProjectListViewModel.Init (WorkspaceId);
 
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
 

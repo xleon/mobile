@@ -110,7 +110,19 @@ namespace Toggl.Joey.UI.Fragments
         public async void StartStopClick (object sender, EventArgs e)
         {
             await ViewModel.StartStopTimeEntry ();
-            OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+
+            if (ViewModel.HasMore) {
+                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+            }
+
+            if (ViewModel.IsTimeEntryRunning) {
+                var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+                IList<string> guids = ((TimeEntryHolder)logAdapter.GetEntry (1)).TimeEntryGuids;
+                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+                intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
+
+                StartActivity (intent);
+            }
         }
 
         public override void OnDestroyView ()

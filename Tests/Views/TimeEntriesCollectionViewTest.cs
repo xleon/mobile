@@ -9,6 +9,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Phoebe.Tests.Views
 {
@@ -28,18 +29,20 @@ namespace Toggl.Phoebe.Tests.Views
         }
 
         // TODO: Extract this to a Test.Util class
-        public TimeEntryData CreateTimeEntry (DateTime startTime = default (DateTime),
-                                              string description = "Test entry",
+        public TimeEntryData CreateTimeEntry (DateTime startTime,
+                                              TimeEntryData prev = null,
+                                              string desc = "Test entry",
                                               Guid taskId = default (Guid),
-                                              Guid projectId = default (Guid))
+                                              Guid projId = default (Guid))
         {
             return new TimeEntryData () {
+                Id = Guid.NewGuid (),
+                StartTime = startTime,
                 UserId = userId,
                 WorkspaceId = workspaceId,
-                TaskId = taskId == Guid.Empty ? Guid.NewGuid () : taskId,
-                ProjectId = projectId == Guid.Empty ? Guid.NewGuid () : projectId,
-                Description = description,
-                StartTime = startTime == DateTime.MinValue ? DateTime.UtcNow : startTime,
+                TaskId = prev != null ? prev.TaskId : (taskId == Guid.Empty ? Guid.NewGuid () : taskId),
+                ProjectId = prev != null ? prev.ProjectId : (projId == Guid.Empty ? Guid.NewGuid () : projId),
+                Description = prev != null ? prev.Description : desc,
                 State = TimeEntryState.Running,
 //                IsBillable,
 //                DurationOnly
@@ -47,38 +50,71 @@ namespace Toggl.Phoebe.Tests.Views
         }
 
         Task<IList<NotifyCollectionChangedEventArgs>> GetEvents (
-            INotifyCollectionChanged col, int evCount, Action action)
+            int eventCount, INotifyCollectionChanged collection, Action raiseEvents)
         {
             var i = 0;
-            var tcs = new TaskCompletionSource<IList<NotifyCollectionChangedEventArgs>> ();
             var li = new List<NotifyCollectionChangedEventArgs> ();
+            var tcs = new TaskCompletionSource<IList<NotifyCollectionChangedEventArgs>> ();
 
             // TODO: Set also  a timeout
-            col.CollectionChanged += (sender, e) => {
+            collection.CollectionChanged += (sender, e) => {
                 li.Add (e);
-                if (++i >= evCount) {
+                if (++i >= eventCount) {
                     tcs.SetResult (li);
                 }
             };
-            action ();
+            raiseEvents ();
             return tcs.Task;
+        }
+
+        private void assert (
+            NotifyCollectionChangedEventArgs ev, string evType, Func<IHolder, IHolder, bool> additionalAssert = null)
+        {
+            NotifyCollectionChangedAction evAction;
+            if (evType == "add")
+                evAction = NotifyCollectionChangedAction.Add;
+            else if (evType == "move")
+                evAction = NotifyCollectionChangedAction.Move;
+            else if (evType == "replace")
+                evAction = NotifyCollectionChangedAction.Replace;
+            else if (evType == "remove")
+                evAction = NotifyCollectionChangedAction.Remove;
+            else
+                throw new NotSupportedException ();
+
+            Assert.IsTrue (ev.Action == evAction);
+
+            if (additionalAssert != null) {
+                var newItem = ev.NewItems != null && ev.NewItems.Count > 0 ? ev.NewItems [0] as IHolder : null;
+                var oldItem = ev.OldItems != null && ev.OldItems.Count > 0 ? ev.OldItems [0] as IHolder : null;
+                Assert.IsTrue (additionalAssert (newItem, oldItem));
+            }
+        }
+
+        private bool isDateHeader(IHolder x)
+        {
+            return x is TimeEntriesCollectionView.DateHolder;
         }
 
         [Test]
         public async void TestAddEntriesToSingle ()
         {
             var feed = new TimeEntriesCollectionView.TestFeed ();
-            var singleView = TimeEntriesCollectionView.InitEmpty (isGrouped: false, feed: feed);
-            var oldCount = singleView.Count;
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
 
-            var evs = await GetEvents (singleView, 2, () => {
-                var entry = CreateTimeEntry ();
-                feed.Push (entry, DataAction.Put);
+            var evs = await GetEvents (3, singleView, () => {
+                var entry1 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 0, 0, 0));
+                var entry2 = CreateTimeEntry (new DateTime (2015, 12, 14, 11, 0, 0, 0));
+                feed.Push (entry1, DataAction.Put);
+                feed.Push (entry2, DataAction.Put);
             });
 
-            Assert.True (evs[0].Action == NotifyCollectionChangedAction.Add); // Date header
-            Assert.True (evs[1].Action == NotifyCollectionChangedAction.Add); // Time entry
+            assert (evs[0], "add", (x, _) => isDateHeader (x));
+            assert (evs[1], "add", (x, _) => x is TimeEntryHolder);
+            assert (evs[2], "replace", (x, _) => isDateHeader (x));
+            assert (evs[3], "add", (x, _) => x is TimeEntryHolder);
         }
     }
 }
 
+    

@@ -31,8 +31,8 @@ namespace Toggl.Phoebe.Data.Utils
         {
             var prev = previous as TimeEntryGroup;
             Group = previous != null
-                ? prev.Group.Append (data).OrderBy (x => x.StartTime).ToList ()
-                : new List<TimeEntryData> () { data };
+                    ? prev.Group.Append (data).OrderBy (x => x.StartTime).ToList ()
+            : new List<TimeEntryData> () { data };
         }
 
         public async Task LoadInfoAsync ()

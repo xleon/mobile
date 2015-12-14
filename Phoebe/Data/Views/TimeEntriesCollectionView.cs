@@ -84,9 +84,9 @@ namespace Toggl.Phoebe.Data.Views
             v.HasMore = false;
 
             if (timeEntries.Length > 0) {
-                var holders = new List<TimeEntryHolder> ();
+                var holders = new List<ITimeEntryHolder> ();
                 foreach (var entry in timeEntries) {
-                    var holder = await testFeed.CreateTimeHolder (isGrouped, entry);
+                    holders.Add (await testFeed.CreateTimeHolder (isGrouped, entry));
                 }
                 v.items.Reset (v.CreateItemCollection (holders));
             }
@@ -191,6 +191,7 @@ namespace Toggl.Phoebe.Data.Views
         private IList<IHolder> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
         {
             return timeHolders
+                   .OrderByDescending (x => x.GetStartTime ())
                    .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
                    .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
                    .ToList ();
@@ -221,18 +222,15 @@ namespace Toggl.Phoebe.Data.Views
                     await UpdateTimeHoldersAsync (timeHolders, msg.Data as TimeEntryData, msg.Action);
                 }
 
-                // 3. Sort new list
-                timeHolders = timeHolders.OrderByDescending (x => x.GetStartTime ()).ToList ();
-
-                // 4. Create the new item collection from holders (add headers...)
+                // 3. Create the new item collection from holders (sort and add headers...)
                 var newItemCollection = CreateItemCollection (timeHolders);
 
-                // 5. Check diffs, modify ItemCollection and notify changes
-                var diffs = Diff.CalculateExtra (items, newItemCollection).ToList ();
+                // 4. Check diffs, modify ItemCollection and notify changes
+                var diffs = Diff.CalculateExtra (items, newItemCollection);
 
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
-                    foreach (var diff in diffs.OrderBy (x => x.NewIndex).ThenBy (x => x.OldIndex)) {
+                    foreach (var diff in diffs) {
                         switch (diff.Type) {
                         case DiffType.Add:
                             items.Insert (diff.NewIndex, diff.NewItem);
@@ -247,7 +245,6 @@ namespace Toggl.Phoebe.Data.Views
                         case DiffType.Replace:
                             items[diff.NewIndex] = diff.NewItem;
                             break;
-                            //                        case DiffType.Copy: // Do nothing
                         }
                     }
                 });
@@ -384,6 +381,11 @@ namespace Toggl.Phoebe.Data.Views
                     return same ? DiffComparison.Same : DiffComparison.Updated;
                 }
             }
+
+            public override string ToString ()
+            {
+                return "DateHolder";
+            }
         }
 
         public interface IFeed : IDisposable
@@ -456,18 +458,15 @@ namespace Toggl.Phoebe.Data.Views
 
         public class TestFeed : IFeed
         {
+            public int BufferMilliseconds { get; private set; }
             public IList<Action<DataChangeMessage>> Listeners { get; private set; }
             public IScheduler MessageScheduler { get; private set; }
 
-            public TestFeed ()
+            public TestFeed (int bufferMilliseconds = 0)
             {
+                BufferMilliseconds = bufferMilliseconds;
                 MessageScheduler = Scheduler.CurrentThread;
                 Listeners = new List<Action<DataChangeMessage>> ();
-            }
-
-            public int BufferMilliseconds
-            {
-                get { return 0; }
             }
 
             public void Push (TimeEntryData data, DataAction action)

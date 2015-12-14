@@ -21,6 +21,32 @@ namespace Toggl.Phoebe
             }
         }
 
+        public static IEnumerable<T> CollapsePairs<T> (this IEnumerable<T> items, Func<T,T,T> collapse)
+        where T : class
+        {
+            T previous = null;
+            foreach (var current in items)
+            {
+                if (previous == null) {
+                    previous = current;
+                } else {
+                    var res = collapse (previous, current);
+                    if (res == null) {
+                        yield return previous;
+                        previous = current;
+                    } else {
+                        yield return res;
+                        previous = null;
+                    }
+                }
+            }
+
+            if (previous != null)
+            {
+                yield return previous;
+            }
+        }
+
         public static void ForEach<T> (this IEnumerable<T> items, Action<T> action)
         {
             foreach (var item in items) {

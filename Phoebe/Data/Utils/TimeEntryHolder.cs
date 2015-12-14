@@ -76,5 +76,10 @@ namespace Toggl.Phoebe.Data.Utils
         {
             await TimeEntryModel.DeleteTimeEntryDataAsync (Data);
         }
+
+        public override string ToString ()
+        {
+            return string.Format ("[{0:MM/dd HH:mm}]", Data.StartTime);
+        }
     }
 }

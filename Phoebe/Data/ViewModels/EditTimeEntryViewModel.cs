@@ -110,14 +110,17 @@ namespace Toggl.Phoebe.Data.ViewModels
         public void ChangeTimeEntryStart (TimeSpan diffTime)
         {
             model.StartTime += diffTime;
-            model.StartTime = GetTrunkedTime (model.StartTime);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
             model.StopTime += diffTime;
-            model.StopTime = GetTrunkedTime ((DateTime)model.StopTime);
+            if (diffTime.TotalSeconds > 0) {
+                model.StartTime = GetTrunkedTime (model.StartTime);
+                model.StopTime = GetTrunkedTime ((DateTime)model.StopTime);
+            }
+
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 

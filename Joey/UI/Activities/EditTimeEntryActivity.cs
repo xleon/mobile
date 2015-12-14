@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
@@ -18,6 +19,7 @@ namespace Toggl.Joey.UI.Activities
         private static readonly string fragmentTag = "edit_fragment";
 
         public static readonly string IsGrouped = "com.toggl.timer.grouped_edit";
+        public static readonly string OpenProjects = "com.toggl.timer.open_projects";
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
         public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";
 
@@ -28,6 +30,7 @@ namespace Toggl.Joey.UI.Activities
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 
             var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);
+            var openProjects = Intent.Extras.GetBoolean (OpenProjects, false);
             var fragment = FragmentManager.FindFragmentByTag (fragmentTag);
             var groupedFragment = FragmentManager.FindFragmentByTag (groupfragmentTag);
 
@@ -58,6 +61,12 @@ namespace Toggl.Joey.UI.Activities
                     .Attach (fragment)
                     .Commit ();
                 }
+            }
+
+            if (openProjects) {
+                var intent = new Intent (this, typeof (ProjectListActivity));
+                intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument,  guids[0]);
+                StartActivityForResult (intent, 0);
             }
         }
     }

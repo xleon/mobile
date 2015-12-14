@@ -59,7 +59,10 @@ namespace Toggl.Phoebe.Data.Views
 
             observable.Synchronize (feed.MessageScheduler)
             .TimedBuffer (feed.BufferMilliseconds)
-            .Subscribe (UpdateItemsAsync);
+            // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
+            .Select (msgs => Observable.FromAsync (() => UpdateItemsAsync (msgs)))
+            .Concat()
+            .Subscribe();
 
             feed.SubscribeToMessageBus (UpdateFromMessageBus);
         }
@@ -74,10 +77,20 @@ namespace Toggl.Phoebe.Data.Views
         /// <summary>
         /// Only for testing purposes
         /// </summary>
-        public static TimeEntriesCollectionView InitEmpty (bool isGrouped, IFeed feed = null)
+        public static async Task<TimeEntriesCollectionView> InitAdHoc (
+            bool isGrouped, IFeed testFeed, params TimeEntryData[] timeEntries)
         {
-            var v = new TimeEntriesCollectionView (isGrouped, feed);
+            var v = new TimeEntriesCollectionView (isGrouped, testFeed);
             v.HasMore = false;
+
+            if (timeEntries.Length > 0) {
+                var holders = new List<TimeEntryHolder> ();
+                foreach (var entry in timeEntries) {
+                    var holder = await testFeed.CreateTimeHolder (isGrouped, entry);
+                }
+                v.items.Reset (v.CreateItemCollection (holders));
+            }
+
             return v;
         }
 
@@ -196,7 +209,7 @@ namespace Toggl.Phoebe.Data.Views
         #endregion
 
         #region Update Items
-        private async void UpdateItemsAsync (IEnumerable<DataChangeMessage> msgs)
+        private async Task UpdateItemsAsync (IEnumerable<DataChangeMessage> msgs)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
@@ -401,12 +414,13 @@ namespace Toggl.Phoebe.Data.Views
                 get { return Scheduler.Default; }
             }
 
-            public async Task<ITimeEntryHolder> CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
+            public async Task<ITimeEntryHolder> CreateTimeHolder (
+                bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
             {
                 var holder = isGrouped
-                             ? (ITimeEntryHolder)new TimeEntryGroup ()
-                             : new TimeEntryHolder ();
-                await holder.LoadAsync (entry, previous);
+                             ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
+                             : new TimeEntryHolder (entry);
+                await holder.LoadInfoAsync ();
                 return holder;
             }
 
@@ -463,15 +477,13 @@ namespace Toggl.Phoebe.Data.Views
                 }
             }
 
-            public Task<ITimeEntryHolder> CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
+            public Task<ITimeEntryHolder> CreateTimeHolder (
+                bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
             {
-                return Task.Run (() => {
-                    var holder = isGrouped
+                // Don't load info to prevent interacting with database in unit tests
+                return Task.Run (() => isGrouped
                                  ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
-                                 : new TimeEntryHolder (entry);
-//                    await holder.LoadAsync (entry, previous);
-                    return holder;
-                });
+                                 : new TimeEntryHolder (entry));
             }
 
             public void SubscribeToMessageBus (Action<DataChangeMessage> action)

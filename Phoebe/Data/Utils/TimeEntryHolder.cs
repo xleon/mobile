@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data.Utils
         TimeSpan GetDuration ();
         DateTime GetStartTime ();
         bool Matches (TimeEntryData data);
-        Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous);
+        Task LoadInfoAsync ();
     }
 
     public class TimeEntryHolder : ITimeEntryHolder
@@ -36,16 +36,14 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public TimeEntryHolder (TimeEntryData data = null)
+        public TimeEntryHolder (TimeEntryData data)
         {
             Data = data;
         }
 
-        public async Task LoadAsync (TimeEntryData data, ITimeEntryHolder previous)
+        public async Task LoadInfoAsync ()
         {
-            // Ignore previous
-            Data = data;
-            Info = await TimeEntryInfo.LoadAsync (data);
+            Info = await TimeEntryInfo.LoadAsync (Data);
         }
 
         public DiffComparison Compare (IDiffComparable other)

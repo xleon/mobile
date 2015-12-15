@@ -73,7 +73,7 @@ namespace Toggl.Phoebe.Tests.Views
             public int NewIndex { get; private set; }
             public IHolder OldItem { get; private set; }
             public int OldIndex { get; private set; }
-                
+
             public EventInfo (NotifyCollectionChangedEventArgs ev)
             {
                 NewItem = ev.NewItems != null && ev.NewItems.Count > 0 ? ev.NewItems [0] as IHolder : null;
@@ -177,14 +177,21 @@ namespace Toggl.Phoebe.Tests.Views
                 throw new NotSupportedException ();
             }
 
-            Assert.IsTrue (ev.Action == evAction);
+            if (ev.Action != evAction) {
+                Assert.Fail ("Expected {0} but was {1}", evType, Enum.GetName (typeof (NotifyCollectionChangedAction), ev.Action));
+            }
 
+            var isExpectedType = false;
             if (itemType == "date header") {
-                Assert.IsTrue (holder is DateHolder);
+                isExpectedType = holder is DateHolder;
             } else if (itemType == "time entry") {
-                Assert.IsTrue (holder is ITimeEntryHolder);
+                isExpectedType = holder is ITimeEntryHolder;
             } else {
                 throw new NotSupportedException ();
+            }
+
+            if (!isExpectedType) {
+                Assert.Fail ("Expected {0} but was {1}", itemType, holder.GetType().Name);
             }
         }
 
@@ -211,8 +218,9 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.Fail ("Collection has an unexpected item at index {0}", i);
             }
 
-            if (++i < items.Length)
+            if (++i < items.Length) {
                 Assert.Fail ("Collection has less items than expected");
+            }
         }
 
         [Test]
@@ -241,16 +249,22 @@ namespace Toggl.Phoebe.Tests.Views
             AssertEvent (evs[3], "add", "time entry");
         }
 
+        // TODO TestMoveForwardWithAdd
+        // TODO TestMoveBackwardWithAdd
+        // TODO TestMoveBackwardTwoEntries (with adds and deletes in between)
+        // TODO TestMoveForwardTwoEntries (with adds and deletes in between)
+        // TODO TestMoveForwardAndBackward (with adds and deletes in between)
+
         [Test]
-        public async void TestMoveAndDeleteTimeEntries ()
+        public async void TestMoveForwardWithDelete ()
         {
             var dt = new DateTime (2015, 12, 14, 19, 0, 0);
             var entries = new [] {
                 CreateTimeEntry (dt),
                 CreateTimeEntry (dt.AddMinutes (-10)),
                 CreateTimeEntry (dt.AddMinutes (-20)),
-                CreateTimeEntry (dt.AddMinutes (-30)),
-                CreateTimeEntry (dt.AddDays (-1))
+                CreateTimeEntry (dt.AddDays (-1)),
+                CreateTimeEntry (dt.AddDays (-1).AddMinutes (-20)),
             };
 
             // Allow some buffer so pushes are handled at the same time
@@ -258,16 +272,48 @@ namespace Toggl.Phoebe.Tests.Views
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entries);
 
             var evs = await GetEvents (4, singleView, () => {
-                feed.Push (CreateTimeEntry (entries[2], -1), DataAction.Put); // Move entry to previous day
-                feed.Push (CreateTimeEntry (entries[3]), DataAction.Delete);  // Delete entry
+                feed.Push (CreateTimeEntry (entries[1], -1), DataAction.Put); // Move entry to previous day
+                feed.Push (CreateTimeEntry (entries[2]), DataAction.Delete);  // Delete entry
+                feed.Push (CreateTimeEntry (entries[4]), DataAction.Delete);  // Delete entry
             });
 
-            AssertList (singleView.Data, dt, entries[0], entries[1], dt.AddDays (-1), entries[4], entries[2]);
+            AssertList (singleView.Data, dt, entries[0], dt.AddDays (-1), entries[3], entries[1]);
 
             AssertEvent (evs[0], "replace", "date header"); // Update today's header
             AssertEvent (evs[1], "remove", "time entry");   // Remove time entry
-            AssertEvent (evs[2], "replace", "date header"); // Update yesterday's header
+            AssertEvent (evs[2], "remove", "time entry");   // Remove time entry
             AssertEvent (evs[3], "move", "time entry");     // Move time entry
+        }
+
+        [Test]
+        public async void TestMoveBackwardWithDelete ()
+        {
+            var dt = new DateTime (2015, 12, 14, 19, 0, 0);
+            var entries = new [] {
+                CreateTimeEntry (dt.AddDays (1)),
+                CreateTimeEntry (dt.AddDays (1).AddMinutes (-20)),
+                CreateTimeEntry (dt),
+                CreateTimeEntry (dt.AddMinutes (-10)),
+                CreateTimeEntry (dt.AddMinutes (-20)),
+            };
+
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entries);
+
+            var evs = await GetEvents (5, singleView, () => {
+                feed.Push (CreateTimeEntry (entries[3], 1), DataAction.Put); // Move entry to previous day
+                feed.Push (CreateTimeEntry (entries[0]), DataAction.Delete);  // Delete entry
+                feed.Push (CreateTimeEntry (entries[1]), DataAction.Delete);  // Delete entry
+            });
+
+            AssertList (singleView.Data, dt.AddDays (1), entries[3], dt, entries[2], entries[4]);
+
+            AssertEvent (evs[0], "replace", "date header"); // Update today's header
+            AssertEvent (evs[1], "remove", "time entry");   // Remove time entry
+            AssertEvent (evs[2], "remove", "time entry");     // Move time entry
+            AssertEvent (evs[3], "move", "time entry");     // Move time entry
+            AssertEvent (evs[4], "replace", "date header"); // Update yesterday's header
         }
 
         [Test]
@@ -316,7 +362,7 @@ namespace Toggl.Phoebe.Tests.Views
             AssertList (singleView.Data, dt, entry1, entry2);
 
             var evs = await GetEvents (4, singleView, () => {
-               // Move entries to next day
+                // Move entries to next day
                 feed.Push (CreateTimeEntry (entry2, daysOffset: 1), DataAction.Put);
                 feed.Push (CreateTimeEntry (entry1, daysOffset: 1), DataAction.Put);
             });

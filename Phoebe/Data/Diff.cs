@@ -38,6 +38,9 @@ namespace Toggl.Phoebe.Data
         public T NewItem { get; set; }
         public DiffMove Move { get; set; }
 
+        /// <summary>Used only for internal purposes in Diff algorithm</summary>
+        public DiffSection<T> Link { get; set; }
+
         public bool IsMove
         {
             get { return Move != DiffMove.None; }
@@ -111,6 +114,8 @@ namespace Toggl.Phoebe.Data
                                  listA [x.OldIndex].Compare (addDiff.NewItem) != DiffComparison.Different);
 
                     if (rmDiff != null) {
+                        addDiff.Link = rmDiff;
+                        rmDiff.Link = addDiff;
                         addDiff.OldIndex = rmDiff.NewIndex;
                         rmDiff.Move = addDiff.Move = rmDiff.NewIndex < addDiff.NewIndex
                                                      ? DiffMove.Forward : DiffMove.Backward;
@@ -118,36 +123,46 @@ namespace Toggl.Phoebe.Data
                 }
             }
 
-            int fwOffset = 0, bwOffset = 0;
+            var fwOffset = 0;
+            var bwOffsetDic = new Dictionary<DiffSection<T>, int> ();
             return diffsDic
-                .SelectMany (x => x.Value)
-                .Where (x => x.Type != DiffType.Copy)
-                .OrderBy (x => x.NewIndex)
-                .ThenBy (x => x.OldIndex)
-                // Add offset to indices so events can be raised linearly without conflicting with moves
-                .Select (x => {
-                    if (x.Type == DiffType.Add) {
-                        if (x.IsMove) {
-                            x.Type = DiffType.Move;
-                            if (x.Move == DiffMove.Forward) {
-                                fwOffset--;
-                            }
-                            x.OldIndex += fwOffset + (x.Move == DiffMove.Backward ? bwOffset : 0);
+                   .SelectMany (x => x.Value)
+                   .Where (x => x.Type != DiffType.Copy)
+                   .OrderBy (x => x.NewIndex)
+                   .ThenBy (x => x.Type == DiffType.Remove ? -1 : 0)
+                   // Add offset to indices so events can be raised linearly without conflicting with moves
+            .Select (x => {
+                if (x.Type == DiffType.Add) {
+                    if (x.IsMove) {
+                        if (x.Move == DiffMove.Forward) {
+                            fwOffset--;
+                        } else {
+                            bwOffsetDic.Add (x.Link, 0);
                         }
-                        bwOffset++;                        
+                        x.Link = null;  // Reference is not needed any more
+                        x.Type = DiffType.Move;
+                        x.OldIndex += fwOffset;
                     }
-                    else if (x.Type == DiffType.Remove) {
-                        if (!x.IsMove) {
-                            bwOffset--;
-                        } else if (x.Move == DiffMove.Forward) {
-                            fwOffset++;
-                        }                        
+                    foreach (var k in bwOffsetDic.Keys.ToList ()) {
+                        bwOffsetDic[k] -= 1;
                     }
-                    x.NewIndex += fwOffset;
-                    return x;
-                })
-                .Where (x => !(x.Type == DiffType.Remove && x.IsMove))
-                .ToList ();
+                } else if (x.Type == DiffType.Remove) {
+                    if (!x.IsMove) {
+                        foreach (var k in bwOffsetDic.Keys.ToList ()) {
+                            bwOffsetDic[k] += 1;
+                        }
+                    } else if (x.Move == DiffMove.Forward) {
+                        fwOffset++;
+                    } else { // Move == Diff.Backward
+                        x.Link.OldIndex += bwOffsetDic[x];
+                        bwOffsetDic.Remove (x);
+                    }
+                }
+                x.NewIndex += fwOffset;
+                return x;
+            })
+            .Where (x => ! (x.Type == DiffType.Remove && x.IsMove))
+            .ToList ();
         }
 
         public static IEnumerable<DiffSection<T>> Calculate<T> (
@@ -187,21 +202,18 @@ namespace Toggl.Phoebe.Data
             }
 
             // if we get here, no LCS
-            var rmCount = endA - startA;
-            var addCount = endB - startB;
-            var end = Math.Max (rmCount, addCount);
-
-            for (int i = 0; i < end; i++) {
+            if (endA > startA) {
                 // we got content from first collection --> deleted
-                if (i < rmCount) {
-                    yield return new DiffSection<T> (DiffType.Remove, startA + i, listA[startA + i], startA, default (T));
+                for (int i = 0; i < endA - startA; i++) {
+                    yield return new DiffSection<T> (DiffType.Remove, startA + i, listA[startA + i], startB, default (T));
                 }
+            }
 
+            if (endB > startB) {
                 // we got content from second collection --> inserted
-                if (i < addCount) {
-                    yield return new DiffSection<T> (DiffType.Add, startB, default (T), startB + i, listB[startB + i]);
+                for (int i = 0; i < endB - startB; i++) {
+                    yield return new DiffSection<T> (DiffType.Add, startA, default (T), startB + i, listB[startB + i]);
                 }
-
             }
         }
 

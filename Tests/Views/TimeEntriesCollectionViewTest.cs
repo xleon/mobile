@@ -51,6 +51,11 @@ namespace Toggl.Phoebe.Tests.Views
                 Listeners.Add (action);
             }
 
+            public void ReportFailure (Exception ex)
+            {
+                Assert.Fail (ex.Message);
+            }
+
             public Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct)
             {
                 return Task.Run<IList<TimeEntryData>> (() => new List<TimeEntryData> ());
@@ -237,7 +242,7 @@ namespace Toggl.Phoebe.Tests.Views
         }
 
         [Test]
-        public async void TestMoveMidTimeEntryToPreviousDay ()
+        public async void TestMoveAndDeleteTimeEntries ()
         {
             var dt = new DateTime (2015, 12, 14, 19, 0, 0);
             var entries = new [] {
@@ -248,18 +253,21 @@ namespace Toggl.Phoebe.Tests.Views
                 CreateTimeEntry (dt.AddDays (-1))
             };
 
-            var feed = new TestFeed ();
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed (100);
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entries);
 
-            var evs = await GetEvents (3, singleView, () =>
-                // Move entry to yesterday
-                feed.Push (CreateTimeEntry (entries[2], -1), DataAction.Put));
+            var evs = await GetEvents (4, singleView, () => {
+                feed.Push (CreateTimeEntry (entries[2], -1), DataAction.Put); // Move entry to previous day
+                feed.Push (CreateTimeEntry (entries[3]), DataAction.Delete);  // Delete entry
+            });
 
-            AssertList (singleView.Data, dt, entries[0], entries[1], entries[3], dt.AddDays (-1), entries[4], entries[2]);
+            AssertList (singleView.Data, dt, entries[0], entries[1], dt.AddDays (-1), entries[4], entries[2]);
 
             AssertEvent (evs[0], "replace", "date header"); // Update today's header
-            AssertEvent (evs[1], "replace", "date header"); // Update yesterday's header
-            AssertEvent (evs[2], "move", "time entry");
+            AssertEvent (evs[1], "remove", "time entry");   // Remove time entry
+            AssertEvent (evs[2], "replace", "date header"); // Update yesterday's header
+            AssertEvent (evs[3], "move", "time entry");     // Move time entry
         }
 
         [Test]
@@ -300,21 +308,26 @@ namespace Toggl.Phoebe.Tests.Views
             var entry1 = CreateTimeEntry (dt);
             var entry2 = CreateTimeEntry (dt.AddMinutes (-5));
 
-            var feed = new TestFeed ();
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed (100);
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2);
 
             // Order check before update
             AssertList (singleView.Data, dt, entry1, entry2);
 
-            var evs = await GetEvents (2, singleView, () =>
-                                       // Move first entry to next day
-                                       feed.Push (CreateTimeEntry (entry1, daysOffset: 1), DataAction.Put));
+            var evs = await GetEvents (4, singleView, () => {
+               // Move entries to next day
+                feed.Push (CreateTimeEntry (entry2, daysOffset: 1), DataAction.Put);
+                feed.Push (CreateTimeEntry (entry1, daysOffset: 1), DataAction.Put);
+            });
 
             // Check if date has changed
-            AssertList (singleView.Data, dt.AddDays (1), entry1, dt, entry2);
+            AssertList (singleView.Data, dt.AddDays (1), entry1, entry2);
 
-            AssertEvent (evs[0], "add", "date header"); // Add new header
-            AssertEvent (evs[1], "move", "time entry"); // Move time entry
+            AssertEvent (evs[0], "remove", "date header"); // Remove old header
+            AssertEvent (evs[1], "add", "date header");    // Add new header
+            AssertEvent (evs[2], "replace", "time entry"); // Update time entry
+            AssertEvent (evs[3], "replace", "time entry"); // Update time entry
         }
 
         [Test]

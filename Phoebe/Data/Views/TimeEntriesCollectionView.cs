@@ -233,39 +233,25 @@ namespace Toggl.Phoebe.Data.Views
 
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
-                    int fwOffset = 0, bwOffset = 0;
                     foreach (var diff in diffs) {
                         switch (diff.Type) {
                         case DiffType.Add:
-                            if (!diff.IsMove) {
-                                items.Insert (diff.NewIndex + fwOffset, diff.NewItem);
-                            } else {
-                                if (diff.Move == DiffMove.Forward) {
-                                    fwOffset--;
-                                }
-                                items.Move (diff.OldIndex + fwOffset + (diff.Move == DiffMove.Backward ? bwOffset : 0),
-                                            diff.NewIndex + fwOffset,
-                                            diff.NewItem);
-                            }
-                            bwOffset++;
+                            items.Insert (diff.NewIndex, diff.NewItem);
                             break;
                         case DiffType.Remove:
-                            if (!diff.IsMove) {
-                                items.RemoveAt (diff.NewIndex);
-                                bwOffset--;
-                            } else if (diff.Move == DiffMove.Forward) {
-                                fwOffset++;
-                            }
+                            items.RemoveAt (diff.NewIndex);
                             break;
                         case DiffType.Replace:
-                            items[diff.NewIndex + fwOffset] = diff.NewItem;
+                            items[diff.NewIndex] = diff.NewItem;
+                            break;
+                        case DiffType.Move:
+                            items.Move (diff.OldIndex, diff.NewIndex, diff.NewItem);
                             break;
                         }
                     }
                 });
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<ILogger>();
-                log.Error (Tag, ex, "Failed to update collection");
+                feed.ReportFailure (ex);
             }
         }
 
@@ -375,6 +361,8 @@ namespace Toggl.Phoebe.Data.Views
 
             void SubscribeToMessageBus (Action<DataChangeMessage> action);
 
+            void ReportFailure (Exception ex);
+
             Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct);
 
             Task<ITimeEntryHolder> CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null);
@@ -409,6 +397,12 @@ namespace Toggl.Phoebe.Data.Views
             {
                 bus = ServiceContainer.Resolve<MessageBus> ();
                 subscription = bus.Subscribe<DataChangeMessage> (action);
+            }
+
+            public void ReportFailure (Exception ex)
+            {
+                var log = ServiceContainer.Resolve<ILogger>();
+                log.Error (Tag, ex, "Failed to update collection");
             }
 
             public async Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct)

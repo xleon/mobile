@@ -14,7 +14,8 @@ namespace Toggl.Phoebe.Data
         Copy,
         Add,
         Remove,
-        Replace
+        Replace,
+        Move
     }
 
     public enum DiffMove {
@@ -84,7 +85,7 @@ namespace Toggl.Phoebe.Data
     public static class Diff
     {
         /// <summary>
-        /// Calculates move and replace operation besides add, remove and copy diffs
+        /// Calculates move and replace operation (besides add & remove) and makes indices linear
         /// </summary>
         public static IList<DiffSection<T>> CalculateExtra<T> (
             IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1)
@@ -117,7 +118,36 @@ namespace Toggl.Phoebe.Data
                 }
             }
 
-            return diffsDic.SelectMany (x => x.Value).OrderBy (x => x.NewIndex).ThenBy (x => x.OldIndex).ToList ();
+            int fwOffset = 0, bwOffset = 0;
+            return diffsDic
+                .SelectMany (x => x.Value)
+                .Where (x => x.Type != DiffType.Copy)
+                .OrderBy (x => x.NewIndex)
+                .ThenBy (x => x.OldIndex)
+                // Add offset to indices so events can be raised linearly without conflicting with moves
+                .Select (x => {
+                    if (x.Type == DiffType.Add) {
+                        if (x.IsMove) {
+                            x.Type = DiffType.Move;
+                            if (x.Move == DiffMove.Forward) {
+                                fwOffset--;
+                            }
+                            x.OldIndex += fwOffset + (x.Move == DiffMove.Backward ? bwOffset : 0);
+                        }
+                        bwOffset++;                        
+                    }
+                    else if (x.Type == DiffType.Remove) {
+                        if (!x.IsMove) {
+                            bwOffset--;
+                        } else if (x.Move == DiffMove.Forward) {
+                            fwOffset++;
+                        }                        
+                    }
+                    x.NewIndex += fwOffset;
+                    return x;
+                })
+                .Where (x => !(x.Type == DiffType.Remove && x.IsMove))
+                .ToList ();
         }
 
         public static IEnumerable<DiffSection<T>> Calculate<T> (

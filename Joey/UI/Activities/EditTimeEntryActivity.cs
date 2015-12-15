@@ -4,7 +4,9 @@ using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Fragments;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -30,7 +32,6 @@ namespace Toggl.Joey.UI.Activities
             SetContentView (Resource.Layout.EditTimeEntryActivity);
 
             var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);
-            var openProjects = Intent.Extras.GetBoolean (OpenProjects, false);
             var fragment = FragmentManager.FindFragmentByTag (fragmentTag);
             var groupedFragment = FragmentManager.FindFragmentByTag (groupfragmentTag);
 
@@ -63,7 +64,11 @@ namespace Toggl.Joey.UI.Activities
                 }
             }
 
-            if (openProjects) {
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            var app = (AndroidApp)Application;
+
+            if (settingsStore.ChooseProjectForNew && app.StartedByFAB) {
+                app.StartedByFAB = false;
                 var intent = new Intent (this, typeof (ProjectListActivity));
                 intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument,  guids[0]);
                 StartActivityForResult (intent, 0);

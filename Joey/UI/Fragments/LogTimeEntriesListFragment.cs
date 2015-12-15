@@ -12,7 +12,6 @@ using Android.Support.V7.Widget.Helper;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
-using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
@@ -118,12 +117,13 @@ namespace Toggl.Joey.UI.Fragments
 
             if (ViewModel.IsTimeEntryRunning) {
 
+                var app = (AndroidApp)Activity.Application;
+                app.StartedByFAB = true;
+
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
                 IList<string> guids = ((TimeEntryHolder)logAdapter.GetEntry (1)).TimeEntryGuids;
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
                 intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
-                var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-                intent.PutExtra (EditTimeEntryActivity.OpenProjects, settingsStore.ChooseProjectForNew);
 
                 StartActivity (intent);
             }

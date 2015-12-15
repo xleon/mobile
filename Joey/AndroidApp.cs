@@ -160,6 +160,8 @@ namespace Toggl.Joey
             get { return componentsInitialized; }
         }
 
+        public bool StartedByFAB { get; set; }
+
         public void DispatchOnUIThread (Action action)
         {
             BaseActivity.CurrentActivity.RunOnUiThread (action);

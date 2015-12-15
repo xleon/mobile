@@ -57,7 +57,7 @@ namespace Toggl.Phoebe.Data.Views
                 }
             };
 
-            observable.Synchronize (feed.MessageScheduler)
+            observable.Synchronize (feed.UseThreadPool ? (IScheduler)Scheduler.Default : Scheduler.CurrentThread)
             .TimedBuffer (feed.BufferMilliseconds)
             // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
             .Select (msgs => Observable.FromAsync (() => UpdateItemsAsync (msgs)))
@@ -239,10 +239,10 @@ namespace Toggl.Phoebe.Data.Views
                         case DiffType.Add:
                             if (!diff.IsMove) {
                                 items.Insert (diff.NewIndex + fwOffset, diff.NewItem);
-                            }
-                            else {
-                                if (diff.Move == DiffMove.Forward)
+                            } else {
+                                if (diff.Move == DiffMove.Forward) {
                                     fwOffset--;
+                                }
                                 items.Move (diff.OldIndex + fwOffset + (diff.Move == DiffMove.Backward ? bwOffset : 0),
                                             diff.NewIndex + fwOffset,
                                             diff.NewItem);
@@ -253,8 +253,7 @@ namespace Toggl.Phoebe.Data.Views
                             if (!diff.IsMove) {
                                 items.RemoveAt (diff.NewIndex);
                                 bwOffset--;
-                            }
-                            else if (diff.Move == DiffMove.Forward) {
+                            } else if (diff.Move == DiffMove.Forward) {
                                 fwOffset++;
                             }
                             break;
@@ -368,47 +367,11 @@ namespace Toggl.Phoebe.Data.Views
         #endregion
 
         #region Nested classes
-        public class DateHolder : IHolder
-        {
-            public DateTime Date { get; }
-            public bool IsRunning { get; private set; }
-            public TimeSpan TotalDuration { get; private set; }
-
-            public DateHolder (DateTime date, IEnumerable<ITimeEntryHolder> timeHolders)
-            {
-                var dataObjects = timeHolders.ToList ();
-                var totalDuration = TimeSpan.Zero;
-                foreach (var item in dataObjects) {
-                    totalDuration += item.GetDuration ();
-                }
-
-                Date = date;
-                TotalDuration = totalDuration;
-                IsRunning = dataObjects.Any (g => g.Data.State == TimeEntryState.Running);
-            }
-
-            public DiffComparison Compare (IDiffComparable other)
-            {
-                var other2 = other as DateHolder;
-                if (other2 == null || other2.Date != Date) {
-                    return DiffComparison.Different;
-                } else {
-                    var same = other2.TotalDuration == TotalDuration && other2.IsRunning == IsRunning;
-                    return same ? DiffComparison.Same : DiffComparison.Updated;
-                }
-            }
-
-            public override string ToString ()
-            {
-                return "DateHolder";
-            }
-        }
-
         public interface IFeed : IDisposable
         {
             int BufferMilliseconds { get; }
 
-            IScheduler MessageScheduler { get; }
+            bool UseThreadPool { get; }
 
             void SubscribeToMessageBus (Action<DataChangeMessage> action);
 
@@ -427,9 +390,9 @@ namespace Toggl.Phoebe.Data.Views
                 get { return 500; }
             }
 
-            public IScheduler MessageScheduler
+            public bool UseThreadPool
             {
-                get { return Scheduler.Default; }
+                get { return true; }
             }
 
             public async Task<ITimeEntryHolder> CreateTimeHolder (
@@ -469,53 +432,6 @@ namespace Toggl.Phoebe.Data.Views
                     subscription = null;
                     bus = null;
                 }
-            }
-        }
-
-        public class TestFeed : IFeed
-        {
-            public int BufferMilliseconds { get; private set; }
-            public IList<Action<DataChangeMessage>> Listeners { get; private set; }
-            public IScheduler MessageScheduler { get; private set; }
-
-            public TestFeed (int bufferMilliseconds = 0)
-            {
-                BufferMilliseconds = bufferMilliseconds;
-                MessageScheduler = Scheduler.CurrentThread;
-                Listeners = new List<Action<DataChangeMessage>> ();
-            }
-
-            public void Push (TimeEntryData data, DataAction action)
-            {
-                foreach (var listener in Listeners) {
-                    listener (new DataChangeMessage (null, data, action));
-                }
-            }
-
-            #pragma warning disable 1998
-            public async Task<ITimeEntryHolder> CreateTimeHolder (
-                bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
-            {
-                // Don't load info to prevent interacting with database in unit tests
-                return isGrouped
-                    ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
-                    : new TimeEntryHolder (entry);
-            }
-            #pragma warning restore 1998
-
-            public void SubscribeToMessageBus (Action<DataChangeMessage> action)
-            {
-                Listeners.Add (action);
-            }
-
-            public Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct)
-            {
-                return Task.Run<IList<TimeEntryData>> (() => new List<TimeEntryData> ());
-            }
-
-            public void Dispose ()
-            {
-                Listeners.Clear ();
             }
         }
         #endregion

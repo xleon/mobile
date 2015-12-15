@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data
         public bool IsMove
         {
             get { return Move != DiffMove.None; }
-        }       
+        }
 
         public DiffSection (DiffType type, int oldIndex, T oldItem, int newIndex, T newItem)
         {
@@ -93,25 +93,26 @@ namespace Toggl.Phoebe.Data
             var diffs = Calculate (listA, listB, startA, endA, startB, endB);
 
             var diffsWithReplace = diffs.Select (x => {
-                    if (x.Type == DiffType.Copy && x.OldItem.Compare (x.NewItem) != DiffComparison.Same)
-                        x.Type = DiffType.Replace;
-                    return x;
-                });
+                if (x.Type == DiffType.Copy && x.OldItem.Compare (x.NewItem) != DiffComparison.Same) {
+                    x.Type = DiffType.Replace;
+                }
+                return x;
+            });
 
             var diffsDic = diffsWithReplace
-                .GroupBy (diff => diff.Type)
-                .ToDictionary (gr => gr.Key, gr => gr.ToList ());
+                           .GroupBy (diff => diff.Type)
+                           .ToDictionary (gr => gr.Key, gr => gr.ToList ());
 
             // Calculate Move diffs
             if (diffsDic.ContainsKey (DiffType.Add) && diffsDic.ContainsKey (DiffType.Remove)) {
                 foreach (var addDiff in diffsDic[DiffType.Add]) {
                     var rmDiff = diffsDic [DiffType.Remove].FirstOrDefault (x =>
-                        listA [x.OldIndex].Compare (addDiff.NewItem) != DiffComparison.Different);
+                                 listA [x.OldIndex].Compare (addDiff.NewItem) != DiffComparison.Different);
 
                     if (rmDiff != null) {
                         addDiff.OldIndex = rmDiff.NewIndex;
                         rmDiff.Move = addDiff.Move = rmDiff.NewIndex < addDiff.NewIndex
-                            ? DiffMove.Forward : DiffMove.Backward;
+                                                     ? DiffMove.Forward : DiffMove.Backward;
                     }
                 }
             }

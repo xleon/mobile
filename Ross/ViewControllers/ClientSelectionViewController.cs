@@ -27,9 +27,7 @@ namespace Toggl.Ross.ViewControllers
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-
-            viewModel = new ClientListViewModel (workspace.Id);
-            await viewModel.Init ();
+            viewModel = await ClientListViewModel.Init (workspace.Id);
 
             // Set ObservableTableViewController settings
             // ObservableTableViewController is a helper class

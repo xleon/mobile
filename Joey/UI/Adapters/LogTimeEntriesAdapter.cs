@@ -124,7 +124,7 @@ namespace Toggl.Joey.UI.Adapters
 
             var headerListItemHolder = holder as HeaderListItemHolder;
             if (headerListItemHolder != null) {
-                headerListItemHolder.Bind ((TimeEntriesCollectionView.DateHolder) GetEntry (position));
+                headerListItemHolder.Bind ((DateHolder) GetEntry (position));
                 return;
             }
 
@@ -138,7 +138,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             var type = base.GetItemViewType (position);
             if (type != ViewTypeLoaderPlaceholder) {
-                type = GetEntry (position) is TimeEntriesCollectionView.DateHolder ? ViewTypeDateHeader : ViewTypeContent;
+                type = GetEntry (position) is DateHolder ? ViewTypeDateHeader : ViewTypeContent;
             }
             return type;
         }
@@ -156,7 +156,7 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
-        public class HeaderListItemHolder : RecycledBindableViewHolder<TimeEntriesCollectionView.DateHolder>
+        public class HeaderListItemHolder : RecycledBindableViewHolder<DateHolder>
         {
             private readonly Handler handler;
 

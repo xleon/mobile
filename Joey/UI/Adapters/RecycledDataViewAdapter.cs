@@ -86,7 +86,7 @@ namespace Toggl.Joey.UI.Adapters
         public override async void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
             if (position + LoadMoreOffset > ItemCount && dataView.HasMore) {
-                await dataView.LoadMore (); // TODO: Check if this is blocking the start of spinner animation
+                await dataView.LoadMore ();
             }
 
             if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {

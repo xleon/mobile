@@ -79,5 +79,10 @@ namespace Toggl.Phoebe.Data.Utils
             }
             await Task.WhenAll (deleteTasks);
         }
+
+        public override string ToString ()
+        {
+            return string.Format ("[{0:MM/dd HH:mm}]", Data.StartTime);
+        }
     }
 }

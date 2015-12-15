@@ -195,6 +195,7 @@ namespace Toggl.Phoebe.Tests.Views
             var dt = new DateTime (2015, 12, 14, 10, 10, 11, 0);
             var entry1 = CreateTimeEntry (dt);
             var entry2 = CreateTimeEntry (dt.AddMinutes (-5));
+
             var feed = new TimeEntriesCollectionView.TestFeed ();
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2);
 
@@ -217,19 +218,16 @@ namespace Toggl.Phoebe.Tests.Views
             AssertEvent (evs[1], "move", x => x.NewItem is TimeEntryHolder); // Move time entry
         }
 
-
         [Test]
         public async void TestChangeDateHeaderToPast ()
         {
-            var feed = new TimeEntriesCollectionView.TestFeed ();
-            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
+            var dt = new DateTime (2015, 12, 14, 10, 10, 11, 0);
+            var entry1 = CreateTimeEntry (dt); // First at list
+            var entry2 = CreateTimeEntry (dt.AddMinutes (-5)); // Second at list
 
-            var entry1 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 11, 0)); // First at list
-            var entry2 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 10, 0)); // Second at list
-            feed.Push (entry1, DataAction.Put);
-            feed.Push (entry2, DataAction.Put);
-
-            await Task.Delay (100);
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TimeEntriesCollectionView.TestFeed (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2);
 
             // Order check before update
             var holderList = singleView.Data.ToList ();
@@ -238,38 +236,34 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (((TimeEntryHolder)holderList [2]).Data.Id, entry2.Id);
             var dateValue = ((TimeEntriesCollectionView.DateHolder)holderList [0]).Date;
 
-            var evs = await GetEvents (5, singleView, () => {
-                // Move first entry to previous day
-                entry1.StartTime = entry1.StartTime.AddDays (-1);
-                entry2.StartTime = entry1.StartTime.AddDays (-1);
-                feed.Push (entry1, DataAction.Put);
-                feed.Push (entry2, DataAction.Put);
+            var evs = await GetEvents (4, singleView, () => {
+                // Move entries to previous day
+                feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put);
+                feed.Push (CreateTimeEntry (entry2, daysOffset: -1), DataAction.Put);
             });
 
             // Order check after update
             holderList = singleView.Data.ToList ();
             var newDateValue = ((TimeEntriesCollectionView.DateHolder)holderList [0]).Date;
-            Assert.AreNotEqual (dateValue, newDateValue);
+            Assert.AreEqual (dateValue - newDateValue, TimeSpan.FromDays (1));
 
-            // Events after first push
-            Assert.LessOrEqual (evs.Count, 2);
-            AssertEvent (evs[0], "replace", x => IsDateHeader (x.NewItem));
+            Assert.LessOrEqual (evs.Count, 4);
+            AssertEvent (evs[0], "remove", x => IsDateHeader (x.OldItem));      // Remove old header
+            AssertEvent (evs[1], "add", x => IsDateHeader (x.NewItem));         // Add new header
+            AssertEvent (evs[2], "replace", x => x.NewItem is TimeEntryHolder); // Replace entry1
+            AssertEvent (evs[3], "replace", x => x.NewItem is TimeEntryHolder); // Replace entry2
         }
 
         [Test]
         public async void TestMoveToDifferentDate ()
         {
+            var dt = new DateTime (2015, 12, 14, 10, 10, 11, 0);
+            var entry1 = CreateTimeEntry (dt);                  // First at list
+            var entry2 = CreateTimeEntry (dt.AddMinutes (-5));  // Second at list
+            var entry3 = CreateTimeEntry (dt.AddDays (-1).AddMinutes (-5)); // First at previous day
+
             var feed = new TimeEntriesCollectionView.TestFeed ();
-            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
-
-            var entry1 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 11, 0)); // First at list
-            var entry2 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 10, 0)); // Second at list
-            var entry3 = CreateTimeEntry (new DateTime (2015, 12, 13, 10, 9, 9, 0));  // First at previous day
-            feed.Push (entry1, DataAction.Put);
-            feed.Push (entry2, DataAction.Put);
-            feed.Push (entry3, DataAction.Put);
-
-            await Task.Delay (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2, entry3);
 
             // Order check before update
             var holderList = singleView.Data.ToList ();
@@ -279,11 +273,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.IsTrue (IsDateHeader (holderList [3]));
             Assert.AreEqual (((TimeEntryHolder)holderList [4]).Data.Id, entry3.Id);
 
-            var evs = await GetEvents (2, singleView, () => {
+            var evs = await GetEvents (3, singleView, () =>
                 // Move first entry to previous day
-                entry1.StartTime = entry1.StartTime.AddDays (-1);
-                feed.Push (entry1, DataAction.Put);
-            });
+                feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put));
 
             // Order check after update
             holderList = singleView.Data.ToList ();
@@ -293,28 +285,22 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry1.Id);
             Assert.AreEqual (((TimeEntryHolder)holderList [4]).Data.Id, entry3.Id);
 
-            // Events after first push
-            AssertEvent (evs[0], "move", x => x.NewItem is TimeEntryHolder);
+            AssertEvent (evs[0], "replace", x => IsDateHeader (x.NewItem));
             AssertEvent (evs[1], "replace", x => IsDateHeader (x.NewItem));
-            AssertEvent (evs[2], "replace", x => IsDateHeader (x.NewItem));
+            AssertEvent (evs[2], "move", x => x.NewItem is TimeEntryHolder);
         }
 
         [Test]
-        public async void TestMoveTopTimeEntryToDifferentDate ()
+        public async void TestMoveTopTimeEntryToPreviousDay ()
         {
+            var dt = new DateTime (2015, 12, 14, 10, 10, 11, 0);
+            var entry1 = CreateTimeEntry (dt);                  // First at list
+            var entry2 = CreateTimeEntry (dt.AddMinutes (-5));  // Second at list
+            var entry3 = CreateTimeEntry (dt.AddMinutes (-10)); // Third at list
+            var entry4 = CreateTimeEntry (dt.AddMinutes (-15)); // Fourth at list
+
             var feed = new TimeEntriesCollectionView.TestFeed ();
-            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
-
-            var entry1 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 11, 0)); // First at list
-            var entry2 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 10, 0)); // Second at list
-            var entry3 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 9, 0));  // Third at list
-            var entry4 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 9, 0));  // Fourth at list
-            feed.Push (entry1, DataAction.Put);
-            feed.Push (entry2, DataAction.Put);
-            feed.Push (entry3, DataAction.Put);
-            feed.Push (entry4, DataAction.Put);
-
-            await Task.Delay (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2, entry3, entry4);
 
             // Order check before update
             var holderList = singleView.Data.ToList ();
@@ -324,11 +310,9 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry3.Id);
             Assert.AreEqual (((TimeEntryHolder)holderList [4]).Data.Id, entry4.Id);
 
-            await GetEvents (2, singleView, () => {
+            var evs = await GetEvents (3, singleView, () => 
                 // Move first entry to previous day
-                entry1.StartTime = entry1.StartTime.AddDays (-1);
-                feed.Push (entry1, DataAction.Put);
-            });
+                feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put));
 
             // Order check after update
             holderList = singleView.Data.ToList ();
@@ -339,40 +323,79 @@ namespace Toggl.Phoebe.Tests.Views
             Assert.IsTrue (IsDateHeader (holderList [4]));
             Assert.AreEqual (((TimeEntryHolder)holderList [5]).Data.Id, entry1.Id);
 
-            // TODO: check events
+            AssertEvent (evs[0], "replace", x => IsDateHeader (x.NewItem));  // Update old header
+            AssertEvent (evs[1], "add", x => IsDateHeader (x.NewItem));      // Add new header
+            AssertEvent (evs[2], "move", x => x.NewItem is TimeEntryHolder); // Move time entry
+        }
+
+        [Test]
+        public async void TestMoveBottomTimeEntryToNextDay ()
+        {
+            var dt = new DateTime (2015, 12, 14, 10, 10, 11, 0);
+            var entry1 = CreateTimeEntry (dt);                  // First at list
+            var entry2 = CreateTimeEntry (dt.AddMinutes (-5));  // Second at list
+            var entry3 = CreateTimeEntry (dt.AddMinutes (-10)); // Third at list
+            var entry4 = CreateTimeEntry (dt.AddMinutes (-15)); // Fourth at list
+
+            var feed = new TimeEntriesCollectionView.TestFeed ();
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2, entry3, entry4);
+
+            // Order check before update
+            var holderList = singleView.Data.ToList ();
+            Assert.IsTrue (IsDateHeader (holderList [0]));
+            Assert.AreEqual (((TimeEntryHolder)holderList [1]).Data.Id, entry1.Id);
+            Assert.AreEqual (((TimeEntryHolder)holderList [2]).Data.Id, entry2.Id);
+            Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry3.Id);
+            Assert.AreEqual (((TimeEntryHolder)holderList [4]).Data.Id, entry4.Id);
+
+            var evs = await GetEvents (3, singleView, () => 
+                // Move first entry to previous day
+                feed.Push (CreateTimeEntry (entry4, daysOffset: 1), DataAction.Put));
+
+            // Order check after update
+            holderList = singleView.Data.ToList ();
+            Assert.IsTrue (IsDateHeader (holderList [0]));
+            Assert.AreEqual (((TimeEntryHolder)holderList [1]).Data.Id, entry4.Id);
+            Assert.IsTrue (IsDateHeader (holderList [2]));
+            Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry1.Id);
+            Assert.AreEqual (((TimeEntryHolder)holderList [4]).Data.Id, entry2.Id);
+            Assert.AreEqual (((TimeEntryHolder)holderList [5]).Data.Id, entry3.Id);
+
+            AssertEvent (evs[0], "add", x => IsDateHeader (x.NewItem));      // Add new header
+            AssertEvent (evs[1], "move", x => x.NewItem is TimeEntryHolder); // Move time entry
+            AssertEvent (evs[2], "replace", x => IsDateHeader (x.NewItem));  // Update old header
         }
 
         [Test]
         public async void TestTripleTimeMovement ()
         {
-            var feed = new TimeEntriesCollectionView.TestFeed ();
-            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed);
+            var dt = new DateTime (2015, 12, 14, 10, 10, 0, 0);
+            var entry1 = CreateTimeEntry (dt);                  // First at list
+            var entry2 = CreateTimeEntry (dt.AddMinutes (-5));  // Second at list
+            var entry3 = CreateTimeEntry (dt.AddMinutes (-10)); // Third at list
 
-            var entry1 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 11, 0)); // First at list
-            var entry2 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 10, 0)); // Second at list
-            var entry3 = CreateTimeEntry (new DateTime (2015, 12, 14, 10, 10, 9, 0));  // Third at list
-            feed.Push (entry1, DataAction.Put);
-            feed.Push (entry2, DataAction.Put);
-            feed.Push (entry3, DataAction.Put);
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TimeEntriesCollectionView.TestFeed (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2, entry3);
+            var header = singleView.Data.First ();
 
-            await Task.Delay (100);
-
-            await GetEvents (3, singleView, () => {
-                // Move first entry to previous day
-                entry1.StartTime = entry2.StartTime;
-                entry2.StartTime = entry3.StartTime;
-                entry3.StartTime = entry1.StartTime;
-                feed.Push (entry1, DataAction.Put);
+            var evs = await GetEvents (3, singleView, () => {
+                // Shuffle time entries
+                feed.Push (CreateTimeEntry(entry1, minutesOffset: -5), DataAction.Put);
+                feed.Push (CreateTimeEntry(entry2, minutesOffset: -5), DataAction.Put);
+                feed.Push (CreateTimeEntry(entry3, minutesOffset: 10), DataAction.Put);
             });
 
             // Order check after update
             var holderList = singleView.Data.ToList ();
-            Assert.IsTrue (IsDateHeader (holderList [0]));
+            Assert.IsTrue (holderList[0].Compare (header) == DiffComparison.Same); // Header hasn't changed
             Assert.AreEqual (((TimeEntryHolder)holderList [1]).Data.Id, entry3.Id);
             Assert.AreEqual (((TimeEntryHolder)holderList [2]).Data.Id, entry1.Id);
             Assert.AreEqual (((TimeEntryHolder)holderList [3]).Data.Id, entry2.Id);
 
-            // TODO: check events
+            AssertEvent (evs[0], "move", x => x.NewItem is TimeEntryHolder); // Move time entry3
+            AssertEvent (evs[1], "replace", x => x.NewItem is TimeEntryHolder); // Update time entry1
+            AssertEvent (evs[2], "replace", x => x.NewItem is TimeEntryHolder); // Update time entry2
         }
     }
 }

@@ -86,7 +86,9 @@ namespace Toggl.Phoebe.Data.Views
             if (timeEntries.Length > 0) {
                 var holders = new List<ITimeEntryHolder> ();
                 foreach (var entry in timeEntries) {
-                    holders.Add (await testFeed.CreateTimeHolder (isGrouped, entry));
+                    // Create a new entry to protect the reference;
+                    var protectedEntry = new TimeEntryData (entry);
+                    holders.Add (await testFeed.CreateTimeHolder (isGrouped, protectedEntry));
                 }
                 v.items.Reset (v.CreateItemCollection (holders));
             }
@@ -161,6 +163,7 @@ namespace Toggl.Phoebe.Data.Views
                         log.Warning (Tag, exc, msg, endTime, numDays);
                     }
 
+//                    HasMore = false; // TODO: Check if this should be here
                     useLocal = true;
                 }
             }
@@ -230,20 +233,33 @@ namespace Toggl.Phoebe.Data.Views
 
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
+                    int fwOffset = 0, bwOffset = 0;
                     foreach (var diff in diffs) {
                         switch (diff.Type) {
                         case DiffType.Add:
-                            items.Insert (diff.NewIndex, diff.NewItem);
+                            if (!diff.IsMove) {
+                                items.Insert (diff.NewIndex + fwOffset, diff.NewItem);
+                            }
+                            else {
+                                if (diff.Move == DiffMove.Forward)
+                                    fwOffset--;
+                                items.Move (diff.OldIndex + fwOffset + (diff.Move == DiffMove.Backward ? bwOffset : 0),
+                                            diff.NewIndex + fwOffset,
+                                            diff.NewItem);
+                            }
+                            bwOffset++;
                             break;
                         case DiffType.Remove:
-                            items.RemoveAt (diff.NewIndex);
-                            break;
-                        case DiffType.Move:
-                            var oldIndex = items.IndexOf (diff.OldItem);
-                            items.Move (oldIndex, diff.NewIndex, diff.NewItem);
+                            if (!diff.IsMove) {
+                                items.RemoveAt (diff.NewIndex);
+                                bwOffset--;
+                            }
+                            else if (diff.Move == DiffMove.Forward) {
+                                fwOffset++;
+                            }
                             break;
                         case DiffType.Replace:
-                            items[diff.NewIndex] = diff.NewItem;
+                            items[diff.NewIndex + fwOffset] = diff.NewItem;
                             break;
                         }
                     }
@@ -476,14 +492,16 @@ namespace Toggl.Phoebe.Data.Views
                 }
             }
 
-            public Task<ITimeEntryHolder> CreateTimeHolder (
+            #pragma warning disable 1998
+            public async Task<ITimeEntryHolder> CreateTimeHolder (
                 bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
             {
                 // Don't load info to prevent interacting with database in unit tests
-                return Task.Run (() => isGrouped
-                                 ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
-                                 : new TimeEntryHolder (entry));
+                return isGrouped
+                    ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
+                    : new TimeEntryHolder (entry);
             }
+            #pragma warning restore 1998
 
             public void SubscribeToMessageBus (Action<DataChangeMessage> action)
             {

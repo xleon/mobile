@@ -102,7 +102,7 @@ namespace Toggl.Ross.ViewControllers
         {
             var controller = new ClientSelectionViewController (model.Workspace) {
                 ClientSelected = (client) => {
-                    model.Client = client;
+                    model.Client = new ClientModel (client);
                     NavigationController.PopToViewController (this, true);
                 }
             };

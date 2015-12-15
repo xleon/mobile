@@ -1,11 +1,11 @@
 using System;
-using CoreGraphics;
 using System.Threading;
 using System.Threading.Tasks;
-using UIKit;
+using CoreGraphics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Views.Charting;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {
@@ -138,7 +138,6 @@ namespace Toggl.Ross.Views
         private bool _delaying;
 
         static readonly nfloat padding = 30;
-        static readonly nfloat navBarHeight = 64;
         static readonly nfloat selectorHeight = 60;
 
         public override void LayoutSubviews ()

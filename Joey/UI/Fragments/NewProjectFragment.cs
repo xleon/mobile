@@ -143,11 +143,18 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void SelectClientBitClickedHandler (object sender, EventArgs e)
+        private async void SelectClientBitClickedHandler (object sender, EventArgs e)
         {
-            ClientListDialogFragment.NewInstance (WorkspaceId)
-            .SetClientSelectListener (this)
-            .Show (FragmentManager, "clients_dialog");
+            if (await ClientListViewModel.ContainsClients (WorkspaceId)) {
+                ClientListDialogFragment.NewInstance (WorkspaceId)
+                    .SetClientSelectListener (this)
+                    .Show (FragmentManager, "clients_dialog");
+            }
+            else {
+                CreateClientDialogFragment.NewInstance (WorkspaceId)
+                    .SetOnClientSelectedListener (this)
+                    .Show (FragmentManager, "new_client_dialog");
+            }
         }
 
         #region IOnClientSelectedListener implementation

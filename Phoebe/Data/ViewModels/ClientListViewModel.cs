@@ -11,20 +11,37 @@ namespace Toggl.Phoebe.Data.ViewModels
 {
     public class ClientListViewModel : IDisposable
     {
-        ClientListViewModel ()
+        public static async Task<bool> ContainsClients (Guid workspaceId)
         {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var clients = await store.Table<ClientData> ()
+                .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
+                .CountAsync ();
+            return clients > 0;
+        }
+
+        private Guid workspaceId;
+
+        ClientListViewModel (Guid workspaceId)
+        {
+            this.workspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
         }
 
         public static async Task<ClientListViewModel> Init (Guid workspaceId)
         {
-            var vm = new ClientListViewModel ();
+            var vm = new ClientListViewModel (workspaceId);
             vm.ClientDataCollection = new ObservableRangeCollection<ClientData> ();
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var clients = await store.Table<ClientData> ()
                           .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
                           .ToListAsync();
+
+            Sort (clients);
+            if (clients.Count == 0) {
+                clients.Add (new ClientData { Name = "No client" });
+            }
 
             vm.Sort (clients);
             vm.ClientDataCollection.AddRange (clients);

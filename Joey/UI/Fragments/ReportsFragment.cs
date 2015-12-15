@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -57,7 +58,7 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public ReportsFragment (int period, ZoomLevel zoom) : base()
+        public ReportsFragment (int period, ZoomLevel zoom)
         {
             var args = new Bundle ();
             args.PutInt (ReportPeriodArgument, period);
@@ -95,10 +96,10 @@ namespace Toggl.Joey.UI.Fragments
             controllerPool = null;
         }
 
-        public override void OnResume ()
+        public async override void OnResume ()
         {
             base.OnResume ();
-            EnsureLoaded ();
+            await EnsureLoaded ();
         }
 
         private void OnControllerSnapPositionChanged (object sender, EventArgs e)
@@ -128,33 +129,24 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public override bool UserVisibleHint
-        {
-            get { return base.UserVisibleHint; }
-            set {
-                base.UserVisibleHint = value;
-                EnsureLoaded ();
-            }
-        }
-
-        public void ReloadData()
+        public async Task ReloadData ()
         {
             if (isLoading || controller == null) {
                 return;
             }
             controller.Data = null;
-            EnsureLoaded();
+            await EnsureLoaded();
         }
 
-        private async void EnsureLoaded ()
+        private async Task EnsureLoaded ()
         {
-            if (isLoading || !UserVisibleHint || controller == null || controller.Data != null) {
+            if (isLoading || controller == null || controller.Data != null) {
                 return;
             }
 
             isLoading = true;
             try {
-                var data = new SummaryReportView() {
+                var data = new SummaryReportView {
                     Period = ZoomLevel,
                 };
                 await data.Load (Period);

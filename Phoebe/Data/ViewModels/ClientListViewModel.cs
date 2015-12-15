@@ -15,22 +15,20 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var clients = await store.Table<ClientData> ()
-                .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
-                .CountAsync ();
+                          .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
+                          .CountAsync ();
             return clients > 0;
         }
 
-        private Guid workspaceId;
 
-        ClientListViewModel (Guid workspaceId)
+        ClientListViewModel ()
         {
-            this.workspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
         }
 
         public static async Task<ClientListViewModel> Init (Guid workspaceId)
         {
-            var vm = new ClientListViewModel (workspaceId);
+            var vm = new ClientListViewModel ();
             vm.ClientDataCollection = new ObservableRangeCollection<ClientData> ();
 
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -38,7 +36,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                           .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId)
                           .ToListAsync();
 
-            Sort (clients);
             if (clients.Count == 0) {
                 clients.Add (new ClientData { Name = "No client" });
             }

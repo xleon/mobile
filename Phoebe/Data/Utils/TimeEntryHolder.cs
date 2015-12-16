@@ -37,7 +37,7 @@ namespace Toggl.Phoebe.Data.Utils
                 return DiffComparison.Different;
             } else {
                 var same = other2.TotalDuration == TotalDuration && other2.IsRunning == IsRunning;
-                return same ? DiffComparison.Same : DiffComparison.Updated;
+                return same ? DiffComparison.Same : DiffComparison.SoftUpdate;
             }
         }
 
@@ -89,7 +89,7 @@ namespace Toggl.Phoebe.Data.Utils
             } else {
                 var other2 = other as TimeEntryHolder;
                 return other2 != null && other2.Data.Id == Data.Id
-                       ? DiffComparison.Updated : DiffComparison.Different;
+                       ? DiffComparison.Update : DiffComparison.Different;
             }
         }
 
@@ -115,7 +115,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public override string ToString ()
         {
-            return string.Format ("[{0:MM/dd HH:mm}]", Data.StartTime);
+            return string.Format ("[{0:MM/dd HH:mm}, Id={1}]", Data.StartTime, Data.Id);
         }
     }
 }

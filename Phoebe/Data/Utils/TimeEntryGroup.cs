@@ -47,7 +47,7 @@ namespace Toggl.Phoebe.Data.Utils
             } else {
                 var other2 = other as TimeEntryGroup;
                 return other2 != null && other2.Group.First ().Id == Group.First ().Id
-                       ? DiffComparison.Updated : DiffComparison.Different;
+                       ? DiffComparison.Update : DiffComparison.Different;
             }
         }
 

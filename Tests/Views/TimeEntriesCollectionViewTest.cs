@@ -15,6 +15,8 @@ namespace Toggl.Phoebe.Tests.Views
     [TestFixture]
     public class TimeEntriesCollectionViewTest : Test
     {
+        private const int Timeout = 500;
+
         public class TestFeed : TimeEntriesCollectionView.IFeed
         {
             public event EventHandler<Exception> FailReported;
@@ -55,8 +57,9 @@ namespace Toggl.Phoebe.Tests.Views
 
             public void ReportFailure (Exception ex)
             {
-                if (FailReported != null)
+                if (FailReported != null) {
                     FailReported (this, ex);
+                }
             }
 
             public Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct)
@@ -82,8 +85,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Action = ev.Action;
                 if (ev.NewItems != null && ev.NewItems.Count > 0) {
                     Item = ev.NewItems [0] as IHolder;
-                }
-                else if (ev.OldItems != null && ev.OldItems.Count > 0) {
+                } else if (ev.OldItems != null && ev.OldItems.Count > 0) {
                     Item = ev.OldItems [0] as IHolder;
                 }
                 NewIndex = ev.NewStartingIndex;
@@ -158,21 +160,21 @@ namespace Toggl.Phoebe.Tests.Views
             var tcs = new TaskCompletionSource<IList<EventInfo>> ();
 
             feed.FailReported += (s, ex) => tcs.SetException (ex);
-
-            var timer = new System.Timers.Timer (500);
-            timer.Elapsed += (s, e) => {
-                if (!tcs.Task.IsCompleted)
-                    tcs.SetException (new Exception ("Timeout"));
-            };
-
             collection.CollectionChanged += (s, e) => {
                 li.Add (new EventInfo (e));
                 if (++i == eventCount) {
                     tcs.SetResult (li);
                 }
             };
-
             raiseEvents ();
+
+            var timer = new System.Timers.Timer (Timeout);
+            timer.Elapsed += (s, e) => {
+                timer.Stop();
+                if (!tcs.Task.IsCompleted) {
+                    tcs.SetException (new Exception ("Timeout"));
+                }
+            };
             timer.Start ();
 
             return tcs.Task;
@@ -395,14 +397,14 @@ namespace Toggl.Phoebe.Tests.Views
             var entry3 = CreateTimeEntry (dt.AddMinutes (-20));
             var entry4 = CreateTimeEntry (dt.AddDays (-1));
             var entry5 = CreateTimeEntry (dt.AddDays (-1).AddMinutes (-20));
-            var entry6 = CreateTimeEntry (dt.AddDays (-1).AddMinutes (-30));
+            var entry6 = CreateTimeEntry (dt.AddDays (-1).AddMinutes (-40));
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed (100);
             var singleView = await TimeEntriesCollectionView.InitAdHoc (
-                false, feed, entry1, entry2, entry4, entry5, entry6);
+                                 false, feed, entry1, entry2, entry4, entry5, entry6);
 
-            var evs = await GetEvents (8, singleView, feed, () => {
+            var evs = await GetEvents (6, singleView, feed, () => {
                 feed.Push (entry1, DataAction.Delete);
                 feed.Push (entry3, DataAction.Put);
                 feed.Push (entry6, DataAction.Delete);
@@ -413,13 +415,11 @@ namespace Toggl.Phoebe.Tests.Views
             AssertList (singleView.Data, dt, entry3, dt.AddDays (-1), entry2, entry5, entry4);
 
             AssertEvent (evs[0], "replace", "date header");
-            AssertEvent (evs[1], "remove",  "time entry");
-            AssertEvent (evs[2], "add",     "time entry");
-            AssertEvent (evs[3], "move",    "date header"); // TODO: Should date headers' move be forbidden?
-            AssertEvent (evs[4], "replace", "time entry");
-            AssertEvent (evs[5], "move",    "time entry");
-            AssertEvent (evs[6], "replace", "time entry");
-            AssertEvent (evs[7], "remove",  "time entry");
+            AssertEvent (evs[1], "remove", "time entry");
+            AssertEvent (evs[2], "add", "time entry");
+            AssertEvent (evs[3], "move", "time entry");
+            AssertEvent (evs[4], "remove", "time entry");
+            AssertEvent (evs[5], "move", "time entry");
         }
 
         [Test]

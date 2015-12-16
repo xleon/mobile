@@ -17,6 +17,8 @@ namespace Toggl.Phoebe.Tests.Views
     {
         public class TestFeed : TimeEntriesCollectionView.IFeed
         {
+            public event EventHandler<Exception> FailReported;
+
             public int BufferMilliseconds { get; private set; }
             public IList<Action<DataChangeMessage>> Listeners { get; private set; }
             public bool UseThreadPool { get; private set; }
@@ -53,7 +55,8 @@ namespace Toggl.Phoebe.Tests.Views
 
             public void ReportFailure (Exception ex)
             {
-                Assert.Fail (ex.Message);
+                if (FailReported != null)
+                    FailReported (this, ex);
             }
 
             public Task<IList<TimeEntryData>> DownloadTimeEntries (DateTime endTime, int numDays, CancellationToken ct)
@@ -138,20 +141,30 @@ namespace Toggl.Phoebe.Tests.Views
         }
 
         private Task<IList<NotifyCollectionChangedEventArgs>> GetEvents (
-            int eventCount, INotifyCollectionChanged collection, Action raiseEvents)
+            int eventCount, INotifyCollectionChanged collection, TestFeed feed, Action raiseEvents)
         {
             var i = 0;
             var li = new List<NotifyCollectionChangedEventArgs> ();
             var tcs = new TaskCompletionSource<IList<NotifyCollectionChangedEventArgs>> ();
 
-            // TODO: Set also  a timeout
-            collection.CollectionChanged += (sender, e) => {
+            feed.FailReported += (s, ex) => tcs.SetException (ex);
+
+            var timer = new System.Timers.Timer (500);
+            timer.Elapsed += (s, e) => {
+                if (!tcs.Task.IsCompleted)
+                    tcs.SetException (new Exception ("Timeout"));
+            };
+
+            collection.CollectionChanged += (s, e) => {
                 li.Add (e);
                 if (++i >= eventCount) {
                     tcs.SetResult (li);
                 }
             };
+
             raiseEvents ();
+            timer.Start ();
+
             return tcs.Task;
         }
 
@@ -233,7 +246,7 @@ namespace Toggl.Phoebe.Tests.Views
             var entry1 = CreateTimeEntry (dt);
             var entry2 = CreateTimeEntry (dt.AddHours (1));
 
-            var evs = await GetEvents (4, singleView, () => {
+            var evs = await GetEvents (4, singleView, feed, () => {
                 feed.Push (entry1, DataAction.Put);
                 feed.Push (entry2, DataAction.Put);
             });
@@ -271,7 +284,7 @@ namespace Toggl.Phoebe.Tests.Views
             var feed = new TestFeed (100);
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entries);
 
-            var evs = await GetEvents (4, singleView, () => {
+            var evs = await GetEvents (4, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entries[1], -1), DataAction.Put); // Move entry to previous day
                 feed.Push (CreateTimeEntry (entries[2]), DataAction.Delete);  // Delete entry
                 feed.Push (CreateTimeEntry (entries[4]), DataAction.Delete);  // Delete entry
@@ -301,7 +314,7 @@ namespace Toggl.Phoebe.Tests.Views
             var feed = new TestFeed (100);
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entries);
 
-            var evs = await GetEvents (5, singleView, () => {
+            var evs = await GetEvents (5, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entries[3], 1), DataAction.Put); // Move entry to previous day
                 feed.Push (CreateTimeEntry (entries[0]), DataAction.Delete);  // Delete entry
                 feed.Push (CreateTimeEntry (entries[1]), DataAction.Delete);  // Delete entry
@@ -332,7 +345,7 @@ namespace Toggl.Phoebe.Tests.Views
             var feed = new TestFeed (100);
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entries);
 
-            var evs = await GetEvents (3, singleView, () => {
+            var evs = await GetEvents (3, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entries[0], 0, 2), DataAction.Put);
                 feed.Push (CreateTimeEntry (entries[1], 0, 2), DataAction.Put);
                 feed.Push (CreateTimeEntry (entries[4], 0, 2), DataAction.Put);
@@ -361,7 +374,7 @@ namespace Toggl.Phoebe.Tests.Views
             // Order check before update
             AssertList (singleView.Data, dt, entry1, entry2);
 
-            var evs = await GetEvents (4, singleView, () => {
+            var evs = await GetEvents (4, singleView, feed, () => {
                 // Move entries to next day
                 feed.Push (CreateTimeEntry (entry2, daysOffset: 1), DataAction.Put);
                 feed.Push (CreateTimeEntry (entry1, daysOffset: 1), DataAction.Put);
@@ -390,7 +403,7 @@ namespace Toggl.Phoebe.Tests.Views
             // Order check before update
             AssertList (singleView.Data, dt, entry1, entry2);
 
-            var evs = await GetEvents (4, singleView, () => {
+            var evs = await GetEvents (4, singleView, feed, () => {
                 // Move entries to previous day
                 feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put);
                 feed.Push (CreateTimeEntry (entry2, daysOffset: -1), DataAction.Put);
@@ -420,7 +433,7 @@ namespace Toggl.Phoebe.Tests.Views
             // Order check before update
             AssertList (singleView.Data, dt, entry1, entry2, dt.AddDays (-1), entry3);
 
-            var evs = await GetEvents (3, singleView, () =>
+            var evs = await GetEvents (3, singleView, feed, () =>
                                        // Move first entry to previous day
                                        feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put));
 
@@ -447,7 +460,7 @@ namespace Toggl.Phoebe.Tests.Views
             // Order check before update
             AssertList (singleView.Data, dt, entry1, entry2, entry3, entry4);
 
-            var evs = await GetEvents (3, singleView, () =>
+            var evs = await GetEvents (3, singleView, feed, () =>
                                        // Move first entry to previous day
                                        feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put));
 
@@ -474,7 +487,7 @@ namespace Toggl.Phoebe.Tests.Views
             // Order check before update
             AssertList (singleView.Data, dt, entry1, entry2, entry3, entry4);
 
-            var evs = await GetEvents (3, singleView, () =>
+            var evs = await GetEvents (3, singleView, feed, () =>
                                        // Move first entry to next day
                                        feed.Push (CreateTimeEntry (entry4, daysOffset: 1), DataAction.Put));
 
@@ -498,7 +511,7 @@ namespace Toggl.Phoebe.Tests.Views
             var feed = new TestFeed (100);
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2, entry3);
 
-            var evs = await GetEvents (3, singleView, () => {
+            var evs = await GetEvents (3, singleView, feed, () => {
                 // Shuffle time entries
                 feed.Push (CreateTimeEntry (entry1, minutesOffset: -5), DataAction.Put);
                 feed.Push (CreateTimeEntry (entry2, minutesOffset: -5), DataAction.Put);

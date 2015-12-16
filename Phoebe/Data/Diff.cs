@@ -7,7 +7,9 @@ namespace Toggl.Phoebe.Data
     public enum DiffComparison {
         Different,
         Same,
-        Updated
+        /// <summary>Soft updated items won't moved, they will be only updated in place</summary>
+        SoftUpdate,
+        Update,
     }
 
     public enum DiffType {
@@ -37,6 +39,9 @@ namespace Toggl.Phoebe.Data
         public T OldItem { get; set; }
         public T NewItem { get; set; }
         public DiffMove Move { get; set; }
+
+        /// <summary>Used only for internal purposes in Diff algorithm</summary>
+        public DiffSection<T> Link { get; set; }
 
         public bool IsMove
         {
@@ -85,7 +90,8 @@ namespace Toggl.Phoebe.Data
     public static class Diff
     {
         /// <summary>
-        /// Calculates move and replace operation (besides add & remove) and makes indices linear
+        /// Calculates move and replace operation (besides add & remove) and adjusts indices
+        /// so events can be applied sequentially (included moves) to the source list
         /// </summary>
         public static IList<DiffSection<T>> CalculateExtra<T> (
             IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1)
@@ -101,6 +107,7 @@ namespace Toggl.Phoebe.Data
             });
 
             var diffsDic = diffsWithReplace
+                           .Where (x => x.Type != DiffType.Copy)
                            .GroupBy (diff => diff.Type)
                            .ToDictionary (gr => gr.Key, gr => gr.ToList ());
 
@@ -108,9 +115,11 @@ namespace Toggl.Phoebe.Data
             if (diffsDic.ContainsKey (DiffType.Add) && diffsDic.ContainsKey (DiffType.Remove)) {
                 foreach (var addDiff in diffsDic[DiffType.Add]) {
                     var rmDiff = diffsDic [DiffType.Remove].FirstOrDefault (x =>
-                                 listA [x.OldIndex].Compare (addDiff.NewItem) != DiffComparison.Different);
+                                 listA [x.OldIndex].Compare (addDiff.NewItem) == DiffComparison.Update);
 
                     if (rmDiff != null) {
+                        addDiff.Link = rmDiff;
+                        rmDiff.Link = addDiff;
                         addDiff.OldIndex = rmDiff.NewIndex;
                         rmDiff.Move = addDiff.Move = rmDiff.NewIndex < addDiff.NewIndex
                                                      ? DiffMove.Forward : DiffMove.Backward;
@@ -118,52 +127,63 @@ namespace Toggl.Phoebe.Data
                 }
             }
 
-            int fwOffset = 0, bwOffset = 0;
+            var fwOffset = 0;
+            var bwOffsetDic = new Dictionary<DiffSection<T>, int> ();
+
             return diffsDic
-                .SelectMany (x => x.Value)
-                .Where (x => x.Type != DiffType.Copy)
-                .OrderBy (x => x.NewIndex)
-                .ThenBy (x => x.OldIndex)
-                // Add offset to indices so events can be raised linearly without conflicting with moves
-                .Select (x => {
-                    if (x.Type == DiffType.Add) {
-                        if (x.IsMove) {
-                            x.Type = DiffType.Move;
-                            if (x.Move == DiffMove.Forward) {
-                                fwOffset--;
-                            }
-                            x.OldIndex += fwOffset + (x.Move == DiffMove.Backward ? bwOffset : 0);
+                   .SelectMany (x => x.Value)
+                   .OrderBy (x => x.NewIndex)
+
+                   // Deletes must happen before inserts in the same position to prevent problems with indices
+                   .ThenBy (x => x.Type == DiffType.Remove ? -1 : 0)
+
+                   // Add offset to indices so events can be raised linearly without conflicting with moves
+            .Select (x => {
+                if (x.Type == DiffType.Add) {
+                    if (x.IsMove) {
+                        if (x.Move == DiffMove.Forward) {
+                            fwOffset--;
+                        } else {
+                            bwOffsetDic.Add (x.Link, 0);
                         }
-                        bwOffset++;                        
+                        x.Link = null;  // Reference is not needed any more
+                        x.Type = DiffType.Move;
                     }
-                    else if (x.Type == DiffType.Remove) {
-                        if (!x.IsMove) {
-                            bwOffset--;
-                        } else if (x.Move == DiffMove.Forward) {
-                            fwOffset++;
-                        }                        
+                    foreach (var k in bwOffsetDic.Keys.ToList ()) {
+                        bwOffsetDic[k] -= 1;
                     }
-                    x.NewIndex += fwOffset;
-                    return x;
-                })
-                .Where (x => !(x.Type == DiffType.Remove && x.IsMove))
-                .ToList ();
+                } else if (x.Type == DiffType.Remove) {
+                    if (!x.IsMove) {
+                        foreach (var k in bwOffsetDic.Keys.ToList ()) {
+                            bwOffsetDic[k] += 1;
+                        }
+                    } else if (x.Move == DiffMove.Forward) {
+                        fwOffset++;
+                    } else { // Move == Diff.Backward
+                        x.Link.OldIndex += bwOffsetDic[x];
+                        bwOffsetDic.Remove (x);
+                    }
+                }
+                x.NewIndex += fwOffset;
+                return x;
+            })
+            .Where (x => ! (x.Type == DiffType.Remove && x.IsMove))
+            .ToList ();
         }
 
         public static IEnumerable<DiffSection<T>> Calculate<T> (
-            IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1)
+            IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1,
+            DiffComparison update = DiffComparison.SoftUpdate)
         where T : IDiffComparable
         {
             endA = endA > -1 ? endA : listA.Count;
             endB = endB > -1 ? endB : listB.Count;
-
-            var lcs = FindLongestCommonSubstring (
-                          listA, listB, startA, endA, startB, endB);
+            var lcs = FindLongestCommonSubstring (listA, listB, startA, endA, startB, endB, update);
 
             if (lcs.Success) {
                 // deal with the section before
                 var sectionsBefore =
-                    Calculate (listA, listB, startA, lcs.PositionA, startB, lcs.PositionB);
+                    Calculate (listA, listB, startA, lcs.PositionA, startB, lcs.PositionB, update);
 
                 foreach (var section in sectionsBefore) {
                     yield return section;
@@ -172,41 +192,44 @@ namespace Toggl.Phoebe.Data
                 // output the copy operation
                 for (int i = 0; i < lcs.Length; i++) {
                     int indexA = lcs.PositionA + i, indexB = lcs.PositionB + i;
-                    yield return new DiffSection<T> (DiffType.Copy, indexA, listA[indexA], indexB, listB[indexB]);
+                    yield return new DiffSection<T> (DiffType.Copy, indexA, listA [indexA], indexB, listB [indexB]);
                 }
 
                 // deal with the section after
                 var sectionsAfter =
-                    Calculate (listA, listB, lcs.PositionA + lcs.Length, endA, lcs.PositionB + lcs.Length, endB);
+                    Calculate (listA, listB, lcs.PositionA + lcs.Length, endA, lcs.PositionB + lcs.Length, endB, update);
 
                 foreach (var section in sectionsAfter) {
                     yield return section;
                 }
 
                 yield break;
+            } else if (update == DiffComparison.SoftUpdate) {
+                var sectionsUpdate = Calculate (listA, listB, startA, endA, startB, endB, DiffComparison.Update);
+                foreach (var section in sectionsUpdate) {
+                    yield return section;
+                }
+                yield break;
             }
 
             // if we get here, no LCS
-            var rmCount = endA - startA;
-            var addCount = endB - startB;
-            var end = Math.Max (rmCount, addCount);
-
-            for (int i = 0; i < end; i++) {
+            if (endA > startA) {
                 // we got content from first collection --> deleted
-                if (i < rmCount) {
-                    yield return new DiffSection<T> (DiffType.Remove, startA + i, listA[startA + i], startA, default (T));
+                for (int i = 0; i < endA - startA; i++) {
+                    yield return new DiffSection<T> (DiffType.Remove, startA + i, listA[startA + i], startB, default (T));
                 }
+            }
 
+            if (endB > startB) {
                 // we got content from second collection --> inserted
-                if (i < addCount) {
-                    yield return new DiffSection<T> (DiffType.Add, startB, default (T), startB + i, listB[startB + i]);
+                for (int i = 0; i < endB - startB; i++) {
+                    yield return new DiffSection<T> (DiffType.Add, startA, default (T), startB + i, listB[startB + i]);
                 }
-
             }
         }
 
         private static LongestCommonSubstringResult FindLongestCommonSubstring<T> (
-            IList<T> listA, IList<T> listB, int startA, int endA, int startB, int endB)
+            IList<T> listA, IList<T> listB, int startA, int endA, int startB, int endB, DiffComparison update)
         where T : IDiffComparable
         {
             // default result, if we can't find anything
@@ -214,14 +237,13 @@ namespace Toggl.Phoebe.Data
 
             for (int index1 = startA; index1 < endA; index1++) {
                 for (int index2 = startB; index2 < endB; index2++) {
-                    if (listA[index1].Compare (listB[index2]) != DiffComparison.Different) {
-                        int length = CountEqual (
-                                         listA, listB, index1, endA, index2, endB);
-
-                        // Is longer than what we already have --> record new LCS
+                    int length = CountEqual (listA, listB, index1, endA, index2, endB, update);
+                    if (length > 0) {
+                        // Is longer than what we already have? --> record new LCS
                         if (length > result.Length) {
                             result = new LongestCommonSubstringResult (index1, index2, length);
                         }
+                        break;
                     }
                 }
             }
@@ -229,12 +251,14 @@ namespace Toggl.Phoebe.Data
             return result;
         }
 
-        private static int CountEqual<T> (IList<T> listA, IList<T> listB, int startA, int endA, int startB, int endB)
+        private static int CountEqual<T> (
+            IList<T> listA, IList<T> listB, int startA, int endA, int startB, int endB, DiffComparison update)
         where T : IDiffComparable
         {
             int length = 0;
             while (startA < endA && startB < endB) {
-                if (listA[startA].Compare (listB[startB]) == DiffComparison.Different) {
+                var comp = listA [startA].Compare (listB [startB]);
+                if (comp != DiffComparison.Same && comp != update) {
                     break;
                 }
                 startA++;

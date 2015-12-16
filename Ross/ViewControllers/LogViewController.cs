@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,6 +24,8 @@ namespace Toggl.Ross.ViewControllers
     public class LogViewController : UITableViewController
     {
         private const string DefaultDurationText = " 00:00:00 ";
+        readonly static NSString EntryCellId = new NSString ("EntryCellId");
+        readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
 
         private NavigationMenuController navMenuController;
         private UIView emptyView;
@@ -41,22 +44,24 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLoad ();
 
-            // Create view model
-            ViewModel = await LogTimeEntriesViewModel.Init ();
-
             EdgesForExtendedLayout = UIRectEdge.None;
             emptyView = new SimpleEmptyView {
                 Title = "LogEmptyTitle".Tr (),
                 Message = "LogEmptyMessage".Tr (),
             };
 
-            var headerView = new TableViewRefreshView ();
-            var source = new ObservableSource (this, ViewModel.CollectionView) {
-                EmptyView = emptyView,
-                HeaderView = headerView
-            };
-            source.Attach ();
+            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
+            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
 
+            // Create view model
+            ViewModel = await LogTimeEntriesViewModel.Init ();
+
+            var headerView = new TableViewRefreshView ();
+            var source = new MySource (ViewModel.CollectionView.Data);
+            TableView.Source = source;
+
+
+            ViewModel.CollectionView.CollectionChanged += HandleCollectionChanged;
             RefreshControl = headerView;
             headerView.AdaptToTableView (TableView);
 
@@ -66,6 +71,50 @@ namespace Toggl.Ross.ViewControllers
             // Bindings
 
             navMenuController.Attach (this);
+            await ViewModel.CollectionView.LoadMore ();
+
+            foreach (var item in ViewModel.CollectionView.Data) {
+                Console.WriteLine (item);
+            }
+        }
+
+        private void HandleCollectionChanged (object sender, NotifyCollectionChangedEventArgs e)
+        {
+            var collectionData = ViewModel.CollectionView.Data;
+
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                TableView.ReloadData();
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Add) {
+                if (e.NewItems [0] is DateHolder) {
+                    var indexSet = GetSectionFromPlainIndex (collectionData, e.NewStartingIndex);
+                    TableView.InsertSections (indexSet, UITableViewRowAnimation.Automatic);
+                } else {
+                    var indexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
+                    TableView.InsertRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                if (e.OldItems [0] is DateHolder) {
+                    var indexSet = GetSectionFromPlainIndex (collectionData, e.OldStartingIndex);
+                    TableView.DeleteSections (indexSet, UITableViewRowAnimation.Automatic);
+                } else {
+                    var indexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    TableView.DeleteRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                if (e.OldItems [0] is DateHolder) {
+                    var indexSet = GetSectionFromPlainIndex (collectionData, e.OldStartingIndex);
+                    TableView.ReloadSections (indexSet, UITableViewRowAnimation.Automatic);
+                } else {
+                    var indexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    TableView.ReloadRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                }
+            }
         }
 
         protected override void Dispose (bool disposing)
@@ -118,11 +167,91 @@ namespace Toggl.Ross.ViewControllers
             await ViewModel.StartStopTimeEntry ();
         }
 
-
-        class ObservableSource : CollectionDataViewSource<IHolder, TimeEntriesCollectionView.DateHolder, TimeEntryHolder>, IDisposable
+        #region IEnumerable Utils
+        public static NSIndexSet GetSectionFromPlainIndex (IEnumerable<IHolder> collection, int headerIndex)
         {
-            readonly static NSString EntryCellId = new NSString ("EntryCellId");
-            readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
+            var index = collection.Take (headerIndex).OfType <DateHolder> ().Count ();
+            return NSIndexSet.FromIndex (index);
+        }
+
+        public static NSIndexPath GetRowFromPlainIndex (IEnumerable<IHolder> collection, int holderIndex)
+        {
+            var enumerable = collection.ToArray ();
+            var row = enumerable.Take (holderIndex).Reverse ().IndexOf (p => p is DateHolder);
+            var section = enumerable.Take (holderIndex).OfType <DateHolder> ().Count () - 1; // less one this time.
+            return NSIndexPath.FromRowSection (row, section);
+        }
+
+        public static int GetPlainIndexFromSection (IEnumerable<IHolder> collection, nint sectionIndex)
+        {
+            return collection.IndexOf (p => p == collection.OfType <DateHolder> ().ElementAt ((int)sectionIndex));
+        }
+
+        public static int GetPlainIndexFromRow (IEnumerable<IHolder> collection, NSIndexPath rowIndexPath)
+        {
+            return GetPlainIndexFromSection (collection, rowIndexPath.Section) + rowIndexPath.Row + 1;
+        }
+
+        public static int GetCurrentRowsBySection (IEnumerable<IHolder> collection, nint sectionIndex)
+        {
+            var enumerable = collection.ToArray ();
+            var startIndex = GetPlainIndexFromSection (enumerable, sectionIndex);
+            return enumerable.Skip (startIndex + 1).TakeWhile (p => p is ITimeEntryHolder).Count ();
+        }
+        #endregion
+
+        class MySource : UITableViewSource
+        {
+            private IEnumerable<IHolder> data;
+
+            public MySource (IEnumerable<IHolder> data)
+            {
+                this.data = data;
+            }
+
+            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
+            {
+                var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
+                var holder = (ITimeEntryHolder)data.ElementAt (LogViewController.GetPlainIndexFromRow (data, indexPath));
+                cell.Bind (holder);
+                return cell;
+            }
+
+            public override UIView GetViewForHeader (UITableView tableView, nint section)
+            {
+                var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (SectionHeaderId);
+                view.Bind (data.OfType<DateHolder> ().ElementAt ((int)section));
+                return view;
+            }
+
+            public override nfloat GetHeightForHeader (UITableView tableView, nint section)
+            {
+                return EstimatedHeightForHeader (tableView, section);
+            }
+
+            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
+            {
+                return 42f;
+            }
+
+            public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
+            {
+                return false;
+            }
+
+            public override nint RowsInSection (UITableView tableview, nint section)
+            {
+                return LogViewController.GetCurrentRowsBySection (data, section);
+            }
+
+            public override nint NumberOfSections (UITableView tableView)
+            {
+                return data.OfType<DateHolder> ().Count ();
+            }
+        }
+
+        class ObservableSource : CollectionDataViewSource<IHolder, DateHolder, TimeEntryHolder>, IDisposable
+        {
             readonly LogViewController controller;
             readonly TimeEntriesCollectionView dataView;
             private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
@@ -174,7 +303,7 @@ namespace Toggl.Ross.ViewControllers
                         var index = e.NewStartingIndex + i;
                         var elementToAdd = dataView.Data.ElementAt (index);
 
-                        if (elementToAdd is TimeEntriesCollectionView.DateHolder) {
+                        if (elementToAdd is DateHolder) {
                             var indexSet = GetSectionIndexFromItemIndex (index);
                             TableView.InsertSections (indexSet, UITableViewRowAnimation.Automatic);
                         } else {
@@ -184,8 +313,9 @@ namespace Toggl.Ross.ViewControllers
                     }
                 }
 
+
                 if (e.Action == NotifyCollectionChangedAction.Remove) {
-                    if (e.OldItems[0] is TimeEntriesCollectionView.DateHolder) {
+                    if (e.OldItems[0] is DateHolder) {
                         var indexSet = GetSectionIndexFromItemIndex (e.OldStartingIndex);
                         TableView.DeleteSections (indexSet, UITableViewRowAnimation.Automatic);
                     } else {
@@ -195,7 +325,7 @@ namespace Toggl.Ross.ViewControllers
                 }
 
                 if (e.Action == NotifyCollectionChangedAction.Replace) {
-                    if (dataView.Data.ElementAt (e.NewStartingIndex) is TimeEntriesCollectionView.DateHolder) {
+                    if (dataView.Data.ElementAt (e.NewStartingIndex) is DateHolder) {
                         var indexSet = GetSectionIndexFromItemIndex (e.OldStartingIndex);
                         TableView.ReloadSections (indexSet, UITableViewRowAnimation.Automatic);
                     } else {
@@ -314,13 +444,13 @@ namespace Toggl.Ross.ViewControllers
                 dataView.RemoveItemWithUndoAsync (GetHolderIndex (holder));
             }
 
-            protected override void Update ()
+            protected void Update ()
             {
                 CATransaction.Begin ();
                 CATransaction.CompletionBlock = delegate {
                     TableView.ReloadData ();
                 };
-                base.Update ();
+                TableView.ReloadData ();
                 CATransaction.Commit();
             }
 
@@ -337,9 +467,9 @@ namespace Toggl.Ross.ViewControllers
                 base.Dispose (disposing);
             }
 
-            protected override bool CompareDataSections (IHolder data, TimeEntriesCollectionView.DateHolder section)
+            protected override bool CompareDataSections (IHolder data, DateHolder section)
             {
-                var dateGroup = data as TimeEntriesCollectionView.DateHolder;
+                var dateGroup = data as DateHolder;
                 return dateGroup.Date == section.Date;
             }
         }
@@ -401,7 +531,7 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            public void Bind (TimeEntryHolder dataSource)
+            public void Bind (ITimeEntryHolder dataSource)
             {
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
@@ -458,7 +588,7 @@ namespace Toggl.Ross.ViewControllers
                 LayoutIfNeeded ();
             }
 
-            private void RebindDuration (TimeEntryHolder dataSource)
+            private void RebindDuration (ITimeEntryHolder dataSource)
             {
                 if (dataSource == null) {
                     return;
@@ -469,7 +599,7 @@ namespace Toggl.Ross.ViewControllers
                 runningImageView.Hidden = dataSource.Data.State != TimeEntryState.Running;
             }
 
-            private void RebindTags (TimeEntryHolder dataSource)
+            private void RebindTags (ITimeEntryHolder dataSource)
             {
                 var hasTags = dataSource.Info.NumberOfTags > 0;
                 var isBillable = dataSource.Info.IsBillable;
@@ -647,7 +777,7 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            public void Bind (TimeEntriesCollectionView.DateHolder data)
+            public void Bind (DateHolder data)
             {
                 dateLabel.Text = data.Date.ToLocalizedDateString ();
                 totalDurationLabel.Text = FormatDuration (data.TotalDuration);

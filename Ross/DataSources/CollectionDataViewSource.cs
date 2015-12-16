@@ -17,39 +17,6 @@ namespace Toggl.Ross.DataSources
         private readonly ICollectionDataView<TData> dataView;
         private IEnumerable<TSection> sections = new List<TSection> ();
 
-        protected CollectionDataViewSource (UITableView tableView, ICollectionDataView<TData> dataView)
-        {
-            this.tableView = tableView;
-            this.dataView = dataView;
-            dataView.CollectionChanged += OnCollectionChange;
-        }
-
-        protected override void Dispose (bool disposing)
-        {
-            if (disposing) {
-                dataView.CollectionChanged -= OnCollectionChange;
-            }
-            base.Dispose (disposing);
-        }
-
-        public virtual void OnCollectionChange (object sender, NotifyCollectionChangedEventArgs e)
-        {
-            // Cache sections
-            UpdateSectionList ();
-
-            if (!enoughRowsCheck && dataView.Data.OfType<TRow> ().Count() < 10) {
-                TryLoadMore ();
-                enoughRowsCheck = true;
-            }
-        }
-
-        public virtual void Attach ()
-        {
-            tableView.Source = this;
-            UpdateFooter ();
-            TryLoadMore ();
-        }
-
         private UIActivityIndicatorView defaultFooterView;
 
         public bool IsEmpty
@@ -71,6 +38,64 @@ namespace Toggl.Ross.DataSources
             }
         }
 
+        public UITableView TableView
+        {
+            get { return tableView; }
+        }
+
+        protected CollectionDataViewSource (UITableView tableView, ICollectionDataView<TData> dataView)
+        {
+            this.tableView = tableView;
+            this.dataView = dataView;
+            dataView.CollectionChanged += OnCollectionChange;
+        }
+
+        protected override void Dispose (bool disposing)
+        {
+            if (disposing) {
+                dataView.CollectionChanged -= OnCollectionChange;
+            }
+            base.Dispose (disposing);
+        }
+
+        public override nint RowsInSection (UITableView tableview, nint section)
+        {
+            if (!Sections.Any ()) {
+                return 0;
+            }
+            var rowsInSection = GetRowsFromSection (Sections.ElementAt ((int)section));
+            return (nint)rowsInSection.Count ();
+        }
+
+        public override nint NumberOfSections (UITableView tableView)
+        {
+            return Sections.Count ();
+        }
+
+        public override void Scrolled (UIScrollView scrollView)
+        {
+            //TryLoadMore ();
+        }
+
+        public virtual void OnCollectionChange (object sender, NotifyCollectionChangedEventArgs e)
+        {
+            // Cache sections
+            sections = dataView.Data.OfType<TSection> ();
+
+            if (!enoughRowsCheck && dataView.Data.OfType<TRow> ().Count() < 10) {
+                TryLoadMore ();
+                enoughRowsCheck = true;
+            }
+        }
+
+        public virtual void Attach ()
+        {
+            tableView.Source = this;
+            UpdateFooter ();
+            TryLoadMore ();
+        }
+
+        #region Utils
         protected IEnumerable<TRow> GetRowsFromSection (TSection section)
         {
             var rows = new List<TData> ();
@@ -155,20 +180,7 @@ namespace Toggl.Ross.DataSources
             }
             return -1;
         }
-
-        public override nint RowsInSection (UITableView tableview, nint section)
-        {
-            if (!Sections.Any ()) {
-                return 0;
-            }
-            var rowsInSection = GetRowsFromSection (Sections.ElementAt ((int)section));
-            return rowsInSection.Count ();
-        }
-
-        public override nint NumberOfSections (UITableView tableView)
-        {
-            return Sections.Count ();
-        }
+        #endregion
 
         public UIView EmptyView { get; set; }
 
@@ -188,12 +200,7 @@ namespace Toggl.Ross.DataSources
             }
         }
 
-        public async override void Scrolled (UIScrollView scrollView)
-        {
-            await TryLoadMore ();
-        }
-
-        private async Task TryLoadMore ()
+        private void TryLoadMore ()
         {
             var currentOffset = tableView.ContentOffset.Y;
             var maximumOffset = tableView.ContentSize.Height - tableView.Frame.Height;
@@ -201,26 +208,11 @@ namespace Toggl.Ross.DataSources
             if (maximumOffset - currentOffset <= 200.0) {
                 // Automatically load more
                 if (dataView.HasMore) {
-                    await dataView.LoadMore ();
+                    //await dataView.LoadMore ();
                 }
             }
         }
         protected abstract bool CompareDataSections (TData data, TSection section);
-
-        private void UpdateSectionList ()
-        {
-            sections = dataView.Data.OfType<TSection> ();
-        }
-
-        protected virtual void Update ()
-        {
-            tableView.ReloadData ();
-        }
-
-        public UITableView TableView
-        {
-            get { return tableView; }
-        }
     }
 
 }

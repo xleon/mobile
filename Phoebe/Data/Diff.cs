@@ -88,7 +88,8 @@ namespace Toggl.Phoebe.Data
     public static class Diff
     {
         /// <summary>
-        /// Calculates move and replace operation (besides add & remove) and makes indices linear
+        /// Calculates move and replace operation (besides add & remove) and adjusts indices
+        /// so events can be applied sequentially (included moves) to the source list
         /// </summary>
         public static IList<DiffSection<T>> CalculateExtra<T> (
             IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1)
@@ -125,12 +126,16 @@ namespace Toggl.Phoebe.Data
 
             var fwOffset = 0;
             var bwOffsetDic = new Dictionary<DiffSection<T>, int> ();
+
             return diffsDic
-                   .SelectMany (x => x.Value)
-                   .Where (x => x.Type != DiffType.Copy)
-                   .OrderBy (x => x.NewIndex)
-                   .ThenBy (x => x.Type == DiffType.Remove ? -1 : 0)
-                   // Add offset to indices so events can be raised linearly without conflicting with moves
+            .SelectMany (x => x.Value)
+            .Where (x => x.Type != DiffType.Copy)
+            .OrderBy (x => x.NewIndex)
+            
+            // Deletes must happen before inserts in the same position to prevent problems with indices
+            .ThenBy (x => x.Type == DiffType.Remove ? -1 : 0)
+
+            // Add offset to indices so events can be raised linearly without conflicting with moves
             .Select (x => {
                 if (x.Type == DiffType.Add) {
                     if (x.IsMove) {

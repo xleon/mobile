@@ -194,7 +194,7 @@ namespace Toggl.Phoebe.Tests.Views
                 Assert.Fail ("Expected {0} but was {1}", evType, Enum.GetName (typeof (NotifyCollectionChangedAction), ev.Action));
             }
 
-            var isExpectedType = false;
+            bool isExpectedType;
             if (itemType == "date header") {
                 isExpectedType = holder is DateHolder;
             } else if (itemType == "time entry") {
@@ -315,7 +315,7 @@ namespace Toggl.Phoebe.Tests.Views
             var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entries);
 
             var evs = await GetEvents (5, singleView, feed, () => {
-                feed.Push (CreateTimeEntry (entries[3], 1), DataAction.Put); // Move entry to previous day
+                feed.Push (CreateTimeEntry (entries[3], 1), DataAction.Put); // Move entry to next day
                 feed.Push (CreateTimeEntry (entries[0]), DataAction.Delete);  // Delete entry
                 feed.Push (CreateTimeEntry (entries[1]), DataAction.Delete);  // Delete entry
             });
@@ -328,6 +328,64 @@ namespace Toggl.Phoebe.Tests.Views
             AssertEvent (evs[3], "move", "time entry");     // Move time entry
             AssertEvent (evs[4], "replace", "date header"); // Update yesterday's header
         }
+
+        [Test]
+        public async void TestMoveForwardWithAdd ()
+        {
+            var dt = new DateTime (2015, 12, 15, 10, 0, 0);
+            var entry1 = CreateTimeEntry (dt);
+            var entry2 = CreateTimeEntry (dt.AddMinutes (-10));
+            var entry3 = CreateTimeEntry (dt.AddMinutes (-20));
+            var entry4 = CreateTimeEntry (dt.AddDays (-1));
+            var entry5 = CreateTimeEntry (dt.AddDays (-1).AddMinutes (-20));
+
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry2, entry4);
+
+            var evs = await GetEvents (4, singleView, feed, () => {
+                feed.Push (CreateTimeEntry (entry2, -1), DataAction.Put); // Move entry to previous day
+                feed.Push (CreateTimeEntry (entry3), DataAction.Put);     // Add entry
+                feed.Push (CreateTimeEntry (entry5), DataAction.Put);     // Add entry
+            });
+
+            AssertList (singleView.Data, dt, entry1, entry3, dt.AddDays (-1), entry4, entry2, entry5);
+
+            AssertEvent (evs[0], "add", "time entry");
+            AssertEvent (evs[1], "replace", "date header");
+            AssertEvent (evs[2], "move", "time entry");
+            AssertEvent (evs[3], "add", "time entry");
+        }
+
+        [Test]
+        public async void TestMoveBackwardWithAdd ()
+        {
+            var dt = new DateTime (2015, 12, 15, 10, 0, 0);
+            var entry1 = CreateTimeEntry (dt.AddDays (1));
+            var entry2 = CreateTimeEntry (dt.AddDays (1).AddMinutes (-20));
+            var entry3 = CreateTimeEntry (dt);
+            var entry4 = CreateTimeEntry (dt.AddMinutes (-10));
+            var entry5 = CreateTimeEntry (dt.AddMinutes (-20));
+
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry3, entry4, entry5);
+
+            var evs = await GetEvents (5, singleView, feed, () => {
+                feed.Push (CreateTimeEntry (entry2), DataAction.Put);    // Add entry
+                feed.Push (CreateTimeEntry (entry4, 1), DataAction.Put); // Move entry to next day
+                feed.Push (CreateTimeEntry (entry1), DataAction.Put);    // Add entry
+            });
+
+            AssertList (singleView.Data, dt.AddDays (1), entry1, entry4, entry2, dt, entry3, entry5);
+
+            AssertEvent (evs[0], "add", "date header");
+            AssertEvent (evs[1], "add", "time entry");
+            AssertEvent (evs[2], "move", "time entry");
+            AssertEvent (evs[3], "add", "time entry");
+            AssertEvent (evs[4], "replace", "date header");
+        }
+
 
         [Test]
         public async void TestUpdateThreeEntries ()

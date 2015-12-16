@@ -268,8 +268,6 @@ namespace Toggl.Phoebe.Tests.Views
             AssertEvent (evs[3], "add", "time entry");
         }
 
-        // TODO TestMoveForwardAndBackward (with adds and deletes in between)
-
         [Test]
         public async void TestMoveForwardWithDelete ()
         {
@@ -454,6 +452,36 @@ namespace Toggl.Phoebe.Tests.Views
             AssertEvent (evs[4], "replace", "date header");
             AssertEvent (evs[5], "remove", "time entry");
             AssertEvent (evs[6], "add", "time entry");
+        }
+
+        [Test]
+        public async void TestMoveForwardAndBackward ()
+        {
+            var dt = new DateTime (2015, 12, 15, 10, 0, 0);
+            var entry1 = CreateTimeEntry (dt);
+            var entry2 = CreateTimeEntry (dt.AddMinutes (-20));
+            var entry3 = CreateTimeEntry (dt.AddDays (-1));
+            var entry4 = CreateTimeEntry (dt.AddDays (-1).AddMinutes (-10));
+
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed (100);
+            var singleView = await TimeEntriesCollectionView.InitAdHoc (false, feed, entry1, entry3, entry4);
+
+            var evs = await GetEvents (6, singleView, feed, () => {
+                feed.Push (CreateTimeEntry (entry3, 1, -10), DataAction.Put);
+                feed.Push (CreateTimeEntry (entry1, -1, -20), DataAction.Put);
+                feed.Push (entry2, DataAction.Put);
+                feed.Push (entry4, DataAction.Delete);
+            });
+
+            AssertList (singleView.Data, dt, entry3, entry2, dt.AddDays (-1), entry1);
+
+            AssertEvent (evs[0], "replace", "date header");
+            AssertEvent (evs[1], "move", "time entry");
+            AssertEvent (evs[2], "add", "time entry");
+            AssertEvent (evs[3], "replace", "date header");
+            AssertEvent (evs[4], "remove", "time entry");
+            AssertEvent (evs[5], "move", "time entry");
         }
 
         [Test]

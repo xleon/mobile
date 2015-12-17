@@ -15,7 +15,7 @@ using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class ProjectListAdapter : RecycledDataViewAdapter<object>
+    public class ProjectListAdapter : RecyclerCollectionDataAdapter<object>
     {
         protected const int ViewTypeContent = 1;
         protected const int ViewTypeNoProject = ViewTypeContent;

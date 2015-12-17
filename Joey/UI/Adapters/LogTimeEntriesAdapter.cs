@@ -13,12 +13,13 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<IHolder>
+    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>
     {
         public static readonly int ViewTypeLoaderPlaceholder = 0;
         public static readonly int ViewTypeContent = 1;
@@ -26,16 +27,17 @@ namespace Toggl.Joey.UI.Adapters
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
-        private TimeEntriesCollectionView modelView;
+        private LogTimeEntriesViewModel viewModel;
         private DateTime lastTimeEntryContinuedTime;
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        public LogTimeEntriesAdapter (RecyclerView owner, TimeEntriesCollectionView modelView) : base (owner, modelView)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesViewModel viewModel)
+        : base (owner, viewModel.Collection)
         {
-            this.modelView = modelView;
+            this.viewModel = viewModel;
             lastTimeEntryContinuedTime = Time.UtcNow;
         }
 
@@ -97,7 +99,7 @@ namespace Toggl.Joey.UI.Adapters
             }
             lastTimeEntryContinuedTime = Time.UtcNow;
 
-            modelView.ContinueTimeEntry (viewHolder.AdapterPosition);
+            viewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -114,6 +116,21 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             return holder;
+        }
+
+        public override async void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        {
+            if (position + LoadMoreOffset > ItemCount && viewModel.HasMore) {
+                await viewModel.LoadMore ();
+            }
+
+            if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {
+                var spinnerHolder = (SpinnerHolder)holder;
+                spinnerHolder.StartAnimation (viewModel.HasMore);
+                return;
+            }
+
+            BindHolder (holder, position);
         }
 
         protected override void BindHolder (RecyclerView.ViewHolder holder, int position)

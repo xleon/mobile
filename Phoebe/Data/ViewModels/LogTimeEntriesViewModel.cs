@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using GalaSoft.MvvmLight;
@@ -7,6 +8,7 @@ using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -19,7 +21,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private ActiveTimeEntryManager timeEntryManager;
         private TimeEntryModel model;
-        private Timer durationTimer;
+        private TimeEntriesFeed collectionFeed;
+        private readonly Timer durationTimer;
 
         LogTimeEntriesViewModel ()
         {
@@ -51,14 +54,24 @@ namespace Toggl.Phoebe.Data.ViewModels
                 subscriptionSettingChanged = null;
             }
 
-            if (CollectionView != null) {
-                CollectionView.Dispose ();
-                CollectionView = null;
-            }
+            DisposeCollection ();
 
             timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
             timeEntryManager = null;
             model = null;
+        }
+
+        private void DisposeCollection ()
+        {
+            if (collectionFeed != null) {
+                collectionFeed.Dispose ();
+                collectionFeed = null;
+            }
+
+            if (Collection != null) {
+                Collection.Dispose ();
+                Collection = null;
+            }
         }
 
         #region Properties for ViewModel binding
@@ -74,8 +87,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string Duration { get; set; }
 
-        public TimeEntriesCollectionView CollectionView { get; set; }
-
+        public ICollectionData<IHolder> Collection { get; set; }
         #endregion
 
         public async Task<TimeEntryData> StartStopTimeEntry ()
@@ -128,13 +140,13 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private async Task SyncCollectionView ()
         {
+            DisposeCollection ();
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
-            if (CollectionView != null) {
-                CollectionView.Dispose ();
-            }
-
-            CollectionView = await TimeEntriesCollectionView.Init (IsGroupedMode);
+            collectionFeed = new TimeEntriesFeed ();
+            var col = new TimeEntriesCollection (collectionFeed, IsGroupedMode);
+            await collectionFeed.LoadMore (isInit: true);
+            Collection = col;
         }
 
         private void UpdateView ()
@@ -162,6 +174,33 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
             });
+        }
+
+        public bool HasMore
+        {
+            get { return collectionFeed.HasMore; }
+        }
+
+        public Task LoadMore ()
+        {
+            return collectionFeed.LoadMore ();
+        }
+
+        public Task ContinueTimeEntryAsync (int index)
+        {
+            return collectionFeed.ContinueTimeEntryAsync (
+                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
+        }
+
+        public Task RemoveItemWithUndoAsync (int index)
+        {
+            return collectionFeed.RemoveItemWithUndoAsync (
+                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
+        }
+
+        public void RestoreItemFromUndo()
+        {
+            collectionFeed.RestoreItemFromUndo ();
         }
     }
 }

@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public abstract class RecycledDataViewAdapter<T> : RecyclerView.Adapter
+    public abstract class RecyclerCollectionDataAdapter<T> : RecyclerView.Adapter
     {
-        private readonly int ViewTypeLoaderPlaceholder = 0;
-        private readonly int ViewTypeContent = 1;
-        private readonly int LoadMoreOffset = 3;
-        private ICollectionDataView<T> dataView;
+        protected const int ViewTypeLoaderPlaceholder = 0;
+        protected const int ViewTypeContent = 1;
+        protected const int LoadMoreOffset = 3;
+        protected ICollectionData<T> collectionData;
 
         protected RecyclerView Owner;
 
@@ -31,14 +31,14 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        protected RecycledDataViewAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        protected RecyclerCollectionDataAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        protected RecycledDataViewAdapter (RecyclerView owner, ICollectionDataView<T> dataView)
+        protected RecyclerCollectionDataAdapter (RecyclerView owner, ICollectionData<T> dataView)
         {
-            this.dataView = dataView;
-            this.dataView.CollectionChanged += OnCollectionChanged;
+            this.collectionData = dataView;
+            this.collectionData.CollectionChanged += OnCollectionChanged;
             Owner = owner;
 
             HasStableIds = false;
@@ -47,8 +47,8 @@ namespace Toggl.Joey.UI.Adapters
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                if (dataView != null) {
-                    dataView.CollectionChanged -= OnCollectionChanged;
+                if (collectionData != null) {
+                    collectionData.CollectionChanged -= OnCollectionChanged;
                 }
             }
             base.Dispose (disposing);
@@ -70,12 +70,12 @@ namespace Toggl.Joey.UI.Adapters
 
         public virtual T GetEntry (int position)
         {
-            return position >= dataView.Count ? default (T) : dataView.Data.ElementAt (position);
+            return position >= collectionData.Count ? default (T) : collectionData.Data.ElementAt (position);
         }
 
         public override int GetItemViewType (int position)
         {
-            return position >= dataView.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
+            return position >= collectionData.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
@@ -83,18 +83,8 @@ namespace Toggl.Joey.UI.Adapters
             return viewType == ViewTypeLoaderPlaceholder ? new SpinnerHolder (GetLoadIndicatorView (parent)) : GetViewHolder (parent, viewType);
         }
 
-        public override async void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+        public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
-            if (position + LoadMoreOffset > ItemCount && dataView.HasMore) {
-                await dataView.LoadMore ();
-            }
-
-            if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {
-                var spinnerHolder = (SpinnerHolder)holder;
-                spinnerHolder.StartAnimation (dataView.HasMore);
-                return;
-            }
-
             BindHolder (holder, position);
         }
 
@@ -107,13 +97,13 @@ namespace Toggl.Joey.UI.Adapters
         public override int ItemCount
         {
             get {
-                return dataView.Count + 1;
+                return collectionData.Count + 1;
             }
         }
 
-        public ICollectionDataView<T> DataView
+        public ICollectionData<T> DataView
         {
-            get { return dataView; }
+            get { return collectionData; }
         }
 
         protected virtual View GetLoadIndicatorView (ViewGroup parent)

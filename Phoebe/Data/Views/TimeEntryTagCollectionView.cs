@@ -9,7 +9,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class TimeEntryTagCollectionView : ICollectionDataView<TagData>
+    public class TimeEntryTagCollectionView : ICollectionData<TagData>
     {
         private readonly Guid timeEntryId;
         private readonly HashSet<Guid> tagIds = new HashSet<Guid> ();
@@ -76,16 +76,6 @@ namespace Toggl.Phoebe.Data.Views
             get {
                 return tagNames.FirstOrDefault (t => t != TimeEntryModel.DefaultTag) != null;
             }
-        }
-
-        public bool HasMore
-        {
-            get { return false; }
-        }
-
-        public Task LoadMore (bool isInit = false)
-        {
-            return null;
         }
 
         private void OnUpdated ()

@@ -42,7 +42,7 @@ namespace Toggl.Joey.UI.Fragments
 
         // binding references
         private Binding<bool, bool> hasMoreBinding, newMenuBinding;
-        private Binding<TimeEntriesCollectionView, TimeEntriesCollectionView> collectionBinding;
+        private Binding<ICollectionData<IHolder>, ICollectionData<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.
@@ -82,8 +82,8 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
             ViewModel = await LogTimeEntriesViewModel.Init ();
 
-            collectionBinding = this.SetBinding (()=> ViewModel.CollectionView).WhenSourceChanges (() => {
-                logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel.CollectionView);
+            collectionBinding = this.SetBinding (()=> ViewModel.Collection).WhenSourceChanges (() => {
+                logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
@@ -184,13 +184,13 @@ namespace Toggl.Joey.UI.Fragments
 
         public async void OnDismiss (RecyclerView.ViewHolder viewHolder)
         {
-            var duration = TimeEntriesCollectionView.UndoSecondsInterval * 1000;
+            var duration = TimeEntriesFeed.UndoSecondsInterval * 1000;
 
-            await ViewModel.CollectionView.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
+            await ViewModel.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
             var snackBar = Snackbar
                            .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
                            .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
-                                       _ => ViewModel.CollectionView.RestoreItemFromUndo ());
+                                       _ => ViewModel.RestoreItemFromUndo ());
             ChangeSnackBarColor (snackBar);
             snackBar.Show ();
         }

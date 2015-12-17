@@ -92,7 +92,7 @@ namespace Toggl.Phoebe.Data
         private static IDictionary<int, DiffComparison> Cache = new Dictionary<int, DiffComparison> ();
 
         private static DiffComparison Compare<T> (IList<T> listA, int indexA, IList<T> listB, int indexB)
-            where T : IDiffComparable
+        where T : IDiffComparable
         {
             DiffComparison res;
             var key = indexA | (indexB << 16);
@@ -129,7 +129,7 @@ namespace Toggl.Phoebe.Data
             if (diffsDic.ContainsKey (DiffType.Add) && diffsDic.ContainsKey (DiffType.Remove)) {
                 foreach (var addDiff in diffsDic[DiffType.Add]) {
                     var rmDiff = diffsDic [DiffType.Remove].FirstOrDefault (x =>
-                        Compare (listA, x.OldIndex, listB, addDiff.NewIndex) == DiffComparison.Update);
+                                 Compare (listA, x.OldIndex, listB, addDiff.NewIndex) == DiffComparison.Update);
 
                     if (rmDiff != null) {
                         addDiff.Link = rmDiff;

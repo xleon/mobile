@@ -26,8 +26,10 @@ namespace Toggl.Phoebe.Data.Views
     public class TimeEntriesCollectionView : ICollectionDataView<IHolder>
     {
         #region Fields
-        public static int MaxInitLocalEntries = 20;
-        public static int UndoSecondsInterval = 5;
+        public const int MaxInitLocalEntries = 20;
+        public const int UndoSecondsInterval = 5;
+        public const int DaysLocalLoad = 9;
+        public const int DaysServerLoad = 4;
 
         private const string Tag = "TimeEntriesCollectionView";
 
@@ -145,26 +147,25 @@ namespace Toggl.Phoebe.Data.Views
 
             var endTime = startFrom;
             var useLocal = isInit;
+            startFrom = endTime - TimeSpan.FromDays (useLocal ? DaysLocalLoad : DaysServerLoad);
 
             // Try with latest data from server first:
             if (!useLocal) {
-                const int numDays = 5;
+                // Add one day to see if more entries can be downloaded
+                const int numDays = DaysServerLoad + 1;
                 try {
                     var entries = await feed.DownloadTimeEntries (endTime, numDays, cts.Token);
                     var minStart = entries.Min (x => x.StartTime);
                     HasMore = (endTime.Date - minStart.Date).Days > 0;
                 } catch (Exception exc) {
+                    useLocal = true;
                     var log = ServiceContainer.Resolve<ILogger> ();
                     const string msg = "Failed to fetch time entries {1} days up to {0}";
-
                     if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
                         log.Info (Tag, exc, msg, endTime, numDays);
                     } else {
                         log.Warning (Tag, exc, msg, endTime, numDays);
                     }
-
-//                    HasMore = false; // TODO: Check if this should be here
-                    useLocal = true;
                 }
             }
 
@@ -178,13 +179,13 @@ namespace Toggl.Phoebe.Data.Views
                                         && r.DeletedAt == null
                                         && r.UserId == userId);
 
-                var entries = await baseQuery
-                              .Take (MaxInitLocalEntries)
-                              .OrderByDescending (r => r.StartTime)
-                              .ToListAsync ();
+                (await baseQuery.Take (MaxInitLocalEntries)
+                 .OrderByDescending (r => r.StartTime)
+                 .ToListAsync ())
+                .ForEach (entry => observable.OnNext (new DataChangeMessage (null, entry, DataAction.Put)));
 
-                foreach (var entry in entries) {
-                    observable.OnNext (new DataChangeMessage (null, entry, DataAction.Put));
+                if (!isInit) {
+                    HasMore = (await baseQuery.CountAsync ()) > MaxInitLocalEntries;
                 }
             }
         }

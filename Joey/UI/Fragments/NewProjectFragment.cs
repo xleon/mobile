@@ -147,13 +147,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (await ClientListViewModel.ContainsClients (WorkspaceId)) {
                 ClientListDialogFragment.NewInstance (WorkspaceId)
-                    .SetClientSelectListener (this)
-                    .Show (FragmentManager, "clients_dialog");
-            }
-            else {
+                .SetClientSelectListener (this)
+                .Show (FragmentManager, "clients_dialog");
+            } else {
                 CreateClientDialogFragment.NewInstance (WorkspaceId)
-                    .SetOnClientSelectedListener (this)
-                    .Show (FragmentManager, "new_client_dialog");
+                .SetOnClientSelectedListener (this)
+                .Show (FragmentManager, "new_client_dialog");
             }
         }
 

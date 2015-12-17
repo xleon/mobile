@@ -89,18 +89,32 @@ namespace Toggl.Phoebe.Data
     // Adapted from http://devdirective.com/post/115/creating-a-reusable-though-simple-diff-implementation-in-csharp-part-3
     public static class Diff
     {
+        private static IDictionary<int, DiffComparison> Cache = new Dictionary<int, DiffComparison> ();
+
+        private static DiffComparison Compare<T> (IList<T> listA, int indexA, IList<T> listB, int indexB)
+            where T : IDiffComparable
+        {
+            DiffComparison res;
+            var key = indexA | (indexB << 16);
+            if (!Cache.TryGetValue (key, out res)) {
+                res = listA [indexA].Compare (listB [indexB]);
+                Cache.Add (key, res);
+            }
+            return res;
+        }
+
         /// <summary>
-        /// Calculates move and replace operation (besides add & remove) and adjusts indices
+        /// Calculates move and replace operation (besides add and remove) and adjusts indices
         /// so events can be applied sequentially (included moves) to the source list
         /// </summary>
-        public static IList<DiffSection<T>> CalculateExtra<T> (
-            IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1)
+        public static IList<DiffSection<T>> Calculate<T> (IList<T> listA, IList<T> listB)
         where T : IDiffComparable
         {
-            var diffs = Calculate (listA, listB, startA, endA, startB, endB);
+            Cache.Clear ();
+            var diffs = Calculate (listA, listB, 0, listA.Count, 0, listB.Count, DiffComparison.SoftUpdate);
 
             var diffsWithReplace = diffs.Select (x => {
-                if (x.Type == DiffType.Copy && x.OldItem.Compare (x.NewItem) != DiffComparison.Same) {
+                if (x.Type == DiffType.Copy && Compare (listA, x.OldIndex, listB, x.NewIndex) != DiffComparison.Same) {
                     x.Type = DiffType.Replace;
                 }
                 return x;
@@ -115,7 +129,7 @@ namespace Toggl.Phoebe.Data
             if (diffsDic.ContainsKey (DiffType.Add) && diffsDic.ContainsKey (DiffType.Remove)) {
                 foreach (var addDiff in diffsDic[DiffType.Add]) {
                     var rmDiff = diffsDic [DiffType.Remove].FirstOrDefault (x =>
-                                 listA [x.OldIndex].Compare (addDiff.NewItem) == DiffComparison.Update);
+                        Compare (listA, x.OldIndex, listB, addDiff.NewIndex) == DiffComparison.Update);
 
                     if (rmDiff != null) {
                         addDiff.Link = rmDiff;
@@ -171,13 +185,10 @@ namespace Toggl.Phoebe.Data
             .ToList ();
         }
 
-        public static IEnumerable<DiffSection<T>> Calculate<T> (
-            IList<T> listA, IList<T> listB, int startA = 0, int endA = -1, int startB = 0, int endB = -1,
-            DiffComparison update = DiffComparison.SoftUpdate)
+        private static IEnumerable<DiffSection<T>> Calculate<T> (
+            IList<T> listA, IList<T> listB, int startA, int endA, int startB, int endB, DiffComparison update)
         where T : IDiffComparable
         {
-            endA = endA > -1 ? endA : listA.Count;
-            endB = endB > -1 ? endB : listB.Count;
             var lcs = FindLongestCommonSubstring (listA, listB, startA, endA, startB, endB, update);
 
             if (lcs.Success) {
@@ -257,7 +268,7 @@ namespace Toggl.Phoebe.Data
         {
             int length = 0;
             while (startA < endA && startB < endB) {
-                var comp = listA [startA].Compare (listB [startB]);
+                var comp = Compare (listA, startA, listB, startB);
                 if (comp != DiffComparison.Same && comp != update) {
                     break;
                 }

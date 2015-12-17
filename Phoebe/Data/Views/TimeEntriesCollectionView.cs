@@ -229,7 +229,7 @@ namespace Toggl.Phoebe.Data.Views
                 var newItemCollection = CreateItemCollection (timeHolders);
 
                 // 4. Check diffs, modify ItemCollection and notify changes
-                var diffs = Diff.CalculateExtra (items, newItemCollection);
+                var diffs = Diff.Calculate (items, newItemCollection);
 
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {

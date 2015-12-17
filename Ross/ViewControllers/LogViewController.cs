@@ -107,12 +107,20 @@ namespace Toggl.Ross.ViewControllers
             }
 
             if (e.Action == NotifyCollectionChangedAction.Replace) {
-                if (e.OldItems [0] is DateHolder) {
-                    var indexSet = GetSectionFromPlainIndex (collectionData, e.OldStartingIndex);
+                if (e.NewItems [0] is DateHolder) {
+                    var indexSet = GetSectionFromPlainIndex (collectionData, e.NewStartingIndex);
                     TableView.ReloadSections (indexSet, UITableViewRowAnimation.Automatic);
                 } else {
-                    var indexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    var indexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
                     TableView.ReloadRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                if (! (e.NewItems [0] is DateHolder)) {
+                    var fromIndexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
+                    var toIndexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    TableView.MoveRow (fromIndexPath, toIndexPath);
                 }
             }
         }

@@ -17,7 +17,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public TimeEntryData Data
         {
-            get { return Group.Last (); }
+            get { return Group[0]; }
         }
 
         public IList<string> Guids
@@ -27,11 +27,17 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
+        TimeEntryGroup () { }
+
         public TimeEntryGroup (TimeEntryData data, ITimeEntryHolder previous = null)
         {
-            var prev = previous as TimeEntryGroup;
-            if (prev != null) {
-                Group = prev.Group.ReplaceOrAppend (data, x => x.Id == data.Id).OrderByDescending (x => x.StartTime).ToList ();
+            var previous2 = previous as TimeEntryGroup;
+            if (previous2 != null) {
+                Group = previous2.Group.ReplaceOrAppend (data, x => x.Id == data.Id)
+                        .OrderByDescending (x => x.StartTime).ToList ();
+
+                // Recycle entry info if possible
+                Info = previous2.Data.Id == Data.Id ? previous2.Info : null;
             } else {
                 Group = new List<TimeEntryData> { data };
             }
@@ -39,7 +45,25 @@ namespace Toggl.Phoebe.Data.Utils
 
         public async Task LoadInfoAsync ()
         {
-            Info = await TimeEntryInfo.LoadAsync (Data);
+            Info = Info ?? await TimeEntryInfo.LoadAsync (Data);
+        }
+
+        public ITimeEntryHolder UpdateOrDelete (TimeEntryData data, out bool isAffectedByDelete)
+        {
+            isAffectedByDelete = Group.Any (x => x.Id == data.Id);
+
+            if (isAffectedByDelete) {
+                if (Group.Count == 1) {
+                    return null; // Delete
+                } else {
+                    var updated = new TimeEntryGroup ();
+                    updated.Group = Group.Where (x => x.Id != data.Id).ToList ();
+                    updated.Info = updated.Data.Id == Data.Id ? Info : null; // Recycle entry info if possible
+                    return updated;
+                }
+            } else {
+                return null;
+            }
         }
 
         public DiffComparison Compare (IDiffComparable other)
@@ -48,19 +72,22 @@ namespace Toggl.Phoebe.Data.Utils
                 return DiffComparison.Same;
             } else {
                 var other2 = other as TimeEntryGroup;
+
+                // Use the last Id for comparison as this is the original entry
+                // (Group is sorted by StartTime in descending order)
                 return other2 != null && other2.Group.Last ().Id == Group.Last ().Id
                        ? DiffComparison.Update : DiffComparison.Different;
             }
         }
 
-        public bool Matches (TimeEntryData data)
+        public bool IsAffectedByPut (TimeEntryData data)
         {
             return Group.Any (x => x.IsGroupableWith (data));
         }
 
         public DateTime GetStartTime()
         {
-            return Group[0].StartTime;
+            return Data.StartTime;
         }
 
         public TimeSpan GetDuration ()
@@ -80,7 +107,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public override string ToString ()
         {
-            return string.Format ("[{0:MM/dd HH:mm}]", Data.StartTime);
+            return string.Format ("[{0:MM/dd HH:mm}]", GetStartTime ());
         }
     }
 }

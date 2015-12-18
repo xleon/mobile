@@ -52,25 +52,6 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        /// <summary>Only for testing purposes</summary>
-        public static async Task<TimeEntriesCollection> InitAdHoc (
-            IObservable<TimeEntryMessage> feed, bool isGrouped, int bufferMilliseconds, params TimeEntryData[] timeEntries)
-        {
-            var v = new TimeEntriesCollection (feed, isGrouped, bufferMilliseconds, false, false);
-
-            if (timeEntries.Length > 0) {
-                var holders = new List<ITimeEntryHolder> ();
-                foreach (var entry in timeEntries) {
-                    // Create a new entry to protect the reference;
-                    var protectedEntry = new TimeEntryData (entry);
-                    holders.Add (await v.CreateTimeHolder (isGrouped, protectedEntry));
-                }
-                v.Reset (v.CreateItemCollection (holders));
-            }
-
-            return v;
-        }
-
         private async Task UpdateItemsAsync (IEnumerable<TimeEntryMessage> msgs)
         {
             // 1. Get only TimeEntryHolders from current collection
@@ -78,11 +59,11 @@ namespace Toggl.Phoebe.Data.Utils
 
             // 2. Remove, replace or add items from messages
             foreach (var msg in msgs) {
-                await UpdateTimeHoldersAsync (timeHolders, msg.Data, msg.Action);
+                UpdateTimeHoldersAsync (timeHolders, msg.Data, msg.Action);
             }
 
             // 3. Create the new item collection from holders (sort and add headers...)
-            var newItemCollection = CreateItemCollection (timeHolders);
+            var newItemCollection = await CreateItemCollection (timeHolders, loadTimeEntryInfo);
 
             // 4. Check diffs, modify ItemCollection and notify changes
             var diffs = Diff.Calculate (Items, newItemCollection);
@@ -108,50 +89,54 @@ namespace Toggl.Phoebe.Data.Utils
             });
         }
 
-        private async Task UpdateTimeHoldersAsync (IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
+        private void UpdateTimeHoldersAsync (IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
         {
-            var foundIndex = -1;
-            for (var j = 0; j < timeHolders.Count; j++) {
-                if (timeHolders [j].Matches (entry)) {
-                    foundIndex = j;
-                    break;
-                }
-            }
-
-            if (foundIndex > -1) {
-                if (action == DataAction.Put) {
-                    timeHolders [foundIndex] = await CreateTimeHolder (isGrouped, entry, timeHolders [foundIndex]); // Replace
+            if (action == DataAction.Put) {
+                var foundIndex = timeHolders.IndexOf (x => x.IsAffectedByPut (entry));
+                if (foundIndex > -1) {
+                    timeHolders [foundIndex] = CreateTimeHolder (isGrouped, entry, timeHolders [foundIndex]); // Replace
                 } else {
-                    timeHolders.RemoveAt (foundIndex); // Remove
+                    timeHolders.Add (CreateTimeHolder (isGrouped, entry)); // Insert
                 }
             } else {
-                if (action == DataAction.Put) {
-                    timeHolders.Add (await CreateTimeHolder (isGrouped, entry)); // Insert
+                var isAffectedByDelete = false;
+                for (var i = 0; i < timeHolders.Count; i++) {
+                    var updatedHolder = timeHolders [i].UpdateOrDelete (entry, out isAffectedByDelete);
+
+                    if (isAffectedByDelete) {
+                        if (updatedHolder == null) {
+                            timeHolders.RemoveAt (i); // Remove
+                        } else {
+                            timeHolders [i] = updatedHolder; // Replace
+                        }
+                        break;
+                    }
                 }
             }
         }
 
-        private IList<IHolder> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
+        public static async Task<IList<IHolder>> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders, bool loadTimeEntryInfo)
         {
-            return timeHolders
+            var timeHolders2 = timeHolders;
+            if (loadTimeEntryInfo) {
+                timeHolders2 = await Task.WhenAll (timeHolders.Select (async x => {
+                    await x.LoadInfoAsync ();
+                    return x;
+                }));
+            }
+
+            return timeHolders2
                    .OrderByDescending (x => x.GetStartTime ())
                    .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
                    .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
                    .ToList ();
         }
 
-        public async Task<ITimeEntryHolder> CreateTimeHolder (
-            bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
+        public static ITimeEntryHolder CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
         {
-            var holder = isGrouped
-                         ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
-                         : new TimeEntryHolder (entry);
-
-            if (loadTimeEntryInfo) {
-                await holder.LoadInfoAsync ();
-            }
-
-            return holder;
+            return isGrouped
+                   ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
+                   : new TimeEntryHolder (entry);
         }
     }
 }

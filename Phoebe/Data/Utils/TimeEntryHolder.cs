@@ -17,10 +17,11 @@ namespace Toggl.Phoebe.Data.Utils
         IList<string> Guids { get; }
 
         Task DeleteAsync ();
+        Task LoadInfoAsync ();
         TimeSpan GetDuration ();
         DateTime GetStartTime ();
-        bool Matches (TimeEntryData data);
-        Task LoadInfoAsync ();
+        bool IsAffectedByPut (TimeEntryData data);
+        ITimeEntryHolder UpdateOrDelete (TimeEntryData data, out bool isAffectedByDelete);
     }
 
     public class TimeEntryHolder : ITimeEntryHolder
@@ -45,6 +46,12 @@ namespace Toggl.Phoebe.Data.Utils
             Info = await TimeEntryInfo.LoadAsync (Data);
         }
 
+        public ITimeEntryHolder UpdateOrDelete (TimeEntryData data, out bool isAffectedByDelete)
+        {
+            isAffectedByDelete = data.Id == Data.Id;
+            return null; // Always delete if affected
+        }
+
         public DiffComparison Compare (IDiffComparable other)
         {
             if (object.ReferenceEquals (this, other)) {
@@ -56,7 +63,7 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public bool Matches (TimeEntryData data)
+        public bool IsAffectedByPut (TimeEntryData data)
         {
             return data.Id == Data.Id;
         }

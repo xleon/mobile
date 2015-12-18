@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 
-namespace Toggl.Phoebe.Data.Views
+namespace Toggl.Phoebe.Data.Utils
 {
     public interface ICollectionData<T> : INotifyCollectionChanged, IDisposable
     {

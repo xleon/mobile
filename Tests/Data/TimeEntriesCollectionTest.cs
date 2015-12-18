@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -91,8 +92,7 @@ namespace Toggl.Phoebe.Tests.Data
         }
 
         // TODO: Extract these methods to a Test.Util class
-        public TimeEntryData CreateTimeEntry (
-            DateTime startTime, string desc = "Test entry", Guid taskId = default (Guid), Guid projId = default (Guid))
+        public TimeEntryData CreateTimeEntry (DateTime startTime, Guid taskId = default (Guid), Guid projId = default (Guid))
         {
             return new TimeEntryData {
                 Id = Guid.NewGuid (),
@@ -102,7 +102,7 @@ namespace Toggl.Phoebe.Tests.Data
                 WorkspaceId = workspaceId,
                 TaskId = taskId == Guid.Empty ? Guid.NewGuid () : taskId,
                 ProjectId = projId == Guid.Empty ? Guid.NewGuid () : projId,
-                Description = desc,
+                Description = "Test Entry",
                 State = TimeEntryState.Finished,
             };
         }
@@ -207,8 +207,13 @@ namespace Toggl.Phoebe.Tests.Data
                     if (CastEquals<DateHolder, DateTime> (itemA, items [i], (a, b) => a.Date == b.Date)) {
                         continue;
                     }
-                } else if (itemA is ITimeEntryHolder) {
-                    if (CastEquals<ITimeEntryHolder, TimeEntryData> (itemA, items [i], (a, b) => a.Data.Id == b.Id)) {
+                } else if (itemA is TimeEntryHolder) {
+                    if (CastEquals<TimeEntryHolder, TimeEntryData> (itemA, items [i], (a, b) => a.Data.Id == b.Id)) {
+                        continue;
+                    }
+                } else if (itemA is TimeEntryGroup) {
+                    if (CastEquals<TimeEntryGroup, TimeEntryData> (itemA, items [i], (a, b) => a.Group.Single ().Id == b.Id) ||
+                            CastEquals<TimeEntryGroup, TimeEntryData[]> (itemA, items [i], (a, b) => a.Group.SequenceEqual (b, (x, y) => x.Id == y.Id))) {
                         continue;
                     }
                 }
@@ -658,6 +663,40 @@ namespace Toggl.Phoebe.Tests.Data
             AssertEvent (evs[0], "move", "time entry");    // Move time entry3
             AssertEvent (evs[1], "replace", "time entry"); // Update time entry1
             AssertEvent (evs[2], "replace", "time entry"); // Update time entry2
+        }
+
+        [Test]
+        public async void GroupTestSendPutsToEmptyList ()
+        {
+            var feed = new TestFeed ();
+            var groupedView = await TimeEntriesCollection.InitAdHoc (feed, true, 0);
+
+            var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
+            Guid prj = Guid.NewGuid (), task1 = Guid.NewGuid (), task2 = Guid.NewGuid ();
+
+            var entry1 = CreateTimeEntry (dt, task1, prj);
+            var entry2 = CreateTimeEntry (dt.AddHours (1), task2, prj);
+            var entry3 = CreateTimeEntry (dt.AddHours (2), task1, prj);
+
+            var evs = await GetEvents (6, groupedView, feed, () => {
+                feed.Push (entry1, DataAction.Put);
+                feed.Push (entry2, DataAction.Put);
+                feed.Push (entry3, DataAction.Put);
+            });
+
+            AssertList (groupedView, dt, new[] { entry3, entry1 }, entry2);
+
+            // Events after first push
+            AssertEvent (evs[0], "add", "date header");
+            AssertEvent (evs[1], "add", "time entry");
+
+            // Events after second push
+            AssertEvent (evs[2], "replace", "date header");
+            AssertEvent (evs[3], "add", "time entry");
+
+            // Events after third push
+            AssertEvent (evs[4], "replace", "date header");
+            AssertEvent (evs[5], "move", "time entry");
         }
     }
 }

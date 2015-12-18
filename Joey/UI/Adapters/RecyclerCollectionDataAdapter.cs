@@ -6,18 +6,17 @@ using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
-using Toggl.Phoebe.Data.Views;
-using System.Threading.Tasks;
+using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Adapters
 {
     public abstract class RecyclerCollectionDataAdapter<T> : RecyclerView.Adapter
     {
-        protected const int ViewTypeLoaderPlaceholder = 0;
-        protected const int ViewTypeContent = 1;
-        protected const int LoadMoreOffset = 3;
-        protected ICollectionData<T> collectionData;
+        public const int ViewTypeLoaderPlaceholder = 0;
+        public const int ViewTypeContent = 1;
+        public const int LoadMoreOffset = 3;
 
+        protected ICollectionData<T> collectionData;
         protected RecyclerView Owner;
 
         private bool IsInLayout

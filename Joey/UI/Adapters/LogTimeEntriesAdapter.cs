@@ -20,7 +20,7 @@ namespace Toggl.Joey.UI.Adapters
 {
     public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>
     {
-        private const int ViewTypeDateHeader = ViewTypeContent + 1;
+        public const int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;

@@ -96,6 +96,9 @@ namespace Toggl.Phoebe
             }
         }
 
+        /// <summary>
+        /// Returns the index of the first element fulfilling the predicate. -1 if none does.
+        /// </summary>
         public static int IndexOf<T> (this IEnumerable<T> items, Func<T, bool> predicate)
         {
             var i = 0;

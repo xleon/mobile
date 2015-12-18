@@ -4,7 +4,7 @@ using System.Linq;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -12,8 +12,9 @@ namespace Toggl.Joey.UI.Adapters
     {
         public const int ViewTypeLoaderPlaceholder = 0;
         public const int ViewTypeContent = 1;
+        public const int LoadMoreOffset = 3;
 
-        protected ICollectionData<T> CollectionData;
+        protected ICollectionData<T> collectionData;
         protected RecyclerView Owner;
         protected bool HasMoreItems { get; set; }
 

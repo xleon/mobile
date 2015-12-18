@@ -14,16 +14,13 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
     public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>
     {
-        public static readonly int ViewTypeLoaderPlaceholder = 0;
-        public static readonly int ViewTypeContent = 1;
-        public static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
+        private const int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;

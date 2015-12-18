@@ -52,23 +52,24 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-//        public static async Task<TimeEntriesCollectionView> InitAdHoc (
-//            bool isGrouped, IFeed testFeed, params TimeEntryData[] timeEntries)
-//        {
-//            var v = new TimeEntriesCollectionView (isGrouped, testFeed);
-//
-//            if (timeEntries.Length > 0) {
-//                var holders = new List<ITimeEntryHolder> ();
-//                foreach (var entry in timeEntries) {
-//                    // Create a new entry to protect the reference;
-//                    var protectedEntry = new TimeEntryData (entry);
-//                    holders.Add (await testFeed.CreateTimeHolder (isGrouped, protectedEntry));
-//                }
-//                v.items.Reset (v.CreateItemCollection (holders));
-//            }
-//
-//            return v;
-//        }
+        /// <summary>Only for testing purposes</summary>
+        public static async Task<TimeEntriesCollection> InitAdHoc (
+            IObservable<TimeEntryMessage> feed, bool isGrouped, int bufferMilliseconds, params TimeEntryData[] timeEntries)
+        {
+            var v = new TimeEntriesCollection (feed, isGrouped, bufferMilliseconds, false, false);
+
+            if (timeEntries.Length > 0) {
+                var holders = new List<ITimeEntryHolder> ();
+                foreach (var entry in timeEntries) {
+                    // Create a new entry to protect the reference;
+                    var protectedEntry = new TimeEntryData (entry);
+                    holders.Add (await v.CreateTimeHolder (isGrouped, protectedEntry));
+                }
+                v.Reset (v.CreateItemCollection (holders));
+            }
+
+            return v;
+        }
 
         private async Task UpdateItemsAsync (IEnumerable<TimeEntryMessage> msgs)
         {

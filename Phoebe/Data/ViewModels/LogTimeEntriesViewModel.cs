@@ -75,11 +75,13 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
 
         #region Properties for ViewModel binding
-        public bool IsProcessingAction { get; set; }
+        public bool IsProcessingAction { get; private set; }
 
-        public bool IsTimeEntryRunning { get; set; }
+        public bool IsTimeEntryRunning { get; private set; }
 
-        public bool IsGroupedMode { get; set; }
+        public bool IsGroupedMode { get; private set; }
+
+        public bool HasMore { get; private set; }
 
         public string Description { get; set; }
 
@@ -87,7 +89,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string Duration { get; set; }
 
-        public ICollectionData<IHolder> Collection { get; set; }
+        public ICollectionData<IHolder> Collection { get; private set; }
         #endregion
 
         public async Task<TimeEntryData> StartStopTimeEntry ()
@@ -111,6 +113,39 @@ namespace Toggl.Phoebe.Data.ViewModels
         public TimeEntryData GetActiveTimeEntry ()
         {
             return model.Data;
+        }
+
+        public async Task LoadMore ()
+        {
+            await collectionFeed.LoadMore ();
+            HasMore = collectionFeed.HasMore;
+        }
+
+        public async Task ContinueTimeEntryAsync (int index)
+        {
+            var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
+            if (timeEntryHolder == null) {
+                return;
+            }
+
+            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
+                await TimeEntryModel.StopAsync (timeEntryHolder.Data);
+                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
+            } else {
+                await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.Data);
+                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
+            }
+        }
+
+        public Task RemoveItemWithUndoAsync (int index)
+        {
+            return collectionFeed.RemoveItemWithUndoAsync (
+                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
+        }
+
+        public void RestoreItemFromUndo()
+        {
+            collectionFeed.RestoreItemFromUndo ();
         }
 
         private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
@@ -144,8 +179,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
             collectionFeed = new TimeEntriesFeed ();
+            HasMore = collectionFeed.HasMore;
             var col = new TimeEntriesCollection (collectionFeed, IsGroupedMode);
-            await collectionFeed.LoadMore (isInit: true);
             Collection = col;
         }
 
@@ -174,33 +209,6 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
             });
-        }
-
-        public bool HasMore
-        {
-            get { return collectionFeed.HasMore; }
-        }
-
-        public Task LoadMore ()
-        {
-            return collectionFeed.LoadMore ();
-        }
-
-        public Task ContinueTimeEntryAsync (int index)
-        {
-            return collectionFeed.ContinueTimeEntryAsync (
-                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
-        }
-
-        public Task RemoveItemWithUndoAsync (int index)
-        {
-            return collectionFeed.RemoveItemWithUndoAsync (
-                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
-        }
-
-        public void RestoreItemFromUndo()
-        {
-            collectionFeed.RestoreItemFromUndo ();
         }
     }
 }

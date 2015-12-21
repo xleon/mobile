@@ -141,6 +141,23 @@ namespace Toggl.Phoebe.Data
             return ctx.Connection.Execute (q, time);
         }
 
+        public async static Task<DateTime> GetDatesByDays (this IDataStore ds, DateTime initialDate, int daysToLoad)
+        {
+            var result = DateTime.MinValue;
+            var teTable = await ds.GetTableNameAsync<TimeEntryData>();
+            var q = String.Concat (
+                        "SELECT t.* FROM ", teTable, " AS t ",
+                        "WHERE t.DeletedAt IS NULL AND t.State > 0 AND t.StartTime < ? ",
+                        "GROUP BY t.StartTime");
+
+            var entries = await ds.QueryAsync<TimeEntryData> (q, initialDate);
+            if (entries.Count > 0) {
+                var dates = entries.Select (t => t.StartTime.Date).GroupBy (x => x.Date).Take (daysToLoad);
+                result = dates.LastOrDefault ().Key;
+            }
+            return result;
+        }
+
         private class ColumnRow<T>
         {
             public T Value { get; set; }

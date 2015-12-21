@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Data.Models;
@@ -15,6 +14,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Data.Utils
 {
     public struct TimeEntryMessage {
+
         public TimeEntryData Data { get; private set; }
         public DataAction Action { get; private set; }
 
@@ -27,10 +27,9 @@ namespace Toggl.Phoebe.Data.Utils
 
     public class TimeEntriesFeed : IObservable<TimeEntryMessage>, IDisposable
     {
-        public const int MaxInitLocalEntries = 20;
+        public const int MaxInitLocalEntries = 100;
         public const int UndoSecondsInterval = 5;
-        public const int DaysServerLoad = 4;
-        public const int DaysLocalLoad = 9;
+        public const int DaysLoad = 5;
 
         private MessageBus bus;
         private DateTime startFrom = Time.UtcNow;
@@ -92,79 +91,54 @@ namespace Toggl.Phoebe.Data.Utils
             return subject.Subscribe (observer);
         }
 
-        public async Task LoadMore (bool isInit = false)
+        public async Task LoadMore ()
         {
             if (!HasMore) {
                 return;
             }
 
-            var endTime = startFrom;
-            var useLocal = isInit;
-            startFrom = endTime - TimeSpan.FromDays (useLocal ? DaysLocalLoad : DaysServerLoad);
+            var endDate = startFrom;
 
-            // Try with latest data from server first:
-            if (!useLocal) {
-                // Add one day to see if more entries can be downloaded
-                const int numDays = DaysServerLoad + 1;
-                try {
-                    // Download new Entries
-                    var client = ServiceContainer.Resolve<ITogglClient> ();
-                    var jsonEntries = await client.ListTimeEntries (endTime, numDays, cts.Token);
+            // Try to update with latest data from server
+            try {
+                // Download new Entries
+                var client = ServiceContainer.Resolve<ITogglClient> ();
+                var jsonEntries = await client.ListTimeEntries (startFrom, DaysLoad, cts.Token);
 
-                    // Store them in the local data store
-                    var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                    var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
-                                  jsonEntries.Select (json => json.Import (ctx)).ToList ());
+                // Store them in the local data store
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
+                              jsonEntries.Select (json => json.Import (ctx)).ToList ());
+                startFrom = entries.Min (x => x.StartTime);
+                HasMore = entries.Any ();
 
-                    var minStart = entries.Min (x => x.StartTime);
-                    HasMore = (endTime.Date - minStart.Date).Days > 0;
-                } catch (Exception exc) {
-                    useLocal = true;
-                    var tag = GetType ().Name;
-                    var log = ServiceContainer.Resolve<ILogger> ();
-                    const string msg = "Failed to fetch time entries {1} days up to {0}";
-                    if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                        log.Info (tag, exc, msg, endTime, numDays);
-                    } else {
-                        log.Warning (tag, exc, msg, endTime, numDays);
-                    }
+            } catch (Exception exc) {
+                var tag = GetType ().Name;
+                var log = ServiceContainer.Resolve<ILogger> ();
+                const string msg = "Failed to fetch time entries {1} days up to {0}";
+                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
+                    log.Info (tag, exc, msg, startFrom, DaysLoad);
+                } else {
+                    log.Warning (tag, exc, msg, startFrom, DaysLoad);
                 }
+
+                // Redefine startFrom using local DB
+                startFrom = await GetDatesByDays (startFrom, DaysLoad);
             }
 
-            // Fall back to local data:
-            if (useLocal) {
-                var store = ServiceContainer.Resolve<IDataStore> ();
-                var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+            // Always fall back to local data:
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+            var baseQuery = store.Table<TimeEntryData> ().Where (r =>
+                            r.State != TimeEntryState.New &&
+                            r.StartTime >= startFrom && r.StartTime < endDate &&
+                            r.DeletedAt == null &&
+                            r.UserId == userId).Take (MaxInitLocalEntries);
 
-                var baseQuery = store.Table<TimeEntryData> ()
-                                .Where (r => r.State != TimeEntryState.New
-                                        && r.DeletedAt == null
-                                        && r.UserId == userId);
-
-                (await baseQuery.Take (MaxInitLocalEntries)
-                 .OrderByDescending (r => r.StartTime)
-                 .ToListAsync ())
-                .ForEach (entry => subject.OnNext (new TimeEntryMessage (entry, DataAction.Put)));
-
-                if (!isInit) {
-                    HasMore = (await baseQuery.CountAsync ()) > MaxInitLocalEntries;
-                }
-            }
-        }
-
-        public async Task ContinueTimeEntryAsync (ITimeEntryHolder timeEntryHolder)
-        {
-            if (timeEntryHolder == null) {
-                return;
-            }
-
-            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                await TimeEntryModel.StopAsync (timeEntryHolder.Data);
-                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
-            } else {
-                await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.Data);
-                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
-            }
+            (await baseQuery
+             .OrderByDescending (r => r.StartTime)
+             .ToListAsync ())
+            .ForEach (entry => subject.OnNext (new TimeEntryMessage (entry, DataAction.Put)));
         }
 
         public async Task RemoveItemWithUndoAsync (ITimeEntryHolder timeEntryHolder)
@@ -217,6 +191,24 @@ namespace Toggl.Phoebe.Data.Utils
         {
             await RemoveItemPermanentlyAsync (lastRemovedItem);
             lastRemovedItem = null;
+        }
+
+        // TODO: replace this method from the SQLite equivalent.
+        private async Task<DateTime> GetDatesByDays (DateTime startDate, int numDays)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+
+            var baseQuery = store.Table<TimeEntryData> ().Where (r =>
+                            r.State != TimeEntryState.New &&
+                            r.StartTime < startDate &&
+                            r.DeletedAt == null);
+
+            var entries = await baseQuery.ToListAsync ();
+            if (entries.Count > 0) {
+                var group = entries.OrderByDescending (r => r.StartTime).GroupBy (t => t.StartTime.Date).Take (numDays).LastOrDefault ();
+                return group.Key;
+            }
+            return DateTime.MinValue;
         }
     }
 }

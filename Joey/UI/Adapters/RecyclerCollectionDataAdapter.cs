@@ -12,9 +12,8 @@ namespace Toggl.Joey.UI.Adapters
     {
         public const int ViewTypeLoaderPlaceholder = 0;
         public const int ViewTypeContent = 1;
-        public const int LoadMoreOffset = 3;
 
-        protected ICollectionData<T> collectionData;
+        protected ICollectionData<T> CollectionData;
         protected RecyclerView Owner;
         protected bool HasMoreItems { get; set; }
 

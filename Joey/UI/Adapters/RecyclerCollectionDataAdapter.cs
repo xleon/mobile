@@ -1,136 +1,142 @@
 ﻿using System;
 using System.Collections.Specialized;
 using System.Linq;
-using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
-using Android.Views.Animations;
 using Android.Widget;
 using Toggl.Phoebe.Data.Views;
-using System.Threading.Tasks;
 
 namespace Toggl.Joey.UI.Adapters
 {
     public abstract class RecyclerCollectionDataAdapter<T> : RecyclerView.Adapter
     {
-        protected const int ViewTypeLoaderPlaceholder = 0;
-        protected const int ViewTypeContent = 1;
-        protected const int LoadMoreOffset = 3;
-        protected ICollectionData<T> collectionData;
+        public const int ViewTypeLoaderPlaceholder = 0;
+        public const int ViewTypeContent = 1;
 
+        protected ICollectionData<T> CollectionData;
         protected RecyclerView Owner;
-
-        private bool IsInLayout
-        {
-            get {
-                var isInLayout = Owner.GetItemAnimator().IsRunning;
-                if (Build.VERSION.SdkInt > BuildVersionCodes.JellyBeanMr1) {
-                    isInLayout = Owner.GetItemAnimator().IsRunning || Owner.IsInLayout;
-                }
-                return isInLayout;
-            }
-        }
+        protected bool HasMoreItems { get; set; }
 
         protected RecyclerCollectionDataAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        protected RecyclerCollectionDataAdapter (RecyclerView owner, ICollectionData<T> dataView)
+        protected RecyclerCollectionDataAdapter (RecyclerView owner, ICollectionData<T> collectionData)
         {
-            this.collectionData = dataView;
-            this.collectionData.CollectionChanged += OnCollectionChanged;
+            CollectionData = collectionData;
+            CollectionData.CollectionChanged += OnCollectionChanged;
             Owner = owner;
-
             HasStableIds = false;
         }
 
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                if (collectionData != null) {
-                    collectionData.CollectionChanged -= OnCollectionChanged;
-                }
+                CollectionData.CollectionChanged -= OnCollectionChanged;
             }
+
             base.Dispose (disposing);
         }
 
-        private void OnCollectionChanged (object sender, NotifyCollectionChangedEventArgs e)
+        protected void OnCollectionChanged (object sender, NotifyCollectionChangedEventArgs e)
         {
             if (Handle == IntPtr.Zero) {
                 return;
             }
 
-            CollectionChanged (e);
+            if (e.Action == NotifyCollectionChangedAction.Reset) {
+                NotifyDataSetChanged();
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Add) {
+
+                if (e.NewItems.Count == 1) {
+                    NotifyItemInserted (e.NewStartingIndex);
+                } else {
+                    NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
+                }
+
+                // Don't scroll when an insert is processed
+                // if position of scroll is at top
+                var lm = (LinearLayoutManager)Owner.GetLayoutManager ();
+                if (lm.FindFirstCompletelyVisibleItemPosition () == 0) {
+                    lm.ScrollToPosition (0);
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Replace) {
+                NotifyItemChanged (e.NewStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove) {
+                NotifyItemRemoved (e.OldStartingIndex);
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Move) {
+                NotifyItemMoved (e.OldStartingIndex, e.NewStartingIndex);
+            }
         }
 
-        public override long GetItemId (int position)
+        protected T GetItem (int index)
         {
-            return -1;
-        }
-
-        public virtual T GetEntry (int position)
-        {
-            return position >= collectionData.Count ? default (T) : collectionData.Data.ElementAt (position);
+            return CollectionData.Data.ElementAt (index);
         }
 
         public override int GetItemViewType (int position)
         {
-            return position >= collectionData.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
+            return position >= CollectionData.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
-            return viewType == ViewTypeLoaderPlaceholder ? new SpinnerHolder (GetLoadIndicatorView (parent)) : GetViewHolder (parent, viewType);
+            return viewType == ViewTypeLoaderPlaceholder ? new FooterHolder (GetFooterView (parent)) : GetViewHolder (parent, viewType);
         }
 
         public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
+            if (GetItemViewType (position) == ViewTypeLoaderPlaceholder) {
+                var footer = (FooterHolder)holder;
+                footer.Bind (HasMoreItems);
+                return;
+            }
+
             BindHolder (holder, position);
         }
-
-        protected abstract RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType);
-
-        protected abstract void BindHolder (RecyclerView.ViewHolder holder, int position);
-
-        protected abstract void CollectionChanged (NotifyCollectionChangedEventArgs e);
 
         public override int ItemCount
         {
             get {
-                return collectionData.Count + 1;
+                // Return one element more to return the footer.
+                return CollectionData.Count + 1;
             }
         }
 
-        public ICollectionData<T> DataView
-        {
-            get { return collectionData; }
-        }
+        #region Abstract methods
+        protected abstract RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType);
 
-        protected virtual View GetLoadIndicatorView (ViewGroup parent)
+        protected abstract void BindHolder (RecyclerView.ViewHolder holder, int position);
+        #endregion
+
+        protected virtual View GetFooterView (ViewGroup parent)
         {
             var view = LayoutInflater.FromContext (parent.Context).Inflate (
-                           Resource.Layout.TimeEntryListLoadingItem, parent, false);
+                           Resource.Layout.TimeEntryListFooter, parent, false);
             return view;
         }
 
-        protected class SpinnerHolder : RecyclerView.ViewHolder
+        protected class FooterHolder : RecyclerView.ViewHolder
         {
-            public ImageView SpinningImage { get; set; }
+            readonly ProgressBar progressBar;
 
-            public SpinnerHolder (View root) : base (root)
+            public FooterHolder (View root) : base (root)
             {
-                SpinningImage = ItemView.FindViewById<ImageView> (Resource.Id.LoadingImageView);
+                progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);
                 IsRecyclable = false;
             }
 
-            public virtual void StartAnimation (bool hasMore)
+            public void Bind (bool hasMore)
             {
-                if (hasMore) {
-                    Animation spinningImageAnimation = AnimationUtils.LoadAnimation (ItemView.Context, Resource.Animation.SpinningAnimation);
-                    SpinningImage.StartAnimation (spinningImageAnimation);
-                } else {
-                    SpinningImage.Visibility = ViewStates.Gone;
-                }
+                progressBar.Visibility = hasMore ? ViewStates.Visible : ViewStates.Invisible;
             }
         }
     }

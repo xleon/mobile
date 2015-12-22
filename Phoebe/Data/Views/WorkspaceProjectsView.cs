@@ -11,7 +11,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class WorkspaceProjectsView : ICollectionDataView<object>, IDisposable
+    public class WorkspaceProjectsView : ICollectionData<object>, IDisposable
     {
         private readonly List<Workspace> workspacesList = new List<Workspace> ();
         private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
@@ -678,16 +678,6 @@ namespace Toggl.Phoebe.Data.Views
             }
 
             OnUpdated ();
-        }
-
-        public bool HasMore
-        {
-            get { return false; }
-        }
-
-        public Task LoadMore (bool isInit = false)
-        {
-            return null;
         }
 
         public IEnumerable<object> Data

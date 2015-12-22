@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using Android.Content;
 using Android.Graphics;
 using Android.Support.V7.Widget;
@@ -15,9 +14,8 @@ using PopupArgs = Android.Widget.PopupMenu.MenuItemClickEventArgs;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class ProjectListAdapter : RecycledDataViewAdapter<object>
+    public class ProjectListAdapter : RecyclerCollectionDataAdapter<object>
     {
-        protected const int ViewTypeContent = 1;
         protected const int ViewTypeNoProject = ViewTypeContent;
         protected const int ViewTypeClient = ViewTypeContent + 1;
         protected const int ViewTypeProject = ViewTypeContent + 2;
@@ -35,13 +33,6 @@ namespace Toggl.Joey.UI.Adapters
         {
             this.owner = owner;
             this.collectionView = collectionView;
-        }
-
-        protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
-        {
-            if (e.Action == NotifyCollectionChangedAction.Reset) {
-                NotifyDataSetChanged();
-            }
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -77,7 +68,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private void HandleProjectItemClick (int position)
         {
-            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
+            var proj = (WorkspaceProjectsView.Project)GetItem (position);
             var handler = HandleProjectSelection;
             if (handler != null) {
                 handler (proj);
@@ -87,7 +78,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private void HandleTasksProjectItemClick (int position)
         {
-            var proj = (WorkspaceProjectsView.Project)GetEntry (position);
+            var proj = (WorkspaceProjectsView.Project)GetItem (position);
             if (TasksProjectItemClick != null) {
                 TasksProjectItemClick (this, position);
             }
@@ -102,17 +93,17 @@ namespace Toggl.Joey.UI.Adapters
             var viewType = GetItemViewType (position);
 
             if (viewType == ViewTypeTask) {
-                var data = (TaskData)GetEntry (position);
+                var data = (TaskData)GetItem (position);
                 var projectHolder = (ProjectListTaskItemHolder) holder;
                 projectHolder.Bind (data);
             } else if (viewType == ViewTypeClient) {
-                var data = (WorkspaceProjectsView.Client)GetEntry (position);
+                var data = (WorkspaceProjectsView.Client)GetItem (position);
                 var clientHolder = (ClientListItemHolder)holder;
                 clientHolder.Bind (data);
             } else if (viewType == ViewTypeFooter) {
             } else {
 
-                var data = (WorkspaceProjectsView.Project) GetEntry (position);
+                var data = (WorkspaceProjectsView.Project) GetItem (position);
                 if (viewType == ViewTypeProject) {
                     var projectHolder = (ProjectListItemHolder)holder;
                     projectHolder.Bind (data);
@@ -129,7 +120,7 @@ namespace Toggl.Joey.UI.Adapters
             if (position == (ItemCount)) {
                 return ViewTypeFooter;
             }
-            var obj = GetEntry (position);
+            var obj = GetItem (position);
             if (obj is WorkspaceProjectsView.Project) {
                 var p = (WorkspaceProjectsView.Project)obj;
 

@@ -501,7 +501,6 @@ namespace Toggl.Phoebe.Net
         public Task<List<TimeEntryJson>> ListTimeEntries ()
         {
             var url = new Uri (v8Url, "time_entries");
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListObjects<TimeEntryJson> (url);
         }
 
@@ -511,7 +510,6 @@ namespace Toggl.Phoebe.Net
                                String.Format ("time_entries?start_date={0}&end_date={1}",
                                               WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListObjects<TimeEntryJson> (url);
         }
 
@@ -521,7 +519,6 @@ namespace Toggl.Phoebe.Net
                                String.Format ("time_entries?end_date={0}&num_of_days={1}",
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
                                               days));
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListObjects<TimeEntryJson> (url);
         }
 
@@ -531,7 +528,6 @@ namespace Toggl.Phoebe.Net
                                String.Format ("time_entries?start_date={0}&end_date={1}",
                                               WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListObjects<TimeEntryJson> (url, cancellationToken);
         }
 

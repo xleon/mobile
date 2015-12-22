@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using GalaSoft.MvvmLight;
@@ -7,6 +8,7 @@ using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
@@ -19,7 +21,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private ActiveTimeEntryManager timeEntryManager;
         private TimeEntryModel model;
-        private Timer durationTimer;
+        private TimeEntriesFeed collectionFeed;
+        private readonly Timer durationTimer;
 
         LogTimeEntriesViewModel ()
         {
@@ -51,22 +54,34 @@ namespace Toggl.Phoebe.Data.ViewModels
                 subscriptionSettingChanged = null;
             }
 
-            if (CollectionView != null) {
-                CollectionView.Dispose ();
-                CollectionView = null;
-            }
+            DisposeCollection ();
 
             timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
             timeEntryManager = null;
             model = null;
         }
 
+        private void DisposeCollection ()
+        {
+            if (collectionFeed != null) {
+                collectionFeed.Dispose ();
+                collectionFeed = null;
+            }
+
+            if (Collection != null) {
+                Collection.Dispose ();
+                Collection = null;
+            }
+        }
+
         #region Properties for ViewModel binding
-        public bool IsProcessingAction { get; set; }
+        public bool IsProcessingAction { get; private set; }
 
-        public bool IsTimeEntryRunning { get; set; }
+        public bool IsTimeEntryRunning { get; private set; }
 
-        public bool IsGroupedMode { get; set; }
+        public bool IsGroupedMode { get; private set; }
+
+        public bool HasMore { get; private set; }
 
         public string Description { get; set; }
 
@@ -74,8 +89,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string Duration { get; set; }
 
-        public TimeEntriesCollectionView CollectionView { get; set; }
-
+        public ICollectionData<IHolder> Collection { get; private set; }
         #endregion
 
         public async Task<TimeEntryData> StartStopTimeEntry ()
@@ -99,6 +113,39 @@ namespace Toggl.Phoebe.Data.ViewModels
         public TimeEntryData GetActiveTimeEntry ()
         {
             return model.Data;
+        }
+
+        public async Task LoadMore ()
+        {
+            await collectionFeed.LoadMore ();
+            HasMore = collectionFeed.HasMore;
+        }
+
+        public async Task ContinueTimeEntryAsync (int index)
+        {
+            var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
+            if (timeEntryHolder == null) {
+                return;
+            }
+
+            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
+                await TimeEntryModel.StopAsync (timeEntryHolder.Data);
+                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
+            } else {
+                await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.Data);
+                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
+            }
+        }
+
+        public Task RemoveItemWithUndoAsync (int index)
+        {
+            return collectionFeed.RemoveItemWithUndoAsync (
+                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
+        }
+
+        public void RestoreItemFromUndo()
+        {
+            collectionFeed.RestoreItemFromUndo ();
         }
 
         private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
@@ -128,13 +175,13 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private async Task SyncCollectionView ()
         {
+            DisposeCollection ();
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
-            if (CollectionView != null) {
-                CollectionView.Dispose ();
-            }
-
-            CollectionView = await TimeEntriesCollectionView.Init (IsGroupedMode);
+            collectionFeed = new TimeEntriesFeed ();
+            HasMore = collectionFeed.HasMore;
+            var col = new TimeEntriesCollection (collectionFeed, IsGroupedMode);
+            Collection = col;
         }
 
         private void UpdateView ()

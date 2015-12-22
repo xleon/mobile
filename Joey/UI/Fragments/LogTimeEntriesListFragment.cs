@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.Content;
 using Android.OS;
@@ -25,7 +26,10 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class LogTimeEntriesListFragment : Fragment, SwipeDismissCallback.IDismissListener, ItemTouchListener.IItemTouchListener, SwipeRefreshLayout.IOnRefreshListener
+    public class LogTimeEntriesListFragment : Fragment,
+        SwipeDismissCallback.IDismissListener,
+        ItemTouchListener.IItemTouchListener,
+        SwipeRefreshLayout.IOnRefreshListener
     {
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
@@ -42,12 +46,12 @@ namespace Toggl.Joey.UI.Fragments
 
         // binding references
         private Binding<bool, bool> hasMoreBinding, newMenuBinding;
-        private Binding<TimeEntriesCollectionView, TimeEntriesCollectionView> collectionBinding;
+        private Binding<ICollectionData<IHolder>, ICollectionData<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.
 
-        public LogTimeEntriesViewModel ViewModel { get; set;}
+        public LogTimeEntriesViewModel ViewModel { get; private set;}
         public IMenuItem AddNewMenuItem { get; private set; }
         public StartStopFab StartStopBtn { get; private set;}
 
@@ -70,8 +74,6 @@ namespace Toggl.Joey.UI.Fragments
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
-
-            SetupRecyclerView ();
             HasOptionsMenu = true;
 
             return view;
@@ -82,8 +84,8 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
             ViewModel = await LogTimeEntriesViewModel.Init ();
 
-            collectionBinding = this.SetBinding (()=> ViewModel.CollectionView).WhenSourceChanges (() => {
-                logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel.CollectionView);
+            collectionBinding = this.SetBinding (()=> ViewModel.Collection).WhenSourceChanges (() => {
+                logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
@@ -99,6 +101,10 @@ namespace Toggl.Joey.UI.Fragments
             // Pass ViewModel to TimerComponent.
             timerComponent.SetViewModel (ViewModel);
             StartStopBtn.Click += StartStopClick;
+            SetupRecyclerView (ViewModel);
+
+            // Get data to fill the list.
+            await ViewModel.LoadMore ();
         }
 
         public async void StartStopClick (object sender, EventArgs e)
@@ -124,11 +130,15 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroyView ();
         }
 
-        private void SetupRecyclerView ()
+        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
         {
             // Touch listeners.
             itemTouchListener = new ItemTouchListener (recyclerView, this);
             recyclerView.AddOnItemTouchListener (itemTouchListener);
+
+            // Scroll listener
+            recyclerView.AddOnScrollListener (
+                new ScrollListener ((LinearLayoutManager)recyclerView.GetLayoutManager (), viewModel));
 
             var touchCallback = new SwipeDismissCallback (ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
             var touchHelper = new ItemTouchHelper (touchCallback);
@@ -139,7 +149,6 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration = new ShadowItemDecoration (Activity);
             recyclerView.AddItemDecoration (dividerDecoration);
             recyclerView.AddItemDecoration (shadowDecoration);
-
             recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
         }
 
@@ -162,7 +171,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             inflater.Inflate (Resource.Menu.NewItemMenu, menu);
             AddNewMenuItem = menu.FindItem (Resource.Id.newItem);
-            AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
+            if (ViewModel != null) {
+                AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
+            }
         }
 
         public override bool OnOptionsItemSelected (IMenuItem item)
@@ -179,18 +190,18 @@ namespace Toggl.Joey.UI.Fragments
         public bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
         {
             var adapter = recyclerView.GetAdapter ();
-            return adapter.GetItemViewType (viewHolder.LayoutPosition) == LogTimeEntriesAdapter.ViewTypeContent;
+            return adapter.GetItemViewType (viewHolder.LayoutPosition) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
         }
 
         public async void OnDismiss (RecyclerView.ViewHolder viewHolder)
         {
-            var duration = TimeEntriesCollectionView.UndoSecondsInterval * 1000;
+            const int duration = TimeEntriesFeed.UndoSecondsInterval * 1000;
 
-            await ViewModel.CollectionView.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
+            await ViewModel.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
             var snackBar = Snackbar
                            .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
                            .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
-                                       _ => ViewModel.CollectionView.RestoreItemFromUndo ());
+                                       _ => ViewModel.RestoreItemFromUndo ());
             ChangeSnackBarColor (snackBar);
             snackBar.Show ();
         }
@@ -202,8 +213,7 @@ namespace Toggl.Joey.UI.Fragments
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-
-            IList<string> guids = ((ITimeEntryHolder)logAdapter.GetEntry (position)).Guids;
+            IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.Data.ElementAt (position)).Guids;
             intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
             intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
 
@@ -218,7 +228,7 @@ namespace Toggl.Joey.UI.Fragments
         public bool CanClick (RecyclerView view, int position)
         {
             var adapter = recyclerView.GetAdapter ();
-            return adapter.GetItemViewType (position) == LogTimeEntriesAdapter.ViewTypeContent;
+            return adapter.GetItemViewType (position) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
         }
 
         #endregion
@@ -264,6 +274,44 @@ namespace Toggl.Joey.UI.Fragments
                         t.SetTextColor (Resources.GetColor (Resource.Color.material_green));
                     }
 
+                }
+            }
+        }
+
+        class ScrollListener : RecyclerView.OnScrollListener
+        {
+            private const int visibleThreshold = 5; // The minimum amount of items to have below your current scroll position before loading more.
+            private int previousTotal; // The total number of items in the dataset after the last load
+            private bool loading = true; // True if we are still waiting for the last set of data to load.
+            private int firstVisibleItem, visibleItemCount, totalItemCount;
+            private readonly LinearLayoutManager linearLayoutManager;
+            private readonly LogTimeEntriesViewModel viewModel;
+
+            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesViewModel viewModel)
+            {
+                this.linearLayoutManager = linearLayoutManager;
+                this.viewModel = viewModel;
+            }
+
+            public async override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            {
+                base.OnScrolled (recyclerView, dx, dy);
+
+                visibleItemCount = recyclerView.ChildCount;
+                totalItemCount = linearLayoutManager.ItemCount;
+                firstVisibleItem = linearLayoutManager.FindFirstVisibleItemPosition ();
+
+                if (loading) {
+                    if (totalItemCount > previousTotal) {
+                        loading = false;
+                        previousTotal = totalItemCount;
+                    }
+                }
+
+                if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
+                    loading = true;
+                    // Request more entries.
+                    await viewModel.LoadMore ();
                 }
             }
         }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -7,88 +6,42 @@ using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Data.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : RecycledDataViewAdapter<IHolder>
+    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>
     {
-        public static readonly int ViewTypeLoaderPlaceholder = 0;
-        public static readonly int ViewTypeContent = 1;
-        public static readonly int ViewTypeDateHeader = ViewTypeContent + 1;
+        public const int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
-        private TimeEntriesCollectionView modelView;
         private DateTime lastTimeEntryContinuedTime;
+        protected LogTimeEntriesViewModel ViewModel { get; set; }
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        public LogTimeEntriesAdapter (RecyclerView owner, TimeEntriesCollectionView modelView) : base (owner, modelView)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesViewModel viewModel)
+        : base (owner, viewModel.Collection)
         {
-            this.modelView = modelView;
+            ViewModel = viewModel;
             lastTimeEntryContinuedTime = Time.UtcNow;
+            this.SetBinding (() => ViewModel.HasMore).WhenSourceChanges (() => {
+                HasMoreItems = ViewModel.HasMore;
+            });
         }
 
-        protected override void CollectionChanged (NotifyCollectionChangedEventArgs e)
-        {
-            if (e.Action == NotifyCollectionChangedAction.Reset) {
-                NotifyDataSetChanged();
-            }
-
-            if (e.Action == NotifyCollectionChangedAction.Add) {
-
-                if (e.NewItems.Count == 0) {
-                    return;
-                }
-
-                // First items are inserterd with a reset
-                // to fix the top scroll position
-                if (e.NewItems.Count == DataView.Count && e.NewStartingIndex == 0) {
-                    NotifyDataSetChanged();
-                    return;
-                }
-
-                if (e.NewItems.Count == 1) {
-
-                    // If new TE is started,
-                    // we should move the scroll to top position
-                    Owner.SmoothScrollToPosition (0);
-
-                    // After some investigation, this action breaks
-                    // RecyclerView layout. Under investigation.
-                    // For the moment, the NotifyItemRangeInserted will be
-                    // replaced by the generic NotifyDataSetChanged.
-                    NotifyItemInserted (e.NewStartingIndex);
-                } else {
-                    // NotifyItemRangeInserted (e.NewStartingIndex, e.NewItems.Count);
-                    NotifyDataSetChanged();
-                }
-            }
-
-            if (e.Action == NotifyCollectionChangedAction.Replace) {
-                NotifyItemChanged (e.NewStartingIndex);
-            }
-
-            if (e.Action == NotifyCollectionChangedAction.Remove) {
-                NotifyItemRemoved (e.OldStartingIndex);
-            }
-
-            if (e.Action == NotifyCollectionChangedAction.Move) {
-                NotifyItemMoved (e.OldStartingIndex, e.NewStartingIndex);
-            }
-        }
-
-        private void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
+        private async void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
             // Don't continue a new TimeEntry before
             // x seconds has passed.
@@ -97,7 +50,7 @@ namespace Toggl.Joey.UI.Adapters
             }
             lastTimeEntryContinuedTime = Time.UtcNow;
 
-            modelView.ContinueTimeEntry (viewHolder.AdapterPosition);
+            await ViewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -118,19 +71,15 @@ namespace Toggl.Joey.UI.Adapters
 
         protected override void BindHolder (RecyclerView.ViewHolder holder, int position)
         {
-            if (holder is SpinnerHolder) {
-                return;
-            }
-
             var headerListItemHolder = holder as HeaderListItemHolder;
             if (headerListItemHolder != null) {
-                headerListItemHolder.Bind ((DateHolder) GetEntry (position));
+                headerListItemHolder.Bind ((DateHolder) GetItem (position));
                 return;
             }
 
             var timeEntryListItemHolder = holder as TimeEntryListItemHolder;
             if (timeEntryListItemHolder != null) {
-                timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetEntry (position));
+                timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetItem (position));
             }
         }
 
@@ -138,7 +87,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             var type = base.GetItemViewType (position);
             if (type != ViewTypeLoaderPlaceholder) {
-                type = GetEntry (position) is DateHolder ? ViewTypeDateHeader : ViewTypeContent;
+                type = GetItem (position) is DateHolder ? ViewTypeDateHeader : ViewTypeContent;
             }
             return type;
         }
@@ -221,23 +170,14 @@ namespace Toggl.Joey.UI.Adapters
             private readonly LogTimeEntriesAdapter owner;
 
             public ITimeEntryHolder DataSource { get; set; }
-
             public View ColorView { get; private set; }
-
             public TextView ProjectTextView { get; private set; }
-
             public TextView ClientTextView { get; private set; }
-
             public TextView TaskTextView { get; private set; }
-
             public TextView DescriptionTextView { get; private set; }
-
             public NotificationImageView TagsView { get; private set; }
-
             public View BillableView { get; private set; }
-
             public TextView DurationTextView { get; private set; }
-
             public ImageButton ContinueImageButton { get; private set; }
 
             public TimeEntryListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)

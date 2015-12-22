@@ -179,7 +179,6 @@
     <Compile Include="UI\Views\ColorPickerRecyclerView.cs" />
     <Compile Include="UI\Views\TogglField.cs" />
     <Compile Include="UI\Views\DividerItemDecoration.cs" />
-    <Compile Include="UI\Adapters\RecycledDataViewAdapter.cs" />
     <Compile Include="UI\Utils\RecycledBindableViewHolder.cs" />
     <Compile Include="UI\Adapters\LogTimeEntriesAdapter.cs" />
     <Compile Include="UI\Fragments\LogTimeEntriesListFragment.cs" />
@@ -202,6 +201,7 @@
     <Compile Include="Wear\Common.cs" />
     <Compile Include="Wear\WearDataProvider.cs" />
     <Compile Include="UI\Fragments\ChangeDateTimeDialogFragment.cs" />
+    <Compile Include="UI\Adapters\RecyclerCollectionDataAdapter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -752,6 +752,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\ic_add_black_24dp.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ic_add_black_24dp.png" />
     <AndroidResource Include="Resources\layout\EmptyFooter.axml" />
+    <AndroidResource Include="Resources\layout\TimeEntryListFooter.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <Import Project="..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets" Condition="Exists('..\packages\Xamarin.Insights.1.11.1\build\MonoAndroid10\Xamarin.Insights.targets')" />

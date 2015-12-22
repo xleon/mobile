@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
@@ -32,6 +33,10 @@ namespace Toggl.Ross.ViewControllers
         private UIButton durationButton;
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
+        private UIView EmptyView { get; set; }
+
+        private Binding<bool, bool> syncBinding;
+        private Binding<TimeEntriesCollectionView, TimeEntriesCollectionView> collectionBinding;
 
         protected LogTimeEntriesViewModel ViewModel {get; set;}
 
@@ -50,28 +55,38 @@ namespace Toggl.Ross.ViewControllers
                 Message = "LogEmptyMessage".Tr (),
             };
 
-            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
-            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
-
             // Create view model
             ViewModel = await LogTimeEntriesViewModel.Init ();
+            ViewModel.CollectionView.CollectionChanged += HandleCollectionChanged;
+
+            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
+            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+            TableView.Scrolled += async (sender, e) => {
+                var currentOffset = TableView.ContentOffset.Y;
+                var maximumOffset = TableView.ContentSize.Height - TableView.Frame.Height;
+                if (maximumOffset - currentOffset <= 200.0) {
+                    await ViewModel.LoadMoreItems ();
+                }
+            };
 
             var headerView = new TableViewRefreshView ();
-            var source = new MySource (ViewModel.CollectionView.Data);
-            TableView.Source = source;
-
-
-            ViewModel.CollectionView.CollectionChanged += HandleCollectionChanged;
             RefreshControl = headerView;
             headerView.AdaptToTableView (TableView);
+            headerView.ValueChanged += (sender, e) => ViewModel.TriggerSync ();
+
+            // Bindings
+            syncBinding = this.SetBinding (() => ViewModel.IsAppSyncing).WhenSourceChanges (() => {
+                if (!ViewModel.IsAppSyncing) {
+                    headerView.EndRefreshing ();
+                }
+            });
+            collectionBinding = this.SetBinding (() => ViewModel.CollectionView).WhenSourceChanges (() => {
+                TableView.Source = new MySource (ViewModel.CollectionView.Data);
+            });
 
             // Setup top toolbar
             SetupToolbar ();
-
-            // Bindings
-
             navMenuController.Attach (this);
-            await ViewModel.CollectionView.LoadMore ();
 
             foreach (var item in ViewModel.CollectionView.Data) {
                 Console.WriteLine (item);
@@ -85,6 +100,8 @@ namespace Toggl.Ross.ViewControllers
             if (e.Action == NotifyCollectionChangedAction.Reset) {
                 TableView.ReloadData();
             }
+
+            Console.WriteLine (e.Action + " " + e.NewStartingIndex);
 
             if (e.Action == NotifyCollectionChangedAction.Add) {
                 if (e.NewItems [0] is DateHolder) {
@@ -118,8 +135,8 @@ namespace Toggl.Ross.ViewControllers
 
             if (e.Action == NotifyCollectionChangedAction.Move) {
                 if (! (e.NewItems [0] is DateHolder)) {
-                    var fromIndexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
-                    var toIndexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    var fromIndexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    var toIndexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
                     TableView.MoveRow (fromIndexPath, toIndexPath);
                 }
             }
@@ -232,6 +249,16 @@ namespace Toggl.Ross.ViewControllers
                 return view;
             }
 
+            public override nint RowsInSection (UITableView tableview, nint section)
+            {
+                return LogViewController.GetCurrentRowsBySection (data, section);
+            }
+
+            public override nint NumberOfSections (UITableView tableView)
+            {
+                return data.OfType<DateHolder> ().Count ();
+            }
+
             public override nfloat GetHeightForHeader (UITableView tableView, nint section)
             {
                 return EstimatedHeightForHeader (tableView, section);
@@ -242,19 +269,19 @@ namespace Toggl.Ross.ViewControllers
                 return 42f;
             }
 
+            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            {
+                return 60f;
+            }
+
+            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
+            {
+                return EstimatedHeight (tableView, indexPath);
+            }
+
             public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
             {
                 return false;
-            }
-
-            public override nint RowsInSection (UITableView tableview, nint section)
-            {
-                return LogViewController.GetCurrentRowsBySection (data, section);
-            }
-
-            public override nint NumberOfSections (UITableView tableView)
-            {
-                return data.OfType<DateHolder> ().Count ();
             }
         }
 

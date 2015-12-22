@@ -11,6 +11,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
@@ -19,6 +20,8 @@ namespace Toggl.Phoebe.Data.ViewModels
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
+        private Subscription<SyncStartedMessage> subscriptionSyncStarted;
+        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private ActiveTimeEntryManager timeEntryManager;
         private TimeEntryModel model;
         private TimeEntriesFeed collectionFeed;
@@ -36,6 +39,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
+            subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
+            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
         }
 
         public static async Task<LogTimeEntriesViewModel> Init ()
@@ -52,6 +57,14 @@ namespace Toggl.Phoebe.Data.ViewModels
             if (subscriptionSettingChanged != null) {
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
+            }
+            if (subscriptionSyncStarted != null) {
+                bus.Unsubscribe (subscriptionSyncStarted);
+                subscriptionSyncStarted = null;
+            }
+            if (subscriptionSyncFinished != null) {
+                bus.Unsubscribe (subscriptionSyncFinished);
+                subscriptionSyncFinished = null;
             }
 
             DisposeCollection ();
@@ -77,7 +90,11 @@ namespace Toggl.Phoebe.Data.ViewModels
         #region Properties for ViewModel binding
         public bool IsProcessingAction { get; private set; }
 
-        public bool IsTimeEntryRunning { get; private set; }
+        public bool IsAppSyncing { get; set; }
+
+        public bool IsLoadingMoreItems { get; set; }
+
+        public bool IsTimeEntryRunning { get; set; }
 
         public bool IsGroupedMode { get; private set; }
 
@@ -110,10 +127,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             return model.Data;
         }
 
-        public TimeEntryData GetActiveTimeEntry ()
+        public void TriggerSync ()
         {
-            return model.Data;
+            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
+            syncManager.Run ();
         }
+
 
         public async Task LoadMore ()
         {
@@ -148,19 +167,20 @@ namespace Toggl.Phoebe.Data.ViewModels
             collectionFeed.RestoreItemFromUndo ();
         }
 
-        private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        public TimeEntryData GetActiveTimeEntry ()
         {
-            if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
-                await SyncModel ();
-            }
+            return model.Data;
         }
 
-        private async void OnSettingChanged (SettingChangedMessage msg)
+        public async Task LoadMoreItems()
         {
-            // Implement a GetPropertyName
-            if (msg.Name == "GroupedTimeEntries") {
-                await SyncCollectionView ();
+            if (IsLoadingMoreItems) {
+                return;
             }
+
+            IsLoadingMoreItems = true;
+            await CollectionView.LoadMore ();
+            IsLoadingMoreItems = false;
         }
 
         private async Task SyncModel ()
@@ -200,6 +220,35 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
+        private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
+                await SyncModel ();
+            }
+        }
+
+        private async void OnSettingChanged (SettingChangedMessage msg)
+        {
+            // Implement a GetPropertyName
+            if (msg.Name == "GroupedTimeEntries") {
+                await SyncCollectionView ();
+            }
+        }
+
+        private void OnSyncStarted (SyncStartedMessage msg)
+        {
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                IsAppSyncing = true;
+            });
+        }
+
+        private void OnSyncFinished (SyncFinishedMessage msg)
+        {
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                IsAppSyncing = false;
+            });
+        }
+
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)
         {
             var duration = model.GetDuration ();
@@ -210,5 +259,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
             });
         }
+
     }
 }

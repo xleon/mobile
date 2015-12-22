@@ -1,0 +1,6 @@
+graph LR
+  A[Pushes from Server] --> X["<p style='text-align:center;margin:0'>Update Time Entries<br>(no scheduling)</p>"]
+  B[Load from Local DB] --> X
+  C[User removes entry] --> X
+  X --> Y["Asynchronous operations<br>(don't wait for each other)"]
+  Y --> Z[Notify UI]

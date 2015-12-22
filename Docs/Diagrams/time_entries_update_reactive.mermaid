@@ -1,0 +1,10 @@
+graph LR
+  A[Pushes from Server] --> X1[Observable]
+  B[Load from Local DB] --> X1
+  C[User removes entry] --> X1
+  X1 --> X2["<p style='text-align:center;margin:0'>Subscription (scheduled)<br>& Time Buffer</p>"]
+  X2 --> X3["<p style='text-align:center;margin:0'>Asynchronous operations<br>(wait for each other)</p>"]
+  X3 --> Z[Notify UI]
+  
+  classDef green fill:lightgreen;
+  class X2,X3 green; 

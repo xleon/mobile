@@ -317,19 +317,6 @@ namespace Toggl.Phoebe.Tests.Data.Models
         }
 
         [Test]
-        public void TestNewFutureStartChangeNoStop ()
-        {
-            var entry = new TimeEntryModel (new TimeEntryData () {
-                State = TimeEntryState.New,
-                UserId = user.Id,
-                WorkspaceId = user.DefaultWorkspace.Id,
-            });
-
-            entry.StartTime = Time.UtcNow.AddHours (1);
-            Assert.AreEqual (entry.StartTime, entry.StopTime);
-        }
-
-        [Test]
         public void TestNewStopChange ()
         {
             var entry = new TimeEntryModel (new TimeEntryData () {

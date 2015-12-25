@@ -72,9 +72,6 @@ namespace Toggl.Joey.UI.Fragments
             coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             StartStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
             timerComponent = ((MainDrawerActivity)Activity).Timer; // TODO: a better way to do this?
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
             HasOptionsMenu = true;
 
             return view;
@@ -83,9 +80,11 @@ namespace Toggl.Joey.UI.Fragments
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
+
+            // init viewModel
             ViewModel = await LogTimeEntriesViewModel.Init ();
 
-            collectionBinding = this.SetBinding (()=> ViewModel.Collection).WhenSourceChanges (() => {
+            collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
@@ -104,9 +103,18 @@ namespace Toggl.Joey.UI.Fragments
             StartStopBtn.Click += StartStopClick;
             SetupRecyclerView (ViewModel);
 
-            // Get data to fill the list.
+            // TODO: Review this line.
+            // Get data to fill the list. For the moment,
+            // until a screenloader is added to the screen
+            // is better to load the items after create
+            // the viewModel and show the loader from RecyclerView
             await ViewModel.LoadMore ();
+
+            // Subscribe to sync messages
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
         }
+
 
         public async void StartStopClick (object sender, EventArgs e)
         {
@@ -138,10 +146,8 @@ namespace Toggl.Joey.UI.Fragments
             // TODO: Remove bindings to ViewModel
             // check if it is needed or not.
             timerComponent.DetachBindind ();
-
             ReleaseRecyclerView ();
             ViewModel.Dispose ();
-
             base.OnDestroyView ();
         }
 
@@ -186,6 +192,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             inflater.Inflate (Resource.Menu.NewItemMenu, menu);
             AddNewMenuItem = menu.FindItem (Resource.Id.newItem);
+            // TODO: find a better way.
             if (ViewModel != null) {
                 AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
             }
@@ -201,7 +208,6 @@ namespace Toggl.Joey.UI.Fragments
         }
 
         #region IDismissListener implementation
-
         public bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
         {
             var adapter = recyclerView.GetAdapter ();
@@ -220,11 +226,9 @@ namespace Toggl.Joey.UI.Fragments
             ChangeSnackBarColor (snackBar);
             snackBar.Show ();
         }
-
         #endregion
 
         #region IRecyclerViewOnItemClickListener implementation
-
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
@@ -245,13 +249,12 @@ namespace Toggl.Joey.UI.Fragments
             var adapter = recyclerView.GetAdapter ();
             return adapter.GetItemViewType (position) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
         }
-
         #endregion
 
+        #region Sync
         public void OnRefresh ()
         {
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-            syncManager.Run ();
+            ViewModel.TriggerFullSync ();
         }
 
         private void SyncFinished (SyncFinishedMessage msg)
@@ -270,10 +273,10 @@ namespace Toggl.Joey.UI.Fragments
                 } else if (msg.FatalError is TaskCanceledException) {
                     msgId = Resource.String.LastSyncFatalError;
                 }
-
                 Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
             }
         }
+        #endregion
 
         // Temporal hack to change the
         // action color in snack bar
@@ -288,7 +291,6 @@ namespace Toggl.Joey.UI.Fragments
                     if (t.Text == Resources.GetString (Resource.String.UndoBarButtonText)) {
                         t.SetTextColor (Resources.GetColor (Resource.Color.material_green));
                     }
-
                 }
             }
         }

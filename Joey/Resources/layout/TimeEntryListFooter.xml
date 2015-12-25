@@ -2,10 +2,38 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="70dp">
     <ProgressBar
         android:id="@+id/ProgressBar"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true" />
+    <RelativeLayout
+        android:id="@+id/RetryLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="An error ocurred downloading data"
+                android:textSize="11dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:layout_gravity="center_horizontal" />
+        </LinearLayout>
+        <Button
+            android:id="@+id/RetryButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            android:background="@null"
+            android:text="Try again"
+            android:layout_gravity="center_horizontal"
+            android:theme="@style/Widget.AppCompat.Button.Small" />
+    </RelativeLayout>
 </LinearLayout>

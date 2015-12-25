@@ -451,8 +451,6 @@ namespace Toggl.Phoebe.Net
 
         private async Task RunTimeEntriesUpdateAsync (DateTime startFrom, int daysLoad)
         {
-            Console.WriteLine ("Download data from " + startFrom);
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
             bool hadErrors = false;
             bool hasMore = true;

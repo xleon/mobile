@@ -151,6 +151,31 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroyView ();
         }
 
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            inflater.Inflate (Resource.Menu.NewItemMenu, menu);
+            AddNewMenuItem = menu.FindItem (Resource.Id.newItem);
+            ConfigureOptionMenu ();
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
+            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
+            Activity.StartActivity (i);
+
+            return base.OnOptionsItemSelected (item);
+        }
+
+        // Because the viewModel needs time to be created,
+        // this method is called from two points
+        private void ConfigureOptionMenu ()
+        {
+            if (ViewModel != null && AddNewMenuItem != null) {
+                AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
+            }
+        }
+
         private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
         {
             // Touch listeners.
@@ -188,24 +213,6 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration.Dispose ();
         }
 
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
-        {
-            inflater.Inflate (Resource.Menu.NewItemMenu, menu);
-            AddNewMenuItem = menu.FindItem (Resource.Id.newItem);
-            // TODO: find a better way.
-            if (ViewModel != null) {
-                AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
-            }
-        }
-
-        public override bool OnOptionsItemSelected (IMenuItem item)
-        {
-            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
-            Activity.StartActivity (i);
-
-            return base.OnOptionsItemSelected (item);
-        }
 
         #region IDismissListener implementation
         public bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)

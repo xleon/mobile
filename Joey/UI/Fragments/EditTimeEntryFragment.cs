@@ -181,6 +181,9 @@ namespace Toggl.Joey.UI.Fragments
                 }
             });
 
+            // Configure option menu.
+            ConfigureOptionMenu ();
+                    
             // If project list needs to be opened?
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntryStartedByFAB) {
@@ -255,7 +258,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
             SaveMenuItem = menu.FindItem (Resource.Id.saveItem);
-            SaveMenuItem.SetVisible (ViewModel.IsManual);
+            ConfigureOptionMenu ();
         }
 
         public override bool OnOptionsItemSelected (IMenuItem item)
@@ -273,6 +276,15 @@ namespace Toggl.Joey.UI.Fragments
             Guid result;
             Guid.TryParse (data.GetStringExtra (id), out result);
             return result;
+        }
+
+        // Because the viewModel needs time to be created,
+        // this method is called from two points
+        private void ConfigureOptionMenu ()
+        {
+            if (ViewModel != null && SaveMenuItem != null) {
+                SaveMenuItem.SetVisible (ViewModel.IsManual);
+            }
         }
     }
 }

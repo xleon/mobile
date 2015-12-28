@@ -1,0 +1,18 @@
+graph LR
+    subgraph notify
+    D4[Store] ==> A4[View Models]
+    end
+
+    subgraph read_write
+    B3[Dispatcher] ==> D3[Store]
+    end
+
+    subgraph process
+    B2[Dispatcher] --> C2["Action Register (API)"]
+    C2 --> B2
+    end
+
+    subgraph dispatch
+    A1[View Models] ==> B1[Dispatcher]
+    end
+    

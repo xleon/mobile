@@ -17,3 +17,4 @@ local.properties
 .ci/**/*.exe
 packages
 Resource.designer.cs
+node_modules

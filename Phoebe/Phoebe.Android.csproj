@@ -89,15 +89,16 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
-    <Compile Include="Data\StartStopMessage.cs" />
-    <Compile Include="Data\ActiveTimeEntryManager.cs" />
+    <Compile Include="_Old\**\*.cs" />
+    <Compile Include="_Models\**\*.cs" />
+    <Compile Include="_ViewModels\**\*.cs" />
+    <Compile Include="_Dispatcher\**\*.cs" />
+    <Compile Include="_Store\**\*.cs" />
+    <Compile Include="_Helpers\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />
     <Folder Include="Contrib\XPlatUtils\" />
-    <Folder Include="Data\Reports\" />
-    <Folder Include="Assemblies\" />
-    <Folder Include="Data\ViewModels\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

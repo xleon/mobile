@@ -34,15 +34,15 @@ It's probably easier to imagine the new workflow with some specific examples.
 > It's important the ``Store`` launches the notification, even if there're no more items, to hide the loading icon.
 
 
-### **Remove a Time Entry** (WIP)
+### **Remove a Time Entry**
 
-1. DISPATCH
+1. DISPATCH: The Time Entries' Collection ``View Model`` removes the entry but waits a bit in case the user decides to undo. Only when the time is consumed, a request is sent to remove the entry. 
 
-2. PROCESS
+2. PROCESS: The ``Dispatcher`` looks for the appropriate callback in the ``Action Register``, which in this case should be very simple: basically just letting the message pass through to the ``Store``.
 
-3. READ_WRITE
+3. READ_WRITE: The ``Store`` removes the entry and sends a notification.
 
-4. NOTIFY
+4. NOTIFY: The ``View Model`` receives the notification, but doesn't need to do anything as it already deleted the entry from the collection in memory.
 
 <br>
 ## Advantages of this proposal

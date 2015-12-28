@@ -19,7 +19,6 @@ using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Xamarin;
 using XPlatUtils;
-using Toggl.Joey.UI.Activities;
 
 namespace Toggl.Joey
 {
@@ -159,8 +158,6 @@ namespace Toggl.Joey
         {
             get { return componentsInitialized; }
         }
-
-        public bool StartedByFAB { get; set; }
 
         public void DispatchOnUIThread (Action action)
         {

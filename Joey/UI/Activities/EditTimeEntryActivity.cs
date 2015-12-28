@@ -1,12 +1,9 @@
 ﻿using System.Collections.Generic;
 using Android.App;
-using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
-using Toggl.Joey.Data;
 using Toggl.Joey.UI.Fragments;
-using XPlatUtils;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -62,16 +59,6 @@ namespace Toggl.Joey.UI.Activities
                     .Attach (fragment)
                     .Commit ();
                 }
-            }
-
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            var app = (AndroidApp)Application;
-
-            if (settingsStore.ChooseProjectForNew && app.StartedByFAB) {
-                app.StartedByFAB = false;
-                var intent = new Intent (this, typeof (ProjectListActivity));
-                intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument,  guids[0]);
-                StartActivityForResult (intent, 0);
             }
         }
     }

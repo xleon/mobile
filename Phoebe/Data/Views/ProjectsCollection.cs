@@ -1,43 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class WorkspaceProjectsView : ICollectionData<object>, IDisposable
+    public class ProjectsCollection : ObservableRangeCollection<CommonData>, ICollectionData<CommonData>
     {
-        private readonly List<Workspace> workspacesList = new List<Workspace> ();
-        private readonly List<ClientData> clientDataObjects = new List<ClientData> ();
-        private readonly List<object> dataObjects = new List<object> ();
-        private UserData userData;
-        private Subscription<DataChangeMessage> subscriptionDataChange;
-        private SortProjectsBy sortBy = SortProjectsBy.Clients;
-        private Workspace filteredList;
-        private string filter;
-        private bool hasFilter;
-        private int currentWorkspaceIndex;
-        private int unfoldedProjectIndex;
-        private Project unfoldedTaskProject;
+        private List<ClientData> clients;
+        private List<SuperProjectData> projects;
+        private List<TaskData> tasks;
+        private SortProjectsBy sortBy;
+        private Guid workspaceId;
 
-        WorkspaceProjectsView ()
-        {
-            userData = ServiceContainer.Resolve<AuthManager> ().User;
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+        public enum SortProjectsBy {
+            Projects,
+            Clients
         }
 
-        public Project UnfoldedTaskProject
+        ProjectsCollection (SortProjectsBy sortBy, Guid workspaceId)
         {
-            get {
-                return unfoldedTaskProject;
-            }
+            this.sortBy = sortBy;
+            this.workspaceId = workspaceId;
+        }
+
+        public void Dispose ()
+        {
+        }
+
+        public static async Task<ProjectsCollection> Init (SortProjectsBy sortBy, Guid workspaceId)
+        {
+            var v = new ProjectsCollection (sortBy, workspaceId);
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+
+            var projectsTask = store.GetUserAccessibleProjects (userData.Id);
+            var clientsTask = store.Table<ClientData> ().Where (r => r.DeletedAt == null)
+                              .OrderBy (r => r.Name).ToListAsync ();
+            var tasksTask = store.Table<TaskData> ().Where (r => r.DeletedAt == null && r.IsActive)
+                            .OrderBy (r => r.Name).ToListAsync();
+            await Task.WhenAll (projectsTask, tasksTask, clientsTask);
+
+            v.clients = clientsTask.Result;
+            v.tasks = tasksTask.Result;
+            v.projects = projectsTask.Result.Select (p =>
+                         new SuperProjectData (p,
+                                               v.clients.FirstOrDefault (c => c.Id == p.ClientId),
+                                               v.tasks.Count (t => t.ProjectId == p.Id))
+                                                    ).ToList ();
+
+            // Create collection
+            v.CreateSortedCollection ();
+            return v;
         }
 
         public SortProjectsBy SortBy
@@ -45,828 +63,94 @@ namespace Toggl.Phoebe.Data.Views
             get {
                 return sortBy;
             } set {
+                if (sortBy == value) {
+                    return;
+                }
                 sortBy = value;
-                UpdateCollection ();
+                CreateSortedCollection ();
             }
         }
 
-        public bool IsEmpty
+        public Guid WorkspaceId
         {
             get {
-                return workspacesList [currentWorkspaceIndex].HasNoProjects;
-            }
-        }
-
-        public void ShowTaskForProject (Project project, int position, out int collapsedTaskNumber)
-        {
-            collapsedTaskNumber = unfoldedTaskProject == null ? 0 : unfoldedTaskProject.Tasks.Count;
-
-            if (unfoldedTaskProject == project) {
-                collapsedTaskNumber = 0;
-                unfoldedTaskProject = null;
-            } else {
-                unfoldedTaskProject = project;
-            }
-
-            if (unfoldedProjectIndex > position) {
-                collapsedTaskNumber = 0;
-            }
-
-            unfoldedProjectIndex = position;
-            UpdateCollection ();
-        }
-
-        public void Dispose ()
-        {
-            if (subscriptionDataChange != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionDataChange);
-                subscriptionDataChange = null;
-            }
-        }
-
-        private void OnDataChange (DataChangeMessage msg)
-        {
-            if (msg.Data is UserData) {
-                OnDataChange ((UserData)msg.Data);
-            } else if (msg.Data is WorkspaceData) {
-                OnDataChange ((WorkspaceData)msg.Data, msg.Action);
-            } else if (msg.Data is ProjectData) {
-                OnDataChange ((ProjectData)msg.Data, msg.Action);
-            } else if (msg.Data is TaskData) {
-                OnDataChange ((TaskData)msg.Data, msg.Action);
-            } else if (msg.Data is ClientData) {
-                OnDataChange ((ClientData)msg.Data, msg.Action);
-            }
-        }
-
-        private void OnDataChange (UserData data)
-        {
-            var existingData = userData;
-            userData = data;
-            if (existingData == null || existingData.DefaultWorkspaceId != data.DefaultWorkspaceId) {
-                OnUpdated ();
-            }
-            userData = data;
-        }
-
-        private void OnDataChange (WorkspaceData data, DataAction action)
-        {
-            var isExcluded = action == DataAction.Delete
-                             || data.DeletedAt.HasValue;
-
-            Workspace workspace;
-
-            if (isExcluded) {
-                if (FindWorkspace (data.Id, out workspace)) {
-                    workspacesList.Remove (workspace);
-                    OnUpdated ();
-                }
-            } else {
-                data = new WorkspaceData (data);
-
-                if (FindWorkspace (data.Id, out workspace)) {
-                    var existingData = workspace.Data;
-
-                    workspace.Data = data;
-                    if (existingData.Name != data.Name) {
-                        SortWorkspaces (workspacesList);
-                    }
-                    OnUpdated ();
-                } else {
-                    workspace = new Workspace (data);
-                    workspacesList.Add (workspace);
-                    SortWorkspaces (workspacesList);
-                    OnUpdated ();
-                }
-            }
-        }
-
-        private void OnDataChange (ProjectData data, DataAction action)
-        {
-            var isExcluded = action == DataAction.Delete
-                             || data.DeletedAt.HasValue
-                             || !data.IsActive;
-
-            Workspace workspace;
-            Project project;
-
-            if (isExcluded) {
-                if (FindProject (data.Id, out workspace, out project)) {
-                    workspace.Projects.Remove (project);
-                    UpdateCollection ();
-                }
-            } else {
-                data = new ProjectData (data);
-
-                if (FindProject (data.Id, out workspace, out project)) {
-                    var existingData = project.Data;
-
-                    var shouldReparent = existingData.WorkspaceId != data.WorkspaceId;
-                    var shouldSort = existingData.Name != data.Name
-                                     || existingData.ClientId != data.ClientId
-                                     || shouldReparent;
-
-                    project.Data = data;
-
-                    if (shouldReparent) {
-                        workspace.Projects.Remove (project);
-                        if (FindWorkspace (data.WorkspaceId, out workspace)) {
-                            workspace.Projects.Add (project);
-                        }
-                    }
-
-                    if (shouldSort && workspace != null) {
-                        SortProjects (workspace.Projects, clientDataObjects);
-                    }
-                    UpdateCollection ();
-                } else if (FindWorkspace (data.WorkspaceId, out workspace)) {
-                    project = new Project (data);
-
-                    if (project.Data.ClientId == null) {
-                        workspace.Clients.First ().Projects.Add (project);
-                    } else {
-                        workspace.Clients
-                        .First (r => r.Data != null && r.Data.Id == project.Data.ClientId)
-                        .Projects.Add (project);
-                    }
-                    SortEverything ();
-                    UpdateCollection();
-                }
-            }
-        }
-
-        private void OnDataChange (TaskData data, DataAction action)
-        {
-            var isExcluded = action == DataAction.Delete
-                             || data.DeletedAt.HasValue
-                             || !data.IsActive;
-
-            Workspace workspace;
-            Project project;
-            TaskData existingData;
-
-            if (isExcluded) {
-                if (FindTask (data.Id, out workspace, out project, out existingData)) {
-                    project.Tasks.Remove (existingData);
-                    UpdateCollection ();
-                }
-            } else {
-                data = new TaskData (data);
-
-                if (FindTask (data.Id, out workspace, out project, out existingData)) {
-                    var shouldReparent = existingData.ProjectId != data.ProjectId;
-                    var shouldSort = existingData.Name != data.Name
-                                     || shouldReparent;
-
-                    if (shouldReparent) {
-                        project.Tasks.Remove (existingData);
-
-                        if (FindProject (data.ProjectId, out workspace, out project)) {
-                            project.Tasks.Add (data);
-                        }
-                    } else {
-                        project.Tasks.UpdateData (data);
-                    }
-
-                    if (shouldSort) {
-                        SortTasks (project.Tasks);
-                    }
-
-                    UpdateCollection ();
-                } else if (FindProject (data.ProjectId, out workspace, out project)) {
-                    project.Tasks.Add (data);
-                    SortTasks (project.Tasks);
-                    UpdateCollection ();
-                }
-            }
-        }
-
-        private void OnDataChange (ClientData data, DataAction action)
-        {
-            var isExcluded = action == DataAction.Delete
-                             || data.DeletedAt.HasValue;
-
-            var existingData = clientDataObjects.FirstOrDefault (item => data.Matches (item));
-
-            if (isExcluded) {
-                if (existingData != null) {
-                    clientDataObjects.Remove (existingData);
-                    workspacesList[currentWorkspaceIndex].Clients.Remove (new Client (existingData));
-                }
-            } else {
-                data = new ClientData (data);
-
-                if (existingData != null) {
-                    clientDataObjects.UpdateData (data);
-
-                    var shouldSort = data.Name != existingData.Name;
-                    if (shouldSort) {
-                        Workspace workspace;
-                        if (FindWorkspace (data.WorkspaceId, out workspace)) {
-                            SortProjects (workspace.Projects, clientDataObjects);
-                        }
-                    }
-                } else {
-                    clientDataObjects.Add (data);
-                    workspacesList[currentWorkspaceIndex].Clients.Add (new Client (data));
-
-                }
-            }
-        }
-
-        private bool FindWorkspace (Guid id, out Workspace workspace)
-        {
-            foreach (var ws in workspacesList) {
-                if (ws.Data.Id == id) {
-                    workspace = ws;
-                    return true;
-                }
-            }
-
-            workspace = null;
-            return false;
-        }
-
-        private bool FindProject (Guid id, out Workspace workspace, out Project project)
-        {
-            foreach (var ws in workspacesList) {
-                foreach (var proj in ws.Projects) {
-                    if (proj.Data != null && proj.Data.Id == id) {
-                        workspace = ws;
-                        project = proj;
-                        return true;
-                    }
-                }
-            }
-
-            workspace = null;
-            project = null;
-            return false;
-        }
-
-        private bool FindTask (Guid id, out Workspace workspace, out Project project, out TaskData existingData)
-        {
-            foreach (var ws in workspacesList) {
-                foreach (var proj in ws.Projects) {
-                    foreach (var task in proj.Tasks) {
-                        if (task.Id == id) {
-                            workspace = ws;
-                            project = proj;
-                            existingData = task;
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            workspace = null;
-            project = null;
-            existingData = null;
-            return false;
-        }
-
-        private void OnUpdated ()
-        {
-            DispatchCollectionEvent (CollectionEventBuilder.GetEvent (NotifyCollectionChangedAction.Reset, -1, -1));
-        }
-
-        public event NotifyCollectionChangedEventHandler CollectionChanged;
-
-        private void DispatchCollectionEvent (NotifyCollectionChangedEventArgs args)
-        {
-            var handler = CollectionChanged;
-            if (handler != null) {
-                handler (this, args);
-            }
-        }
-
-        public static async Task<WorkspaceProjectsView> Init ()
-        {
-            var v = new WorkspaceProjectsView ();
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            var shouldSubscribe = v.subscriptionDataChange != null;
-
-            if (v.subscriptionDataChange != null) {
-                bus.Unsubscribe (v.subscriptionDataChange);
-                v.subscriptionDataChange = null;
-                shouldSubscribe = true;
-            }
-
-            try {
-                var store = ServiceContainer.Resolve<IDataStore> ();
-                var userId = v.userData != null ? v.userData.Id : (Guid?)null;
-
-                v.clientDataObjects.Clear ();
-
-                var workspaceTask = store.Table<WorkspaceData> ()
-                                    .Where (r => r.DeletedAt == null).ToListAsync();
-                var projectsTask = store.GetUserAccessibleProjects (userId ?? Guid.Empty);
-                var mostUsedProjectsTask = store.GetMostUsedProjects (userId ?? Guid.Empty);
-
-                var tasksTask = store.Table<TaskData> ()
-                                .Where (r => r.DeletedAt == null && r.IsActive).ToListAsync();
-                var clientsTask = store.Table<ClientData> ()
-                                  .Where (r => r.DeletedAt == null).ToListAsync();
-
-                await Task.WhenAll (mostUsedProjectsTask, workspaceTask, projectsTask, tasksTask, clientsTask);
-
-                var wsList = workspaceTask.Result;
-                v.workspacesList.Clear();
-                foreach (var ws in wsList) {
-                    var workspace = new Workspace (ws);
-                    var projects = projectsTask.Result.Where (r => r.WorkspaceId == ws.Id);
-                    var clients = new List<ClientData> ();
-
-                    clients.Add (new ClientData());
-                    clients.AddRange (clientsTask.Result.Where (r => r.WorkspaceId == ws.Id));
-                    v.FillClientsBranchForWorkspace (workspace, clients, projects, tasksTask);
-                    v.FillProjectsBranchForWorkspace (workspace, projects, tasksTask);
-
-                    var mostUsed = mostUsedProjectsTask.Result.Where (r => r.WorkspaceId == workspace.Data.Id).Take (5).ToList();
-                    if (mostUsed.Any ()) {
-                        var mostUsedClient = new Client (workspace.Data);
-                        mostUsedClient.IsMostUsed = true;
-                        foreach (var p in mostUsed) {
-                            var pr = new Project (p);
-                            pr.Tasks.AddRange (tasksTask.Result.Where (t => t.ProjectId == p.Id).ToList());
-                            mostUsedClient.Projects.Add (pr);
-                        }
-                        workspace.Clients.Add (mostUsedClient);
-                    }
-
-                    v.workspacesList.Add (workspace);
-                }
-
-                v.clientDataObjects.AddRange (clientsTask.Result);
-                v.SortEverything();
-
-            } finally {
-                v.UpdateCollection ();
-
-                if (shouldSubscribe) {
-                    v.subscriptionDataChange = bus.Subscribe<DataChangeMessage> (v.OnDataChange);
-                }
-            }
-
-            return v;
-        }
-
-        private void FillClientsBranchForWorkspace (Workspace workspace, List<ClientData> clients, IEnumerable<ProjectData> projects, Task<List<TaskData>> tasksTask)
-        {
-            foreach (var clientData in clients) {
-                Client client;
-                Guid? clientId = null;
-
-                if (workspace.Clients.Count == 0) { // first element
-                    client = new Client (workspace.Data);
-                    client.IsNoClient = true;
-                    client.Projects.Add (new Project (workspace.Data));
-                } else {
-                    client = new Client (clientData);
-                    clientId = clientData.Id;
-                }
-
-                foreach (var projectData in projects.Where (r => r.ClientId == clientId)) {
-                    var project = new Project (projectData);
-
-                    var tasks = tasksTask.Result.Where (r => r.ProjectId == projectData.Id);
-                    project.Tasks.AddRange (tasks);
-
-                    client.Projects.Add (project);
-                }
-                workspace.Clients.Add (client);
-            }
-        }
-
-        private void FillProjectsBranchForWorkspace (Workspace workspace, IEnumerable<ProjectData> projects, Task<List<TaskData>> tasksTask)
-        {
-            foreach (var projectData in projects) {
-                var project = new Project (projectData);
-
-                var tasks = tasksTask.Result.Where (r => r.ProjectId == projectData.Id);
-                project.Tasks.AddRange (tasks);
-
-                workspace.Projects.Add (project);
-            }
-        }
-
-        private void SortEverything()
-        {
-            SortWorkspaces (workspacesList);
-            foreach (var ws in workspacesList) {
-
-                SortProjects (ws.Projects, clientDataObjects);
-                SortClients (ws.Clients);
-                foreach (var client in ws.Clients) {
-                    SortProjects (client.Projects, new List<ClientData> ());
-                    foreach (var project in client.Projects) {
-                        SortTasks (project.Tasks);
-                    }
-                }
-            }
-        }
-
-        public bool ApplyNameFilter (string filterString)
-        {
-            hasFilter = filterString.Length > 0;
-
-            //If no string, don't filter.
-            if (!hasFilter) {
-                UpdateCollection();
-                return true;
-            }
-
-            Workspace source;
-
-            // If old filter is contained in the new filter, search an already filtered list.
-            var searchFromPrevious = filter != null && filteredList != null && workspacesList[currentWorkspaceIndex].Data.Id == filteredList.Data.Id && filterString.ToLower().Contains (filter);
-            source = searchFromPrevious ? filteredList : workspacesList [currentWorkspaceIndex];
-
-            filteredList = new Workspace (workspacesList[currentWorkspaceIndex].Data);
-            filter = filterString.ToLower();
-
-            switch (sortBy) {
-            case SortProjectsBy.Clients:
-
-                foreach (var client in source.Clients) {
-                    Client cl;
-
-                    if (client.Data == null) {
-                        cl = new Client (workspacesList [currentWorkspaceIndex].Data);
-                        if (cl.IsMostUsed) {
-                            cl.IsMostUsed = client.IsMostUsed;
-                        } else if (cl.IsNoClient) {
-                            cl.IsNoClient = client.IsNoClient;
-                        }
-                    } else {
-                        cl = new Client (client.Data);
-                    }
-                    if (client.Data != null && client.Data.Name.ToLower().Contains (filter)) {
-                        cl.Projects.AddRange (client.Projects);
-                    } else {
-                        foreach (var project in client.Projects) {
-                            if (project.Data != null && project.Data.Name != null && project.Data.Name.ToLower().Contains (filter)) {
-                                cl.Projects.Add (project);
-                            } else { // Maybe in the tasks
-                                foreach (var task in project.Tasks) {
-                                    if (task.Name != null && task.Name.ToLower().Contains (filter)) {
-                                        cl.Projects.Add (project);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (cl.Projects.Count > 0) {
-                        filteredList.Clients.Add (cl);
-                    }
-                }
-                break;
-
-            case SortProjectsBy.Projects:
-
-                foreach (var project in source.Projects) {
-                    if (project.Data == null) {
-                        continue;
-                    }
-                    var projectModel = new ProjectModel (project.Data);
-                    if (projectModel.Name.ToLower().Contains (filter)) {
-                        filteredList.Projects.Add (project);
-                        continue;
-                    }
-
-                    if (projectModel.Client != null && projectModel.Client.Name.ToLower().Contains (filter)) {
-                        filteredList.Projects.Add (project);
-                        continue;
-                    }
-
-                    foreach (var task in project.Tasks) {
-                        if (task.Name.ToLower().Contains (filter)) {
-                            filteredList.Projects.Add (project);
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-            UpdateCollection();
-            return filteredList.Clients.Count != 0 || filteredList.Projects.Count != 1;
-
-        }
-
-        private static void SortWorkspaces (List<Workspace> data)
-        {
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-            data.Sort ((a, b) => {
-                if (user != null) {
-                    if (a.Data != null && a.Data.Id == user.DefaultWorkspaceId) {
-                        return -1;
-                    }
-                    if (b.Data != null && b.Data.Id == user.DefaultWorkspaceId) {
-                        return 1;
-                    }
-                }
-
-                var aName = a.Data != null ? (a.Data.Name ?? String.Empty) : String.Empty;
-                var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
-                return String.Compare (aName, bName, StringComparison.Ordinal);
-            });
-        }
-
-        private void SortProjects (List<Project> data, List<ClientData> clients)
-        {
-            data.Sort ((a, b) => {
-                if (a.IsNoProject != b.IsNoProject) {
-                    return a.IsNoProject ? -1 : 1;
-                }
-                var res = 0;
-
-                if (sortBy == SortProjectsBy.Clients) {
-                    var aName = a.Data != null ? (a.Data.Name ?? String.Empty) : String.Empty;
-                    var bName = b.Data != null ? (b.Data.Name ?? String.Empty) : String.Empty;
-                    res = String.Compare (aName, bName, StringComparison.InvariantCulture);
-                } else {
-                    // Try to order by client name when same project name
-                    var aClient = a.Data != null ? clients.FirstOrDefault (r => r.Id == a.Data.ClientId) : null;
-                    var bClient = b.Data != null ? clients.FirstOrDefault (r => r.Id == b.Data.ClientId) : null;
-
-                    var aClientName = aClient != null ? aClient.Name ?? String.Empty : String.Empty;
-                    var bClientName = bClient != null ? bClient.Name ?? String.Empty : String.Empty;
-
-                    res = String.Compare (aClientName, bClientName, StringComparison.InvariantCulture);
-                }
-
-                return res;
-            });
-        }
-
-        private static void SortClients (List<Client> data)
-        {
-            data.Sort ((a, b) => {
-                if (data.IndexOf (a) == data.IndexOf (b)) {
-                    return 0;
-                }
-
-                if (a.IsMostUsed != b.IsMostUsed) {
-                    return a.IsMostUsed ? -1 : 1;
-                }
-
-                if (a.IsNoClient != b.IsNoClient) {
-                    return a.IsNoClient ? -1 : 1;
-                }
-
-                return String.Compare (
-                           a.Data.Name ?? String.Empty,
-                           b.Data.Name ?? String.Empty,StringComparison.InvariantCulture
-                       );
-            });
-        }
-
-        private static void SortTasks (List<TaskData> data)
-        {
-            data.Sort ((a, b) => String.Compare (
-                           a.Name ?? String.Empty,
-                           b.Name ?? String.Empty,
-                           StringComparison.InvariantCulture
-                       ));
-        }
-
-        private void UpdateCollection ()
-        {
-            dataObjects.Clear ();
-
-            if (workspacesList == null) {
-                return;
-            }
-
-            Workspace ws;
-            ws = hasFilter ? filteredList : workspacesList [currentWorkspaceIndex];
-            switch (sortBy) {
-            case SortProjectsBy.Clients:
-
-                foreach (var client in ws.Clients) {
-                    if (client.Projects.Count == 0) {
-                        continue;
-                    }
-
-                    dataObjects.Add (client);
-                    foreach (var project in client.Projects) {
-                        dataObjects.Add (project);
-                        if (unfoldedTaskProject != null && project == unfoldedTaskProject) {
-                            foreach (var task in project.Tasks) {
-                                dataObjects.Add (task);
-                            }
-                        }
-                    }
-                }
-                break;
-            default:
-
-                foreach (var project in ws.Projects) {
-                    dataObjects.Add (project);
-                    if (unfoldedTaskProject != null && project == unfoldedTaskProject) {
-                        foreach (var task in project.Tasks) {
-                            dataObjects.Add (task);
-                        }
-                    }
-                }
-                var mostUsedClient = ws.Clients.FirstOrDefault (c => c.IsMostUsed);
-                if (mostUsedClient != null) {
-                    dataObjects.InsertRange (1, mostUsedClient.Projects);
-                }
-                break;
-            }
-
-            OnUpdated ();
-        }
-
-        public IEnumerable<object> Data
-        {
-            get {
-                return dataObjects;
-            }
-        }
-
-        public int Count
-        {
-            get {
-                return dataObjects.Count;
-            }
-        }
-
-        public int CountWorkspaces
-        {
-            get {
-                return workspacesList.Count;
-            }
-        }
-
-        public List<Workspace> Workspaces
-        {
-            get {
-                return workspacesList;
-            }
-        }
-
-        public int CurrentWorkspaceIndex
-        {
-            get {
-                return currentWorkspaceIndex;
+                return workspaceId;
             } set {
-                if (workspacesList.Count > value) {
-                    currentWorkspaceIndex = value;
+                if (workspaceId == value) {
+                    return;
                 }
-                UpdateCollection ();
+                workspaceId = value;
+                CreateSortedCollection ();
             }
         }
 
-        public class Workspace
+        private void CreateSortedCollection ()
         {
-            private WorkspaceData dataObject;
-            private readonly List<Project> projects = new List<Project> ();
-            private readonly List<Client> clients = new List<Client> ();
+            // Reset collection.
+            Clear ();
 
-            public Workspace (WorkspaceData dataObject)
-            {
-                this.dataObject = dataObject;
-                projects.Add (new Project (dataObject));
-            }
+            // TODO: Try with a grouping method
+            // using linq
 
-            public WorkspaceData Data
-            {
-                get { return dataObject; }
-                set {
-                    if (value == null) {
-                        throw new ArgumentNullException ("value");
+            if (sortBy == SortProjectsBy.Clients) {
+
+                // Add no client section
+                Add (new ClientData ());
+                Add (GetEmptyProject ());
+                AddRange (projects.Where (p => p.ClientId == null && p.WorkspaceId == workspaceId));
+
+                // Add normal sections
+                var filteredClients = clients.Where (p => p.WorkspaceId == workspaceId);
+                foreach (var item in filteredClients) {
+                    var filteredProjects = projects.Where (p => p.ClientId == item.Id && p.WorkspaceId == workspaceId).ToList ();
+                    if (filteredProjects.Count > 0) {
+                        Add (item);
+                        AddRange (filteredProjects);
                     }
-                    if (dataObject.Id != value.Id) {
-                        throw new ArgumentException ("Cannot change Id of the workspace.", "value");
-                    }
-                    dataObject = value;
                 }
-            }
-
-            public List<Project> Projects
-            {
-                get { return projects; }
-            }
-
-            public bool HasNoProjects
-            {
-                get {
-                    return Projects.Count == 1 && Projects[0].IsNoProject;
-                }
-            }
-            public List<Client> Clients
-            {
-                get { return clients; }
+            } else {
+                Add (GetEmptyProject ());
+                AddRange (projects.Where (p => p.WorkspaceId == workspaceId));
             }
         }
 
-        public class Client
+        public void AddTasks (ProjectData project)
         {
-            private ClientData dataObject;
-            private readonly Guid workspaceId;
-            private readonly List<Project> projects = new List<Project> ();
-
-            public Client (ClientData dataObject)
-            {
-                this.dataObject = dataObject;
-                workspaceId = dataObject.WorkspaceId;
-            }
-
-            public Client (WorkspaceData workspaceData)
-            {
-                dataObject = null;
-                workspaceId = workspaceData.Id;
-            }
-
-            public bool IsNoClient { get; set; }
-
-            public bool IsMostUsed { get; set; }
-
-            public Guid WorkspaceId
-            {
-                get { return dataObject != null ? dataObject.WorkspaceId : workspaceId; }
-            }
-
-            public ClientData Data
-            {
-                get { return dataObject; }
-                set {
-                    if (value == null) {
-                        throw new ArgumentNullException ("value");
-                    }
-
-                    if (dataObject.Id != value.Id) {
-                        throw new ArgumentException ("Cannot change Id of the project.", "value");
-                    }
-                    dataObject = value;
-                }
-            }
-
-            public List<Project> Projects
-            {
-                get { return projects; }
-            }
+            RemoveTasks ();
+            var index = this.IndexOf (p => p.Id == project.Id);
+            InsertRange (tasks.Where (p => p.ProjectId == project.Id), index);
         }
 
-        public class Project
+        public void RemoveTasks ()
         {
-            private ProjectData dataObject;
-            private readonly List<TaskData> tasks = new List<TaskData> ();
-            private readonly Guid workspaceId;
+            RemoveRange (this.OfType<TaskData> ());
+        }
 
-            public Project (ProjectData dataObject)
-            {
-                this.dataObject = dataObject;
-                workspaceId = dataObject.WorkspaceId;
-            }
-
-            public Project (WorkspaceData workspaceData)
-            {
-                dataObject = null;
-                workspaceId = workspaceData.Id;
-            }
-
-            public bool IsNoProject
-            {
-                get { return dataObject == null; }
-            }
-
-            public bool IsNewProject
-            {
-                get { return dataObject != null && dataObject.Id == Guid.Empty; }
-            }
-
-            public Guid WorkspaceId
-            {
-                get { return dataObject != null ? dataObject.WorkspaceId : workspaceId; }
-            }
-
-            public ProjectData Data
-            {
-                get { return dataObject; }
-                set {
-                    if (value == null) {
-                        throw new ArgumentNullException ("value");
-                    }
-                    if (dataObject.Id != value.Id) {
-                        throw new ArgumentException ("Cannot change Id of the project.", "value");
-                    }
-                    dataObject = value;
-                }
-            }
-
-            public List<TaskData> Tasks
-            {
-                get { return tasks; }
+        public IEnumerable<CommonData> Data
+        {
+            get {
+                return this;
             }
         }
 
-        public enum SortProjectsBy {
-            Projects,
-            Clients
+        public class SuperProjectData : ProjectData
+        {
+            public string ClientName { get; private set; }
+            public int TaskNumber { get; private set; }
+            public bool IsEmpty { get; private set; }
+
+            public SuperProjectData (ProjectData dataObject,
+                                     ClientData client, int taskNumber, bool isEmpty = false) : base (dataObject)
+            {
+                TaskNumber = taskNumber;
+                IsEmpty = isEmpty;
+                ClientName = client != null ? client.Name : "";
+            }
+        }
+
+        private SuperProjectData GetEmptyProject ()
+        {
+            return new SuperProjectData (new ProjectData (), null, 0, true);
         }
     }
 }

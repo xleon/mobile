@@ -73,7 +73,12 @@ namespace Toggl.Joey.UI.Adapters
             }
 
             if (e.Action == NotifyCollectionChangedAction.Remove) {
-                NotifyItemRemoved (e.OldStartingIndex);
+
+                if (e.OldItems.Count == 1) {
+                    NotifyItemRemoved (e.OldStartingIndex);
+                } else {
+                    NotifyItemRangeRemoved (e.OldStartingIndex, e.OldItems.Count);
+                }
             }
 
             if (e.Action == NotifyCollectionChangedAction.Move) {
@@ -83,7 +88,7 @@ namespace Toggl.Joey.UI.Adapters
 
         protected T GetItem (int index)
         {
-            return CollectionData.Data.ElementAt (index);
+            return index < CollectionData.Count ? CollectionData.Data.ElementAt (index) : default (T);
         }
 
         public override int GetItemViewType (int position)
@@ -126,6 +131,10 @@ namespace Toggl.Joey.UI.Adapters
         {
             public EmptyFooter (View root) : base (root)
             {
+                var retryLayout = ItemView.FindViewById<RelativeLayout> (Resource.Id.RetryLayout);
+                var progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);
+                progressBar.Visibility = ViewStates.Invisible;
+                retryLayout.Visibility = ViewStates.Invisible;
             }
         }
     }

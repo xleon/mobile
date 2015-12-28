@@ -73,7 +73,8 @@ namespace Toggl.Phoebe.Data
                         "SELECT p.* FROM ", projectTbl, " AS p ",
                         "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
                         "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
-                        "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)");
+                        "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)",
+                        "ORDER BY p.Name ");
             return await ds.QueryAsync<ProjectData> (q, userId);
         }
 

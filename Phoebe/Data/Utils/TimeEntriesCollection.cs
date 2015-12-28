@@ -7,7 +7,6 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
@@ -99,7 +98,7 @@ namespace Toggl.Phoebe.Data.Utils
                     timeHolders.Add (CreateTimeHolder (isGrouped, entry)); // Insert
                 }
             } else {
-                var isAffectedByDelete = false;
+                bool isAffectedByDelete;
                 for (var i = 0; i < timeHolders.Count; i++) {
                     var updatedHolder = timeHolders [i].UpdateOrDelete (entry, out isAffectedByDelete);
 

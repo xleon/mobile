@@ -1,8 +1,20 @@
+<style>
+    .centered {
+        margin: auto;
+        display: block;
+    }
+    .max-width-400 {
+        max-width: 400px;
+    }
+</style>
+
 # Unidirectional Architecture Proposal
 
 This document proposes a new architecture for Toggl mobile apps to simplify the different app layers and the exchanges among them. The overall pattern can be seen in the following diagram.
 
-![Unidirectional Architecture Diagram](Diagrams/unidirectional_architecture.mmd.png)
+<div class="max-width-400 centered">
+![](Diagrams/unidirectional_architecture.mmd.png)
+</div>
 
 > The thick arrows represent subscriptions to Rx Observables.
 

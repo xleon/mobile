@@ -9,10 +9,11 @@ graph LR
 
     subgraph PROCESS
     B2[Dispatcher] --> C2["Action Register (API)"]
-    C2 --> B2
+    C2 -- Asynchronous --> B2
     end
 
     subgraph DISPATCH
-    A1[View Models] ==> B1[Dispatcher]
+    A1[View Models] --> B1["Dispatcher (Scheduler)"]
+    C1[Push Notifications] --> B1
     end
     

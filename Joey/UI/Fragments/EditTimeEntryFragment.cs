@@ -9,11 +9,13 @@ using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
+using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -137,8 +139,8 @@ namespace Toggl.Joey.UI.Fragments
                 .Show (FragmentManager, "stop_time_dialog");
             };
 
-            ProjectField.TextField.Click += OnProjectEditTextClick;
-            ProjectField.Click += OnProjectEditTextClick;
+            ProjectField.TextField.Click += (sender, e) => OpenProjectListActivity ();
+            ProjectField.Click += (sender, e) => OpenProjectListActivity ();
             TagsField.OnPressTagField += OnTagsEditTextClick;
 
             HasOptionsMenu = true;
@@ -178,6 +180,13 @@ namespace Toggl.Joey.UI.Fragments
                     SaveMenuItem.SetVisible (ViewModel.IsManual);
                 }
             });
+
+            // If project list needs to be opened?
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntryStartedByFAB) {
+                LogTimeEntriesListFragment.NewTimeEntryStartedByFAB = false;
+                OpenProjectListActivity ();
+            }
         }
 
         public override void OnDestroyView ()
@@ -194,7 +203,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnPause ();
         }
 
-        private void OnProjectEditTextClick (object sender, EventArgs e)
+        private void OpenProjectListActivity ()
         {
             var intent = new Intent (Activity, typeof (ProjectListActivity));
             intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());

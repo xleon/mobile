@@ -26,11 +26,8 @@ namespace Toggl.Joey.Data
         private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
         private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
-        private const string GotWelcomeMessageKey = "gotWelcomeMessage";
-        private const string ReadDurOnlyNoticeKey = "readDurOnlyNotice";
         private const string IdleNotificationKey = "idleNotification";
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
-        private const string ReadContinueDialogKey = "readContinueDialog";
         private const string ReportsCurrentItemKey = "reportsCurrentItem";
         private const string JoeyShowNotificationKey = "disableNotificationKey";
         private const string JoeyProjectSortKey = "projectSortKey";
@@ -215,7 +212,7 @@ namespace Toggl.Joey.Data
 
         public bool ChooseProjectForNew
         {
-            get { return (GetInt (ChooseProjectForNewKey) ?? 1) == 1; }
+            get { return GetInt (ChooseProjectForNewKey) == 1; }
             set {
                 SetInt (ChooseProjectForNewKey, value ? 1 : 0);
                 OnSettingChanged (PropertyChooseProjectForNew);
@@ -241,39 +238,6 @@ namespace Toggl.Joey.Data
         {
             get { return GetString (PhoebeLastAppVersionKey); }
             set { SetString (PhoebeLastAppVersionKey, value); }
-        }
-
-        public static readonly string PropertyGotWelcomeMessage = GetPropertyName (s => s.GotWelcomeMessage);
-
-        public bool GotWelcomeMessage
-        {
-            get { return GetInt (GotWelcomeMessageKey) == 1; }
-            set {
-                SetInt (GotWelcomeMessageKey, value ? 1 : 0);
-                OnSettingChanged (PropertyGotWelcomeMessage);
-            }
-        }
-
-        public static readonly string PropertyReadDurOnlyNotice = GetPropertyName (s => s.ReadDurOnlyNotice);
-
-        public bool ReadDurOnlyNotice
-        {
-            get { return GetInt (ReadDurOnlyNoticeKey) == 1; }
-            set {
-                SetInt (ReadDurOnlyNoticeKey, value ? 1 : 0);
-                OnSettingChanged (PropertyReadDurOnlyNotice);
-            }
-        }
-
-        public static readonly string PropertyReadContinueDialog = GetPropertyName (s => s.ReadContinueDialog);
-
-        public bool ReadContinueDialog
-        {
-            get { return GetInt (ReadContinueDialogKey) == 1; }
-            set {
-                SetInt (ReadContinueDialogKey, value ? 1 : 0);
-                OnSettingChanged (PropertyReadContinueDialog);
-            }
         }
 
         public static readonly string PropertyLastReportZoomViewed = GetPropertyName (s => s.LastReportZoomViewed);

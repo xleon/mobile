@@ -140,7 +140,7 @@
     <string name="SettingsGeneralAskProjectDesc">Starting a new time entry asks for project.</string>
     <string name="SettingsGeneralMobileTagTitle">\"Mobile\" tag</string>
     <string name="SettingsGeneralMobileTagDesc">Automatically tag created time entries with \"mobile\" tag.</string>
-    <string name="SettingsGeneralGroupedEntriesTitle">Grouped entries (Alpha state)</string>
+    <string name="SettingsGeneralGroupedEntriesTitle">Grouped entries</string>
     <string name="SettingsGeneralGroupedEntriesDesc">Group similar time entries as a single item.</string>
     <string name="SettingsGeneralShowNotificationTitle">Running entry notification</string>
     <string name="SettingsGeneralShowNotificationDesc">Show the running entry as a notification.</string>

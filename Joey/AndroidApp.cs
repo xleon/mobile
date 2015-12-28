@@ -19,7 +19,6 @@ using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Xamarin;
 using XPlatUtils;
-using Toggl.Joey.UI.Activities;
 
 namespace Toggl.Joey
 {

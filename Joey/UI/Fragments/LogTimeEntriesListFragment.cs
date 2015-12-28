@@ -20,7 +20,6 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -31,6 +30,8 @@ namespace Toggl.Joey.UI.Fragments
         ItemTouchListener.IItemTouchListener,
         SwipeRefreshLayout.IOnRefreshListener
     {
+        public static bool NewTimeEntryStartedByFAB;
+
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
@@ -109,8 +110,22 @@ namespace Toggl.Joey.UI.Fragments
 
         public async void StartStopClick (object sender, EventArgs e)
         {
-            await ViewModel.StartStopTimeEntry ();
-            OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+            var timeEntryData = await ViewModel.StartStopTimeEntry ();
+
+            if (ViewModel.HasMore) {
+                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+            }
+
+            if (ViewModel.IsTimeEntryRunning) {
+
+                NewTimeEntryStartedByFAB = true;
+
+                var ids = new List<string> { timeEntryData.Id.ToString () };
+                var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
+                intent.PutExtra (EditTimeEntryActivity.IsGrouped,  false);
+                StartActivity (intent);
+            }
         }
 
         public override void OnDestroyView ()

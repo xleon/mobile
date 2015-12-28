@@ -116,6 +116,12 @@ namespace Toggl.Phoebe.Data.ViewModels
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
             model.StopTime += diffTime;
+            if (diffTime.TotalSeconds > 0) {
+
+                model.StartTime = model.StartTime.Truncate (TimeSpan.TicksPerMinute);
+                model.StopTime = ((DateTime)model.StopTime).Truncate (TimeSpan.TicksPerMinute);
+            }
+
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 

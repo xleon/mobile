@@ -30,7 +30,7 @@ namespace Toggl.Joey.Data
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
         private const string ReportsCurrentItemKey = "reportsCurrentItem";
         private const string JoeyShowNotificationKey = "disableNotificationKey";
-        private const string JoeyProjectSortKey = "projectSortKey";
+        private const string PhoebeProjectSortKey = "projectSortKey";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -286,14 +286,13 @@ namespace Toggl.Joey.Data
             }
         }
 
-        public static readonly string PropertyProjectSort = GetPropertyName (s => s.ProjectSortCategory);
+        public static readonly string PropertyProjectSort = GetPropertyName (s => s.SortProjectsBy);
 
-        public string ProjectSortCategory
+        public string SortProjectsBy
         {
-            get { return (GetString (JoeyProjectSortKey)); }
+            get { return (GetString (PhoebeProjectSortKey)); }
             set {
-                SetString (JoeyProjectSortKey, value);
-                OnSettingChanged (PropertyProjectSort);
+                SetString (PhoebeProjectSortKey, value);
             }
         }
     }

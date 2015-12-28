@@ -7,6 +7,8 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.Views;
+using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 

@@ -4,20 +4,22 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Collections.Generic;
 
-namespace Toggl.Phoebe
+namespace Toggl.Phoebe.Helpers
 {
     public static class LinqExtensions
     {
-        public static IObservable<IList<T>> TimedBuffer<T> (this IObservable<T> observable, int milliseconds)
+        /// <summary>
+        /// Filters out null results from chooser function
+        /// </summary>
+        public static IEnumerable<U> Choose<T,U> (this IEnumerable<T> items, Func<T,U> chooser)
+        where U : class
         {
-            if (milliseconds > 0) {
-                // TODO: This is firing up even if there're no events. Can it be improved?
-                return observable
-                       .Buffer (TimeSpan.FromMilliseconds (milliseconds))
-                       .Where (b => b.Count > 0);
-            } else {
-                return observable
-                .Select (x => new List<T> () { x });
+            foreach (var item in items)
+            {
+                var res = chooser (item);
+                if (res != null) {
+                    yield return res;
+                }
             }
         }
 

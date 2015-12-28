@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Phoebe.Data.Utils
 {

@@ -183,7 +183,7 @@ namespace Toggl.Joey.UI.Fragments
 
             // Configure option menu.
             ConfigureOptionMenu ();
-                    
+
             // If project list needs to be opened?
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntryStartedByFAB) {

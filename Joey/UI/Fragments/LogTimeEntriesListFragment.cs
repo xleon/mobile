@@ -120,7 +120,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
 
-            if (ViewModel.HasMore) {
+            if (ViewModel.HasMoreItems) {
                 OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
             }
 

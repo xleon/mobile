@@ -223,4 +223,6 @@
     <string name="TimerComponentNoProject">(no project)</string>
     <string name="TimerComponentNoDescription">(no description)</string>
     <string name="WearEntryDefaultDescription">wear entry</string>
+    <string name="TimeEntriesListFooterError">An error ocurred downloading data</string>
+    <string name="TimeEntriesListFooterTryAgain">Try again</string>
 </resources>

@@ -104,10 +104,12 @@ namespace Toggl.Joey.UI.Fragments
 
             DescriptionField = view.FindViewById<TogglField> (Resource.Id.Description)
                                .DestroyAssistView().DestroyArrow()
-                               .SetName (Resource.String.BaseEditTimeEntryFragmentDescription);
+                               .SetName (Resource.String.EditTimeEntryFragmentDescription)
+                               .SetHint (Resource.String.EditTimeEntryFragmentDescriptionHint);
 
             ProjectField = view.FindViewById<TogglField> (Resource.Id.Project)
-                           .SetName (Resource.String.BaseEditTimeEntryFragmentProject)
+                           .SetName (Resource.String.EditTimeEntryFragmentProject)
+                           .SetHint (Resource.String.EditTimeEntryFragmentProjectHint)
                            .SimulateButton();
 
             TagsField = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);

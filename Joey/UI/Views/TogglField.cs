@@ -80,6 +80,18 @@ namespace Toggl.Joey.UI.Views
             return this;
         }
 
+        public TogglField SetHint (string name)
+        {
+            TextField.Hint = name;
+            return this;
+        }
+
+        public TogglField SetHint (int resourceId)
+        {
+            TextField.SetHint (resourceId);
+            return this;
+        }
+
         public TogglField SetAssistViewTitle (string title)
         {
             assistView.Visibility = !string.IsNullOrEmpty (title) ? ViewStates.Visible : ViewStates.Gone;

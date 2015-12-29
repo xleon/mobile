@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Android.App;
 using Android.Content;
 using Android.Graphics;
 using Android.OS;
@@ -21,11 +22,11 @@ using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
-using Android.App;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class EditGroupedTimeEntryFragment : Fragment
+    public class EditGroupedTimeEntryFragment : Fragment,
+        ChangeTimeEntryDurationDialogFragment.IChangeDuration
     {
         private static readonly string TimeEntriesIdsArgument = "com.toggl.timer.time_entries_ids";
 
@@ -44,6 +45,7 @@ namespace Toggl.Joey.UI.Fragments
         private TextView stopTimeEditLabel;
         private ActionBar toolbar;
         private ListView timeEntriesListView;
+        private TimeEntryData editedTimeEntry;
 
         private IList<string> TimeEntryIds
         {
@@ -102,7 +104,6 @@ namespace Toggl.Joey.UI.Fragments
 
             ProjectField.TextField.Click += OnProjectEditTextClick;
             ProjectField.Click += OnProjectEditTextClick;
-
             timeEntriesListView = view.FindViewById<ListView> (Resource.Id.timeEntryGroupListView);
 
             HasOptionsMenu = true;
@@ -145,9 +146,23 @@ namespace Toggl.Joey.UI.Fragments
 
         private void HandleTimeEntryClick (TimeEntryData timeEntry)
         {
-            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-            intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> {timeEntry.Id.ToString()});
-            StartActivity (intent);
+            if (!timeEntry.StopTime.HasValue) {
+                return;
+            }
+
+            // TODO: Try to find a better persistence
+            // for the time entry value.
+            editedTimeEntry = timeEntry;
+            ChangeTimeEntryDurationDialogFragment.NewInstance (timeEntry.StopTime.Value, timeEntry.StartTime)
+            .SetChangeDurationHandler (this)
+            .Show (FragmentManager, "duration_dialog");
+        }
+
+        public void OnChangeDuration (TimeSpan newDuration)
+        {
+            if (editedTimeEntry != null) {
+                ViewModel.ChangeTimeEntryDuration (newDuration, editedTimeEntry);
+            }
         }
 
         private void OnProjectEditTextClick (object sender, EventArgs e)

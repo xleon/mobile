@@ -105,6 +105,18 @@ namespace Toggl.Phoebe.Data.ViewModels
             UpdateView ();
         }
 
+        public void ChangeTimeEntryDuration (TimeSpan newDuration, TimeEntryData timeEntryData)
+        {
+            // TODO: for the moment, old style methods
+            // using existing models.
+            var entryModel = new TimeEntryModel (timeEntryData);
+            entryModel.SetDuration (newDuration);
+            timeEntryList [timeEntryList.IndexOf (p => p.Id == entryModel.Id)] = entryModel.Data;
+            UpdateView ();
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Group Duration";
+        }
+
         public async Task SaveModel ()
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
@@ -131,36 +143,40 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private void UpdateView ()
         {
-            StartDate = timeEntryList.FirstOrDefault ().StartTime.ToLocalTime ();
-            StopDate = model.StopTime.HasValue ? model.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
-            // TODO: check substring function for long times
-            var listDuration = GetTimeEntryListDuration (timeEntryList);
-            Duration = TimeSpan.FromSeconds (listDuration.TotalSeconds).ToString ().Substring (0, 8);
-            Description = model.Description;
-            ProjectName = model.Project != null ? model.Project.Name : string.Empty;
-            ProjectColor = model.Project != null ? model.Project.Color : 0;
-            WorkspaceId = model.Workspace.Id;
+            // Ensure that this content runs in UI thread
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
 
-            if (model.Project != null) {
-                if (model.Project.Client != null) {
-                    ClientName = model.Project.Client.Name;
+                StartDate = timeEntryList.FirstOrDefault ().StartTime.ToLocalTime ();
+                StopDate = model.StopTime.HasValue ? model.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
+                // TODO: check substring function for long times
+                var listDuration = GetTimeEntryListDuration (timeEntryList);
+                Duration = TimeSpan.FromSeconds (listDuration.TotalSeconds).ToString ().Substring (0, 8);
+                Description = model.Description;
+                ProjectName = model.Project != null ? model.Project.Name : string.Empty;
+                ProjectColor = model.Project != null ? model.Project.Color : 0;
+                WorkspaceId = model.Workspace.Id;
+
+                if (model.Project != null) {
+                    if (model.Project.Client != null) {
+                        ClientName = model.Project.Client.Name;
+                    }
                 }
-            }
 
-            if (model.State == TimeEntryState.Running && !IsRunning) {
-                IsRunning = true;
-                durationTimer.Start ();
-            } else if (model.State != TimeEntryState.Running) {
-                IsRunning = false;
-                durationTimer.Stop ();
-            }
+                if (model.State == TimeEntryState.Running && !IsRunning) {
+                    IsRunning = true;
+                    durationTimer.Start ();
+                } else if (model.State != TimeEntryState.Running) {
+                    IsRunning = false;
+                    durationTimer.Stop ();
+                }
 
-            if (TimeEntryCollection == null) {
-                TimeEntryCollection = new ObservableRangeCollection<TimeEntryData> ();
-            } else {
-                TimeEntryCollection.Clear ();
-            }
-            TimeEntryCollection.AddRange (timeEntryList);
+                if (TimeEntryCollection == null) {
+                    TimeEntryCollection = new ObservableRangeCollection<TimeEntryData> ();
+                } else {
+                    TimeEntryCollection.Clear ();
+                }
+                TimeEntryCollection.AddRange (timeEntryList);
+            });
         }
 
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)

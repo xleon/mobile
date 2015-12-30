@@ -172,29 +172,33 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private void UpdateView ()
         {
-            StartDate = model.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : model.StartTime.ToLocalTime ();
-            StopDate = model.StopTime.HasValue ? model.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
-            Duration = TimeSpan.FromSeconds (model.GetDuration ().TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
-            Description = model.Description;
-            ProjectName = model.Project != null ? model.Project.Name : string.Empty;
-            IsBillable = model.IsBillable;
-            IsPremium = model.Workspace.IsPremium;
-            WorkspaceId = model.Workspace.Id;
-            IsManual = model.State == TimeEntryState.New;
+            // Ensure that this content runs in UI thread
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
 
-            if (model.Project != null) {
-                if (model.Project.Client != null) {
-                    ClientName = model.Project.Client.Name;
+                StartDate = model.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : model.StartTime.ToLocalTime ();
+                StopDate = model.StopTime.HasValue ? model.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
+                Duration = TimeSpan.FromSeconds (model.GetDuration ().TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
+                Description = model.Description;
+                ProjectName = model.Project != null ? model.Project.Name : string.Empty;
+                IsBillable = model.IsBillable;
+                IsPremium = model.Workspace.IsPremium;
+                WorkspaceId = model.Workspace.Id;
+                IsManual = model.State == TimeEntryState.New;
+
+                if (model.Project != null) {
+                    if (model.Project.Client != null) {
+                        ClientName = model.Project.Client.Name;
+                    }
                 }
-            }
 
-            if (model.State == TimeEntryState.Running && !IsRunning) {
-                IsRunning = true;
-                durationTimer.Start ();
-            } else if (model.State != TimeEntryState.Running) {
-                IsRunning = false;
-                durationTimer.Stop ();
-            }
+                if (model.State == TimeEntryState.Running && !IsRunning) {
+                    IsRunning = true;
+                    durationTimer.Start ();
+                } else if (model.State != TimeEntryState.Running) {
+                    IsRunning = false;
+                    durationTimer.Stop ();
+                }
+            });
         }
 
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)

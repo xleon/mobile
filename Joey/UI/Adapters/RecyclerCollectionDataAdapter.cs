@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using Android.Support.V7.Widget;
 using Android.Views;
+using Android.Widget;
 using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Adapters

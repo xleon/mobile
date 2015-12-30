@@ -94,7 +94,7 @@ namespace Toggl.Phoebe.Data.Views
                     return;
                 }
                 projectNameFilter = value;
-                var prjs = string.IsNullOrEmpty (value) ? projects : projects.Where (p => p.Name.Contains (projectNameFilter));
+                var prjs = string.IsNullOrEmpty (value) ? projects : projects.Where (p => p.Name.ToLower ().Contains (projectNameFilter.ToLower ()));
                 CreateSortedCollection (prjs);
             }
         }
@@ -102,10 +102,6 @@ namespace Toggl.Phoebe.Data.Views
         private void CreateSortedCollection (IEnumerable<SuperProjectData> projectList)
         {
             var enumerable = projectList as IList<SuperProjectData> ?? projectList.ToList ();
-            if (!enumerable.Any ()) {
-                return;
-            }
-
             var data = new List<CommonData> ();
 
             // TODO: Maybe group using linq is clearer

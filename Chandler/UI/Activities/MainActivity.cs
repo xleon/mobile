@@ -24,7 +24,7 @@ namespace Toggl.Chandler.UI.Activities
         private GoogleApiClient googleApiClient;
         private PagesAdapter adapter;
         private List<SimpleTimeEntryData> timeEntries = new List<SimpleTimeEntryData> ();
-        private const int RebindTime = 2000;
+        private const int RebindTime = 4000;
 
         protected override void OnCreate (Bundle savedInstanceState)
         {

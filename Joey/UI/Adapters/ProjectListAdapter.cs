@@ -106,9 +106,7 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
                 TasksButton = root.FindViewById<ImageButton> (Resource.Id.TasksButton);
-                TasksButton.Click += (sender, e) => {
-
-                };
+                TasksButton.Click += (sender, e) => adapter.collectionView.AddTasks (projectData);
                 root.SetOnClickListener (this);
             }
 

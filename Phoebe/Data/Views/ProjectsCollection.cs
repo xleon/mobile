@@ -59,6 +59,7 @@ namespace Toggl.Phoebe.Data.Views
             return v;
         }
 
+        #region List operations
         public SortProjectsBy SortBy
         {
             get {
@@ -98,6 +99,7 @@ namespace Toggl.Phoebe.Data.Views
                 CreateSortedCollection (prjs);
             }
         }
+        #endregion
 
         private void CreateSortedCollection (IEnumerable<SuperProjectData> projectList)
         {
@@ -132,14 +134,17 @@ namespace Toggl.Phoebe.Data.Views
 
         public void AddTasks (ProjectData project)
         {
-            RemoveTasks ();
-            var index = this.IndexOf (p => p.Id == project.Id);
-            InsertRange (tasks.Where (p => p.ProjectId == project.Id), index);
-        }
+            // Remove previous tasks
+            var oldTaskIndex = this.IndexOf (p => p is TaskData);
+            if (oldTaskIndex != -1) {
+                RemoveRange (this.OfType<TaskData> ());
+            }
 
-        public void RemoveTasks ()
-        {
-            RemoveRange (this.OfType<TaskData> ());
+            // Insert new tasks
+            var newTaskIndex = this.IndexOf (p => p.Id == project.Id) + 1;
+            if (oldTaskIndex != newTaskIndex) {
+                InsertRange (tasks.Where (p => p.ProjectId == project.Id), newTaskIndex);
+            }
         }
 
         public IEnumerable<CommonData> Data

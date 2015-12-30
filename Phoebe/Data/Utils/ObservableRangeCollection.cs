@@ -30,13 +30,16 @@ namespace Toggl.Phoebe.Data.Utils
                                      NotifyCollectionChangedAction.Move, updatedItem, newIndex, oldIndex));
         }
 
-        public void InsertRange (IEnumerable<T> collection, int newIndex)
+        public void InsertRange (IEnumerable<T> collection, int startingIndex)
         {
             if (collection == null) { throw new ArgumentNullException ("collection"); }
-
-            int startingIndex = newIndex - 1;
-            foreach (var item in collection) { Items.Insert (startingIndex++, item); }
-            OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Add, collection as List<T>, newIndex));
+            var enumerable = collection.ToList ();
+            if (!enumerable.Any ()) {
+                return;
+            }
+            int counter = startingIndex;
+            foreach (var item in enumerable) { Items.Insert (counter, item); counter++; }
+            OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Add, enumerable, startingIndex));
         }
 
         public void AddRange (IEnumerable<T> collection)
@@ -46,7 +49,6 @@ namespace Toggl.Phoebe.Data.Utils
             if (!enumerable.Any ()) {
                 return;
             }
-
             int startingIndex = Items.Count;
             foreach (var i in enumerable) { Items.Add (i); }
             OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Add, enumerable, startingIndex));

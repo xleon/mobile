@@ -1,12 +1,17 @@
-﻿using System;
+﻿#if __TESTS__
+#else
+using System;
 using System.Collections.Generic;
+using Mindscape.Raygun4Net;
+using Mindscape.Raygun4Net.Messages;
 using Toggl.Phoebe.Logging;
-using Xamarin;
 
 namespace Toggl.Phoebe.Logging
 {
     public class LogClient : ILoggerClient
     {
+        private readonly RaygunClient client = new RaygunClient (Build.RaygunApiKey);
+
         public LogClient (Action platformInitAction)
         {
             if (platformInitAction != null) {
@@ -19,21 +24,16 @@ namespace Toggl.Phoebe.Logging
         public void SetUser (string id, string email = null, string name = null)
         {
             if (id != null) {
-                var traits = new Dictionary<string, string> {
-                    { Insights.Traits.Email, email },
-                    { Insights.Traits.Name, name }
+                client.UserInfo = new RaygunIdentifierMessage (id) {
+                    IsAnonymous = false,
+                    Email = email,
+                    FullName = name
                 };
-                Insights.Identify (id, traits);
             }
         }
 
         public void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null)
         {
-            var reportSeverity = Insights.Severity.Error;
-            if (severity == ErrorSeverity.Warning) {
-                reportSeverity = Insights.Severity.Warning;
-            }
-
             var extraData = new Dictionary<string, string> ();
             foreach (var item in extraMetadata) {
                 if (item.Value != null) {
@@ -44,11 +44,8 @@ namespace Toggl.Phoebe.Logging
                 }
             }
 
-            if (severity == ErrorSeverity.Info) {
-                Insights.Track ("Info", extraData);
-            } else {
-                Insights.Report (e, extraData, reportSeverity);
-            }
+            var tags = new List<string> { Enum.GetName (typeof (ErrorSeverity), severity) };
+            client.SendInBackground (e, tags, extraData);
         }
 
         public string DeviceId { get; set; }
@@ -59,4 +56,5 @@ namespace Toggl.Phoebe.Logging
 
     }
 }
+#endif
 

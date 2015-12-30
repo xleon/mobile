@@ -23,11 +23,14 @@ namespace Toggl.Phoebe.Helpers
             }
         }
 
+        /// <summary>
+        /// Replaces the first item for which predicates evaluates to true, or adds the replacement at the end
+        /// </summary>
         public static IEnumerable<T> ReplaceOrAppend<T> (this IEnumerable<T> items, T replacement, Func<T,bool> predicate)
         {
             var replaced = false;
             foreach (var item in items) {
-                if (predicate (item)) {
+                if (!replaced && predicate (item)) {
                     replaced = true;
                     yield return replacement;
                 } else {

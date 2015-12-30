@@ -1,36 +1,34 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Data.DataObjects;
-using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.Utils
+namespace Toggl.Phoebe
 {
-    public class TimeEntryInfo
+    public static partial class Store
     {
-        public ProjectData ProjectData { get; private set; }
-        public ClientData ClientData { get; private set; }
-        public TaskData TaskData { get; private set; }
-        public string Description { get; private set; }
-        public int Color { get; private set; }
-        public bool IsBillable { get; private set; }
-        public int NumberOfTags { get; private set; }
-
-        TimeEntryInfo ()
+        static Func<DataMsgUntyped, Task<StoreResultUntyped>> GetCallback (string tag)
         {
+            switch (tag) {
+            default:
+                return null;
+            }
         }
 
-        public static async Task<TimeEntryInfo> LoadAsync (TimeEntryData timeEntryData)
+        #region TimeEntryInfo
+        static async Task<TimeEntryInfo> LoadAsync (TimeEntry timeEntryData)
         {
             var info = new TimeEntryInfo ();
             info.ProjectData = timeEntryData.ProjectId.HasValue
-                               ? await GetProjectDataAsync (timeEntryData.ProjectId.Value)
-                               : new ProjectData ();
+                ? await GetProjectDataAsync (timeEntryData.ProjectId.Value)
+                : new ProjectData ();
             info.ClientData = info.ProjectData.ClientId.HasValue
-                              ? await GetClientDataAsync (info.ProjectData.ClientId.Value)
-                              : new ClientData ();
+                ? await GetClientDataAsync (info.ProjectData.ClientId.Value)
+                : new ClientData ();
             info.TaskData = timeEntryData.TaskId.HasValue
-                            ? await GetTaskDataAsync (timeEntryData.TaskId.Value)
-                            : new TaskData ();
+                ? await GetTaskDataAsync (timeEntryData.TaskId.Value)
+                : new TaskData ();
             info.Description = timeEntryData.Description;
             info.Color = (info.ProjectData.Id != Guid.Empty) ? info.ProjectData.Color : -1;
             info.IsBillable = timeEntryData.IsBillable;
@@ -42,35 +40,35 @@ namespace Toggl.Phoebe.Data.Utils
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             return await store.Table<ProjectData> ()
-                   .Where (m => m.Id == projectGuid)
-                   .FirstAsync ();
+                .Where (m => m.Id == projectGuid)
+                .FirstAsync ();
         }
 
         private static async Task<TaskData> GetTaskDataAsync (Guid taskId)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             return await store.Table<TaskData> ()
-                   .Where (m => m.Id == taskId)
-                   .FirstAsync ();
+                .Where (m => m.Id == taskId)
+                .FirstAsync ();
         }
 
         private static async Task<ClientData> GetClientDataAsync (Guid clientId)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             return await store.Table<ClientData> ()
-                   .Where (m => m.Id == clientId)
-                   .FirstAsync ();
+                .Where (m => m.Id == clientId)
+                .FirstAsync ();
         }
 
         private static Task<int> GetNumberOfTagsAsync (Guid timeEntryGuid)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             return store.Table<TimeEntryTagData>()
-                   .Where (t => t.TimeEntryId == timeEntryGuid)
-                   .CountAsync ();
+                .Where (t => t.TimeEntryId == timeEntryGuid)
+                .CountAsync ();
         }
 
-        private static async Task<ProjectData> UpdateProject (TimeEntryData newTimeEntry, ProjectData oldProjectData)
+        private static async Task<ProjectData> UpdateProject (TimeEntry newTimeEntry, ProjectData oldProjectData)
         {
             if (!newTimeEntry.ProjectId.HasValue) {
                 return new ProjectData ();
@@ -104,7 +102,7 @@ namespace Toggl.Phoebe.Data.Utils
             return oldClientData;
         }
 
-        private static async Task<TaskData> UpdateTask (TimeEntryData newTimeEntry, TaskData oldTaskData)
+        private static async Task<TaskData> UpdateTask (TimeEntry newTimeEntry, TaskData oldTaskData)
         {
             if (!newTimeEntry.TaskId.HasValue) {
                 return new TaskData ();
@@ -120,6 +118,7 @@ namespace Toggl.Phoebe.Data.Utils
 
             return oldTaskData;
         }
+        #endregion
     }
 }
 

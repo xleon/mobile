@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Toggl.Phoebe.Data;
 
-namespace Toggl.Phoebe.Data.Utils
+namespace Toggl.Phoebe.Models
 {
     public class DateHolder : IHolder
     {

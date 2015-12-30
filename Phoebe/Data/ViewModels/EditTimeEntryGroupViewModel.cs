@@ -77,12 +77,22 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public async Task SetProjectAndTask (Guid projectId, Guid taskId)
         {
+            Guid newWorkspaceId;
+
             // Set project to Model
-            var projectModel = new ProjectModel (projectId);
-            await projectModel.LoadAsync ();
-            model.Project = projectModel;
-            model.Workspace = projectModel.Workspace;
-            model.Task = new TaskModel (taskId);
+            if (projectId == Guid.Empty) {
+                model.Project = null;
+                model.Task = null;
+                newWorkspaceId = model.Workspace.Id;
+            } else {
+                var projectModel = new ProjectModel (projectId);
+                await projectModel.LoadAsync ();
+
+                model.Project = projectModel;
+                model.Workspace = new WorkspaceModel (projectModel.Workspace);
+                model.Task = taskId != Guid.Empty ? new TaskModel (taskId) : null;
+                newWorkspaceId = projectModel.Workspace.Id;
+            }
 
             // Edit in a straight way the time entries.
             foreach (var item in timeEntryList) {
@@ -98,7 +108,8 @@ namespace Toggl.Phoebe.Data.ViewModels
                     item.TaskId = projectId;
                 }
 
-                item.WorkspaceId = projectModel.Workspace.Id;
+                // Change workspace according to project selected
+                item.WorkspaceId = newWorkspaceId;
                 Model<TimeEntryData>.MarkDirty (item);
             }
 

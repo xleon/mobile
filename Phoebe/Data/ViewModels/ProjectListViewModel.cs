@@ -39,7 +39,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             vm.ProjectList = await ProjectsCollection.Init ((ProjectsCollection.SortProjectsBy)savedSort, workspaceId);
             vm.WorkspaceList = await store.Table<WorkspaceData> ().Where (r => r.DeletedAt == null)
-                               .OrderByDescending (r => r.Name).ToListAsync ();
+                               .OrderBy (r => r.Name).ToListAsync ();
             vm.CurrentWorkspaceIndex = vm.WorkspaceList.IndexOf (p => p.Id == workspaceId);
 
             // Search stream

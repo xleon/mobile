@@ -92,12 +92,17 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public async Task SetProjectAndTask (Guid projectId, Guid taskId)
         {
-            var projectModel = new ProjectModel (projectId);
-            await projectModel.LoadAsync ();
+            if (projectId == Guid.Empty) {
+                model.Project = null;
+                model.Task = null;
+            } else {
+                var projectModel = new ProjectModel (projectId);
+                await projectModel.LoadAsync ();
 
-            model.Project = projectModel;
-            model.Workspace = new WorkspaceModel (projectModel.Workspace);
-            model.Task = new TaskModel (taskId);
+                model.Project = projectModel;
+                model.Workspace = new WorkspaceModel (projectModel.Workspace);
+                model.Task = taskId != Guid.Empty ? new TaskModel (taskId) : null;
+            }
             UpdateView ();
         }
 

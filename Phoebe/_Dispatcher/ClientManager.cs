@@ -4,6 +4,9 @@ namespace Toggl.Phoebe
 {
     public static class ClientManager
     {
+        public ClientManager ()
+        {
+        }
     }
 }
 

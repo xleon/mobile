@@ -58,6 +58,19 @@ namespace Toggl.Phoebe.ViewModels
 
         private Either<Unit,string> UpdateItems (IEnumerable<StoreMsg<TimeEntry>> msgs)
         {
+            if (resultsGroup.Left.Count == 0) {
+                var error = resultsGroup.Right.LastOrDefault ();
+                if (error != null && LoadFinished != null) {
+                    LoadFinished (new ErrorEventArgs (error));
+                }
+            }
+            else {
+                UpdateItems (resultsGroup.Left.SelectMany (x => x));
+            }
+        }
+
+        private Either<Unit,string> UpdateItems (IEnumerable<StoreMsg<TimeEntry>> msgs)
+        {
             try {
                 // 1. Get only TimeEntryHolders from current collection
                 var timeHolders = Items.OfType<ITimeEntryHolder> ().ToList ();

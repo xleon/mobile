@@ -1,5 +1,4 @@
 ﻿using System;
-<<<<<<< HEAD
 using Toggl.Phoebe.Data.DataObjects;
 using SQLite.Net.Attributes;
 using Toggl.Phoebe.Data;
@@ -52,17 +51,5 @@ namespace Toggl.Phoebe.Models
         [ForeignRelation (typeof (TaskData))]
         public Guid? TaskId { get; set; }
     }
-
-=======
-
-namespace Toggl.Phoebe._Models
-{
-    public class TimeEntry
-    {
-        public TimeEntry ()
-        {
-        }
-    }
->>>>>>> First refactor for unidirectional prototype
 }
 

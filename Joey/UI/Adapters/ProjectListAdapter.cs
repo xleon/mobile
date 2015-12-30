@@ -126,7 +126,11 @@ namespace Toggl.Joey.UI.Adapters
                 this.projectData = projectData;
 
                 if (projectData.IsEmpty) {
-                    ColorView.SetBackgroundColor (ColorView.Resources.GetColor (Resource.Color.dark_gray_text));
+                    var emptyColor = ColorView.Resources.GetColor (Resource.Color.dark_gray_text);
+                    ColorView.SetBackgroundColor (emptyColor);
+                    ProjectTextView.SetTextColor (emptyColor);
+                    ClientTextView.SetTextColor (emptyColor);
+
                     ProjectTextView.SetText (Resource.String.ProjectsNoProject);
                     ClientTextView.Visibility = ViewStates.Gone;
                     TasksButton.Visibility = ViewStates.Gone;

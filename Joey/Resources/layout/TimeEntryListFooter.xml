@@ -1,11 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="70dp">
     <ProgressBar
         android:id="@+id/ProgressBar"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:indeterminateTint="#CCC"
+        android:indeterminateTintMode="src_in"
+        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
-</LinearLayout>
+    <RelativeLayout
+        android:id="@+id/RetryLayout"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/TimeEntriesListFooterError"
+            android:textSize="11dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="5dp"
+            android:layout_centerHorizontal="true" />
+        <Button
+            android:id="@+id/RetryButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            android:background="@null"
+            android:text="@string/TimeEntriesListFooterTryAgain"
+            android:layout_gravity="center_horizontal"
+            android:theme="@style/Widget.AppCompat.Button.Small" />
+    </RelativeLayout>
+</RelativeLayout>

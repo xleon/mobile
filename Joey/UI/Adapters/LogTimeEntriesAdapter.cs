@@ -25,7 +25,7 @@ namespace Toggl.Joey.UI.Adapters
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
-        protected LogTimeEntriesViewModel ViewModel { get; set; }
+        protected LogTimeEntriesViewModel ViewModel { get; private set; }
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
@@ -36,9 +36,6 @@ namespace Toggl.Joey.UI.Adapters
         {
             ViewModel = viewModel;
             lastTimeEntryContinuedTime = Time.UtcNow;
-            this.SetBinding (() => ViewModel.HasMore).WhenSourceChanges (() => {
-                HasMoreItems = ViewModel.HasMore;
-            });
         }
 
         private async void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
@@ -102,6 +99,13 @@ namespace Toggl.Joey.UI.Adapters
                 mHolder.DisposeDataSource ();
             }
             base.OnViewDetachedFromWindow (holder);
+        }
+
+        protected override RecyclerView.ViewHolder GetFooterHolder (ViewGroup parent)
+        {
+            var view = LayoutInflater.FromContext (parent.Context).Inflate (
+                           Resource.Layout.TimeEntryListFooter, parent, false);
+            return new FooterHolder (view, ViewModel);
         }
 
         [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
@@ -309,6 +313,51 @@ namespace Toggl.Joey.UI.Adapters
                 var numberOfTags = DataSource.Info.NumberOfTags;
                 TagsView.BubbleCount = numberOfTags;
                 TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
+            }
+        }
+
+        class FooterHolder : RecyclerView.ViewHolder
+        {
+            readonly ProgressBar progressBar;
+            readonly RelativeLayout retryLayout;
+            readonly Button retryButton;
+            protected LogTimeEntriesViewModel Vm { get; set; }
+            Binding<bool, bool> hasMoreBinding, hasErrorBinding;
+            RecyclerLoadState loadState = RecyclerLoadState.Loading;
+
+            public FooterHolder (View root, LogTimeEntriesViewModel viewModel) : base (root)
+            {
+                Vm = viewModel;
+                retryLayout = ItemView.FindViewById<RelativeLayout> (Resource.Id.RetryLayout);
+                retryButton = ItemView.FindViewById<Button> (Resource.Id.RetryButton);
+                progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);
+                IsRecyclable = false;
+
+                retryButton.Click += async (sender, e) => await Vm.LoadMore ();
+                hasMoreBinding = this.SetBinding (() => Vm.HasMoreItems).WhenSourceChanges (SetFooterState);
+                hasErrorBinding = this.SetBinding (() => Vm.HasLoadErrors).WhenSourceChanges (SetFooterState);
+
+                SetFooterState ();
+            }
+
+            protected void SetFooterState ()
+            {
+                if (Vm.HasMoreItems && !Vm.HasLoadErrors) {
+                    loadState = RecyclerLoadState.Loading;
+                } else if (Vm.HasMoreItems && Vm.HasLoadErrors) {
+                    loadState = RecyclerLoadState.Retry;
+                } else if (!Vm.HasMoreItems && !Vm.HasLoadErrors) {
+                    loadState = RecyclerLoadState.Finished;
+                }
+
+                progressBar.Visibility = ViewStates.Gone;
+                retryLayout.Visibility = ViewStates.Gone;
+
+                if (loadState == RecyclerLoadState.Loading) {
+                    progressBar.Visibility = ViewStates.Visible;
+                } else if (loadState == RecyclerLoadState.Retry) {
+                    retryLayout.Visibility = ViewStates.Visible;
+                }
             }
         }
     }

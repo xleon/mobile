@@ -5,9 +5,7 @@ using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -32,18 +30,18 @@ namespace Toggl.Phoebe.Data.Utils
         public const int DaysLoad = 5;
 
         private MessageBus bus;
-        private DateTime startFrom = Time.UtcNow;
+        private DateTime paginationDate = Time.UtcNow;
         private ITimeEntryHolder lastRemovedItem;
         private Subscription<DataChangeMessage> subscription;
+        private Subscription<UpdateFinishedMessage> updateSubscription;
         private System.Timers.Timer undoTimer = new System.Timers.Timer ();
         private CancellationTokenSource cts = new CancellationTokenSource ();
         private Subject<TimeEntryMessage> subject = new Subject<TimeEntryMessage> ();
 
-        public bool HasMore { get; private set; } = true;
-
         public TimeEntriesFeed ()
         {
             bus = ServiceContainer.Resolve<MessageBus> ();
+            updateSubscription = bus.Subscribe<UpdateFinishedMessage> (OnUpdateFinished);
             subscription = bus.Subscribe<DataChangeMessage> (msg => {
                 var entry = msg != null ? msg.Data as TimeEntryData : null;
                 if (entry != null) {
@@ -53,6 +51,7 @@ namespace Toggl.Phoebe.Data.Utils
                     subject.OnNext (new TimeEntryMessage (entry, isExcluded ? DataAction.Delete : DataAction.Put));
                 }
             });
+
         }
 
         public void Dispose ()
@@ -62,7 +61,7 @@ namespace Toggl.Phoebe.Data.Utils
                 subject = null;
             }
 
-            // cancel web request.
+            // cancel DB request.
             if (cts != null) {
                 cts.Cancel ();
                 cts.Dispose ();
@@ -91,54 +90,28 @@ namespace Toggl.Phoebe.Data.Utils
             return subject.Subscribe (observer);
         }
 
-        public async Task LoadMore ()
+        public async Task<DateTime> LoadMore ()
         {
-            if (!HasMore) {
-                return;
-            }
-
-            var endDate = startFrom;
-
-            // Try to update with latest data from server
-            try {
-                // Download new Entries
-                var client = ServiceContainer.Resolve<ITogglClient> ();
-                var jsonEntries = await client.ListTimeEntries (startFrom, DaysLoad, cts.Token);
-
-                // Store them in the local data store
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
-                              jsonEntries.Select (json => json.Import (ctx)).ToList ());
-                startFrom = entries.Min (x => x.StartTime);
-                HasMore = entries.Any ();
-
-            } catch (Exception exc) {
-                var tag = GetType ().Name;
-                var log = ServiceContainer.Resolve<ILogger> ();
-                const string msg = "Failed to fetch time entries {1} days up to {0}";
-                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                    log.Info (tag, exc, msg, startFrom, DaysLoad);
-                } else {
-                    log.Warning (tag, exc, msg, startFrom, DaysLoad);
-                }
-
-                // Redefine startFrom using local DB
-                startFrom = await GetDatesByDays (startFrom, DaysLoad);
-            }
+            var endDate = paginationDate;
+            var startDate = await GetDatesByDays (endDate, DaysLoad);
 
             // Always fall back to local data:
             var store = ServiceContainer.Resolve<IDataStore> ();
             var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
             var baseQuery = store.Table<TimeEntryData> ().Where (r =>
                             r.State != TimeEntryState.New &&
-                            r.StartTime >= startFrom && r.StartTime < endDate &&
+                            r.StartTime >= startDate && r.StartTime < endDate &&
                             r.DeletedAt == null &&
                             r.UserId == userId).Take (MaxInitLocalEntries);
 
-            (await baseQuery
-             .OrderByDescending (r => r.StartTime)
-             .ToListAsync ())
-            .ForEach (entry => subject.OnNext (new TimeEntryMessage (entry, DataAction.Put)));
+            var entries = await baseQuery.OrderByDescending (r => r.StartTime).ToListAsync ();
+            entries.ForEach (entry => subject.OnNext (new TimeEntryMessage (entry, DataAction.Put)));
+
+            paginationDate = entries.Count > 0 ? startDate : endDate;
+
+            // Return old paginationDate to get the same data from server
+            // using the sync manager.
+            return endDate;
         }
 
         public async Task RemoveItemWithUndoAsync (ITimeEntryHolder timeEntryHolder)
@@ -193,17 +166,25 @@ namespace Toggl.Phoebe.Data.Utils
             lastRemovedItem = null;
         }
 
+        private void OnUpdateFinished (UpdateFinishedMessage msg)
+        {
+            // If there are no items, there is
+            // no way to predict the pagination.
+            if (!msg.HadErrors) {
+                paginationDate = msg.EndDate;
+            }
+        }
+
         // TODO: replace this method from the SQLite equivalent.
         private async Task<DateTime> GetDatesByDays (DateTime startDate, int numDays)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-
             var baseQuery = store.Table<TimeEntryData> ().Where (r =>
                             r.State != TimeEntryState.New &&
                             r.StartTime < startDate &&
                             r.DeletedAt == null);
 
-            var entries = await baseQuery.ToListAsync ();
+            var entries = await baseQuery.ToListAsync (cts.Token);
             if (entries.Count > 0) {
                 var group = entries.OrderByDescending (r => r.StartTime).GroupBy (t => t.StartTime.Date).Take (numDays).LastOrDefault ();
                 return group.Key;

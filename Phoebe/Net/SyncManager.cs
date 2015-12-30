@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using SQLite.Net.Async;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
-using SQLite.Net.Async;
 
 namespace Toggl.Phoebe.Net
 {
@@ -442,6 +442,48 @@ namespace Toggl.Phoebe.Net
         {
             public Task<Exception> Task;
             public CommonData Data;
+        }
+
+        public void RunTimeEntriesUpdate (DateTime startFrom, int daysLoad)
+        {
+            Task.Run (async () => await RunTimeEntriesUpdateAsync (startFrom, daysLoad));
+        }
+
+        private async Task RunTimeEntriesUpdateAsync (DateTime startFrom, int daysLoad)
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            bool hadErrors = false;
+            bool hasMore = true;
+            var endDate = DateTime.MinValue;
+
+            // Try to update with latest data from server
+            try {
+                bus.Send (new UpdateStartedMessage (this, startFrom));
+
+                // Download new Entries
+                var client = ServiceContainer.Resolve<ITogglClient> ();
+                var jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
+
+                // Store them in the local data store
+                var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
+                              jsonEntries.Select (json => json.Import (ctx)).ToList ());
+
+                endDate = entries.Min (p => p.StartTime);
+                hasMore = entries.Any ();
+            } catch (Exception exc) {
+                hadErrors = true;
+                var tag = GetType ().Name;
+                var log = ServiceContainer.Resolve<ILogger> ();
+                const string msg = "Failed to fetch time entries {1} days up to {0}";
+                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
+                    log.Info (tag, exc, msg, startFrom, daysLoad);
+                } else {
+                    log.Warning (tag, exc, msg, startFrom, daysLoad);
+                }
+            } finally {
+                bus.Send (new UpdateFinishedMessage (this, startFrom, endDate, hasMore, hadErrors));
+            }
         }
     }
 }

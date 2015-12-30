@@ -9,7 +9,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.Utils
+namespace Toggl.Phoebe.Models
 {
     public struct TimeEntryMessage {
 

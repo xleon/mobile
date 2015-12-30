@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 
-namespace Toggl.Phoebe.Data.Utils
+namespace Toggl.Phoebe.Models
 {
     /// <summary>
-    // Wrapper to manage groups of TimeEntryData objects
+    // Wrapper to manage groups of TimeEntry objects
     /// </summary>
     public class TimeEntryGroup : ITimeEntryHolder
     {
@@ -46,7 +46,7 @@ namespace Toggl.Phoebe.Data.Utils
         public TimeEntryInfo Info { get; private set; }
         public List<TimeEntryData> DataCollection { get; private set; }
 
-        public TimeEntryData Data
+        public TimeEntry Data
         {
             get { return DataCollection [0]; }
         }

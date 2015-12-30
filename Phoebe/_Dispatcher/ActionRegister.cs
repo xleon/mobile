@@ -7,22 +7,22 @@ namespace Toggl.Phoebe
 {
     public static class ActionRegister
     {
-        public static Func<object, Task<ActionMsg>> GetCallback (string tag)
+        public static Func<DataMsgUntyped, Task<DataMsgUntyped>> GetCallback (string tag)
         {
             switch (tag) {
-            case ActionMsg.LOAD_MORE_ENTRIES:
+            case DataMsg.LOAD_MORE_ENTRIES:
                 return LoadMoreEntries;
             default:
                 return null;
             }
         }
 
-        static Task<ActionMsg> LoadMoreEntries (object data)
+        static Task<DataMsgUntyped> LoadMoreEntries (object data)
         {
             throw new NotImplementedException ();
         }
 
-        static Task<ActionMsg> RemoveEntry (object data)
+        static Task<DataMsgUntyped> RemoveEntry (object data)
         {
             throw new NotImplementedException ();
         }

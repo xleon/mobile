@@ -16,6 +16,7 @@ namespace Toggl.Phoebe.Data.Views
         private List<TaskData> tasks;
         private SortProjectsBy sortBy;
         private Guid workspaceId;
+        private string projectNameFilter;
 
         public enum SortProjectsBy {
             Projects,
@@ -54,7 +55,7 @@ namespace Toggl.Phoebe.Data.Views
                                                     ).ToList ();
 
             // Create collection
-            v.CreateSortedCollection ();
+            v.CreateSortedCollection (v.projects);
             return v;
         }
 
@@ -67,7 +68,7 @@ namespace Toggl.Phoebe.Data.Views
                     return;
                 }
                 sortBy = value;
-                CreateSortedCollection ();
+                CreateSortedCollection (projects);
             }
         }
 
@@ -80,38 +81,57 @@ namespace Toggl.Phoebe.Data.Views
                     return;
                 }
                 workspaceId = value;
-                CreateSortedCollection ();
+                CreateSortedCollection (projects);
             }
         }
 
-        private void CreateSortedCollection ()
+        public string ProjectNameFilter
         {
-            // Reset collection.
-            Clear ();
+            get {
+                return projectNameFilter;
+            } set {
+                if (projectNameFilter == value) {
+                    return;
+                }
+                projectNameFilter = value;
+                var prjs = string.IsNullOrEmpty (value) ? projects : projects.Where (p => p.Name.Contains (projectNameFilter));
+                CreateSortedCollection (prjs);
+            }
+        }
 
-            // TODO: Try with a grouping method
-            // using linq
+        private void CreateSortedCollection (IEnumerable<SuperProjectData> projectList)
+        {
+            var enumerable = projectList as IList<SuperProjectData> ?? projectList.ToList ();
+            if (!enumerable.Any ()) {
+                return;
+            }
 
+            var data = new List<CommonData> ();
+
+            // TODO: Maybe group using linq is clearer
             if (sortBy == SortProjectsBy.Clients) {
 
-                // Add no client section
-                Add (new ClientData ());
-                Add (GetEmptyProject ());
-                AddRange (projects.Where (p => p.ClientId == null && p.WorkspaceId == workspaceId));
+                // Add section without client
+                data.Add (new ClientData ());
+                data.Add (GetEmptyProject ());
+                enumerable.Where (p => p.ClientId == null && p.WorkspaceId == workspaceId).ForEach (data.Add);
 
                 // Add normal sections
-                var filteredClients = clients.Where (p => p.WorkspaceId == workspaceId);
-                foreach (var item in filteredClients) {
-                    var filteredProjects = projects.Where (p => p.ClientId == item.Id && p.WorkspaceId == workspaceId).ToList ();
-                    if (filteredProjects.Count > 0) {
-                        Add (item);
-                        AddRange (filteredProjects);
+                var sectionHeaders = clients.Where (p => p.WorkspaceId == workspaceId);
+                foreach (var header in sectionHeaders) {
+                    var sectionItems = enumerable.Where (p => p.ClientId == header.Id && p.WorkspaceId == workspaceId).ToList ();
+                    if (sectionItems.Count > 0) {
+                        data.Add (header);
+                        sectionItems.ForEach (data.Add);
                     }
                 }
             } else {
-                Add (GetEmptyProject ());
-                AddRange (projects.Where (p => p.WorkspaceId == workspaceId));
+                data.Add (GetEmptyProject ());
+                enumerable.Where (p => p.WorkspaceId == workspaceId).ForEach (data.Add);
             }
+
+            // ObservableRange method :)
+            Reset (data);
         }
 
         public void AddTasks (ProjectData project)

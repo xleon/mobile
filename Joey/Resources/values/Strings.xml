@@ -200,10 +200,12 @@
     <string name="RunningWidgetNoDescription">(no description)</string>
     <string name="WidgetSingInNotice">Sign in to track time</string>
     <string name="WidgetName">Toggl Widget</string>
-    <string name="BaseEditTimeEntryFragmentProject">Project</string>
-    <string name="BaseEditTimeEntryFragmentTask">Task</string>
-    <string name="BaseEditTimeEntryFragmentDescription">Description</string>
-    <string name="BaseEditTimeEntryFragmentSaveButtonText">Save</string>
+    <string name="EditTimeEntryFragmentProject">Project</string>
+    <string name="EditTimeEntryFragmentProjectHint">Add project</string>
+    <string name="EditTimeEntryFragmentTask">Task</string>
+    <string name="EditTimeEntryFragmentDescription">Description</string>
+    <string name="EditTimeEntryFragmentDescriptionHint">What are you doing?</string>
+    <string name="EditTimeEntryFragmentSaveButtonText">Save</string>
     <string name="SwipeDeleteQuestion">Delete?</string>
     <string name="UndoBarDeletedText">Time entry deleted</string>
     <string name="UndoBarButtonText">UNDO</string>

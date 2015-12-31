@@ -1,6 +1,4 @@
-﻿#if __TESTS__
-#else
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Mindscape.Raygun4Net;
 using Mindscape.Raygun4Net.Messages;
@@ -10,30 +8,28 @@ namespace Toggl.Phoebe.Logging
 {
     public class LogClient : ILoggerClient
     {
-        private readonly RaygunClient client = new RaygunClient (Build.RaygunApiKey);
-
-        public LogClient (Action platformInitAction)
-        {
-            if (platformInitAction != null) {
-                platformInitAction();
-            }
-        }
-
         #region ILoggerClient implementation
 
         public void SetUser (string id, string email = null, string name = null)
         {
+            #if (!DEBUG)
             if (id != null) {
-                client.UserInfo = new RaygunIdentifierMessage (id) {
+                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage (id) {
                     IsAnonymous = false,
                     Email = email,
                     FullName = name
                 };
+            } else {
+                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage ("not_logged") {
+                    IsAnonymous = true
+                };
             }
+            #endif
         }
 
         public void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null)
         {
+            #if (!DEBUG)
             var extraData = new Dictionary<string, string> ();
             foreach (var item in extraMetadata) {
                 if (item.Value != null) {
@@ -45,16 +41,12 @@ namespace Toggl.Phoebe.Logging
             }
 
             var tags = new List<string> { Enum.GetName (typeof (ErrorSeverity), severity) };
-            client.SendInBackground (e, tags, extraData);
+            RaygunClient.Current.SendInBackground (e, tags, extraData);
+            #endif
         }
-
-        public string DeviceId { get; set; }
-
-        public List<string> ProjectNamespaces { get; set; }
 
         #endregion
 
     }
 }
-#endif
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
 namespace Toggl.Phoebe.Logging
@@ -13,7 +12,7 @@ namespace Toggl.Phoebe.Logging
 
     public class Metadata : JObject
     {
-        public Metadata () : base ()
+        public Metadata ()
         {
         }
 
@@ -48,10 +47,6 @@ namespace Toggl.Phoebe.Logging
 
     public interface ILoggerClient
     {
-        string DeviceId { get; set; }
-
-        List<string> ProjectNamespaces { get; set; }
-
         void SetUser (string id, string email = null, string name = null);
 
         void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null);

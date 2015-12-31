@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Net
                 loggerClient.SetUser (null, null, null);
             } else {
                 string id = user.RemoteId.HasValue ? user.RemoteId.ToString () : null;
-                loggerClient.SetUser (id, null, user.Name);
+                loggerClient.SetUser (id, user.Email, user.Name);
             }
         }
     }

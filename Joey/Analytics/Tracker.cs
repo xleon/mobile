@@ -4,7 +4,6 @@ using Android.Content;
 using Android.Gms.Analytics;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
-using Xamarin;
 
 namespace Toggl.Joey.Analytics
 {
@@ -36,7 +35,7 @@ namespace Toggl.Joey.Analytics
             SendHit (builder);
         }
 
-        protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label)
+        protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label = null)
         {
             SendHit (new HitBuilders.TimingBuilder ()
                      .SetValue (elapsedMilliseconds)
@@ -45,7 +44,7 @@ namespace Toggl.Joey.Analytics
                      .SetLabel (label));
         }
 
-        protected override void SendEvent (string category, string action, string label, long value)
+        protected override void SendEvent (string category, string action, string label = null, long value = 0)
         {
             SendHit (new HitBuilders.EventBuilder ()
                      .SetCategory (category)

@@ -1,39 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using Mindscape.Raygun4Net;
+using Mindscape.Raygun4Net.Messages;
 using Toggl.Phoebe.Logging;
-using Xamarin;
 
 namespace Toggl.Phoebe.Logging
 {
     public class LogClient : ILoggerClient
     {
-        public LogClient (Action platformInitAction)
-        {
-            if (platformInitAction != null) {
-                platformInitAction();
-            }
-        }
-
         #region ILoggerClient implementation
 
         public void SetUser (string id, string email = null, string name = null)
         {
+            #if (!DEBUG)
             if (id != null) {
-                var traits = new Dictionary<string, string> {
-                    { Insights.Traits.Email, email },
-                    { Insights.Traits.Name, name }
+                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage (id) {
+                    IsAnonymous = false,
+                    Email = email,
+                    FullName = name
                 };
-                Insights.Identify (id, traits);
+            } else {
+                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage ("not_logged") {
+                    IsAnonymous = true
+                };
             }
+            #endif
         }
 
         public void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null)
         {
-            var reportSeverity = Insights.Severity.Error;
-            if (severity == ErrorSeverity.Warning) {
-                reportSeverity = Insights.Severity.Warning;
-            }
-
+            #if (!DEBUG)
             var extraData = new Dictionary<string, string> ();
             foreach (var item in extraMetadata) {
                 if (item.Value != null) {
@@ -44,16 +40,10 @@ namespace Toggl.Phoebe.Logging
                 }
             }
 
-            if (severity == ErrorSeverity.Info) {
-                Insights.Track ("Info", extraData);
-            } else {
-                Insights.Report (e, extraData, reportSeverity);
-            }
+            var tags = new List<string> { Enum.GetName (typeof (ErrorSeverity), severity) };
+            RaygunClient.Current.SendInBackground (e, tags, extraData);
+            #endif
         }
-
-        public string DeviceId { get; set; }
-
-        public List<string> ProjectNamespaces { get; set; }
 
         #endregion
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -62,6 +63,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnCreate (savedInstanceState);
             viewModel = await ClientListViewModel.Init (WorkspaceId);
+            SetDialogContent ();
         }
 
         public override void OnDestroy ()
@@ -81,7 +83,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Mvvm ligth utility to generate an adapter from
             // an Observable collection.
-            var clientsAdapter = viewModel.ClientDataCollection.GetAdapter (GetClientView);
+            var clientsAdapter = new ObservableCollection <ClientData> ().GetAdapter (GetClientView);
 
             var dia = new AlertDialog.Builder (Activity)
             .SetTitle (Resource.String.SelectClientTitle)
@@ -92,8 +94,31 @@ namespace Toggl.Joey.UI.Fragments
             listView = dia.ListView;
             listView.Clickable = true;
             listView.ItemClick += OnItemClick;
+            listView.ViewAttachedToWindow += (sender, e) => SetDialogContent ();
 
             return dia;
+        }
+
+        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        {
+            base.OnActivityResult (requestCode, resultCode, data);
+            if (requestCode == NewProjectFragment.ClientSelectedRequestCode) {
+                if (resultCode == (int)Result.Ok) {
+                    Activity.Finish();
+                }
+            }
+        }
+
+        private void SetDialogContent ()
+        {
+            if (listView == null || listView.Adapter == null || viewModel == null) {
+                return;
+            }
+
+            // Set the correct adapter here. Because the Dialog is created
+            // in a sync way and ViewModel in an async way, we need to
+            // call this method twice
+            listView.Adapter = viewModel.ClientDataCollection.GetAdapter (GetClientView);
         }
 
         private View GetClientView (int position, ClientData clientData, View convertView)
@@ -116,16 +141,6 @@ namespace Toggl.Joey.UI.Fragments
             .SetOnClientSelectedListener (clientSelectedHandler)
             .Show (FragmentManager, "new_client_dialog");
             Dismiss ();
-        }
-
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
-        {
-            base.OnActivityResult (requestCode, resultCode, data);
-            if (requestCode == NewProjectFragment.ClientSelectedRequestCode) {
-                if (resultCode == (int)Result.Ok) {
-                    Activity.Finish();
-                }
-            }
         }
     }
 }

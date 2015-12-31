@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -6,14 +7,12 @@ using Android.Support.Design.Widget;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -22,13 +21,14 @@ using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ProjectListFragment : Fragment, Toolbar.IOnMenuItemClickListener, TabLayout.IOnTabSelectedListener, SearchView.IOnQueryTextListener
+    public class ProjectListFragment : Fragment,
+        Toolbar.IOnMenuItemClickListener,
+        TabLayout.IOnTabSelectedListener,
+        SearchView.IOnQueryTextListener
     {
         private static readonly string WorkspaceIdArgument = "workspace_id_param";
         private static readonly int ProjectCreatedRequestCode = 1;
 
-        private readonly Handler handler = new Handler ();
-        private string filter;
         private RecyclerView recyclerView;
         private TabLayout tabLayout;
         private Toolbar toolBar;
@@ -97,50 +97,46 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
             viewModel = await ProjectListViewModel.Init (WorkspaceId);
 
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-
-            if (settingsStore.ProjectSortCategory == WorkspaceProjectsView.SortProjectsBy.Projects.ToString()) {
-                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
-            } else {
-                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
-            }
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
-            adapter.HandleProjectSelection = OnItemSelected;
+            adapter.HandleItemSelection = OnItemSelected;
             recyclerView.SetAdapter (adapter);
 
-            EnsureCorrectState ();
-
-            // Create tabs
-            if (viewModel.ProjectList.Workspaces.Count > 1) {
-                int i = 0;
-                foreach (var ws in viewModel.ProjectList.Workspaces) {
-                    var tab = tabLayout.NewTab().SetText (ws.Data.Name);
-                    tabLayout.AddTab (tab);
-                    if (ws.Data.Id == viewModel.CurrentWorkspaceId) {
-                        viewModel.ProjectList.CurrentWorkspaceIndex = i;
-                        tab.Select();
-                    }
-                    i++;
-                }
-            }
+            ConfigureUIViews ();
+            CreateWorkspaceTabs ();
         }
 
-        private void EnsureCorrectState ()
+        private void ConfigureUIViews ()
         {
             // Set toolbar scrollable or not.
             var _params = new AppBarLayout.LayoutParams (toolBar.LayoutParameters);
 
-            if (viewModel.ProjectList.Workspaces.Count > 1) {
+            if (viewModel.WorkspaceList.Any ()) {
                 tabLayout.Visibility = ViewStates.Visible;
                 _params.ScrollFlags  = AppBarLayout.LayoutParams.ScrollFlagScroll | AppBarLayout.LayoutParams.ScrollFlagEnterAlways;
             } else {
                 tabLayout.Visibility = ViewStates.Gone;
                 _params.ScrollFlags = 0;
             }
-
             toolBar.LayoutParameters = _params;
-            recyclerView.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Gone : ViewStates.Visible;
-            emptyStateLayout.Visibility = viewModel.ProjectList.IsEmpty ? ViewStates.Visible : ViewStates.Gone;
+
+            // Hide or show recyclerview.
+            var haveProjects = viewModel.ProjectList.OfType<ProjectData> ().Any ();
+            recyclerView.Visibility = haveProjects ? ViewStates.Visible : ViewStates.Gone;
+            emptyStateLayout.Visibility = haveProjects ? ViewStates.Gone : ViewStates.Visible;
+        }
+
+        private void CreateWorkspaceTabs ()
+        {
+            // Create tabs
+            if (viewModel.WorkspaceList.Any ()) {
+                foreach (var ws in viewModel.WorkspaceList) {
+                    var tab = tabLayout.NewTab().SetText (ws.Name);
+                    tabLayout.AddTab (tab);
+                    if (ws.Id == WorkspaceId) {
+                        tab.Select ();
+                    }
+                }
+            }
         }
 
         private void OnNewProjectFabClick (object sender, EventArgs e)
@@ -151,16 +147,15 @@ namespace Toggl.Joey.UI.Fragments
             StartActivityForResult (intent, ProjectCreatedRequestCode);
         }
 
-        private void OnItemSelected (object m)
+        private void OnItemSelected (CommonData m)
         {
             // TODO: valorate to work only with IDs.
             Guid projectId = Guid.Empty;
             Guid taskId = Guid.Empty;
 
-            if (m is WorkspaceProjectsView.Project) {
-                var wrap = (WorkspaceProjectsView.Project)m;
-                if (!wrap.IsNoProject) {
-                    projectId = wrap.Data.Id;
+            if (m is ProjectData) {
+                if (! ((ProjectsCollection.SuperProjectData)m).IsEmpty) {
+                    projectId = m.Id;
                 }
             } else if (m is TaskData) {
                 var task = (TaskData)m;
@@ -212,21 +207,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool OnQueryTextChange (string newText)
         {
-            filter = newText;
-            handler.RemoveCallbacks (SearchList);
-            handler.PostDelayed (SearchList, 250);
+            viewModel.SearchByProjectName (newText);
             return true;
-        }
-
-        private void SearchList()
-        {
-            if (filter == null) {
-                return;
-            }
-
-            bool hasResults = viewModel.ProjectList.ApplyNameFilter (filter);
-            recyclerView.Visibility = !hasResults ? ViewStates.Gone : ViewStates.Visible;
-            searchEmptyState.Visibility = !hasResults ? ViewStates.Visible : ViewStates.Gone;
         }
 
         public bool OnQueryTextSubmit (string query)
@@ -244,15 +226,12 @@ namespace Toggl.Joey.UI.Fragments
 
         public bool OnMenuItemClick (IMenuItem item)
         {
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             switch (item.ItemId) {
             case Resource.Id.SortByClients:
-                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Clients;
-                settingsStore.ProjectSortCategory = WorkspaceProjectsView.SortProjectsBy.Clients.ToString();
+                viewModel.ChangeListSorting (ProjectsCollection.SortProjectsBy.Clients);
                 return true;
             case Resource.Id.SortByProjects:
-                viewModel.ProjectList.SortBy = WorkspaceProjectsView.SortProjectsBy.Projects;
-                settingsStore.ProjectSortCategory = WorkspaceProjectsView.SortProjectsBy.Projects.ToString();
+                viewModel.ChangeListSorting (ProjectsCollection.SortProjectsBy.Projects);
                 return true;
             }
             return false;
@@ -262,18 +241,13 @@ namespace Toggl.Joey.UI.Fragments
         #region Workspace Tablayout
         public void OnTabSelected (TabLayout.Tab tab)
         {
-            viewModel.ProjectList.CurrentWorkspaceIndex = tab.Position;
-            EnsureCorrectState();
-            SearchList();
+            viewModel.ChangeWorkspaceByIndex (tab.Position);
+            ConfigureUIViews();
         }
 
-        public void OnTabReselected (TabLayout.Tab tab)
-        {
-        }
+        public void OnTabReselected (TabLayout.Tab tab)  { }
 
-        public void OnTabUnselected (TabLayout.Tab tab)
-        {
-        }
+        public void OnTabUnselected (TabLayout.Tab tab) { }
         #endregion
     }
 }

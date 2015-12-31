@@ -30,13 +30,28 @@ namespace Toggl.Phoebe.Data.Utils
                                      NotifyCollectionChangedAction.Move, updatedItem, newIndex, oldIndex));
         }
 
+        public void InsertRange (IEnumerable<T> collection, int startingIndex)
+        {
+            if (collection == null) { throw new ArgumentNullException ("collection"); }
+            var enumerable = collection.ToList ();
+            if (!enumerable.Any ()) {
+                return;
+            }
+            int counter = startingIndex;
+            foreach (var item in enumerable) { Items.Insert (counter, item); counter++; }
+            OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Add, enumerable, startingIndex));
+        }
+
         public void AddRange (IEnumerable<T> collection)
         {
             if (collection == null) { throw new ArgumentNullException ("collection"); }
-
+            var enumerable = collection as IList<T> ?? collection.ToList ();
+            if (!enumerable.Any ()) {
+                return;
+            }
             int startingIndex = Items.Count;
-            foreach (var i in collection) { Items.Add (i); }
-            OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Add, collection as List<T>, startingIndex));
+            foreach (var i in enumerable) { Items.Add (i); }
+            OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Add, enumerable, startingIndex));
         }
 
         public void RemoveRange (IEnumerable<T> collection)
@@ -44,8 +59,9 @@ namespace Toggl.Phoebe.Data.Utils
             if (collection == null) { throw new ArgumentNullException ("collection"); }
 
             var enumerable = collection.ToList ();
+            var startAt = Items.IndexOf (enumerable.First ());
             foreach (var i in enumerable) { Items.Remove (i); }
-            OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Remove, enumerable.ToList()));
+            OnCollectionChanged (new NotifyCollectionChangedEventArgs (NotifyCollectionChangedAction.Remove, enumerable, startAt));
         }
 
         public void Replace (T item)

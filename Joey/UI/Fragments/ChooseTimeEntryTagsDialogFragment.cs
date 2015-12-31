@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Android.App;
 using Android.Content;
@@ -88,8 +89,9 @@ namespace Toggl.Joey.UI.Fragments
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
         {
             // Mvvm ligth utility to generate an adapter from
-            // an Observable collection.
-            var tagsAdapter = viewModel.TagCollection.GetAdapter (GetTagView);
+            // an Observable collection. For the moment, use a dummy
+            // adapter and repace it when the ViewModel is initializated.
+            var tagsAdapter = new ObservableCollection<TagData> ().GetAdapter (GetTagView);
 
             var dia = new AlertDialog.Builder (Activity)
             .SetTitle (Resource.String.ChooseTimeEntryTagsDialogTitle)
@@ -159,11 +161,13 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetPreviousSelectedTags ()
         {
-            if (listView == null || listView.Adapter == null) {
+            if (listView == null || listView.Adapter == null || viewModel == null) {
                 return;
             }
 
+            // Set correct dialog Adapter
             var list = ExistingTagIds;
+            listView.Adapter = viewModel.TagCollection.GetAdapter (GetTagView);
             listView.ClearChoices ();
 
             for (int i = 0; i < viewModel.TagCollection.Count; i++) {

@@ -19,5 +19,7 @@ namespace Toggl.Phoebe.Data
         int? LastReportZoomViewed { get; set; }
 
         bool GroupedTimeEntries { get; set; }
+
+        string SortProjectsBy { get; set; }
     }
 }

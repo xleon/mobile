@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Foundation;
 using Google.Core;
 using Google.SignIn;
+using Mindscape.Raygun4Net;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.XamarinIOS;
 using Toggl.Phoebe;
@@ -18,7 +18,6 @@ using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
 using UIKit;
-using Xamarin;
 using XPlatUtils;
 
 namespace Toggl.Ross
@@ -37,6 +36,11 @@ namespace Toggl.Ross
         {
             var versionString = UIDevice.CurrentDevice.SystemVersion;
             systemVersion = Convert.ToInt32 ( versionString.Split ( new [] {"."}, StringSplitOptions.None)[0]);
+
+            // Attach bug tracker
+            #if (!DEBUG)
+            RaygunClient.Attach (Build.RaygunApiKey);
+            #endif
 
             // Component initialisation.
             RegisterComponents ();
@@ -149,18 +153,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));
-            ServiceContainer.Register<ILoggerClient> (delegate {
-                return new LogClient (delegate {
-                    #if DEBUG
-                    Insights.Initialize (Insights.DebugModeKey);
-                    #else
-                    Insights.Initialize (Build.XamInsightsApiKey);
-                    #endif
-                }) {
-                    DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
-                    ProjectNamespaces = new List<string> () { "Toggl." },
-                };
-            });
+            ServiceContainer.Register<ILoggerClient> (() => new LogClient ());
             ServiceContainer.Register<ITracker> (() => new Tracker());
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();

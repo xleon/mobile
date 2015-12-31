@@ -26,8 +26,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         EditTimeEntryViewModel (TimeEntryModel model, List<TagData> tagList)
         {
             this.model = model;
-            this.durationTimer = new Timer ();
-            this.TagList = tagList;
+            durationTimer = new Timer ();
+            TagList = tagList;
 
             model.PropertyChanged += OnPropertyChange;
             durationTimer.Elapsed += DurationTimerCallback;

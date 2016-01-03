@@ -67,7 +67,7 @@
       <HintPath>..\packages\SQLite.Net.Async-PCL.3.1.1\lib\portable-win8+net45+wp8+wpa81+MonoAndroid1+MonoTouch1\SQLite.Net.Async.dll</HintPath>
     </Reference>
     <Reference Include="Mindscape.Raygun4Net4">
-      <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\net40\Mindscape.Raygun4Net.dll</HintPath>
+      <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

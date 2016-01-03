@@ -47,8 +47,8 @@ Target "android-signalign" (fun () ->
     // path configurations
     let basePath = "Joey/bin/Release/com.toggl.timer"
     let unsignedApk = basePath + ".apk"
-    let unsignedWereableApk = basePath + "/res/raw/wearable_app.apk"
-    let signedWereableApk = basePath + "_weareable_signed.apk"
+    let unsignedWearableApk = basePath + "/res/raw/wearable_app.apk"
+    let signedWearableApk = basePath + "_weareable_signed.apk"
 
     let ChangeFileName (file:FileInfo) =
         let newName = Path.Combine(file.DirectoryName, fileName)
@@ -60,15 +60,15 @@ Target "android-signalign" (fun () ->
     Shell.Exec ("apktool", unpackArgs) |> ignore
 
      // Sign wearable apk
-    let jarsignerArgs = String.Format("-verbose -keystore {0} -storepass {1} {2} {3}", keyStorePath, keyStorePassword, unsignedWereableApk, keyStoreAlias)
+    let jarsignerArgs = String.Format("-verbose -keystore {0} -storepass {1} {2} {3}", keyStorePath, keyStorePassword, unsignedWearableApk, keyStoreAlias)
     Shell.Exec ("jarsigner", jarsignerArgs) |> ignore
 
     // Pack solution again
-    let packArgs = String.Format("b -o {0} {1}", signedWereableApk, basePath)
+    let packArgs = String.Format("b -o {0} {1}", signedWearableApk, basePath)
     Shell.Exec ("apktool", packArgs) |> ignore
 
     // Sign whole .apk and finish process
-    let apkFileInfo = new FileInfo (signedWereableApk);
+    let apkFileInfo = new FileInfo (signedWearableApk);
     AndroidSignAndAlign (fun defaults ->
         {defaults with
             KeystorePath = keyStorePath

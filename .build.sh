@@ -7,6 +7,6 @@ if [[ ! -e ${NUGET} ]]; then
     curl -o ${NUGET} https://az320820.vo.msecnd.net/downloads/nuget.exe
 fi
 
-mono --runtime=v4.0 ${NUGET} install FAKE -Version 4.4.2 -OutputDirectory packages
+mono --runtime=v4.0 ${NUGET} install FAKE -Version 4.12.0 -OutputDirectory packages
 mono --runtime=v4.0 ${NUGET} install NUnit.Runners -Version 2.6.4 -OutputDirectory packages
 mono --runtime=v4.0 packages/FAKE.4.4.2/tools/FAKE.exe .build.fsx $@

@@ -46,7 +46,9 @@ namespace Toggl.Chandler
                     return (T) (object)Guid.Parse (s);
                 } else if (t == typeof (DateTime)) {
                     var s = dataMap.GetString (key);
-                    return (T) (object)DateTime.Parse (s);
+                    DateTime dt = new DateTime();
+                    DateTime.TryParse (s, out dt);
+                    return (T) (object) dt;
                 } else {
                     throw new NotSupportedException (typeof (T).Name);
                 }

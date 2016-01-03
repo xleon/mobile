@@ -78,6 +78,7 @@ namespace Toggl.Joey.Wear
 
         public async void OnConnected (Android.OS.Bundle connectionHint)
         {
+            Log.Info ("WearIntegration", "Connected");
             await UpdateSharedTimeEntryList();
         }
 
@@ -107,12 +108,14 @@ namespace Toggl.Joey.Wear
             try {
                 Log.Info ("WearIntegration", "Received Message");
 
+                googleApiClient.Connect();
                 if (!googleApiClient.IsConnected) {
-                    googleApiClient.Connect();
+                    Log.Info ("WearIntegration", "Connecting");
                 }
 
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
                 if (!authManager.IsAuthenticated) {
+                    Log.Info ("WearIntegration", "Is not authenticated");
                     NotifyNotLoggedIn();
                     return;
                 }
@@ -130,6 +133,7 @@ namespace Toggl.Joey.Wear
                         await StartEntry (guid);
                         await UpdateSharedTimeEntryList ();
                     } else if (path == Common.RequestSyncPath) {
+                        Log.Info ("WearIntegration", "Sending sync data!");
 
                         await UpdateSharedTimeEntryList ();
                     } else if (path == Common.OpenHandheldPath) {
@@ -183,7 +187,28 @@ namespace Toggl.Joey.Wear
                 currentDataMap.Add (entry.DataMap);
             }
             mapReq.DataMap.PutDataMapArrayList (Common.TimeEntryListKey, currentDataMap);
-            await WearableClass.DataApi.PutDataItem (googleApiClient, mapReq.AsPutDataRequest ());
+            await SendData (mapReq);
+        }
+
+        private Task SendData (PutDataMapRequest mapReq)
+        {
+            return Task.Run (() => {
+                foreach (var node in clientNodes) {
+                    WearableClass.DataApi.PutDataItem (googleApiClient, mapReq.AsPutDataRequest());
+                }
+            });
+        }
+
+        private IList<INode> clientNodes
+        {
+            get {
+                return WearableClass
+                       .NodeApi
+                       .GetConnectedNodes (googleApiClient)
+                       .Await ()
+                       .JavaCast<INodeApiGetConnectedNodesResult> ()
+                       .Nodes;
+            }
         }
 
         public static void LOGD (string tag, string message)
@@ -194,4 +219,3 @@ namespace Toggl.Joey.Wear
         }
     }
 }
-

@@ -26,9 +26,9 @@
     <DefineConstants>DEBUG;__MOBILE__;__ANDROID__;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AndroidLinkMode>None</AndroidLinkMode>
     <ConsolePause>false</ConsolePause>
     <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -38,9 +38,10 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <AndroidLinkMode>Full</AndroidLinkMode>
-    <AndroidLinkSkip>Bugsnag;Bugsnag.Android;Phoebe;Joey</AndroidLinkSkip>
+    <AndroidLinkSkip>Phoebe;Joey;System.Reactive.Core;System.Reactive.Linq;</AndroidLinkSkip>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <DebugType>full</DebugType>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

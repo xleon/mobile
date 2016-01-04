@@ -128,7 +128,7 @@ namespace Toggl.Phoebe.Tests
 
             public bool GroupedTimeEntries { get; set; }
 
-            public bool SortProjectsBy { get; set; }
+            public string SortProjectsBy { get; set; }
         }
     }
 }

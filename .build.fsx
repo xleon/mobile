@@ -1,4 +1,4 @@
-#r @"packages/FAKE.4.4.2/tools/FakeLib.dll"
+#r @"packages/FAKE.4.12.0/tools/FakeLib.dll"
 #load ".build-helpers.fsx"
 open Fake
 open System
@@ -25,45 +25,58 @@ Target "core-tests" (fun () ->
     RunNUnitTests "Tests/bin/Debug/Tests.dll" "Tests/bin/Debug/TestResult.xml"
 )
 
-Target "android-build" (fun () ->
+Target "android-package" (fun () ->
     let buildParamsFile = getBuildParam "buildParamsFile"
     if (System.String.Empty <> buildParamsFile)
       then cp buildParamsFile "Phoebe/Build.cs"
 
     RestorePackages "Mobile.Android.sln"
+    // Build solution to include Android Wear
     MSBuild "" "Build" [ ("Configuration", "Release") ] [ "Mobile.Android.sln" ] |> ignore
+    // Package project (wear apk will be included)
+    MSBuild "Joey/bin/Release" "PackageForAndroid" [ ("Configuration", "Release") ]  [ "Joey/Joey.csproj" ] |> ignore
 )
 
-Target "android-package" (fun () ->
+Target "android-signalign" (fun () ->
     // Android build parameters
     let keyStorePath = getBuildParamOrDefault "keyStorePath" "toggl.keystore"
     let keyStorePassword = getBuildParamOrDefault "keyStorePassword" ""
     let keyStoreAlias = getBuildParamOrDefault "keyStoreAlias" "toggl"
     let fileName = GetAndroidReleaseName "Joey/Properties/AndroidManifest.xml"
 
+    // path configurations
+    let basePath = "Joey/bin/Release/com.toggl.timer"
+    let unsignedApk = basePath + ".apk"
+    let unsignedWearableApk = basePath + "/res/raw/wearable_app.apk"
+    let signedWearableApk = basePath + "_weareable_signed.apk"
+
     let ChangeFileName (file:FileInfo) =
         let newName = Path.Combine(file.DirectoryName, fileName)
         file.MoveTo (newName)
         newName
 
-    AndroidPackage (fun defaults ->
-        {defaults with
-            ProjectPath = "Joey/Joey.csproj" // Project file and not Android solution!
-            Configuration = "Release"
-            OutputPath = "Joey/bin/Release"
-        })
-    |> AndroidSignAndAlign (fun defaults ->
+    // Unpack the unsigned apk
+    let unpackArgs = String.Format("d -s -o {0} {1}", basePath, unsignedApk)
+    Shell.Exec ("apktool", unpackArgs) |> ignore
+
+     // Sign wearable apk
+    let jarsignerArgs = String.Format("-verbose -keystore {0} -storepass {1} {2} {3}", keyStorePath, keyStorePassword, unsignedWearableApk, keyStoreAlias)
+    Shell.Exec ("jarsigner", jarsignerArgs) |> ignore
+
+    // Pack solution again
+    let packArgs = String.Format("b -o {0} {1}", signedWearableApk, basePath)
+    Shell.Exec ("apktool", packArgs) |> ignore
+
+    // Sign whole .apk and finish process
+    let apkFileInfo = new FileInfo (signedWearableApk);
+    AndroidSignAndAlign (fun defaults ->
         {defaults with
             KeystorePath = keyStorePath
             KeystorePassword = keyStorePassword
             KeystoreAlias = keyStoreAlias
-            // If zipalign tool is not added to system path
-            // you should uncomment this line and configure
-            // the correct path.
-            // ZipalignPath = "/Users/xxx/Library/Developers/Xamarin/android-sdk-macosx/build-tools/23.0.0/zipalign"
-        })
+        }) apkFileInfo
     |> ChangeFileName
-    |> TeamCityHelper.PublishArtifact
+    |> TeamCityHelper.PublishArtifact 
 )
 
 Target "ios-build" (fun () ->
@@ -163,8 +176,8 @@ Target "ios-appstore" (fun () ->
   ==> "core-tests"
 
 "clean"
-  ==> "android-build"
   ==> "android-package"
+  ==> "android-signalign"
 
 "clean"
   ==> "ios-build"

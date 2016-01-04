@@ -40,5 +40,8 @@ namespace Toggl.Phoebe.Data
         /// <returns>The task for the async transaction.</returns>
         /// <param name="worker">Worker function that is executed on the background thread.</param>
         Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker);
+
+        // TODO: Temporary
+        Task<Tuple<T,List<DataChangeMessage>>> ExecuteInTransactionWithMessagesAsync<T> (Func<IDataStoreContext, T> worker);
     }
 }

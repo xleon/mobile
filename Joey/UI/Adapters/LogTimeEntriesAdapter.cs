@@ -14,6 +14,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Models;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters

@@ -6,8 +6,7 @@ using System.Linq;
 
 namespace Toggl.Phoebe
 {
-    public struct StoreMsgUntyped
-    {
+    public struct StoreMsgUntyped {
         public readonly DataAction Action;
         public readonly object Data;
 
@@ -18,8 +17,7 @@ namespace Toggl.Phoebe
         }
     }
 
-    public struct StoreMsg<T>
-    {
+    public struct StoreMsg<T> {
         public readonly DataAction Action;
         public readonly T Data;
 
@@ -32,8 +30,8 @@ namespace Toggl.Phoebe
 
     public class StoreResultUntyped
     {
-        public readonly string Tag;
-        public readonly Either<IEnumerable<StoreMsgUntyped>, string> Data;
+        public string Tag { get; private set; }
+        public Either<IEnumerable<StoreMsgUntyped>, string> Data { get; private set; }
 
         StoreResultUntyped() { }
 
@@ -58,14 +56,14 @@ namespace Toggl.Phoebe
     {
         public readonly Either<IEnumerable<StoreMsg<T>>, string> Data;
 
-        public StoreResult(StoreResultUntyped res)
+        public StoreResult (StoreResultUntyped res)
         {
             this.Data = res.Data.Select (x => x.Select (y => new StoreMsg<T> (y)), x => x);
         }
 
         public U Match<U> (Func<IEnumerable<StoreMsg<T>>,U> success, Func<string,U> error)
         {
-            return this.Data.Match(success, error);
+            return this.Data.Match (success, error);
         }
     }
 }

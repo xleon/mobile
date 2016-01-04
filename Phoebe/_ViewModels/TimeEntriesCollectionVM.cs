@@ -3,19 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Models;
 using XPlatUtils;
-using Toggl.Phoebe.Data;
 
 namespace Toggl.Phoebe.ViewModels
 {
     public class TimeEntriesCollectionVM : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
-    {   
-        private IDisposable disposable;
-        private readonly bool isGrouped;
+    {
+        public const int UndoSecondsInterval = 5;
+
+        IDisposable disposable;
+        readonly bool isGrouped;
+        ITimeEntryHolder lastRemovedItem;
+        System.Timers.Timer undoTimer = new System.Timers.Timer ();
 
         public event EventHandler<Either<Unit, string>> LoadFinished;
 
@@ -29,10 +34,9 @@ namespace Toggl.Phoebe.ViewModels
             this.isGrouped = isGrouped;
 
             disposable = Store
-                .Observe<TimeEntry> ()
-                .TimedBuffer (bufferMilliseconds)
-                .Select (x => HandleStoreResults (x))
-                .Subscribe ();
+                         .Observe<TimeEntryData> ()
+                         .TimedBuffer (bufferMilliseconds)
+                         .Subscribe (HandleStoreResults);
         }
 
         public void Dispose ()
@@ -43,20 +47,20 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void HandleStoreResults (IList<StoreResult<TimeEntry>> results)
+        private void HandleStoreResults (IList<StoreResult<TimeEntryData>> results)
         {
             var resultsGroup = results.Select (x => x.Data).Split ();
 
             var finalResult = resultsGroup.Left.Count == 0
-                ? Either<Unit,string>.Right (resultsGroup.Right.LastOrDefault ())
-                : UpdateItems (resultsGroup.Left.SelectMany (x => x));
+                              ? Either<Unit,string>.Right (resultsGroup.Right.LastOrDefault ())
+                              : UpdateItems (resultsGroup.Left.SelectMany (x => x));
 
             if (LoadFinished != null) {
-                LoadFinished (finalResult);
+                LoadFinished (this, finalResult);
             }
         }
 
-        private Either<Unit,string> UpdateItems (IEnumerable<StoreMsg<TimeEntry>> msgs)
+        private Either<Unit,string> UpdateItems (IEnumerable<StoreMsg<TimeEntryData>> msgs)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
@@ -93,15 +97,14 @@ namespace Toggl.Phoebe.ViewModels
                     }
                 });
                 return Either<Unit,string>.Left (new Unit ());
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (GetType ().Name, ex, "Failed to update collection");
                 return Either<Unit,string>.Right (ex.Message);
             }
         }
 
-        private void UpdateTimeHolders (IList<ITimeEntryHolder> timeHolders, TimeEntry entry, DataAction action)
+        private void UpdateTimeHolders (IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
         {
             if (action == DataAction.Put) {
                 var foundIndex = timeHolders.IndexOf (x => x.IsAffectedByPut (entry));
@@ -130,17 +133,69 @@ namespace Toggl.Phoebe.ViewModels
         public static IList<IHolder> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
         {
             return timeHolders
-                .OrderByDescending (x => x.GetStartTime ())
-                .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
-                .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
-                .ToList ();
+                   .OrderByDescending (x => x.GetStartTime ())
+                   .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
+                   .ToList ();
         }
 
-        public static ITimeEntryHolder CreateTimeHolder (bool isGrouped, TimeEntry entry, ITimeEntryHolder previous = null)
+        public static ITimeEntryHolder CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
         {
             return isGrouped
-                ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
-                    : new TimeEntryHolder (entry);
+                   ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
+                   : new TimeEntryHolder (entry);
+        }
+
+        public void RestoreTimeEntryFromUndo ()
+        {
+            Dispatcher.Send (DataTag.RestoreTimeEntryFromUndo, lastRemovedItem.Data);
+        }
+
+        public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
+        {
+            if (timeEntryHolder == null) {
+                return;
+            }
+
+            Action<ITimeEntryHolder> removeTimeEntryPermanently = holder => {
+                IList<TimeEntryData> entries = null;
+                var groupHolder = holder as TimeEntryGroup;
+                if (groupHolder != null) {
+                    entries = groupHolder.Group;
+                } else {
+                    entries = new [] { holder.Data };
+                }
+                Dispatcher.Send (DataTag.RemoveTimeEntryPermanently, entries);
+            };
+
+            System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
+                removeTimeEntryPermanently (lastRemovedItem);
+                lastRemovedItem = null;
+            };
+
+            // Remove previous if exists
+            if (lastRemovedItem != null) {
+                removeTimeEntryPermanently (lastRemovedItem);
+            }
+
+            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
+                Dispatcher.Send (DataTag.StopTimeEntry, timeEntryHolder.Data);
+            }
+            lastRemovedItem = timeEntryHolder;
+
+            // Remove item only from list
+            Dispatcher.Send (DataTag.RemoveTimeEntryWithUndo, timeEntryHolder.Data);
+
+            // Create Undo timer
+            if (undoTimer != null) {
+                undoTimer.Elapsed += undoTimerFinished;
+                undoTimer.Close();
+            }
+            // Using the correct timer.
+            undoTimer = new System.Timers.Timer ((UndoSecondsInterval + 1) * 1000);
+            undoTimer.AutoReset = false;
+            undoTimer.Elapsed += undoTimerFinished;
+            undoTimer.Start();
         }
     }
 }

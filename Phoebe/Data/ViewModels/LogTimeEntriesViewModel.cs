@@ -10,7 +10,9 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
@@ -101,7 +103,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string Duration { get; private set; }
 
-        public ICollectionData<IHolder> Collection { get; private set; }
+        public TimeEntriesCollectionVM Collection { get; private set; }
         #endregion
 
         #region Sync operations
@@ -117,10 +119,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             HasMoreItems = true;
             HasLoadErrors = false;
-
-            var startDate = await collectionFeed.LoadMore ();
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-            syncManager.RunTimeEntriesUpdate (startDate, TimeEntriesFeed.DaysLoad);
+            Dispatcher.Send (DataTag.LoadMoreTimeEntries);
         }
         #endregion
 
@@ -165,15 +164,15 @@ namespace Toggl.Phoebe.Data.ViewModels
             return active;
         }
 
-        public Task RemoveItemWithUndoAsync (int index)
+        public void RemoveItemWithUndo (int index)
         {
-            return collectionFeed.RemoveItemWithUndoAsync (
-                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
+            Collection.RemoveTimeEntryWithUndo (
+                Collection.Data.ElementAt (index) as ITimeEntryHolder);
         }
 
         public void RestoreItemFromUndo()
         {
-            collectionFeed.RestoreItemFromUndo ();
+            Collection.RestoreTimeEntryFromUndo ();
         }
 
         public TimeEntryData GetActiveTimeEntry ()

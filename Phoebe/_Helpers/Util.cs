@@ -8,7 +8,17 @@ namespace Toggl.Phoebe.Helpers
 {
     public static class Util
     {
-        public static void LogError(string tag, Exception ex, string msg)
+        public static T Rethrow<T> (Exception ex)
+        {
+            throw ex;
+        }
+
+        public static T Unexpected<T> (object value = null)
+        {
+            throw value != null ? new UnexpectedException (value) : new UnexpectedException ();
+        }
+
+        public static void LogError (string tag, Exception ex, string msg)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             log.Error (tag, ex, msg);
@@ -18,8 +28,7 @@ namespace Toggl.Phoebe.Helpers
         {
             try {
                 return await @try();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 return @catch (ex);
             }
         }
@@ -32,7 +41,20 @@ namespace Toggl.Phoebe.Helpers
                 item.Match (leftList.Add, rightList.Add);
             }
             return new EitherGroup<TL, TR> (leftList, rightList);
-        }        
+        }
+    }
+
+    public class UnexpectedException : Exception
+    {
+        public object Value { get; private set; }
+
+        public UnexpectedException (object value)
+        : base (string.Format ("Unexpected value: {0}", value))
+        {
+            Value = value;
+        }
+
+        public UnexpectedException () : base ("Unexpected") { }
     }
 
     public class Either<TL,TR>
@@ -50,12 +72,12 @@ namespace Toggl.Phoebe.Helpers
 
         public static Either<TL,TR> Left (TL left)
         {
-            return new Either<TL, TR> (true, left, default(TR));
+            return new Either<TL, TR> (true, left, default (TR));
         }
 
         public static Either<TL,TR> Right (TR right)
         {
-            return new Either<TL, TR> (false, default(TL), right);
+            return new Either<TL, TR> (false, default (TL), right);
         }
 
         public T Match<T> (Func<TL,T> left, Func<TR,T> right)
@@ -65,7 +87,11 @@ namespace Toggl.Phoebe.Helpers
 
         public void Match (Action<TL> left, Action<TR> right)
         {
-            _isLeft ? left (_left) : right (_right);
+            if (_isLeft) {
+                left (_left);
+            } else {
+                right (_right);
+            }
         }
 
         public Either<TL2,TR2> Select<TL2,TR2> (Func<TL,TL2> left, Func<TR,TR2> right)
@@ -79,7 +105,7 @@ namespace Toggl.Phoebe.Helpers
         public IList<TL> Left { get; private set; }
         public IList<TR> Right { get; private set; }
 
-        public EitherGroup(IList<TL> left, IList<TR> right)
+        public EitherGroup (IList<TL> left, IList<TR> right)
         {
             Left = left;
             Right = right;

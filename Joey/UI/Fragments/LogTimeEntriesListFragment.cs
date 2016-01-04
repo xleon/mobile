@@ -20,7 +20,9 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
@@ -47,7 +49,7 @@ namespace Toggl.Joey.UI.Fragments
 
         // binding references
         private Binding<bool, bool> hasMoreBinding, newMenuBinding;
-        private Binding<ICollectionData<IHolder>, ICollectionData<IHolder>> collectionBinding;
+        private Binding<TimeEntriesCollectionVM, TimeEntriesCollectionVM> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.
@@ -185,11 +187,11 @@ namespace Toggl.Joey.UI.Fragments
             return adapter.GetItemViewType (viewHolder.LayoutPosition) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
         }
 
-        public async void OnDismiss (RecyclerView.ViewHolder viewHolder)
+        public void OnDismiss (RecyclerView.ViewHolder viewHolder)
         {
-            const int duration = TimeEntriesFeed.UndoSecondsInterval * 1000;
+            const int duration = TimeEntriesCollectionVM.UndoSecondsInterval * 1000;
 
-            await ViewModel.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
+            ViewModel.RemoveItemWithUndo (viewHolder.AdapterPosition);
             var snackBar = Snackbar
                            .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
                            .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Models
@@ -18,11 +19,10 @@ namespace Toggl.Phoebe.Models
 
     public interface ITimeEntryHolder : IHolder
     {
-        TimeEntry Data { get; }
+        TimeEntryData Data { get; }
         TimeEntryInfo Info { get; }
         IList<string> Guids { get; }
 
-        Task DeleteAsync ();
         TimeSpan GetDuration ();
         DateTime GetStartTime ();
     }
@@ -81,12 +81,6 @@ namespace Toggl.Phoebe.Models
         public TimeSpan GetDuration()
         {
             return TimeEntryModel.GetDuration (Data, Time.UtcNow);
-        }
-
-        public Task DeleteAsync()
-        {
-            throw new NotImplementedException ();
-//            await TimeEntryModel.DeleteTimeEntryDataAsync (Data);
         }
 
         public override string ToString ()

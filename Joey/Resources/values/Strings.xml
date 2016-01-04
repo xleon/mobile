@@ -78,9 +78,10 @@
     <string name="ProjectsNoClient">No client</string>
     <string name="ProjectsNamelessWorkspace">(nameless workspace)</string>
     <string name="NewProjectTitle">New project</string>
-    <string name="NewProjectProjectFieldName">Project Name</string>
-    <string name="NewProjectSelectClientFieldName">Select client</string>
+    <string name="NewProjectProjectFieldName">Project</string>
+    <string name="NewProjectProjectFieldHint">Project Name</string>
     <string name="NewProjectClientFieldName">Client</string>
+    <string name="NewProjectClientFieldHint">Add Client</string>
     <string name="NewProjectSaveButtonText">Save</string>
     <string name="NewProjectEmptyDialogTitle">Empty name</string>
     <string name="NewProjectEmptyDialogMessage">Fill in the project name before saving</string>

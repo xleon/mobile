@@ -76,11 +76,13 @@ namespace Toggl.Joey.UI.Fragments
             Toolbar.SetTitle (Resource.String.NewProjectTitle);
 
             ProjectBit = view.FindViewById<TogglField> (Resource.Id.NewProjectProjectNameBit)
-                         .DestroyAssistView().DestroyArrow()
-                         .SetName (Resource.String.NewProjectProjectFieldName);
+                         .DestroyAssistView ().DestroyArrow ()
+                         .SetName (Resource.String.NewProjectProjectFieldName)
+                         .SetHint (Resource.String.NewProjectProjectFieldHint);
 
             SelectClientBit = view.FindViewById<TogglField> (Resource.Id.SelectClientNameBit)
-                              .DestroyAssistView().SetName (Resource.String.NewProjectSelectClientFieldName)
+                              .DestroyAssistView().SetName (Resource.String.NewProjectClientFieldName)
+                              .SetHint (Resource.String.NewProjectClientFieldHint)
                               .SimulateButton();
 
             SelectClientBit.TextField.Click += SelectClientBitClickedHandler;

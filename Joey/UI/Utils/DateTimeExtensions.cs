@@ -19,7 +19,7 @@ namespace Toggl.Joey.UI.Utils
         public static string ToDeviceDateString (this DateTime self)
         {
             var javaDate = new Java.Util.Date ((long)self.ToUnix ().TotalMilliseconds);
-            return DateFormat.GetDateFormat (ServiceContainer.Resolve<Context> ()).Format (javaDate);
+            return self.DayOfWeek.ToString ().Substring (0,3) + " " + DateFormat.GetDateFormat (ServiceContainer.Resolve<Context> ()).Format (javaDate);
         }
     }
 }

@@ -191,9 +191,9 @@ namespace Toggl.Phoebe.Data.ViewModels
                 IsManual = model.State == TimeEntryState.New;
 
                 if (model.Project != null) {
-                    if (model.Project.Client != null) {
-                        ClientName = model.Project.Client.Name;
-                    }
+                    ClientName = model.Project.Client != null ? model.Project.Client.Name : string.Empty;
+                } else {
+                    ClientName = string.Empty;
                 }
 
                 if (model.State == TimeEntryState.Running && !IsRunning) {

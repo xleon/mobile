@@ -22,7 +22,9 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
@@ -51,8 +53,8 @@ namespace Toggl.Joey.UI.Fragments
         private ItemTouchListener itemTouchListener;
 
         // binding references
-        private Binding<bool, bool> hasItemsBinding, newMenuBinding, hasMoreBinging, hasErrorBinding;
-        private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
+        private Binding<bool, bool> hasMoreBinding, newMenuBinding;
+        private Binding<TimeEntriesCollectionVM, TimeEntriesCollectionVM> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.

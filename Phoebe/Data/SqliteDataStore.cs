@@ -208,6 +208,20 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        // TODO: Temporary
+        public async Task<Tuple<T,List<DataChangeMessage>>> ExecuteInTransactionWithMessagesAsync<T> (Func<IDataStoreContext, T> worker)
+        {
+            Context ctx = null;
+            var result = default (T);
+
+            await CreateAsyncCnn().RunInTransactionAsync (conn => {
+                ctx = new Context (this, conn);
+                result = worker (ctx);
+            });
+
+            return Tuple.Create (result, ctx.Messages);
+        }
+
         private class Context : IDataStoreContext
         {
             private readonly SqliteDataStore store;

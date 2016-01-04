@@ -11,6 +11,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
@@ -128,10 +129,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             HasMoreItems = true;
             HasLoadErrors = false;
-
-            var startDate = await collectionFeed.LoadMore ();
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-            syncManager.RunTimeEntriesUpdate (startDate, TimeEntriesFeed.DaysLoad);
+            Dispatcher.Send (DataTag.LoadMoreTimeEntries);
         }
         #endregion
 

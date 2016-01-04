@@ -338,7 +338,7 @@
     <Compile Include="ViewControllers\WebViewController.cs" />
     <Compile Include="Net\APNSManager.cs" />
     <Compile Include="ViewControllers\NewClientViewController.cs" />
-    <Compile Include="DataSources\CollectionDataViewSource.cs" />
+    <Compile Include="DataSources\ObservableCollectionViewSource.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

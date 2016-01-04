@@ -96,7 +96,7 @@ namespace Toggl.Joey.UI.Fragments
             var dia = new AlertDialog.Builder (Activity)
             .SetTitle (Resource.String.ChooseTimeEntryTagsDialogTitle)
             .SetAdapter (tagsAdapter, (IDialogInterfaceOnClickListener)null)
-            .SetNegativeButton (Resource.String.ChooseTimeEntryTagsDialogCreate, OnCreateButtonClicked)
+            .SetNeutralButton (Resource.String.ChooseTimeEntryTagsDialogCreate, OnCreateButtonClicked)
             .SetPositiveButton (Resource.String.ChooseTimeEntryTagsDialogOk, OnOkButtonClicked)
             .Create ();
 

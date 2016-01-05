@@ -215,30 +215,6 @@ namespace Toggl.Joey.UI.Fragments
             StartActivityForResult (intent, 0);
         }
 
-        Task<bool> AwaitPredicate (Func<bool> predicate, double interval = 100, double timeout = 5000)
-        {
-            var tcs = new TaskCompletionSource<bool> ();
-
-            double timePassed = 0;
-            var timer = new System.Timers.Timer (interval)  { AutoReset = true };
-            timer.Elapsed += (s, e) => {
-                timePassed += interval;
-                if (timePassed >= timeout) {
-                    timer.Stop ();
-                    tcs.SetResult (false);
-                } else {
-                    var success = predicate ();
-                    if (success) {
-                        timer.Stop ();
-                        tcs.SetResult (true);
-                    }
-                }
-            };
-            timer.Start ();
-
-            return tcs.Task;
-        }
-
         public override async void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
@@ -313,6 +289,30 @@ namespace Toggl.Joey.UI.Fragments
             if (ViewModel != null && SaveMenuItem != null) {
                 SaveMenuItem.SetVisible (ViewModel.IsManual);
             }
+        }
+
+        private Task<bool> AwaitPredicate (Func<bool> predicate, double interval = 100, double timeout = 5000)
+        {
+            var tcs = new TaskCompletionSource<bool> ();
+
+            double timePassed = 0;
+            var timer = new System.Timers.Timer (interval)  { AutoReset = true };
+            timer.Elapsed += (s, e) => {
+                timePassed += interval;
+                if (timePassed >= timeout) {
+                    timer.Stop ();
+                    tcs.SetResult (false);
+                } else {
+                    var success = predicate ();
+                    if (success) {
+                        timer.Stop ();
+                        tcs.SetResult (true);
+                    }
+                }
+            };
+            timer.Start ();
+
+            return tcs.Task;
         }
     }
 }

@@ -174,12 +174,14 @@ namespace Toggl.Joey.UI.Fragments
             StartActivityForResult (intent, 0);
         }
 
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public async override void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
             if (resultCode == (int)Result.Ok) {
                 var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
                 var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
+
+                await AwaitPredicate (() => ViewModel != null);
                 ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }
@@ -229,6 +231,30 @@ namespace Toggl.Joey.UI.Fragments
             Guid result;
             Guid.TryParse (data.GetStringExtra (id), out result);
             return result;
+        }
+
+        private Task<bool> AwaitPredicate (Func<bool> predicate, double interval = 100, double timeout = 5000)
+        {
+            var tcs = new TaskCompletionSource<bool> ();
+
+            double timePassed = 0;
+            var timer = new System.Timers.Timer (interval)  { AutoReset = true };
+            timer.Elapsed += (s, e) => {
+                timePassed += interval;
+                if (timePassed >= timeout) {
+                    timer.Stop ();
+                    tcs.SetResult (false);
+                } else {
+                    var success = predicate ();
+                    if (success) {
+                        timer.Stop ();
+                        tcs.SetResult (true);
+                    }
+                }
+            };
+            timer.Start ();
+
+            return tcs.Task;
         }
     }
 }

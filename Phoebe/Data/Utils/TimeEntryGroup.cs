@@ -36,8 +36,8 @@ namespace Toggl.Phoebe.Data.Utils
                 Group = previous2.Group.ReplaceOrAppend (data, x => x.Id == data.Id)
                         .OrderByDescending (x => x.StartTime).ToList ();
 
-                // Recycle entry info if possible
-                Info = previous2.Data.Id == Data.Id ? previous2.Info : null;
+                // Recycle entry info if possible (IsGroupableWith method is used to check info hasn't changed)
+                Info = previous2.Data.Id == Data.Id && previous2.Data.IsGroupableWith (Data) ? previous2.Info : null;
             } else {
                 Group = new List<TimeEntryData> { data };
             }
@@ -82,7 +82,7 @@ namespace Toggl.Phoebe.Data.Utils
 
         public bool IsAffectedByPut (TimeEntryData data)
         {
-            return Group.Any (x => x.IsGroupableWith (data));
+            return Group.Any (x => x.Id == data.Id || x.IsGroupableWith (data));
         }
 
         public DateTime GetStartTime()

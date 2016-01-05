@@ -107,7 +107,7 @@ namespace Toggl.Phoebe.Tests.Data
             };
         }
 
-        public TimeEntryData CreateTimeEntry (TimeEntryData prev, int daysOffset = 0, int minutesOffset = 0)
+        public TimeEntryData CreateTimeEntry (TimeEntryData prev, int daysOffset = 0, int minutesOffset = 0, Guid task = default (Guid), Guid proj = default (Guid))
         {
             var startTime = prev.StartTime.AddDays (daysOffset).AddMinutes (minutesOffset);
             return new TimeEntryData {
@@ -116,8 +116,8 @@ namespace Toggl.Phoebe.Tests.Data
                 StopTime = startTime.AddMinutes (1),
                 UserId = userId,
                 WorkspaceId = workspaceId,
-                TaskId = prev.TaskId,
-                ProjectId = prev.ProjectId,
+                TaskId = task == Guid.Empty ? prev.TaskId : task,
+                ProjectId = proj == Guid.Empty ? prev.ProjectId : proj,
                 Description = prev.Description,
                 State = TimeEntryState.Finished,
             };
@@ -772,6 +772,32 @@ namespace Toggl.Phoebe.Tests.Data
             AssertEvent (evs[0], "replace", "date header");
             AssertEvent (evs[1], "remove", "time entry");
             AssertEvent (evs[2], "replace", "time entry");
+        }
+
+        [Test]
+        public async void GroupTestEditProject ()
+        {
+            var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
+            Guid task = Guid.NewGuid (), proj1 = Guid.NewGuid (), proj2 = Guid.NewGuid ();
+
+            var entry1 = CreateTimeEntry (dt.AddMinutes (10), task, proj1);
+            var entry2 = CreateTimeEntry (dt.AddMinutes (5), task, proj1);
+            var entry3 = CreateTimeEntry (dt, task, proj1);
+
+            var feed = new TestFeed ();
+            var groupedView = await CreateTimeEntriesCollection (feed, true, 100, entry1, entry2, entry3);
+
+            AssertList (groupedView, dt, new[] { entry1, entry2, entry3 });
+
+            // Edit project for all entries in group
+            var evs = await GetEvents (1, groupedView, feed, () => {
+                feed.Push (CreateTimeEntry (entry1, proj: proj2), DataAction.Put);
+                feed.Push (CreateTimeEntry (entry2, proj: proj2), DataAction.Put);
+                feed.Push (CreateTimeEntry (entry3, proj: proj2), DataAction.Put);
+            });
+
+            AssertList (groupedView, dt, new[] { entry1, entry2, entry3 });
+            AssertEvent (evs[0], "replace", "time entry");
         }
     }
 }

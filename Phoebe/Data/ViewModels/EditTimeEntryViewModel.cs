@@ -41,8 +41,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             var model = new TimeEntryModel (timeEntryId);
             await model.LoadAsync ();
 
-            var tagsView = await TimeEntryTagCollectionView.Init (timeEntryId);
-            var tagList = tagsView.Data.ToList ();
+            var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryId);;
 
             // If the entry is new, setup it a bit.
             if (model.State == TimeEntryState.New) {

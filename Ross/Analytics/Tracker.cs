@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Google.Analytics;
 using Toggl.Phoebe.Analytics;
-using Xamarin;
 
 namespace Toggl.Ross.Analytics
 {
@@ -26,9 +25,6 @@ namespace Toggl.Ross.Analytics
         protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label = null)
         {
             SendHit (DictionaryBuilder.CreateTiming (category, elapsedMilliseconds, variable, label));
-            if (Insights.IsInitialized) {
-                Insights.Track ("AppStartupTime", new Dictionary<string, string>  {{"ElapsedTime", elapsedMilliseconds + "ms"}});
-            }
         }
 
         protected override void SendEvent (string category, string action, string label = null, long value = 0)

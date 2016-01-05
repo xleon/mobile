@@ -13,6 +13,7 @@ using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using XPlatUtils;
@@ -215,30 +216,6 @@ namespace Toggl.Joey.UI.Fragments
             StartActivityForResult (intent, 0);
         }
 
-        Task<bool> AwaitPredicate (Func<bool> predicate, double interval = 100, double timeout = 5000)
-        {
-            var tcs = new TaskCompletionSource<bool> ();
-
-            double timePassed = 0;
-            var timer = new System.Timers.Timer (interval)  { AutoReset = true };
-            timer.Elapsed += (s, e) => {
-                timePassed += interval;
-                if (timePassed >= timeout) {
-                    timer.Stop ();
-                    tcs.SetResult (false);
-                } else {
-                    var success = predicate ();
-                    if (success) {
-                        timer.Stop ();
-                        tcs.SetResult (true);
-                    }
-                }
-            };
-            timer.Start ();
-
-            return tcs.Task;
-        }
-
         public override async void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
@@ -246,7 +223,7 @@ namespace Toggl.Joey.UI.Fragments
                 var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
                 var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
 
-                await AwaitPredicate (() => ViewModel != null);
+                await Util.AwaitPredicate (() => ViewModel != null);
                 await ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }

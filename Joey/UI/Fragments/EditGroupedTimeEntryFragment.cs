@@ -104,8 +104,6 @@ namespace Toggl.Joey.UI.Fragments
                            .SetHint (Resource.String.EditTimeEntryFragmentProjectHint)
                            .SimulateButton();
 
-            ProjectField.TextField.Click += OnProjectEditTextClick;
-            ProjectField.Click += OnProjectEditTextClick;
             timeEntriesListView = view.FindViewById<ListView> (Resource.Id.timeEntryGroupListView);
 
             HasOptionsMenu = true;
@@ -116,6 +114,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
             ViewModel = await EditTimeEntryGroupViewModel.Init (TimeEntryIds.ToList ());
+
+            ProjectField.TextField.Click += OnProjectEditTextClick;
+            ProjectField.Click += OnProjectEditTextClick;
 
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
             startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => StartTimeEditText.Text).ConvertSourceToTarget (dateTime => dateTime.ToDeviceTimeString ());
@@ -174,13 +175,15 @@ namespace Toggl.Joey.UI.Fragments
             StartActivityForResult (intent, 0);
         }
 
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public override async void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
             if (resultCode == (int)Result.Ok) {
                 var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
                 var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
-                ViewModel.SetProjectAndTask (projectId, taskId);
+
+                await Util.AwaitPredicate (() => ViewModel != null);
+                await ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }
 
@@ -232,4 +235,3 @@ namespace Toggl.Joey.UI.Fragments
         }
     }
 }
-

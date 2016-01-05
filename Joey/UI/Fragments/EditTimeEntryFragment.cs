@@ -13,6 +13,7 @@ using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using XPlatUtils;
@@ -115,6 +116,15 @@ namespace Toggl.Joey.UI.Fragments
             TagsField = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
 
+            HasOptionsMenu = true;
+            return view;
+        }
+
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
+        {
+            base.OnViewCreated (view, savedInstanceState);
+            ViewModel = await EditTimeEntryViewModel.Init (TimeEntryId);
+
             // TODO: in theory, this event could be binded but
             // the event "CheckedChange" isn't found when
             // the app is compiled for release. Investigate!
@@ -144,15 +154,6 @@ namespace Toggl.Joey.UI.Fragments
             ProjectField.TextField.Click += (sender, e) => OpenProjectListActivity ();
             ProjectField.Click += (sender, e) => OpenProjectListActivity ();
             TagsField.OnPressTagField += OnTagsEditTextClick;
-
-            HasOptionsMenu = true;
-            return view;
-        }
-
-        public async override void OnViewCreated (View view, Bundle savedInstanceState)
-        {
-            base.OnViewCreated (view, savedInstanceState);
-            ViewModel = await EditTimeEntryViewModel.Init (TimeEntryId);
 
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
             startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => StartTimeEditText.Text)
@@ -215,13 +216,15 @@ namespace Toggl.Joey.UI.Fragments
             StartActivityForResult (intent, 0);
         }
 
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public override async void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
             if (resultCode == (int)Result.Ok) {
                 var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
                 var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
-                ViewModel.SetProjectAndTask (projectId, taskId);
+
+                await Util.AwaitPredicate (() => ViewModel != null);
+                await ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }
 

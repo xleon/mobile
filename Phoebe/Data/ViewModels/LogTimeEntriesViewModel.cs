@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -81,7 +82,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             if (Collection != null) {
-                Collection.Dispose ();
+                ((TimeEntriesCollection)Collection).Dispose ();
                 Collection = null;
             }
         }
@@ -105,7 +106,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string Duration { get; private set; }
 
-        public ICollectionData<IHolder> Collection { get; private set; }
+        public ObservableCollection<IHolder> Collection { get; private set; }
         #endregion
 
         #region Sync operations
@@ -131,7 +132,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         #region Time entry operations
         public async Task ContinueTimeEntryAsync (int index)
         {
-            var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
+            var timeEntryHolder = Collection.ElementAt (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
                 return;
             }
@@ -166,7 +167,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         public Task RemoveItemWithUndoAsync (int index)
         {
             return collectionFeed.RemoveItemWithUndoAsync (
-                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
+                       Collection.ElementAt (index) as ITimeEntryHolder);
         }
 
         public void RestoreItemFromUndo()

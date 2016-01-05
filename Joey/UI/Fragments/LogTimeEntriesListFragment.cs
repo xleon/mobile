@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Android.Content;
@@ -47,7 +48,7 @@ namespace Toggl.Joey.UI.Fragments
 
         // binding references
         private Binding<bool, bool> hasMoreBinding, newMenuBinding;
-        private Binding<ICollectionData<IHolder>, ICollectionData<IHolder>> collectionBinding;
+        private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.

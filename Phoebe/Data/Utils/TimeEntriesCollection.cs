@@ -12,7 +12,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Utils
 {
-    public class TimeEntriesCollection : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
+    public class TimeEntriesCollection : ObservableRangeCollection<IHolder>, IDisposable
     {
         private IDisposable disposable;
         private readonly bool isGrouped;

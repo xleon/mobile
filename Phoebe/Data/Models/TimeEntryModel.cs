@@ -11,7 +11,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class TimeEntryModel : Model<TimeEntryData>, ITimeEntryModel
+    public class TimeEntryModel : Model<TimeEntryData>
     {
         private const string Tag = "TimeEntryModel";
 
@@ -631,15 +631,6 @@ namespace Toggl.Phoebe.Data.Models
             IsBillable = model.IsBillable;
             Task = model.Task;
             await SaveAsync ();
-        }
-
-        TimeEntryData ITimeEntryModel.Data
-        {
-            get {
-                return Data;
-            } set {
-                Data = value;
-            }
         }
 
         #region Public static methods.

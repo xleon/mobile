@@ -16,13 +16,13 @@ namespace Toggl.Phoebe.Data.Utils
         {
             public IEnumerable<TimeEntryGroup> Group (IEnumerable<TimeEntryHolder> items)
             {
-                var tempDic = new Dictionary<TimeEntryData, List<TimeEntryHolder>> ();
+                var key = default (Guid);
+                var tempDic = new Dictionary<Guid, List<TimeEntryHolder>> ();
                 foreach (var item in items) {
-                    var key = tempDic.Keys.SingleOrDefault (x => x.IsGroupableWith (item.Data));
-                    if (key != null) {
-                        tempDic [item.Data].Add (item);
+                    if (tempDic.TryFindKey (out key, kv => kv.Value[0].Data.IsGroupableWith (item.Data))) {
+                        tempDic [key].Add (item);
                     } else {
-                        tempDic.Add (item.Data, new List<TimeEntryHolder> { item });
+                        tempDic.Add (item.Data.Id, new List<TimeEntryHolder> { item });
                     }
                 }
                 foreach (var kvPair in tempDic) {
@@ -73,15 +73,16 @@ namespace Toggl.Phoebe.Data.Utils
 
         public DiffComparison Compare (IDiffComparable other)
         {
-            if (object.ReferenceEquals (this, other)) {
-                return DiffComparison.Same;
+            var other2 = other as TimeEntryGroup;
+            if (other2 != null) {
+                if (DataCollection.SequenceEqual (other2.DataCollection, object.ReferenceEquals)) {
+                    return DiffComparison.Same;
+                } else {
+                    return other2.DataCollection.Last ().Id == DataCollection.Last ().Id
+                           ? DiffComparison.Update : DiffComparison.Different;
+                }
             } else {
-                var other2 = other as TimeEntryGroup;
-
-                // Use the last Id for comparison as this is the original entry
-                // (Group is sorted by StartTime in descending order)
-                return other2 != null && other2.DataCollection.Last ().Id == DataCollection.Last ().Id
-                       ? DiffComparison.Update : DiffComparison.Different;
+                return DiffComparison.Different;
             }
         }
 

@@ -78,7 +78,7 @@ namespace Toggl.Phoebe.Data.Utils
                 if (DataCollection.SequenceEqual (other2.DataCollection, object.ReferenceEquals)) {
                     return DiffComparison.Same;
                 } else {
-                    return other2.DataCollection.Last ().Id == DataCollection.Last ().Id
+                    return Data.IsGroupableWith (other2.Data)
                            ? DiffComparison.Update : DiffComparison.Different;
                 }
             } else {

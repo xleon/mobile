@@ -95,6 +95,7 @@ namespace Toggl.Phoebe.Data
             return existingProjects.Count != 0;
         }
 
+        // TODO: Check also IsBillable, Tags?
         public static bool IsGroupableWith (this TimeEntryData data, TimeEntryData other)
         {
             return data.ProjectId == other.ProjectId &&

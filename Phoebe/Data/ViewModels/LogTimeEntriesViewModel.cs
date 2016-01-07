@@ -196,8 +196,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
             collectionFeed = new TimeEntriesFeed ();
-            var col = new TimeEntriesCollection (collectionFeed, IsGroupedMode);
-            Collection = col;
+            Collection = IsGroupedMode
+                         ? (ICollectionData<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed)
+                         : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
         }
 
         private void UpdateView ()

@@ -30,7 +30,7 @@ namespace Toggl.Phoebe.Data.Utils
                     yield return new TimeEntryGroup (kvPair.Value.Select (x => x.Data), cached != null ? cached.Info : null);
                 }
             }
-            public IEnumerable<TimeEntryHolder> Disgroup (IEnumerable<TimeEntryGroup> groups)
+            public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryGroup> groups)
             {
                 foreach (var g in groups) {
                     foreach (var data in g.DataCollection) {

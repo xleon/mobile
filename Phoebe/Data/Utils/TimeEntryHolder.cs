@@ -9,7 +9,7 @@ namespace Toggl.Phoebe.Data.Utils
     public interface IGrouper<T, TGroup>
     {
         IEnumerable<TGroup> Group (IEnumerable<T> items);
-        IEnumerable<T> Disgroup (IEnumerable<TGroup> groups);
+        IEnumerable<T> Ungroup (IEnumerable<TGroup> groups);
     }
 
     public interface IHolder : IDiffComparable
@@ -36,7 +36,7 @@ namespace Toggl.Phoebe.Data.Utils
             {
                 return items;
             }
-            public IEnumerable<TimeEntryHolder> Disgroup (IEnumerable<TimeEntryHolder> groups)
+            public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryHolder> groups)
             {
                 return groups;
             }

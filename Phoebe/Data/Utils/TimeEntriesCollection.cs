@@ -54,7 +54,7 @@ namespace Toggl.Phoebe.Data.Utils
         private async Task UpdateItemsAsync (IEnumerable<TimeEntryMessage> msgs)
         {
             // 1. Get only TimeEntryHolders from current collection
-            var timeHolders = grouper.Disgroup (Items.OfType<T> ()).ToList ();
+            var timeHolders = grouper.Ungroup (Items.OfType<T> ()).ToList ();
 
             // 2. Remove, replace or add items from messages
             foreach (var msg in msgs) {

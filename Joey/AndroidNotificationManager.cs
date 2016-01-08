@@ -1,7 +1,7 @@
 using System;
-using System.ComponentModel;
 using Android.App;
 using Android.Content;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Phoebe;
@@ -15,7 +15,7 @@ using NotificationCompat = Android.Support.V4.App.NotificationCompat;
 
 namespace Toggl.Joey
 {
-    sealed class AndroidNotificationManager : IDisposable
+    public class AndroidNotificationManager : IDisposable
     {
         private const int IdleNotifId = 40;
         private const int RunningNotifId = 42;
@@ -24,10 +24,12 @@ namespace Toggl.Joey
         private readonly NotificationCompat.Builder runningBuilder;
         private readonly NotificationCompat.Builder idleBuilder;
         private PropertyChangeTracker propertyTracker;
-        private ActiveTimeEntryManager timeEntryManager;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        private TimeEntryModel backingRunningTimeEntry;
+        private TimeEntryModel activeTimeEntryModel;
+
+        private Binding<TimeEntryData, TimeEntryData> binding;
+        protected ActiveTimeEntryManager TimeEntryManager {get; set;}
 
         public AndroidNotificationManager ()
         {
@@ -37,15 +39,12 @@ namespace Toggl.Joey
             idleBuilder = CreateIdleNotificationBuilder (ctx);
             propertyTracker = new PropertyChangeTracker ();
 
-            timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            timeEntryManager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
+            TimeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            binding = this.SetBinding (() => TimeEntryManager.ActiveTimeEntry).WhenSourceChanges (OnActiveTimeEntryChanged);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
-
-            SyncRunningModel ();
-            SyncNotification ();
+            //subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
         }
 
         public void Dispose ()
@@ -63,54 +62,23 @@ namespace Toggl.Joey
                 bus.Unsubscribe (subscriptionAuthChanged);
                 subscriptionAuthChanged = null;
             }
-            if (timeEntryManager != null) {
-                timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
-                timeEntryManager = null;
-            }
             if (propertyTracker != null) {
                 propertyTracker.Dispose ();
                 propertyTracker = null;
             }
         }
 
-        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        private void OnActiveTimeEntryChanged ()
         {
-            if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
-                SyncRunningModel ();
-                SyncNotification ();
-            }
-        }
+            var data = TimeEntryManager.ActiveTimeEntry;
 
-        private TimeEntryData RunningTimeEntryData
-        {
-            get {
-                if (timeEntryManager == null) {
-                    return null;
-                }
-                return timeEntryManager.Running;
+            if (activeTimeEntryModel == null) {
+                activeTimeEntryModel = new TimeEntryModel (data);
+            } else {
+                activeTimeEntryModel.Data = data;
             }
-        }
 
-        private void SyncRunningModel ()
-        {
-            var data = RunningTimeEntryData;
-            if (data != null) {
-                if (backingRunningTimeEntry == null) {
-                    backingRunningTimeEntry = new TimeEntryModel (data);
-                } else {
-                    backingRunningTimeEntry.Data = data;
-                }
-            }
-        }
-
-        private TimeEntryModel RunningTimeEntry
-        {
-            get {
-                if (RunningTimeEntryData == null) {
-                    return null;
-                }
-                return backingRunningTimeEntry;
-            }
+            SyncNotification ();
         }
 
         private void ResetTrackedObservables ()
@@ -121,7 +89,7 @@ namespace Toggl.Joey
 
             propertyTracker.MarkAllStale ();
 
-            var model = RunningTimeEntry;
+            var model = activeTimeEntryModel;
             if (model != null) {
                 propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
 
@@ -175,14 +143,14 @@ namespace Toggl.Joey
 
         private void SyncNotification ()
         {
-            var currentTimeEntry = RunningTimeEntry;
+            var currentTimeEntry = activeTimeEntryModel;
             ResetTrackedObservables ();
 
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (!authManager.IsAuthenticated) {
                 notificationManager.Cancel (RunningNotifId);
                 notificationManager.Cancel (IdleNotifId);
-            } else if (currentTimeEntry == null) {
+            } else if (currentTimeEntry.State != TimeEntryState.Running) {
                 notificationManager.Cancel (RunningNotifId);
                 var settings = ServiceContainer.Resolve<SettingsStore> ();
                 if (settings.IdleNotification) {

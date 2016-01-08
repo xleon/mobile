@@ -82,7 +82,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = await LogTimeEntriesViewModel.Init ();
+            ViewModel = LogTimeEntriesViewModel.Init ();
 
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);

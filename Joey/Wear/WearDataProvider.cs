@@ -19,12 +19,8 @@ namespace Toggl.Joey.Wear
         public static async Task StartStopTimeEntry (Context ctx)
         {
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            if (manager.Active == null) {
-                return;
-            }
-
-            var active = new TimeEntryModel (manager.Active);
-            if (manager.Active.State == TimeEntryState.Running) {
+            var active = new TimeEntryModel (manager.ActiveTimeEntry);
+            if (manager.ActiveTimeEntry.State == TimeEntryState.Running) {
                 await active.StopAsync ();
                 ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
             } else {

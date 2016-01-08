@@ -89,6 +89,8 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
+    <Compile Include="Data\StartStopMessage.cs" />
+    <Compile Include="Data\ActiveTimeEntryManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

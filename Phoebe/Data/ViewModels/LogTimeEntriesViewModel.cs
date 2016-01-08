@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -21,10 +20,10 @@ namespace Toggl.Phoebe.Data.ViewModels
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
-        private ActiveTimeEntryManager timeEntryManager;
-        private TimeEntryModel model;
         private TimeEntriesFeed collectionFeed;
         private readonly Timer durationTimer;
+
+        private readonly ActiveTimeEntryManager timeEntryManager;
 
         LogTimeEntriesViewModel ()
         {
@@ -34,7 +33,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
             timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            timeEntryManager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
+            timeEntryManager.PropertyChanged += OnRunningStateChanged;
+            UpdateView (timeEntryManager.IsRunning, timeEntryManager.ActiveTimeEntry);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -42,10 +42,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
         }
 
-        public static async Task<LogTimeEntriesViewModel> Init ()
+        public static LogTimeEntriesViewModel Init ()
         {
             var vm = new LogTimeEntriesViewModel ();
-            await vm.SyncModel ();
             vm.SyncCollectionView ();
             return vm;
         }
@@ -66,11 +65,8 @@ namespace Toggl.Phoebe.Data.ViewModels
                 subscriptionUpdateFinished = null;
             }
 
+            timeEntryManager.PropertyChanged -= OnRunningStateChanged;
             DisposeCollection ();
-
-            timeEntryManager.PropertyChanged -= OnActiveTimeEntryManagerPropertyChanged;
-            timeEntryManager = null;
-            model = null;
         }
 
         private void DisposeCollection ()
@@ -147,11 +143,12 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public async Task<TimeEntryData> StartStopTimeEntry ()
         {
-            // Protect from double clicks
+            // Protect from double clicks?
             if (IsProcessingAction) {
-                return model.Data;
+                return timeEntryManager.ActiveTimeEntry;
             }
 
+            var model = new TimeEntryModel (timeEntryManager.ActiveTimeEntry);
             if (model.State == TimeEntryState.Running) {
                 await model.StopAsync ();
             } else {
@@ -159,7 +156,6 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             IsProcessingAction = false;
-
             return model.Data;
         }
 
@@ -176,19 +172,9 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public TimeEntryData GetActiveTimeEntry ()
         {
-            return model.Data;
+            return timeEntryManager.ActiveTimeEntry;
         }
         #endregion
-
-        private async Task SyncModel ()
-        {
-            var data = timeEntryManager.Active;
-            if (data != null) {
-                model = new TimeEntryModel (data);
-                await model.LoadAsync ();
-                UpdateView ();
-            }
-        }
 
         private void SyncCollectionView ()
         {
@@ -201,17 +187,20 @@ namespace Toggl.Phoebe.Data.ViewModels
                          : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
         }
 
-        private void UpdateView ()
+        private void UpdateView (bool isRunning, TimeEntryData data)
         {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                Description = model.Description;
-                ProjectName = model.Project != null ? model.Project.Name : string.Empty;
-
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
                 // Check if an entry is running.
-                if (model.State == TimeEntryState.Running && !IsTimeEntryRunning) {
+                if (isRunning) {
+                    var model = new TimeEntryModel (data);
+                    await model.LoadAsync ();
+                    Description = model.Description;
+                    ProjectName = model.Project != null ? model.Project.Name : string.Empty;
                     IsTimeEntryRunning = true;
                     durationTimer.Start ();
-                } else if (model.State != TimeEntryState.Running) {
+                } else {
+                    Description = string.Empty;
+                    ProjectName = string.Empty;
                     IsTimeEntryRunning = false;
                     durationTimer.Stop ();
                     Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
@@ -219,11 +208,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        private void OnRunningStateChanged (object sender, EventArgs args)
         {
-            if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
-                await SyncModel ();
-            }
+            UpdateView (timeEntryManager.IsRunning, timeEntryManager.ActiveTimeEntry);
         }
 
         private void OnSettingChanged (SettingChangedMessage msg)
@@ -251,7 +238,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)
         {
-            var duration = model.GetDuration ();
+
+            var duration = TimeEntryModel.GetDuration (timeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
             durationTimer.Interval = 1000 - duration.Milliseconds;
 
             // Update on UI Thread

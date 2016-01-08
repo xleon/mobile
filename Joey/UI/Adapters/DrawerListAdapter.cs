@@ -17,6 +17,7 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int SettingsPageId = 2;
         public static readonly int LogoutPageId = 3;
         public static readonly int FeedbackPageId = 4;
+        public static readonly int CreateUserPageId = 5;
         private List<DrawerItem> rowItems;
         private readonly AuthManager authManager;
 
@@ -56,6 +57,12 @@ namespace Toggl.Joey.UI.Adapters
                 new DrawerItem () {
                     Id = LogoutPageId,
                     TextResId = Resource.String.MainDrawerLogout,
+                    ImageResId = Resource.Drawable.IcNavLogout,
+                    IsEnabled = true,
+                },
+                new DrawerItem () {
+                    Id = CreateUserPageId,
+                    TextResId = Resource.String.MainDrawerSignup,
                     ImageResId = Resource.Drawable.IcNavLogout,
                     IsEnabled = true,
                 }

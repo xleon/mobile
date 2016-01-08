@@ -268,7 +268,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (entry2, DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 4);
+            Assert.AreEqual (4, evs.Count);
             AssertList (singleView, dt, entry2, entry1);
 
             // Events after first push
@@ -302,7 +302,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (entries[4], DataAction.Delete);  // Delete entry
             });
 
-            Assert.AreEqual (evs.Count, 4);
+            Assert.AreEqual (4, evs.Count);
             AssertList (singleView, dt, entries[0], dt.AddDays (-1), entries[3], entries[1]);
 
             AssertEvent (evs[0], "replace", "date header"); // Update today's header
@@ -333,7 +333,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (entries[1], DataAction.Delete); // Delete entry
             });
 
-            Assert.AreEqual (evs.Count, 5);
+            Assert.AreEqual (5, evs.Count);
             AssertList (singleView, dt.AddDays (1), entries[3], dt, entries[2], entries[4]);
 
             AssertEvent (evs[0], "replace", "date header"); // Update today's header
@@ -363,7 +363,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (entry5, DataAction.Put); // Add entry
             });
 
-            Assert.AreEqual (evs.Count, 4);
+            Assert.AreEqual (4, evs.Count);
             AssertList (singleView, dt, entry1, entry3, dt.AddDays (-1), entry4, entry2, entry5);
 
             AssertEvent (evs[0], "add", "time entry");
@@ -392,7 +392,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (CreateTimeEntry (entry4, 1), DataAction.Put); // Move entry to next day
             });
 
-            Assert.AreEqual (evs.Count, 5);
+            Assert.AreEqual (5, evs.Count);
             AssertList (singleView, dt.AddDays (1), entry1, entry4, entry2, dt, entry3, entry5);
 
             AssertEvent (evs[0], "add", "date header");
@@ -426,7 +426,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (CreateTimeEntry (entry2, daysOffset: -1), DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 6);
+            Assert.AreEqual (6, evs.Count);
             AssertList (singleView, dt, entry3, dt.AddDays (-1), entry2, entry5, entry4);
 
             AssertEvent (evs[0], "replace", "date header");
@@ -460,7 +460,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (CreateTimeEntry (entry5, daysOffset: 1), DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 7);
+            Assert.AreEqual (7, evs.Count);
             AssertList (singleView, dt, entry3, entry1, entry2, entry5, dt.AddDays (-1), entry6);
 
             AssertEvent (evs[0], "replace", "date header");
@@ -492,7 +492,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (entry4, DataAction.Delete);
             });
 
-            Assert.AreEqual (evs.Count, 6);
+            Assert.AreEqual (6, evs.Count);
             AssertList (singleView, dt, entry3, entry2, dt.AddDays (-1), entry1);
 
             AssertEvent (evs[0], "replace", "date header");
@@ -525,7 +525,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (CreateTimeEntry (entries[4], 0, 2), DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 3);
+            Assert.AreEqual (3, evs.Count);
             AssertList (singleView, dt, entries[0], entries[1], entries[2], entries[3], dt.AddDays (-1), entries[4]);
 
             // The date header doesn't change because total duration remains the same
@@ -555,7 +555,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (CreateTimeEntry (entry1, daysOffset: 1), DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 4);
+            Assert.AreEqual (4, evs.Count);
             AssertList (singleView, dt.AddDays (1), entry1, entry2);
 
             AssertEvent (evs[0], "remove", "date header"); // Remove old header
@@ -584,7 +584,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (CreateTimeEntry (entry2, daysOffset: -1), DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 4);
+            Assert.AreEqual (4, evs.Count);
             AssertList (singleView, dt.AddDays (-1), entry1, entry2);
 
             AssertEvent (evs[0], "remove", "date header"); // Remove old header
@@ -611,7 +611,7 @@ namespace Toggl.Phoebe.Tests.Data
                                        // Move first entry to previous day
                                        feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put));
 
-            Assert.AreEqual (evs.Count, 3);
+            Assert.AreEqual (3, evs.Count);
             AssertList (singleView, dt, entry2, dt.AddDays (-1), entry1, entry3);
 
             AssertEvent (evs[0], "replace", "date header");
@@ -638,7 +638,7 @@ namespace Toggl.Phoebe.Tests.Data
                                        // Move first entry to previous day
                                        feed.Push (CreateTimeEntry (entry1, daysOffset: -1), DataAction.Put));
 
-            Assert.AreEqual (evs.Count, 3);
+            Assert.AreEqual (3, evs.Count);
             AssertList (singleView, dt, entry2, entry3, entry4, dt.AddDays (-1), entry1);
 
             AssertEvent (evs[0], "replace", "date header"); // Update old header
@@ -665,7 +665,7 @@ namespace Toggl.Phoebe.Tests.Data
                                        // Move first entry to next day
                                        feed.Push (CreateTimeEntry (entry4, daysOffset: 1), DataAction.Put));
 
-            Assert.AreEqual (evs.Count, 3);
+            Assert.AreEqual (3, evs.Count);
             AssertList (singleView, dt.AddDays (1), entry4, dt, entry1, entry2, entry3);
 
             AssertEvent (evs[0], "add", "date header");     // Add new header
@@ -692,7 +692,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (CreateTimeEntry (entry3, minutesOffset: 10), DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 3);
+            Assert.AreEqual (3, evs.Count);
             AssertList (singleView, dt, entry3, entry1, entry2);
 
             AssertEvent (evs[0], "move", "time entry");    // Move time entry3
@@ -719,7 +719,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (entry3, DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 6);
+            Assert.AreEqual (6, evs.Count);
             AssertList (groupedView, dt, new[] { entry3, entry1 }, entry2);
 
             // Events after first push
@@ -750,7 +750,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             var evs = await GetEvents (2, groupedView, feed, () => feed.Push (entry3, DataAction.Put));
 
-            Assert.AreEqual (evs.Count, 2);
+            Assert.AreEqual (2, evs.Count);
             AssertList (groupedView, dt, new[] { entry3, entry2 }, entry1);
 
             AssertEvent (evs[0], "replace", "date header");
@@ -780,7 +780,7 @@ namespace Toggl.Phoebe.Tests.Data
                 feed.Push (entry3, DataAction.Delete);
             });
 
-            Assert.AreEqual (evs.Count, 3);
+            Assert.AreEqual (3, evs.Count);
             AssertList (groupedView, dt, entry1);
 
             AssertEvent (evs[0], "replace", "date header");
@@ -792,28 +792,34 @@ namespace Toggl.Phoebe.Tests.Data
         public async void GroupTestEditProject ()
         {
             var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
-            Guid task = Guid.NewGuid (), proj1 = Guid.NewGuid (), proj2 = Guid.NewGuid ();
+            Guid task = Guid.NewGuid (), proj1 = Guid.NewGuid (), proj2 = Guid.NewGuid (), proj3 = Guid.NewGuid ();
 
-            var entry1 = CreateTimeEntry (dt.AddMinutes (10), task, proj1);
-            var entry2 = CreateTimeEntry (dt.AddMinutes (5), task, proj1);
-            var entry3 = CreateTimeEntry (dt, task, proj1);
+            var entry1 = CreateTimeEntry (dt.AddMinutes (20), task, proj1);
+            var entry2 = CreateTimeEntry (dt.AddMinutes (15), task, proj1);
+            var entry3 = CreateTimeEntry (dt.AddMinutes (10), task, proj1);
+            var entry4 = CreateTimeEntry (dt.AddMinutes (5), task, proj2);
+            var entry5 = CreateTimeEntry (dt, task, proj2);
+
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 100, entry1, entry2, entry3);
+            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 100, entry1, entry2, entry3, entry4, entry5);
 
-            AssertList (groupedView, dt, new[] { entry1, entry2, entry3 });
+            AssertList (groupedView, dt, new[] { entry1, entry2, entry3 }, new[] { entry4, entry5 });
 
             // Edit project for all entries in group
-            var evs = await GetEvents (1, groupedView, feed, () => {
-                feed.Push (CreateTimeEntry (entry1, proj: proj2), DataAction.Put);
-                feed.Push (CreateTimeEntry (entry2, proj: proj2), DataAction.Put);
-                feed.Push (CreateTimeEntry (entry3, proj: proj2), DataAction.Put);
+            var evs = await GetEvents (2, groupedView, feed, () => {
+                feed.Push (CreateTimeEntry (entry1, proj: proj3), DataAction.Put);
+                feed.Push (CreateTimeEntry (entry2, proj: proj3), DataAction.Put);
+                feed.Push (CreateTimeEntry (entry3, proj: proj3), DataAction.Put);
             });
 
-            Assert.AreEqual (evs.Count, 1);
-            AssertList (groupedView, dt, new[] { entry1, entry2, entry3 });
+            Assert.AreEqual (2, evs.Count);
+            AssertList (groupedView, dt, new[] { entry1, entry2, entry3 }, new[] { entry4, entry5 });
 
-            AssertEvent (evs[0], "replace", "time entry");
+            AssertEvent (evs[0], "remove", "time entry");
+            AssertEvent (evs[1], "add", "time entry");
+            Assert.AreEqual (proj3, ((TimeEntryGroup)groupedView[1]).Data.ProjectId);
+            Assert.AreEqual (proj2, ((TimeEntryGroup)groupedView[2]).Data.ProjectId);
         }
 
         [Test]
@@ -827,19 +833,68 @@ namespace Toggl.Phoebe.Tests.Data
             var entry3 = CreateTimeEntry (dt, task, proj1);
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 100, entry1, entry2, entry3);
+            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2, entry3);
 
             AssertList (groupedView, dt, new[] { entry1, entry2, entry3 });
 
-            // Edit project for all entries in group
             var evs = await GetEvents (
                           2, groupedView, feed, () => feed.Push (CreateTimeEntry (entry1, proj: proj2), DataAction.Put));
 
-            Assert.AreEqual (evs.Count, 2);
+            Assert.AreEqual (2, evs.Count);
             AssertList (groupedView, dt, entry1, new[] { entry2, entry3 });
 
             AssertEvent (evs[0], "add", "time entry");
             AssertEvent (evs[1], "replace", "time entry");
+        }
+
+        [Test]
+        public async void GroupTestJoin ()
+        {
+            var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
+            Guid task = Guid.NewGuid (), proj1 = Guid.NewGuid (), proj2 = Guid.NewGuid ();
+
+            var entry1 = CreateTimeEntry (dt.AddMinutes (10), task, proj1);
+            var entry2 = CreateTimeEntry (dt, task, proj2);
+
+            var feed = new TestFeed ();
+            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2);
+
+            AssertList (groupedView, dt, entry1, entry2);
+
+            var evs = await GetEvents (
+                          2, groupedView, feed, () => feed.Push (CreateTimeEntry (entry1, proj: proj2), DataAction.Put));
+
+            Assert.AreEqual (2, evs.Count);
+            AssertList (groupedView, dt, new[] { entry1, entry2 });
+
+            AssertEvent (evs[0], "remove", "time entry");
+            AssertEvent (evs[1], "replace", "time entry");
+        }
+
+        [Test]
+        public async void GroupTestRestartBottomGroup ()
+        {
+            var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
+            Guid task = Guid.NewGuid (), proj1 = Guid.NewGuid (), proj2 = Guid.NewGuid ();
+
+            var entry1 = CreateTimeEntry (dt.AddMinutes (10), task, proj2);
+            var entry2 = CreateTimeEntry (dt.AddMinutes (5), task, proj1);
+            var entry3 = CreateTimeEntry (dt, task, proj2);
+
+            var feed = new TestFeed ();
+            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry2, entry3);
+
+            AssertList (groupedView, dt, entry2, entry3);
+
+            entry1.State = TimeEntryState.Running;
+            var evs = await GetEvents (2, groupedView, feed, () => feed.Push (entry1, DataAction.Put));
+
+            Assert.AreEqual (2, evs.Count);
+            AssertList (groupedView, dt, new[] { entry1, entry3 }, entry2);
+
+            AssertEvent (evs[0], "replace", "date header");
+            AssertEvent (evs[1], "move", "time entry");
+            Assert.AreEqual (TimeEntryState.Running, ((ITimeEntryHolder)evs [1].Item).Data.State);
         }
     }
 }

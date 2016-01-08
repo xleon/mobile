@@ -17,7 +17,7 @@ namespace Toggl.Joey.Widget
 
     public class WidgetProvider : AppWidgetProvider
     {
-        public const string EntryIdParameter = "entryId";
+        public const string TimeEntryIdParameter = "entryId";
         public const string StartStopAction = "com.toggl.timer.widget.START_ENTRY";
         public const string ContiueAction = "com.toggl.timer.widget.CONTINUE_ENTRY";
         public const string RefreshListAction = "com.toggl.timer.widget.REFRESH_CONTENT";

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -12,6 +13,8 @@ namespace Toggl.Joey.Widget
     [Service (Exported = false)]
     public class InitWidgetService : Service
     {
+        private Subscription<SyncWidgetMessage> subscriptionSyncFinishedMessage;
+
         public InitWidgetService ()
         {
         }
@@ -19,14 +22,6 @@ namespace Toggl.Joey.Widget
         public InitWidgetService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
         : base (javaRef, transfer)
         {
-        }
-
-        private Subscription<SyncWidgetMessage> subscriptionSyncFinishedMessage;
-
-        public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
-        {
-            StartSync();
-            return StartCommandResult.Sticky;
         }
 
         public override void OnCreate ()
@@ -48,10 +43,10 @@ namespace Toggl.Joey.Widget
             base.OnDestroy ();
         }
 
-        private void StartSync ()
+        public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
         {
-            var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
-            widgetManager.SyncWidgetData ();
+            Task.Run (async () => await ServiceContainer.Resolve<WidgetSyncManager>().SyncWidgetData ());
+            return StartCommandResult.Sticky;
         }
 
         private void OnSyncFinishedMessage (SyncWidgetMessage msg)

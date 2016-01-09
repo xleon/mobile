@@ -18,6 +18,7 @@ namespace Toggl.Phoebe.Data
 
         private Subscription<StartStopMessage> subscriptionStateChange;
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
+        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         protected AuthManager AuthManager { get; set; }
         Binding<UserData, UserData> authBinding;
 
@@ -27,6 +28,7 @@ namespace Toggl.Phoebe.Data
             AuthManager = ServiceContainer.Resolve<AuthManager> ();
             authBinding = this.SetBinding (() => AuthManager.User).WhenSourceChanges (async () => await UpdateRunningTimeEntry ());
             subscriptionStateChange = bus.Subscribe<StartStopMessage> (OnTimeEntryStateChanged);
+            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (async msg => await UpdateRunningTimeEntry ());
         }
 
         ~ActiveTimeEntryManager ()

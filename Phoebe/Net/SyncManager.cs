@@ -120,6 +120,9 @@ namespace Toggl.Phoebe.Net
                     lastRun = await PullChanges (lastRun).ConfigureAwait (false);
                 }
 
+                // Resolve conflicts in client (not server)
+                await ResolveConflicts ();
+
                 if (mode.HasFlag (SyncMode.Push)) {
                     hasErrors = await PushChanges ().ConfigureAwait (false);
                 }
@@ -428,6 +431,27 @@ namespace Toggl.Phoebe.Net
             }
 
             return error;
+        }
+
+        private async Task ResolveConflicts ()
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+
+            await store.ExecuteInTransactionAsync (ctx => {
+                var runningEntries = ctx.Connection.Table <TimeEntryData> ()
+                                     .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null)
+                                     .OrderByDescending (r => r.StartTime).ToList ();
+
+                // Try enforce single running.
+                if (runningEntries.Count > 1)
+                    runningEntries.Skip (1).ForEach (te => {
+                    // Stop time entry
+                    te.StopTime = Time.UtcNow;
+                    te.State = TimeEntryState.Finished;
+                    Toggl.Phoebe.Data.Models.Model<TimeEntryData>.MarkDirty (te);
+                    ctx.Put (te);
+                });
+            });
         }
 
         public bool IsRunning { get; private set; }

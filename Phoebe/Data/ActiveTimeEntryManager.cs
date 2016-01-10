@@ -17,7 +17,6 @@ namespace Toggl.Phoebe.Data
         public static readonly string PropertyActiveTimeEntry = "ActiveTimeEntry";
 
         private Subscription<StartStopMessage> subscriptionStateChange;
-        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         protected AuthManager AuthManager { get; set; }
         Binding<UserData, UserData> authBinding;
@@ -27,8 +26,8 @@ namespace Toggl.Phoebe.Data
             var bus = ServiceContainer.Resolve<MessageBus> ();
             AuthManager = ServiceContainer.Resolve<AuthManager> ();
             authBinding = this.SetBinding (() => AuthManager.User).WhenSourceChanges (async () => await UpdateRunningTimeEntry ());
-            subscriptionStateChange = bus.Subscribe<StartStopMessage> (OnTimeEntryStateChanged);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (async msg => await UpdateRunningTimeEntry ());
+            subscriptionStateChange = bus.Subscribe<StartStopMessage> (OnTimeEntryStateChanged);
         }
 
         ~ActiveTimeEntryManager ()
@@ -52,16 +51,16 @@ namespace Toggl.Phoebe.Data
                     subscriptionStateChange = null;
                 }
 
-                if (subscriptionAuthChanged != null) {
-                    bus.Unsubscribe (subscriptionAuthChanged);
-                    subscriptionAuthChanged = null;
+                if (subscriptionSyncFinished != null) {
+                    bus.Unsubscribe (subscriptionSyncFinished);
+                    subscriptionSyncFinished = null;
                 }
             }
         }
 
         private void OnTimeEntryStateChanged (StartStopMessage msg)
         {
-            ActiveTimeEntry = msg.TimeEntry.State == TimeEntryState.Running ? msg.TimeEntry : TimeEntryModel.GetDraft ().Data;
+            ActiveTimeEntry = msg.TimeEntry.State == TimeEntryState.Running ? msg.TimeEntry : TimeEntryModel.GetDraft ();
             IsRunning = msg.TimeEntry.State == TimeEntryState.Running;
         }
 
@@ -70,9 +69,10 @@ namespace Toggl.Phoebe.Data
             var store = ServiceContainer.Resolve<IDataStore> ();
             var teList = await store.Table<TimeEntryData> ()
                          .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null)
+                         .OrderByDescending (r => r.StartTime)
                          .ToListAsync ();
 
-            ActiveTimeEntry = teList.Any () ? teList.FirstOrDefault () : TimeEntryModel.GetDraft ().Data;
+            ActiveTimeEntry = teList.Any () ? teList.FirstOrDefault () : TimeEntryModel.GetDraft ();
             IsRunning = ActiveTimeEntry.State == TimeEntryState.Running;
         }
 

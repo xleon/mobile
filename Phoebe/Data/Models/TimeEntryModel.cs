@@ -655,9 +655,7 @@ namespace Toggl.Phoebe.Data.Models
                 // Need to just mark this item as deleted so that it could be synced with the server
                 var newData = new TimeEntryData (data);
                 newData.DeletedAt = Time.UtcNow;
-
                 MarkDirty (newData);
-
                 await dataStore.PutAsync (newData);
             }
         }
@@ -697,7 +695,7 @@ namespace Toggl.Phoebe.Data.Models
             return newData;
         }
 
-        public static async Task<TimeEntryModel> CreateFinishedAsync (TimeSpan duration)
+        public static async Task<TimeEntryData> CreateFinishedAsync (TimeSpan duration)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             if (user == null) {
@@ -707,7 +705,7 @@ namespace Toggl.Phoebe.Data.Models
             var store = ServiceContainer.Resolve<IDataStore> ();
             var now = Time.UtcNow;
 
-            var newData = new TimeEntryData () {
+            var newData = new TimeEntryData {
                 State = TimeEntryState.Finished,
                 StartTime = now - duration,
                 StopTime = now,
@@ -724,7 +722,7 @@ namespace Toggl.Phoebe.Data.Models
                 }
             });
 
-            return new TimeEntryModel (newData);
+            return newData;
         }
 
         public static explicit operator TimeEntryModel (TimeEntryData data)

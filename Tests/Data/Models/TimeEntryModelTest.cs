@@ -1,9 +1,10 @@
 ﻿using System;
-using Moq;
 using NUnit.Framework;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Tests.Analytics;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -31,6 +32,9 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 await user.SaveAsync ();
                 await SetUpFakeUser (user.Id);
             });
+
+            ServiceContainer.Register<ExperimentManager> (new ExperimentManager ());
+            ServiceContainer.Register<ITracker> (() => new Tracker ());
         }
 
         [Test]
@@ -56,37 +60,18 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void TestStart ()
         {
             RunAsync (async delegate {
-                var entry = new TimeEntryModel () {
-                    User = user,
+                var entry = new TimeEntryData {
+                    UserId = user.Id,
+                    WorkspaceId = user.DefaultWorkspace.Id
                 };
 
-                await entry.StartAsync ();
-                Assert.IsNull (entry.Task);
-                Assert.IsNull (entry.Project);
-                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
-                Assert.AreEqual (TimeEntryState.Running, entry.State);
-                Assert.AreNotEqual (new DateTime (), entry.StartTime);
-                Assert.IsNull (entry.StopTime);
-            });
-        }
-
-        [Test]
-        public void TestStore ()
-        {
-            RunAsync (async delegate {
-                var entry = new TimeEntryModel () {
-                    User = user,
-                    StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
-                    StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
-                };
-
-                await entry.StoreAsync ();
-                Assert.IsNull (entry.Task);
-                Assert.IsNull (entry.Project);
-                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
-                Assert.AreEqual (TimeEntryState.Finished, entry.State);
-                Assert.AreEqual (new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc), entry.StartTime);
-                Assert.AreEqual (new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc), entry.StopTime);
+                var newEntry = await TimeEntryModel.StartAsync (entry);
+                Assert.IsNull (newEntry.TaskId);
+                Assert.IsNull (newEntry.ProjectId);
+                Assert.AreEqual (user.DefaultWorkspace.Id, newEntry.WorkspaceId);
+                Assert.AreEqual (TimeEntryState.Running, newEntry.State);
+                Assert.AreNotEqual (new DateTime (), newEntry.StartTime);
+                Assert.IsNull (newEntry.StopTime);
             });
         }
 
@@ -94,35 +79,10 @@ namespace Toggl.Phoebe.Tests.Data.Models
         public void TestContinueStartStop ()
         {
             RunAsync (async delegate {
-                var parent = new TimeEntryModel () {
-                    User = user,
-                    StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
-                    StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
-                };
-                await parent.StoreAsync ();
+                var parent = await TimeEntryModel.CreateFinishedAsync (TimeSpan.FromHours (2));
+                parent.StartTime = parent.StartTime.AddDays (-2); // TODO: Finished entries are created with StartTime = UTC.Now
+                var entry = await TimeEntryModel.ContinueAsync (parent);
 
-                var entry = await parent.ContinueAsync ();
-                Assert.NotNull (entry);
-                Assert.AreNotSame (parent, entry);
-                Assert.AreNotEqual (parent.Id, entry.Id);
-                Assert.IsNull (entry.StopTime);
-                Assert.AreEqual (TimeEntryState.Running, entry.State);
-            });
-        }
-
-        [Test]
-        public void TestContinueDurationOtherDay ()
-        {
-            RunAsync (async delegate {
-                var parent = new TimeEntryModel () {
-                    User = user,
-                    StartTime = new DateTime (2013, 1, 2, 3, 4, 5, DateTimeKind.Utc),
-                    StopTime = new DateTime (2013, 1, 2, 5, 4, 3, DateTimeKind.Utc),
-                    DurationOnly = true,
-                };
-                await parent.StoreAsync ();
-
-                var entry = await parent.ContinueAsync ();
                 Assert.NotNull (entry);
                 Assert.AreNotSame (parent, entry);
                 Assert.AreNotEqual (parent.Id, entry.Id);
@@ -137,16 +97,17 @@ namespace Toggl.Phoebe.Tests.Data.Models
             RunAsync (async delegate {
                 var startTime = Time.Now.Date.AddHours (1);
                 var stopTime = startTime + TimeSpan.FromHours (2);
-                var parent = new TimeEntryModel () {
-                    User = user,
+                var parent = new TimeEntryData () {
+                    UserId = user.Id,
                     StartTime = startTime,
                     StopTime = stopTime,
                     DurationOnly = true,
+                    State = TimeEntryState.Finished
                 };
-                await parent.StoreAsync ();
+                parent = await TimeEntryModel.SaveTimeEntryDataAsync (parent);
 
-                var entry = await parent.ContinueAsync ();
-                Assert.AreSame (parent, entry);
+                var entry = await TimeEntryModel.ContinueAsync (parent);
+                Assert.AreEqual (parent.Id, entry.Id);
                 Assert.IsNull (entry.StopTime);
                 Assert.AreEqual (TimeEntryState.Running, entry.State);
             });
@@ -155,86 +116,22 @@ namespace Toggl.Phoebe.Tests.Data.Models
         [Test]
         public void TestGetDraft ()
         {
-            RunAsync (async delegate {
-                var entry = await TimeEntryModel.GetDraftAsync ();
-                Assert.IsNotNull (entry);
-                Assert.AreNotEqual (Guid.Empty, entry.Id);
-                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
-                Assert.AreEqual (TimeEntryState.New, entry.State);
-            });
+            var entry = TimeEntryModel.GetDraft ();
+            Assert.IsNotNull (entry);
+            Assert.AreEqual (user.DefaultWorkspace.Id, entry.WorkspaceId);
+            Assert.AreEqual (TimeEntryState.New, entry.State);
         }
 
         [Test]
-        public void TestDraftDefaultTag ()
+        public void TestGetDraftNotLoggedUser ()
         {
-            ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
-                        (store) => store.ApiToken == "test" &&
-                        store.UserId == user.Id &&
-                        store.UseDefaultTag == true));
+            // Logout user
+            ServiceContainer.Resolve<AuthManager> ().Forget ();
 
-            RunAsync (async delegate {
-                var entry = await TimeEntryModel.GetDraftAsync ();
-
-                var rows = await DataStore.Table<TimeEntryTagData> ()
-                           .Where (r => r.TimeEntryId == entry.Id).ToListAsync ();
-                Assert.That (rows, Has.Count.EqualTo (1));
-                var firstTagId = rows [0].TagId;
-
-                // Change user default workspace, to make sure that the draft uses the correct workspace default tag
-                user.DefaultWorkspace = new WorkspaceModel () {
-                    Name = "Other workspace",
-                };
-
-                await user.DefaultWorkspace.SaveAsync ();
-                await user.SaveAsync ();
-
-                // Check data again:
-                await entry.DeleteAsync ();
-                entry = await TimeEntryModel.GetDraftAsync ();
-
-                rows = await DataStore.Table<TimeEntryTagData> ()
-                       .Where (r => r.TimeEntryId == entry.Id).ToListAsync ();
-                Assert.That (rows, Has.Count.EqualTo (1));
-                Assert.AreNotEqual (firstTagId, rows [0].TagId);
-
-                // Make sure that we don't add duplicate tags when starting:
-                await entry.StartAsync ();
-                rows = await DataStore.Table<TimeEntryTagData> ()
-                       .Where (r => r.TimeEntryId == entry.Id).ToListAsync ();
-                Assert.That (rows, Has.Count.EqualTo (1));
-            });
-        }
-
-        [Test]
-        public void TestGetDraftNotLoadedUser ()
-        {
-            RunAsync (async delegate {
-                // Pretend that the data isn't loaded yet
-                ServiceContainer.Resolve<AuthManager> ().User.DefaultWorkspaceId = Guid.Empty;
-
-                var entry = await TimeEntryModel.GetDraftAsync ();
-                Assert.IsNotNull (entry);
-                Assert.AreNotEqual (Guid.Empty, entry.Id);
-                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
-                Assert.AreEqual (TimeEntryState.New, entry.State);
-            });
-        }
-
-        [Test]
-        public void TestGetDraftUpdateGetAgain ()
-        {
-            RunAsync (async delegate {
-                var entry = await TimeEntryModel.GetDraftAsync ();
-                entry.Description = "Hello, world!";
-                await entry.SaveAsync ();
-
-                entry = await TimeEntryModel.GetDraftAsync ();
-                Assert.IsNotNull (entry);
-                Assert.AreNotEqual (Guid.Empty, entry.Id);
-                Assert.AreEqual ("Hello, world!", entry.Description);
-                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
-                Assert.AreEqual (TimeEntryState.New, entry.State);
-            });
+            var entry = TimeEntryModel.GetDraft ();
+            Assert.IsNotNull (entry);
+            Assert.AreEqual (Guid.Empty, entry.WorkspaceId);
+            Assert.AreEqual (TimeEntryState.New, entry.State);
         }
 
         [Test]
@@ -244,7 +141,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 var entry = await TimeEntryModel.CreateFinishedAsync (TimeSpan.FromMinutes (95));
                 Assert.IsNotNull (entry);
                 Assert.AreNotEqual (Guid.Empty, entry.Id);
-                Assert.AreEqual (user.DefaultWorkspace.Id, entry.Workspace.Id);
+                Assert.AreEqual (user.DefaultWorkspace.Id, entry.WorkspaceId);
                 Assert.AreEqual (TimeEntryState.Finished, entry.State);
             });
         }
@@ -533,7 +430,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 };
                 await parent.StoreAsync ();
 
-                var entry = await TimeEntryModel.ContinueTimeEntryDataAsync (parent.Data);
+                var entry = await TimeEntryModel.ContinueAsync (parent.Data);
                 Assert.NotNull (entry);
                 Assert.AreNotSame (parent.Data, entry);
                 Assert.AreNotEqual (parent.Data.Id, entry.Id);
@@ -554,7 +451,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 };
                 await parent.StoreAsync ();
 
-                var entry = await TimeEntryModel.ContinueTimeEntryDataAsync (parent.Data);
+                var entry = await TimeEntryModel.ContinueAsync (parent.Data);
                 Assert.NotNull (entry);
                 Assert.AreNotSame (parent.Data, entry);
                 Assert.AreNotEqual (parent.Data.Id, entry.Id);
@@ -577,7 +474,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 };
                 await parent.StoreAsync ();
 
-                var entry = await TimeEntryModel.ContinueTimeEntryDataAsync (parent.Data);
+                var entry = await TimeEntryModel.ContinueAsync (parent.Data);
                 Assert.NotNull (entry);
                 Assert.AreNotSame (parent.Data, entry);
                 Assert.AreEqual (parent.Data.Id, entry.Id);
@@ -609,17 +506,23 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 var parent = new TimeEntryData {
                     UserId = user.Id
                 };
-                var model = new TimeEntryModel (parent);
-                await model.StartAsync ();
+                parent = await TimeEntryModel.StartAsync (parent);
 
                 // Check if running.
-                Assert.AreEqual (TimeEntryState.Running, model.State);
+                Assert.AreEqual (TimeEntryState.Running, parent.State);
 
-                var entry = await TimeEntryModel.StopAsync (model.Data);
+                var entry = await TimeEntryModel.StopAsync (parent);
                 Assert.NotNull (entry);
-                Assert.AreEqual (model.Data.Id, entry.Id);
+                Assert.AreEqual (parent.Id, entry.Id);
                 Assert.AreEqual (TimeEntryState.Finished, entry.State);
             });
+        }
+
+        private class Tracker : TestTracker
+        {
+            protected override void SendEvent (string category, string action, string label = null, long value = 0L)
+            {
+            }
         }
     }
 }

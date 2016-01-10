@@ -136,7 +136,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 await TimeEntryModel.StopAsync (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                await TimeEntryModel.ContinueTimeEntryDataAsync (timeEntryHolder.Data);
+                await TimeEntryModel.ContinueAsync (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
         }
@@ -148,15 +148,15 @@ namespace Toggl.Phoebe.Data.ViewModels
                 return timeEntryManager.ActiveTimeEntry;
             }
 
-            var model = new TimeEntryModel (timeEntryManager.ActiveTimeEntry);
-            if (model.State == TimeEntryState.Running) {
-                await model.StopAsync ();
+            var active = timeEntryManager.ActiveTimeEntry;
+            if (active.State == TimeEntryState.Running) {
+                await TimeEntryModel.StopAsync (active);
             } else {
-                await model.StartAsync ();
+                await TimeEntryModel.StartAsync (active);
             }
 
             IsProcessingAction = false;
-            return model.Data;
+            return active;
         }
 
         public Task RemoveItemWithUndoAsync (int index)

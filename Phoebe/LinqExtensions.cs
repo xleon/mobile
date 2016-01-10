@@ -62,6 +62,18 @@ namespace Toggl.Phoebe
             return true;
         }
 
+        public static bool TryFindKey<TKey, TValue> (this IDictionary<TKey, TValue> dic,
+                out TKey result, Func<KeyValuePair<TKey, TValue>, bool> predicate)
+        {
+            foreach (var kv in dic) {
+                if (predicate (kv)) {
+                    result = kv.Key;
+                    return true;
+                }
+            }
+            result = default (TKey);
+            return false;
+        }
 
         public static IEnumerable<T> CollapsePairs<T> (this IEnumerable<T> items, Func<T,T,T> collapse)
         where T : class

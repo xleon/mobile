@@ -12,35 +12,58 @@ namespace Toggl.Phoebe.Data.Utils
     /// </summary>
     public class TimeEntryGroup : ITimeEntryHolder
     {
+        public class Grouper : IGrouper<TimeEntryHolder, TimeEntryGroup>
+        {
+            public IEnumerable<TimeEntryGroup> Group (IEnumerable<TimeEntryHolder> items)
+            {
+                var key = default (Guid);
+                var tempDic = new Dictionary<Guid, List<TimeEntryHolder>> ();
+                foreach (var item in items) {
+                    if (tempDic.TryFindKey (out key, kv => kv.Value[0].Data.IsGroupableWith (item.Data))) {
+                        tempDic [key].Add (item);
+                    } else {
+                        tempDic.Add (item.Data.Id, new List<TimeEntryHolder> { item });
+                    }
+                }
+                foreach (var kvPair in tempDic) {
+                    var cached = kvPair.Value.FirstOrDefault (x => x.Info != null);
+                    yield return new TimeEntryGroup (kvPair.Value.Select (x => x.Data), cached != null ? cached.Info : null);
+                }
+            }
+            public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryGroup> groups)
+            {
+                foreach (var g in groups) {
+                    foreach (var data in g.DataCollection) {
+                        yield return new TimeEntryHolder (data, g.Info); // Cache TimeEntryInfo
+                    }
+                }
+            }
+        }
+
         public TimeEntryInfo Info { get; private set; }
-        public List<TimeEntryData> Group { get; private set; }
+        public List<TimeEntryData> DataCollection { get; private set; }
 
         public TimeEntryData Data
         {
-            get { return Group[0]; }
+            get { return DataCollection [0]; }
         }
 
         public IList<string> Guids
         {
             get {
-                return Group.AsEnumerable ().Select (r => r.Id.ToString ()).ToList ();
+                return DataCollection.AsEnumerable ().Select (r => r.Id.ToString ()).ToList ();
             }
         }
 
-        TimeEntryGroup () { }
-
-        public TimeEntryGroup (TimeEntryData data, ITimeEntryHolder previous = null)
+        public TimeEntryGroup (TimeEntryData data)
         {
-            var previous2 = previous as TimeEntryGroup;
-            if (previous2 != null) {
-                Group = previous2.Group.ReplaceOrAppend (data, x => x.Id == data.Id)
-                        .OrderByDescending (x => x.StartTime).ToList ();
+            DataCollection = new List<TimeEntryData> { data };
+        }
 
-                // Recycle entry info if possible
-                Info = previous2.Data.Id == Data.Id ? previous2.Info : null;
-            } else {
-                Group = new List<TimeEntryData> { data };
-            }
+        public TimeEntryGroup (IEnumerable<TimeEntryData> dataCollection, TimeEntryInfo info)
+        {
+            DataCollection = dataCollection.OrderByDescending (x => x.StartTime).ToList ();
+            Info = info;
         }
 
         public async Task LoadInfoAsync ()
@@ -48,41 +71,19 @@ namespace Toggl.Phoebe.Data.Utils
             Info = Info ?? await TimeEntryInfo.LoadAsync (Data);
         }
 
-        public ITimeEntryHolder UpdateOrDelete (TimeEntryData data, out bool isAffectedByDelete)
-        {
-            isAffectedByDelete = Group.Any (x => x.Id == data.Id);
-
-            if (isAffectedByDelete) {
-                if (Group.Count == 1) {
-                    return null; // Delete
-                } else {
-                    var updated = new TimeEntryGroup ();
-                    updated.Group = Group.Where (x => x.Id != data.Id).ToList ();
-                    updated.Info = updated.Data.Id == Data.Id ? Info : null; // Recycle entry info if possible
-                    return updated;
-                }
-            } else {
-                return null;
-            }
-        }
-
         public DiffComparison Compare (IDiffComparable other)
         {
-            if (object.ReferenceEquals (this, other)) {
-                return DiffComparison.Same;
+            var other2 = other as TimeEntryGroup;
+            if (other2 != null) {
+                if (DataCollection.SequenceEqual (other2.DataCollection, object.ReferenceEquals)) {
+                    return DiffComparison.Same;
+                } else {
+                    return Data.IsGroupableWith (other2.Data)
+                           ? DiffComparison.Update : DiffComparison.Different;
+                }
             } else {
-                var other2 = other as TimeEntryGroup;
-
-                // Use the last Id for comparison as this is the original entry
-                // (Group is sorted by StartTime in descending order)
-                return other2 != null && other2.Group.Last ().Id == Group.Last ().Id
-                       ? DiffComparison.Update : DiffComparison.Different;
+                return DiffComparison.Different;
             }
-        }
-
-        public bool IsAffectedByPut (TimeEntryData data)
-        {
-            return Group.Any (x => x.IsGroupableWith (data));
         }
 
         public DateTime GetStartTime()
@@ -92,13 +93,13 @@ namespace Toggl.Phoebe.Data.Utils
 
         public TimeSpan GetDuration ()
         {
-            return Group.Aggregate (TimeSpan.Zero, (acc, x) => acc + TimeEntryModel.GetDuration (x, Time.UtcNow));
+            return DataCollection.Aggregate (TimeSpan.Zero, (acc, x) => acc + TimeEntryModel.GetDuration (x, Time.UtcNow));
         }
 
         public async Task DeleteAsync ()
         {
             var deleteTasks = new List<Task> ();
-            foreach (var item in Group) {
+            foreach (var item in DataCollection) {
                 var m = new TimeEntryModel (item);
                 deleteTasks.Add (m.DeleteAsync ());
             }

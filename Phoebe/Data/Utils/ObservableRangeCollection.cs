@@ -24,10 +24,13 @@ namespace Toggl.Phoebe.Data.Utils
 
         public void Move (int oldIndex, int newIndex, T updatedItem)
         {
+            var oldItem = Items [oldIndex];
             Items.RemoveAt (oldIndex);
             Items.Insert (newIndex, updatedItem);
             OnCollectionChanged (new NotifyCollectionChangedEventArgs (
                                      NotifyCollectionChangedAction.Move, updatedItem, newIndex, oldIndex));
+            OnCollectionChanged (new NotifyCollectionChangedEventArgs (
+                                     NotifyCollectionChangedAction.Replace, updatedItem, oldItem, newIndex));
         }
 
         public void InsertRange (IEnumerable<T> collection, int startingIndex)

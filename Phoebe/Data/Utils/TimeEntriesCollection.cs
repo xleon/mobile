@@ -12,21 +12,21 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Utils
 {
-    public class TimeEntriesCollection : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
+    public class TimeEntriesCollection<T>
+        : ObservableRangeCollection<IHolder>, ICollectionData<IHolder> where T : ITimeEntryHolder
     {
         private IDisposable disposable;
-        private readonly bool isGrouped;
         private readonly bool loadTimeEntryInfo;
+        private readonly IGrouper<TimeEntryHolder, T> grouper;
 
         public IEnumerable<IHolder> Data
         {
             get { return Items; }
         }
 
-        public TimeEntriesCollection (IObservable<TimeEntryMessage> feed, bool isGrouped,
-                                      int bufferMilliseconds = 500, bool useThreadPool = true, bool loadTimeEntryInfo = true)
+        public TimeEntriesCollection (IObservable<TimeEntryMessage> feed, int bufferMilliseconds = 500, bool useThreadPool = true, bool loadTimeEntryInfo = true)
         {
-            this.isGrouped = isGrouped;
+            this.grouper = CreateGrouper ();;
             this.loadTimeEntryInfo = loadTimeEntryInfo;
 
             disposable =
@@ -54,15 +54,15 @@ namespace Toggl.Phoebe.Data.Utils
         private async Task UpdateItemsAsync (IEnumerable<TimeEntryMessage> msgs)
         {
             // 1. Get only TimeEntryHolders from current collection
-            var timeHolders = Items.OfType<ITimeEntryHolder> ().ToList ();
+            var timeHolders = grouper.Ungroup (Items.OfType<T> ()).ToList ();
 
             // 2. Remove, replace or add items from messages
             foreach (var msg in msgs) {
-                UpdateTimeHoldersAsync (timeHolders, msg.Data, msg.Action);
+                UpdateTimeHolders (timeHolders, msg.Data, msg.Action);
             }
 
             // 3. Create the new item collection from holders (sort and add headers...)
-            var newItemCollection = await CreateItemCollection (timeHolders, loadTimeEntryInfo);
+            var newItemCollection = await CreateItemCollectionAsync (timeHolders, loadTimeEntryInfo);
 
             // 4. Check diffs, modify ItemCollection and notify changes
             var diffs = Diff.Calculate (Items, newItemCollection);
@@ -88,54 +88,52 @@ namespace Toggl.Phoebe.Data.Utils
             });
         }
 
-        private void UpdateTimeHoldersAsync (IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
+        private void UpdateTimeHolders (List<TimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
         {
-            if (action == DataAction.Put) {
-                var foundIndex = timeHolders.IndexOf (x => x.IsAffectedByPut (entry));
-                if (foundIndex > -1) {
-                    timeHolders [foundIndex] = CreateTimeHolder (isGrouped, entry, timeHolders [foundIndex]); // Replace
-                } else {
-                    timeHolders.Add (CreateTimeHolder (isGrouped, entry)); // Insert
-                }
-            } else {
-                bool isAffectedByDelete;
-                for (var i = 0; i < timeHolders.Count; i++) {
-                    var updatedHolder = timeHolders [i].UpdateOrDelete (entry, out isAffectedByDelete);
-
-                    if (isAffectedByDelete) {
-                        if (updatedHolder == null) {
-                            timeHolders.RemoveAt (i); // Remove
-                        } else {
-                            timeHolders [i] = updatedHolder; // Replace
-                        }
-                        break;
+            for (var i = 0; i < timeHolders.Count; i++) {
+                if (entry.Id == timeHolders [i].Data.Id) {
+                    if (action == DataAction.Put) {
+                        timeHolders [i] = new TimeEntryHolder (entry); // Replace
+                    } else {
+                        timeHolders.RemoveAt (i); // Remove
                     }
+                    return;
                 }
+            }
+
+            if (action == DataAction.Put) {
+                timeHolders.Add (new TimeEntryHolder (entry)); // Add
             }
         }
 
-        public static async Task<IList<IHolder>> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders, bool loadTimeEntryInfo)
+        public async Task<IList<IHolder>> CreateItemCollectionAsync (IEnumerable<TimeEntryHolder> timeHolders, bool loadTimeEntryInfo)
         {
-            var timeHolders2 = timeHolders;
+            IEnumerable<T> timeHolders2 = null;
             if (loadTimeEntryInfo) {
-                timeHolders2 = await Task.WhenAll (timeHolders.Select (async x => {
+                timeHolders2 = await Task.WhenAll (grouper.Group (timeHolders).Select (async x => {
                     await x.LoadInfoAsync ();
                     return x;
                 }));
+            } else {
+                timeHolders2 = grouper.Group (timeHolders);
             }
 
             return timeHolders2
                    .OrderByDescending (x => x.GetStartTime ())
                    .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
-                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
                    .ToList ();
         }
 
-        public static ITimeEntryHolder CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
+        private IGrouper<TimeEntryHolder, T> CreateGrouper ()
         {
-            return isGrouped
-                   ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
-                   : new TimeEntryHolder (entry);
+            if (typeof (T) == typeof (TimeEntryGroup)) {
+                return (IGrouper<TimeEntryHolder, T>)new TimeEntryGroup.Grouper ();
+            } else if (typeof (T) == typeof (TimeEntryHolder)) {
+                return (IGrouper<TimeEntryHolder, T>)new TimeEntryHolder.Grouper ();
+            } else {
+                throw new NotSupportedException ();
+            }
         }
     }
 }

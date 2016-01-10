@@ -170,7 +170,7 @@ namespace Toggl.Joey.Wear
         {
             var model = new TimeEntryModel (id);
             await model.LoadAsync();
-            await model.ContinueAsync();
+            await TimeEntryModel.ContinueAsync (model.Data);
         }
 
         public async Task UpdateSharedTimeEntryList ()

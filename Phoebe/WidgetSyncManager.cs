@@ -68,11 +68,10 @@ namespace Toggl.Phoebe
                 await TimeEntryModel.StopAsync (activeTimeEntryManager.ActiveTimeEntry);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.Widget);
             } else {
-                var newTimeEntryModel = TimeEntryModel.GetDraft ();
-                await newTimeEntryModel.StartAsync ();
+                var startedEntry = await TimeEntryModel.StartAsync (TimeEntryModel.GetDraft ());
 
                 // Show new screen on platform
-                widgetUpdateService.ShowNewTimeEntryScreen (newTimeEntryModel);
+                widgetUpdateService.ShowNewTimeEntryScreen (new TimeEntryModel (startedEntry));
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.WidgetNew);
             }
         }
@@ -80,7 +79,7 @@ namespace Toggl.Phoebe
         public async Task ContinueTimeEntry (Guid timeEntryId)
         {
             var entryModel = new TimeEntryModel (timeEntryId);
-            await entryModel.ContinueAsync ();
+            await TimeEntryModel.ContinueAsync (entryModel.Data);
             ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.WidgetStart);
         }
 
@@ -98,8 +97,8 @@ namespace Toggl.Phoebe
                 // Query local data:
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 var entries = await store.Table<TimeEntryData> ()
-                                .OrderByDescending (r => r.StartTime) .Where (r => r.DeletedAt == null && r.State != TimeEntryState.New)
-                                .Take (4).ToListAsync ().ConfigureAwait (false);
+                              .OrderByDescending (r => r.StartTime) .Where (r => r.DeletedAt == null && r.State != TimeEntryState.New)
+                              .Take (4).ToListAsync ().ConfigureAwait (false);
 
                 var widgetEntries = new List<WidgetEntryData>();
 

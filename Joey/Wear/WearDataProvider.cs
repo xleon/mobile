@@ -19,13 +19,13 @@ namespace Toggl.Joey.Wear
         public static async Task StartStopTimeEntry (Context ctx)
         {
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            var active = new TimeEntryModel (manager.ActiveTimeEntry);
+            var active = manager.ActiveTimeEntry;
             if (manager.ActiveTimeEntry.State == TimeEntryState.Running) {
-                await active.StopAsync ();
+                await TimeEntryModel.StopAsync (active);
                 ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
             } else {
-                active.Data.Description = ctx.Resources.GetString (Resource.String.WearEntryDefaultDescription);
-                await active.StartAsync ();
+                active.Description = ctx.Resources.GetString (Resource.String.WearEntryDefaultDescription);
+                await TimeEntryModel.StartAsync (active);
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
             }
         }
@@ -33,7 +33,7 @@ namespace Toggl.Joey.Wear
         public static async Task ContinueTimeEntry (Guid timeEntryId)
         {
             var entryModel = new TimeEntryModel (timeEntryId);
-            await entryModel.StartAsync ();
+            await TimeEntryModel.StartAsync (entryModel.Data);
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchContinue);
         }
 

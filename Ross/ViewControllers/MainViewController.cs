@@ -17,10 +17,12 @@ namespace Toggl.Ross.ViewControllers
         private NavDelegate navDelegate;
         private UIScreenEdgePanGestureRecognizer interactiveEdgePanGestureRecognizer;
         private UIAlertView upgradeAlert;
+        private UIView fadeView;
 
         private UITapGestureRecognizer _tapGesture;
         private UIPanGestureRecognizer _panGesture;
         private CGPoint draggingPoint;
+
 
         private const float menuSlideAnimationDuration = .3f;
         private const int menuOffset = 60;
@@ -62,6 +64,12 @@ namespace Toggl.Ross.ViewControllers
 
             View.AddGestureRecognizer (_tapGesture);
             View.AddGestureRecognizer (_panGesture);
+
+            fadeView = new UIView();
+            fadeView.BackgroundColor = UIColor.FromRGBA (29f / 255f, 29f / 255f, 28f / 255f, 0.5f);
+            fadeView.Frame = new CGRect (0, 0, width: View.Frame.Width, height: View.Frame.Height);
+            View.Add (fadeView);
+            fadeView.Hidden = true;
         }
 
         public nfloat Width
@@ -139,6 +147,7 @@ namespace Toggl.Ross.ViewControllers
 
         public void CloseMenu()
         {
+            fadeView.Hidden = true;
             _tapGesture.Enabled = false;
 
             UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, delegate {
@@ -148,6 +157,7 @@ namespace Toggl.Ross.ViewControllers
 
         public void OpenMenu()
         {
+            fadeView.Hidden = false;
             _tapGesture.Enabled = true;
 
             UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, delegate {

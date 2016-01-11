@@ -59,10 +59,20 @@ namespace Toggl.Ross.ViewControllers
                 (signOutButton = new UIButton ()),
             };
             logButton.SetTitle ("LeftPanelMenuLog".Tr (), UIControlState.Normal);
+            logButton.SetImage (UIImage.FromFile ("iconTimer.png"), UIControlState.Normal);
+
             reportsButton.SetTitle ("LeftPanelMenuReports".Tr (), UIControlState.Normal);
+            reportsButton.SetImage (UIImage.FromFile ("iconReports.png"), UIControlState.Normal);
+
             settingsButton.SetTitle ("LeftPanelMenuSettings".Tr (), UIControlState.Normal);
+            settingsButton.SetImage (UIImage.FromFile ("iconSettings.png"), UIControlState.Normal);
+
             feedbackButton.SetTitle ("LeftPanelMenuFeedback".Tr (), UIControlState.Normal);
+            feedbackButton.SetImage (UIImage.FromFile ("iconFeedback.png"), UIControlState.Normal);
+
             signOutButton.SetTitle ("LeftPanelMenuSignOut".Tr (), UIControlState.Normal);
+            signOutButton.SetImage (UIImage.FromFile ("iconLogout.png"), UIControlState.Normal);
+
 
             logButton.HorizontalAlignment = reportsButton.HorizontalAlignment = settingsButton.HorizontalAlignment =
                                                 feedbackButton.HorizontalAlignment = signOutButton.HorizontalAlignment = UIControlContentHorizontalAlignment.Left;

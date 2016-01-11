@@ -201,6 +201,16 @@
     <BundleResource Include="GoogleService-Info.plist" />
     <BundleResource Include="Resources\arrowUp%402x.png" />
     <BundleResource Include="Resources\arrowUp.png" />
+    <BundleResource Include="Resources\iconTimer%402x.png" />
+    <BundleResource Include="Resources\iconTimer.png" />
+    <BundleResource Include="Resources\iconSettings%402x.png" />
+    <BundleResource Include="Resources\iconSettings.png" />
+    <BundleResource Include="Resources\iconReports%402x.png" />
+    <BundleResource Include="Resources\iconReports.png" />
+    <BundleResource Include="Resources\iconLogout%402x.png" />
+    <BundleResource Include="Resources\iconLogout.png" />
+    <BundleResource Include="Resources\iconFeedback%402x.png" />
+    <BundleResource Include="Resources\iconFeedback.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

@@ -30,7 +30,7 @@ namespace Toggl.Ross.Views
 
             titleLabel.Frame = new CGRect (
                 (Frame.Width - titleSize.Width) / 2,
-                spacing + arrowHeight,
+                arrowHeight - titleSize.Height - messageSize.Height,
                 titleSize.Width,
                 titleSize.Height
             );
@@ -45,7 +45,7 @@ namespace Toggl.Ross.Views
             arrowImageView.Frame = new CGRect (
                 y: 0f,
                 height: arrowHeight ,
-                x: Frame.Width - arrowWidth - 30f,
+                x: Frame.Width - arrowWidth - 5f,
                 width: arrowWidth
             );
         }

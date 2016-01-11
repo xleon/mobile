@@ -199,8 +199,8 @@
     <BundleResource Include="Resources\btn-arrow-up.png" />
     <BundleResource Include="Resources\btn-arrow-up%402x.png" />
     <BundleResource Include="GoogleService-Info.plist" />
-    <BundleResource Include="Resources\empty-arrow%402x.png" />
-    <BundleResource Include="Resources\empty-arrow.png" />
+    <BundleResource Include="Resources\arrowUp%402x.png" />
+    <BundleResource Include="Resources\arrowUp.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

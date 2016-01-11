@@ -124,7 +124,7 @@ namespace Toggl.Ross.Theme
 
         public static UIImage ArrowEmptyState
         {
-            get { return UIImage.FromBundle ("empty-arrow"); }
+            get { return UIImage.FromBundle ("arrowUp"); }
         }
     }
 }

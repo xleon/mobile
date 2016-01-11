@@ -23,6 +23,7 @@ namespace Toggl.Ross.Data
         private const string RossChooseProjectForNewKey = "rossChooseProjectForNew";
         private const string RossReadDurOnlyNoticeKey = "rossReadDurOnlyNotice";
         private const string RossIgnoreSyncErrorsUntilKey = "rossIgnoreSyncErrorsUntil";
+        private const string PhoebeProjectSortKey = "projectSortKey";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -246,6 +247,16 @@ namespace Toggl.Ross.Data
             set {
                 SetInt (PhoebeLastReportZoomKey, value);
                 OnSettingChanged (PropertyLastReportZoomViewed);
+            }
+        }
+
+        public static readonly string PropertyProjectSort = GetPropertyName (s => s.SortProjectsBy);
+
+        public string SortProjectsBy
+        {
+            get { return (GetString (PhoebeProjectSortKey)); }
+            set {
+                SetString (PhoebeProjectSortKey, value);
             }
         }
     }

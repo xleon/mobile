@@ -115,6 +115,10 @@ namespace Toggl.Ross.ViewControllers
         private void OnUserLoad (object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            if (userData == null) {
+                return;
+            }
+
             usernameLabel.Text = userData.Name;
             emailLabel.Text = userData.Email;
 

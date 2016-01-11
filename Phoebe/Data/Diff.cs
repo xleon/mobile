@@ -91,18 +91,17 @@ namespace Toggl.Phoebe.Data
         readonly IDictionary<int, DiffComparison> Cache = new Dictionary<int, DiffComparison> ();
 
         public DiffComparison Compare<T> (IList<T> listA, int indexA, IList<T> listB, int indexB)
-            where T : IDiffComparable
+        where T : IDiffComparable
         {
             var key = indexA | (indexB << 16);
             if (Cache.ContainsKey (key)) {
                 return Cache [key];
-            }
-            else {
+            } else {
                 var res = listA [indexA].Compare (listB [indexB]);
                 Cache.Add (key, res);
                 return res;
             }
-        }        
+        }
     }
 
     // Adapted from http://devdirective.com/post/115/creating-a-reusable-though-simple-diff-implementation-in-csharp-part-3

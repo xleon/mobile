@@ -20,6 +20,13 @@ namespace Toggl.Ross.Theme
                 v.Font = UIFont.FromName ("HelveticaNeue-Light", 20f);
                 v.TextAlignment = UITextAlignment.Left;
             }
+
+            public static void EmailLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Light", 16f);
+                v.TextAlignment = UITextAlignment.Left;
+                v.TextColor = Color.DarkGray;
+            }
         }
     }
 }

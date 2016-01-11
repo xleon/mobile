@@ -22,6 +22,7 @@ namespace Toggl.Ross.ViewControllers
         private UIButton signOutButton;
         private UIButton[] menuButtons;
         private UILabel usernameLabel;
+        private UILabel emailLabel;
 
         private UIImageView userAvatarImage;
         private UIImageView separatorLineImage;
@@ -88,12 +89,16 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             usernameLabel = new UILabel ().Apply (Style.LeftView.UserLabel);
-            usernameLabel.Frame = new CGRect (60, View.Frame.Height - 100f, height: 50f, width: View.Frame.Width);
+            var imageStartingPoint = View.Frame.Width - menuOffset - 90f;
+            usernameLabel.Frame = new CGRect (40, View.Frame.Height - 110f, height: 50f, width: imageStartingPoint - 40f);
             View.AddSubview (usernameLabel);
+            emailLabel = new UILabel ().Apply (Style.LeftView.EmailLabel);
+            emailLabel.Frame = new CGRect (40f, View.Frame.Height - 80f, height: 50f, width: imageStartingPoint - 40f);
+            View.AddSubview (emailLabel);
 
             userAvatarImage = new UIImageView (
                 new CGRect (
-                    View.Frame.Width - menuOffset - 90f,
+                    imageStartingPoint,
                     View.Frame.Height - 100f,
                     60f,
                     60f
@@ -111,6 +116,7 @@ namespace Toggl.Ross.ViewControllers
         {
             var userData = ServiceContainer.Resolve<AuthManager> ().User;
             usernameLabel.Text = userData.Name;
+            emailLabel.Text = userData.Email;
 
             var url = new NSUrl (userData.ImageUrl);
             var data = NSData.FromUrl (url);

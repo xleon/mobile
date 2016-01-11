@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using CoreFoundation;
-using UIKit;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using XPlatUtils;
 using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
+using UIKit;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -84,6 +85,7 @@ namespace Toggl.Ross.ViewControllers
                         return;
                     }
 
+                    OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
                     await currentTimeEntry.StartAsync ();
 
                     var controllers = new List<UIViewController> (parentController.NavigationController.ViewControllers);

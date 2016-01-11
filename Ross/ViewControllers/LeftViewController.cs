@@ -22,7 +22,7 @@ namespace Toggl.Ross.ViewControllers
         private UIButton signOutButton;
         private UIButton[] menuButtons;
         private UILabel usernameLabel;
-        private UILabel syncStatusLabel;
+
         private UIImageView userAvatarImage;
         private UIImageView separatorLineImage;
         private const int horizMargin = 15;
@@ -32,15 +32,6 @@ namespace Toggl.Ross.ViewControllers
         private CGPoint draggingPoint;
         private const int menuOffset = 60;
         private const int velocityTreshold = 100;
-
-        private Subscription<SyncStartedMessage> drawerSyncStarted;
-        private Subscription<SyncFinishedMessage> drawerSyncFinished;
-        private long lastSyncInMillis;
-        private int syncStatus;
-        private const int syncing = 0;
-        private const int syncSuccessful = 1;
-        private const int syncHadErrors = 2;
-        private const int syncFatalError = 3;
 
         public override void LoadView ()
         {
@@ -81,10 +72,6 @@ namespace Toggl.Ross.ViewControllers
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             authManager.PropertyChanged += OnUserLoad;
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            drawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
-            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
-
             foreach (var button in menuButtons) {
                 button.Apply (Style.LeftView.Button);
                 button.TouchUpInside += OnMenuButtonTouchUpInside;
@@ -118,10 +105,6 @@ namespace Toggl.Ross.ViewControllers
             separatorLineImage = new UIImageView (UIImage.FromFile ("line.png"));
             separatorLineImage.Frame = new CGRect (0f, View.Frame.Height - 140f, height: 1f, width: View.Frame.Width - menuOffset);
             View.AddSubview (separatorLineImage);
-
-            syncStatusLabel = new UILabel ().Apply (Style.LeftView.UserLabel);
-            syncStatusLabel.Frame = new CGRect (horizMargin, View.Frame.Height - 50f, height: 50f, width: View.Frame.Width);
-            View.AddSubview (syncStatusLabel);
         }
 
         private void OnUserLoad (object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -230,57 +213,6 @@ namespace Toggl.Ross.ViewControllers
                 ServiceContainer.Resolve<AuthManager> ().Forget ();
             }
             main.CloseMenu();
-        }
-
-        protected void SyncStarted (SyncStartedMessage msg)
-        {
-            syncStatus = syncing;
-            UpdateSyncStatus();
-        }
-
-        private void SyncFinished (SyncFinishedMessage msg)
-        {
-            if (msg.FatalError != null) {
-                syncStatus = syncFatalError;
-            } else if (msg.HadErrors) {
-                syncStatus = syncHadErrors;
-            } else {
-                syncStatus = syncSuccessful;
-            }
-            lastSyncInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            UpdateSyncStatus ();
-        }
-
-        private void UpdateSyncStatus ()
-        {
-            switch (syncStatus) {
-            case syncing:
-                syncStatusLabel.Text = "LeftPanelSyncing".Tr();
-                break;
-            case syncHadErrors:
-                syncStatusLabel.Text = "LeftPanelSyncHadErrors".Tr();
-                break;
-            case syncFatalError:
-                syncStatusLabel.Text = "LeftPanelSyncFailed".Tr();
-                break;
-            default:
-                syncStatusLabel.Text = ResolveLastSyncTime ();
-                break;
-            }
-        }
-
-        private String ResolveLastSyncTime ()
-        {
-            const int minuteInMillis = 60 * 1000;
-            var NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            if (NowInMillis - lastSyncInMillis < minuteInMillis) {
-                return "LeftPanelSyncJustNow".Tr();
-            }
-
-            return String.Format (
-                       "LeftPanelSyncTime".Tr(),
-                       (NowInMillis - lastSyncInMillis) / minuteInMillis
-                   );
         }
     }
 }

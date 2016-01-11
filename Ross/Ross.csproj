@@ -211,6 +211,8 @@
     <BundleResource Include="Resources\iconLogout.png" />
     <BundleResource Include="Resources\iconFeedback%402x.png" />
     <BundleResource Include="Resources\iconFeedback.png" />
+    <BundleResource Include="Resources\line%402x.png" />
+    <BundleResource Include="Resources\line.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

@@ -17,7 +17,7 @@ namespace Toggl.Ross.Theme
 
             public static void UserLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 17f);
+                v.Font = UIFont.FromName ("HelveticaNeue-Light", 20f);
                 v.TextAlignment = UITextAlignment.Left;
             }
         }

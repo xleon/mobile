@@ -24,6 +24,7 @@ namespace Toggl.Ross.ViewControllers
         private UILabel usernameLabel;
         private UILabel syncStatusLabel;
         private UIImageView userAvatarImage;
+        private UIImageView separatorLineImage;
         private const int horizMargin = 15;
 
 
@@ -100,13 +101,23 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             usernameLabel = new UILabel ().Apply (Style.LeftView.UserLabel);
-            usernameLabel.Frame = new CGRect (60, 60, height: 50f, width: View.Frame.Width);
+            usernameLabel.Frame = new CGRect (60, View.Frame.Height - 100f, height: 50f, width: View.Frame.Width);
             View.AddSubview (usernameLabel);
 
-            userAvatarImage = new UIImageView (new CGRect (horizMargin, 70, 30, 30));
-            userAvatarImage.Layer.CornerRadius=15f;
+            userAvatarImage = new UIImageView (
+                new CGRect (
+                    View.Frame.Width - menuOffset - 90f,
+                    View.Frame.Height - 100f,
+                    60f,
+                    60f
+                ));
+            userAvatarImage.Layer.CornerRadius = 30f;
             userAvatarImage.Layer.MasksToBounds = true;
             View.AddSubview (userAvatarImage);
+
+            separatorLineImage = new UIImageView (UIImage.FromFile ("line.png"));
+            separatorLineImage.Frame = new CGRect (0f, View.Frame.Height - 140f, height: 1f, width: View.Frame.Width - menuOffset);
+            View.AddSubview (separatorLineImage);
 
             syncStatusLabel = new UILabel ().Apply (Style.LeftView.UserLabel);
             syncStatusLabel.Frame = new CGRect (horizMargin, View.Frame.Height - 50f, height: 50f, width: View.Frame.Width);
@@ -180,7 +191,7 @@ namespace Toggl.Ross.ViewControllers
         private static IEnumerable<FluentLayout> MakeConstraints (UIView container)
         {
             UIView prev = null;
-            const float startTopMargin = 120.0f;
+            const float startTopMargin = 60.0f;
             const float topMargin = 7f;
 
             foreach (var view in container.Subviews) {

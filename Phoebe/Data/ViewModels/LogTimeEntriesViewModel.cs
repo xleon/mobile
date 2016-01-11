@@ -74,12 +74,10 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             if (collectionFeed != null) {
                 collectionFeed.Dispose ();
-                collectionFeed = null;
             }
 
             if (Collection != null) {
                 Collection.Dispose ();
-                Collection = null;
             }
         }
 

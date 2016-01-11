@@ -56,11 +56,6 @@ namespace Toggl.Phoebe.Data.Utils
 
         public void Dispose ()
         {
-            if (subject != null) {
-                subject.Dispose ();
-                subject = null;
-            }
-
             // cancel DB request.
             if (cts != null) {
                 cts.Cancel ();
@@ -82,6 +77,11 @@ namespace Toggl.Phoebe.Data.Utils
                 bus.Unsubscribe (subscription);
                 subscription = null;
                 bus = null;
+            }
+
+            if (subject != null) {
+                subject.Dispose ();
+                subject = null;
             }
         }
 

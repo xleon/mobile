@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Helpers;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
@@ -22,8 +23,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
         private TimeEntriesFeed collectionFeed;
         private readonly Timer durationTimer;
-
-        private readonly ActiveTimeEntryManager timeEntryManager;
+        private Binding<bool, bool> binding;
+        protected ActiveTimeEntryManager TimeEntryManager {get; private set; }
 
         LogTimeEntriesViewModel ()
         {
@@ -32,9 +33,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             durationTimer.Elapsed += DurationTimerCallback;
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
-            timeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            timeEntryManager.PropertyChanged += OnRunningStateChanged;
-            UpdateView (timeEntryManager.IsRunning, timeEntryManager.ActiveTimeEntry);
+            TimeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            binding = this.SetBinding (() => TimeEntryManager.IsRunning)
+                      .WhenSourceChanges (() => UpdateView (TimeEntryManager.IsRunning, TimeEntryManager.ActiveTimeEntry));
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -65,7 +66,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 subscriptionUpdateFinished = null;
             }
 
-            timeEntryManager.PropertyChanged -= OnRunningStateChanged;
+            durationTimer.Elapsed -= DurationTimerCallback;
             DisposeCollection ();
         }
 
@@ -125,37 +126,43 @@ namespace Toggl.Phoebe.Data.ViewModels
         #endregion
 
         #region Time entry operations
-        public async Task ContinueTimeEntryAsync (int index)
+        public async Task<TimeEntryData> ContinueTimeEntryAsync (int index)
         {
+            var newTimeEntry = new TimeEntryData ();
             var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
-                return;
+                return newTimeEntry;
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                await TimeEntryModel.StopAsync (timeEntryHolder.Data);
+                newTimeEntry = await TimeEntryModel.StopAsync (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                await TimeEntryModel.ContinueAsync (timeEntryHolder.Data);
+                newTimeEntry = await TimeEntryModel.ContinueAsync (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
+
+            return newTimeEntry;
         }
 
         public async Task<TimeEntryData> StartStopTimeEntry ()
         {
             // Protect from double clicks?
             if (IsProcessingAction) {
-                return timeEntryManager.ActiveTimeEntry;
+                return TimeEntryManager.ActiveTimeEntry;
             }
 
-            var active = timeEntryManager.ActiveTimeEntry;
-            if (active.State == TimeEntryState.Running) {
-                await TimeEntryModel.StopAsync (active);
-            } else {
-                await TimeEntryModel.StartAsync (active);
-            }
-
+            IsProcessingAction = true;
+            var active = TimeEntryManager.ActiveTimeEntry;
+            active = active.State == TimeEntryState.Running ? await TimeEntryModel.StopAsync (active) : await TimeEntryModel.StartAsync (active);
             IsProcessingAction = false;
+
+            if (TimeEntryManager.IsRunning) {
+                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppNew);
+            } else {
+                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
+            }
+
             return active;
         }
 
@@ -172,7 +179,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public TimeEntryData GetActiveTimeEntry ()
         {
-            return timeEntryManager.ActiveTimeEntry;
+            return TimeEntryManager.ActiveTimeEntry;
         }
         #endregion
 
@@ -208,11 +215,6 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private void OnRunningStateChanged (object sender, EventArgs args)
-        {
-            UpdateView (timeEntryManager.IsRunning, timeEntryManager.ActiveTimeEntry);
-        }
-
         private void OnSettingChanged (SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
@@ -239,7 +241,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)
         {
 
-            var duration = TimeEntryModel.GetDuration (timeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
+            var duration = TimeEntryModel.GetDuration (TimeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
             durationTimer.Interval = 1000 - duration.Milliseconds;
 
             // Update on UI Thread

@@ -528,7 +528,7 @@ namespace Toggl.Phoebe.Data.Models
 
             // Send notification message
             var msgBus = ServiceContainer.Resolve<MessageBus> ();
-            msgBus.Send (new StartStopMessage (data));
+            msgBus.Send (new StartStopMessage (newData));
 
             return newData;
         }

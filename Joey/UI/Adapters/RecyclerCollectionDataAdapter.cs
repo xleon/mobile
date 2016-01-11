@@ -20,7 +20,6 @@ namespace Toggl.Joey.UI.Adapters
         public const int ViewTypeContent = 1;
         protected ICollectionData<T> CollectionData;
         protected RecyclerView Owner;
-        protected RecyclerLoadState currentLoadState = RecyclerLoadState.Loading;
 
         protected RecyclerCollectionDataAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {

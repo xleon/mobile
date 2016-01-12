@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Helpers;
 using PropertyChanged;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
@@ -15,19 +14,22 @@ namespace Toggl.Phoebe.Data
     public class ActiveTimeEntryManager : ObservableObject, IDisposable
     {
         public static readonly string PropertyActiveTimeEntry = "ActiveTimeEntry";
+        public static readonly string PropertyIsRunning = "IsRunning";
 
         private Subscription<StartStopMessage> subscriptionStateChange;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        protected AuthManager AuthManager { get; set; }
-        Binding<UserData, UserData> authBinding;
+        private Subscription<AuthChangedMessage> subscriptionAuthChange;
 
         public ActiveTimeEntryManager ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            AuthManager = ServiceContainer.Resolve<AuthManager> ();
-            authBinding = this.SetBinding (() => AuthManager.User).WhenSourceChanges (async () => await UpdateRunningTimeEntry ());
+
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (async msg => await UpdateRunningTimeEntry ());
+            subscriptionAuthChange = bus.Subscribe<AuthChangedMessage> (async msg => await UpdateRunningTimeEntry ());
             subscriptionStateChange = bus.Subscribe<StartStopMessage> (OnTimeEntryStateChanged);
+
+            // Init state.
+            Task.Run (async () => await UpdateRunningTimeEntry ());
         }
 
         ~ActiveTimeEntryManager ()
@@ -54,6 +56,11 @@ namespace Toggl.Phoebe.Data
                 if (subscriptionSyncFinished != null) {
                     bus.Unsubscribe (subscriptionSyncFinished);
                     subscriptionSyncFinished = null;
+                }
+
+                if (subscriptionAuthChange != null) {
+                    bus.Unsubscribe (subscriptionAuthChange);
+                    subscriptionAuthChange = null;
                 }
             }
         }

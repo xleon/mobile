@@ -1,9 +1,9 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Helpers;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
@@ -23,8 +23,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
         private TimeEntriesFeed collectionFeed;
         private readonly Timer durationTimer;
-        private Binding<bool, bool> binding;
-        protected ActiveTimeEntryManager TimeEntryManager {get; private set; }
+        private readonly ActiveTimeEntryManager activeTimeEntryManager;
 
         LogTimeEntriesViewModel ()
         {
@@ -33,9 +32,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             durationTimer.Elapsed += DurationTimerCallback;
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
-            TimeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            binding = this.SetBinding (() => TimeEntryManager.IsRunning)
-                      .WhenSourceChanges (() => UpdateView (TimeEntryManager.IsRunning, TimeEntryManager.ActiveTimeEntry));
+            activeTimeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            activeTimeEntryManager.PropertyChanged += OnActiveTimeEntryChanged;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
@@ -66,6 +64,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 subscriptionUpdateFinished = null;
             }
 
+            activeTimeEntryManager.PropertyChanged -= OnActiveTimeEntryChanged;
             durationTimer.Elapsed -= DurationTimerCallback;
             DisposeCollection ();
         }
@@ -147,15 +146,15 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             // Protect from double clicks?
             if (IsProcessingAction) {
-                return TimeEntryManager.ActiveTimeEntry;
+                return activeTimeEntryManager.ActiveTimeEntry;
             }
 
             IsProcessingAction = true;
-            var active = TimeEntryManager.ActiveTimeEntry;
+            var active = activeTimeEntryManager.ActiveTimeEntry;
             active = active.State == TimeEntryState.Running ? await TimeEntryModel.StopAsync (active) : await TimeEntryModel.StartAsync (active);
             IsProcessingAction = false;
 
-            if (TimeEntryManager.IsRunning) {
+            if (activeTimeEntryManager.IsRunning) {
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppNew);
             } else {
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
@@ -177,7 +176,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public TimeEntryData GetActiveTimeEntry ()
         {
-            return TimeEntryManager.ActiveTimeEntry;
+            return activeTimeEntryManager.ActiveTimeEntry;
         }
         #endregion
 
@@ -213,6 +212,13 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
+        private void OnActiveTimeEntryChanged (object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == ActiveTimeEntryManager.PropertyIsRunning) {
+                UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
+            }
+        }
+
         private void OnSettingChanged (SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
@@ -239,7 +245,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)
         {
 
-            var duration = TimeEntryModel.GetDuration (TimeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
+            var duration = TimeEntryModel.GetDuration (activeTimeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
             durationTimer.Interval = 1000 - duration.Milliseconds;
 
             // Update on UI Thread

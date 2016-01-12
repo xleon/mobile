@@ -247,6 +247,10 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private static async Task<List<TagData>> GetDefaultTagList (Guid workspaceId)
         {
+            if (!ServiceContainer.Resolve<ISettingsStore> ().UseDefaultTag) {
+                return new List<TagData> ();
+            }
+
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var defaultTagList = await dataStore.Table<TagData> ()
                                  .Where (r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null)

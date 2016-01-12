@@ -8,12 +8,11 @@ namespace Toggl.Phoebe
     {
         public static IEnumerable<Exception> TraverseTree (this Exception ex)
         {
-            yield return ex;
-
-            while (ex.InnerException != null) {
-                ex = ex.InnerException;
+            while (ex != null) {
                 yield return ex;
+                ex = ex.InnerException;
             }
+            yield break;
         }
 
         public static bool IsNetworkFailure (this Exception ex)

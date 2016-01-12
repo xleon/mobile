@@ -44,6 +44,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         public static LogTimeEntriesViewModel Init ()
         {
             var vm = new LogTimeEntriesViewModel ();
+            vm.UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
             vm.SyncCollectionView ();
             return vm;
         }

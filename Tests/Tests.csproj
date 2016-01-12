@@ -101,6 +101,7 @@
     <Compile Include="Analytics\TestTracker.cs" />
     <Compile Include="Analytics\BaseTrackerTest.cs" />
     <Compile Include="Data\TimeEntriesCollectionTest.cs" />
+    <Compile Include="Misc\ExceptionTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -121,5 +122,6 @@
     <Folder Include="Data\Json\Converters\" />
     <Folder Include="Data\Merge\" />
     <Folder Include="Analytics\" />
+    <Folder Include="Misc\" />
   </ItemGroup>
 </Project>

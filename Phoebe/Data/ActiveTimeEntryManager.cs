@@ -81,6 +81,7 @@ namespace Toggl.Phoebe.Data
 
             ActiveTimeEntry = teList.Any () ? teList.FirstOrDefault () : TimeEntryModel.GetDraft ();
             IsRunning = ActiveTimeEntry.State == TimeEntryState.Running;
+
         }
 
         public bool IsRunning { get; private set; }

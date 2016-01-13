@@ -39,13 +39,14 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
+
+            UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
+            SyncCollectionView ();
         }
 
         public static LogTimeEntriesViewModel Init ()
         {
             var vm = new LogTimeEntriesViewModel ();
-            vm.UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
-            vm.SyncCollectionView ();
             return vm;
         }
 

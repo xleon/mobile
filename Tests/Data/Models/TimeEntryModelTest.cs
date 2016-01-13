@@ -34,7 +34,7 @@ namespace Toggl.Phoebe.Tests.Data.Models
             });
 
             ServiceContainer.Register<ExperimentManager> (new ExperimentManager ());
-            ServiceContainer.Register<ITracker> (() => new Tracker ());
+            ServiceContainer.Register<ITracker> (() => new FakeTracker ());
         }
 
         [Test]
@@ -516,13 +516,6 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 Assert.AreEqual (parent.Id, entry.Id);
                 Assert.AreEqual (TimeEntryState.Finished, entry.State);
             });
-        }
-
-        private class Tracker : TestTracker
-        {
-            protected override void SendEvent (string category, string action, string label = null, long value = 0L)
-            {
-            }
         }
     }
 }

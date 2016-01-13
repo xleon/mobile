@@ -21,26 +21,25 @@ namespace Toggl.Joey.Widget
         {
         }
 
-        public override void OnStart (Intent intent, int startId)
+        public async override void OnStart (Intent intent, int startId)
         {
             try {
                 var action = intent.Action;
                 var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
 
                 if (action == WidgetProvider.StartStopAction) {
-                    widgetManager.StartStopTimeEntry();
+                    await widgetManager.StartStopTimeEntry();
                 } else if (action == WidgetProvider.ContiueAction) {
 
                     // Get entry Id string.
-                    var entryId = intent.GetStringExtra (WidgetProvider.EntryIdParameter);
+                    var entryId = intent.GetStringExtra (WidgetProvider.TimeEntryIdParameter);
                     Guid entryGuid;
                     Guid.TryParse (entryId, out entryGuid);
 
                     // Set correct Guid.
                     var widgetUpdateService = ServiceContainer.Resolve<IWidgetUpdateService> ();
                     widgetUpdateService.EntryIdStarted = entryGuid;
-
-                    widgetManager.ContinueTimeEntry();
+                    await widgetManager.ContinueTimeEntry (entryGuid);
                 }
             } finally {
                 WakefulBroadcastReceiver.CompleteWakefulIntent (intent);
@@ -57,7 +56,6 @@ namespace Toggl.Joey.Widget
         public override void OnCreate ()
         {
             base.OnCreate ();
-
             ((AndroidApp)Application).InitializeComponents ();
         }
 
@@ -73,7 +71,7 @@ namespace Toggl.Joey.Widget
             {
                 var serviceIntent = new Intent (context, typeof (WidgetStartStopService));
                 serviceIntent.SetAction (intent.Action);
-                serviceIntent.PutExtra (WidgetProvider.EntryIdParameter, intent.GetStringExtra (WidgetProvider.EntryIdParameter));
+                serviceIntent.PutExtra (WidgetProvider.TimeEntryIdParameter, intent.GetStringExtra (WidgetProvider.TimeEntryIdParameter));
                 StartWakefulService (context, serviceIntent);
             }
         }

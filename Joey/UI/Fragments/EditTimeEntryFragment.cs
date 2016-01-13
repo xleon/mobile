@@ -205,7 +205,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Save Time entry state every time
             // the fragment is paused.
-            Task.Run (async () => await ViewModel.SaveModel ());
+            Task.Run (async () => await ViewModel.SaveAsync ());
             base.OnPause ();
         }
 
@@ -269,7 +269,7 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             if (item == SaveMenuItem) {
-                Task.Run (async () => await ViewModel.SaveModelManual ());
+                Task.Run (async () => await ViewModel.SaveManualAsync ());
             }
 
             Activity.OnBackPressed ();

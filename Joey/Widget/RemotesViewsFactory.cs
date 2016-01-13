@@ -90,7 +90,7 @@ namespace Toggl.Joey.Widget
                 intent.SetAction (WidgetProvider.StartStopAction);
             } else {
                 intent.SetAction (WidgetProvider.ContiueAction);
-                intent.PutExtra (WidgetProvider.EntryIdParameter, entryData.Id);
+                intent.PutExtra (WidgetProvider.TimeEntryIdParameter, entryData.Id);
             }
 
             return intent;

@@ -5,7 +5,6 @@ namespace Toggl.Phoebe.Tests.Analytics
 {
     public class TestTracker : BaseTracker
     {
-
         public const string SendEventExceptionMessage = "SendEventCalled";
         public const string SendTimingExceptionMessage = "SendTimingCalled";
         public const string StartNewSessionException = "StartNewSession";
@@ -47,6 +46,13 @@ namespace Toggl.Phoebe.Tests.Analytics
             public string Category;
             public string Action;
             public string Label;
+        }
+    }
+
+    public class FakeTracker : TestTracker
+    {
+        protected override void SendEvent (string category, string action, string label = null, long value = 0L)
+        {
         }
     }
 }

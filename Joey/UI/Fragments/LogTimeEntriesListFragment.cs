@@ -82,7 +82,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = await LogTimeEntriesViewModel.Init ();
+            ViewModel = LogTimeEntriesViewModel.Init ();
 
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
@@ -151,6 +151,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroyView ();
         }
 
+        #region Menu setup
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
             inflater.Inflate (Resource.Menu.NewItemMenu, menu);
@@ -175,44 +176,7 @@ namespace Toggl.Joey.UI.Fragments
                 AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
             }
         }
-
-        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
-        {
-            // Touch listeners.
-            itemTouchListener = new ItemTouchListener (recyclerView, this);
-            recyclerView.AddOnItemTouchListener (itemTouchListener);
-
-            // Scroll listener
-            recyclerView.AddOnScrollListener (
-                new ScrollListener ((LinearLayoutManager)recyclerView.GetLayoutManager (), viewModel));
-
-            var touchCallback = new SwipeDismissCallback (ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
-            var touchHelper = new ItemTouchHelper (touchCallback);
-            touchHelper.AttachToRecyclerView (recyclerView);
-
-            // Decorations.
-            dividerDecoration = new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList);
-            shadowDecoration = new ShadowItemDecoration (Activity);
-            recyclerView.AddItemDecoration (dividerDecoration);
-            recyclerView.AddItemDecoration (shadowDecoration);
-            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
-        }
-
-        private void ReleaseRecyclerView ()
-        {
-            recyclerView.RemoveItemDecoration (shadowDecoration);
-            recyclerView.RemoveItemDecoration (dividerDecoration);
-            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
-
-            recyclerView.GetAdapter ().Dispose ();
-            recyclerView.Dispose ();
-            logAdapter = null;
-
-            itemTouchListener.Dispose ();
-            dividerDecoration.Dispose ();
-            shadowDecoration.Dispose ();
-        }
-
+        #endregion
 
         #region IDismissListener implementation
         public bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
@@ -284,6 +248,44 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
         #endregion
+
+        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
+        {
+            // Touch listeners.
+            itemTouchListener = new ItemTouchListener (recyclerView, this);
+            recyclerView.AddOnItemTouchListener (itemTouchListener);
+
+            // Scroll listener
+            recyclerView.AddOnScrollListener (
+                new ScrollListener ((LinearLayoutManager)recyclerView.GetLayoutManager (), viewModel));
+
+            var touchCallback = new SwipeDismissCallback (ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
+            var touchHelper = new ItemTouchHelper (touchCallback);
+            touchHelper.AttachToRecyclerView (recyclerView);
+
+            // Decorations.
+            dividerDecoration = new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList);
+            shadowDecoration = new ShadowItemDecoration (Activity);
+            recyclerView.AddItemDecoration (dividerDecoration);
+            recyclerView.AddItemDecoration (shadowDecoration);
+            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
+        }
+
+        private void ReleaseRecyclerView ()
+        {
+            recyclerView.RemoveItemDecoration (shadowDecoration);
+            recyclerView.RemoveItemDecoration (dividerDecoration);
+            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
+
+            recyclerView.GetAdapter ().Dispose ();
+            recyclerView.Dispose ();
+            logAdapter = null;
+
+            itemTouchListener.Dispose ();
+            dividerDecoration.Dispose ();
+            shadowDecoration.Dispose ();
+        }
+
 
         // Temporal hack to change the
         // action color in snack bar

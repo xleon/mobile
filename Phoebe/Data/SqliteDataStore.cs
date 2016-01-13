@@ -28,6 +28,7 @@ namespace Toggl.Phoebe.Data
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
             CreateTables();
+            CleanOldDraftEntry ();
         }
 
         internal static IEnumerable<Type> DiscoverDataObjectTypes ()
@@ -44,6 +45,14 @@ namespace Toggl.Phoebe.Data
             foreach (var t in dataObjects) {
                 cnn.CreateTable (t);
             }
+        }
+
+        private void CleanOldDraftEntry ()
+        {
+            // TODO: temporal method to clear old
+            // draft entries from DB. It should be removed
+            // in next versions.
+            cnn.Table <Toggl.Phoebe.Data.DataObjects.TimeEntryData> ().Delete (t => t.State == TimeEntryState.New);
         }
 
         private void WipeTables ()

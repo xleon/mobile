@@ -74,7 +74,7 @@
     <Reference Include="System.Reactive.PlatformServices">
       <HintPath>..\packages\Rx-PlatformServices.2.2.5\lib\portable-windows8+net45+wp8\System.Reactive.PlatformServices.dll</HintPath>
     </Reference>
-    <Reference Include="Mindscape.Raygun4Net4">
+    <Reference Include="Mindscape.Raygun4Net.Xamarin.Android">
       <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -89,6 +89,8 @@
     <Compile Include="Threading\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
+    <Compile Include="Data\StartStopMessage.cs" />
+    <Compile Include="Data\ActiveTimeEntryManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

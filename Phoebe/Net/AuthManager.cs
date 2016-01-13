@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using GalaSoft.MvvmLight;
+using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
@@ -12,16 +14,21 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
 {
+    [ImplementPropertyChanged]
     public class AuthManager : ObservableObject
     {
+        public static readonly string PropertyIsAuthenticating = GetPropertyName (m => m.IsAuthenticating);
+        public static readonly string PropertyIsAuthenticated = GetPropertyName (m => m.IsAuthenticated);
+        public static readonly string PropertyUser = GetPropertyName (m => m.User);
+        public static readonly string PropertyToken = GetPropertyName (m => m.Token);
+
+        private readonly Subscription<DataChangeMessage> subscriptionDataChange;
         private static readonly string Tag = "AuthManager";
 
         private static string GetPropertyName<T> (Expression<Func<AuthManager, T>> expr)
         {
             return expr.ToPropertyName ();
         }
-
-        private readonly Subscription<DataChangeMessage> subscriptionDataChange;
 
         public AuthManager ()
         {
@@ -218,56 +225,13 @@ namespace Toggl.Phoebe.Net
             }
         }
 
-        private bool authenticating;
-        public static readonly string PropertyIsAuthenticating = GetPropertyName ((m) => m.IsAuthenticating);
+        public bool IsAuthenticating { get; private set; }
 
-        public bool IsAuthenticating
-        {
-            get { return authenticating; }
-            private set {
-                if (authenticating == value) {
-                    return;
-                }
+        public bool IsAuthenticated { get; private set; }
 
-                ChangePropertyAndNotify (PropertyIsAuthenticating, delegate {
-                    authenticating = value;
-                });
-            }
-        }
+        public UserData User { get; private set; }
 
-        private bool authenticated;
-        public static readonly string PropertyIsAuthenticated = GetPropertyName ((m) => m.IsAuthenticated);
-
-        public bool IsAuthenticated
-        {
-            get { return authenticated; }
-            private set {
-                if (authenticated == value) {
-                    return;
-                }
-
-                ChangePropertyAndNotify (PropertyIsAuthenticated, delegate {
-                    authenticated = value;
-                });
-            }
-        }
-
-        private UserData userData;
-        public static readonly string PropertyUser = GetPropertyName ((m) => m.User);
-
-        public UserData User
-        {
-            get { return userData; }
-            private set {
-                if (userData == value) {
-                    return;
-                }
-
-                ChangePropertyAndNotify (PropertyUser, delegate {
-                    userData = value;
-                });
-            }
-        }
+        public string Token { get; private set; }
 
         public Guid? GetUserId ()
         {
@@ -275,23 +239,6 @@ namespace Toggl.Phoebe.Net
                 return null;
             }
             return User.Id;
-        }
-
-        private string token;
-        public static readonly string PropertyToken = GetPropertyName ((m) => m.Token);
-
-        public string Token
-        {
-            get { return token; }
-            private set {
-                if (token == value) {
-                    return;
-                }
-
-                ChangePropertyAndNotify (PropertyToken, delegate {
-                    token = value;
-                });
-            }
         }
     }
 }

@@ -5,13 +5,12 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public class TimeEntryModel : Model<TimeEntryData>, ITimeEntryModel
+    public class TimeEntryModel : Model<TimeEntryData>
     {
         private const string Tag = "TimeEntryModel";
 
@@ -352,68 +351,6 @@ namespace Toggl.Phoebe.Data.Models
             set { task.Set (value); }
         }
 
-        /// <summary>
-        /// Stores the draft time entry in model store as a running time entry.
-        /// </summary>
-        public async Task StartAsync ()
-        {
-            await LoadAsync ();
-
-            if (Data.State != TimeEntryState.New) {
-                throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", Data.State));
-            }
-            if (!Data.StartTime.IsMinValue () || Data.StopTime.HasValue) {
-                throw new InvalidOperationException ("Cannot start tracking time entry with start/stop time set already.");
-            }
-
-            var task = Task;
-            var project = Project;
-            var workspace = Workspace;
-            var user = User;
-
-            // Preload all pending relations:
-            var pending = new List<Task> ();
-            if (task != null) {
-                pending.Add (task.LoadAsync ());
-            }
-            if (project != null) {
-                pending.Add (project.LoadAsync ());
-            }
-            if (workspace != null) {
-                pending.Add (workspace.LoadAsync ());
-            }
-            if (user != null) {
-                pending.Add (user.LoadAsync ());
-            }
-            await System.Threading.Tasks.Task.WhenAll (pending);
-
-            if (ModelExists (task)) {
-                project = task.Project;
-            }
-            if (ModelExists (project)) {
-                workspace = project.Workspace;
-            }
-            if (ModelExists (user) && !ModelExists (workspace)) {
-                workspace = user.DefaultWorkspace;
-            }
-            if (!ModelExists (workspace)) {
-                throw new InvalidOperationException ("Workspace (or user default workspace) must be set.");
-            }
-
-            MutateData (data => {
-                data.TaskId = task != null ? (Guid?)task.Id : null;
-                data.ProjectId = project != null ? (Guid?)project.Id : null;
-                data.WorkspaceId = workspace.Id;
-                data.UserId = user.Id;
-                data.State = TimeEntryState.Running;
-                data.StartTime = Time.UtcNow;
-                data.StopTime = null;
-            });
-
-            await SaveAsync ();
-            await AddDefaultTags ();
-        }
-
         private async Task AddDefaultTags ()
         {
             if (!ShouldAddDefaultTag) {
@@ -513,94 +450,6 @@ namespace Toggl.Phoebe.Data.Models
             await AddDefaultTags ();
         }
 
-        /// <summary>
-        /// Marks the currently running time entry as finished.
-        /// </summary>
-        public async Task StopAsync ()
-        {
-            await LoadAsync ();
-
-            if (Data.State != TimeEntryState.Running) {
-                throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", Data.State));
-            }
-
-            MutateData (data => {
-                data.State = TimeEntryState.Finished;
-                data.StopTime = Time.UtcNow;
-            });
-
-            await SaveAsync ();
-        }
-
-        /// <summary>
-        /// Continues the finished time entry, either by creating a new time entry or restarting the current one.
-        /// </summary>
-        public async Task<TimeEntryModel> ContinueAsync ()
-        {
-            var store = ServiceContainer.Resolve<IDataStore> ();
-
-            await LoadAsync ();
-
-            // Validate the current state
-            switch (Data.State) {
-            case TimeEntryState.Running:
-                return this;
-            case TimeEntryState.Finished:
-                break;
-            default:
-                throw new InvalidOperationException (String.Format ("Cannot continue a time entry in {0} state.", Data.State));
-            }
-
-            // We can continue time entries which haven't been synced yet:
-            if (Data.DurationOnly && Data.StartTime.ToLocalTime ().Date == Time.Now.Date) {
-                if (Data.RemoteId == null) {
-                    MutateData (data => {
-                        data.State = TimeEntryState.Running;
-                        data.StartTime = Time.UtcNow - GetDuration ();
-                        data.StopTime = null;
-                    });
-
-                    await SaveAsync ();
-                    return this;
-                }
-            }
-
-            // Create new time entry:
-            var newData = new TimeEntryData () {
-                WorkspaceId = Data.WorkspaceId,
-                ProjectId = Data.ProjectId,
-                TaskId = Data.TaskId,
-                UserId = Data.UserId,
-                Description = Data.Description,
-                StartTime = Time.UtcNow,
-                DurationOnly = Data.DurationOnly,
-                IsBillable = Data.IsBillable,
-                State = TimeEntryState.Running,
-            };
-            MarkDirty (newData);
-
-            var parentId = Data.Id;
-            await store.ExecuteInTransactionAsync (ctx => {
-                newData = ctx.Put (newData);
-
-                // Duplicate tag relations as well
-                if (parentId != Guid.Empty) {
-                    var q = ctx.Connection.Table<TimeEntryTagData> ()
-                            .Where (r => r.TimeEntryId == parentId && r.DeletedAt == null);
-                    foreach (var row in q) {
-                        ctx.Put (new TimeEntryTagData () {
-                            TimeEntryId = newData.Id,
-                            TagId = row.TagId,
-                        });
-                    }
-                }
-            });
-
-            var model = new TimeEntryModel (newData);
-
-            return model;
-        }
-
         public async Task MapTagsFromModel (TimeEntryModel model)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
@@ -633,89 +482,61 @@ namespace Toggl.Phoebe.Data.Models
             await SaveAsync ();
         }
 
-        TimeEntryData ITimeEntryModel.Data
-        {
-            get {
-                return Data;
-            } set {
-                Data = value;
-            }
-        }
-
         #region Public static methods.
 
-        private static TaskCompletionSource<TimeEntryData> draftDataTCS;
-
-        public static async Task<TimeEntryModel> GetDraftAsync ()
+        /// <summary>
+        /// Create a running time entry.
+        /// </summary>
+        public static async Task<TimeEntryData> StartAsync (TimeEntryData data)
         {
-            TimeEntryData data = null;
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
-            if (user == null) {
-                return null;
+            if (data.State != TimeEntryState.New) {
+                throw new InvalidOperationException (String.Format ("Cannot start a time entry in {0} state.", data.State));
+            }
+            if (!data.StartTime.IsMinValue () || data.StopTime.HasValue) {
+                throw new InvalidOperationException ("Cannot start tracking time entry with start/stop time set already.");
             }
 
-            // We're already loading draft data, wait for it to load, no need to create several drafts
-            if (draftDataTCS != null) {
-                data = await draftDataTCS.Task;
-                if (data == null) {
-                    return null;
-                }
-                data = new TimeEntryData (data);
-                return new TimeEntryModel (data);
-            }
+            var newData = MutateData (data, d => {
+                d.State = TimeEntryState.Running;
+                d.StartTime = Time.UtcNow;
+                d.StopTime = null;
+            });
 
-            draftDataTCS = new TaskCompletionSource<TimeEntryData> ();
+            // Previous started entries.
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            var runningEntries = await store.Table<TimeEntryData> ()
+                                 .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null)
+                                 .ToListAsync ();
 
-            try {
-                var store = ServiceContainer.Resolve<IDataStore> ();
-
-                if (user.DefaultWorkspaceId == Guid.Empty) {
-                    // User data has not yet been loaded by AuthManager, duplicate the effort and load ourselves:
-                    var userRows = await store.Table<UserData> ()
-                                   .Where (m => m.Id == user.Id)
-                                   .Take (1)
-                                   .ToListAsync ();
-                    user = userRows.First ();
-                }
-
-                var rows = await store.Table<TimeEntryData> ()
-                           .Where (m => m.State == TimeEntryState.New && m.DeletedAt == null && m.UserId == user.Id)
-                           .OrderBy (m => m.ModifiedAt)
-                           .Take (1)
-                           .ToListAsync ();
-                data = rows.FirstOrDefault ();
-
-                if (data == null) {
-                    // Create new draft object
-                    var newData = new TimeEntryData () {
-                        State = TimeEntryState.New,
-                        UserId = user.Id,
-                        WorkspaceId = user.DefaultWorkspaceId,
-                        DurationOnly = user.TrackingMode == TrackingMode.Continue,
-                    };
-                    MarkDirty (newData);
-
-                    await store.ExecuteInTransactionAsync (ctx => {
-                        newData = ctx.Put (newData);
-                        if (ShouldAddDefaultTag) {
-                            AddDefaultTags (ctx, newData.WorkspaceId, newData.Id);
-                        }
+            await store.ExecuteInTransactionAsync (ctx => {
+                // Set running entries as stopped.
+                foreach (var running in runningEntries) {
+                    var stopped = MutateData (running, d => {
+                        d.State = TimeEntryState.Finished;
+                        d.StopTime = Time.UtcNow;
                     });
-
-                    data = newData;
+                    ctx.Put (stopped);
                 }
-            } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Warning (Tag, ex, "Failed to retrieve/create draft.");
-            } finally {
-                draftDataTCS.SetResult (data);
-                draftDataTCS = null;
-            }
+                // Save started data.
+                ctx.Put (newData);
 
-            return new TimeEntryModel (data);
+                // Add default tags.
+                if (ShouldAddDefaultTag) {
+                    AddDefaultTags (ctx, newData.WorkspaceId, newData.Id);
+                }
+            });
+
+            // Send notification message
+            var msgBus = ServiceContainer.Resolve<MessageBus> ();
+            msgBus.Send (new StartStopMessage (newData));
+
+            return newData;
         }
 
-        public static async Task<TimeEntryData> ContinueTimeEntryDataAsync (TimeEntryData timeEntryData)
+        /// <summary>
+        /// Continues the finished time entry, either by creating a new time entry or restarting the current one.
+        /// </summary>
+        public static async Task<TimeEntryData> ContinueAsync (TimeEntryData timeEntryData)
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
 
@@ -756,8 +577,24 @@ namespace Toggl.Phoebe.Data.Models
             };
             MarkDirty (newData);
 
+            // Previous started entries.
+            var runningEntries = await store.Table<TimeEntryData> ()
+                                 .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null)
+                                 .ToListAsync ();
+
             var parentId = timeEntryData.Id;
             await store.ExecuteInTransactionAsync (ctx => {
+
+                // Set running entries as stopped.
+                foreach (var running in runningEntries) {
+                    var stopped = MutateData (running, data => {
+                        data.State = TimeEntryState.Finished;
+                        data.StopTime = Time.UtcNow;
+                    });
+                    ctx.Put (stopped);
+                }
+
+                // Set new entry as running.
                 newData = ctx.Put (newData);
 
                 // Duplicate tag relations as well
@@ -765,7 +602,7 @@ namespace Toggl.Phoebe.Data.Models
                     var q = ctx.Connection.Table<TimeEntryTagData> ()
                             .Where (r => r.TimeEntryId == parentId && r.DeletedAt == null);
                     foreach (var row in q) {
-                        ctx.Put (new TimeEntryTagData () {
+                        ctx.Put (new TimeEntryTagData {
                             TimeEntryId = newData.Id,
                             TagId = row.TagId,
                         });
@@ -773,9 +610,14 @@ namespace Toggl.Phoebe.Data.Models
                 }
             });
 
+            var msgBus = ServiceContainer.Resolve<MessageBus> ();
+            msgBus.Send (new StartStopMessage (newData));
             return newData;
         }
 
+        /// <summary>
+        /// Marks the currently running time entry as finished.
+        /// </summary>
         public static async Task<TimeEntryData> StopAsync (TimeEntryData timeEntryData)
         {
             if (timeEntryData.State != TimeEntryState.Running) {
@@ -788,7 +630,11 @@ namespace Toggl.Phoebe.Data.Models
                 data.StopTime = Time.UtcNow;
             });
 
-            return await SaveTimeEntryDataAsync (timeEntryData);
+            var newData = await SaveTimeEntryDataAsync (timeEntryData);
+            var msgBus = ServiceContainer.Resolve<MessageBus> ();
+            msgBus.Send (new StartStopMessage (newData));
+
+            return newData;
         }
 
         public static async Task<TimeEntryData> SaveTimeEntryDataAsync (TimeEntryData timeEntryData)
@@ -809,11 +655,36 @@ namespace Toggl.Phoebe.Data.Models
                 // Need to just mark this item as deleted so that it could be synced with the server
                 var newData = new TimeEntryData (data);
                 newData.DeletedAt = Time.UtcNow;
-
                 MarkDirty (newData);
-
                 await dataStore.PutAsync (newData);
             }
+        }
+
+        /// <summary>
+        /// Get a simple draft.
+        /// </summary>
+        public static TimeEntryData GetDraft ()
+        {
+            Guid userId = Guid.Empty;
+            Guid workspaceId = Guid.Empty;
+            bool durationOnly = false;
+
+            if (ServiceContainer.Resolve<AuthManager> ().IsAuthenticated) {
+                var user = ServiceContainer.Resolve<AuthManager> ().User;
+                userId = user.Id;
+                workspaceId = user.DefaultWorkspaceId;
+                durationOnly = user.TrackingMode == TrackingMode.Continue;
+            }
+
+            // Create new draft object
+            var newData = new TimeEntryData {
+                State = TimeEntryState.New,
+                UserId = userId,
+                WorkspaceId = workspaceId,
+                DurationOnly = durationOnly,
+            };
+
+            return newData;
         }
 
         protected static TimeEntryData MutateData (TimeEntryData timeEntryData, Action<TimeEntryData> mutator)
@@ -824,7 +695,7 @@ namespace Toggl.Phoebe.Data.Models
             return newData;
         }
 
-        public static async Task<TimeEntryModel> CreateFinishedAsync (TimeSpan duration)
+        public static async Task<TimeEntryData> CreateFinishedAsync (TimeSpan duration)
         {
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             if (user == null) {
@@ -834,7 +705,7 @@ namespace Toggl.Phoebe.Data.Models
             var store = ServiceContainer.Resolve<IDataStore> ();
             var now = Time.UtcNow;
 
-            var newData = new TimeEntryData () {
+            var newData = new TimeEntryData {
                 State = TimeEntryState.Finished,
                 StartTime = now - duration,
                 StopTime = now,
@@ -851,7 +722,7 @@ namespace Toggl.Phoebe.Data.Models
                 }
             });
 
-            return new TimeEntryModel (newData);
+            return newData;
         }
 
         public static explicit operator TimeEntryModel (TimeEntryData data)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using CoreAnimation;
 using CoreFoundation;
 using CoreGraphics;
@@ -18,7 +19,6 @@ using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
 using XPlatUtils;
-using System.Threading.Tasks;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -60,6 +60,7 @@ namespace Toggl.Ross.ViewControllers
         private class ContentController : BaseTimerTableViewController
         {
             private UIView emptyView;
+            private UIView OBMemptyView;
 
             public ContentController () : base (UITableViewStyle.Plain)
             {
@@ -71,6 +72,10 @@ namespace Toggl.Ross.ViewControllers
 
                 EdgesForExtendedLayout = UIRectEdge.None;
 
+                OBMemptyView = new OBMEmptyView () {
+                    Title = "LogOBMEmptyTitle".Tr (),
+                    Message = "LogOBMEmptyMessage".Tr (),
+                };
                 emptyView = new SimpleEmptyView () {
                     Title = "LogEmptyTitle".Tr (),
                     Message = "LogEmptyMessage".Tr (),
@@ -80,6 +85,7 @@ namespace Toggl.Ross.ViewControllers
 
                 var source = new Source (this) {
                     EmptyView = emptyView,
+                    OBMEmptyView = OBMemptyView,
                     HeaderView = headerView
                 };
                 source.Attach ();
@@ -93,6 +99,8 @@ namespace Toggl.Ross.ViewControllers
                 base.ViewDidLayoutSubviews ();
 
                 emptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+                OBMemptyView.Frame = new CGRect (25f, 15f, View.Frame.Size.Width - 50f, 200f);
+
             }
         }
 

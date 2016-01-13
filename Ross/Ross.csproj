@@ -199,6 +199,8 @@
     <BundleResource Include="Resources\btn-arrow-up.png" />
     <BundleResource Include="Resources\btn-arrow-up%402x.png" />
     <BundleResource Include="GoogleService-Info.plist" />
+    <BundleResource Include="Resources\arrowUp%402x.png" />
+    <BundleResource Include="Resources\arrowUp.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -291,8 +293,10 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="UIImageEffects.cs" />
-    <Compile Include="Views\SimpleEmptyView.cs" />
     <Compile Include="Theme\Style.EmptyView.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Theme\Style.OBMEmptyView.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\SettingsViewController.cs" />
@@ -339,6 +343,8 @@
     <Compile Include="ViewControllers\WebViewController.cs" />
     <Compile Include="Net\APNSManager.cs" />
     <Compile Include="ViewControllers\NewClientViewController.cs" />
+    <Compile Include="Views\SimpleEmptyView.cs" />
+    <Compile Include="Views\OBMEmptyView.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

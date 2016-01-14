@@ -150,8 +150,7 @@ namespace Toggl.Phoebe.Tests.Data
                 var col2 = new TimeEntriesCollection<T> (feed, bufferMilliseconds, false, false);
                 col2.Reset (col1.Data);
                 return col2;
-            }
-            else {
+            } else {
                 return col1;
             }
         }

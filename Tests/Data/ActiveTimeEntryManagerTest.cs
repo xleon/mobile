@@ -35,10 +35,12 @@ namespace Toggl.Phoebe.Tests.Data
                 });
 
                 await SetUpFakeUser (user.Id);
+                var activeManager = new ActiveTimeEntryManager ();
+                await Util.AwaitPredicate (() => activeManager.ActiveTimeEntry != null);
 
                 ServiceContainer.Register<ExperimentManager> (new ExperimentManager ());
                 ServiceContainer.Register<ISyncManager> (Mock.Of<ISyncManager> (mgr => !mgr.IsRunning));
-                ServiceContainer.Register<ActiveTimeEntryManager> (new ActiveTimeEntryManager ());
+                ServiceContainer.Register<ActiveTimeEntryManager> (activeManager);
                 ServiceContainer.Register<ITracker> (() => new FakeTracker ());
             });
         }

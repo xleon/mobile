@@ -158,7 +158,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             IsProcessingAction = false;
 
-            if (IsTimeEntryRunning) {
+            if (active.State == TimeEntryState.Running) {
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppNew);
             } else {
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);

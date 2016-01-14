@@ -23,7 +23,6 @@ namespace Toggl.Phoebe.Data.ViewModels
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
-        private TimeEntriesFeed collectionFeed;
         private readonly Timer durationTimer;
         private readonly ActiveTimeEntryManager activeTimeEntryManager;
 
@@ -75,10 +74,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private void DisposeCollection ()
         {
-            if (collectionFeed != null) {
-                collectionFeed.Dispose ();
-            }
-
             if (Collection != null) {
                 Collection.Dispose ();
             }
@@ -186,10 +181,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             DisposeCollection ();
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
-            collectionFeed = new TimeEntriesFeed ();
-            Collection = IsGroupedMode
-                         ? (ICollectionData<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed)
-                         : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
+            Collection = new TimeEntriesCollectionVM (IsGroupedMode ?
+                TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
         }
 
         private void UpdateView (bool isRunning, TimeEntryData data)

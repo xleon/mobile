@@ -258,30 +258,6 @@ namespace Toggl.Phoebe.Data.Models
             MutateData (data => SetDuration (data, value));
         }
 
-        private static void SetDuration (TimeEntryData data, TimeSpan value)
-        {
-            var now = Time.UtcNow;
-
-            if (data.State == TimeEntryState.Finished) {
-                data.StopTime = data.StartTime + value;
-            } else if (data.State == TimeEntryState.New) {
-                if (value == TimeSpan.Zero) {
-                    data.StartTime = DateTime.MinValue;
-                    data.StopTime = null;
-                } else if (data.StopTime.HasValue) {
-                    data.StartTime = data.StopTime.Value - value;
-                } else {
-                    data.StartTime = now - value;
-                    data.StopTime = now;
-                }
-            } else {
-                data.StartTime = now - value;
-            }
-
-            data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
-            data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
-        }
-
         private ForeignRelation<UserModel> user;
         private ForeignRelation<WorkspaceModel> workspace;
         private ForeignRelation<ProjectModel> project;
@@ -637,6 +613,9 @@ namespace Toggl.Phoebe.Data.Models
             return newData;
         }
 
+        /// <summary>
+        /// Save a TimeEntryData
+        /// </summary>
         public static async Task<TimeEntryData> SaveTimeEntryDataAsync (TimeEntryData timeEntryData)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
@@ -644,6 +623,9 @@ namespace Toggl.Phoebe.Data.Models
             return newData;
         }
 
+        /// <summary>
+        /// Delete a TimeEntryData
+        /// </summary>
         public static async Task DeleteTimeEntryDataAsync (TimeEntryData data)
         {
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
@@ -658,6 +640,76 @@ namespace Toggl.Phoebe.Data.Models
                 MarkDirty (newData);
                 await dataStore.PutAsync (newData);
             }
+        }
+
+        /// <summary>
+        /// Change duration of a time entry.
+        /// </summary>
+        public static TimeEntryData SetDuration (TimeEntryData data, TimeSpan value)
+        {
+            var now = Time.UtcNow;
+
+            if (data.State == TimeEntryState.Finished) {
+                data.StopTime = data.StartTime + value;
+            } else if (data.State == TimeEntryState.New) {
+                if (value == TimeSpan.Zero) {
+                    data.StartTime = DateTime.MinValue;
+                    data.StopTime = null;
+                } else if (data.StopTime.HasValue) {
+                    data.StartTime = data.StopTime.Value - value;
+                } else {
+                    data.StartTime = now - value;
+                    data.StopTime = now;
+                }
+            } else {
+                data.StartTime = now - value;
+            }
+
+            data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
+            data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
+
+            return data;
+        }
+
+        /// <summary>
+        /// Change StartTime to a TimeEntryData
+        /// </summary>
+        public static TimeEntryData ChangeStartTime (TimeEntryData data, DateTime newValue)
+        {
+            newValue = newValue.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+            var duration = GetDuration (data, Time.UtcNow);
+            data.StartTime = newValue;
+
+            if (data.State != TimeEntryState.Running) {
+                if (data.StopTime.HasValue) {
+                    data.StopTime = data.StartTime + duration;
+                } else {
+                    var now = Time.UtcNow;
+
+                    data.StopTime = data.StartTime.Date
+                                    .AddHours (now.Hour)
+                                    .AddMinutes (now.Minute)
+                                    .AddSeconds (data.StartTime.Second);
+
+                    if (data.StopTime < data.StartTime) {
+                        data.StopTime = data.StartTime + duration;
+                    }
+                }
+
+                data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
+                data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
+            }
+            return data;
+        }
+
+        /// <summary>
+        /// Change StopTime to a TimeEntryData
+        /// </summary>
+        public static TimeEntryData ChangeStoptime (TimeEntryData data, DateTime? newValue)
+        {
+            newValue = newValue.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+            data.StopTime = newValue;
+            return data;
         }
 
         /// <summary>
@@ -687,10 +739,70 @@ namespace Toggl.Phoebe.Data.Models
             return newData;
         }
 
-        protected static TimeEntryData MutateData (TimeEntryData timeEntryData, Action<TimeEntryData> mutator)
+        /// <summary>
+        /// Get a ProjectData related with a TimeEntryData
+        /// </summary>
+        public static async Task<TimeEntryData> GetTimeEntryDataAsync (Guid timeEntryGuid)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return await store.Table<TimeEntryData> ()
+                   .Where (m => m.Id == timeEntryGuid)
+                   .FirstAsync ();
+        }
+
+        /// <summary>
+        /// Get a ProjectData related with a TimeEntryData
+        /// </summary>
+        public static async Task<ProjectData> GetProjectDataAsync (Guid projectGuid)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return await store.Table<ProjectData> ()
+                   .Where (m => m.Id == projectGuid)
+                   .FirstAsync ();
+        }
+
+        /// <summary>
+        /// Get TaskData related with a TimeEntryData
+        /// </summary>
+        public static async Task<TaskData> GetTaskDataAsync (Guid taskId)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return await store.Table<TaskData> ()
+                   .Where (m => m.Id == taskId)
+                   .FirstAsync ();
+        }
+
+        /// <summary>
+        /// Get a ClientData related with a ProjectData
+        /// </summary>
+        public static async Task<ClientData> GetClientDataAsync (Guid clientId)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return await store.Table<ClientData> ()
+                   .Where (m => m.Id == clientId)
+                   .FirstAsync ();
+        }
+
+        /// <summary>
+        /// Get a ClientData related with a ProjectData
+        /// </summary>
+        public static async Task<WorkspaceData> GetWorkspaceDataAsync (Guid workspaceId)
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return await store.Table<WorkspaceData> ()
+                   .Where (m => m.Id == workspaceId)
+                   .FirstAsync ();
+        }
+
+        public async static Task<TimeEntryData> PrepareForSync (TimeEntryData timeEntryData)
         {
             var newData = new TimeEntryData (timeEntryData);
-            mutator (newData);
+
+            if (newData.RemoteId == null && newData.Id != Guid.Empty) {
+                var store = ServiceContainer.Resolve<IDataStore> ();
+                var entry = await store.Table<TimeEntryData> ().Where (t => t.Id == timeEntryData.Id).FirstAsync ();
+                newData.RemoteId = entry.RemoteId;
+            }
             MarkDirty (newData);
             return newData;
         }
@@ -722,6 +834,14 @@ namespace Toggl.Phoebe.Data.Models
                 }
             });
 
+            return newData;
+        }
+
+        protected static TimeEntryData MutateData (TimeEntryData timeEntryData, Action<TimeEntryData> mutator = null)
+        {
+            var newData = new TimeEntryData (timeEntryData);
+            mutator (newData);
+            MarkDirty (newData);
             return newData;
         }
 

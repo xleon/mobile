@@ -1,48 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Models
 {
-    public interface IGrouper<T, TGroup>
-    {
-        IEnumerable<TGroup> Group (IEnumerable<T> items);
-        IEnumerable<T> Ungroup (IEnumerable<TGroup> groups);
-    }
-
-    public interface IHolder : IDiffComparable
-    {
-    }
-
-    public interface ITimeEntryHolder : IHolder
-    {
-        TimeEntryData Data { get; }
-        TimeEntryInfo Info { get; }
-        IList<string> Guids { get; }
-
-        TimeSpan GetDuration ();
-        DateTime GetStartTime ();
-    }
-
     public class TimeEntryHolder : ITimeEntryHolder
     {
-        public class Grouper : IGrouper<TimeEntryHolder, TimeEntryHolder>
-        {
-            public IEnumerable<TimeEntryHolder> Group (IEnumerable<TimeEntryHolder> items)
-            {
-                return items;
-            }
-            public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryHolder> groups)
-            {
-                return groups;
+        public TimeEntryInfo Info { get; private set; }
+        public TimeEntryData Data { get; private set; }
+        public IList<TimeEntryData> DataCollection {
+            get {
+                return new[] { Data };
             }
         }
-
-        public TimeEntryData Data { get; private set; }
-        public TimeEntryInfo Info { get; private set; }
 
         public IList<string> Guids
         {
@@ -55,11 +27,6 @@ namespace Toggl.Phoebe.Models
         {
             Data = data;
             Info = info;
-        }
-
-        public async Task LoadInfoAsync ()
-        {
-            Info = await TimeEntryInfo.LoadAsync (Data);
         }
 
         public DiffComparison Compare (IDiffComparable other)

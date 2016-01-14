@@ -18,8 +18,8 @@ namespace Toggl.Phoebe.ViewModels
         public const int UndoSecondsInterval = 5;
 
         IDisposable disposable;
-        readonly bool isGrouped;
         ITimeEntryHolder lastRemovedItem;
+        TimeEntryGrouper grouper;
         System.Timers.Timer undoTimer = new System.Timers.Timer ();
 
         public event EventHandler<Either<Unit, string>> LoadFinished;
@@ -29,10 +29,9 @@ namespace Toggl.Phoebe.ViewModels
             get { return Items; }
         }
 
-        public TimeEntriesCollectionVM (bool isGrouped, int bufferMilliseconds = 500)
+        public TimeEntriesCollectionVM (TimeEntryGroupMethod groupMethod, int bufferMilliseconds = 500)
         {
-            this.isGrouped = isGrouped;
-
+            this.grouper = new TimeEntryGrouper (groupMethod);
             disposable = Store
                          .Observe<TimeEntryData> ()
                          .TimedBuffer (bufferMilliseconds)
@@ -64,7 +63,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
-                var timeHolders = Items.OfType<ITimeEntryHolder> ().ToList ();
+                var timeHolders = grouper.Ungroup (Items.OfType<ITimeEntryHolder> ()).ToList ();
 
                 // 2. Remove, replace or add items from messages
                 foreach (var msg in msgs) {
@@ -104,46 +103,31 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void UpdateTimeHolders (IList<ITimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
+        private void UpdateTimeHolders (IList<TimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
         {
-            if (action == DataAction.Put) {
-                var foundIndex = timeHolders.IndexOf (x => x.IsAffectedByPut (entry));
-                if (foundIndex > -1) {
-                    timeHolders [foundIndex] = CreateTimeHolder (isGrouped, entry, timeHolders [foundIndex]); // Replace
-                } else {
-                    timeHolders.Add (CreateTimeHolder (isGrouped, entry)); // Insert
-                }
-            } else {
-                var isAffectedByDelete = false;
-                for (var i = 0; i < timeHolders.Count; i++) {
-                    var updatedHolder = timeHolders [i].UpdateOrDelete (entry, out isAffectedByDelete);
-
-                    if (isAffectedByDelete) {
-                        if (updatedHolder == null) {
-                            timeHolders.RemoveAt (i); // Remove
-                        } else {
-                            timeHolders [i] = updatedHolder; // Replace
-                        }
-                        break;
+            for (var i = 0; i < timeHolders.Count; i++) {
+                if (entry.Id == timeHolders [i].Data.Id) {
+                    if (action == DataAction.Put) {
+                        timeHolders [i] = new TimeEntryHolder (entry); // Replace
+                    } else {
+                        timeHolders.RemoveAt (i); // Remove
                     }
+                    return;
                 }
+            }
+
+            if (action == DataAction.Put) {
+                timeHolders.Add (new TimeEntryHolder (entry)); // Add
             }
         }
 
-        public static IList<IHolder> CreateItemCollection (IEnumerable<ITimeEntryHolder> timeHolders)
+        public IList<IHolder> CreateItemCollection (IEnumerable<TimeEntryHolder> timeHolders)
         {
-            return timeHolders
+            return grouper.Group (timeHolders)
                    .OrderByDescending (x => x.GetStartTime ())
                    .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
-                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
                    .ToList ();
-        }
-
-        public static ITimeEntryHolder CreateTimeHolder (bool isGrouped, TimeEntryData entry, ITimeEntryHolder previous = null)
-        {
-            return isGrouped
-                   ? (ITimeEntryHolder)new TimeEntryGroup (entry, previous)
-                   : new TimeEntryHolder (entry);
         }
 
         public void RestoreTimeEntryFromUndo ()
@@ -161,7 +145,7 @@ namespace Toggl.Phoebe.ViewModels
                 IList<TimeEntryData> entries = null;
                 var groupHolder = holder as TimeEntryGroup;
                 if (groupHolder != null) {
-                    entries = groupHolder.Group;
+                    entries = groupHolder.DataCollection;
                 } else {
                     entries = new [] { holder.Data };
                 }

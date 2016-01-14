@@ -78,10 +78,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private void DisposeCollection ()
         {
-            if (collectionFeed != null) {
-                collectionFeed.Dispose ();
-            }
-
             if (Collection != null) {
                 Collection.CollectionChanged -= OnDetectHasItems;
                 if (Collection is TimeEntriesCollection<TimeEntryHolder>) {

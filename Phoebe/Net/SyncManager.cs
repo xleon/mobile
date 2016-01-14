@@ -443,14 +443,15 @@ namespace Toggl.Phoebe.Net
                                      .OrderByDescending (r => r.StartTime).ToList ();
 
                 // Try enforce single running.
-                if (runningEntries.Count > 1)
-                    runningEntries.Skip (1).ForEach (te => {
-                    // Stop time entry
-                    te.StopTime = Time.UtcNow;
-                    te.State = TimeEntryState.Finished;
-                    Toggl.Phoebe.Data.Models.Model<TimeEntryData>.MarkDirty (te);
-                    ctx.Put (te);
-                });
+                if (runningEntries.Count > 1) {
+                    foreach (var te in runningEntries.Skip (1)) {
+                        // Stop time entry
+                        te.StopTime = Time.UtcNow;
+                        te.State = TimeEntryState.Finished;
+                        Toggl.Phoebe.Data.Models.Model<TimeEntryData>.MarkDirty (te);
+                        ctx.Put (te);
+                    }
+                }
             });
         }
 

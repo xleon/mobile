@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
 
-            UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
+            UpdateView (activeTimeEntryManager.ActiveTimeEntry);
             SyncCollectionView ();
         }
 
@@ -152,11 +152,13 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             IsProcessingAction = true;
+
             var active = activeTimeEntryManager.ActiveTimeEntry;
             active = active.State == TimeEntryState.Running ? await TimeEntryModel.StopAsync (active) : await TimeEntryModel.StartAsync (active);
+
             IsProcessingAction = false;
 
-            if (activeTimeEntryManager.IsRunning) {
+            if (IsTimeEntryRunning) {
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppNew);
             } else {
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
@@ -193,21 +195,24 @@ namespace Toggl.Phoebe.Data.ViewModels
                          : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
         }
 
-        private void UpdateView (bool isRunning, TimeEntryData data)
+        private void UpdateView (TimeEntryData data)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
-                // Check if an entry is running.
-                if (isRunning) {
-                    var model = new TimeEntryModel (data);
-                    await model.LoadAsync ();
-                    Description = model.Description;
-                    ProjectName = model.Project != null ? model.Project.Name : string.Empty;
+
+                if (data.State == TimeEntryState.Running) {
+                    Description = data.Description;
+                    if (data.ProjectId != null) {
+                        var prj = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
+                        ProjectName = prj.Name;
+                    } else {
+                        ProjectName = string.Empty;
+                    }
                     IsTimeEntryRunning = true;
                     durationTimer.Start ();
                 } else {
+                    IsTimeEntryRunning = false;
                     Description = string.Empty;
                     ProjectName = string.Empty;
-                    IsTimeEntryRunning = false;
                     durationTimer.Stop ();
                     Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
                 }
@@ -216,8 +221,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         private void OnActiveTimeEntryChanged (object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == ActiveTimeEntryManager.PropertyIsRunning) {
-                UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
+            if (e.PropertyName == ActiveTimeEntryManager.PropertyActiveTimeEntry) {
+                UpdateView (activeTimeEntryManager.ActiveTimeEntry);
             }
         }
 

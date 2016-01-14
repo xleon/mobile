@@ -224,7 +224,7 @@ namespace Toggl.Joey.UI.Fragments
                 var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
 
                 await Util.AwaitPredicate (() => ViewModel != null);
-                await ViewModel.SetProjectAndTask (projectId, taskId);
+                ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }
 

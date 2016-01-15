@@ -48,7 +48,5 @@
             android:dividerHeight="1dp"
             android:choiceMode="singleChoice"
             android:paddingBottom="48dp" />
-        <include
-            layout="@layout/MainDrawerSyncStatus" />
     </FrameLayout>
 </android.support.v4.widget.DrawerLayout>

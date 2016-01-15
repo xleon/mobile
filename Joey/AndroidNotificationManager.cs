@@ -44,7 +44,6 @@ namespace Toggl.Joey
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            //subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
         }
 
         public void Dispose ()

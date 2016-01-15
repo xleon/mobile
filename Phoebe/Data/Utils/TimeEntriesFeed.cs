@@ -30,7 +30,7 @@ namespace Toggl.Phoebe.Data.Utils
         public const int DaysLoad = 5;
 
         private MessageBus bus;
-        private DateTime paginationDate = Time.UtcNow;
+        private DateTime paginationDate;
         private ITimeEntryHolder lastRemovedItem;
         private Subscription<DataChangeMessage> subscription;
         private Subscription<UpdateFinishedMessage> updateSubscription;
@@ -40,6 +40,11 @@ namespace Toggl.Phoebe.Data.Utils
 
         public TimeEntriesFeed ()
         {
+            // Set initial pagination Date to the beginning
+            // of the next day. So, we can include all entries
+            // created -Today-.
+            paginationDate = Time.UtcNow.Date.AddDays (1);
+
             bus = ServiceContainer.Resolve<MessageBus> ();
             updateSubscription = bus.Subscribe<UpdateFinishedMessage> (OnUpdateFinished);
             subscription = bus.Subscribe<DataChangeMessage> (msg => {
@@ -106,7 +111,6 @@ namespace Toggl.Phoebe.Data.Utils
 
             var entries = await baseQuery.OrderByDescending (r => r.StartTime).ToListAsync ();
             entries.ForEach (entry => subject.OnNext (new TimeEntryMessage (entry, DataAction.Put)));
-
             paginationDate = entries.Count > 0 ? startDate : endDate;
 
             // Return old paginationDate to get the same data from server

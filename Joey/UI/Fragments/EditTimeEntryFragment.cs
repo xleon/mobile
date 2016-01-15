@@ -268,7 +268,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (item == SaveMenuItem) {
+            // Ugly null check
+            if (item == SaveMenuItem && ViewModel != null) {
                 Task.Run (async () => await ViewModel.SaveManualAsync ());
             }
 

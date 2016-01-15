@@ -200,7 +200,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
 
                 if (data.State == TimeEntryState.Running) {
-                    Description = data.Description;
+                    Description = string.IsNullOrEmpty (data.Description) ? string.Empty : data.Description;
                     if (data.ProjectId != null) {
                         var prj = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
                         ProjectName = prj.Name;

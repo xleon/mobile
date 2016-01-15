@@ -61,7 +61,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                 tagList = await GetDefaultTagList (data.WorkspaceId);
             } else {
                 data = await TimeEntryModel.GetTimeEntryDataAsync (timeEntryId);
-                Console.WriteLine (data.RemoteId);
                 var tagsView = await TimeEntryTagCollectionView.Init (timeEntryId);
                 tagList = tagsView.Data.ToList ();
             }
@@ -76,29 +75,29 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
 
         #region viewModel State properties
-        public bool IsPremium { get; set; }
+        public bool IsPremium { get; private set; }
 
-        public bool IsRunning { get; set; }
+        public bool IsRunning { get; private set; }
 
-        public bool IsManual { get; set; }
+        public bool IsManual { get; private set; }
 
-        public string Duration { get; set; }
+        public string Duration { get; private set; }
 
-        public DateTime StartDate { get; set; }
+        public DateTime StartDate { get; private set; }
 
-        public DateTime StopDate { get; set; }
+        public DateTime StopDate { get; private set; }
 
-        public string ProjectName { get; set; }
+        public string ProjectName { get; private set; }
 
-        public string ClientName { get; set; }
+        public string ClientName { get; private set; }
 
         public string Description { get; set; }
 
-        public List<TagData> TagList { get; set; }
+        public List<TagData> TagList { get; private set; }
 
         public bool IsBillable { get; set; }
 
-        public Guid WorkspaceId { get; set; }
+        public Guid WorkspaceId { get; private set; }
 
         #endregion
 
@@ -185,6 +184,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 var duration = TimeEntryModel.GetDuration (data, Time.UtcNow);
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
                 Description = data.Description;
+                WorkspaceId = data.WorkspaceId;
 
                 if (data.State == TimeEntryState.Running && !IsRunning) {
                     IsRunning = true;

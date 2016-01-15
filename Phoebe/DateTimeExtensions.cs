@@ -58,6 +58,11 @@ namespace Toggl.Phoebe
             return dt.AddDays (-1 * diff).Date;
         }
 
+        public static TimeSpan Truncate (this TimeSpan val, long percisionTicks)
+        {
+            return new TimeSpan (val.Ticks - (val.Ticks % percisionTicks));
+        }
+
         public static DateTime AbsoluteStart (this DateTime dateTime)
         {
             return dateTime.Date;

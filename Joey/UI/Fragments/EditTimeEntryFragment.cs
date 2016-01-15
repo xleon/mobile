@@ -224,7 +224,7 @@ namespace Toggl.Joey.UI.Fragments
                 var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
 
                 await Util.AwaitPredicate (() => ViewModel != null);
-                await ViewModel.SetProjectAndTask (projectId, taskId);
+                ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }
 
@@ -268,7 +268,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (item == SaveMenuItem) {
+            // Ugly null check
+            if (item == SaveMenuItem && ViewModel != null) {
                 Task.Run (async () => await ViewModel.SaveManualAsync ());
             }
 

@@ -124,8 +124,7 @@ namespace Toggl.Joey.UI.Fragments
                 OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
             }
 
-            if (ViewModel.IsTimeEntryRunning) {
-
+            if (timeEntryData.State == Toggl.Phoebe.Data.TimeEntryState.Running) {
                 NewTimeEntryStartedByFAB = true;
 
                 var ids = new List<string> { timeEntryData.Id.ToString () };

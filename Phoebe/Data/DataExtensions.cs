@@ -98,11 +98,18 @@ namespace Toggl.Phoebe.Data
         // TODO: Check also IsBillable, Tags?
         public static bool IsGroupableWith (this TimeEntryData data, TimeEntryData other)
         {
-            return data.ProjectId == other.ProjectId &&
-                   string.Compare (data.Description, other.Description, StringComparison.Ordinal) == 0 &&
-                   data.TaskId == other.TaskId &&
-                   data.UserId == other.UserId &&
-                   data.WorkspaceId == other.WorkspaceId;
+            var groupable = data.ProjectId == other.ProjectId &&
+                            string.Compare (data.Description, other.Description, StringComparison.Ordinal) == 0 &&
+                            data.TaskId == other.TaskId &&
+                            data.UserId == other.UserId &&
+                            data.WorkspaceId == other.WorkspaceId;
+
+            if (groupable) {
+                var date1 = data.StartTime.ToLocalTime ().Date;
+                var date2 = other.StartTime.ToLocalTime ().Date;
+                return date1 == date2;
+            }
+            return false;
         }
     }
 }

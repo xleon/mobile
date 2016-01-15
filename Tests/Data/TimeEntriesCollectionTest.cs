@@ -18,7 +18,7 @@ namespace Toggl.Phoebe.Tests.Data
     {
         private const int Timeout = 500;
 
-        public class TestFeed : IObservable<TimeEntryMessage>
+        class TestFeed : IObservable<TimeEntryMessage>
         {
             class Disposable : IDisposable
             {
@@ -132,30 +132,27 @@ namespace Toggl.Phoebe.Tests.Data
             }
         }
 
-        private static async Task<TimeEntriesCollection<T>> CreateTimeEntriesCollection<T> (
-            IObservable<TimeEntryMessage> feed, int bufferMilliseconds, params TimeEntryData[] timeEntries)
+        private static TimeEntriesCollection<T> CreateTimeEntriesCollection<T> (
+            TestFeed feed, int bufferMilliseconds, params TimeEntryData[] timeEntries)
         where T : ITimeEntryHolder
         {
-            var v = new TimeEntriesCollection<T> (feed, bufferMilliseconds, false, false);
+            // First create a collection with no time buffer to add the firs items
+            var col1 = new TimeEntriesCollection<T> (feed, 0, false, false);
 
-            if (timeEntries.Length > 0) {
-                var holders = new List<TimeEntryHolder> ();
-
-                foreach (var entry in timeEntries) {
-                    // Create a new entry to protect the reference;
-                    var entry2 = new TimeEntryData (entry);
-                    var foundIndex = holders.IndexOf (x => x.Data.Id == entry2.Id);
-
-                    if (foundIndex > -1) {
-                        holders[foundIndex] = new TimeEntryHolder (entry2);
-                    } else {
-                        holders.Add (new TimeEntryHolder (entry2));
-                    }
-                }
-                v.Reset (await v.CreateItemCollectionAsync (holders, false));
+            foreach (var entry in timeEntries) {
+                // Create a new entry to protect the reference;
+                // This will run synchronous as we're not querying data from the database
+                feed.Push (new TimeEntryData (entry), DataAction.Put);
             }
 
-            return v;
+            // Create a new collection with the desired buffer
+            if (bufferMilliseconds > 0) {
+                var col2 = new TimeEntriesCollection<T> (feed, bufferMilliseconds, false, false);
+                col2.Reset (col1.Data);
+                return col2;
+            } else {
+                return col1;
+            }
         }
 
 
@@ -257,7 +254,7 @@ namespace Toggl.Phoebe.Tests.Data
         public async void TestSendTwoPutsToEmptyList ()
         {
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0);
 
             var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
             var entry1 = CreateTimeEntry (dt);
@@ -294,7 +291,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entries);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entries);
 
             var evs = await GetEvents (5, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entries[1], -1), DataAction.Put); // Move entry to previous day
@@ -326,7 +323,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entries);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entries);
 
             var evs = await GetEvents (6, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entries[3], 1), DataAction.Put); // Move entry to next day
@@ -357,7 +354,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2, entry4);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2, entry4);
 
             var evs = await GetEvents (5, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entry2, -1), DataAction.Put); // Move entry to previous day
@@ -387,7 +384,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry3, entry4, entry5);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry3, entry4, entry5);
 
             var evs = await GetEvents (6, singleView, feed, () => {
                 feed.Push (entry2, DataAction.Put); // Add entry
@@ -419,7 +416,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (
                                  feed, 100, entry1, entry2, entry4, entry5, entry6);
 
             var evs = await GetEvents (8, singleView, feed, () => {
@@ -456,7 +453,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry3, entry4, entry5);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry3, entry4, entry5);
 
             var evs = await GetEvents (9, singleView, feed, () => {
                 feed.Push (entry4, DataAction.Delete);
@@ -491,7 +488,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry3, entry4);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry3, entry4);
 
             var evs = await GetEvents (8, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entry3, 1, -10), DataAction.Put);
@@ -527,7 +524,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entries);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entries);
 
             var evs = await GetEvents (3, singleView, feed, () => {
                 feed.Push (CreateTimeEntry (entries[0], 0, 2), DataAction.Put);
@@ -554,7 +551,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2);
 
             // Order check before update
             AssertList (singleView, dt, entry1, entry2);
@@ -583,7 +580,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2);
 
             // Order check before update
             AssertList (singleView, dt, entry1, entry2);
@@ -612,7 +609,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry3 = CreateTimeEntry (dt.AddDays (-1).AddMinutes (-5)); // First at previous day
 
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entry1, entry2, entry3);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entry1, entry2, entry3);
 
             // Order check before update
             AssertList (singleView, dt, entry1, entry2, dt.AddDays (-1), entry3);
@@ -640,7 +637,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry4 = CreateTimeEntry (dt.AddMinutes (-15)); // Fourth at list
 
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entry1, entry2, entry3, entry4);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entry1, entry2, entry3, entry4);
 
             // Order check before update
             AssertList (singleView, dt, entry1, entry2, entry3, entry4);
@@ -668,7 +665,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry4 = CreateTimeEntry (dt.AddMinutes (-15)); // Fourth at list
 
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entry1, entry2, entry3, entry4);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entry1, entry2, entry3, entry4);
 
             // Order check before update
             AssertList (singleView, dt, entry1, entry2, entry3, entry4);
@@ -696,7 +693,7 @@ namespace Toggl.Phoebe.Tests.Data
 
             // Allow some buffer so pushes are handled at the same time
             var feed = new TestFeed ();
-            var singleView = await CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2, entry3);
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 100, entry1, entry2, entry3);
 
             var evs = await GetEvents (4, singleView, feed, () => {
                 // Shuffle time entries
@@ -719,7 +716,7 @@ namespace Toggl.Phoebe.Tests.Data
         public async void GroupTestSendPutsToEmptyList ()
         {
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0);
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0);
 
             var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
             Guid prj = Guid.NewGuid (), task1 = Guid.NewGuid (), task2 = Guid.NewGuid ();
@@ -762,7 +759,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry3 = CreateTimeEntry (dt.AddHours (2), task2, prj);
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2);
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2);
 
             var evs = await GetEvents (2, groupedView, feed, () => feed.Push (entry3, DataAction.Put));
 
@@ -785,7 +782,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry4 = CreateTimeEntry (dt.AddMinutes (30), task2, prj);
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 100, entry1, entry2, entry3, entry4);
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 100, entry1, entry2, entry3, entry4);
 
             AssertList (groupedView, dt, new[] { entry4, entry2 }, new[] { entry3, entry1 });
 
@@ -818,7 +815,7 @@ namespace Toggl.Phoebe.Tests.Data
 
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 100, entry1, entry2, entry3, entry4, entry5);
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 100, entry1, entry2, entry3, entry4, entry5);
 
             AssertList (groupedView, dt, new[] { entry1, entry2, entry3 }, new[] { entry4, entry5 });
 
@@ -849,7 +846,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry3 = CreateTimeEntry (dt, task, proj1);
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2, entry3);
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2, entry3);
 
             AssertList (groupedView, dt, new[] { entry1, entry2, entry3 });
 
@@ -873,7 +870,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry2 = CreateTimeEntry (dt, task, proj2);
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2);
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry1, entry2);
 
             AssertList (groupedView, dt, entry1, entry2);
 
@@ -898,7 +895,7 @@ namespace Toggl.Phoebe.Tests.Data
             var entry3 = CreateTimeEntry (dt, task, proj2);
 
             var feed = new TestFeed ();
-            var groupedView = await CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry2, entry3);
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry2, entry3);
 
             AssertList (groupedView, dt, entry2, entry3);
 
@@ -912,6 +909,31 @@ namespace Toggl.Phoebe.Tests.Data
             AssertEvent (evs[1], "move", "time entry");
             AssertEvent (evs[2], "replace", "time entry");
             Assert.AreEqual (TimeEntryState.Running, ((ITimeEntryHolder)evs [1].Item).Data.State);
+        }
+
+        [Test]
+        public async void GroupTestDifferentDays ()
+        {
+            var dt = new DateTime (2015, 12, 14, 10, 0, 0, 0);
+            var yesterday = dt.AddDays (-1);
+            Guid task = Guid.NewGuid (), proj1 = Guid.NewGuid ();
+
+            var entry1 = CreateTimeEntry (dt.AddMinutes (10), task, proj1);
+            var entry2 = CreateTimeEntry (dt.AddMinutes (5), task, proj1);
+            var entry3 = CreateTimeEntry (yesterday, task, proj1);
+
+            var feed = new TestFeed ();
+            var groupedView = CreateTimeEntriesCollection<TimeEntryGroup> (feed, 0, entry2, entry3);
+
+            AssertList (groupedView, dt, entry2, yesterday, entry3);
+
+            var evs = await GetEvents (2, groupedView, feed, () => feed.Push (entry1, DataAction.Put));
+
+            Assert.AreEqual (2, evs.Count);
+            AssertList (groupedView, dt, new[] { entry1, entry2 }, yesterday, entry3);
+
+            AssertEvent (evs[0], "replace", "date header");
+            AssertEvent (evs[1], "replace", "time entry");
         }
     }
 }

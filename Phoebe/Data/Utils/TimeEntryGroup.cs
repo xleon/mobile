@@ -19,7 +19,9 @@ namespace Toggl.Phoebe.Data.Utils
                 var key = default (Guid);
                 var tempDic = new Dictionary<Guid, List<TimeEntryHolder>> ();
                 foreach (var item in items) {
-                    if (tempDic.TryFindKey (out key, kv => kv.Value[0].Data.IsGroupableWith (item.Data))) {
+                    var success = tempDic.TryFindKey (
+                                      out key, kv => kv.Value [0].Data.IsGroupableWith (item.Data));
+                    if (success) {
                         tempDic [key].Add (item);
                     } else {
                         tempDic.Add (item.Data.Id, new List<TimeEntryHolder> { item });
@@ -78,8 +80,8 @@ namespace Toggl.Phoebe.Data.Utils
                 if (DataCollection.SequenceEqual (other2.DataCollection, object.ReferenceEquals)) {
                     return DiffComparison.Same;
                 } else {
-                    return Data.IsGroupableWith (other2.Data)
-                           ? DiffComparison.Update : DiffComparison.Different;
+                    return Data.IsGroupableWith (other2.Data) ?
+                           DiffComparison.Update : DiffComparison.Different;
                 }
             } else {
                 return DiffComparison.Different;

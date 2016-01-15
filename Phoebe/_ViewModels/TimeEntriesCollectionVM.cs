@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.ViewModels
         TimeEntryGrouper grouper;
         System.Timers.Timer undoTimer = new System.Timers.Timer ();
 
-        public event EventHandler<Either<Unit, string>> LoadFinished;
+        public event EventHandler<Either<DateTime, Exception>> LoadFinished;
 
         public IEnumerable<IHolder> Data
         {
@@ -33,7 +33,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             this.grouper = new TimeEntryGrouper (groupMethod);
             disposable = Store
-                         .Observe<TimeEntryData> ()
+                         .Observe<TimeEntryLoad> ()
                          .TimedBuffer (bufferMilliseconds)
                          .Subscribe (HandleStoreResults);
         }
@@ -46,28 +46,28 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void HandleStoreResults (IList<StoreResult<TimeEntryData>> results)
+        private void HandleStoreResults (IList<DataMsg<TimeEntryLoad>> results)
         {
             var resultsGroup = results.Select (x => x.Data).Split ();
 
             var finalResult = resultsGroup.Left.Count == 0
-                              ? Either<Unit,string>.Right (resultsGroup.Right.LastOrDefault ())
-                              : UpdateItems (resultsGroup.Left.SelectMany (x => x));
+                              ? Either<DateTime, Exception>.Right (resultsGroup.Right.LastOrDefault ())
+                              : UpdateItems (TimeEntryLoad.Aggregate (resultsGroup.Left));
 
             if (LoadFinished != null) {
                 LoadFinished (this, finalResult);
             }
         }
 
-        private Either<Unit,string> UpdateItems (IEnumerable<StoreMsg<TimeEntryData>> msgs)
+        private Either<DateTime, Exception> UpdateItems (TimeEntryLoad load)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
                 var timeHolders = grouper.Ungroup (Items.OfType<ITimeEntryHolder> ()).ToList ();
 
                 // 2. Remove, replace or add items from messages
-                foreach (var msg in msgs) {
-                    UpdateTimeHolders (timeHolders, msg.Data, msg.Action);
+                foreach (var msg in load.Messages) {
+                    UpdateTimeHolders (timeHolders, msg.Item1, msg.Item2);
                 }
 
                 // 3. Create the new item collection from holders (sort and add headers...)
@@ -95,11 +95,11 @@ namespace Toggl.Phoebe.ViewModels
                         }
                     }
                 });
-                return Either<Unit,string>.Left (new Unit ());
+                return Either<DateTime, Exception>.Left (DateTime.UtcNow);
             } catch (Exception ex) {
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error (GetType ().Name, ex, "Failed to update collection");
-                return Either<Unit,string>.Right (ex.Message);
+                ServiceContainer.Resolve<ILogger> ().Error (
+                    GetType ().Name, ex, "Failed to update collection");
+                return Either<DateTime, Exception>.Right (ex);
             }
         }
 

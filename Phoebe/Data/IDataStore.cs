@@ -42,6 +42,6 @@ namespace Toggl.Phoebe.Data
         Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker);
 
         // TODO: Temporary
-        Task<Tuple<T,List<DataChangeMessage>>> ExecuteInTransactionWithMessagesAsync<T> (Func<IDataStoreContext, T> worker);
+        Task<DataChangeMessage[]> ExecuteInTransactionWithMessagesAsync (Action<IDataStoreContext> worker);
     }
 }

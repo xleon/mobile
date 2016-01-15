@@ -8,29 +8,9 @@ namespace Toggl.Phoebe.Helpers
 {
     public static class Util
     {
-        public static T Rethrow<T> (Exception ex)
+        public static string GetName<T> (T enumCase)
         {
-            throw ex;
-        }
-
-        public static T Unexpected<T> (object value = null)
-        {
-            throw value != null ? new UnexpectedException (value) : new UnexpectedException ();
-        }
-
-        public static void LogError (string tag, Exception ex, string msg)
-        {
-            var log = ServiceContainer.Resolve<ILogger> ();
-            log.Error (tag, ex, msg);
-        }
-
-        public static async Task<T> TryCatchAsync<T> (Func<Task<T>> @try, Func<Exception,T> @catch)
-        {
-            try {
-                return await @try();
-            } catch (Exception ex) {
-                return @catch (ex);
-            }
+            return Enum.GetName (typeof (T), enumCase);
         }
 
         public static Task<bool> AwaitPredicate (Func<bool> predicate, double interval = 100, double timeout = 5000)
@@ -66,19 +46,6 @@ namespace Toggl.Phoebe.Helpers
             }
             return new EitherGroup<TL, TR> (leftList, rightList);
         }
-    }
-
-    public class UnexpectedException : Exception
-    {
-        public object Value { get; private set; }
-
-        public UnexpectedException (object value)
-        : base (string.Format ("Unexpected value: {0}", value))
-        {
-            Value = value;
-        }
-
-        public UnexpectedException () : base ("Unexpected") { }
     }
 
     public class Either<TL,TR>

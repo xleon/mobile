@@ -182,7 +182,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
             Collection = new TimeEntriesCollectionVM (IsGroupedMode ?
-                TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
+                    TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
         }
 
         private void UpdateView (bool isRunning, TimeEntryData data)

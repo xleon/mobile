@@ -185,17 +185,16 @@ namespace Toggl.Phoebe.Data
         }
 
         // TODO: Temporary
-        public async Task<Tuple<T,List<DataChangeMessage>>> ExecuteInTransactionWithMessagesAsync<T> (Func<IDataStoreContext, T> worker)
+        public async Task<DataChangeMessage[]> ExecuteInTransactionWithMessagesAsync (
+            Action<IDataStoreContext> worker)
         {
             Context ctx = null;
-            var result = default (T);
-
             await CreateAsyncCnn().RunInTransactionAsync (conn => {
                 ctx = new Context (this, conn);
-                result = worker (ctx);
+                worker (ctx);
             });
 
-            return Tuple.Create (result, ctx.Messages);
+            return ctx.Messages.ToArray ();
         }
 
         private class Context : IDataStoreContext

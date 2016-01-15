@@ -10,7 +10,8 @@ namespace Toggl.Phoebe.Models
     {
         public TimeEntryInfo Info { get; private set; }
         public TimeEntryData Data { get; private set; }
-        public IList<TimeEntryData> DataCollection {
+        public IList<TimeEntryData> DataCollection
+        {
             get {
                 return new[] { Data };
             }

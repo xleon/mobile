@@ -23,7 +23,7 @@ namespace Toggl.Phoebe
         static IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
         #endregion
 
-        static Func<DataMsgUntyped, Task<StoreResultUntyped>> GetCallback (DataTag tag)
+        static Func<IDataMsg, Task<IDataMsg>> GetAction (DataTag tag)
         {
             switch (tag) {
             case DataTag.LoadMoreTimeEntries:
@@ -42,104 +42,113 @@ namespace Toggl.Phoebe
                 return RemoveTimeEntryPermanently;
 
             default:
-                return null;
+                throw new ActionNotFoundException (tag, typeof (DispatcherRegister));
             }
         }
 
-        static async Task<StoreResultUntyped> RunTimeEntriesUpdate (DataMsgUntyped msg)
+        static async Task<IDataMsg> RunTimeEntriesUpdate (IDataMsg msg)
         {
-            var jsonEntries = msg.Data.Match (x => x as IList<TimeEntryJson>, e => { throw new Exception (e); });
-
-            var res = await dataStore.ExecuteInTransactionWithMessagesAsync (ctx =>
-                      jsonEntries.Select (json => json.Import (ctx)).ToList ());
-
-            return StoreResultUntyped.Success (typeof (TimeEntryData).FullName, res.Item2.Select (x =>
-                                               new StoreMsgUntyped (x.Action, x.Data)));
+            throw new NotImplementedException ();
+//            var jsonEntries = msg.Data.Match (x => x as IList<TimeEntryJson>, e => { throw new Exception (e); });
+//
+//            var res = await dataStore.ExecuteInTransactionWithMessagesAsync (ctx =>
+//                      jsonEntries.Select (json => json.Import (ctx)).ToList ());
+//
+//            return StoreMsgUntyped.Success (typeof (TimeEntryData).FullName, res.Item2.Select (x =>
+//                                            new StoreMsgUntyped (x.Action, x.Data)));
         }
 
-        static async Task<StoreResultUntyped> LoadMoreTimeEntries (DataMsgUntyped msg)
+        static async Task<IDataMsg> LoadMoreTimeEntries (IDataMsg msg)
         {
-            var endDate = paginationDate;
-            var startDate = await GetDatesByDays (endDate, DaysLoad);
-
-            var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-            var baseQuery = dataStore.Table<TimeEntryData> ().Where (r =>
-                            r.State != TimeEntryState.New &&
-                            r.StartTime >= startDate && r.StartTime < endDate &&
-                            r.DeletedAt == null &&
-                            r.UserId == userId).Take (MaxInitLocalEntries);
-
-            var entries = await baseQuery.OrderByDescending (r => r.StartTime).ToListAsync ();
-
-            paginationDate = entries.Count > 0 ? startDate : endDate;
-
-            // Get the same data from server
-            Dispatcher.Send (DataTag.RunTimeEntriesUpdate, Tuple.Create (endDate, DaysLoad));
-
-            return StoreResultUntyped.Success (typeof (TimeEntryData).FullName, entries.Select (entry =>
-                                               new StoreMsgUntyped (DataAction.Put, entry)));
+            throw new NotImplementedException ();
+//
+//            var endDate = paginationDate;
+//            var startDate = await GetDatesByDays (endDate, DaysLoad);
+//
+//            // Always fall back to local data:
+//            var store = ServiceContainer.Resolve<IDataStore> ();
+//            var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+//            var baseQuery = store.Table<TimeEntryData> ().Where (r =>
+//                            r.State != TimeEntryState.New &&
+//                            r.StartTime >= startDate && r.StartTime < endDate &&
+//                            r.DeletedAt == null &&
+//                            r.UserId == userId).Take (MaxInitLocalEntries);
+//
+//            var entries = await baseQuery.OrderByDescending (r => r.StartTime).ToListAsync ();
+//            entries.ForEach (entry => subject.OnNext (new TimeEntryMessage (entry, DataAction.Put)));
+//
+//            paginationDate = entries.Count > 0 ? startDate : endDate;
+//
+//            // Return old paginationDate to get the same data from server
+//            // using the sync manager.
+//            return endDate;
         }
 
-        static async Task<StoreResultUntyped> StopTimeEntry (DataMsgUntyped msg)
+        static async Task<IDataMsg> StopTimeEntry (IDataMsg msg)
         {
-            var timeEntryData = msg.Data.Match (x => x as TimeEntryData, e => { throw new Exception (e); });
-
-            // Code from TimeEntryModel.StopAsync
-            if (timeEntryData.State != TimeEntryState.Running) {
-                throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", timeEntryData.State));
-            }
-
-            // Mutate data
-            timeEntryData = MutateData (timeEntryData, data => {
-                data.State = TimeEntryState.Finished;
-                data.StopTime = Time.UtcNow;
-            });
-
-            // Save TimeEntryData
-            var newData = await dataStore.PutAsync (timeEntryData);
-
-            return StoreResultUntyped.Success (typeof (TimeEntryData).FullName, new[] {
-                new StoreMsgUntyped (DataAction.Put, newData)
-            });
+            throw new NotImplementedException ();
+//
+//            var timeEntryData = msg.Data.Match (x => x as TimeEntryData, e => { throw new Exception (e); });
+//
+//            // Code from TimeEntryModel.StopAsync
+//            if (timeEntryData.State != TimeEntryState.Running) {
+//                throw new InvalidOperationException (String.Format ("Cannot stop a time entry in {0} state.", timeEntryData.State));
+//            }
+//
+//            // Mutate data
+//            timeEntryData = MutateData (timeEntryData, data => {
+//                data.State = TimeEntryState.Finished;
+//                data.StopTime = Time.UtcNow;
+//            });
+//
+//            // Save TimeEntryData
+//            var newData = await dataStore.PutAsync (timeEntryData);
+//
+//            return StoreMsgUntyped.Success (typeof (TimeEntryData).FullName, new[] {
+//                new StoreMsgUntyped (DataAction.Put, newData)
+//            });
         }
 
-        static Task<StoreResultUntyped> RemoveTimeEntryWithUndo (DataMsgUntyped msg)
+        static Task<IDataMsg> RemoveTimeEntryWithUndo (IDataMsg msg)
         {
+            throw new NotImplementedException ();
             // Speculative delete: don't touch the db for now
-            return Task.Run (() => StoreResultUntyped.Success (
-            typeof (TimeEntryData).FullName, new [] { new StoreMsgUntyped (DataAction.Delete, msg.Data) }));
+//            return Task.Run (() => StoreMsgUntyped.Success (
+//            typeof (TimeEntryData).FullName, new [] { new StoreMsgUntyped (DataAction.Delete, msg.Data) }));
         }
 
-        static Task<StoreResultUntyped> RestoreTimeEntryFromUndo (DataMsgUntyped msg)
+        static Task<IDataMsg> RestoreTimeEntryFromUndo (IDataMsg msg)
         {
+            throw new NotImplementedException ();
             // The entry wasn't really deleted, see RemoveTimeEntryWithUndo
-            return Task.Run (() => StoreResultUntyped.Success (
-            typeof (TimeEntryData).FullName, new [] { new StoreMsgUntyped (DataAction.Put, msg.Data) }));
+//            return Task.Run (() => StoreMsgUntyped.Success (
+//            typeof (TimeEntryData).FullName, new [] { new StoreMsgUntyped (DataAction.Put, msg.Data) }));
         }
 
-        static async Task<StoreResultUntyped> RemoveTimeEntryPermanently (DataMsgUntyped msg)
+        static async Task<IDataMsg> RemoveTimeEntryPermanently (IDataMsg msg)
         {
-            var entries = msg.Data.Match (x => x as IList<TimeEntryData>, e => { throw new Exception (e); });
-
-            // Code from TimeEntryModel.DeleteTimeEntryDataAsync
-            var tasks = entries.Select (async data => {
-                if (data.RemoteId == null) {
-                    // We can safely delete the item as it has not been synchronized with the server yet
-                    await dataStore.DeleteAsync (data);
-                } else {
-                    // Need to just mark this item as deleted so that it could be synced with the server
-                    var newData = new TimeEntryData (data);
-                    newData.DeletedAt = Time.UtcNow;
-
-                    MarkDirty (newData);
-
-                    await dataStore.PutAsync (newData);
-                }
-            });
-            await Task.WhenAll (tasks);
-
-            return StoreResultUntyped.Success (typeof (TimeEntryData).FullName, entries.Select (x =>
-                                               new StoreMsgUntyped (DataAction.Delete, x)));
+            throw new NotImplementedException ();
+//            var entries = msg.Data.Match (x => x as IList<TimeEntryData>, e => { throw new Exception (e); });
+//
+//            // Code from TimeEntryModel.DeleteTimeEntryDataAsync
+//            var tasks = entries.Select (async data => {
+//                if (data.RemoteId == null) {
+//                    // We can safely delete the item as it has not been synchronized with the server yet
+//                    await dataStore.DeleteAsync (data);
+//                } else {
+//                    // Need to just mark this item as deleted so that it could be synced with the server
+//                    var newData = new TimeEntryData (data);
+//                    newData.DeletedAt = Time.UtcNow;
+//
+//                    MarkDirty (newData);
+//
+//                    await dataStore.PutAsync (newData);
+//                }
+//            });
+//            await Task.WhenAll (tasks);
+//
+//            return StoreMsgUntyped.Success (typeof (TimeEntryData).FullName, entries.Select (x =>
+//                                            new StoreMsgUntyped (DataAction.Delete, x)));
         }
 
         #region Util

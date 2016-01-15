@@ -8,35 +8,28 @@ namespace Toggl.Phoebe
 {
     public static class Dispatcher
     {
-        static readonly IObservable<DataMsgUntyped> observable;
-        static readonly Subject<DataMsgUntyped> subject = new Subject<DataMsgUntyped> ();
+        static readonly IObservable<IDataMsg> observable;
+        static readonly Subject<IDataMsg> subject = new Subject<IDataMsg> ();
 
         static Dispatcher ()
         {
             // TODO: Scheduler.CurrentThread for unit tests
-            observable = subject.Synchronize (Scheduler.Default)
-                .Select (msg => {
-                    var cb = ActionRegister.GetCallback (msg.Tag);
-                    if (cb == null) {
-                        throw new Exception ("Cannot find Dispatcher action for tag: " +
-                            Enum.GetName (typeof(DataTag), msg.Tag));
-                    }
-                    return Tuple.Create (cb, msg);
-                })
+            observable =
+                subject
+                .Synchronize (Scheduler.Default)
+                .Select (msg => Tuple.Create (DispatcherRegister.GetAction (msg.Tag), msg))
                 .SelectAsync (async tup => await tup.Item1 (tup.Item2))
-                .Catch<DataMsgUntyped, Exception> (ex => {
-                    Util.LogError ("DISPATCHER", ex, "Uncaught error");
-                    return Observable.Return (DataMsgUntyped.Error (DataTag.UncaughtError, ex.Message));
-                })
-                .Where (msg => msg.Tag != DataTag.UncaughtError);
+                .Catch<IDataMsg, Exception> (ex => Observable.Return (
+                                                 DataMsg.Error<object> (DataTag.UncaughtError, ex)))
+                .Where (x => x.Tag != DataTag.UncaughtError);
         }
 
         public static void Send (DataTag tag, object data = null)
         {
-            subject.OnNext (DataMsgUntyped.Success (tag, data));
+            subject.OnNext (DataMsg.Success (tag, data));
         }
 
-        public static IObservable<DataMsgUntyped> Observe ()
+        public static IObservable<IDataMsg> Observe ()
         {
             return observable;
         }

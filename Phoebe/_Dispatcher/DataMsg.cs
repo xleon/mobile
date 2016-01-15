@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
+using System.Reactive.Linq;
 
 namespace Toggl.Phoebe
 {
@@ -16,27 +17,49 @@ namespace Toggl.Phoebe
         RestoreTimeEntryFromUndo,
     }
 
-    public class DataMsgUntyped
+    public class ActionNotFoundException : Exception
     {
         public DataTag Tag { get; private set; }
-        public Either<object, string> Data { get; private set; }
+        public Type Register { get; private set; }
 
-        DataMsgUntyped () { }
-
-        public static DataMsgUntyped Success (DataTag tag, object data = null)
+        public ActionNotFoundException (DataTag tag, Type register)
+        : base (Enum.GetName (typeof (DataTag), tag) + " not found in " + register.FullName)
         {
-            return new DataMsgUntyped {
-                Tag = tag,
-                Data = Either<object, string>.Left (data)
-            };
+            Tag = tag;
+            Register = register;
+        }
+    }
+
+    public interface IDataMsg
+    {
+        DataTag Tag { get; }
+        Type DataType { get; }
+    }
+
+    public class DataMsg<T> : IDataMsg
+    {
+        public DataTag Tag { get; private set; }
+        public Type DataType { get { return typeof (T); } }
+        public Either<T, Exception> Data { get; private set; }
+
+        internal DataMsg (DataTag tag, Either<T, Exception> data)
+        {
+            Tag = tag;
+            Data = data;
+        }
+    }
+
+    public static class DataMsg
+    {
+        public static DataMsg<T> Success<T> (DataTag tag, T data)
+        {
+            return new DataMsg<T> (tag, Either<T, Exception>.Left (data));
         }
 
-        public static DataMsgUntyped Error (DataTag tag, string error)
+        public static DataMsg<T> Error<T> (DataTag tag, Exception ex)
         {
-            return new DataMsgUntyped {
-                Tag = tag,
-                Data = Either<object, string>.Right (error)
-            };
+            ServiceContainer.Resolve<ILogger> ().Error (Util.GetName (tag), ex, ex.Message);
+            return new DataMsg<T> (tag, Either<T, Exception>.Right (ex));
         }
     }
 }

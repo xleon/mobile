@@ -214,8 +214,10 @@ namespace Toggl.Joey
                    .SetUsesChronometer (true)
                    .SetOngoing (true)
                    .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
-                   .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
-//                    .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
+                   // TODO: Removed Stop button from notification until
+                   // find a fiable solution
+                   // .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
+                   // .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
                    .SetContentIntent (pendingOpenIntent);
         }
 

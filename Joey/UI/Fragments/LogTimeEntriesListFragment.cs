@@ -88,6 +88,7 @@ namespace Toggl.Joey.UI.Fragments
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
+            hasMoreBinding = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (ShowEmptyState);
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
@@ -121,7 +122,7 @@ namespace Toggl.Joey.UI.Fragments
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
 
             if (ViewModel.HasMoreItems) {
-                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+                OBMExperimentManager.Send (OBMExperimentManager.HomeWithTEListState, "startButton", "click");
             }
 
             if (timeEntryData.State == Toggl.Phoebe.Data.TimeEntryState.Running) {
@@ -140,6 +141,12 @@ namespace Toggl.Joey.UI.Fragments
             // Protect against Java side being GCed
             if (Handle == IntPtr.Zero) {
                 return;
+            }
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (drawerSyncFinished != null) {
+                bus.Unsubscribe (drawerSyncFinished);
+                drawerSyncFinished = null;
             }
 
             // TODO: Remove bindings to ViewModel
@@ -285,6 +292,16 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration.Dispose ();
         }
 
+        private void ShowEmptyState ()
+        {
+            //Empty state is experimental.
+            if (!OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+                return;
+            }
+
+            recyclerView.Visibility = ViewModel.HasMoreItems ? ViewStates.Visible : ViewStates.Gone;
+            emptyMessageView.Visibility = ViewModel.HasMoreItems ? ViewStates.Gone : ViewStates.Visible;
+        }
 
         // Temporal hack to change the
         // action color in snack bar

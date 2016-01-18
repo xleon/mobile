@@ -14,7 +14,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Tests.Data
 {
     [TestFixture]
-    public class TimeEntriesCollectionTest : Test
+    public class TimeEntryCollectionTest : Test
     {
         private const int Timeout = 500;
 

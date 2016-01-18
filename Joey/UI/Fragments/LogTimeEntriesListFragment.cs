@@ -49,7 +49,7 @@ namespace Toggl.Joey.UI.Fragments
 
         // binding references
         private Binding<bool, bool> hasMoreBinding, newMenuBinding;
-        private Binding<TimeEntriesCollectionVM, TimeEntriesCollectionVM> collectionBinding;
+        private Binding<TimeEntryCollectionVM, TimeEntryCollectionVM> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.
@@ -189,7 +189,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnDismiss (RecyclerView.ViewHolder viewHolder)
         {
-            const int duration = TimeEntriesCollectionVM.UndoSecondsInterval * 1000;
+            const int duration = TimeEntryCollectionVM.UndoSecondsInterval * 1000;
 
             ViewModel.RemoveItemWithUndo (viewHolder.AdapterPosition);
             var snackBar = Snackbar

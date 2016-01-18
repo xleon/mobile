@@ -21,8 +21,8 @@ namespace Toggl.Phoebe.Data.ViewModels
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
-        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
+//        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+//        private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
         private readonly Timer durationTimer;
         private readonly ActiveTimeEntryManager activeTimeEntryManager;
 
@@ -38,8 +38,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
-            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
+//            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+//            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
 
             UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
             SyncCollectionView ();
@@ -58,14 +58,14 @@ namespace Toggl.Phoebe.Data.ViewModels
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-            if (subscriptionSyncFinished != null) {
-                bus.Unsubscribe (subscriptionSyncFinished);
-                subscriptionSyncFinished = null;
-            }
-            if (subscriptionUpdateFinished != null) {
-                bus.Unsubscribe (subscriptionUpdateFinished);
-                subscriptionUpdateFinished = null;
-            }
+//            if (subscriptionSyncFinished != null) {
+//                bus.Unsubscribe (subscriptionSyncFinished);
+//                subscriptionSyncFinished = null;
+//            }
+//            if (subscriptionUpdateFinished != null) {
+//                bus.Unsubscribe (subscriptionUpdateFinished);
+//                subscriptionUpdateFinished = null;
+//            }
 
             activeTimeEntryManager.PropertyChanged -= OnActiveTimeEntryChanged;
             durationTimer.Elapsed -= DurationTimerCallback;
@@ -98,7 +98,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string Duration { get; private set; }
 
-        public TimeEntriesCollectionVM Collection { get; private set; }
+        public TimeEntryCollectionVM Collection { get; private set; }
         #endregion
 
         #region Sync operations
@@ -181,8 +181,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             DisposeCollection ();
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
-            Collection = new TimeEntriesCollectionVM (IsGroupedMode ?
-                    TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
+            Collection = new TimeEntryCollectionVM (IsGroupedMode ?
+                                                    TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
         }
 
         private void UpdateView (bool isRunning, TimeEntryData data)
@@ -221,6 +221,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
+        // TODO: Trigger OnSyncFinished and OnUpdateItemsFinished
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {

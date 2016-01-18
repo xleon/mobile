@@ -13,7 +13,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.ViewModels
 {
-    public class TimeEntriesCollectionVM : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
+    public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
     {
         public const int UndoSecondsInterval = 5;
 
@@ -29,11 +29,11 @@ namespace Toggl.Phoebe.ViewModels
             get { return Items; }
         }
 
-        public TimeEntriesCollectionVM (TimeEntryGroupMethod groupMethod, int bufferMilliseconds = 500)
+        public TimeEntryCollectionVM (TimeEntryGroupMethod groupMethod, int bufferMilliseconds = 500)
         {
             this.grouper = new TimeEntryGrouper (groupMethod);
             disposable = Store
-                         .Observe<TimeEntryLoad> ()
+                         .Observe<TimeEntryMsg> ()
                          .TimedBuffer (bufferMilliseconds)
                          .Subscribe (HandleStoreResults);
         }
@@ -46,20 +46,20 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void HandleStoreResults (IList<DataMsg<TimeEntryLoad>> results)
+        private void HandleStoreResults (IList<DataMsg<TimeEntryMsg>> results)
         {
             var resultsGroup = results.Select (x => x.Data).Split ();
 
             var finalResult = resultsGroup.Left.Count == 0
                               ? Either<DateTime, Exception>.Right (resultsGroup.Right.LastOrDefault ())
-                              : UpdateItems (TimeEntryLoad.Aggregate (resultsGroup.Left));
+                              : UpdateItems (TimeEntryMsg.Aggregate (resultsGroup.Left));
 
             if (LoadFinished != null) {
                 LoadFinished (this, finalResult);
             }
         }
 
-        private Either<DateTime, Exception> UpdateItems (TimeEntryLoad load)
+        private Either<DateTime, Exception> UpdateItems (TimeEntryMsg load)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection

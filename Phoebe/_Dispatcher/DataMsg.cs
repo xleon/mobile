@@ -34,6 +34,7 @@ namespace Toggl.Phoebe
     {
         DataTag Tag { get; }
         Type DataType { get; }
+
     }
 
     public class DataMsg<T> : IDataMsg
@@ -51,6 +52,26 @@ namespace Toggl.Phoebe
 
     public static class DataMsg
     {
+        public static U MatchData<T,U> (this IDataMsg msg, Func<T,U> left, Func<Exception,U> right)
+        {
+            var typedMsg = msg as DataMsg<T>;
+            if (typedMsg == null) {
+                right (new InvalidCastException (typeof (T).FullName));
+            }
+
+            return typedMsg.Data.Match (left, right);
+        }
+
+        public static T ForceGetData<T> (this IDataMsg msg)
+        {
+            var typedMsg = msg as DataMsg<T>;
+            if (typedMsg == null) {
+                throw new InvalidCastException (typeof (T).FullName);
+            }
+
+            return typedMsg.Data.Match (x => x, e => { throw e; });
+        }
+
         public static DataMsg<T> Success<T> (DataTag tag, T data)
         {
             return new DataMsg<T> (tag, Either<T, Exception>.Left (data));

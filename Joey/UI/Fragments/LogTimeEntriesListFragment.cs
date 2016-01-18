@@ -54,7 +54,7 @@ namespace Toggl.Joey.UI.Fragments
 
         // binding references
         private Binding<bool, bool> hasMoreBinding, newMenuBinding;
-        private Binding<TimeEntriesCollectionVM, TimeEntriesCollectionVM> collectionBinding;
+        private Binding<TimeEntryCollectionVM, TimeEntryCollectionVM> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.

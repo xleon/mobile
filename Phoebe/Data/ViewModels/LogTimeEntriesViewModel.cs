@@ -38,8 +38,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
-            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
+//            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+//            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
 
             HasMoreItems = true;
             HasLoadErrors = false;
@@ -62,14 +62,14 @@ namespace Toggl.Phoebe.Data.ViewModels
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-            if (subscriptionSyncFinished != null) {
-                bus.Unsubscribe (subscriptionSyncFinished);
-                subscriptionSyncFinished = null;
-            }
-            if (subscriptionUpdateFinished != null) {
-                bus.Unsubscribe (subscriptionUpdateFinished);
-                subscriptionUpdateFinished = null;
-            }
+//            if (subscriptionSyncFinished != null) {
+//                bus.Unsubscribe (subscriptionSyncFinished);
+//                subscriptionSyncFinished = null;
+//            }
+//            if (subscriptionUpdateFinished != null) {
+//                bus.Unsubscribe (subscriptionUpdateFinished);
+//                subscriptionUpdateFinished = null;
+//            }
 
             activeTimeEntryManager.PropertyChanged -= OnActiveTimeEntryChanged;
             durationTimer.Elapsed -= DurationTimerCallback;
@@ -248,6 +248,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
+        // TODO: Trigger OnSyncFinished and OnUpdateItemsFinished
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {

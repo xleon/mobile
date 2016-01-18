@@ -49,26 +49,31 @@ namespace Toggl.Phoebe.Models
         }
     }
 
-    public class TimeEntryLoad
+    public class TimeEntryMsg
     {
         public Tuple<TimeEntryData, DataAction>[] Messages { get; private set; }
-        public DateTime EndDate { get; private set; }
+        public DateTime? EndDate { get; private set; }
 
-        public TimeEntryLoad (Tuple<TimeEntryData, DataAction>[] messages, DateTime endDate)
+        public TimeEntryMsg (Tuple<TimeEntryData, DataAction>[] messages, DateTime? endDate = null)
         {
             Messages = messages;
             EndDate = endDate;
         }
 
-        public static TimeEntryLoad Aggregate (IEnumerable<TimeEntryLoad> items)
+        public TimeEntryMsg (TimeEntryData entry, DataAction action)
         {
-            var endDate = DateTime.MinValue;
+            Messages = new [] { Tuple.Create (entry, action) };
+        }
+
+        public static TimeEntryMsg Aggregate (IEnumerable<TimeEntryMsg> items)
+        {
+            DateTime? endDate = DateTime.MinValue;
             var msgs = new List<Tuple<TimeEntryData, DataAction>> ();
             foreach (var item in items) {
                 msgs.AddRange (item.Messages);
                 endDate = item.EndDate > endDate ? item.EndDate : endDate;
             }
-            return new TimeEntryLoad (msgs.ToArray(), endDate);
+            return new TimeEntryMsg (msgs.ToArray(), endDate);
         }
     }
 }

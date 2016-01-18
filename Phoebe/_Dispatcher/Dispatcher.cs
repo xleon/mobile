@@ -29,6 +29,11 @@ namespace Toggl.Phoebe
             subject.OnNext (DataMsg.Success (tag, data));
         }
 
+        public static void SendError<T> (DataTag tag, Exception ex)
+        {
+            subject.OnNext (DataMsg.Error<T> (tag, ex));
+        }
+
         public static IObservable<IDataMsg> Observe ()
         {
             return observable;

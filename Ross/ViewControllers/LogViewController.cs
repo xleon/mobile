@@ -339,7 +339,7 @@ namespace Toggl.Ross.ViewControllers
                 if (DataSource == null) {
                     return;
                 }
-                await DataSource.ContinueAsync ();
+                await TimeEntryModel.ContinueAsync (DataSource);
                 if (ContinueCallback != null) {
                     ContinueCallback (DataSource);
                 }

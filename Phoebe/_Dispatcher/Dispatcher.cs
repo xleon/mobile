@@ -39,6 +39,6 @@ namespace Toggl.Phoebe
         }
 
         public static IObservable<IDataMsg> PropagateError (Exception ex) =>
-            Observable.Return (DataMsg.Error<object> (ex, DataTag.UncaughtError, DataDir.None));
+        Observable.Return (DataMsg.Error<object> (ex, DataTag.UncaughtError, DataDir.None));
     }
 }

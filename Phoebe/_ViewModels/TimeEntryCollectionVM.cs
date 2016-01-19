@@ -56,17 +56,23 @@ namespace Toggl.Phoebe.ViewModels
             var resultsGroup = results.Select (x => x.Data).Split ();
 
             if (resultsGroup.Left.Count > 0) {
-                var hasMore = await UpdateItems (resultsGroup.Left.SelectMany (x => x.Messages));
+                await UpdateItems (resultsGroup.Left.SelectMany (x => x.Messages));
+
+                // If we've received non-empty messages from server (DataDir.Incoming)
+                // this means there're more entries available
+                var hasMore =
+                    results.Any (
+                        x => x.Dir == DataDir.Incoming && x.Data.Match (
+                            y => y.Messages.Count > 0, e => false));
+
                 LoadFinished.SafeInvoke (this, new LoadFinishedArgs { HasMore = hasMore });
-            }
-            else if (resultsGroup.Right.Count > 0) {
+            } else if (resultsGroup.Right.Count > 0) {
                 LoadFinished.SafeInvoke (this, new LoadFinishedArgs { HasErrors = true });
             }
         }
 
-        private async Task<bool> UpdateItems (IEnumerable<Tuple<TimeEntryData, DataAction>> msgs)
+        private async Task UpdateItems (IEnumerable<Tuple<TimeEntryData, DataAction>> msgs)
         {
-            bool updated = false;
             try {
                 // 1. Get only TimeEntryHolders from current collection
                 var timeHolders = grouper.Ungroup (Items.OfType<ITimeEntryHolder> ()).ToList ();
@@ -79,7 +85,7 @@ namespace Toggl.Phoebe.ViewModels
                 // TODO: Temporary
                 foreach (var holder in timeHolders) {
                     if (holder.Info == null) {
-                        holder.Info = await Store.LoadTimeEntryInfoAsync(holder.Data);
+                        holder.Info = await Store.LoadTimeEntryInfoAsync (holder.Data);
                     }
                 }
 
@@ -88,8 +94,7 @@ namespace Toggl.Phoebe.ViewModels
 
                 // 4. Check diffs, modify ItemCollection and notify changes
                 var diffs = Diff.Calculate (Items, newItemCollection);
-                updated = diffs.Count > 0;
-                
+
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
                     foreach (var diff in diffs) {
@@ -113,7 +118,6 @@ namespace Toggl.Phoebe.ViewModels
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (GetType ().Name, ex, "Failed to update collection");
             }
-            return updated;
         }
 
         private void UpdateTimeHolders (IList<TimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)

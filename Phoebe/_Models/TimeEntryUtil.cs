@@ -66,7 +66,8 @@ namespace Toggl.Phoebe.Models
     {
         public IList<Tuple<TimeEntryData, DataAction>> Messages { get; private set; }
 
-        public bool HasMore {
+        public bool HasMore
+        {
             get { return Messages.Any (); }
         }
 

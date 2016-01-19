@@ -9,12 +9,18 @@ namespace Toggl.Phoebe
 {
     public enum DataTag {
         UncaughtError,
-        LoadMoreTimeEntries,
-        RunTimeEntriesUpdate,
-        StopTimeEntry,
-        RemoveTimeEntryPermanently,
-        RemoveTimeEntryWithUndo,
-        RestoreTimeEntryFromUndo,
+        TimeEntryLoad,
+        TimeEntryLoadFromServer,
+        TimeEntryStop,
+        TimeEntryRemove,
+        TimeEntryRemoveWithUndo,
+        TimeEntryRestoreFromUndo,
+    }
+
+    public enum DataDir {
+        Incoming,
+        Outcoming,
+        None
     }
 
     public class ActionNotFoundException : Exception
@@ -33,20 +39,22 @@ namespace Toggl.Phoebe
     public interface IDataMsg
     {
         DataTag Tag { get; }
+        DataDir Dir { get; }
         Type DataType { get; }
-
     }
 
     public class DataMsg<T> : IDataMsg
     {
         public DataTag Tag { get; private set; }
+        public DataDir Dir { get; private set; }
         public Type DataType { get { return typeof (T); } }
         public Either<T, Exception> Data { get; private set; }
 
-        internal DataMsg (DataTag tag, Either<T, Exception> data)
+        internal DataMsg (Either<T, Exception> data, DataTag tag, DataDir dir)
         {
-            Tag = tag;
             Data = data;
+            Tag = tag;
+            Dir = dir;
         }
     }
 
@@ -58,9 +66,18 @@ namespace Toggl.Phoebe
             if (typedMsg == null) {
                 right (new InvalidCastException (typeof (T).FullName));
             }
-
             return typedMsg.Data.Match (left, right);
         }
+
+        public static Task<U> MatchDataAsync<T,U> (this IDataMsg msg, Func<T,Task<U>> left, Func<Exception,U> right)
+        {
+            var typedMsg = msg as DataMsg<T>;
+            if (typedMsg == null) {
+                right (new InvalidCastException (typeof (T).FullName));
+            }
+            return typedMsg.Data.Match (left, ex => Task.Run (() => right (ex)));
+        }
+
 
         public static T ForceGetData<T> (this IDataMsg msg)
         {
@@ -72,15 +89,15 @@ namespace Toggl.Phoebe
             return typedMsg.Data.Match (x => x, e => { throw e; });
         }
 
-        public static DataMsg<T> Success<T> (DataTag tag, T data)
+        public static DataMsg<T> Success<T> (T data, DataTag tag, DataDir dir)
         {
-            return new DataMsg<T> (tag, Either<T, Exception>.Left (data));
+            return new DataMsg<T> (Either<T, Exception>.Left (data), tag, dir);
         }
 
-        public static DataMsg<T> Error<T> (DataTag tag, Exception ex)
+        public static DataMsg<T> Error<T> (Exception ex, DataTag tag, DataDir dir)
         {
             ServiceContainer.Resolve<ILogger> ().Error (Util.GetName (tag), ex, ex.Message);
-            return new DataMsg<T> (tag, Either<T, Exception>.Right (ex));
+            return new DataMsg<T> (Either<T, Exception>.Right (ex), tag, dir);
         }
     }
 }

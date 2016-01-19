@@ -10,19 +10,24 @@ using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Models;
 using XPlatUtils;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.ViewModels
 {
     public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
     {
-        public const int UndoSecondsInterval = 5;
+        public class LoadFinishedArgs : EventArgs
+        {
+            public bool HasMore { get; set; }
+            public bool HasErrors { get; set; }
+        }
 
         IDisposable disposable;
         ITimeEntryHolder lastRemovedItem;
         TimeEntryGrouper grouper;
         System.Timers.Timer undoTimer = new System.Timers.Timer ();
 
-        public event EventHandler<Either<DateTime, Exception>> LoadFinished;
+        public event EventHandler<LoadFinishedArgs> LoadFinished;
 
         public IEnumerable<IHolder> Data
         {
@@ -46,28 +51,36 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void HandleStoreResults (IList<DataMsg<TimeEntryMsg>> results)
+        private async void HandleStoreResults (IList<DataMsg<TimeEntryMsg>> results)
         {
             var resultsGroup = results.Select (x => x.Data).Split ();
 
-            var finalResult = resultsGroup.Left.Count == 0
-                              ? Either<DateTime, Exception>.Right (resultsGroup.Right.LastOrDefault ())
-                              : UpdateItems (TimeEntryMsg.Aggregate (resultsGroup.Left));
-
-            if (LoadFinished != null) {
-                LoadFinished (this, finalResult);
+            if (resultsGroup.Left.Count > 0) {
+                var hasMore = await UpdateItems (resultsGroup.Left.SelectMany (x => x.Messages));
+                LoadFinished.SafeInvoke (this, new LoadFinishedArgs { HasMore = hasMore });
+            }
+            else if (resultsGroup.Right.Count > 0) {
+                LoadFinished.SafeInvoke (this, new LoadFinishedArgs { HasErrors = true });
             }
         }
 
-        private Either<DateTime, Exception> UpdateItems (TimeEntryMsg load)
+        private async Task<bool> UpdateItems (IEnumerable<Tuple<TimeEntryData, DataAction>> msgs)
         {
+            bool updated = false;
             try {
                 // 1. Get only TimeEntryHolders from current collection
                 var timeHolders = grouper.Ungroup (Items.OfType<ITimeEntryHolder> ()).ToList ();
 
                 // 2. Remove, replace or add items from messages
-                foreach (var msg in load.Messages) {
+                foreach (var msg in msgs) {
                     UpdateTimeHolders (timeHolders, msg.Item1, msg.Item2);
+                }
+
+                // TODO: Temporary
+                foreach (var holder in timeHolders) {
+                    if (holder.Info == null) {
+                        holder.Info = await Store.LoadTimeEntryInfoAsync(holder.Data);
+                    }
                 }
 
                 // 3. Create the new item collection from holders (sort and add headers...)
@@ -75,7 +88,8 @@ namespace Toggl.Phoebe.ViewModels
 
                 // 4. Check diffs, modify ItemCollection and notify changes
                 var diffs = Diff.Calculate (Items, newItemCollection);
-
+                updated = diffs.Count > 0;
+                
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
                     foreach (var diff in diffs) {
@@ -95,12 +109,11 @@ namespace Toggl.Phoebe.ViewModels
                         }
                     }
                 });
-                return Either<DateTime, Exception>.Left (DateTime.UtcNow);
             } catch (Exception ex) {
-                ServiceContainer.Resolve<ILogger> ().Error (
-                    GetType ().Name, ex, "Failed to update collection");
-                return Either<DateTime, Exception>.Right (ex);
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Error (GetType ().Name, ex, "Failed to update collection");
             }
+            return updated;
         }
 
         private void UpdateTimeHolders (IList<TimeEntryHolder> timeHolders, TimeEntryData entry, DataAction action)
@@ -132,7 +145,7 @@ namespace Toggl.Phoebe.ViewModels
 
         public void RestoreTimeEntryFromUndo ()
         {
-            Dispatcher.Send (DataTag.RestoreTimeEntryFromUndo, lastRemovedItem.Data);
+            Dispatcher.Send (DataTag.TimeEntryRestoreFromUndo, lastRemovedItem.Data);
         }
 
         public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
@@ -149,7 +162,7 @@ namespace Toggl.Phoebe.ViewModels
                 } else {
                     entries = new [] { holder.Data };
                 }
-                Dispatcher.Send (DataTag.RemoveTimeEntryPermanently, entries);
+                Dispatcher.Send (DataTag.TimeEntryRemove, entries);
             };
 
             System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
@@ -163,12 +176,12 @@ namespace Toggl.Phoebe.ViewModels
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                Dispatcher.Send (DataTag.StopTimeEntry, timeEntryHolder.Data);
+                Dispatcher.Send (DataTag.TimeEntryStop, timeEntryHolder.Data);
             }
             lastRemovedItem = timeEntryHolder;
 
             // Remove item only from list
-            Dispatcher.Send (DataTag.RemoveTimeEntryWithUndo, timeEntryHolder.Data);
+            Dispatcher.Send (DataTag.TimeEntryRemoveWithUndo, timeEntryHolder.Data);
 
             // Create Undo timer
             if (undoTimer != null) {
@@ -176,7 +189,7 @@ namespace Toggl.Phoebe.ViewModels
                 undoTimer.Close();
             }
             // Using the correct timer.
-            undoTimer = new System.Timers.Timer ((UndoSecondsInterval + 1) * 1000);
+            undoTimer = new System.Timers.Timer ((Literals.TimeEntryRemoveUndoSeconds + 1) * 1000);
             undoTimer.AutoReset = false;
             undoTimer.Elapsed += undoTimerFinished;
             undoTimer.Start();

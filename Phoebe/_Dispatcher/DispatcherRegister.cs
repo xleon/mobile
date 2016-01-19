@@ -6,6 +6,7 @@ using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Phoebe
 {
@@ -14,16 +15,14 @@ namespace Toggl.Phoebe
         public static Func<IDataMsg, Task<IDataMsg>> GetAction (DataTag tag)
         {
             switch (tag) {
-            case DataTag.LoadMoreTimeEntries:
-                return LoadMoreTimeEntries;
+            case DataTag.TimeEntryLoadFromServer:
+                return TimeEntryLoadFromServer;
 
-            case DataTag.RunTimeEntriesUpdate:
-                return RunTimeEntriesUpdate;
-
-            case DataTag.StopTimeEntry:
-            case DataTag.RemoveTimeEntryWithUndo:
-            case DataTag.RestoreTimeEntryFromUndo:
-            case DataTag.RemoveTimeEntryPermanently:
+            case DataTag.TimeEntryLoad:
+            case DataTag.TimeEntryStop:
+            case DataTag.TimeEntryRemoveWithUndo:
+            case DataTag.TimeEntryRestoreFromUndo:
+            case DataTag.TimeEntryRemove:
                 return LetGoThrough;
 
             default:
@@ -31,35 +30,16 @@ namespace Toggl.Phoebe
             }
         }
 
-        static Task<IDataMsg> LoadMoreTimeEntries (IDataMsg msg)
+        static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg)
         {
-            // Try to update with latest data from server
-            Dispatcher.Send (DataTag.RunTimeEntriesUpdate, msg.ForceGetData<UpdateStartedMessage> ());
-
-            // And then pass the message to the store to load first data locally
-            return LetGoThrough (msg);
-        }
-
-        static async Task<IDataMsg> RunTimeEntriesUpdate (IDataMsg msg)
-        {
-            var msgData = msg.ForceGetData<UpdateStartedMessage> ();
-            var startFrom = msgData.StartDate;
-            var daysLoad = msgData.DaysLoad;
-
-            bool hadErrors = false;
-            bool hasMore = true;
-            var endDate = DateTime.MinValue;
-            var jsonEntries = new List<TimeEntryJson> ();
-
+            var startFrom = msg.ForceGetData<DateTime> ();
+            const int daysLoad = Literals.TimeEntryLoadDays;
             try {
                 // Download new Entries
                 var client = ServiceContainer.Resolve<ITogglClient> ();
-                jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
-
-                endDate = jsonEntries.Min (p => p.StartTime);
-                hasMore = jsonEntries.Any ();
+                var jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
+                return DataMsg.Success (jsonEntries, msg.Tag, DataDir.Incoming);
             } catch (Exception exc) {
-                hadErrors = true;
                 var tag = typeof (DispatcherRegister).Name;
                 var log = ServiceContainer.Resolve<ILogger> ();
                 const string errorMsg = "Failed to fetch time entries {1} days up to {0}";
@@ -68,12 +48,8 @@ namespace Toggl.Phoebe
                 } else {
                     log.Warning (tag, exc, errorMsg, startFrom, daysLoad);
                 }
+                return DataMsg.Error<List<TimeEntryJson>> (exc, msg.Tag, DataDir.Incoming);
             }
-
-            // TODO: Use an Either.Right to pass the error instead
-            return DataMsg.Success (
-               msg.Tag, new UpdateFinishedMessage (
-                   jsonEntries, startFrom, endDate, hasMore, hadErrors));
         }
 
         static Task<IDataMsg> LetGoThrough (IDataMsg msg)

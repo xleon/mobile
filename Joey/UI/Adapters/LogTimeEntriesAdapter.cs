@@ -181,6 +181,7 @@ namespace Toggl.Joey.UI.Adapters
             public TextView DescriptionTextView { get; private set; }
             public NotificationImageView TagsView { get; private set; }
             public View BillableView { get; private set; }
+            public View NotSyncedView { get; private set; }
             public TextView DurationTextView { get; private set; }
             public ImageButton ContinueImageButton { get; private set; }
 
@@ -199,6 +200,7 @@ namespace Toggl.Joey.UI.Adapters
                 TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoMedium);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.Roboto);
                 TagsView = root.FindViewById<NotificationImageView> (Resource.Id.TagsIcon);
+                NotSyncedView = root.FindViewById<View> (Resource.Id.NotSyncedIcon);
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
@@ -227,6 +229,11 @@ namespace Toggl.Joey.UI.Adapters
                 var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
+                if (DataSource.Data.RemoteId.HasValue) {
+                    NotSyncedView.Visibility = ViewStates.Gone;
+                } else {
+                    NotSyncedView.Visibility = ViewStates.Visible;
+                }
                 var info = DataSource.Info;
                 if (!String.IsNullOrWhiteSpace (info.ProjectData.Name)) {
                     color = Color.ParseColor (ProjectModel.HexColors [info.Color % ProjectModel.HexColors.Length]);

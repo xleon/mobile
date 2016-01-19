@@ -753,6 +753,10 @@
     <AndroidResource Include="Resources\layout\EmptyFooter.axml" />
     <AndroidResource Include="Resources\layout\TimeEntryListFooter.xml" />
     <AndroidResource Include="Resources\drawable\obm90.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcError.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcError.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcError.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcError.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>

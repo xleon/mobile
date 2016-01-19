@@ -15,8 +15,16 @@
             android:id="@+id/ColorView"
             android:layout_width="4dp"
             android:layout_height="72dp"
-            android:background="@drawable/ColoredSideShape"
-            android:layout_marginRight="12dp" />
+            android:layout_marginRight="12dp"
+            android:background="@drawable/ColoredSideShape" />
+        <ImageView
+            android:id="@+id/NotSyncedIcon"
+            android:gravity="center"
+            android:layout_marginLeft="-6dp"
+            android:paddingRight="6dp"
+            android:src="@drawable/IcError"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent" />
         <LinearLayout
             android:orientation="vertical"
             android:layout_weight="1"

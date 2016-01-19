@@ -17,8 +17,7 @@ namespace Toggl.Phoebe
                 .Observe ()
                 .Select (msg => Tuple.Create (GetAction (msg.Tag), msg))
                 .SelectAsync (async tup => await tup.Item1 (tup.Item2))
-                .Catch<IDataMsg, Exception> (ex => Observable.Return (
-                                                 DataMsg.Error<object> (DataTag.UncaughtError, ex)))
+                .Catch<IDataMsg, Exception> (Dispatcher.PropagateError)
                 .Where (x => x.Tag != DataTag.UncaughtError);
         }
 

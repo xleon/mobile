@@ -24,6 +24,7 @@ using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
+using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -79,7 +80,7 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public async override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
@@ -110,7 +111,7 @@ namespace Toggl.Joey.UI.Fragments
             // until a screenloader is added to the screen
             // is better to load the items after create
             // the viewModel and show the loader from RecyclerView
-            await ViewModel.LoadMore ();
+            ViewModel.LoadMore ();
 
             // Subscribe to sync messages
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -189,7 +190,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnDismiss (RecyclerView.ViewHolder viewHolder)
         {
-            const int duration = TimeEntryCollectionVM.UndoSecondsInterval * 1000;
+            const int duration = Literals.TimeEntryRemoveUndoSeconds * 1000;
 
             ViewModel.RemoveItemWithUndo (viewHolder.AdapterPosition);
             var snackBar = Snackbar
@@ -321,7 +322,7 @@ namespace Toggl.Joey.UI.Fragments
                 this.viewModel = viewModel;
             }
 
-            public async override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
             {
                 base.OnScrolled (recyclerView, dx, dy);
 
@@ -339,7 +340,7 @@ namespace Toggl.Joey.UI.Fragments
                 if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
                     loading = true;
                     // Request more entries.
-                    await viewModel.LoadMore ();
+                    viewModel.LoadMore ();
                 }
             }
         }

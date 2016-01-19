@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Json;
 
 namespace Toggl.Phoebe.Models
 {
@@ -49,31 +50,34 @@ namespace Toggl.Phoebe.Models
         }
     }
 
+    public class TimeEntryJsonMsg
+    {
+        public bool HasMore { get; private set; }
+        public List<TimeEntryJson> Messages { get; private set; }
+
+        public TimeEntryJsonMsg (bool hasMore, List<TimeEntryJson> messages)
+        {
+            HasMore = hasMore;
+            Messages = messages;
+        }
+    }
+
     public class TimeEntryMsg
     {
-        public Tuple<TimeEntryData, DataAction>[] Messages { get; private set; }
-        public DateTime? EndDate { get; private set; }
+        public IList<Tuple<TimeEntryData, DataAction>> Messages { get; private set; }
 
-        public TimeEntryMsg (Tuple<TimeEntryData, DataAction>[] messages, DateTime? endDate = null)
+        public bool HasMore {
+            get { return Messages.Any (); }
+        }
+
+        public TimeEntryMsg (IList<Tuple<TimeEntryData, DataAction>> messages)
         {
             Messages = messages;
-            EndDate = endDate;
         }
 
         public TimeEntryMsg (TimeEntryData entry, DataAction action)
         {
             Messages = new [] { Tuple.Create (entry, action) };
-        }
-
-        public static TimeEntryMsg Aggregate (IEnumerable<TimeEntryMsg> items)
-        {
-            DateTime? endDate = DateTime.MinValue;
-            var msgs = new List<Tuple<TimeEntryData, DataAction>> ();
-            foreach (var item in items) {
-                msgs.AddRange (item.Messages);
-                endDate = item.EndDate > endDate ? item.EndDate : endDate;
-            }
-            return new TimeEntryMsg (msgs.ToArray(), endDate);
         }
     }
 }

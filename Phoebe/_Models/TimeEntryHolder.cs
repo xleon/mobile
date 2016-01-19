@@ -8,7 +8,7 @@ namespace Toggl.Phoebe.Models
 {
     public class TimeEntryHolder : ITimeEntryHolder
     {
-        public TimeEntryInfo Info { get; private set; }
+        public TimeEntryInfo Info { get; set; } // TODO: Make set private again?
         public TimeEntryData Data { get; private set; }
         public IList<TimeEntryData> DataCollection
         {

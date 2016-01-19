@@ -19,24 +19,26 @@ namespace Toggl.Phoebe
                 .Synchronize (Scheduler.Default)
                 .Select (msg => Tuple.Create (DispatcherRegister.GetAction (msg.Tag), msg))
                 .SelectAsync (async tup => await tup.Item1 (tup.Item2))
-                .Catch<IDataMsg, Exception> (ex => Observable.Return (
-                                                 DataMsg.Error<object> (DataTag.UncaughtError, ex)))
+                .Catch<IDataMsg, Exception> (PropagateError)
                 .Where (x => x.Tag != DataTag.UncaughtError);
         }
 
-        public static void Send (DataTag tag, object data = null)
+        public static void Send<T> (DataTag tag, T data)
         {
-            subject.OnNext (DataMsg.Success (tag, data));
+            subject.OnNext (DataMsg.Success<T> (data, tag, DataDir.None));
         }
 
         public static void SendError<T> (DataTag tag, Exception ex)
         {
-            subject.OnNext (DataMsg.Error<T> (tag, ex));
+            subject.OnNext (DataMsg.Error<T> (ex, tag, DataDir.None));
         }
 
         public static IObservable<IDataMsg> Observe ()
         {
             return observable;
         }
+
+        public static IObservable<IDataMsg> PropagateError (Exception ex) =>
+            Observable.Return (DataMsg.Error<object> (ex, DataTag.UncaughtError, DataDir.None));
     }
 }

@@ -4,18 +4,6 @@ using Toggl.Phoebe.Data.Json;
 
 namespace Toggl.Phoebe.Net
 {
-    public class UpdateStartedMessage
-    {
-        public readonly DateTime StartDate;
-        public readonly int DaysLoad;
-
-        public UpdateStartedMessage (DateTime startDate, int daysLoad)
-        {
-            this.StartDate = startDate;
-            this.DaysLoad = daysLoad;
-        }
-    }
-
     public class UpdateFinishedMessage
     {
         public readonly List<TimeEntryJson> JsonEntries;

@@ -334,7 +334,7 @@ namespace Toggl.Joey.UI.Adapters
                 progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);
                 IsRecyclable = false;
 
-                retryButton.Click += async (sender, e) => await Vm.LoadMore ();
+                retryButton.Click += (sender, e) => Vm.LoadMore ();
                 hasMoreBinding = this.SetBinding (() => Vm.HasMoreItems).WhenSourceChanges (SetFooterState);
                 hasErrorBinding = this.SetBinding (() => Vm.HasLoadErrors).WhenSourceChanges (SetFooterState);
 

@@ -21,7 +21,7 @@ namespace Toggl.Phoebe.Data.ViewModels
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
-//        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 //        private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
         private readonly Timer durationTimer;
         private readonly ActiveTimeEntryManager activeTimeEntryManager;
@@ -38,7 +38,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-//            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
 //            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
 
             UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
@@ -58,10 +58,10 @@ namespace Toggl.Phoebe.Data.ViewModels
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-//            if (subscriptionSyncFinished != null) {
-//                bus.Unsubscribe (subscriptionSyncFinished);
-//                subscriptionSyncFinished = null;
-//            }
+            if (subscriptionSyncFinished != null) {
+                bus.Unsubscribe (subscriptionSyncFinished);
+                subscriptionSyncFinished = null;
+            }
 //            if (subscriptionUpdateFinished != null) {
 //                bus.Unsubscribe (subscriptionUpdateFinished);
 //                subscriptionUpdateFinished = null;
@@ -110,11 +110,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             syncManager.Run ();
         }
 
-        public async Task LoadMore ()
+        public void LoadMore ()
         {
             HasMoreItems = true;
             HasLoadErrors = false;
-            Dispatcher.Send (DataTag.LoadMoreTimeEntries);
+            Dispatcher.Send (DataTag.TimeEntryLoad, new Object());
         }
         #endregion
 
@@ -181,8 +181,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             DisposeCollection ();
             IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
 
-            Collection = new TimeEntryCollectionVM (IsGroupedMode ?
-                                                    TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
+            Collection = new TimeEntryCollectionVM (
+                IsGroupedMode ? TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
+            Collection.LoadFinished += OnLoadFinished;
         }
 
         private void UpdateView (bool isRunning, TimeEntryData data)
@@ -221,7 +222,14 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        // TODO: Trigger OnSyncFinished and OnUpdateItemsFinished
+        void OnLoadFinished (object sender, TimeEntryCollectionVM.LoadFinishedArgs args)
+        {
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                HasMoreItems = args.HasMore;
+                HasLoadErrors = args.HasErrors;
+            });
+        }
+
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
@@ -229,13 +237,13 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private void OnUpdateItemsFinished (UpdateFinishedMessage msg)
-        {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                HasMoreItems = msg.HadMore;
-                HasLoadErrors = msg.HadErrors;
-            });
-        }
+//        private void OnUpdateItemsFinished (UpdateFinishedMessage msg)
+//        {
+//            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+//                HasMoreItems = msg.HadMore;
+//                HasLoadErrors = msg.HadErrors;
+//            });
+//        }
 
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)
         {

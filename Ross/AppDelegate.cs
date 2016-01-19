@@ -107,7 +107,9 @@ namespace Toggl.Ross
                     if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
                         widgetManager.StartStopTimeEntry();
                     } else {
-                        widgetManager.ContinueTimeEntry();
+                        var nsUserDefaults = new NSUserDefaults ("group.com.toggl.timer", NSUserDefaultsType.SuiteName);
+                        var guid = nsUserDefaults.StringForKey (WidgetUpdateService.StartedEntryKey);
+                        widgetManager.ContinueTimeEntry (Guid.Parse (guid));
                     }
                     return true;
                 }

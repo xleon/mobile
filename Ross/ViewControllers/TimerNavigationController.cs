@@ -5,6 +5,7 @@ using CoreFoundation;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Ross.Data;
@@ -62,7 +63,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
         {
-            var controller = new DurationChangeViewController (currentTimeEntry);
+            var controller = new DurationChangeViewController ((TimeEntryModel)currentTimeEntry);
             parentController.NavigationController.PushViewController (controller, true);
         }
 
@@ -75,23 +76,23 @@ namespace Toggl.Ross.ViewControllers
 
             try {
                 if (currentTimeEntry != null && currentTimeEntry.State == TimeEntryState.Running) {
-                    await currentTimeEntry.StopAsync ();
+                    await TimeEntryModel.StopAsync (currentTimeEntry);
 
                     // Ping analytics
                     ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
                 } else if (timeEntryManager != null) {
-                    currentTimeEntry = (TimeEntryModel)timeEntryManager.Draft;
+                    currentTimeEntry = (TimeEntryModel)timeEntryManager.ActiveTimeEntry;
                     if (currentTimeEntry == null) {
                         return;
                     }
 
                     OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
-                    await currentTimeEntry.StartAsync ();
+                    await TimeEntryModel.StartAsync (currentTimeEntry);
 
                     var controllers = new List<UIViewController> (parentController.NavigationController.ViewControllers);
-                    controllers.Add (new EditTimeEntryViewController (currentTimeEntry));
+                    controllers.Add (new EditTimeEntryViewController ((TimeEntryModel)currentTimeEntry));
                     if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
-                        controllers.Add (new ProjectSelectionViewController (currentTimeEntry));
+                        controllers.Add (new ProjectSelectionViewController ((TimeEntryModel)currentTimeEntry));
                     }
                     parentController.NavigationController.SetViewControllers (controllers.ToArray (), true);
 
@@ -118,7 +119,7 @@ namespace Toggl.Ross.ViewControllers
                 actionButton.Apply (Style.NavTimer.StartButton);
                 actionButton.Hidden = false;
             } else {
-                var duration = currentTimeEntry.GetDuration ();
+                var duration = new TimeEntryModel (currentTimeEntry).GetDuration ();
 
                 durationButton.SetTitle (duration.ToString (@"hh\:mm\:ss"), UIControlState.Normal);
                 actionButton.Apply (Style.NavTimer.StopButton);
@@ -161,7 +162,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (args.PropertyName == ActiveTimeEntryManager.PropertyRunning) {
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyIsRunning) {
                 ResetModelToRunning ();
                 Rebind ();
             }
@@ -174,9 +175,9 @@ namespace Toggl.Ross.ViewControllers
             }
 
             if (currentTimeEntry == null) {
-                currentTimeEntry = (TimeEntryModel)timeEntryManager.Running;
-            } else if (timeEntryManager.Running != null) {
-                currentTimeEntry.Data = timeEntryManager.Running;
+                currentTimeEntry = (TimeEntryModel)timeEntryManager.ActiveTimeEntry;
+            } else if (timeEntryManager.ActiveTimeEntry != null) {
+                currentTimeEntry.Data = timeEntryManager.ActiveTimeEntry;
             } else {
                 currentTimeEntry = null;
             }

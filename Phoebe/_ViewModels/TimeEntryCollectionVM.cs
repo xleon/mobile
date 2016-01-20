@@ -56,14 +56,13 @@ namespace Toggl.Phoebe.ViewModels
             var resultsGroup = results.Select (x => x.Data).Split ();
 
             if (resultsGroup.Left.Count > 0) {
-                await UpdateItems (resultsGroup.Left.SelectMany (x => x.Messages));
+                await UpdateItems (resultsGroup.Left.SelectMany (x => x));
 
                 // If we've received non-empty messages from server (DataDir.Incoming)
                 // this means there're more entries available
-                var hasMore =
-                    results.Any (
+                var hasMore = results.Any (
                         x => x.Dir == DataDir.Incoming && x.Data.Match (
-                            y => y.Messages.Count > 0, e => false));
+                            y => y.Count > 0, e => false));
 
                 LoadFinished.SafeInvoke (this, new LoadFinishedArgs { HasMore = hasMore });
             } else if (resultsGroup.Right.Count > 0) {
@@ -71,7 +70,7 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private async Task UpdateItems (IEnumerable<Tuple<TimeEntryData, DataAction>> msgs)
+        private async Task UpdateItems (IEnumerable<DataActionMsg<TimeEntryData>> msgs)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
@@ -79,7 +78,7 @@ namespace Toggl.Phoebe.ViewModels
 
                 // 2. Remove, replace or add items from messages
                 foreach (var msg in msgs) {
-                    UpdateTimeHolders (timeHolders, msg.Item1, msg.Item2);
+                    UpdateTimeHolders (timeHolders, msg.Data, msg.Action);
                 }
 
                 // TODO: Temporary

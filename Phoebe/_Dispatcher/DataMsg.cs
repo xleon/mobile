@@ -36,6 +36,18 @@ namespace Toggl.Phoebe
         }
     }
 
+    public class DataActionMsg<T>
+    {
+        public T Data { get; private set; }
+        public Toggl.Phoebe.Data.DataAction Action { get; private set; }
+
+        public DataActionMsg (T data, Toggl.Phoebe.Data.DataAction action)
+        {
+            Data = data;
+            Action = action;
+        }
+    }
+
     public interface IDataMsg
     {
         DataTag Tag { get; }

@@ -49,12 +49,13 @@ namespace Toggl.Phoebe
             async jsonMsg => {
                 var storeMsgs =
                     await dataStore.ExecuteInTransactionWithMessagesAsync (ctx =>
-                            jsonMsg.Messages.ForEach (json => json.Import (ctx)));
+                            jsonMsg.ForEach (json => json.Import (ctx)));
 
-                var entryMsgs =
-                    storeMsgs.Select (x => Tuple.Create ((TimeEntryData)x.Data, x.Action)).ToList ();
+                var entryMsg = new TimeEntryMsg (
+                        storeMsgs.Select (x =>
+                            new DataActionMsg<TimeEntryData> ((TimeEntryData)x.Data, x.Action)));
 
-                return DataMsg.Success (new TimeEntryMsg (entryMsgs), msg.Tag, msg.Dir);
+                return DataMsg.Success (entryMsg, msg.Tag, msg.Dir);
             }, ex => msg);
         }
 
@@ -63,8 +64,7 @@ namespace Toggl.Phoebe
         static DateTime paginationDate = Time.UtcNow.Date.AddDays (1);
         static async Task<IDataMsg> TimeEntryLoad (IDataMsg msg)
         {
-            var endDate = paginationDate;
-            var startDate = await GetDatesByDays (endDate, Literals.TimeEntryLoadDays);
+            var startDate = await GetDatesByDays (paginationDate, Literals.TimeEntryLoadDays);
 
             // Always fall back to local data:
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -73,22 +73,22 @@ namespace Toggl.Phoebe
                 store.Table<TimeEntryData> ()
                 .Where (r =>
                         r.State != TimeEntryState.New &&
-                        r.StartTime >= startDate && r.StartTime < endDate &&
+                        r.StartTime >= startDate && r.StartTime < paginationDate &&
                         r.DeletedAt == null &&
                         r.UserId == userId)
                 .Take (Literals.TimeEntryLoadMaxInit);
 
-            var entryMsgs =
-                (await baseQuery.OrderByDescending (r => r.StartTime)
-                 .ToListAsync ())
-                .Select (x => Tuple.Create (x, DataAction.Put))
-                .ToArray ();
-            paginationDate = entryMsgs.Length > 0 ? startDate : endDate;
+            var entryMsg =
+                new TimeEntryMsg (
+                    (await baseQuery.OrderByDescending (r => r.StartTime)
+                     .ToListAsync ())
+                    .Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Put)));
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            Dispatcher.Send (DataTag.TimeEntryLoadFromServer, endDate);
+            Dispatcher.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
 
-            return DataMsg.Success (new TimeEntryMsg (entryMsgs), msg.Tag, DataDir.None);
+            paginationDate = entryMsg.Count > 0 ? startDate : paginationDate;
+            return DataMsg.Success (entryMsg, msg.Tag, DataDir.None);
         }
 
         static async Task<IDataMsg> TimeEntryStop (IDataMsg msg)
@@ -147,8 +147,9 @@ namespace Toggl.Phoebe
             });
             await Task.WhenAll (tasks);
 
-            var entryMsgs = entries.Select (x => Tuple.Create (x, DataAction.Delete)).ToArray();
-            return DataMsg.Success (new TimeEntryMsg (entryMsgs), msg.Tag, DataDir.Outcoming);
+            var entryMsg = new TimeEntryMsg (
+                entries.Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Delete)));
+            return DataMsg.Success (entryMsg, msg.Tag, DataDir.Outcoming);
         }
 
         #region Util

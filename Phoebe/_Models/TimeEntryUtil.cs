@@ -50,35 +50,24 @@ namespace Toggl.Phoebe.Models
         }
     }
 
-    public class TimeEntryJsonMsg
+    public class TimeEntryJsonMsg : List<TimeEntryJson>
     {
-        public bool HasMore { get; private set; }
-        public List<TimeEntryJson> Messages { get; private set; }
-
-        public TimeEntryJsonMsg (bool hasMore, List<TimeEntryJson> messages)
+        public TimeEntryJsonMsg (IEnumerable<TimeEntryJson> messages)
+            : base (messages)
         {
-            HasMore = hasMore;
-            Messages = messages;
         }
     }
 
-    public class TimeEntryMsg
+    public class TimeEntryMsg : List<DataActionMsg<TimeEntryData>>
     {
-        public IList<Tuple<TimeEntryData, DataAction>> Messages { get; private set; }
-
-        public bool HasMore
+        public TimeEntryMsg (IEnumerable<DataActionMsg<TimeEntryData>> messages)
+            : base (messages)
         {
-            get { return Messages.Any (); }
-        }
-
-        public TimeEntryMsg (IList<Tuple<TimeEntryData, DataAction>> messages)
-        {
-            Messages = messages;
         }
 
         public TimeEntryMsg (TimeEntryData entry, DataAction action)
+            : base (new [] { new DataActionMsg<TimeEntryData> (entry, action) })
         {
-            Messages = new [] { Tuple.Create (entry, action) };
         }
     }
 }

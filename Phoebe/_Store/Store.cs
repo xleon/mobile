@@ -23,9 +23,7 @@ namespace Toggl.Phoebe
 
         public static IObservable<DataMsg<T>> Observe<T> ()
         {
-            return observable
-                   .Where (msg => msg is DataMsg<T>)
-                   .Cast<DataMsg<T>> ();
+            return observable.OfType<DataMsg<T>> ();
         }
     }
 }

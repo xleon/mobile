@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 using System.Reactive.Linq;
+using System.Collections.Generic;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data;
 
 namespace Toggl.Phoebe
 {
@@ -36,15 +40,31 @@ namespace Toggl.Phoebe
         }
     }
 
+    public class CommonDataWrapper<T> : CommonData
+    {
+        public T Data { get; private set; }
+
+        public CommonDataWrapper (T data)
+        {
+            Data = data;
+        }
+    }
+
     public class DataActionMsg<T>
     {
         public T Data { get; private set; }
-        public Toggl.Phoebe.Data.DataAction Action { get; private set; }
+        public DataAction Action { get; private set; }
 
-        public DataActionMsg (T data, Toggl.Phoebe.Data.DataAction action)
+        public DataActionMsg (T data, DataAction action)
         {
             Data = data;
             Action = action;
+        }
+
+        public DataActionMsg (DataChangeMessage msg)
+        {
+            Data = (T)msg.Data;
+            Action = msg.Action;
         }
     }
 
@@ -55,14 +75,14 @@ namespace Toggl.Phoebe
         Type DataType { get; }
     }
 
-    public class DataMsg<T> : IDataMsg
+    public class DataMsg<T> : IDataMsg where T : CommonData
     {
         public DataTag Tag { get; private set; }
         public DataDir Dir { get; private set; }
         public Type DataType { get { return typeof (T); } }
-        public Either<T, Exception> Data { get; private set; }
+        public Either<IList<DataActionMsg<T>>, Exception> Data { get; private set; }
 
-        internal DataMsg (Either<T, Exception> data, DataTag tag, DataDir dir)
+        internal DataMsg (Either<IList<DataActionMsg<T>>, Exception> data, DataTag tag, DataDir dir)
         {
             Data = data;
             Tag = tag;
@@ -72,7 +92,9 @@ namespace Toggl.Phoebe
 
     public static class DataMsg
     {
-        public static U MatchData<T,U> (this IDataMsg msg, Func<T,U> left, Func<Exception,U> right)
+        public static U MatchData<T,U> (
+            this IDataMsg msg, Func<IList<DataActionMsg<T>>,U> left, Func<Exception,U> right)
+            where T : CommonData
         {
             var typedMsg = msg as DataMsg<T>;
             if (typedMsg == null) {
@@ -81,7 +103,9 @@ namespace Toggl.Phoebe
             return typedMsg.Data.Match (left, right);
         }
 
-        public static Task<U> MatchDataAsync<T,U> (this IDataMsg msg, Func<T,Task<U>> left, Func<Exception,U> right)
+        public static Task<U> MatchDataAsync<T,U> (
+            this IDataMsg msg, Func<IList<DataActionMsg<T>>,Task<U>> left, Func<Exception,U> right)
+            where T : CommonData
         {
             var typedMsg = msg as DataMsg<T>;
             if (typedMsg == null) {
@@ -90,8 +114,8 @@ namespace Toggl.Phoebe
             return typedMsg.Data.Match (left, ex => Task.Run (() => right (ex)));
         }
 
-
-        public static T ForceGetData<T> (this IDataMsg msg)
+        public static IList<DataActionMsg<T>> ForceGetData<T> (this IDataMsg msg)
+            where T : CommonData
         {
             var typedMsg = msg as DataMsg<T>;
             if (typedMsg == null) {
@@ -101,15 +125,35 @@ namespace Toggl.Phoebe
             return typedMsg.Data.Match (x => x, e => { throw e; });
         }
 
-        public static DataMsg<T> Success<T> (T data, DataTag tag, DataDir dir)
+        public static T ForceGetWrappedData<T> (this IDataMsg msg)
         {
-            return new DataMsg<T> (Either<T, Exception>.Left (data), tag, dir);
+            var typedMsg = msg as DataMsg<CommonDataWrapper<T>>;
+            if (typedMsg == null) {
+                throw new InvalidCastException (typeof (T).FullName);
+            }
+
+            return typedMsg.Data.Match (x => x.Single ().Data.Data, e => { throw e; });
         }
 
-        public static DataMsg<T> Error<T> (Exception ex, DataTag tag, DataDir dir)
+
+        public static IDataMsg Success<T> (IList<DataActionMsg<T>> items, DataTag tag, DataDir dir)
+            where T : CommonData
+        {
+            return new DataMsg<T> (Either<IList<DataActionMsg<T>>, Exception>.Left (items), tag, dir);
+        }
+
+        public static IDataMsg Success<T> (T data, DataAction action, DataTag tag, DataDir dir)
+            where T : CommonData
+        {
+            var li = new List<DataActionMsg<T>> { new DataActionMsg<T> (data, action) };
+            return Success (li, tag, dir);
+        }
+
+        public static IDataMsg Error<T> (Exception ex, DataTag tag, DataDir dir)
+            where T : CommonData
         {
             ServiceContainer.Resolve<ILogger> ().Error (Util.GetName (tag), ex, ex.Message);
-            return new DataMsg<T> (Either<T, Exception>.Right (ex), tag, dir);
+            return new DataMsg<T> (Either<IList<DataActionMsg<T>>, Exception>.Right (ex), tag, dir);
         }
     }
 }

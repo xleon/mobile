@@ -2,6 +2,7 @@
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe.Data.DataObjects;
 
 namespace Toggl.Phoebe
 {
@@ -22,6 +23,7 @@ namespace Toggl.Phoebe
         }
 
         public static IObservable<DataMsg<T>> Observe<T> ()
+            where T : CommonData
         {
             return observable.OfType<DataMsg<T>> ();
         }

@@ -95,7 +95,7 @@
     <Compile Include="_Dispatcher\**\*.cs" />
     <Compile Include="_Store\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
-    <Compile Include="_Helpers\Literals.cs" />
+    <Compile Include="_Sync\**\.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

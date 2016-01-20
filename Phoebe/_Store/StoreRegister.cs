@@ -29,15 +29,14 @@ namespace Toggl.Phoebe
             case DataTag.TimeEntryStop:
                 return TimeEntryStop;
 
-            case DataTag.TimeEntryRemoveWithUndo:
-                return TimeEntryRemoveWithUndo;
-
-            case DataTag.TimeEntryRestoreFromUndo:
-                return TimeEntryRestoreFromUndo;
-
             case DataTag.TimeEntryRemove:
                 return TimeEntryRemove;
 
+            // These operations don't really do anything with the database
+            case DataTag.TimeEntryRemoveWithUndo:
+            case DataTag.TimeEntryRestoreFromUndo:
+                return DispatcherRegister.LetGoThrough;
+                
             default:
                 throw new ActionNotFoundException (tag, typeof (DispatcherRegister));
             }
@@ -45,18 +44,8 @@ namespace Toggl.Phoebe
 
         static Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg)
         {
-            return msg.MatchDataAsync<TimeEntryJsonMsg, IDataMsg> (
-            async jsonMsg => {
-                var storeMsgs =
-                    await dataStore.ExecuteInTransactionWithMessagesAsync (ctx =>
-                            jsonMsg.ForEach (json => json.Import (ctx)));
-
-                var entryMsg = new TimeEntryMsg (
-                        storeMsgs.Select (x =>
-                            new DataActionMsg<TimeEntryData> ((TimeEntryData)x.Data, x.Action)));
-
-                return DataMsg.Success (entryMsg, msg.Tag, msg.Dir);
-            }, ex => msg);
+            // TODO: 
+            return Task.Run (() => msg);
         }
 
         // Set initial pagination Date to the beginning of the next day.
@@ -79,13 +68,12 @@ namespace Toggl.Phoebe
                 .Take (Literals.TimeEntryLoadMaxInit);
 
             var entryMsg =
-                new TimeEntryMsg (
                     (await baseQuery.OrderByDescending (r => r.StartTime)
                      .ToListAsync ())
-                    .Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Put)));
+                    .Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Put)).ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            Dispatcher.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
+            Dispatcher.SendWrapped (DataTag.TimeEntryLoadFromServer, paginationDate);
 
             paginationDate = entryMsg.Count > 0 ? startDate : paginationDate;
             return DataMsg.Success (entryMsg, msg.Tag, DataDir.None);
@@ -93,7 +81,7 @@ namespace Toggl.Phoebe
 
         static async Task<IDataMsg> TimeEntryStop (IDataMsg msg)
         {
-            var timeEntryData = msg.ForceGetData<TimeEntryData> ();
+            var timeEntryData = msg.ForceGetData<TimeEntryData> ().Single ().Data;
 
             // Code from TimeEntryModel.StopAsync
             if (timeEntryData.State != TimeEntryState.Running) {
@@ -109,35 +97,22 @@ namespace Toggl.Phoebe
 
             // Save TimeEntryData
             var newData = await dataStore.PutAsync (timeEntryData);
-            return DataMsg.Success (new TimeEntryMsg (newData, DataAction.Put), msg.Tag, DataDir.Outcoming);
-        }
 
-        static Task<IDataMsg> TimeEntryRemoveWithUndo (IDataMsg msg)
-        {
-            // Speculative delete: don't touch the db for now
-            var entryMsg = new TimeEntryMsg (msg.ForceGetData<TimeEntryData> (), DataAction.Delete);
-            return Task.Run<IDataMsg> (() => DataMsg.Success (entryMsg, msg.Tag, DataDir.None));
-        }
-
-        static Task<IDataMsg> TimeEntryRestoreFromUndo (IDataMsg msg)
-        {
-            // The entry wasn't really deleted, see RemoveTimeEntryWithUndo
-            var entryMsg = new TimeEntryMsg (msg.ForceGetData<TimeEntryData> (), DataAction.Put);
-            return Task.Run<IDataMsg> (() => DataMsg.Success (entryMsg, msg.Tag, DataDir.None));
+            return DataMsg.Success (newData, DataAction.Put, msg.Tag, DataDir.Outcoming);
         }
 
         static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg)
         {
-            var entries = msg.ForceGetData<IList<TimeEntryData>> ();
+            var entries = msg.ForceGetData<TimeEntryData> ();
 
             // Code from TimeEntryModel.DeleteTimeEntryDataAsync
             var tasks = entries.Select (async data => {
-                if (data.RemoteId == null) {
+                if (data.Data.RemoteId == null) {
                     // We can safely delete the item as it has not been synchronized with the server yet
                     await dataStore.DeleteAsync (data);
                 } else {
                     // Need to just mark this item as deleted so that it could be synced with the server
-                    var newData = new TimeEntryData (data);
+                    var newData = new TimeEntryData (data.Data);
                     newData.DeletedAt = Time.UtcNow;
 
                     MarkDirty (newData);
@@ -147,9 +122,7 @@ namespace Toggl.Phoebe
             });
             await Task.WhenAll (tasks);
 
-            var entryMsg = new TimeEntryMsg (
-                entries.Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Delete)));
-            return DataMsg.Success (entryMsg, msg.Tag, DataDir.Outcoming);
+            return msg;
         }
 
         #region Util

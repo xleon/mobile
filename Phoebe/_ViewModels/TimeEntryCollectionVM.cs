@@ -38,7 +38,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             this.grouper = new TimeEntryGrouper (groupMethod);
             disposable = Store
-                         .Observe<TimeEntryMsg> ()
+                         .Observe<TimeEntryData> ()
                          .TimedBuffer (bufferMilliseconds)
                          .Subscribe (HandleStoreResults);
         }
@@ -51,7 +51,7 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private async void HandleStoreResults (IList<DataMsg<TimeEntryMsg>> results)
+        private async void HandleStoreResults (IList<DataMsg<TimeEntryData>> results)
         {
             var resultsGroup = results.Select (x => x.Data).Split ();
 
@@ -81,7 +81,7 @@ namespace Toggl.Phoebe.ViewModels
                     UpdateTimeHolders (timeHolders, msg.Data, msg.Action);
                 }
 
-                // TODO: Temporary
+                // TODO: Temporary, every access to the database should be done in the Store component
                 foreach (var holder in timeHolders) {
                     if (holder.Info == null) {
                         holder.Info = await Store.LoadTimeEntryInfoAsync (holder.Data);
@@ -142,7 +142,7 @@ namespace Toggl.Phoebe.ViewModels
             return grouper.Group (timeHolders)
                    .OrderByDescending (x => x.GetStartTime ())
                    .GroupBy (x => x.GetStartTime ().ToLocalTime().Date)
-                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr)))
                    .ToList ();
         }
 
@@ -165,7 +165,8 @@ namespace Toggl.Phoebe.ViewModels
                 } else {
                     entries = new [] { holder.Data };
                 }
-                Dispatcher.Send (DataTag.TimeEntryRemove, entries);
+                Dispatcher.Send (DataTag.TimeEntryRemove, entries.Select (x =>
+                    new DataActionMsg<TimeEntryData> (x, DataAction.Delete)));
             };
 
             System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
@@ -179,12 +180,12 @@ namespace Toggl.Phoebe.ViewModels
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                Dispatcher.Send (DataTag.TimeEntryStop, timeEntryHolder.Data);
+                Dispatcher.Send (DataTag.TimeEntryStop, timeEntryHolder.Data, DataAction.Put);
             }
             lastRemovedItem = timeEntryHolder;
 
             // Remove item only from list
-            Dispatcher.Send (DataTag.TimeEntryRemoveWithUndo, timeEntryHolder.Data);
+            Dispatcher.Send (DataTag.TimeEntryRemoveWithUndo, timeEntryHolder.Data, DataAction.Delete);
 
             // Create Undo timer
             if (undoTimer != null) {

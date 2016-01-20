@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Phoebe
@@ -23,12 +27,31 @@ namespace Toggl.Phoebe
                 .Where (x => x.Tag != DataTag.UncaughtError);
         }
 
-        public static void Send<T> (DataTag tag, T data)
+        public static void Send (DataTag tag)
         {
-            subject.OnNext (DataMsg.Success<T> (data, tag, DataDir.None));
+            subject.OnNext (DataMsg.Success<CommonData> (null, DataAction.Put, tag, DataDir.None));
         }
 
+        public static void SendWrapped<T> (DataTag tag, T data)
+        {
+            var wrapped = new CommonDataWrapper<T> (data);
+            subject.OnNext (DataMsg.Success<CommonDataWrapper<T>> (wrapped, DataAction.Put, tag, DataDir.None));
+        }
+
+        public static void Send<T> (DataTag tag, T data, DataAction action = DataAction.Put)
+            where T : CommonData
+        {
+            subject.OnNext (DataMsg.Success<T> (data, action, tag, DataDir.None));
+        }
+        
+        public static void Send<T> (DataTag tag, IEnumerable<DataActionMsg<T>> msgs)
+            where T : CommonData
+        {
+            subject.OnNext (DataMsg.Success<T> (msgs.ToList (), tag, DataDir.None));
+        }
         public static void SendError<T> (DataTag tag, Exception ex)
+
+            where T : CommonData
         {
             subject.OnNext (DataMsg.Error<T> (ex, tag, DataDir.None));
         }
@@ -39,6 +62,6 @@ namespace Toggl.Phoebe
         }
 
         public static IObservable<IDataMsg> PropagateError (Exception ex) =>
-        Observable.Return (DataMsg.Error<object> (ex, DataTag.UncaughtError, DataDir.None));
+            Observable.Return (DataMsg.Error<CommonData> (ex, DataTag.UncaughtError, DataDir.None));
     }
 }

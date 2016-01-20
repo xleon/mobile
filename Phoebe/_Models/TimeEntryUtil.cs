@@ -49,26 +49,5 @@ namespace Toggl.Phoebe.Models
                    ? groups.Cast<TimeEntryHolder> () : TimeEntryGroup.Ungroup (groups.Cast<TimeEntryGroup> ());
         }
     }
-
-    public class TimeEntryJsonMsg : List<TimeEntryJson>
-    {
-        public TimeEntryJsonMsg (IEnumerable<TimeEntryJson> messages)
-            : base (messages)
-        {
-        }
-    }
-
-    public class TimeEntryMsg : List<DataActionMsg<TimeEntryData>>
-    {
-        public TimeEntryMsg (IEnumerable<DataActionMsg<TimeEntryData>> messages)
-            : base (messages)
-        {
-        }
-
-        public TimeEntryMsg (TimeEntryData entry, DataAction action)
-            : base (new [] { new DataActionMsg<TimeEntryData> (entry, action) })
-        {
-        }
-    }
 }
 

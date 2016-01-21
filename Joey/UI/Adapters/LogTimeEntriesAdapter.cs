@@ -234,6 +234,12 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     NotSyncedView.Visibility = ViewStates.Visible;
                 }
+                var notSyncedShape = NotSyncedView.Background as GradientDrawable;
+                if (DataSource.Data.IsDirty && DataSource.Data.RemoteId.HasValue) {
+                    notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.light_gray));
+                } else {
+                    notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.material_red));
+                }
 
                 var info = DataSource.Info;
                 if (!String.IsNullOrWhiteSpace (info.ProjectData.Name)) {

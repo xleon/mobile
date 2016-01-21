@@ -17,14 +17,6 @@
             android:layout_height="72dp"
             android:layout_marginRight="12dp"
             android:background="@drawable/ColoredSideShape" />
-        <ImageView
-            android:id="@+id/NotSyncedIcon"
-            android:gravity="center"
-            android:layout_marginLeft="-6dp"
-            android:paddingRight="6dp"
-            android:src="@drawable/IcError"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent" />
         <LinearLayout
             android:orientation="vertical"
             android:layout_weight="1"
@@ -112,4 +104,12 @@
             android:clickable="true"
             android:background="@drawable/play_button_background" />
     </LinearLayout>
+    <View
+        android:id="@+id/NotSyncedIcon"
+        android:background="@drawable/itemsyncerror"
+        android:layout_width="7dp"
+        android:layout_height="7dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentRight="true" />
 </RelativeLayout>

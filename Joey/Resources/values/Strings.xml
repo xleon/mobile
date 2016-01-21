@@ -228,4 +228,5 @@
     <string name="WearEntryDefaultDescription">wear entry</string>
     <string name="TimeEntriesListFooterError">An error ocurred downloading data</string>
     <string name="TimeEntriesListFooterTryAgain">Try again</string>
+    <string name="EditTimeEntrySyncFailed">This time entry has failed to sync correctly</string>
 </resources>

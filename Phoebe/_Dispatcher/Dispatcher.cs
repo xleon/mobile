@@ -29,31 +29,17 @@ namespace Toggl.Phoebe
 
         public static void Send (DataTag tag)
         {
-            subject.OnNext (DataMsg.Success<CommonData> (null, DataAction.Put, tag, DataDir.None));
+            subject.OnNext (DataMsg.Success<object> (tag, null));
         }
 
-        public static void SendWrapped<T> (DataTag tag, T data)
+        public static void Send<T> (DataTag tag, T data)
         {
-            var wrapped = new CommonDataWrapper<T> (data);
-            subject.OnNext (DataMsg.Success<CommonDataWrapper<T>> (wrapped, DataAction.Put, tag, DataDir.None));
+            subject.OnNext (DataMsg.Success<T> (tag, data));
         }
 
-        public static void Send<T> (DataTag tag, T data, DataAction action = DataAction.Put)
-            where T : CommonData
-        {
-            subject.OnNext (DataMsg.Success<T> (data, action, tag, DataDir.None));
-        }
-        
-        public static void Send<T> (DataTag tag, IEnumerable<DataActionMsg<T>> msgs)
-            where T : CommonData
-        {
-            subject.OnNext (DataMsg.Success<T> (msgs.ToList (), tag, DataDir.None));
-        }
         public static void SendError<T> (DataTag tag, Exception ex)
-
-            where T : CommonData
         {
-            subject.OnNext (DataMsg.Error<T> (ex, tag, DataDir.None));
+            subject.OnNext (DataMsg.Error<T> (tag, ex));
         }
 
         public static IObservable<IDataMsg> Observe ()
@@ -62,6 +48,19 @@ namespace Toggl.Phoebe
         }
 
         public static IObservable<IDataMsg> PropagateError (Exception ex) =>
-            Observable.Return (DataMsg.Error<CommonData> (ex, DataTag.UncaughtError, DataDir.None));
+            Observable.Return (DataMsg.Error<object> (DataTag.UncaughtError, ex));
+    }
+
+    public class ActionNotFoundException : Exception
+    {
+        public DataTag Tag { get; private set; }
+        public Type Register { get; private set; }
+
+        public ActionNotFoundException (DataTag tag, Type register)
+            : base (Enum.GetName (typeof (DataTag), tag) + " not found in " + register.FullName)
+        {
+            Tag = tag;
+            Register = register;
+        }
     }
 }

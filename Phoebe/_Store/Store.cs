@@ -23,10 +23,13 @@ namespace Toggl.Phoebe
         }
 
         public static IObservable<DataMsg<T>> Observe<T> ()
-            where T : CommonData
         {
             return observable.OfType<DataMsg<T>> ();
         }
+
+        public static IObservable<IDataMsg> ObserveTag (DataTag tag)
+        {
+            return observable.Where (x => x.Tag == tag);
+        }
     }
 }
-

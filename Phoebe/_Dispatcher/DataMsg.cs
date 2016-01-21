@@ -21,80 +21,78 @@ namespace Toggl.Phoebe
         TimeEntryRestoreFromUndo,
     }
 
+    public enum DataVerb {
+        Post,
+        Put,
+        Delete
+    }
+
     public enum DataDir {
         Incoming,
         Outcoming,
         None
     }
 
-    public class ActionNotFoundException : Exception
-    {
-        public DataTag Tag { get; private set; }
-        public Type Register { get; private set; }
-
-        public ActionNotFoundException (DataTag tag, Type register)
-        : base (Enum.GetName (typeof (DataTag), tag) + " not found in " + register.FullName)
-        {
-            Tag = tag;
-            Register = register;
-        }
-    }
-
-    public class CommonDataWrapper<T> : CommonData
-    {
-        public T Data { get; private set; }
-
-        public CommonDataWrapper (T data)
-        {
-            Data = data;
-        }
-    }
-
-    public class DataActionMsg<T>
-    {
-        public T Data { get; private set; }
-        public DataAction Action { get; private set; }
-
-        public DataActionMsg (T data, DataAction action)
-        {
-            Data = data;
-            Action = action;
-        }
-
-        public DataActionMsg (DataChangeMessage msg)
-        {
-            Data = (T)msg.Data;
-            Action = msg.Action;
-        }
-    }
-
     public interface IDataMsg
     {
         DataTag Tag { get; }
-        DataDir Dir { get; }
         Type DataType { get; }
     }
 
-    public class DataMsg<T> : IDataMsg where T : CommonData
+    public class DataMsg<T> : IDataMsg
     {
         public DataTag Tag { get; private set; }
-        public DataDir Dir { get; private set; }
         public Type DataType { get { return typeof (T); } }
-        public Either<IList<DataActionMsg<T>>, Exception> Data { get; private set; }
+        public Either<T, Exception> Data { get; private set; }
 
-        internal DataMsg (Either<IList<DataActionMsg<T>>, Exception> data, DataTag tag, DataDir dir)
+        internal DataMsg (DataTag tag, Either<T, Exception> data)
         {
             Data = data;
             Tag = tag;
-            Dir = dir;
         }
+    }
+
+    public interface IDataSyncMsg
+    {
+        DataDir Dir { get; }
+        DataVerb Verb { get; }
+        Type DataType { get; }
+    }
+
+    public class DataSyncMsg<T> : IDataSyncMsg
+    {
+        public DataDir Dir { get; private set; }
+        public DataVerb Verb { get; private set; }
+        public T Data { get; private set; }
+        public Type DataType { get { return typeof(T); } }
+
+        public DataSyncMsg (DataDir dir, DataVerb verb, T data)
+        {
+            Dir = dir;
+            Verb = verb;
+            Data = data;
+        }
+    }
+
+    public interface IDataSyncGroupMsg
+    {
+        Type DataType { get; }
+        IEnumerable<IDataSyncMsg> RawMessages { get; }
+    }
+
+    public interface IDataSyncGroupMsg<T> : IDataSyncGroupMsg
+    {
+        IEnumerable<DataSyncMsg<T>> Messages { get; }
     }
 
     public static class DataMsg
     {
-        public static U MatchData<T,U> (
-            this IDataMsg msg, Func<IList<DataActionMsg<T>>,U> left, Func<Exception,U> right)
-            where T : CommonData
+        public static DataVerb ToVerb (this DataAction action)
+        {
+            return action == DataAction.Put ? DataVerb.Put : DataVerb.Delete;
+        }
+
+        public static U MatchData<T,U> (this IDataMsg msg, Func<T,U> left, Func<Exception,U> right)
         {
             var typedMsg = msg as DataMsg<T>;
             if (typedMsg == null) {
@@ -103,9 +101,7 @@ namespace Toggl.Phoebe
             return typedMsg.Data.Match (left, right);
         }
 
-        public static Task<U> MatchDataAsync<T,U> (
-            this IDataMsg msg, Func<IList<DataActionMsg<T>>,Task<U>> left, Func<Exception,U> right)
-            where T : CommonData
+        public static Task<U> MatchDataAsync<T,U> (this IDataMsg msg, Func<T,Task<U>> left, Func<Exception,U> right)
         {
             var typedMsg = msg as DataMsg<T>;
             if (typedMsg == null) {
@@ -114,8 +110,7 @@ namespace Toggl.Phoebe
             return typedMsg.Data.Match (left, ex => Task.Run (() => right (ex)));
         }
 
-        public static IList<DataActionMsg<T>> ForceGetData<T> (this IDataMsg msg)
-            where T : CommonData
+        public static T ForceGetData<T> (this IDataMsg msg)
         {
             var typedMsg = msg as DataMsg<T>;
             if (typedMsg == null) {
@@ -125,35 +120,15 @@ namespace Toggl.Phoebe
             return typedMsg.Data.Match (x => x, e => { throw e; });
         }
 
-        public static T ForceGetWrappedData<T> (this IDataMsg msg)
+        public static IDataMsg Success<T> (DataTag tag, T data)
         {
-            var typedMsg = msg as DataMsg<CommonDataWrapper<T>>;
-            if (typedMsg == null) {
-                throw new InvalidCastException (typeof (T).FullName);
-            }
-
-            return typedMsg.Data.Match (x => x.Single ().Data.Data, e => { throw e; });
+            return new DataMsg<T> (tag, Either<T, Exception>.Left (data));
         }
 
-
-        public static IDataMsg Success<T> (IList<DataActionMsg<T>> items, DataTag tag, DataDir dir)
-            where T : CommonData
-        {
-            return new DataMsg<T> (Either<IList<DataActionMsg<T>>, Exception>.Left (items), tag, dir);
-        }
-
-        public static IDataMsg Success<T> (T data, DataAction action, DataTag tag, DataDir dir)
-            where T : CommonData
-        {
-            var li = new List<DataActionMsg<T>> { new DataActionMsg<T> (data, action) };
-            return Success (li, tag, dir);
-        }
-
-        public static IDataMsg Error<T> (Exception ex, DataTag tag, DataDir dir)
-            where T : CommonData
+        public static IDataMsg Error<T> (DataTag tag, Exception ex)
         {
             ServiceContainer.Resolve<ILogger> ().Error (Util.GetName (tag), ex, ex.Message);
-            return new DataMsg<T> (Either<IList<DataActionMsg<T>>, Exception>.Right (ex), tag, dir);
+            return new DataMsg<T> (tag, Either<T, Exception>.Right (ex));
         }
     }
 }

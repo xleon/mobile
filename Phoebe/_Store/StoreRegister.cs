@@ -42,10 +42,17 @@ namespace Toggl.Phoebe
             }
         }
 
-        static Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg)
+        static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg)
         {
-            // TODO: 
-            return Task.Run (() => msg);
+            var jsonEntries = msg.ForceGetData<List<TimeEntryJson>> ();
+
+            var dbMsgs = await dataStore.ExecuteInTransactionWithMessagesAsync (ctx =>
+                    jsonEntries.ForEach (json => json.Import (ctx)));
+
+            var entryMsg = new TimeEntryMsg (DataDir.Incoming, dbMsgs.Select (
+                x => Tuple.Create (x.Action.ToVerb (), (TimeEntryData)x.Data)));
+
+            return DataMsg.Success (msg.Tag, entryMsg);
         }
 
         // Set initial pagination Date to the beginning of the next day.
@@ -67,62 +74,77 @@ namespace Toggl.Phoebe
                         r.UserId == userId)
                 .Take (Literals.TimeEntryLoadMaxInit);
 
-            var entryMsg =
-                    (await baseQuery.OrderByDescending (r => r.StartTime)
-                     .ToListAsync ())
-                    .Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Put)).ToList ();
+            var dbMsgs = (await baseQuery.OrderByDescending (r => r.StartTime).ToListAsync ())
+                .Select (x => Tuple.Create (DataVerb.Post, x)).ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            Dispatcher.SendWrapped (DataTag.TimeEntryLoadFromServer, paginationDate);
+            Dispatcher.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
+            paginationDate = dbMsgs.Count > 0 ? startDate : paginationDate;
 
-            paginationDate = entryMsg.Count > 0 ? startDate : paginationDate;
-            return DataMsg.Success (entryMsg, msg.Tag, DataDir.None);
+            // TODO: Check if there're entries in the db that hasn't been synced
+            return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbMsgs));
         }
 
         static async Task<IDataMsg> TimeEntryStop (IDataMsg msg)
         {
-            var timeEntryData = msg.ForceGetData<TimeEntryData> ().Single ().Data;
+            var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
 
-            // Code from TimeEntryModel.StopAsync
-            if (timeEntryData.State != TimeEntryState.Running) {
-                throw new InvalidOperationException (
-                    String.Format ("Cannot stop a time entry in {0} state.", timeEntryData.State));
+            var newEntries = new List<Tuple<DataVerb, TimeEntryData>> ();
+            foreach (var tuple in entryMsg) {
+                var entryData = tuple.Item2;
+
+                // Code from TimeEntryModel.StopAsync
+                if (entryData.State != TimeEntryState.Running) {
+                    throw new InvalidOperationException (
+                        String.Format ("Cannot stop a time entry in {0} state.", entryData.State));
+                }
+
+                // Mutate data
+                entryData = MutateData (entryData, data => {
+                    data.State = TimeEntryState.Finished;
+                    data.StopTime = Time.UtcNow;
+                });
+
+                // Save TimeEntryData
+                var newData = await dataStore.PutAsync (entryData);
+
+                newEntries.Add (Tuple.Create (tuple.Item1, newData));
             }
 
-            // Mutate data
-            timeEntryData = MutateData (timeEntryData, data => {
-                data.State = TimeEntryState.Finished;
-                data.StopTime = Time.UtcNow;
-            });
-
-            // Save TimeEntryData
-            var newData = await dataStore.PutAsync (timeEntryData);
-
-            return DataMsg.Success (newData, DataAction.Put, msg.Tag, DataDir.Outcoming);
+            return DataMsg.Success (msg.Tag, new TimeEntryMsg (entryMsg.Dir, newEntries));
         }
 
         static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg)
         {
-            var entries = msg.ForceGetData<TimeEntryData> ();
+            var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
 
-            // Code from TimeEntryModel.DeleteTimeEntryDataAsync
-            var tasks = entries.Select (async data => {
-                if (data.Data.RemoteId == null) {
+            var newEntries = new List<Tuple<DataVerb, TimeEntryData>> ();
+            foreach (var tuple in entryMsg) {
+                var entryData = tuple.Item2;
+
+                // Code from TimeEntryModel.DeleteTimeEntryDataAsync
+                if (entryData.RemoteId == null) {
                     // We can safely delete the item as it has not been synchronized with the server yet
-                    await dataStore.DeleteAsync (data);
+                    await dataStore.DeleteAsync (entryData);
+
+                    // TODO: Ignore these entries? (They don't need to be synced and they're removed from the view)
+                    // Or change the DataDir to Incoming?
+                    // newEntries.Add (Tuple.Create (tuple.Item1, entryData));
                 } else {
                     // Need to just mark this item as deleted so that it could be synced with the server
-                    var newData = new TimeEntryData (data.Data);
+                    var newData = new TimeEntryData (entryData);
                     newData.DeletedAt = Time.UtcNow;
 
+                    // TODO: Don't mark dirty, SyncOutManager takes care of syncing
                     MarkDirty (newData);
 
                     await dataStore.PutAsync (newData);
+                    newEntries.Add (Tuple.Create (tuple.Item1, newData));
                 }
-            });
-            await Task.WhenAll (tasks);
+            }
 
-            return msg;
+            return DataMsg.Success (msg.Tag, new TimeEntryMsg (entryMsg.Dir, newEntries));
+
         }
 
         #region Util

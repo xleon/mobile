@@ -35,22 +35,14 @@ namespace Toggl.Phoebe
         static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg)
         {
             const int daysLoad = Literals.TimeEntryLoadDays;
-            var startFrom = msg.ForceGetWrappedData<DateTime> ();
+            var startFrom = msg.ForceGetData<DateTime> ();
 
             try {
                 // Download new Entries
                 var client = ServiceContainer.Resolve<ITogglClient> ();
                 var jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
 
-                // TODO: Temporary, every database writing should be done in the Store component
-                // Move it once, the JSON and DB serialization have been separated
-                var msgs = await ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ()
-                    .ExecuteInTransactionWithMessagesAsync (ctx =>
-                        jsonEntries.ForEach (json => json.Import (ctx)));
-
-                var dataMsgs = msgs.Select (x => new DataActionMsg<TimeEntryData> (x)).ToList ();
-
-                return DataMsg.Success (dataMsgs, msg.Tag, DataDir.Incoming);
+                return DataMsg.Success (msg.Tag, jsonEntries);
 
             } catch (Exception exc) {
                 var tag = typeof (DispatcherRegister).Name;
@@ -63,7 +55,7 @@ namespace Toggl.Phoebe
                     log.Warning (tag, exc, errorMsg, startFrom, daysLoad);
                 }
 
-                return DataMsg.Error<TimeEntryData> (exc, msg.Tag, DataDir.Incoming);
+                return DataMsg.Error<TimeEntryData> (msg.Tag, exc);
             }
         }
 

@@ -77,6 +77,9 @@
     <Reference Include="Mindscape.Raygun4Net.Xamarin.Android">
       <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
     </Reference>
+    <Reference Include="AutoMapper">
+      <HintPath>..\packages\AutoMapper.4.1.1\lib\MonoAndroid\AutoMapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Contrib\XPlatUtils\XPlatUtils\ServiceContainer.cs">
@@ -96,10 +99,37 @@
     <Compile Include="_Store\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
     <Compile Include="_Helpers\Literals.cs" />
+    <Compile Include="_Net\ITogglClient.cs" />
+    <Compile Include="_Net\TogglHttpResponseMessage.cs" />
+    <Compile Include="_Net\TogglRestClient.cs" />
+    <Compile Include="_Net\UnsuccessfulRequestException.cs" />
+    <Compile Include="_Data\Json\ActionJson.cs" />
+    <Compile Include="_Data\Json\FeedbackJson.cs" />
+    <Compile Include="_Data\Json\OBMJson.cs" />
+    <Compile Include="_Data\Json\ReportJson.cs" />
+    <Compile Include="_Data\Models\ClientData.cs" />
+    <Compile Include="_Data\Models\CommonData.cs" />
+    <Compile Include="_Data\Models\ProjectData.cs" />
+    <Compile Include="_Data\Models\ProjectUserData.cs" />
+    <Compile Include="_Data\Models\ReportData.cs" />
+    <Compile Include="_Data\Models\TagData.cs" />
+    <Compile Include="_Data\Models\TaskData.cs" />
+    <Compile Include="_Data\Models\TimeCorrectionData.cs" />
+    <Compile Include="_Data\Models\TimeEntryData.cs" />
+    <Compile Include="_Data\Models\TimeEntryTagData.cs" />
+    <Compile Include="_Data\Models\UserData.cs" />
+    <Compile Include="_Data\Models\UserRelatedData.cs" />
+    <Compile Include="_Data\Models\WorkspaceData.cs" />
+    <Compile Include="_Data\Models\WorkspaceUserData.cs" />
+    <Compile Include="_Data\Duration.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />
     <Folder Include="Contrib\XPlatUtils\" />
+    <Folder Include="_Net\" />
+    <Folder Include="_Data\" />
+    <Folder Include="_Data\Json\" />
+    <Folder Include="_Data\Models\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

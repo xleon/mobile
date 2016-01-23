@@ -53,7 +53,7 @@ namespace Toggl.Phoebe.Models
     public class TimeEntryJsonMsg : List<TimeEntryJson>
     {
         public TimeEntryJsonMsg (IEnumerable<TimeEntryJson> messages)
-            : base (messages)
+        : base (messages)
         {
         }
     }
@@ -61,12 +61,12 @@ namespace Toggl.Phoebe.Models
     public class TimeEntryMsg : List<DataActionMsg<TimeEntryData>>
     {
         public TimeEntryMsg (IEnumerable<DataActionMsg<TimeEntryData>> messages)
-            : base (messages)
+        : base (messages)
         {
         }
 
         public TimeEntryMsg (TimeEntryData entry, DataAction action)
-            : base (new [] { new DataActionMsg<TimeEntryData> (entry, action) })
+        : base (new [] { new DataActionMsg<TimeEntryData> (entry, action) })
         {
         }
     }

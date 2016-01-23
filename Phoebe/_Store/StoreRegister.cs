@@ -52,8 +52,8 @@ namespace Toggl.Phoebe
                             jsonMsg.ForEach (json => json.Import (ctx)));
 
                 var entryMsg = new TimeEntryMsg (
-                        storeMsgs.Select (x =>
-                            new DataActionMsg<TimeEntryData> ((TimeEntryData)x.Data, x.Action)));
+                    storeMsgs.Select (x =>
+                                      new DataActionMsg<TimeEntryData> ((TimeEntryData)x.Data, x.Action)));
 
                 return DataMsg.Success (entryMsg, msg.Tag, msg.Dir);
             }, ex => msg);
@@ -80,9 +80,9 @@ namespace Toggl.Phoebe
 
             var entryMsg =
                 new TimeEntryMsg (
-                    (await baseQuery.OrderByDescending (r => r.StartTime)
-                     .ToListAsync ())
-                    .Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Put)));
+                (await baseQuery.OrderByDescending (r => r.StartTime)
+                 .ToListAsync ())
+                .Select (x => new DataActionMsg<TimeEntryData> (x, DataAction.Put)));
 
             // Try to update with latest data from server with old paginationDate to get the same data
             Dispatcher.Send (DataTag.TimeEntryLoadFromServer, paginationDate);

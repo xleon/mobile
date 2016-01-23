@@ -16,11 +16,14 @@ namespace Toggl.Phoebe._Data.Models
             IsActive = other.IsActive;
             WorkspaceId = other.WorkspaceId;
             UserId = other.UserId;
+            Email = other.Email;
         }
 
         public bool IsAdmin { get; set; }
 
         public bool IsActive { get; set; }
+
+        public string Email { get; set; }
 
         public Guid WorkspaceId { get; set; }
 

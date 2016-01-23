@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Toggl.Phoebe._Data.Json;
-using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Models;
 using XPlatUtils;
 
 namespace Toggl.Phoebe._Net
@@ -28,17 +28,18 @@ namespace Toggl.Phoebe._Net
             v8Url = new Uri (url, "v8/");
             v9Url = new Uri (url, "v9/");
             this.authToken = authToken;
+            AutoMapperConfig.RegisterMappings();
         }
 
-        private HttpClient MakeHttpClient ()
+        private HttpClient MakeHttpClient()
         {
             // Cannot share HttpClient instance between threads as it might (and will) cause InvalidOperationExceptions
             // occasionally.
-            var client = new HttpClient () {
+            var client = new HttpClient() {
                 Timeout = TimeSpan.FromSeconds (10),
             };
             var headers = client.DefaultRequestHeaders;
-            headers.UserAgent.Clear ();
+            headers.UserAgent.Clear();
             headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));
             headers.Accept.Add (new MediaTypeWithQualityHeaderValue ("application/json"));
 
@@ -48,7 +49,7 @@ namespace Toggl.Phoebe._Net
         public async Task<T> Create<T> (T dataObject)
         where T : CommonData
         {
-            var type = dataObject.GetType ();
+            var type = dataObject.GetType();
             if (type == typeof (ClientData)) {
                 return (T) (object)await CreateClient ((ClientData) (object)dataObject);
             } else if (type == typeof (ProjectData)) {
@@ -68,7 +69,7 @@ namespace Toggl.Phoebe._Net
             } else if (type == typeof (ProjectUserData)) {
                 return (T) (object)await CreateProjectUser ((ProjectUserData) (object)dataObject);
             } else {
-                throw new NotSupportedException (String.Format ("Creating of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Creating of {0} is not supported.", type));
             }
         }
 
@@ -89,29 +90,29 @@ namespace Toggl.Phoebe._Net
             } else if (type == typeof (UserData)) {
                 return (T) (object)await GetUser (id);
             } else {
-                throw new NotSupportedException (String.Format ("Fetching of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Fetching of {0} is not supported.", type));
             }
         }
 
-        public async Task<List<T>> List<T> ()
+        public async Task<List<T>> List<T>()
         where T : CommonData
         {
             var type = typeof (T);
             if (type == typeof (ClientData)) {
-                return (List<T>) (object)await ListClients ();
+                return (List<T>) (object)await ListClients();
             } else if (type == typeof (TimeEntryData)) {
-                return (List<T>) (object)await ListTimeEntries ();
+                return (List<T>) (object)await ListTimeEntries();
             } else if (type == typeof (WorkspaceData)) {
-                return (List<T>) (object)await ListWorkspaces ();
+                return (List<T>) (object)await ListWorkspaces();
             } else {
-                throw new NotSupportedException (String.Format ("Listing of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Listing of {0} is not supported.", type));
             }
         }
 
         public async Task<T> Update<T> (T dataObject)
         where T : CommonData
         {
-            var type = dataObject.GetType ();
+            var type = dataObject.GetType();
             if (type == typeof (ClientData)) {
                 return (T) (object)await UpdateClient ((ClientData) (object)dataObject);
             } else if (type == typeof (ProjectData)) {
@@ -131,14 +132,14 @@ namespace Toggl.Phoebe._Net
             } else if (type == typeof (ProjectUserData)) {
                 return (T) (object)await UpdateProjectUser ((ProjectUserData) (object)dataObject);
             } else {
-                throw new NotSupportedException (String.Format ("Updating of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Updating of {0} is not supported.", type));
             }
         }
 
         public async Task Delete<T> (T dataObject)
         where T : CommonData
         {
-            var type = dataObject.GetType ();
+            var type = dataObject.GetType();
             if (type == typeof (ClientData)) {
                 await DeleteClient ((ClientData) (object)dataObject);
             } else if (type == typeof (ProjectData)) {
@@ -154,7 +155,7 @@ namespace Toggl.Phoebe._Net
             } else if (type == typeof (ProjectUserData)) {
                 await DeleteProjectUser ((ProjectUserData) (object)dataObject);
             } else {
-                throw new NotSupportedException (String.Format ("Deleting of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Deleting of {0} is not supported.", type));
             }
         }
 
@@ -172,45 +173,45 @@ namespace Toggl.Phoebe._Net
                 await Task.WhenAll (dataObjects.Select ((object json) => DeleteTimeEntry ((TimeEntryData)json)));
             } else if (type == typeof (CommonData)) {
                 // Cannot use LINQ due to AOT failure when using lambdas that use generic method calls inside them.
-                var tasks = new List<Task> ();
+                var tasks = new List<Task>();
                 foreach (var data in dataObjects) {
                     tasks.Add (Delete (data));
                 }
                 await Task.WhenAll (tasks);
             } else {
-                throw new NotSupportedException (String.Format ("Batch deleting of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Batch deleting of {0} is not supported.", type));
             }
         }
 
-        private string StringifyData (CommonData dataObject)
+        private string StringifyJson (CommonJson jsonObject)
         {
-            var type = dataObject.GetType ();
+            var type = jsonObject.GetType();
 
             string dataKey;
-            if (type == typeof (TimeEntryData)) {
+            if (type == typeof (TimeEntryJson)) {
                 dataKey = "time_entry";
-            } else if (type == typeof (ProjectData)) {
+            } else if (type == typeof (ProjectJson)) {
                 dataKey = "project";
-            } else if (type == typeof (ClientData)) {
+            } else if (type == typeof (ClientJson)) {
                 dataKey = "client";
-            } else if (type == typeof (TaskData)) {
+            } else if (type == typeof (TaskJson)) {
                 dataKey = "task";
-            } else if (type == typeof (WorkspaceData)) {
+            } else if (type == typeof (WorkspaceJson)) {
                 dataKey = "workspace";
-            } else if (type == typeof (UserData)) {
+            } else if (type == typeof (UserJson)) {
                 dataKey = "user";
-            } else if (type == typeof (TagData)) {
+            } else if (type == typeof (TagJson)) {
                 dataKey = "tag";
-            } else if (type == typeof (WorkspaceUserData)) {
+            } else if (type == typeof (WorkspaceUserJson)) {
                 dataKey = "workspace_user";
-            } else if (type == typeof (ProjectUserData)) {
+            } else if (type == typeof (ProjectUserJson)) {
                 dataKey = "project_user";
             } else {
-                throw new ArgumentException (String.Format ("Don't know how to handle JSON object of type {0}.", type), "jsonObject");
+                throw new ArgumentException (string.Format ("Don't know how to handle JSON object of type {0}.", type), "jsonObject");
             }
 
-            var json = new JObject ();
-            json.Add (dataKey, JObject.FromObject (dataObject));
+            var json = new JObject();
+            json.Add (dataKey, JObject.FromObject (jsonObject));
             return json.ToString (Formatting.None);
         }
 
@@ -226,105 +227,111 @@ namespace Toggl.Phoebe._Net
 
         private async Task PrepareResponse (HttpResponseMessage resp, TimeSpan requestTime)
         {
-            ServiceContainer.Resolve<MessageBus> ().Send (new TogglHttpResponseMessage (this, resp, requestTime));
+            ServiceContainer.Resolve<MessageBus>().Send (new TogglHttpResponseMessage (this, resp, requestTime));
             if (!resp.IsSuccessStatusCode) {
                 string content = string.Empty;
                 if (resp.Content != null) {
-                    content = await resp.Content.ReadAsStringAsync ().ConfigureAwait (false);
+                    content = await resp.Content.ReadAsStringAsync().ConfigureAwait (false);
                 }
                 throw new UnsuccessfulRequestException (resp.StatusCode, resp.ReasonPhrase + ":" + content);
             }
         }
 
-        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq, CancellationToken cancellationToken = CancellationToken.None)
+        private Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq)
         {
-            using (var httpClient = MakeHttpClient ()) {
-                var reqTimer = Stopwatch.StartNew ();
-                var httpResp = await httpClient.SendAsync (httpReq, cancellationToken)
-                               .ConfigureAwait (false);
-                reqTimer.Stop ();
+            return SendAsync (httpReq, CancellationToken.None);
+        }
+
+        private async Task<HttpResponseMessage> SendAsync (HttpRequestMessage httpReq, CancellationToken cancellationToken)
+        {
+            using (var httpClient = MakeHttpClient()) {
+                var reqTimer = Stopwatch.StartNew();
+                var httpResp = await httpClient.SendAsync (httpReq, cancellationToken).ConfigureAwait (false);
+                reqTimer.Stop();
                 await PrepareResponse (httpResp, reqTimer.Elapsed);
                 return httpResp;
             }
         }
 
-        private async Task<T> CreateObject<T> (Uri url, T dataObject)
-        where T : CommonData, new()
+        private async Task<T> CreateObject<T, V> (Uri url, T dataObject)
+        where T : CommonData where V : CommonJson, new()
         {
-            var json = StringifyData (dataObject);
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var jsonObj = AutoMapper.Mapper.Map<V> (dataObject);
+            var json = StringifyJson (jsonObj);
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
-            var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
-            return wrap.Data;
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait (false);
+
+            var wrap = JsonConvert.DeserializeObject<Wrapper<V>> (respData);
+            var newDataObj = AutoMapper.Mapper.Map<T> (wrap.Data);
+            return newDataObj;
         }
 
-        private async Task<T> GetObject<T> (Uri url)
-        where T : CommonData, new()
+        private async Task<T> GetObject<T, V> (Uri url)
+        where T : CommonData where V : CommonJson, new()
         {
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
-            var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
-            return wrap.Data;
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait (false);
+
+            var wrap = JsonConvert.DeserializeObject<Wrapper<V>> (respData);
+            var dataObj = AutoMapper.Mapper.Map<T> (wrap.Data);
+            return dataObj;
         }
 
-        private async Task<T> UpdateObject<T> (Uri url, T dataObject)
-        where T : CommonData, new()
+        private async Task<T> UpdateObject<T, V> (Uri url, T dataObject)
+        where T : CommonData where V : CommonJson, new()
         {
-            var json = StringifyData (dataObject);
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var jsonObj = AutoMapper.Mapper.Map<V> (dataObject);
+            var json = StringifyJson (jsonObj);
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Put,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
-            var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
-            return wrap.Data;
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait (false);
+
+            var wrap = JsonConvert.DeserializeObject<Wrapper<V>> (respData);
+            var newDataObj = AutoMapper.Mapper.Map<T> (wrap.Data);
+            return newDataObj;
         }
 
-        private Task<List<T>> ListObjects<T> (Uri url)
-        where T : CommonData, new()
+        private Task<List<T>> ListObjects<T, V> (Uri url)
+        where T : CommonData where V : CommonJson, new()
         {
-            return ListObjects<T> (url, CancellationToken.None);
+            return ListObjects<T, V> (url, CancellationToken.None);
         }
 
-        private async Task<List<T>> ListObjects<T> (Uri url, CancellationToken cancellationToken)
-        where T : CommonData, new()
+        private async Task<List<T>> ListObjects<T, V> (Uri url, CancellationToken cancellationToken)
+        where T : CommonData where V : CommonJson, new()
         {
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
 
-            var httpResp = await SendAsync (httpReq, cancellationToken)
-                           .ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq, cancellationToken).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait (false);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
-            return JsonConvert.DeserializeObject<List<T>> (respData) ?? new List<T> (0);
+            var jsonList = JsonConvert.DeserializeObject<List<V>> (respData) ?? new List<V> (0);
+            // TODO: review Mapping with lists.
+            return AutoMapper.Mapper.Map<List<T>> (jsonList);
         }
 
         private async Task DeleteObject (Uri url)
         {
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Delete,
                 RequestUri = url,
             });
@@ -341,36 +348,36 @@ namespace Toggl.Phoebe._Net
         public Task<ClientData> CreateClient (ClientData dataObject)
         {
             var url = new Uri (v8Url, "clients");
-            return CreateObject (url, dataObject);
+            return CreateObject<ClientData, ClientJson> (url, dataObject);
         }
 
         public Task<ClientData> GetClient (long id)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", id));
-            return GetObject<ClientData> (url);
+            var url = new Uri (v8Url, string.Format ("clients/{0}", id));
+            return GetObject<ClientData, ClientJson> (url);
         }
 
-        public Task<List<ClientData>> ListClients ()
+        public Task<List<ClientData>> ListClients()
         {
             var url = new Uri (v8Url, "clients");
-            return ListObjects<ClientData> (url);
+            return ListObjects<ClientData, ClientJson> (url);
         }
 
         public Task<List<ClientData>> ListWorkspaceClients (long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/clients", workspaceId));
-            return ListObjects<ClientData> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/clients", workspaceId));
+            return ListObjects<ClientData, ClientJson> (url);
         }
 
         public Task<ClientData> UpdateClient (ClientData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", dataObject.RemoteId.Value));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("clients/{0}", dataObject.RemoteId.Value));
+            return UpdateObject<ClientData, ClientJson> (url, dataObject);
         }
 
         public Task DeleteClient (ClientData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", dataObject.RemoteId.Value));
+            var url = new Uri (v8Url, string.Format ("clients/{0}", dataObject.RemoteId.Value));
             return DeleteObject (url);
         }
 
@@ -381,43 +388,43 @@ namespace Toggl.Phoebe._Net
         public Task<ProjectData> CreateProject (ProjectData dataObject)
         {
             var url = new Uri (v8Url, "projects");
-            return CreateObject (url, dataObject);
+            return CreateObject<ProjectData, ProjectJson> (url, dataObject);
         }
 
         public Task<ProjectData> GetProject (long id)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", id));
-            return GetObject<ProjectData> (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}", id));
+            return GetObject<ProjectData, ProjectJson> (url);
         }
 
         public Task<List<ProjectData>> ListWorkspaceProjects (long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/projects", workspaceId));
-            return ListObjects<ProjectData> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/projects", workspaceId));
+            return ListObjects<ProjectData, ProjectJson> (url);
         }
 
         public Task<List<WorkspaceUserData>> ListWorkspaceUsers (long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/workspace_users", workspaceId));
-            return ListObjects<WorkspaceUserData> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/workspace_users", workspaceId));
+            return ListObjects<WorkspaceUserData, WorkspaceUserJson> (url);
         }
 
         public Task<ProjectData> UpdateProject (ProjectData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", dataObject.RemoteId));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("projects/{0}", dataObject.RemoteId));
+            return UpdateObject<ProjectData, ProjectJson> (url, dataObject);
         }
 
         public Task DeleteProject (ProjectData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", dataObject.RemoteId.Value));
+            var url = new Uri (v8Url, string.Format ("projects/{0}", dataObject.RemoteId.Value));
             return DeleteObject (url);
         }
 
         public Task DeleteProjects (IEnumerable<ProjectData> dataObjects)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}",
-                               String.Join (",", dataObjects.Select (model => model.RemoteId.Value.ToString ()))));
+            var url = new Uri (v8Url, string.Format ("projects/{0}",
+                               string.Join (",", dataObjects.Select (model => model.RemoteId.Value.ToString()))));
             return DeleteObjects (url);
         }
 
@@ -428,49 +435,49 @@ namespace Toggl.Phoebe._Net
         public Task<TaskData> CreateTask (TaskData dataObject)
         {
             var url = new Uri (v8Url, "tasks");
-            return CreateObject (url, dataObject);
+            return CreateObject<TaskData, TaskJson> (url, dataObject);
         }
 
         public Task<TaskData> GetTask (long id)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", id));
-            return GetObject<TaskData> (url);
+            var url = new Uri (v8Url, string.Format ("tasks/{0}", id));
+            return GetObject<TaskData, TaskJson> (url);
         }
 
         public Task<List<TaskData>> ListProjectTasks (long projectId)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}/tasks", projectId));
-            return ListObjects<TaskData> (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}/tasks", projectId));
+            return ListObjects<TaskData, TaskJson> (url);
         }
 
         public Task<List<ProjectUserData>> ListProjectUsers (long projectId)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}/project_users", projectId));
-            return ListObjects<ProjectUserData> (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}/project_users", projectId));
+            return ListObjects<ProjectUserData, ProjectUserJson> (url);
         }
 
         public Task<List<TaskData>> ListWorkspaceTasks (long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/tasks", workspaceId));
-            return ListObjects<TaskData> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/tasks", workspaceId));
+            return ListObjects<TaskData, TaskJson> (url);
         }
 
         public Task<TaskData> UpdateTask (TaskData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", dataObject.RemoteId));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("tasks/{0}", dataObject.RemoteId));
+            return UpdateObject<TaskData, TaskJson> (url, dataObject);
         }
 
         public Task DeleteTask (TaskData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", dataObject.RemoteId.Value));
+            var url = new Uri (v8Url, string.Format ("tasks/{0}", dataObject.RemoteId.Value));
             return DeleteObject (url);
         }
 
         public Task DeleteTasks (IEnumerable<TaskData> dataObjects)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}",
-                               String.Join (",", dataObjects.Select (data => data.RemoteId.Value.ToString ()))));
+            var url = new Uri (v8Url, string.Format ("tasks/{0}",
+                               string.Join (",", dataObjects.Select (data => data.RemoteId.Value.ToString()))));
             return DeleteObjects (url);
         }
 
@@ -481,67 +488,66 @@ namespace Toggl.Phoebe._Net
         public Task<TimeEntryData> CreateTimeEntry (TimeEntryData dataObject)
         {
             var url = new Uri (v8Url, "time_entries");
-            dataObject.CreatedWith = Platform.DefaultCreatedWith;
-            return CreateObject (url, dataObject);
+            return CreateObject<TimeEntryData, TimeEntryJson> (url, dataObject);
         }
 
         public Task<TimeEntryData> GetTimeEntry (long id)
         {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", id));
-            return GetObject<TimeEntryData> (url);
+            var url = new Uri (v8Url, string.Format ("time_entries/{0}", id));
+            return GetObject<TimeEntryData, TimeEntryJson> (url);
         }
 
-        public Task<List<TimeEntryData>> ListTimeEntries ()
+        public Task<List<TimeEntryData>> ListTimeEntries()
         {
             var url = new Uri (v8Url, "time_entries");
-            return ListObjects<TimeEntryData> (url);
+            return ListObjects<TimeEntryData, TimeEntryJson> (url);
         }
 
         public Task<List<TimeEntryData>> ListTimeEntries (DateTime start, DateTime end)
         {
             var url = new Uri (v8Url,
-                               String.Format ("time_entries?start_date={0}&end_date={1}",
-                                              WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
-            return ListObjects<TimeEntryData> (url);
+                               string.Format ("time_entries?start_date={0}&end_date={1}",
+                                              WebUtility.UrlEncode (start.ToUtc().ToString ("o")),
+                                              WebUtility.UrlEncode (end.ToUtc().ToString ("o"))));
+            return ListObjects<TimeEntryData, TimeEntryJson> (url);
         }
 
         public Task<List<TimeEntryData>> ListTimeEntries (DateTime end, int days)
         {
             var url = new Uri (v8Url,
-                               String.Format ("time_entries?end_date={0}&num_of_days={1}",
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
+                               string.Format ("time_entries?end_date={0}&num_of_days={1}",
+                                              WebUtility.UrlEncode (end.ToUtc().ToString ("o")),
                                               days));
-            return ListObjects<TimeEntryData> (url);
+            return ListObjects<TimeEntryData, TimeEntryJson> (url);
         }
 
         public Task<List<TimeEntryData>> ListTimeEntries (DateTime start, DateTime end, CancellationToken cancellationToken)
         {
             var url = new Uri (v8Url,
-                               String.Format ("time_entries?start_date={0}&end_date={1}",
-                                              WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
-            return ListObjects<TimeEntryData> (url, cancellationToken);
+                               string.Format ("time_entries?start_date={0}&end_date={1}",
+                                              WebUtility.UrlEncode (start.ToUtc().ToString ("o")),
+                                              WebUtility.UrlEncode (end.ToUtc().ToString ("o"))));
+            return ListObjects<TimeEntryData, TimeEntryJson> (url, cancellationToken);
         }
 
         public Task<List<TimeEntryData>> ListTimeEntries (DateTime end, int days, CancellationToken cancellationToken)
         {
             var url = new Uri (v8Url,
-                               String.Format ("time_entries?end_date={0}&num_of_days={1}",
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
+                               string.Format ("time_entries?end_date={0}&num_of_days={1}",
+                                              WebUtility.UrlEncode (end.ToUtc().ToString ("o")),
                                               days));
-            return ListObjects<TimeEntryData> (url, cancellationToken);
+            return ListObjects<TimeEntryData, TimeEntryJson> (url, cancellationToken);
         }
 
         public Task<TimeEntryData> UpdateTimeEntry (TimeEntryData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", dataObject.RemoteId.Value.ToString ()));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("time_entries/{0}", dataObject.RemoteId.Value.ToString()));
+            return UpdateObject<TimeEntryData, TimeEntryJson> (url, dataObject);
         }
 
         public Task DeleteTimeEntry (TimeEntryData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", dataObject.RemoteId.Value.ToString ()));
+            var url = new Uri (v8Url, string.Format ("time_entries/{0}", dataObject.RemoteId.Value.ToString()));
             return DeleteObject (url);
         }
 
@@ -552,25 +558,25 @@ namespace Toggl.Phoebe._Net
         public Task<WorkspaceData> CreateWorkspace (WorkspaceData dataObject)
         {
             var url = new Uri (v8Url, "workspaces");
-            return CreateObject (url, dataObject);
+            return CreateObject<WorkspaceData, WorkspaceJson> (url, dataObject);
         }
 
         public Task<WorkspaceData> GetWorkspace (long id)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}", id.ToString ()));
-            return GetObject<WorkspaceData> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}", id.ToString()));
+            return GetObject<WorkspaceData, WorkspaceJson> (url);
         }
 
-        public Task<List<WorkspaceData>> ListWorkspaces ()
+        public Task<List<WorkspaceData>> ListWorkspaces()
         {
             var url = new Uri (v8Url, "workspaces");
-            return ListObjects<WorkspaceData> (url);
+            return ListObjects<WorkspaceData, WorkspaceJson> (url);
         }
 
         public Task<WorkspaceData> UpdateWorkspace (WorkspaceData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}", dataObject.RemoteId.Value));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}", dataObject.RemoteId.Value));
+            return UpdateObject<WorkspaceData, WorkspaceJson> (url, dataObject);
         }
 
         #endregion
@@ -580,18 +586,18 @@ namespace Toggl.Phoebe._Net
         public Task<TagData> CreateTag (TagData dataObject)
         {
             var url = new Uri (v8Url, "tags");
-            return CreateObject (url, dataObject);
+            return CreateObject<TagData, TagJson> (url, dataObject);
         }
 
         public Task<TagData> UpdateTag (TagData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("tags/{0}", dataObject.RemoteId.Value));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("tags/{0}", dataObject.RemoteId.Value));
+            return UpdateObject<TagData, TagJson> (url, dataObject);
         }
 
         public Task DeleteTag (TagData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("tags/{0}", dataObject.RemoteId.Value));
+            var url = new Uri (v8Url, string.Format ("tags/{0}", dataObject.RemoteId.Value));
             return DeleteObject (url);
         }
 
@@ -601,12 +607,12 @@ namespace Toggl.Phoebe._Net
 
         public async Task<WorkspaceUserData> CreateWorkspaceUser (WorkspaceUserData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/invite", dataObject.WorkspaceId));
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/invite", dataObject.WorkspaceId));
 
             var json = JsonConvert.SerializeObject (new {
                 emails = new string[] { dataObject.Email },
             });
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
@@ -614,21 +620,21 @@ namespace Toggl.Phoebe._Net
             var httpResp = await SendAsync (httpReq)
                            .ConfigureAwait (false);
 
-            var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync ()
+            var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync()
                                       .ConfigureAwait (false));
-            var data = wrap ["data"] [0].ToObject<WorkspaceUserData> ();
+            var data = wrap["data"][0].ToObject<WorkspaceUserData>();
             return data;
         }
 
         public Task<WorkspaceUserData> UpdateWorkspaceUser (WorkspaceUserData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", dataObject.RemoteId.Value));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("workspace_users/{0}", dataObject.RemoteId.Value));
+            return UpdateObject<WorkspaceUserData, WorkspaceUserJson> (url, dataObject);
         }
 
         public Task DeleteWorkspaceUser (WorkspaceUserData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", dataObject.RemoteId.Value));
+            var url = new Uri (v8Url, string.Format ("workspace_users/{0}", dataObject.RemoteId.Value));
             return DeleteObject (url);
         }
 
@@ -639,18 +645,18 @@ namespace Toggl.Phoebe._Net
         public Task<ProjectUserData> CreateProjectUser (ProjectUserData dataObject)
         {
             var url = new Uri (v8Url, "project_users");
-            return CreateObject (url, dataObject);
+            return CreateObject<ProjectUserData, ProjectUserJson> (url, dataObject);
         }
 
         public Task<ProjectUserData> UpdateProjectUser (ProjectUserData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("project_users/{0}", dataObject.RemoteId.Value));
-            return UpdateObject (url, dataObject);
+            var url = new Uri (v8Url, string.Format ("project_users/{0}", dataObject.RemoteId.Value));
+            return UpdateObject<ProjectUserData, ProjectUserJson> (url, dataObject);
         }
 
         public Task DeleteProjectUser (ProjectUserData dataObject)
         {
-            var url = new Uri (v8Url, String.Format ("project_users/{0}", dataObject.RemoteId.Value));
+            var url = new Uri (v8Url, string.Format ("project_users/{0}", dataObject.RemoteId.Value));
             return DeleteObject (url);
         }
 
@@ -661,21 +667,20 @@ namespace Toggl.Phoebe._Net
         public Task<UserData> CreateUser (UserData dataObject)
         {
             var url = new Uri (v8Url, dataObject.GoogleAccessToken != null ? "signups?app_name=toggl_mobile" : "signups");
-            dataObject.CreatedWith = Platform.DefaultCreatedWith;
-            return CreateObject (url, dataObject);
+            return CreateObject<UserData, UserJson> (url, dataObject);
         }
 
         public Task<UserData> GetUser (long id)
         {
             var url = new Uri (v8Url, "me");
-            return GetObject<UserData> (url);
+            return GetObject<UserData, UserJson> (url);
         }
 
         public async Task<UserData> GetUser (string username, string password)
         {
             var url = new Uri (v8Url, "me");
 
-            var httpReq = new HttpRequestMessage () {
+            var httpReq = new HttpRequestMessage() {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             };
@@ -683,7 +688,7 @@ namespace Toggl.Phoebe._Net
                     Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                 string.Format ("{0}:{1}", username, password))));
             var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
-            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserData>> (respData);
 
             return wrap.Data;
@@ -692,7 +697,7 @@ namespace Toggl.Phoebe._Net
         public async Task<UserData> GetUser (string googleAccessToken)
         {
             var url = new Uri (v8Url, "me?app_name=toggl_mobile");
-            var httpReq = new HttpRequestMessage () {
+            var httpReq = new HttpRequestMessage() {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             };
@@ -700,7 +705,7 @@ namespace Toggl.Phoebe._Net
                     Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                 string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
             var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
-            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserData>> (respData);
             return wrap.Data;
         }
@@ -708,41 +713,41 @@ namespace Toggl.Phoebe._Net
         public Task<UserData> UpdateUser (UserData dataObject)
         {
             var url = new Uri (v8Url, "me");
-            return UpdateObject (url, dataObject);
+            return UpdateObject<UserData, UserJson> (url, dataObject);
         }
 
         #endregion
 
         public async Task<UserRelatedData> GetChanges (DateTime? since)
         {
-            since = since.ToUtc ();
+            since = since.ToUtc();
             var relUrl = "me?with_related_data=true";
             if (since.HasValue) {
-                relUrl = String.Format ("{0}&since={1}", relUrl, (long) (since.Value - UnixStart).TotalSeconds);
+                relUrl = string.Format ("{0}&since={1}", relUrl, (long) (since.Value - UnixStart).TotalSeconds);
             }
             var url = new Uri (v8Url, relUrl);
 
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
             var httpResp = await SendAsync (httpReq)
                            .ConfigureAwait (false);
 
-            var respData = await httpResp.Content.ReadAsStringAsync ()
+            var respData = await httpResp.Content.ReadAsStringAsync()
                            .ConfigureAwait (false);
             var json = JObject.Parse (respData);
 
-            var user = json ["data"].ToObject<UserData> ();
-            return new UserRelatedData () {
-                Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
+            var user = json["data"].ToObject<UserData>();
+            return new UserRelatedData() {
+                Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json["since"]),
                 User = user,
-                Workspaces = GetChangesObjects<WorkspaceData> (json ["data"] ["workspaces"]),
-                Tags = GetChangesObjects<TagData> (json ["data"] ["tags"]),
-                Clients = GetChangesObjects<ClientData> (json ["data"] ["clients"]),
-                Projects = GetChangesObjects<ProjectData> (json ["data"] ["projects"]),
-                Tasks = GetChangesObjects<TaskData> (json ["data"] ["tasks"]),
-                TimeEntries = GetChangesTimeEntryObjects (json ["data"] ["time_entries"], user),
+                Workspaces = GetChangesObjects<WorkspaceData> (json["data"]["workspaces"]),
+                Tags = GetChangesObjects<TagData> (json["data"]["tags"]),
+                Clients = GetChangesObjects<ClientData> (json["data"]["clients"]),
+                Projects = GetChangesObjects<ProjectData> (json["data"]["projects"]),
+                Tasks = GetChangesObjects<TaskData> (json["data"]["tasks"]),
+                TimeEntries = GetChangesTimeEntryObjects (json["data"]["time_entries"], user),
             };
         }
 
@@ -750,31 +755,34 @@ namespace Toggl.Phoebe._Net
         where T : CommonData, new()
         {
             if (json == null) {
-                return Enumerable.Empty<T> ();
+                return Enumerable.Empty<T>();
             }
-            return json.ToObject<List<T>> ();
+            return json.ToObject<List<T>>();
         }
 
         private IEnumerable<TimeEntryData> GetChangesTimeEntryObjects (JToken json, UserData user)
         {
             if (json == null) {
-                return Enumerable.Empty<TimeEntryData> ();
+                return Enumerable.Empty<TimeEntryData>();
             }
-            return json.ToObject<List<TimeEntryData>> ().Select ((te) => {
-                te.UserId = user.Id.Value;
+            var timeEntryJsonList = json.ToObject<List<TimeEntryJson>>().Select ((te) => {
+                te.UserId = user.RemoteId.Value;
                 return te;
             });
+
+            // TODO: review Mapping related with lists.
+            return AutoMapper.Mapper.Map<IEnumerable<TimeEntryData>> (timeEntryJsonList);
         }
 
         public async Task CreateFeedback (FeedbackJson dataObject)
         {
             var url = new Uri (v8Url, "feedback");
 
-            dataObject.AppVersion = String.Format ("{0}/{1}", Platform.AppIdentifier, Platform.AppVersion);
+            dataObject.AppVersion = string.Format ("{0}/{1}", Platform.AppIdentifier, Platform.AppVersion);
             dataObject.Timestamp = Time.Now;
 
             var json = JsonConvert.SerializeObject (dataObject);
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
@@ -787,7 +795,7 @@ namespace Toggl.Phoebe._Net
             var url = new Uri (v9Url, "obm/actions");
             var json = JsonConvert.SerializeObject (dataObject);
 
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (new HttpRequestMessage() {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json")

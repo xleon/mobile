@@ -98,30 +98,8 @@
     <Compile Include="_Dispatcher\**\*.cs" />
     <Compile Include="_Store\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
-    <Compile Include="_Helpers\Literals.cs" />
-    <Compile Include="_Net\ITogglClient.cs" />
-    <Compile Include="_Net\TogglHttpResponseMessage.cs" />
-    <Compile Include="_Net\TogglRestClient.cs" />
-    <Compile Include="_Net\UnsuccessfulRequestException.cs" />
-    <Compile Include="_Data\Json\ActionJson.cs" />
-    <Compile Include="_Data\Json\FeedbackJson.cs" />
-    <Compile Include="_Data\Json\OBMJson.cs" />
-    <Compile Include="_Data\Json\ReportJson.cs" />
-    <Compile Include="_Data\Models\ClientData.cs" />
-    <Compile Include="_Data\Models\CommonData.cs" />
-    <Compile Include="_Data\Models\ProjectData.cs" />
-    <Compile Include="_Data\Models\ProjectUserData.cs" />
-    <Compile Include="_Data\Models\ReportData.cs" />
-    <Compile Include="_Data\Models\TagData.cs" />
-    <Compile Include="_Data\Models\TaskData.cs" />
-    <Compile Include="_Data\Models\TimeCorrectionData.cs" />
-    <Compile Include="_Data\Models\TimeEntryData.cs" />
-    <Compile Include="_Data\Models\TimeEntryTagData.cs" />
-    <Compile Include="_Data\Models\UserData.cs" />
-    <Compile Include="_Data\Models\UserRelatedData.cs" />
-    <Compile Include="_Data\Models\WorkspaceData.cs" />
-    <Compile Include="_Data\Models\WorkspaceUserData.cs" />
-    <Compile Include="_Data\Duration.cs" />
+    <Compile Include="_Data\**\*.cs" />
+    <Compile Include="_Net\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

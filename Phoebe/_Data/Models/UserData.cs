@@ -28,6 +28,8 @@ namespace Toggl.Phoebe._Data.Models
             DurationFormat = other.DurationFormat;
             ExperimentIncluded = other.ExperimentIncluded;
             ExperimentNumber = other.ExperimentNumber;
+            GoogleAccessToken = other.GoogleAccessToken;
+            ApiToken = other.ApiToken;
         }
 
         public string Name { get; set; }
@@ -61,5 +63,9 @@ namespace Toggl.Phoebe._Data.Models
         public int ExperimentNumber { get; set; }
 
         public Guid DefaultWorkspaceId { get; set; }
+
+        public string GoogleAccessToken { get; set; }
+
+        public string ApiToken { get; set; }
     }
 }

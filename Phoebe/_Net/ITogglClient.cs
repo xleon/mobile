@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Data.Json;
 
 namespace Toggl.Phoebe._Net

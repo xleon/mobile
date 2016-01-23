@@ -60,8 +60,9 @@ namespace Toggl.Phoebe.ViewModels
 
                 // If we've received non-empty messages from server (DataDir.Incoming)
                 // this means there're more entries available
-                var hasMore = resultsGroup.Left.Any (
-                        x => x.Dir == DataDir.Incoming && x.Count > 0);
+                var hasMore = results.Any (
+                                  x => x.Dir == DataDir.Incoming && x.Data.Match (
+                                      y => y.Count > 0, e => false));
 
                 LoadFinished.SafeInvoke (this, new LoadFinishedArgs { HasMore = hasMore });
             } else if (resultsGroup.Right.Count > 0) {

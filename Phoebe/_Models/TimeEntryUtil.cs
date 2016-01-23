@@ -52,29 +52,21 @@ namespace Toggl.Phoebe.Models
 
     public class TimeEntryMsg : List<Tuple<DataVerb, TimeEntryData>>, IDataSyncGroupMsg<TimeEntryData>
     {
-        public DataDir Dir { get; private set; }
-        public Type DataType { get { return typeof(TimeEntryData); } }
-
-        public IEnumerable<DataSyncMsg<TimeEntryData>> Messages {
-            get { 
-                return this.Select (x => new DataSyncMsg<TimeEntryData> (Dir, x.Item1, x.Item2));
-            }
+        public TimeEntryJsonMsg (IEnumerable<TimeEntryJson> messages)
+        : base (messages)
+        {
         }
 
-        public IEnumerable<IDataSyncMsg> RawMessages {
-            get { 
-                return Messages;
-            }
-        }
-
-        public TimeEntryMsg (DataDir dir, IEnumerable<Tuple<DataVerb, TimeEntryData>> msgs)
-            : base (msgs)
+    public class TimeEntryMsg : List<DataActionMsg<TimeEntryData>>
+    {
+        public TimeEntryMsg (IEnumerable<DataActionMsg<TimeEntryData>> messages)
+        : base (messages)
         {
             Dir = dir;
         }
 
-        public TimeEntryMsg (DataDir dir, DataVerb action, TimeEntryData data)
-            : base (new [] { Tuple.Create (action, data) })
+        public TimeEntryMsg (TimeEntryData entry, DataAction action)
+        : base (new [] { new DataActionMsg<TimeEntryData> (entry, action) })
         {
             Dir = dir;
         }

@@ -100,6 +100,7 @@
     <Compile Include="_Helpers\**\*.cs" />
     <Compile Include="_Data\**\*.cs" />
     <Compile Include="_Net\**\*.cs" />
+    <Compile Include="_Data\ReportTypes.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

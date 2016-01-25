@@ -14,6 +14,12 @@ namespace Toggl.Ross.ViewControllers
 {
     public sealed class LeftViewController : UIViewController
     {
+        public static readonly int TimerPageId = 0;
+        public static readonly int ReportsPageId = 1;
+        public static readonly int SettingsPageId = 2;
+        public static readonly int FeedbackPageId = 3;
+        public static readonly int LogoutPageId = 4;
+
         private TogglWindow window;
         private UIButton logButton;
         private UIButton reportsButton;
@@ -52,19 +58,19 @@ namespace Toggl.Ross.ViewControllers
                 (signOutButton = new UIButton ()),
             };
             logButton.SetTitle ("LeftPanelMenuLog".Tr (), UIControlState.Normal);
-            logButton.SetImage (UIImage.FromFile ("iconTimer.png"), UIControlState.Normal);
+            logButton.SetImage (Image.TimerButtonPressed, UIControlState.Normal);
 
             reportsButton.SetTitle ("LeftPanelMenuReports".Tr (), UIControlState.Normal);
-            reportsButton.SetImage (UIImage.FromFile ("iconReports.png"), UIControlState.Normal);
+            reportsButton.SetImage (Image.ReportsButton, UIControlState.Normal);
 
             settingsButton.SetTitle ("LeftPanelMenuSettings".Tr (), UIControlState.Normal);
-            settingsButton.SetImage (UIImage.FromFile ("iconSettings.png"), UIControlState.Normal);
+            settingsButton.SetImage (Image.SettingsButton, UIControlState.Normal);
 
             feedbackButton.SetTitle ("LeftPanelMenuFeedback".Tr (), UIControlState.Normal);
-            feedbackButton.SetImage (UIImage.FromFile ("iconFeedback.png"), UIControlState.Normal);
+            feedbackButton.SetImage (Image.FeedbackButton, UIControlState.Normal);
 
             signOutButton.SetTitle ("LeftPanelMenuSignOut".Tr (), UIControlState.Normal);
-            signOutButton.SetImage (UIImage.FromFile ("iconLogout.png"), UIControlState.Normal);
+            signOutButton.SetImage (Image.SignoutButton, UIControlState.Normal);
 
 
             logButton.HorizontalAlignment = reportsButton.HorizontalAlignment = settingsButton.HorizontalAlignment =
@@ -209,20 +215,51 @@ namespace Toggl.Ross.ViewControllers
         {
             var main = window.RootViewController as MainViewController;
             if (sender == logButton) {
+                SelectMenuItem (TimerPageId);
                 ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
                 main.SetViewControllers (new[] {
                     new LogViewController ()
                 }, true);
             } else if (sender == reportsButton) {
+                SelectMenuItem (ReportsPageId);
                 main.PushViewController (new ReportsViewController (), true);
             } else if (sender == settingsButton) {
+                SelectMenuItem (SettingsPageId);
                 main.PushViewController (new SettingsViewController (), true);
             } else if (sender == feedbackButton) {
+                SelectMenuItem (FeedbackPageId);
                 main.PushViewController (new FeedbackViewController (), true);
             } else {
+                SelectMenuItem (LogoutPageId);
                 ServiceContainer.Resolve<AuthManager> ().Forget ();
             }
             main.CloseMenu();
         }
+
+        public void SelectMenuItem (int id)
+        {
+            ResetButtons ();
+            if (id == TimerPageId) {
+                logButton.SetImage (Image.TimerButtonPressed, UIControlState.Normal);
+            } else if (id == ReportsPageId) {
+                reportsButton.SetImage (Image.ReportsButtonPressed, UIControlState.Normal);
+            } else if (id == SettingsPageId) {
+                settingsButton.SetImage (Image.SettingsButtonPressed, UIControlState.Normal);
+            } else if (id == FeedbackPageId) {
+                feedbackButton.SetImage (Image.FeedbackButtonPressed, UIControlState.Normal);
+            } else {
+                signOutButton.SetImage (Image.SignoutButtonPressed, UIControlState.Normal);
+            }
+        }
+
+        private void ResetButtons ()
+        {
+            logButton.SetImage (Image.TimerButton, UIControlState.Normal);
+            reportsButton.SetImage (Image.ReportsButton, UIControlState.Normal);
+            settingsButton.SetImage (Image.SettingsButton, UIControlState.Normal);
+            feedbackButton.SetImage (Image.FeedbackButton, UIControlState.Normal);
+            signOutButton.SetImage (Image.SignoutButton, UIControlState.Normal);
+        }
+
     }
 }

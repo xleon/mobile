@@ -126,5 +126,55 @@ namespace Toggl.Ross.Theme
         {
             get { return UIImage.FromBundle ("arrowUp"); }
         }
+
+        public static UIImage TimerButton
+        {
+            get { return UIImage.FromBundle ("icon-timer"); }
+        }
+
+        public static UIImage TimerButtonPressed
+        {
+            get { return UIImage.FromBundle ("icon-timer-green"); }
+        }
+
+        public static UIImage ReportsButton
+        {
+            get { return UIImage.FromBundle ("icon-reports"); }
+        }
+
+        public static UIImage ReportsButtonPressed
+        {
+            get { return UIImage.FromBundle ("icon-reports-green"); }
+        }
+
+        public static UIImage SettingsButton
+        {
+            get { return UIImage.FromBundle ("icon-settings"); }
+        }
+
+        public static UIImage SettingsButtonPressed
+        {
+            get { return UIImage.FromBundle ("icon-settings-green"); }
+        }
+
+        public static UIImage FeedbackButton
+        {
+            get { return UIImage.FromBundle ("icon-feedback"); }
+        }
+
+        public static UIImage FeedbackButtonPressed
+        {
+            get { return UIImage.FromBundle ("icon-feedback-green"); }
+        }
+
+        public static UIImage SignoutButton
+        {
+            get { return UIImage.FromBundle ("icon-logout"); }
+        }
+
+        public static UIImage SignoutButtonPressed
+        {
+            get { return UIImage.FromBundle ("icon-logout-green"); }
+        }
     }
 }

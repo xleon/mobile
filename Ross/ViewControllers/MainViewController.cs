@@ -160,6 +160,18 @@ namespace Toggl.Ross.ViewControllers
             fadeView.Hidden = false;
             _tapGesture.Enabled = true;
 
+            if (VisibleViewController is LogViewController) {
+                menu.SelectMenuItem (LeftViewController.TimerPageId);
+            } else if (VisibleViewController is ReportsViewController) {
+                menu.SelectMenuItem (LeftViewController.ReportsPageId);
+            } else if (VisibleViewController is SettingsViewController) {
+                menu.SelectMenuItem (LeftViewController.SettingsPageId);
+            } else if (VisibleViewController is FeedbackViewController) {
+                menu.SelectMenuItem (LeftViewController.FeedbackPageId);
+            } else {
+                menu.SelectMenuItem (LeftViewController.LogoutPageId);
+            }
+
             UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, delegate {
                 MoveToLocation (Width-menuOffset);
             }, null);

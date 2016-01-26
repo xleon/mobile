@@ -15,9 +15,9 @@ namespace Toggl.Phoebe._Data.Json
         public long Estimate { get; set; }
 
         [JsonProperty ("wid")]
-        public long WorkspaceId { get; set; }
+        public long WorkspaceRemoteId { get; set; }
 
         [JsonProperty ("pid")]
-        public long ProjectId { get; set; }
+        public long ProjectRemoteId { get; set; }
     }
 }

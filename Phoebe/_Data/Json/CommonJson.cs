@@ -11,7 +11,7 @@ namespace Toggl.Phoebe._Data.Json
         }
 
         [JsonProperty ("id", NullValueHandling = NullValueHandling.Ignore)]
-        public long? Id { get; set; }
+        public long? RemoteId { get; set; }
 
         [JsonProperty ("at")]
         public DateTime ModifiedAt { get; set; }
@@ -21,7 +21,7 @@ namespace Toggl.Phoebe._Data.Json
 
         internal string ToIdString ()
         {
-            return String.Concat (GetType ().Name, "#", Id.ToString ());
+            return String.Concat (GetType ().Name, "#", RemoteId.ToString ());
         }
     }
 }

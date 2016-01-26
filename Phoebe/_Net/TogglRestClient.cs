@@ -766,7 +766,7 @@ namespace Toggl.Phoebe._Net
                 return Enumerable.Empty<TimeEntryData>();
             }
             var timeEntryJsonList = json.ToObject<List<TimeEntryJson>>().Select ((te) => {
-                te.UserId = user.RemoteId.Value;
+                te.UserRemoteId = user.RemoteId.Value;
                 return te;
             });
 

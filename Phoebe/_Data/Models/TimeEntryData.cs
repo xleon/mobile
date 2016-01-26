@@ -30,6 +30,10 @@ namespace Toggl.Phoebe._Data.Models
             WorkspaceId = other.WorkspaceId;
             ProjectId = other.ProjectId;
             TaskId = other.TaskId;
+            UserRemoteId = other.UserRemoteId;
+            WorkspaceRemoteId = other.WorkspaceRemoteId;
+            ProjectRemoteId = other.ProjectRemoteId;
+            TaskRemoteId = other.TaskRemoteId;
             Tags = new List<string> (other.Tags);
         }
 
@@ -44,6 +48,14 @@ namespace Toggl.Phoebe._Data.Models
         public bool DurationOnly { get; set; }
 
         public bool IsBillable { get; set; }
+
+        public long UserRemoteId { get; set; }
+
+        public long WorkspaceRemoteId { get; set; }
+
+        public long? ProjectRemoteId { get; set; }
+
+        public long? TaskRemoteId { get; set; }
 
         public Guid UserId { get; set; }
 

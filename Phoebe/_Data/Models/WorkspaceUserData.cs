@@ -17,6 +17,8 @@ namespace Toggl.Phoebe._Data.Models
             WorkspaceId = other.WorkspaceId;
             UserId = other.UserId;
             Email = other.Email;
+            WorkspaceRemoteId = other.WorkspaceRemoteId;
+            UserRemoteId = other.UserRemoteId;
         }
 
         public bool IsAdmin { get; set; }
@@ -24,6 +26,10 @@ namespace Toggl.Phoebe._Data.Models
         public bool IsActive { get; set; }
 
         public string Email { get; set; }
+
+        public long WorkspaceRemoteId { get; set; }
+
+        public long UserRemoteId { get; set; }
 
         public Guid WorkspaceId { get; set; }
 

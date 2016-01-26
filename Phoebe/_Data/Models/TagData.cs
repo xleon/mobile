@@ -15,9 +15,12 @@ namespace Toggl.Phoebe._Data.Models
         {
             Name = other.Name;
             WorkspaceId = other.WorkspaceId;
+            WorkspaceRemoteId = other.WorkspaceRemoteId;
         }
 
         public string Name { get; set; }
+
+        public long WorkspaceRemoteId { get; set; }
 
         public Guid WorkspaceId { get; set; }
     }

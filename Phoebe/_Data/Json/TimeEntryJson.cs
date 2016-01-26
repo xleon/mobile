@@ -36,15 +36,15 @@ namespace Toggl.Phoebe._Data.Json
         public List<string> Tags { get; set; }
 
         [JsonProperty ("uid")]
-        public long UserId { get; set; }
+        public long UserRemoteId { get; set; }
 
         [JsonProperty ("wid")]
-        public long WorkspaceId { get; set; }
+        public long WorkspaceRemoteId { get; set; }
 
         [JsonProperty ("pid")]
-        public long? ProjectId { get; set; }
+        public long? ProjectRemoteId { get; set; }
 
         [JsonProperty ("tid")]
-        public long? TaskId { get; set; }
+        public long? TaskRemoteId { get; set; }
     }
 }

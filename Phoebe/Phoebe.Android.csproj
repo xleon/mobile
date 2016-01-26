@@ -106,10 +106,6 @@
   <ItemGroup>
     <Folder Include="Contrib\" />
     <Folder Include="Contrib\XPlatUtils\" />
-    <Folder Include="_Net\" />
-    <Folder Include="_Data\" />
-    <Folder Include="_Data\Json\" />
-    <Folder Include="_Data\Models\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -57,14 +57,16 @@ namespace Toggl.Phoebe
         DataDir Dir { get; }
         DataVerb Verb { get; }
         Type DataType { get; }
+        CommonData RawData { get; }
     }
 
-    public class DataSyncMsg<T> : IDataSyncMsg
+    public class DataSyncMsg<T> : IDataSyncMsg where T : CommonData
     {
         public DataDir Dir { get; private set; }
         public DataVerb Verb { get; private set; }
         public T Data { get; private set; }
         public Type DataType { get { return typeof(T); } }
+        public CommonData RawData { get { return Data; } }
 
         public DataSyncMsg (DataDir dir, DataVerb verb, T data)
         {
@@ -80,7 +82,7 @@ namespace Toggl.Phoebe
         IEnumerable<IDataSyncMsg> RawMessages { get; }
     }
 
-    public interface IDataSyncGroupMsg<T> : IDataSyncGroupMsg
+    public interface IDataSyncGroupMsg<T> : IDataSyncGroupMsg where T : CommonData
     {
         IEnumerable<DataSyncMsg<T>> Messages { get; }
     }

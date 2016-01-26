@@ -144,7 +144,6 @@ namespace Toggl.Phoebe
             }
 
             return DataMsg.Success (msg.Tag, new TimeEntryMsg (entryMsg.Dir, newEntries));
-
         }
 
         #region Util

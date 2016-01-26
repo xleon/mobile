@@ -25,6 +25,7 @@ namespace Toggl.Phoebe._Data.Models
             SendWeeklyReport = other.SendWeeklyReport;
             TrackingMode = other.TrackingMode;
             DefaultWorkspaceId = other.DefaultWorkspaceId;
+            DefaultWorkspaceRemoteId = other.DefaultWorkspaceRemoteId;
             DurationFormat = other.DurationFormat;
             ExperimentIncluded = other.ExperimentIncluded;
             ExperimentNumber = other.ExperimentNumber;
@@ -61,6 +62,8 @@ namespace Toggl.Phoebe._Data.Models
         public bool ExperimentIncluded { get; set; }
 
         public int ExperimentNumber { get; set; }
+
+        public long DefaultWorkspaceRemoteId { get; set; }
 
         public Guid DefaultWorkspaceId { get; set; }
 

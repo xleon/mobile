@@ -98,17 +98,12 @@
     <Compile Include="_Dispatcher\**\*.cs" />
     <Compile Include="_Store\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
-    <Compile Include="_Data\**\*.cs" />
     <Compile Include="_Net\**\*.cs" />
-    <Compile Include="_Data\ReportTypes.cs" />
+    <Compile Include="_Data\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />
     <Folder Include="Contrib\XPlatUtils\" />
-    <Folder Include="_Net\" />
-    <Folder Include="_Data\" />
-    <Folder Include="_Data\Json\" />
-    <Folder Include="_Data\Models\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -27,9 +27,9 @@ namespace Toggl.Phoebe._Data.Json
         public bool UseTasksEstimate { get; set; }
 
         [JsonProperty ("wid")]
-        public long WorkspaceId { get; set; }
+        public long WorkspaceRemoteId { get; set; }
 
         [JsonProperty ("cid")]
-        public long? ClientId { get; set; }
+        public long? ClientRemoteId { get; set; }
     }
 }

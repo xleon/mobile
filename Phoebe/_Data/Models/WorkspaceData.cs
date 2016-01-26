@@ -22,6 +22,7 @@ namespace Toggl.Phoebe._Data.Models
             RoundingMode = other.RoundingMode;
             RoundingPercision = other.RoundingPercision;
             LogoUrl = other.LogoUrl;
+            IsAdmin = other.IsAdmin;
         }
 
         public string Name { get; set; }
@@ -45,5 +46,7 @@ namespace Toggl.Phoebe._Data.Models
         public int RoundingPercision { get; set; }
 
         public string LogoUrl { get; set; }
+
+        public bool IsAdmin { get; set; }
     }
 }

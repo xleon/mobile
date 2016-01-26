@@ -38,10 +38,5 @@ namespace Toggl.Phoebe._Data.Models
         public long? RemoteId { get; set; }
 
         public bool RemoteRejected { get; set; }
-
-        internal string ToIdString ()
-        {
-            return String.Concat (GetType ().Name, "#", Id.ToString ());
-        }
     }
 }

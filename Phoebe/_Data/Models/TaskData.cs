@@ -17,6 +17,8 @@ namespace Toggl.Phoebe._Data.Models
             Estimate = other.Estimate;
             WorkspaceId = other.WorkspaceId;
             ProjectId = other.ProjectId;
+            WorkspaceRemoteId = other.WorkspaceRemoteId;
+            ProjectRemoteId = other.ProjectRemoteId;
         }
 
         public string Name { get; set; }
@@ -24,6 +26,10 @@ namespace Toggl.Phoebe._Data.Models
         public bool IsActive { get; set; }
 
         public long Estimate { get; set; }
+
+        public long WorkspaceRemoteId { get; set; }
+
+        public long ProjectRemoteId { get; set; }
 
         public Guid WorkspaceId { get; set; }
 

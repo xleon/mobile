@@ -11,8 +11,8 @@ namespace Toggl.Phoebe._Data.Json
         {
             // TODO: Review how map reverse works with include.
             AutoMapper.Mapper.CreateMap<CommonJson, CommonData>()
-            .ForMember (dest => dest.RemoteId, opt => opt.MapFrom (src => src.Id))
-            .ForMember (dest => dest.DeletedAt, opt => opt.UseValue (null))
+            .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()))
+            .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<DeletedAtResolver>())
             .Include<ProjectJson, ProjectData>()
             .Include<ClientJson, ClientData>()
             .Include<TagJson, TagData>()
@@ -20,18 +20,27 @@ namespace Toggl.Phoebe._Data.Json
             .Include<WorkspaceJson, WorkspaceData>()
             .Include<WorkspaceUserJson, WorkspaceUserData>()
             .Include<UserJson, UserData>()
-            .Include<TimeEntryJson, TimeEntryData>();
+            .Include<TimeEntryJson, TimeEntryData>().ReverseMap ();
+
+            AutoMapper.Mapper.CreateMap<CommonData, CommonJson>()
+            .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<InverseDeletedAtResolver>())
+            .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()));
 
             AutoMapper.Mapper.CreateMap<ProjectJson, ProjectData>().ReverseMap();
-            AutoMapper.Mapper.CreateMap<ClientJson, ClientData>().ReverseMap();
+            AutoMapper.Mapper.CreateMap<ClientJson, ClientData>();
+            AutoMapper.Mapper.CreateMap<ClientData, ClientJson>();
             AutoMapper.Mapper.CreateMap<TagJson, TagData>().ReverseMap();
             AutoMapper.Mapper.CreateMap<TaskJson, TaskData>().ReverseMap();
-            AutoMapper.Mapper.CreateMap<WorkspaceJson, WorkspaceData>().ReverseMap();
             AutoMapper.Mapper.CreateMap<WorkspaceUserJson, WorkspaceUserData>().ReverseMap();
+            AutoMapper.Mapper.CreateMap<WorkspaceJson, WorkspaceData>().ReverseMap();
 
             // User mapping
-            AutoMapper.Mapper.CreateMap<UserJson, UserData>();
+            AutoMapper.Mapper.CreateMap<UserJson, UserData>()
+            .ForMember (dest => dest.ExperimentIncluded, opt => opt.MapFrom (src => src.OBM.Included))
+            .ForMember (dest => dest.ExperimentNumber, opt => opt.MapFrom (src => src.OBM.Number));
+
             AutoMapper.Mapper.CreateMap<UserData, UserJson>()
+            .ForMember (dest => dest.OBM, opt => opt.MapFrom (src => new OBMJson { Included = src.ExperimentIncluded, Number = src.ExperimentNumber }))
             .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith));
 
             // TimeEntry mapping
@@ -41,6 +50,8 @@ namespace Toggl.Phoebe._Data.Json
             .ForMember (dest => dest.State, opt => opt.ResolveUsing<StateResolver>());
 
             AutoMapper.Mapper.CreateMap<TimeEntryData, TimeEntryJson>()
+            .ForMember (dest => dest.StartTime, opt => opt.MapFrom (src => src.StartTime.ToUtc ()))
+            .ForMember (dest => dest.StopTime, opt => opt.MapFrom (src => src.StopTime.ToUtc ()))
             .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith))
             .ForMember (dest => dest.Duration, opt => opt.ResolveUsing<DurationResolver>());
 
@@ -50,22 +61,43 @@ namespace Toggl.Phoebe._Data.Json
             .ForMember (dest => dest.Projects, opt => opt.ResolveUsing<ReportProjectsResolver>())
             .ForMember (dest => dest.TotalCost, opt => opt.ResolveUsing<ReportTotalCostResolver>());
 
-
             // this is REQUIRED in AutoMapper 4.0 to make inheritance work
             AutoMapper.Mapper.Configuration.Seal();
         }
 
         #region TimeEntry resolvers
+        public class DeletedAtResolver : ValueResolver<CommonJson, DateTime?>
+        {
+            protected override DateTime? ResolveCore (CommonJson source)
+            {
+                if (source.DeletedAt.HasValue) {
+                    return source.DeletedAt.Value.ToUtc();
+                }
+                return null;
+            }
+        }
+
+        public class InverseDeletedAtResolver : ValueResolver<CommonData, DateTime?>
+        {
+            protected override DateTime? ResolveCore (CommonData source)
+            {
+                if (source.DeletedAt.HasValue) {
+                    return source.DeletedAt.Value.ToUtc();
+                }
+                return null;
+            }
+        }
+
         public class StartTimeResolver : ValueResolver<TimeEntryJson, DateTime>
         {
             protected override DateTime ResolveCore (TimeEntryJson source)
             {
                 DateTime startTime;
                 if (source.Duration >= 0) {
-                    startTime = source.StartTime.ToUtc ();
+                    startTime = source.StartTime.ToUtc();
                 } else {
                     var now = Time.UtcNow.Truncate (TimeSpan.TicksPerSecond);
-                    var duration = now.ToUnix () + TimeSpan.FromSeconds (source.Duration);
+                    var duration = now.ToUnix() + TimeSpan.FromSeconds (source.Duration);
                     startTime = now - duration;
                 }
                 return startTime;
@@ -79,9 +111,8 @@ namespace Toggl.Phoebe._Data.Json
                 DateTime? stopTime = null;
                 TimeSpan duration;
                 if (source.Duration >= 0) {
-                    var now = Time.UtcNow.Truncate (TimeSpan.TicksPerSecond);
-                    duration = now.ToUnix () + TimeSpan.FromSeconds (source.Duration);
-                    stopTime = source.StartTime.ToUtc () + duration;
+                    duration = TimeSpan.FromSeconds (source.Duration);
+                    stopTime = source.StartTime.ToUtc() + duration;
                 }
 
                 return stopTime;
@@ -106,19 +137,19 @@ namespace Toggl.Phoebe._Data.Json
 
                 // Calculate time entry duration
                 TimeSpan duration;
-                if (source.StartTime.IsMinValue ()) {
+                if (source.StartTime.IsMinValue()) {
                     duration = TimeSpan.Zero;
                 } else {
                     duration = (source.StopTime ?? now) - source.StartTime;
                     if (duration < TimeSpan.Zero) {
-                        duration   = TimeSpan.Zero;
+                        duration = TimeSpan.Zero;
                     }
                 }
 
                 // Encode the duration
                 var encoded = (long)duration.TotalSeconds;
                 if (source.State == TimeEntryState.Running) {
-                    encoded = (long) (encoded - now.ToUnix ().TotalSeconds);
+                    encoded = (long) (encoded - now.ToUnix().TotalSeconds);
                 }
                 return encoded;
             }
@@ -131,9 +162,9 @@ namespace Toggl.Phoebe._Data.Json
             protected override List<ReportActivity> ResolveCore (ReportJson source)
             {
                 var jsonList = source.ActivityContainer;
-                var activityList = new List<ReportActivity> ();
+                var activityList = new List<ReportActivity>();
                 foreach (var item in jsonList.Rows) {
-                    activityList.Add (new ReportActivity () {
+                    activityList.Add (new ReportActivity() {
                         StartTime = UnixStart.AddTicks (ToLong (item[0]) * TimeSpan.TicksPerMillisecond),
                         TotalTime = ToLong (item[1]),
                         BillableTime = ToLong (item[2])
@@ -163,19 +194,19 @@ namespace Toggl.Phoebe._Data.Json
             protected override List<ReportProject> ResolveCore (ReportJson source)
             {
                 var jsonList = source.Projects;
-                var projectList = new List<ReportProject> ();
+                var projectList = new List<ReportProject>();
                 int colorIndex;
 
                 foreach (var item in jsonList) {
-                    var p = new ReportProject () {
+                    var p = new ReportProject() {
                         Project = item.Description.Project,
                         TotalTime = item.TotalTime,
                         Color = Int32.TryParse (item.Description.Color, out colorIndex) ? colorIndex : ProjectData.HexColors.Length - 1
                     };
-                    p.Items = new List<ReportTimeEntry> ();
+                    p.Items = new List<ReportTimeEntry>();
                     if (item.Items != null) {
                         foreach (var i in item.Items) {
-                            p.Items.Add (new ReportTimeEntry () {
+                            p.Items.Add (new ReportTimeEntry() {
                                 Rate = i.Rate,
                                 Title = i.Description.Title,
                                 Time = i.Time,
@@ -183,10 +214,10 @@ namespace Toggl.Phoebe._Data.Json
                             });
                         }
                     }
-                    p.Currencies = new List<ReportCurrency> ();
+                    p.Currencies = new List<ReportCurrency>();
                     if (item.Currencies != null) {
                         foreach (var i in item.Currencies) {
-                            p.Currencies.Add (new ReportCurrency () {
+                            p.Currencies.Add (new ReportCurrency() {
                                 Amount = i.Amount,
                                 Currency = i.Currency
                             });
@@ -202,7 +233,7 @@ namespace Toggl.Phoebe._Data.Json
         {
             protected override List<string> ResolveCore (ReportJson source)
             {
-                var totalCost = new List<string> ();
+                var totalCost = new List<string>();
                 if (source.TotalCurrencies != null) {
                     source.TotalCurrencies.Sort ((x, y) => y.Amount.CompareTo (x.Amount));
                     foreach (var row in source.TotalCurrencies) {

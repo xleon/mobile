@@ -28,6 +28,8 @@ namespace Toggl.Phoebe._Data.Models
             UseTasksEstimate = other.UseTasksEstimate;
             WorkspaceId = other.WorkspaceId;
             ClientId = other.ClientId;
+            ClientRemoteId = other.ClientRemoteId;
+            WorkspaceRemoteId = other.WorkspaceRemoteId;
         }
 
         public string Name { get; set; }
@@ -43,6 +45,10 @@ namespace Toggl.Phoebe._Data.Models
         public bool IsTemplate { get; set; }
 
         public bool UseTasksEstimate { get; set; }
+
+        public long WorkspaceRemoteId { get; set; }
+
+        public long? ClientRemoteId { get; set; }
 
         public Guid WorkspaceId { get; set; }
 

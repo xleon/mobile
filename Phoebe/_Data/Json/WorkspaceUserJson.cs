@@ -18,9 +18,9 @@ namespace Toggl.Phoebe._Data.Json
         public string Email { get; set; }
 
         [JsonProperty ("wid")]
-        public long WorkspaceId { get; set; }
+        public long WorkspaceRemoteId { get; set; }
 
         [JsonProperty ("uid")]
-        public long UserId { get; set; }
+        public long UserRemoteId { get; set; }
     }
 }

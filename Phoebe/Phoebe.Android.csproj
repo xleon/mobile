@@ -98,8 +98,8 @@
     <Compile Include="_Dispatcher\**\*.cs" />
     <Compile Include="_Store\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
-    <Compile Include="_Net\**\*.cs" />
     <Compile Include="_Data\**\*.cs" />
+    <Compile Include="_Net\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />

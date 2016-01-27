@@ -15,8 +15,8 @@
             android:id="@+id/ColorView"
             android:layout_width="4dp"
             android:layout_height="72dp"
-            android:background="@drawable/ColoredSideShape"
-            android:layout_marginRight="12dp" />
+            android:layout_marginRight="12dp"
+            android:background="@drawable/ColoredSideShape" />
         <LinearLayout
             android:orientation="vertical"
             android:layout_weight="1"
@@ -104,4 +104,12 @@
             android:clickable="true"
             android:background="@drawable/play_button_background" />
     </LinearLayout>
+    <View
+        android:id="@+id/NotSyncedIcon"
+        android:background="@drawable/itemsyncerror"
+        android:layout_width="7dp"
+        android:layout_height="7dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentRight="true" />
 </RelativeLayout>

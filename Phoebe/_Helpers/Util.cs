@@ -93,6 +93,15 @@ namespace Toggl.Phoebe.Helpers
             }
         }
 
+        public async Task MatchAsync (Func<TL,Task> left, Action<TR> right)
+        {
+            if (_isLeft) {
+                await left (_left);
+            } else {
+                right (_right);
+            }
+        }
+
         public Either<TL2,TR2> Select<TL2,TR2> (Func<TL,TL2> left, Func<TR,TR2> right)
         {
             return _isLeft ? Either<TL2,TR2>.Left (left (_left)) : Either<TL2,TR2>.Right (right (_right));

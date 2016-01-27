@@ -56,7 +56,7 @@ namespace Toggl.Phoebe.ViewModels
             var resultsGroup = results.Select (x => x.Data).Split ();
 
             if (resultsGroup.Left.Count > 0) {
-                await UpdateItems (resultsGroup.Left.SelectMany (x => x.Messages));
+                await UpdateItems (resultsGroup.Left.SelectMany (x => x));
 
                 // If we've received non-empty messages from server (DataDir.Incoming)
                 // this means there're more entries available
@@ -70,7 +70,7 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private async Task UpdateItems (IEnumerable<DataSyncMsg<TimeEntryData>> msgs)
+        private async Task UpdateItems (IEnumerable<Tuple<DataVerb, TimeEntryData>> msgs)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
@@ -78,7 +78,7 @@ namespace Toggl.Phoebe.ViewModels
 
                 // 2. Remove, replace or add items from messages
                 foreach (var msg in msgs) {
-                    UpdateTimeHolders (timeHolders, msg.Data, msg.Verb);
+                    UpdateTimeHolders (timeHolders, msg.Item1, msg.Item2);
                 }
 
                 // TODO: Temporary, every access to the database should be done in the Store component
@@ -119,7 +119,7 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void UpdateTimeHolders (IList<TimeEntryHolder> timeHolders, TimeEntryData entry, DataVerb action)
+        private void UpdateTimeHolders (IList<TimeEntryHolder> timeHolders, DataVerb action, TimeEntryData entry)
         {
             for (var i = 0; i < timeHolders.Count; i++) {
                 if (entry.Id == timeHolders [i].Data.Id) {

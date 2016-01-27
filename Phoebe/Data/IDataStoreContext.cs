@@ -1,4 +1,5 @@
 using SQLite.Net;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.Data
 {
@@ -9,5 +10,11 @@ namespace Toggl.Phoebe.Data
         bool Delete (object obj);
 
         SQLiteConnection Connection { get; }
+
+        void Enqueue (string json);
+        
+        bool TryDequeue (out string json);
+        
+        bool TryPeekQueue (out string json);
     }
 }

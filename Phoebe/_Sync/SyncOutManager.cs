@@ -9,99 +9,97 @@ using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Phoebe.Data.Json;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Sync
 {
     public static class SyncOutManager
     {
-        // TODO: This queue must be persistant
-        static ConcurrentQueue<IDataSyncMsg> queue = new ConcurrentQueue<IDataSyncMsg> ();
-        // TODO: Export without accessing the database?
         static readonly IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
         static readonly ITogglClient client = ServiceContainer.Resolve<ITogglClient> ();
 
         static SyncOutManager ()
         {   
-            Store.Observe <IDataSyncMsg> ().Subscribe (
-                x => x.Data.Match (y => HandleMessage (new [] { y }),
-                    e => {})); // TODO: Error handling
-
-            Store.Observe <IDataSyncGroupMsg> ().Subscribe (
-                x => x.Data.Match (y => HandleMessage (y.RawMessages),
-                e => {})); // TODO: Error handling
+            Store.Observe <DataSyncMsg> ().Subscribe (HandleMsg);
+            Store.Observe <IDataSyncGroup> ().Subscribe (HandleGroupMsg);
         }
 
-        static async void HandleMessage (IEnumerable<IDataSyncMsg> msgs)
+        static async void HandleMsg (DataMsg<DataSyncMsg> msg)
         {
-            foreach (var msg in msgs.Where (x => x.Dir == DataDir.Outcoming)) {
-                await EnqueueOrSend (msg);
-            }
+            await msg.Data.MatchAsync (
+                async x => {
+                    if (x.Dir == DataDir.Outcoming)
+                        await EnqueueOrSend (new [] { x });
+                },
+                e => {}  // TODO: Error handling
+            );
         }
 
-        static async Task EnqueueOrSend (IDataSyncMsg newMsg)
+        static async void HandleGroupMsg (DataMsg<IDataSyncGroup> msg)
+        {
+            await msg.Data.MatchAsync (
+                x => EnqueueOrSend (x.SyncMessages.Where (y => y.Dir == DataDir.Outcoming).ToList ()),
+                e => {}  // TODO: Error handling
+            );
+        }
+
+        static async Task EnqueueOrSend (IList<DataSyncMsg> msgs)
         {
             // TODO: Check internet connection
             // TODO: Check queue size, if it reaches a limit, empty it and request full sync next time
 
-            bool alreadyQueued = false;
-            try {
-                if (queue.Count > 0) {
-                    queue.Enqueue (newMsg);
-                    alreadyQueued = true;
+            await dataStore.ExecuteInTransactionWithMessagesAsync (async ctx => {
+                foreach (var msg in msgs) {
+                    var msgJson = new DataJsonMsg (msg, ctx);
 
-                    // Send queue to server
-                    IDataSyncMsg curMsg = null;
-                    while (queue.TryPeek (out curMsg)) {
-                        var success = await SendMessage (curMsg);
-                        if (!success) {
-                            break;
+                    string json = null;
+                    bool alreadyQueued = false;
+                    try {
+                        if (ctx.TryDequeue (out json)) {
+                            ctx.Enqueue (JsonConvert.SerializeObject (msgJson));
+                            alreadyQueued = true;
+
+                            // Send queue to server
+                            while (ctx.TryPeekQueue (out json)) {
+                                msgJson = JsonConvert.DeserializeObject<DataJsonMsg> (json);
+                                await SendMessage (msgJson.Verb, msgJson.Data);
+
+                                // If we sent the message successfully, remove it from the queue
+                                ctx.TryDequeue (out json);
+                            }
                         }
-
-                        // TODO: Check if this has actually been dequeued
-                        var dequeued = queue.TryDequeue (out curMsg);
+                        else {
+                            // If there's no queue, try to send the message directly
+                            await SendMessage (msgJson.Verb, msgJson.Data);
+                        }
+                    }
+                    catch (Exception ex) {
+                        if (!alreadyQueued) {
+                            ctx.Enqueue (JsonConvert.SerializeObject (msgJson)); // TODO
+                        }
+                        var log = ServiceContainer.Resolve<ILogger> ();
+                        log.Error (typeof(SyncOutManager).Name, ex, "Failed to send data to server");
                     }
                 }
-                else {
-                    // If there's no queue, try to send the message directly
-                    var success = await SendMessage (newMsg);
-                    if (!success) {
-                        queue.Enqueue (newMsg);
-                    }
-                }
-            }
-            catch (Exception ex) {
-                if (!alreadyQueued) {
-                    queue.Enqueue (newMsg);
-                }
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error (typeof(SyncOutManager).Name, ex, "Failed to send data to server");
-            }
+            });
         }
 
         // TODO: Check client methods results
-        // TODO: Convert messages to JSON in groups to improve performance (same transaction)
-        static async Task<bool> SendMessage (IDataSyncMsg msg)
+        static async Task SendMessage (DataVerb action, CommonJson json)
         {
             object res = null;
-            await dataStore.ExecuteInTransactionWithMessagesAsync(async ctx => {
-                var json = msg.RawData.Export (ctx);
-
-                switch (msg.Verb) {
-                case DataVerb.Post:
-                    res = await client.Create (json);
-                    break;
-                case DataVerb.Put:
-                    res = await client.Update (json);
-                    break;
-                case DataVerb.Delete:
-                    // TODO: Why Delete doesn't return anything?
-                    await client.Delete (json);
-                    res = new object();
-                    break;
-                }
-            });
-
-            return res != null;
+            switch (action) {
+            case DataVerb.Post:
+                res = await client.Create (json);
+                break;
+            case DataVerb.Put:
+                res = await client.Update (json);
+                break;
+            case DataVerb.Delete:
+                await client.Delete (json);
+                break;
+            }
         }
     }
 }

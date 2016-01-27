@@ -12,6 +12,11 @@ namespace Toggl.Phoebe.Data
 {
     public class SqliteDataStore : IDataStore
     {
+        private const string QueueCreateSql = "CREATE TABLE IF NOT EXISTS [__QUEUE__] (DATA TEXT)";
+        private const string QueueInsertSql = "INSERT INTO [__QUEUE__] VALUES (?)";
+        private const string QueueSelectFirstSql = "SELECT ROWID, DATA FROM [__QUEUE__] ORDER BY ROWID LIMIT 1";
+        private const string QueueDeleteSql = "DELETE FROM [__QUEUE__] WHERE ROWID = ?";
+
         private readonly SQLiteConnectionWithLock cnn;
 #pragma warning disable 0414
         private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
@@ -28,6 +33,7 @@ namespace Toggl.Phoebe.Data
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
             CreateTables();
+            CreateQueueTable ();
             CleanOldDraftEntry ();
         }
 
@@ -45,6 +51,11 @@ namespace Toggl.Phoebe.Data
             foreach (var t in dataObjects) {
                 cnn.CreateTable (t);
             }
+        }
+
+        private void CreateQueueTable ()
+        {
+            cnn.Execute (QueueCreateSql);
         }
 
         private void CleanOldDraftEntry ()
@@ -199,6 +210,12 @@ namespace Toggl.Phoebe.Data
 
         private class Context : IDataStoreContext
         {
+            class QueueItem
+            {
+                public long RowId { get; set; }
+                public string Data { get; set; }
+            }
+
             private readonly SqliteDataStore store;
             private readonly SQLiteConnection conn;
 
@@ -235,6 +252,41 @@ namespace Toggl.Phoebe.Data
             public SQLiteConnection Connection
             {
                 get { return conn; }
+            }
+
+            public void Enqueue (string json)
+            {
+                conn.Execute (QueueInsertSql, json);
+            }
+
+            public bool TryDequeue (out string json)
+            {
+                var cmd = conn.CreateCommand (QueueSelectFirstSql);
+                var record = cmd.ExecuteQuery<QueueItem> ().Single ();
+                if (record != null) {
+                    cmd = conn.CreateCommand (QueueDeleteSql, record.RowId);
+                    cmd.ExecuteNonQuery ();
+                    json = record.Data;
+                    return true;
+                }
+                else {
+                    json = null;
+                    return false;
+                }
+            }
+
+            public bool TryPeekQueue (out string json)
+            {
+                var cmd = conn.CreateCommand (QueueSelectFirstSql);
+                var record = cmd.ExecuteQuery<QueueItem> ().Single ();
+                if (record != null) {
+                    json = record.Data;
+                    return true;
+                }
+                else {
+                    json = null;
+                    return false;
+                }
             }
         }
     }

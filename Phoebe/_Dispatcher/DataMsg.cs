@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
-using System.Reactive.Linq;
-using System.Collections.Generic;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data;
 
 namespace Toggl.Phoebe
 {
@@ -52,23 +54,14 @@ namespace Toggl.Phoebe
         }
     }
 
-    public interface IDataSyncMsg
-    {
-        DataDir Dir { get; }
-        DataVerb Verb { get; }
-        Type DataType { get; }
-        CommonData RawData { get; }
-    }
-
-    public class DataSyncMsg<T> : IDataSyncMsg where T : CommonData
+    public class DataSyncMsg
     {
         public DataDir Dir { get; private set; }
         public DataVerb Verb { get; private set; }
-        public T Data { get; private set; }
-        public Type DataType { get { return typeof(T); } }
-        public CommonData RawData { get { return Data; } }
+        public CommonData Data { get; private set; }
+//        public Type DataType { get { return typeof(T); } }
 
-        public DataSyncMsg (DataDir dir, DataVerb verb, T data)
+        public DataSyncMsg (DataDir dir, DataVerb verb, CommonData data)
         {
             Dir = dir;
             Verb = verb;
@@ -76,15 +69,22 @@ namespace Toggl.Phoebe
         }
     }
 
-    public interface IDataSyncGroupMsg
+    public interface IDataSyncGroup
     {
-        Type DataType { get; }
-        IEnumerable<IDataSyncMsg> RawMessages { get; }
+        IEnumerable<DataSyncMsg> SyncMessages { get; }
     }
 
-    public interface IDataSyncGroupMsg<T> : IDataSyncGroupMsg where T : CommonData
+    public class DataJsonMsg
     {
-        IEnumerable<DataSyncMsg<T>> Messages { get; }
+        public DataVerb Verb { get; set; }
+        public CommonJson Data { get; set; }
+//        public Type DataType { get { return typeof(T); } }
+
+        public DataJsonMsg (DataSyncMsg msg, IDataStoreContext ctx)
+        {
+            Verb = msg.Verb;
+            Data = msg.Data.Export (ctx);
+        }
     }
 
     public static class DataMsg

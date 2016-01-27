@@ -12,50 +12,50 @@ namespace Toggl.Phoebe._Net
         #region Generic CURD methods
 
         Task<T> Create<T> (T jsonObject)
-        where T : CommonData;
+        where T : CommonJson;
 
         Task<T> Get<T> (long id)
-        where T : CommonData;
+        where T : CommonJson;
 
         Task<List<T>> List<T> ()
-        where T : CommonData;
+        where T : CommonJson;
 
         Task<T> Update<T> (T jsonObject)
-        where T : CommonData;
+        where T : CommonJson;
 
         Task Delete<T> (T jsonObject)
-        where T : CommonData;
+        where T : CommonJson;
 
         Task Delete<T> (IEnumerable<T> jsonObjects)
-        where T : CommonData;
+        where T : CommonJson;
 
         #endregion
 
-        Task<UserData> GetUser (string username, string password);
+        Task<UserJson> GetUser (string username, string password);
 
-        Task<UserData> GetUser (string googleAccessToken);
+        Task<UserJson> GetUser (string googleAccessToken);
 
-        Task<List<ClientData>> ListWorkspaceClients (long workspaceId);
+        Task<List<ClientJson>> ListWorkspaceClients (long workspaceId);
 
-        Task<List<ProjectData>> ListWorkspaceProjects (long workspaceId);
+        Task<List<ProjectJson>> ListWorkspaceProjects (long workspaceId);
 
-        Task<List<WorkspaceUserData>> ListWorkspaceUsers (long workspaceId);
+        Task<List<WorkspaceUserJson>> ListWorkspaceUsers (long workspaceId);
 
-        Task<List<TaskData>> ListWorkspaceTasks (long workspaceId);
+        Task<List<TaskJson>> ListWorkspaceTasks (long workspaceId);
 
-        Task<List<TaskData>> ListProjectTasks (long projectId);
+        Task<List<TaskJson>> ListProjectTasks (long projectId);
 
-        Task<List<ProjectUserData>> ListProjectUsers (long projectId);
+        Task<List<ProjectUserJson>> ListProjectUsers (long projectId);
 
-        Task<List<TimeEntryData>> ListTimeEntries (DateTime start, DateTime end, CancellationToken cancellationToken);
+        Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end, CancellationToken cancellationToken);
 
-        Task<List<TimeEntryData>> ListTimeEntries (DateTime start, DateTime end);
+        Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end);
 
-        Task<List<TimeEntryData>> ListTimeEntries (DateTime end, int days, CancellationToken cancellationToken);
+        Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days, CancellationToken cancellationToken);
 
-        Task<List<TimeEntryData>> ListTimeEntries (DateTime end, int days);
+        Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days);
 
-        Task<UserRelatedData> GetChanges (DateTime? since);
+        Task<UserRelatedJson> GetChanges (DateTime? since);
 
         Task CreateFeedback (FeedbackJson jsonObject);
 

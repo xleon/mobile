@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe.Data.Json;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Phoebe.Data.Json;
-using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Sync
 {
@@ -51,19 +49,21 @@ namespace Toggl.Phoebe.Sync
 
             await dataStore.ExecuteInTransactionWithMessagesAsync (async ctx => {
                 foreach (var msg in msgs) {
-                    var msgJson = new DataJsonMsg (msg, ctx);
+                    var exported = msg.Data.Export (ctx);
 
                     string json = null;
+                    DataJsonMsg jsonMsg = null;
+
                     bool alreadyQueued = false;
                     try {
                         if (ctx.TryDequeue (out json)) {
-                            ctx.Enqueue (JsonConvert.SerializeObject (msgJson));
+                            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Verb, exported)));
                             alreadyQueued = true;
 
                             // Send queue to server
                             while (ctx.TryPeekQueue (out json)) {
-                                msgJson = JsonConvert.DeserializeObject<DataJsonMsg> (json);
-                                await SendMessage (msgJson.Verb, msgJson.Data);
+                                jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
+                                await SendMessage (jsonMsg.Verb, jsonMsg.Data);
 
                                 // If we sent the message successfully, remove it from the queue
                                 ctx.TryDequeue (out json);
@@ -71,12 +71,12 @@ namespace Toggl.Phoebe.Sync
                         }
                         else {
                             // If there's no queue, try to send the message directly
-                            await SendMessage (msgJson.Verb, msgJson.Data);
+                            await SendMessage (msg.Verb, exported);
                         }
                     }
                     catch (Exception ex) {
                         if (!alreadyQueued) {
-                            ctx.Enqueue (JsonConvert.SerializeObject (msgJson)); // TODO
+                            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Verb, exported)));
                         }
                         var log = ServiceContainer.Resolve<ILogger> ();
                         log.Error (typeof(SyncOutManager).Name, ex, "Failed to send data to server");
@@ -88,13 +88,12 @@ namespace Toggl.Phoebe.Sync
         // TODO: Check client methods results
         static async Task SendMessage (DataVerb action, CommonJson json)
         {
-            object res = null;
             switch (action) {
             case DataVerb.Post:
-                res = await client.Create (json);
+                await client.Create (json);
                 break;
             case DataVerb.Put:
-                res = await client.Update (json);
+                await client.Update (json);
                 break;
             case DataVerb.Delete:
                 await client.Delete (json);

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
-using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
@@ -59,7 +59,6 @@ namespace Toggl.Phoebe
         public DataDir Dir { get; private set; }
         public DataVerb Verb { get; private set; }
         public CommonData Data { get; private set; }
-//        public Type DataType { get { return typeof(T); } }
 
         public DataSyncMsg (DataDir dir, DataVerb verb, CommonData data)
         {
@@ -77,13 +76,35 @@ namespace Toggl.Phoebe
     public class DataJsonMsg
     {
         public DataVerb Verb { get; set; }
-        public CommonJson Data { get; set; }
-//        public Type DataType { get { return typeof(T); } }
+        public string TypeName { get; set; }
+        public IDictionary<string, object> RawData { get; set; }
 
-        public DataJsonMsg (DataSyncMsg msg, IDataStoreContext ctx)
+        [JsonIgnore]
+        public CommonJson Data
         {
-            Verb = msg.Verb;
-            Data = msg.Data.Export (ctx);
+            get {
+                var type = Assembly.GetExecutingAssembly ().GetType (TypeName);
+                var data = Activator.CreateInstance (type);
+                foreach (var prop in type.GetProperties ()) {
+                    prop.SetValue (data, RawData [prop.Name]);
+                }
+                return (CommonJson)data;
+            }
+            set {
+                var data = value;
+                var dic = new Dictionary<string, object> ();
+                foreach (var prop in data.GetType ().GetProperties ()) {
+                    dic.Add (prop.Name, prop.GetValue (data, null));
+                }
+                RawData = dic;
+            }
+        }
+
+        public DataJsonMsg (DataVerb action, CommonJson json)
+        {
+            Verb = action;
+            Data = json;
+            TypeName = json.GetType ().FullName;
         }
     }
 

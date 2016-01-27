@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Json;
 
 namespace Toggl.Phoebe.Models
 {

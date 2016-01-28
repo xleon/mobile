@@ -26,22 +26,26 @@ namespace Toggl.Phoebe.Sync
         readonly ITogglClient client = ServiceContainer.Resolve<ITogglClient> ();
 
         SyncOutManager ()
-        {   
-        }
-
-        void HandleMsg (DataMsg<DataSyncMsg> msg)
         {
-            msg.Data.Match (
-                x => { if (x.Dir == DataDir.Outcoming) { EnqueueOrSend (new [] { x }); } },
-                e => {}  // TODO: Error handling
-            );
-        }
+            Store.Singleton.Observe ()
+                .Subscribe (msg => msg.RawData.Match (
+                    x => {
+                        DataSyncMsg singleMsg;
+                        IDataSyncGroup groupMsg;
+                        if ((singleMsg = x as DataSyncMsg) != null
+                            && singleMsg.Dir == DataDir.Outcoming) {
+                            EnqueueOrSend (new [] { singleMsg });
+                        }
+                        else if ((groupMsg = x as IDataSyncGroup) != null) {
+                            var outMsgs = groupMsg.SyncMessages.Where (
+                                y => y.Dir == DataDir.Outcoming).ToList ();
 
-        void HandleGroupMsg (DataMsg<IDataSyncGroup> msg)
-        {
-            msg.Data.Match (
-                x => EnqueueOrSend (x.SyncMessages.Where (y => y.Dir == DataDir.Outcoming).ToList ()),
-                e => {}  // TODO: Error handling
+                            if (outMsgs.Count > 0)
+                                EnqueueOrSend (outMsgs);
+                        }
+                    },
+                    e => {}
+                )
             );
         }
 

@@ -12,62 +12,63 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Sync
 {
-    public static class SyncOutManager
+    public class SyncOutManager
     {
-        static readonly IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
-        static readonly ITogglClient client = ServiceContainer.Resolve<ITogglClient> ();
+        public static SyncOutManager Singleton { get; private set; }
 
-        static SyncOutManager ()
-        {   
-            Store.Observe <DataSyncMsg> ().Subscribe (HandleMsg);
-            Store.Observe <IDataSyncGroup> ().Subscribe (HandleGroupMsg);
+        public static void Init ()
+        {
+            Store.Init ();
+            Singleton = new SyncOutManager ();
         }
 
-        static async void HandleMsg (DataMsg<DataSyncMsg> msg)
+        readonly IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
+        readonly ITogglClient client = ServiceContainer.Resolve<ITogglClient> ();
+
+        SyncOutManager ()
+        {   
+        }
+
+        void HandleMsg (DataMsg<DataSyncMsg> msg)
         {
-            await msg.Data.MatchAsync (
-                async x => {
-                    if (x.Dir == DataDir.Outcoming)
-                        await EnqueueOrSend (new [] { x });
-                },
+            msg.Data.Match (
+                x => { if (x.Dir == DataDir.Outcoming) { EnqueueOrSend (new [] { x }); } },
                 e => {}  // TODO: Error handling
             );
         }
 
-        static async void HandleGroupMsg (DataMsg<IDataSyncGroup> msg)
+        void HandleGroupMsg (DataMsg<IDataSyncGroup> msg)
         {
-            await msg.Data.MatchAsync (
+            msg.Data.Match (
                 x => EnqueueOrSend (x.SyncMessages.Where (y => y.Dir == DataDir.Outcoming).ToList ()),
                 e => {}  // TODO: Error handling
             );
         }
 
-        static async Task EnqueueOrSend (IList<DataSyncMsg> msgs)
+        void EnqueueOrSend (IList<DataSyncMsg> msgs)
         {
             // TODO: Check internet connection
             // TODO: Check queue size, if it reaches a limit, empty it and request full sync next time
 
-            await dataStore.ExecuteInTransactionWithMessagesAsync (async ctx => {
+            dataStore.ExecuteInTransactionWithMessagesAsync (async ctx => {
                 foreach (var msg in msgs) {
+                    bool alreadyQueued = false;
                     var exported = msg.Data.Export (ctx);
 
-                    string json = null;
-                    DataJsonMsg jsonMsg = null;
-
-                    bool alreadyQueued = false;
                     try {
+                        string json = null;
+                        ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Verb, exported)));
+                        alreadyQueued = true;
+                        
                         if (ctx.TryDequeue (out json)) {
-                            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Verb, exported)));
-                            alreadyQueued = true;
-
                             // Send queue to server
-                            while (ctx.TryPeekQueue (out json)) {
-                                jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
+                            do {
+                                var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
                                 await SendMessage (jsonMsg.Verb, jsonMsg.Data);
 
                                 // If we sent the message successfully, remove it from the queue
                                 ctx.TryDequeue (out json);
-                            }
+                            } while (ctx.TryPeekQueue (out json));
                         }
                         else {
                             // If there's no queue, try to send the message directly
@@ -85,8 +86,8 @@ namespace Toggl.Phoebe.Sync
             });
         }
 
-        // TODO: Check client methods results
-        static async Task SendMessage (DataVerb action, CommonJson json)
+        // TODO: Check client methods results -> Assign ID for newly created json
+        async Task SendMessage (DataVerb action, CommonJson json)
         {
             switch (action) {
             case DataVerb.Post:

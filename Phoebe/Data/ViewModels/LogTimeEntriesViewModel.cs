@@ -125,7 +125,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             HasMoreItems = true;
             HasLoadErrors = false;
-            Dispatcher.Send (DataTag.TimeEntryLoad);
+            Dispatcher.Singleton.Send (DataTag.TimeEntryLoad);
         }
         #endregion
 

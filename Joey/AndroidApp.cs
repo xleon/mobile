@@ -85,6 +85,9 @@ namespace Toggl.Joey
             ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<WidgetSyncManager>();
+
+            // Start the Reactive chain
+            Toggl.Phoebe.Sync.SyncOutManager.Init ();
         }
 
         public void InitializeComponents ()

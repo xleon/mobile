@@ -13,36 +13,34 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe
 {
-    public static partial class Store
+    public static class StoreRegister
     {
-        static IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
-
-        static Func<IDataMsg, Task<IDataMsg>> GetAction (DataTag tag)
+        public static Task<IDataMsg> ResolveAction (IDataMsg msg, IDataStore dataStore)
         {
-            switch (tag) {
+            switch (msg.Tag) {
             case DataTag.TimeEntryLoad:
-                return TimeEntryLoad;
+                return TimeEntryLoad (msg, dataStore);
 
             case DataTag.TimeEntryLoadFromServer:
-                return TimeEntryLoadFromServer;
+                return TimeEntryLoadFromServer (msg, dataStore);
 
             case DataTag.TimeEntryStop:
-                return TimeEntryStop;
+                return TimeEntryStop (msg, dataStore);
 
             case DataTag.TimeEntryRemove:
-                return TimeEntryRemove;
+                return TimeEntryRemove (msg, dataStore);
 
             // These operations don't really do anything with the database
             case DataTag.TimeEntryRemoveWithUndo:
             case DataTag.TimeEntryRestoreFromUndo:
-                return DispatcherRegister.LetGoThrough;
+                return DispatcherRegister.LetGoThrough (msg);
                 
             default:
-                throw new ActionNotFoundException (tag, typeof (DispatcherRegister));
+                throw new ActionNotFoundException (msg.Tag, typeof (DispatcherRegister));
             }
         }
 
-        static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg)
+        static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg, IDataStore dataStore)
         {
             var jsonEntries = msg.ForceGetData<List<TimeEntryJson>> ();
 
@@ -58,15 +56,14 @@ namespace Toggl.Phoebe
         // Set initial pagination Date to the beginning of the next day.
         // So, we can include all entries created -Today-.
         static DateTime paginationDate = Time.UtcNow.Date.AddDays (1);
-        static async Task<IDataMsg> TimeEntryLoad (IDataMsg msg)
+        static async Task<IDataMsg> TimeEntryLoad (IDataMsg msg, IDataStore dataStore)
         {
-            var startDate = await GetDatesByDays (paginationDate, Literals.TimeEntryLoadDays);
+            var startDate = await GetDatesByDays (dataStore, paginationDate, Literals.TimeEntryLoadDays);
 
             // Always fall back to local data:
-            var store = ServiceContainer.Resolve<IDataStore> ();
             var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
             var baseQuery =
-                store.Table<TimeEntryData> ()
+                dataStore.Table<TimeEntryData> ()
                 .Where (r =>
                         r.State != TimeEntryState.New &&
                         r.StartTime >= startDate && r.StartTime < paginationDate &&
@@ -78,14 +75,14 @@ namespace Toggl.Phoebe
                 .Select (x => Tuple.Create (DataVerb.Post, x)).ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            Dispatcher.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
+            Dispatcher.Singleton.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
             paginationDate = dbMsgs.Count > 0 ? startDate : paginationDate;
 
             // TODO: Check if there're entries in the db that hasn't been synced
             return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbMsgs));
         }
 
-        static async Task<IDataMsg> TimeEntryStop (IDataMsg msg)
+        static async Task<IDataMsg> TimeEntryStop (IDataMsg msg, IDataStore dataStore)
         {
             var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
 
@@ -114,7 +111,7 @@ namespace Toggl.Phoebe
             return DataMsg.Success (msg.Tag, new TimeEntryMsg (entryMsg.Dir, newEntries));
         }
 
-        static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg)
+        static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg, IDataStore dataStore)
         {
             var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
 
@@ -148,7 +145,7 @@ namespace Toggl.Phoebe
 
         #region Util
         // TODO: replace this method from the SQLite equivalent.
-        static async Task<DateTime> GetDatesByDays (DateTime startDate, int numDays)
+        static async Task<DateTime> GetDatesByDays (IDataStore dataStore, DateTime startDate, int numDays)
         {
             var baseQuery = dataStore.Table<TimeEntryData> ().Where (r =>
                             r.State != TimeEntryState.New &&

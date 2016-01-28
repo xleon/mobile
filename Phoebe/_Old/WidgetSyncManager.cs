@@ -9,6 +9,8 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Reactive;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -19,11 +21,11 @@ namespace Toggl.Phoebe
         private const string DefaultDurationText = " 00:00:00 ";
 
         private readonly AuthManager authManager;
-        private ActiveTimeEntryManager activeTimeEntryManager;
+        private Toggl.Phoebe._Data.ActiveTimeEntryManager activeTimeEntryManager;
         private readonly IWidgetUpdateService widgetUpdateService;
         private Subscription<SyncStartedMessage> subscriptionSyncStarted;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private Subscription<StartStopMessage> subscriptionStartStopFinished;
+        private Subscription<Toggl.Phoebe._Data.StartStopMessage> subscriptionStartStopFinished;
 
         private bool isLoading;
         private MessageBus messageBus;
@@ -39,7 +41,7 @@ namespace Toggl.Phoebe
             messageBus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = messageBus.Subscribe<SyncStartedMessage> (OnSyncWidget);
             subscriptionSyncFinished = messageBus.Subscribe<SyncFinishedMessage> (OnSyncWidget);
-            subscriptionStartStopFinished = messageBus.Subscribe<StartStopMessage> (OnSyncWidget);
+            subscriptionStartStopFinished = messageBus.Subscribe<Toggl.Phoebe._Data.StartStopMessage> (OnSyncWidget);
         }
 
         public void Dispose ()
@@ -65,7 +67,7 @@ namespace Toggl.Phoebe
         public async Task StartStopTimeEntry ()
         {
             if (activeTimeEntryManager.IsRunning) {
-                await TimeEntryModel.StopAsync (activeTimeEntryManager.ActiveTimeEntry);
+                Dispatcher.Singleton.Send (DataTag.TimeEntryStop, activeTimeEntryManager.ActiveTimeEntry);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.Widget);
             } else {
                 var startedEntry = await TimeEntryModel.StartAsync (TimeEntryModel.GetDraft ());

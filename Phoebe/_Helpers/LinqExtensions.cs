@@ -4,7 +4,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Collections.Generic;
 
-namespace Toggl.Phoebe.Helpers
+namespace Toggl.Phoebe._Helpers
 {
     public static class LinqExtensions
     {

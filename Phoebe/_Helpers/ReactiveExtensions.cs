@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 
-namespace Toggl.Phoebe.Helpers
+namespace Toggl.Phoebe._Helpers
 {
     public static class ReactiveExtensions
     {

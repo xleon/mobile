@@ -1,4 +1,5 @@
 ﻿using System;
+using Toggl.Phoebe._Data.Models;
 
 namespace Toggl.Phoebe._Data
 {

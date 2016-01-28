@@ -111,18 +111,17 @@
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
     <Compile Include="_Old\**\*.cs" />
-    <Compile Include="_Models\**\*.cs" />
     <Compile Include="_ViewModels\**\*.cs" />
-    <Compile Include="_Dispatcher\**\*.cs" />
-    <Compile Include="_Store\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
-    <Compile Include="_Sync\**\*.cs" />
+    <Compile Include="_Reactive\**\*.cs" />
     <Compile Include="_Data\**\*.cs" />
     <Compile Include="_Net\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Contrib\" />
     <Folder Include="Contrib\XPlatUtils\" />
+    <Folder Include="_Data\Diff\" />
+    <Folder Include="_ViewModels\Timer\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

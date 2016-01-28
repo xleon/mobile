@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Helpers
+namespace Toggl.Phoebe._Helpers
 {
     public static class Util
     {

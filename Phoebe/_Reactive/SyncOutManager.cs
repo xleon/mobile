@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Json;
-using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Net;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Sync
+namespace Toggl.Phoebe._Reactive
 {
     public class SyncOutManager
     {
@@ -22,8 +21,10 @@ namespace Toggl.Phoebe.Sync
             Singleton = new SyncOutManager ();
         }
 
-        readonly IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
-        readonly ITogglClient client = ServiceContainer.Resolve<ITogglClient> ();
+        readonly JsonMapper mapper = new JsonMapper ();
+        readonly Toggl.Phoebe.Data.IDataStore dataStore = ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
+        readonly ITogglClient client = new TogglRestClient (
+            Build.ApiUrl, ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().Token);
 
         SyncOutManager ()
         {
@@ -51,17 +52,17 @@ namespace Toggl.Phoebe.Sync
 
         void EnqueueOrSend (IList<DataSyncMsg> msgs)
         {
+            // TODO: Limit queue size?
             // TODO: Check internet connection
-            // TODO: Check queue size, if it reaches a limit, empty it and request full sync next time
 
             dataStore.ExecuteInTransactionSilent (async ctx => {
                 foreach (var msg in msgs) {
                     bool alreadyQueued = false;
-                    var exported = msg.Data.Export (ctx);
+                    var exported = mapper.MapToJson (msg.Data);
 
                     try {
                         string json = null;
-                        ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Action, exported)));
+                        Enqueue (ctx, msg.Action, exported);
                         alreadyQueued = true;
                         
                         if (ctx.TryDequeue (out json)) {
@@ -81,7 +82,7 @@ namespace Toggl.Phoebe.Sync
                     }
                     catch (Exception ex) {
                         if (!alreadyQueued) {
-                            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Action, exported)));
+                            Enqueue (ctx, msg.Action, exported);
                         }
                         var log = ServiceContainer.Resolve<ILogger> ();
                         log.Error (typeof(SyncOutManager).Name, ex, "Failed to send data to server");
@@ -90,20 +91,24 @@ namespace Toggl.Phoebe.Sync
             });
         }
 
-        // TODO: Check client methods results -> Assign ID for newly created json
+        void Enqueue (Toggl.Phoebe.Data.IDataStoreContext ctx, DataAction action, CommonJson json)
+        {
+            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (action, json)));
+        }
+
         async Task SendMessage (DataAction action, CommonJson json)
         {
-            // TODO: Check RemoteId to see if we need to Create or Update
-            switch (action) {
-//            case DataAction.Post:
-//                await client.Create (json);
-//                break;
-            case DataAction.Put:
-                await client.Update (json);
-                break;
-            case DataAction.Delete:
+            if (action == DataAction.Put) {
+                if (json.RemoteId != null) {
+                    await client.Update (json);
+                }
+                else {
+                    var res = await client.Create (json);
+                    // TODO: Store RemoteId
+                }
+            }
+            else {
                 await client.Delete (json);
-                break;
             }
         }
     }

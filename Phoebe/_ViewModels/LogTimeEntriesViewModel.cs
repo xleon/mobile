@@ -2,34 +2,33 @@
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Timers;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.ViewModels
+namespace Toggl.Phoebe._ViewModels
 {
     [ImplementPropertyChanged]
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
-        private Subscription<SettingChangedMessage> subscriptionSettingChanged;
-        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+        private Subscription<Toggl.Phoebe.Data.SettingChangedMessage> subscriptionSettingChanged;
+//        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 //        private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
-        private readonly Timer durationTimer;
+        private readonly System.Timers.Timer durationTimer;
         private readonly ActiveTimeEntryManager activeTimeEntryManager;
 
         LogTimeEntriesViewModel ()
         {
             // durationTimer will update the Duration value if ActiveTimeEntry is running
-            durationTimer = new Timer ();
+            durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
@@ -37,8 +36,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             activeTimeEntryManager.PropertyChanged += OnActiveTimeEntryChanged;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            subscriptionSettingChanged = bus.Subscribe<Toggl.Phoebe.Data.SettingChangedMessage> (OnSettingChanged);
+//            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
 //            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
 
             UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
@@ -58,10 +57,10 @@ namespace Toggl.Phoebe.Data.ViewModels
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-            if (subscriptionSyncFinished != null) {
-                bus.Unsubscribe (subscriptionSyncFinished);
-                subscriptionSyncFinished = null;
-            }
+//            if (subscriptionSyncFinished != null) {
+//                bus.Unsubscribe (subscriptionSyncFinished);
+//                subscriptionSyncFinished = null;
+//            }
 //            if (subscriptionUpdateFinished != null) {
 //                bus.Unsubscribe (subscriptionUpdateFinished);
 //                subscriptionUpdateFinished = null;
@@ -119,23 +118,21 @@ namespace Toggl.Phoebe.Data.ViewModels
         #endregion
 
         #region Time entry operations
-        public async Task<TimeEntryData> ContinueTimeEntryAsync (int index)
+        public async Task ContinueTimeEntry (int index)
         {
             var newTimeEntry = new TimeEntryData ();
             var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
-                return newTimeEntry;
+                return;
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                newTimeEntry = await TimeEntryModel.StopAsync (timeEntryHolder.Data);
+                Dispatcher.Singleton.Send (DataTag.TimeEntryStop, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                newTimeEntry = await TimeEntryModel.ContinueAsync (timeEntryHolder.Data);
+                Dispatcher.Singleton.Send (DataTag.TimeEntryContinue, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
-
-            return newTimeEntry;
         }
 
         public async Task<TimeEntryData> StartStopTimeEntry ()
@@ -145,9 +142,13 @@ namespace Toggl.Phoebe.Data.ViewModels
                 return activeTimeEntryManager.ActiveTimeEntry;
             }
 
-            IsProcessingAction = true;
             var active = activeTimeEntryManager.ActiveTimeEntry;
-            active = active.State == TimeEntryState.Running ? await TimeEntryModel.StopAsync (active) : await TimeEntryModel.StartAsync (active);
+            var msgTag = active.State == TimeEntryState.Running
+                ? DataTag.TimeEntryStop : DataTag.TimeEntryStart;
+
+            IsProcessingAction = true;
+            Dispatcher.Singleton.Send (msgTag, active);
+            // TODO: This must be at the end of the Reactive chain
             IsProcessingAction = false;
 
             if (activeTimeEntryManager.IsRunning) {
@@ -179,7 +180,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         private void SyncCollectionView ()
         {
             DisposeCollection ();
-            IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
+            IsGroupedMode = ServiceContainer.Resolve<Toggl.Phoebe.Data.ISettingsStore> ().GroupedTimeEntries;
 
             Collection = new TimeEntryCollectionVM (
                 IsGroupedMode ? TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
@@ -191,10 +192,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
                 // Check if an entry is running.
                 if (isRunning) {
-                    var model = new TimeEntryModel (data);
-                    await model.LoadAsync ();
-                    Description = model.Description;
-                    ProjectName = model.Project != null ? model.Project.Name : string.Empty;
+                    var info = await StoreRegister.LoadTimeEntryInfoAsync (data);
+                    Description = info.Description;
+                    ProjectName = info.ProjectData != null ? info.ProjectData.Name : string.Empty;
                     IsTimeEntryRunning = true;
                     durationTimer.Start ();
                 } else {
@@ -214,7 +214,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private void OnSettingChanged (SettingChangedMessage msg)
+        private void OnSettingChanged (Toggl.Phoebe.Data.SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
             if (msg.Name == "GroupedTimeEntries") {
@@ -230,12 +230,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private void OnSyncFinished (SyncFinishedMessage msg)
-        {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                IsAppSyncing = false;
-            });
-        }
+//        private void OnSyncFinished (SyncFinishedMessage msg)
+//        {
+//            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+//                IsAppSyncing = false;
+//            });
+//        }
 
 //        private void OnUpdateItemsFinished (UpdateFinishedMessage msg)
 //        {
@@ -245,10 +245,9 @@ namespace Toggl.Phoebe.Data.ViewModels
 //            });
 //        }
 
-        private void DurationTimerCallback (object sender, ElapsedEventArgs e)
+        private void DurationTimerCallback (object sender, System.Timers.ElapsedEventArgs e)
         {
-
-            var duration = TimeEntryModel.GetDuration (activeTimeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
+            var duration = activeTimeEntryManager.ActiveTimeEntry.GetDuration (Time.UtcNow);  //model.GetDuration ();
             durationTimer.Interval = 1000 - duration.Milliseconds;
 
             // Update on UI Thread

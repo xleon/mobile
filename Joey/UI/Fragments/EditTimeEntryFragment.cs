@@ -21,7 +21,7 @@ using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using MeasureSpec = Android.Views.View.MeasureSpec;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
-using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe._Helpers;
 
 namespace Toggl.Joey.UI.Fragments
 {

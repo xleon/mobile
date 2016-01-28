@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Net;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 using XPlatUtils;
-using Toggl.Phoebe.Data.Json;
-using Toggl.Phoebe.Data.Json.Converters;
-using Toggl.Phoebe.Helpers;
-using Toggl.Phoebe.Data.DataObjects;
 
-namespace Toggl.Phoebe
+namespace Toggl.Phoebe._Reactive
 {
     public static class DispatcherRegister
     {

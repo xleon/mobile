@@ -12,9 +12,8 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Models;
+using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
@@ -48,7 +47,7 @@ namespace Toggl.Joey.UI.Adapters
             }
             lastTimeEntryContinuedTime = Time.UtcNow;
 
-            await ViewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
+            await ViewModel.ContinueTimeEntry (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -281,7 +280,7 @@ namespace Toggl.Joey.UI.Adapters
                 var duration = DataSource.GetDuration ();
                 DurationTextView.Text = TimeEntryModel.GetFormattedDuration (duration);
 
-                if (DataSource.Data.State == TimeEntryState.Running) {
+                if (DataSource.Data.State == Toggl.Phoebe._Data.Models.TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
                 } else {
@@ -297,7 +296,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                if (DataSource.Data.State == TimeEntryState.Running) {
+                if (DataSource.Data.State == Toggl.Phoebe._Data.Models.TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
                 } else {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);

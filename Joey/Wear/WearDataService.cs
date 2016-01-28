@@ -52,13 +52,13 @@ namespace Toggl.Joey.Wear
         {
             base.OnCreate ();
             Init (this);
-            var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            var manager = ServiceContainer.Resolve<Toggl.Phoebe._Data.ActiveTimeEntryManager> ();
             manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
         }
 
         private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (args.PropertyName == ActiveTimeEntryManager.PropertyActiveTimeEntry) {
+            if (args.PropertyName == Toggl.Phoebe._Data.ActiveTimeEntryManager.PropertyActiveTimeEntry) {
                 await UpdateSharedTimeEntryList ();
             }
         }
@@ -123,7 +123,7 @@ namespace Toggl.Joey.Wear
                 try {
                     if (path == Common.StartStopTimeEntryPath) {
 
-                        await WearDataProvider.StartStopTimeEntry (BaseContext);
+                        WearDataProvider.StartStopTimeEntry (BaseContext);
                         await UpdateSharedTimeEntryList ();
                     } else if (path == Common.ContinueTimeEntryPath) {
 

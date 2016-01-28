@@ -8,7 +8,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
-using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 

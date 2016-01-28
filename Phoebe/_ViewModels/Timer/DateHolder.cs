@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Toggl.Phoebe.Data;
+using Toggl.Phoebe._Data.Diff;
+using Toggl.Phoebe._Data.Models;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe._ViewModels.Timer
 {
     public class DateHolder : IHolder
     {

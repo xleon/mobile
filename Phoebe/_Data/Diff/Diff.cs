@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 
-namespace Toggl.Phoebe.Data
+namespace Toggl.Phoebe._Data.Diff
 {
     public enum DiffComparison {
         Different,

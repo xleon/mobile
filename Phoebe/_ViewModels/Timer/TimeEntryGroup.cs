@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Diff;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe._ViewModels.Timer
 {
     /// <summary>
     // Wrapper to manage groups of TimeEntry objects
@@ -16,7 +16,7 @@ namespace Toggl.Phoebe.Models
     {
         public static IEnumerable<TimeEntryGroup> Group (IEnumerable<TimeEntryHolder> items)
         {
-            var key = default (Guid);
+            Guid key;
             var tempDic = new Dictionary<Guid, List<TimeEntryHolder>> ();
             foreach (var item in items) {
                 if (tempDic.TryFindKey (out key, kv => kv.Value[0].Data.IsGroupableWith (item.Data))) {
@@ -87,7 +87,7 @@ namespace Toggl.Phoebe.Models
 
         public TimeSpan GetDuration ()
         {
-            return DataCollection.Aggregate (TimeSpan.Zero, (acc, x) => acc + TimeEntryModel.GetDuration (x, Time.UtcNow));
+            return DataCollection.Aggregate (TimeSpan.Zero, (acc, x) => acc + x.GetDuration (Time.UtcNow));
         }
 
         public override string ToString ()

@@ -71,9 +71,39 @@ namespace Toggl.Phoebe._Data.Json
             mapper = mapConfig.CreateMapper ();
         }
 
-        public T Map<T> (object obj)
+        public T Map<T> (object source)
         {
-            return mapper.Map<T> (obj);
+            return mapper.Map<T> (source);
+        }
+
+        public CommonJson MapToJson (CommonData source)
+        {
+            Type destinationType = null;
+            Type sourceType = source.GetType ();
+
+            if (sourceType == typeof (ClientData)) {
+                destinationType = typeof(ClientJson);
+            } else if (sourceType == typeof (ProjectData)) {
+                destinationType = typeof (ProjectJson);
+            } else if (sourceType == typeof (TaskData)) {
+                destinationType = typeof (TaskJson);
+            } else if (sourceType == typeof (TimeEntryData)) {
+                destinationType = typeof (TimeEntryJson);
+            } else if (sourceType == typeof (WorkspaceData)) {
+                destinationType = typeof (WorkspaceJson);
+            } else if (sourceType == typeof (UserData)) {
+                destinationType = typeof (UserJson);
+            } else if (sourceType == typeof (TagData)) {
+                destinationType = typeof (TagJson);
+            } else if (sourceType == typeof (WorkspaceUserData)) {
+                destinationType = typeof (WorkspaceUserJson);
+            } else if (sourceType == typeof (ProjectUserData)) {
+                destinationType = typeof (ProjectUserJson);
+            } else {
+                throw new NotSupportedException (string.Format ("Cannot map {0} to JSON", sourceType.FullName));
+            }
+
+            return (CommonJson)mapper.Map (source, sourceType, destinationType);
         }
 
         #region TimeEntry resolvers

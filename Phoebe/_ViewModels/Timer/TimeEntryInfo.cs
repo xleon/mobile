@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe._Data.Models;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe._ViewModels.Timer
 {
     public class TimeEntryInfo
     {

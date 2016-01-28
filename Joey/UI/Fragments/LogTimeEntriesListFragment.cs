@@ -18,13 +18,11 @@ using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
-using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Joey.UI.Fragments
 {

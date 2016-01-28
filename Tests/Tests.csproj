@@ -65,6 +65,9 @@
     <Reference Include="System.Windows.Interactivity">
       <HintPath>..\packages\MvvmLightLibs.5.2.0.0\lib\net45\System.Windows.Interactivity.dll</HintPath>
     </Reference>
+    <Reference Include="AutoMapper">
+      <HintPath>..\packages\AutoMapper.4.1.1\lib\net45\AutoMapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Test.cs" />
@@ -96,7 +99,6 @@
     <Compile Include="MainThreadSynchronizationContext.cs" />
     <Compile Include="Views\TimeEntryTagsViewTest.cs" />
     <Compile Include="Views\DataViewTest.cs" />
-    <Compile Include="Data\ActiveTimeEntryManagerTest.cs" />
     <Compile Include="Data\DataCacheTest.cs" />
     <Compile Include="UpgradeManagerTest.cs" />
     <Compile Include="TimeCorrectionManagerTest.cs" />
@@ -116,7 +118,8 @@
     <Compile Include="Analytics\TestTracker.cs" />
     <Compile Include="Analytics\BaseTrackerTest.cs" />
     <Compile Include="Misc\ExceptionTest.cs" />
-    <Compile Include="Data\TimeEntryCollectionTest.cs" />
+    <Compile Include="Data\Mapper\MapperJsonToDataTest.cs" />
+    <Compile Include="Data\Mapper\MapperDataToJsonTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -128,6 +131,8 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Data\RelatedModelsCollectionTest.cs" />
+    <None Include="Data\TimeEntryCollectionTest.cs" />
+    <None Include="Data\ActiveTimeEntryManagerTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
@@ -138,5 +143,6 @@
     <Folder Include="Data\Merge\" />
     <Folder Include="Analytics\" />
     <Folder Include="Misc\" />
+    <Folder Include="Data\Mapper\" />
   </ItemGroup>
 </Project>

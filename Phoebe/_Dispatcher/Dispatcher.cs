@@ -18,24 +18,24 @@ namespace Toggl.Phoebe
         {
             Singleton = new Dispatcher ();
         }
-        
+
         IObserver<IDataMsg> observer;
-        readonly IObservable<IDataMsg> observable;
+        event EventHandler<IDataMsg> notify;
 
         Dispatcher ()
         {
-            observable =
-                Observable.Create<IDataMsg> (obs => {
-                    observer = obs;
-                    return () => {
-                        throw new Exception ("Subscription to Dispatcher must end with the app");
-                    }; 
-                })
-                // TODO: Scheduler.CurrentThread for unit tests
-                .Synchronize (Scheduler.Default)
-                .SelectAsync (msg => DispatcherRegister.ResolveAction (msg))
-                .Catch<IDataMsg, Exception> (PropagateError)
-                .Where (x => x.Tag != DataTag.UncaughtError);
+            Observable.Create<IDataMsg> (obs => {
+                observer = obs;
+                return () => {
+                    throw new Exception ("Subscription to Dispatcher must end with the app");
+                }; 
+            })
+            // TODO: Scheduler.CurrentThread for unit tests
+            .Synchronize (Scheduler.Default)
+            .SelectAsync (msg => DispatcherRegister.ResolveAction (msg))
+            .Catch<IDataMsg, Exception> (PropagateError)
+            .Where (x => x.Tag != DataTag.UncaughtError)
+            .Subscribe (msg => notify.SafeInvoke (this, msg));
         }
 
         public void Send (DataTag tag)
@@ -55,7 +55,11 @@ namespace Toggl.Phoebe
 
         public IObservable<IDataMsg> Observe ()
         {
-            return observable;
+            return Observable.FromEventPattern<IDataMsg> (
+                h => notify += h,
+                h => notify -= h
+            )
+                .Select (ev => ev.EventArgs);
         }
 
         public static IObservable<IDataMsg> PropagateError (Exception ex) =>

@@ -27,10 +27,7 @@ namespace Toggl.Phoebe
             .SelectAsync (msg => StoreRegister.ResolveAction (msg, dataStore))
             .Catch<IDataMsg, Exception> (Dispatcher.PropagateError)
             .Where (x => x.Tag != DataTag.UncaughtError)
-            .Subscribe (msg => {
-                if (notify != null)
-                    notify (this, msg);
-            });
+            .Subscribe (msg => notify.SafeInvoke (this, msg));
         }
 
         public IObservable<IDataMsg> Observe ()

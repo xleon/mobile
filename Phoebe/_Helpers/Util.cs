@@ -38,7 +38,7 @@ namespace Toggl.Phoebe.Helpers
         }
 
         // From http://stackoverflow.com/a/3669020/3922220
-        public static void SafeInvoke<T> (this EventHandler<T> evt, object sender, T e) where T : EventArgs
+        public static void SafeInvoke<T> (this EventHandler<T> evt, object sender, T e)
         {
             if (evt != null) {
                 evt (sender, e);

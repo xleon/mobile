@@ -16,28 +16,40 @@ namespace Toggl.Phoebe
             Singleton = new Store ();
         }
 
-        readonly IObservable<IDataMsg> observable;
+        event EventHandler<IDataMsg> notify;
         readonly IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
 
         Store ()
         {
             // Messages are already scheduled in Dispatcher
-            observable =
-                Dispatcher.Singleton
-                .Observe ()
-                .SelectAsync (msg => StoreRegister.ResolveAction (msg, dataStore))
-                .Catch<IDataMsg, Exception> (Dispatcher.PropagateError)
-                .Where (x => x.Tag != DataTag.UncaughtError);
+            Dispatcher.Singleton
+            .Observe ()
+            .SelectAsync (msg => StoreRegister.ResolveAction (msg, dataStore))
+            .Catch<IDataMsg, Exception> (Dispatcher.PropagateError)
+            .Where (x => x.Tag != DataTag.UncaughtError)
+            .Subscribe (msg => {
+                if (notify != null)
+                    notify (this, msg);
+            });
+        }
+
+        public IObservable<IDataMsg> Observe ()
+        {
+            return Observable.FromEventPattern<IDataMsg> (
+                h => notify += h,
+                h => notify -= h
+            )
+            .Select (ev => ev.EventArgs);
         }
 
         public IObservable<DataMsg<T>> Observe<T> ()
         {
-            return observable.OfType<DataMsg<T>> ();
-        }
-
-        public IObservable<IDataMsg> ObserveTag (DataTag tag)
-        {
-            return observable.Where (x => x.Tag == tag);
+            return Observable.FromEventPattern<IDataMsg> (
+                h => notify += h,
+                h => notify -= h
+            )
+            .Select (ev => ev.EventArgs)
+            .OfType<DataMsg<T>> ();
         }
     }
 }

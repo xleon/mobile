@@ -65,9 +65,6 @@
     <Reference Include="System.Windows.Interactivity">
       <HintPath>..\packages\MvvmLightLibs.5.2.0.0\lib\net45\System.Windows.Interactivity.dll</HintPath>
     </Reference>
-    <Reference Include="AutoMapper">
-      <HintPath>..\packages\AutoMapper.4.1.1\lib\net45\AutoMapper.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Test.cs" />

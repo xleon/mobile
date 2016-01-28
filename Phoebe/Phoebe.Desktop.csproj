@@ -70,7 +70,7 @@
       <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
     </Reference>
     <Reference Include="AutoMapper">
-      <HintPath>..\packages\AutoMapper.4.1.1\lib\net45\AutoMapper.dll</HintPath>
+      <HintPath>..\packages\AutoMapper.4.2.0\lib\portable-net45+win+wpa81+MonoAndroid10+Xamarin.iOS10+MonoTouch10\AutoMapper.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -90,6 +90,7 @@
     <Compile Include="_Dispatcher\**\*.cs" />
     <Compile Include="_Store\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
+    <Compile Include="_Sync\**\*.cs" />
     <Compile Include="_Data\**\*.cs" />
     <Compile Include="_Net\**\*.cs" />
   </ItemGroup>

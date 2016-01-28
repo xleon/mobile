@@ -78,8 +78,26 @@
       <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
     </Reference>
     <Reference Include="AutoMapper">
-      <HintPath>..\packages\AutoMapper.4.1.1\lib\MonoAndroid\AutoMapper.dll</HintPath>
+      <HintPath>..\packages\AutoMapper.4.2.0\lib\portable-net45+win+wpa81+MonoAndroid10+Xamarin.iOS10+MonoTouch10\AutoMapper.dll</HintPath>
     </Reference>
+    <Reference Include="System.Collections" />
+    <Reference Include="System.Collections.Concurrent" />
+    <Reference Include="System.ComponentModel" />
+    <Reference Include="System.Dynamic.Runtime" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Globalization" />
+    <Reference Include="System.Linq" />
+    <Reference Include="System.Linq.Expressions" />
+    <Reference Include="System.Linq.Queryable" />
+    <Reference Include="System.Text.RegularExpressions" />
+    <Reference Include="System.Reflection" />
+    <Reference Include="System.Reflection.Extensions" />
+    <Reference Include="System.Diagnostics.Debug" />
+    <Reference Include="System.ObjectModel" />
+    <Reference Include="System.Runtime.Extensions" />
+    <Reference Include="System.Threading" />
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Contrib\XPlatUtils\XPlatUtils\ServiceContainer.cs">

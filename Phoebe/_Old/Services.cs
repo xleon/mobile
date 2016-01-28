@@ -3,7 +3,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe.Sync;
+using Toggl.Phoebe._Reactive;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -15,7 +15,7 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<UpgradeManger> ();
             ServiceContainer.Register<AuthManager> ();
-            ServiceContainer.Register<ActiveTimeEntryManager> ();
+            ServiceContainer.Register<Toggl.Phoebe._Data.ActiveTimeEntryManager> ();
             ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());

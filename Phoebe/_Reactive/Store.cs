@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Reactive.Linq;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Helpers;
 using XPlatUtils;
 
-namespace Toggl.Phoebe
+namespace Toggl.Phoebe._Reactive
 {
     public class Store
     {
@@ -17,7 +17,8 @@ namespace Toggl.Phoebe
         }
 
         event EventHandler<IDataMsg> notify;
-        readonly IDataStore dataStore = ServiceContainer.Resolve<IDataStore> ();
+        readonly Toggl.Phoebe.Data.IDataStore dataStore =
+            ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
 
         Store ()
         {

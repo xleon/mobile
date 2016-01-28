@@ -4,20 +4,22 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Json;
-using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
-namespace Toggl.Phoebe
+namespace Toggl.Phoebe._Data
 {
     public enum DataTag {
         UncaughtError,
         TimeEntryLoad,
         TimeEntryLoadFromServer,
+        TimeEntryStart,
         TimeEntryStop,
+        TimeEntryContinue,
         TimeEntryRemove,
         TimeEntryRemoveWithUndo,
         TimeEntryRestoreFromUndo,
@@ -80,6 +82,8 @@ namespace Toggl.Phoebe
 
     public class DataJsonMsg
     {
+        static readonly IDictionary<string, Type> typeCache = new Dictionary<string, Type> ();
+
         public DataAction Action { get; set; }
         public string TypeName { get; set; }
         public IDictionary<string, object> RawData { get; set; }
@@ -88,7 +92,11 @@ namespace Toggl.Phoebe
         public CommonJson Data
         {
             get {
-                var type = Assembly.GetExecutingAssembly ().GetType (TypeName);
+                Type type = null;
+                if (!typeCache.TryGetValue (TypeName, out type)) {
+                    type = Assembly.GetExecutingAssembly ().GetType (TypeName);
+                    typeCache.Add (TypeName, type);
+                }
                 var data = Activator.CreateInstance (type);
                 foreach (var prop in type.GetProperties ()) {
                     prop.SetValue (data, RawData [prop.Name]);

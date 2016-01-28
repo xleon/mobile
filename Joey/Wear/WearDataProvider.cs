@@ -16,22 +16,25 @@ namespace Toggl.Joey.Wear
     {
         private const int itemCount = 10;
 
-        public static async Task StartStopTimeEntry (Context ctx)
+        public static void StartStopTimeEntry (Context ctx)
         {
-            var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            var manager = ServiceContainer.Resolve<Toggl.Phoebe._Data.ActiveTimeEntryManager> ();
             var active = manager.ActiveTimeEntry;
-            if (manager.ActiveTimeEntry.State == TimeEntryState.Running) {
-                await TimeEntryModel.StopAsync (active);
+            if (manager.ActiveTimeEntry.State == Toggl.Phoebe._Data.Models.TimeEntryState.Running) {
+                Toggl.Phoebe._Reactive.Dispatcher.Singleton.Send (
+                    Toggl.Phoebe._Data.DataTag.TimeEntryStop, active);
                 ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Watch);
             } else {
                 active.Description = ctx.Resources.GetString (Resource.String.WearEntryDefaultDescription);
-                await TimeEntryModel.StartAsync (active);
+                Toggl.Phoebe._Reactive.Dispatcher.Singleton.Send (
+                    Toggl.Phoebe._Data.DataTag.TimeEntryStart, active);
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
             }
         }
 
         public static async Task ContinueTimeEntry (Guid timeEntryId)
         {
+            // TODO TODO TODO
             var entryModel = new TimeEntryModel (timeEntryId);
             await TimeEntryModel.StartAsync (entryModel.Data);
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchContinue);

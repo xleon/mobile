@@ -28,8 +28,8 @@ namespace Toggl.Joey
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private TimeEntryModel activeTimeEntryModel;
 
-        private Binding<TimeEntryData, TimeEntryData> binding;
-        protected ActiveTimeEntryManager TimeEntryManager {get; set;}
+        private Binding<Toggl.Phoebe._Data.Models.TimeEntryData, Toggl.Phoebe._Data.Models.TimeEntryData> binding;
+        protected Toggl.Phoebe._Data.ActiveTimeEntryManager TimeEntryManager {get; set;}
 
         public AndroidNotificationManager ()
         {
@@ -39,7 +39,7 @@ namespace Toggl.Joey
             idleBuilder = CreateIdleNotificationBuilder (ctx);
             propertyTracker = new PropertyChangeTracker ();
 
-            TimeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            TimeEntryManager = ServiceContainer.Resolve<Toggl.Phoebe._Data.ActiveTimeEntryManager> ();
             binding = this.SetBinding (() => TimeEntryManager.ActiveTimeEntry).WhenSourceChanges (OnActiveTimeEntryChanged);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -71,11 +71,12 @@ namespace Toggl.Joey
         {
             var data = TimeEntryManager.ActiveTimeEntry;
 
-            if (activeTimeEntryModel == null) {
-                activeTimeEntryModel = new TimeEntryModel (data);
-            } else {
-                activeTimeEntryModel.Data = data;
-            }
+            // TODO TODO TODO
+//            if (activeTimeEntryModel == null) {
+//                activeTimeEntryModel = new TimeEntryModel (data);
+//            } else {
+//                activeTimeEntryModel.Data = data;
+//            }
 
             SyncNotification ();
         }
@@ -88,18 +89,19 @@ namespace Toggl.Joey
 
             propertyTracker.MarkAllStale ();
 
-            var model = activeTimeEntryModel;
-            if (model != null) {
-                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
-
-                if (model.Project != null) {
-                    propertyTracker.Add (model.Project, HandleProjectPropertyChanged);
-                }
-
-                if (model.Task != null) {
-                    propertyTracker.Add (model.Task, HandleTaskPropertyChanged);
-                }
-            }
+            // TODO TODO TODO
+//            var model = activeTimeEntryModel;
+//            if (model != null) {
+//                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
+//
+//                if (model.Project != null) {
+//                    propertyTracker.Add (model.Project, HandleProjectPropertyChanged);
+//                }
+//
+//                if (model.Task != null) {
+//                    propertyTracker.Add (model.Task, HandleTaskPropertyChanged);
+//                }
+//            }
 
             propertyTracker.ClearStale ();
         }

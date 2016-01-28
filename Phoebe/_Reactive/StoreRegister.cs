@@ -2,20 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Json;
-using Toggl.Phoebe.Data.Json.Converters;
-using Toggl.Phoebe.Helpers;
-using Toggl.Phoebe.Models;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Net;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 using XPlatUtils;
+using Toggl.Phoebe._ViewModels.Timer;
 
-namespace Toggl.Phoebe
+namespace Toggl.Phoebe._Reactive
 {
     public static class StoreRegister
     {
-        public static Task<IDataMsg> ResolveAction (IDataMsg msg, IDataStore dataStore)
+        public static Task<IDataMsg> ResolveAction (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
         {
             switch (msg.Tag) {
             case DataTag.TimeEntryLoad:
@@ -40,28 +39,27 @@ namespace Toggl.Phoebe
             }
         }
 
-        static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg, IDataStore dataStore)
+        static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
         {
             var jsonEntries = msg.ForceGetData<List<TimeEntryJson>> ();
 
-            var dbMsgs = await dataStore.ExecuteInTransactionSilent (ctx =>
-                    jsonEntries.ForEach (json => json.Import (ctx)));
+//            var dbMsgs = await dataStore.ExecuteInTransactionSilent (ctx =>
+//                    jsonEntries.ForEach (json => json.Import (ctx)));
+//            var msgs = dbMsgs.Select (x => Tuple.Create (x.Action, (TimeEntryData)x.Data));
+//            var entryMsg = new TimeEntryMsg (DataDir.Incoming, msgs);
 
-            var entryMsg = new TimeEntryMsg (DataDir.Incoming, dbMsgs.Select (
-                x => Tuple.Create (x.Action, (TimeEntryData)x.Data)));
-
-            return DataMsg.Success (msg.Tag, entryMsg);
+            return DataMsg.Success<TimeEntryMsg> (msg.Tag, null);
         }
 
         // Set initial pagination Date to the beginning of the next day.
         // So, we can include all entries created -Today-.
         static DateTime paginationDate = Time.UtcNow.Date.AddDays (1);
-        static async Task<IDataMsg> TimeEntryLoad (IDataMsg msg, IDataStore dataStore)
+        static async Task<IDataMsg> TimeEntryLoad (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
         {
             var startDate = await GetDatesByDays (dataStore, paginationDate, Literals.TimeEntryLoadDays);
 
             // Always fall back to local data:
-            var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+            var userId = ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().GetUserId ();
             var baseQuery =
                 dataStore.Table<TimeEntryData> ()
                 .Where (r =>
@@ -82,7 +80,7 @@ namespace Toggl.Phoebe
             return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbMsgs));
         }
 
-        static Task<IDataMsg> TimeEntryStop (IDataMsg msg, IDataStore dataStore)
+        static Task<IDataMsg> TimeEntryStop (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
         {
             return Task.Run (() => {
                 try {
@@ -112,7 +110,7 @@ namespace Toggl.Phoebe
             });
         }
 
-        static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg, IDataStore dataStore)
+        static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
         {
             var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
 
@@ -135,7 +133,7 @@ namespace Toggl.Phoebe
 
         #region Util
         // TODO: replace this method with the SQLite equivalent.
-        static async Task<DateTime> GetDatesByDays (IDataStore dataStore, DateTime startDate, int numDays)
+        static async Task<DateTime> GetDatesByDays (Toggl.Phoebe.Data.IDataStore dataStore, DateTime startDate, int numDays)
         {
             var baseQuery = dataStore.Table<TimeEntryData> ().Where (r =>
                             r.State != TimeEntryState.New &&
@@ -154,101 +152,105 @@ namespace Toggl.Phoebe
         #region TimeEntryInfo
         public static async Task<TimeEntryInfo> LoadTimeEntryInfoAsync (TimeEntryData timeEntryData)
         {
+            var store = ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
+
             var info = new TimeEntryInfo ();
             info.ProjectData = timeEntryData.ProjectId.HasValue
-                               ? await GetProjectDataAsync (timeEntryData.ProjectId.Value)
+                ? await GetProjectDataAsync (store, timeEntryData.ProjectId.Value)
                                : new ProjectData ();
             info.ClientData = info.ProjectData.ClientId.HasValue
-                              ? await GetClientDataAsync (info.ProjectData.ClientId.Value)
+                ? await GetClientDataAsync (store, info.ProjectData.ClientId.Value)
                               : new ClientData ();
             info.TaskData = timeEntryData.TaskId.HasValue
-                            ? await GetTaskDataAsync (timeEntryData.TaskId.Value)
-                            : new TaskData ();
+                ? await GetTaskDataAsync (store, timeEntryData.TaskId.Value) : new TaskData ();
             info.Description = timeEntryData.Description;
             info.Color = (info.ProjectData.Id != Guid.Empty) ? info.ProjectData.Color : -1;
             info.IsBillable = timeEntryData.IsBillable;
-            info.NumberOfTags = await GetNumberOfTagsAsync (timeEntryData.Id);
+            info.NumberOfTags = await GetNumberOfTagsAsync (store, timeEntryData.Id);
             return info;
         }
 
-        private static async Task<ProjectData> GetProjectDataAsync (Guid projectGuid)
+        private static async Task<ProjectData> GetProjectDataAsync (
+            Toggl.Phoebe.Data.IDataStore store, Guid projectGuid)
         {
-            var store = ServiceContainer.Resolve<IDataStore> ();
             return await store.Table<ProjectData> ()
                    .Where (m => m.Id == projectGuid)
                    .FirstAsync ();
         }
 
-        private static async Task<TaskData> GetTaskDataAsync (Guid taskId)
+        private static async Task<TaskData> GetTaskDataAsync (
+            Toggl.Phoebe.Data.IDataStore store, Guid taskId)
         {
-            var store = ServiceContainer.Resolve<IDataStore> ();
             return await store.Table<TaskData> ()
                    .Where (m => m.Id == taskId)
                    .FirstAsync ();
         }
 
-        private static async Task<ClientData> GetClientDataAsync (Guid clientId)
+        private static async Task<ClientData> GetClientDataAsync (
+            Toggl.Phoebe.Data.IDataStore store, Guid clientId)
         {
-            var store = ServiceContainer.Resolve<IDataStore> ();
             return await store.Table<ClientData> ()
                    .Where (m => m.Id == clientId)
                    .FirstAsync ();
         }
 
-        private static Task<int> GetNumberOfTagsAsync (Guid timeEntryGuid)
+        private static Task<int> GetNumberOfTagsAsync (
+            Toggl.Phoebe.Data.IDataStore store, Guid timeEntryGuid)
         {
-            var store = ServiceContainer.Resolve<IDataStore> ();
             return store.Table<TimeEntryTagData>()
                    .Where (t => t.TimeEntryId == timeEntryGuid)
                    .CountAsync ();
         }
 
-        private static async Task<ProjectData> UpdateProject (TimeEntryData newTimeEntry, ProjectData oldProjectData)
+        private static async Task<ProjectData> UpdateProject (
+            Toggl.Phoebe.Data.IDataStore store, TimeEntryData newTimeEntry, ProjectData oldProjectData)
         {
             if (!newTimeEntry.ProjectId.HasValue) {
                 return new ProjectData ();
             }
 
             if (oldProjectData.Id == Guid.Empty && newTimeEntry.ProjectId.HasValue) {
-                return await GetProjectDataAsync (newTimeEntry.ProjectId.Value);
+                return await GetProjectDataAsync (store, newTimeEntry.ProjectId.Value);
             }
 
             if (newTimeEntry.ProjectId.Value != oldProjectData.Id) {
-                return await GetProjectDataAsync (newTimeEntry.ProjectId.Value);
+                return await GetProjectDataAsync (store, newTimeEntry.ProjectId.Value);
             }
 
             return oldProjectData;
         }
 
-        private static async Task<ClientData> UpdateClient (ProjectData newProjectData, ClientData oldClientData)
+        private static async Task<ClientData> UpdateClient (
+            Toggl.Phoebe.Data.IDataStore store, ProjectData newProjectData, ClientData oldClientData)
         {
             if (!newProjectData.ClientId.HasValue) {
                 return new ClientData ();
             }
 
             if (oldClientData == null && newProjectData.ClientId.HasValue) {
-                return await GetClientDataAsync (newProjectData.ClientId.Value);
+                return await GetClientDataAsync (store, newProjectData.ClientId.Value);
             }
 
             if (newProjectData.ClientId.Value != oldClientData.Id) {
-                return await GetClientDataAsync (newProjectData.ClientId.Value);
+                return await GetClientDataAsync (store, newProjectData.ClientId.Value);
             }
 
             return oldClientData;
         }
 
-        private static async Task<TaskData> UpdateTask (TimeEntryData newTimeEntry, TaskData oldTaskData)
+        private static async Task<TaskData> UpdateTask (
+            Toggl.Phoebe.Data.IDataStore store, TimeEntryData newTimeEntry, TaskData oldTaskData)
         {
             if (!newTimeEntry.TaskId.HasValue) {
                 return new TaskData ();
             }
 
             if (oldTaskData == null && newTimeEntry.TaskId.HasValue) {
-                return await GetTaskDataAsync (newTimeEntry.TaskId.Value);
+                return await GetTaskDataAsync (store, newTimeEntry.TaskId.Value);
             }
 
             if (newTimeEntry.TaskId.Value != oldTaskData.Id) {
-                return await GetTaskDataAsync (newTimeEntry.TaskId.Value);
+                return await GetTaskDataAsync (store, newTimeEntry.TaskId.Value);
             }
 
             return oldTaskData;

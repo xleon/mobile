@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Helpers;
-using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Models;
-using XPlatUtils;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Logging;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Diff;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._ViewModels.Timer;
+using XPlatUtils;
 
-namespace Toggl.Phoebe.ViewModels
+namespace Toggl.Phoebe._ViewModels
 {
     public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
     {

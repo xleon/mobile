@@ -3,12 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data
+namespace Toggl.Phoebe._Data
 {
     [ImplementPropertyChanged]
     public class ActiveTimeEntryManager : ObservableObject, IDisposable
@@ -75,15 +75,16 @@ namespace Toggl.Phoebe.Data
 
         private async Task UpdateRunningTimeEntry ()
         {
-            var store = ServiceContainer.Resolve<IDataStore> ();
+            var store = ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
             var teList = await store.Table<TimeEntryData> ()
                          .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null)
                          .OrderByDescending (r => r.StartTime)
                          .ToListAsync ();
 
-            ActiveTimeEntry = teList.Any () ? teList.FirstOrDefault () : TimeEntryModel.GetDraft ();
+            ActiveTimeEntry = teList.Any ()
+                ? teList.FirstOrDefault () : TimeEntryUtil.CreateTimeEntryDraft ();
+            
             IsRunning = ActiveTimeEntry.State == TimeEntryState.Running;
-
         }
 
         public bool IsRunning { get; private set; }

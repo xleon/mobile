@@ -3,7 +3,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Timers;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
@@ -11,10 +10,15 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.ViewModels
+namespace Toggl.Phoebe._ViewModels
 {
     [ImplementPropertyChanged]
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
@@ -29,7 +33,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         LogTimeEntriesViewModel ()
         {
             // durationTimer will update the Duration value if ActiveTimeEntry is running
-            durationTimer = new Timer ();
+            durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
@@ -37,8 +41,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             activeTimeEntryManager.PropertyChanged += OnActiveTimeEntryChanged;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            subscriptionSettingChanged = bus.Subscribe<Toggl.Phoebe.Data.SettingChangedMessage> (OnSettingChanged);
+//            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
 //            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
 
             HasMoreItems = true;
@@ -62,10 +66,10 @@ namespace Toggl.Phoebe.Data.ViewModels
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-            if (subscriptionSyncFinished != null) {
-                bus.Unsubscribe (subscriptionSyncFinished);
-                subscriptionSyncFinished = null;
-            }
+//            if (subscriptionSyncFinished != null) {
+//                bus.Unsubscribe (subscriptionSyncFinished);
+//                subscriptionSyncFinished = null;
+//            }
 //            if (subscriptionUpdateFinished != null) {
 //                bus.Unsubscribe (subscriptionUpdateFinished);
 //                subscriptionUpdateFinished = null;
@@ -130,24 +134,22 @@ namespace Toggl.Phoebe.Data.ViewModels
         #endregion
 
         #region Time entry operations
-        public async Task<TimeEntryData> ContinueTimeEntryAsync (int index)
+        public async Task ContinueTimeEntry (int index)
         {
             var newTimeEntry = new TimeEntryData ();
             var timeEntryHolder = Collection.ElementAt (index) as ITimeEntryHolder;
 
             if (timeEntryHolder == null) {
-                return newTimeEntry;
+                return;
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                newTimeEntry = await TimeEntryModel.StopAsync (timeEntryHolder.Data);
+                Dispatcher.Singleton.Send (DataTag.TimeEntryStop, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                newTimeEntry = await TimeEntryModel.ContinueAsync (timeEntryHolder.Data);
+                Dispatcher.Singleton.Send (DataTag.TimeEntryContinue, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
-
-            return newTimeEntry;
         }
 
         public async Task<TimeEntryData> StartStopTimeEntry ()
@@ -200,7 +202,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         private void SyncCollectionView ()
         {
             DisposeCollection ();
-            IsGroupedMode = ServiceContainer.Resolve<ISettingsStore> ().GroupedTimeEntries;
+            IsGroupedMode = ServiceContainer.Resolve<Toggl.Phoebe.Data.ISettingsStore> ().GroupedTimeEntries;
 
             collectionFeed = new TimeEntriesFeed ();
             Collection = IsGroupedMode
@@ -240,7 +242,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
-        private void OnSettingChanged (SettingChangedMessage msg)
+        private void OnSettingChanged (Toggl.Phoebe.Data.SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
             if (msg.Name == "GroupedTimeEntries") {
@@ -256,12 +258,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private void OnSyncFinished (SyncFinishedMessage msg)
-        {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                IsAppSyncing = false;
-            });
-        }
+//        private void OnSyncFinished (SyncFinishedMessage msg)
+//        {
+//            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+//                IsAppSyncing = false;
+//            });
+//        }
 
         private void OnDetectHasItems (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
@@ -270,7 +272,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private void DurationTimerCallback (object sender, ElapsedEventArgs e)
+        private void DurationTimerCallback (object sender, System.Timers.ElapsedEventArgs e)
         {
             var duration = TimeEntryModel.GetDuration (activeTimeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
             durationTimer.Interval = 1000 - duration.Milliseconds;

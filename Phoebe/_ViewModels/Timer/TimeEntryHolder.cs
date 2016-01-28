@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe._Data.Diff;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe._ViewModels.Timer
 {
     public class TimeEntryHolder : ITimeEntryHolder
     {
@@ -20,7 +20,7 @@ namespace Toggl.Phoebe.Models
         public IList<string> Guids
         {
             get {
-                return new List<string>() { Data.Id.ToString() };
+                return new List<string> { Data.Id.ToString() };
             }
         }
 
@@ -48,7 +48,7 @@ namespace Toggl.Phoebe.Models
 
         public TimeSpan GetDuration()
         {
-            return TimeEntryModel.GetDuration (Data, Time.UtcNow);
+            return Data.GetDuration (Time.UtcNow);
         }
 
         public override string ToString ()

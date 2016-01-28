@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Toggl.Phoebe.Helpers
+namespace Toggl.Phoebe._Helpers
 {
     public static class Literals
     {

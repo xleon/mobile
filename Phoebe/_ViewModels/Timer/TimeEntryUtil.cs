@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Diff;
+using Toggl.Phoebe._Data.Models;
+using XPlatUtils;
 
-namespace Toggl.Phoebe.Models
+namespace Toggl.Phoebe._ViewModels.Timer
 {
     // Empty interface just to hide references to IDiffComparable
     public interface IHolder : IDiffComparable
@@ -56,7 +58,7 @@ namespace Toggl.Phoebe.Models
 
         public IEnumerable<DataSyncMsg> SyncMessages {
             get { 
-                return this.Select (x => new DataSyncMsg (Dir, x.Item1, x.Item2));;
+                return this.Select (x => new DataSyncMsg (Dir, x.Item1, x.Item2));
             }
         }
 
@@ -70,6 +72,34 @@ namespace Toggl.Phoebe.Models
             : base (new [] { Tuple.Create (action, data) })
         {
             Dir = dir;
+        }
+    }
+
+    public static class TimeEntryUtil
+    {
+        public static TimeEntryData CreateTimeEntryDraft ()
+        {
+            Guid userId = Guid.Empty;
+            Guid workspaceId = Guid.Empty;
+            bool durationOnly = false;
+
+            var authManager = ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ();
+            if (authManager.IsAuthenticated) {
+                var user = authManager.User;
+                userId = user.Id;
+                workspaceId = user.DefaultWorkspaceId;
+                durationOnly = user.TrackingMode == TrackingMode.Continue;
+            }
+
+            // Create new draft object
+            var newData = new TimeEntryData {
+                State = TimeEntryState.New,
+                UserId = userId,
+                WorkspaceId = workspaceId,
+                DurationOnly = durationOnly,
+            };
+
+            return newData;
         }
     }
 }

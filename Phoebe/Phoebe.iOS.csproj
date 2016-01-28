@@ -93,10 +93,8 @@
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Logging\**\*.cs" />
     <Compile Include="_Old\**\*.cs" />
-    <Compile Include="_Models\**\*.cs" />
     <Compile Include="_ViewModels\**\*.cs" />
-    <Compile Include="_Dispatcher\**\*.cs" />
-    <Compile Include="_Store\**\*.cs" />
+    <Compile Include="_Reactive\**\*.cs" />
     <Compile Include="_Helpers\**\*.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 
-namespace Toggl.Phoebe
+namespace Toggl.Phoebe._Reactive
 {
     public class Dispatcher
     {

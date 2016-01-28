@@ -41,7 +41,7 @@ namespace Toggl.Ross.ViewControllers
             navMenuController = new NavigationMenuController ();
         }
 
-        public override void ViewDidLoad ()
+        public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
@@ -61,6 +61,7 @@ namespace Toggl.Ross.ViewControllers
 
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
             TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+            /*
             TableView.Scrolled += async (sender, e) => {
                 var currentOffset = TableView.ContentOffset.Y;
                 var maximumOffset = TableView.ContentSize.Height - TableView.Frame.Height;
@@ -68,7 +69,7 @@ namespace Toggl.Ross.ViewControllers
                     await ViewModel.LoadMore ();
                 }
             };
-
+            */
             var headerView = new TableViewRefreshView ();
             RefreshControl = headerView;
             headerView.AdaptToTableView (TableView);
@@ -89,9 +90,12 @@ namespace Toggl.Ross.ViewControllers
             SetupToolbar ();
             navMenuController.Attach (this);
 
-            foreach (var item in ViewModel.Collection) {
-                Console.WriteLine (item);
-            }
+            // TODO: Review this line.
+            // Get data to fill the list. For the moment,
+            // until a screenloader is added to the screen
+            // is better to load the items after create
+            // the viewModel and show the loader from RecyclerView
+            await ViewModel.LoadMore ();
         }
 
         protected override void Dispose (bool disposing)
@@ -204,7 +208,6 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableTagsImageView;
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
-            private nint rebindCounter;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -251,6 +254,7 @@ namespace Toggl.Ross.ViewControllers
 
             public void Bind (ITimeEntryHolder dataSource)
             {
+                Console.WriteLine ("here: " + dataSource.Data.Description);
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
                 var clientName = string.Empty;

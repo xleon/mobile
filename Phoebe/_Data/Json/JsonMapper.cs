@@ -5,64 +5,75 @@ using Toggl.Phoebe._Data.Models;
 
 namespace Toggl.Phoebe._Data.Json
 {
-    public static class AutoMapperConfig
+    public class JsonMapper
     {
-        public static void RegisterMappings()
+        readonly IMapper mapper;
+
+        public JsonMapper ()
         {
-            // TODO: Review how map reverse works with include.
-            AutoMapper.Mapper.CreateMap<CommonJson, CommonData>()
-            .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()))
-            .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<DeletedAtResolver>())
-            .Include<ProjectJson, ProjectData>()
-            .Include<ClientJson, ClientData>()
-            .Include<TagJson, TagData>()
-            .Include<TaskJson, TaskData>()
-            .Include<WorkspaceJson, WorkspaceData>()
-            .Include<WorkspaceUserJson, WorkspaceUserData>()
-            .Include<UserJson, UserData>()
-            .Include<TimeEntryJson, TimeEntryData>().ReverseMap ();
+            var mapConfig = new MapperConfiguration (config => {
+                // TODO: Review how map reverse works with include.
+                config.CreateMap<CommonJson, CommonData> ()
+                .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()))
+                .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<DeletedAtResolver> ())
+                .Include<ProjectJson, ProjectData> ()
+                .Include<ClientJson, ClientData> ()
+                .Include<TagJson, TagData> ()
+                .Include<TaskJson, TaskData> ()
+                .Include<WorkspaceJson, WorkspaceData> ()
+                .Include<WorkspaceUserJson, WorkspaceUserData> ()
+                .Include<UserJson, UserData> ()
+                .Include<TimeEntryJson, TimeEntryData> ().ReverseMap ();
 
-            AutoMapper.Mapper.CreateMap<CommonData, CommonJson>()
-            .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<InverseDeletedAtResolver>())
-            .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()));
+                config.CreateMap<CommonData, CommonJson> ()
+                .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<InverseDeletedAtResolver> ())
+                .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()));
 
-            AutoMapper.Mapper.CreateMap<ProjectJson, ProjectData>().ReverseMap();
-            AutoMapper.Mapper.CreateMap<ClientJson, ClientData>();
-            AutoMapper.Mapper.CreateMap<ClientData, ClientJson>();
-            AutoMapper.Mapper.CreateMap<TagJson, TagData>().ReverseMap();
-            AutoMapper.Mapper.CreateMap<TaskJson, TaskData>().ReverseMap();
-            AutoMapper.Mapper.CreateMap<WorkspaceUserJson, WorkspaceUserData>().ReverseMap();
-            AutoMapper.Mapper.CreateMap<WorkspaceJson, WorkspaceData>().ReverseMap();
+                config.CreateMap<ProjectJson, ProjectData> ().ReverseMap ();
+                config.CreateMap<ClientJson, ClientData> ();
+                config.CreateMap<ClientData, ClientJson> ();
+                config.CreateMap<TagJson, TagData> ().ReverseMap ();
+                config.CreateMap<TaskJson, TaskData> ().ReverseMap ();
+                config.CreateMap<WorkspaceUserJson, WorkspaceUserData> ().ReverseMap ();
+                config.CreateMap<WorkspaceJson, WorkspaceData> ().ReverseMap ();
 
-            // User mapping
-            AutoMapper.Mapper.CreateMap<UserJson, UserData>()
-            .ForMember (dest => dest.ExperimentIncluded, opt => opt.MapFrom (src => src.OBM.Included))
-            .ForMember (dest => dest.ExperimentNumber, opt => opt.MapFrom (src => src.OBM.Number));
+                // User mapping
+                config.CreateMap<UserJson, UserData> ()
+                .ForMember (dest => dest.ExperimentIncluded, opt => opt.MapFrom (src => src.OBM.Included))
+                .ForMember (dest => dest.ExperimentNumber, opt => opt.MapFrom (src => src.OBM.Number));
 
-            AutoMapper.Mapper.CreateMap<UserData, UserJson>()
-            .ForMember (dest => dest.OBM, opt => opt.MapFrom (src => new OBMJson { Included = src.ExperimentIncluded, Number = src.ExperimentNumber }))
-            .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith));
+                config.CreateMap<UserData, UserJson> ()
+                .ForMember (dest => dest.OBM, opt => opt.MapFrom (src => new OBMJson {
+                    Included = src.ExperimentIncluded,
+                    Number = src.ExperimentNumber
+                }))
+                .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith));
 
-            // TimeEntry mapping
-            AutoMapper.Mapper.CreateMap<TimeEntryJson, TimeEntryData>()
-            .ForMember (dest => dest.StartTime, opt => opt.ResolveUsing<StartTimeResolver>())
-            .ForMember (dest => dest.StopTime, opt => opt.ResolveUsing<StopTimeResolver>())
-            .ForMember (dest => dest.State, opt => opt.ResolveUsing<StateResolver>());
+                // TimeEntry mapping
+                config.CreateMap<TimeEntryJson, TimeEntryData> ()
+                .ForMember (dest => dest.StartTime, opt => opt.ResolveUsing<StartTimeResolver> ())
+                .ForMember (dest => dest.StopTime, opt => opt.ResolveUsing<StopTimeResolver> ())
+                .ForMember (dest => dest.State, opt => opt.ResolveUsing<StateResolver> ());
 
-            AutoMapper.Mapper.CreateMap<TimeEntryData, TimeEntryJson>()
-            .ForMember (dest => dest.StartTime, opt => opt.MapFrom (src => src.StartTime.ToUtc ()))
-            .ForMember (dest => dest.StopTime, opt => opt.MapFrom (src => src.StopTime.ToUtc ()))
-            .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith))
-            .ForMember (dest => dest.Duration, opt => opt.ResolveUsing<DurationResolver>());
+                config.CreateMap<TimeEntryData, TimeEntryJson> ()
+                .ForMember (dest => dest.StartTime, opt => opt.MapFrom (src => src.StartTime.ToUtc ()))
+                .ForMember (dest => dest.StopTime, opt => opt.MapFrom (src => src.StopTime.ToUtc ()))
+                .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith))
+                .ForMember (dest => dest.Duration, opt => opt.ResolveUsing<DurationResolver> ());
 
-            // Extra mappings
-            AutoMapper.Mapper.CreateMap<ReportJson, ReportData>()
-            .ForMember (dest => dest.Activity, opt => opt.ResolveUsing<ReportActivityResolver>())
-            .ForMember (dest => dest.Projects, opt => opt.ResolveUsing<ReportProjectsResolver>())
-            .ForMember (dest => dest.TotalCost, opt => opt.ResolveUsing<ReportTotalCostResolver>());
+                // Extra mappings
+                config.CreateMap<ReportJson, ReportData> ()
+                .ForMember (dest => dest.Activity, opt => opt.ResolveUsing<ReportActivityResolver> ())
+                .ForMember (dest => dest.Projects, opt => opt.ResolveUsing<ReportProjectsResolver> ())
+                .ForMember (dest => dest.TotalCost, opt => opt.ResolveUsing<ReportTotalCostResolver> ());
+            });
 
-            // this is REQUIRED in AutoMapper 4.0 to make inheritance work
-            AutoMapper.Mapper.Configuration.Seal();
+            mapper = mapConfig.CreateMapper ();
+        }
+
+        public T Map<T> (object obj)
+        {
+            return mapper.Map<T> (obj);
         }
 
         #region TimeEntry resolvers

@@ -10,12 +10,14 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 {
     public class MapperJsonToDataTest : Test
     {
+        JsonMapper mapper;
+
         [SetUp]
         public override void SetUp()
         {
             base.SetUp();
             ServiceContainer.Register<IPlatformUtils> (new PlatformUtils());
-            AutoMapperConfig.RegisterMappings();
+            mapper = new JsonMapper ();
         }
 
         [Test]
@@ -29,7 +31,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 WorkspaceRemoteId = 321
             };
 
-            var commonData = AutoMapper.Mapper.Map<CommonData> (commonJson);
+            var commonData = mapper.Map<CommonData> (commonJson);
 
             Assert.AreEqual (commonData.RemoteId, commonJson.RemoteId);
             Assert.AreEqual (commonData.ModifiedAt, commonJson.ModifiedAt.ToUtc());
@@ -39,7 +41,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.AreEqual (commonData.Id, Guid.Empty);
 
             commonJson.DeletedAt = DateTime.Now;
-            commonData = AutoMapper.Mapper.Map<CommonData> (commonJson);
+            commonData = mapper.Map<CommonData> (commonJson);
             Assert.AreEqual (commonData.DeletedAt, commonJson.DeletedAt.ToUtc ());
         }
 
@@ -56,7 +58,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 WorkspaceRemoteId = 321
             };
 
-            var clientData = AutoMapper.Mapper.Map<ClientData> (clientJson);
+            var clientData = mapper.Map<ClientData> (clientJson);
 
             Assert.AreEqual (clientData.RemoteId, clientJson.RemoteId);
             Assert.AreEqual (clientData.ModifiedAt, clientJson.ModifiedAt.ToUtc());
@@ -66,7 +68,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.AreEqual (clientData.Id, Guid.Empty);
 
             clientJson.DeletedAt = DateTime.Now;
-            clientData = AutoMapper.Mapper.Map<ClientData> (clientJson);
+            clientData = mapper.Map<ClientData> (clientJson);
             Assert.AreEqual (clientData.DeletedAt, clientJson.DeletedAt.ToUtc ());
         }
 
@@ -81,7 +83,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 WorkspaceRemoteId = 321
             };
 
-            var clientData = AutoMapper.Mapper.Map<ClientData> (clientJson);
+            var clientData = mapper.Map<ClientData> (clientJson);
 
             Assert.AreEqual (clientData.Name, clientJson.Name);
             Assert.AreEqual (clientData.WorkspaceRemoteId, clientJson.WorkspaceRemoteId);
@@ -106,7 +108,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 UseTasksEstimate = true
             };
 
-            var projectData = AutoMapper.Mapper.Map<ProjectData> (projectJson);
+            var projectData = mapper.Map<ProjectData> (projectJson);
 
             Assert.AreEqual (projectData.Name, projectJson.Name);
             Assert.AreEqual (projectData.IsActive, projectJson.IsActive);
@@ -132,7 +134,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 WorkspaceRemoteId = 321,
             };
 
-            var tagData = AutoMapper.Mapper.Map<TagData> (tagJson);
+            var tagData = mapper.Map<TagData> (tagJson);
 
             Assert.AreEqual (tagData.Name, tagJson.Name);
             Assert.AreEqual (tagData.WorkspaceRemoteId, tagJson.WorkspaceRemoteId);
@@ -154,7 +156,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 IsActive = true
             };
 
-            var taskData = AutoMapper.Mapper.Map<TaskData> (taskJson);
+            var taskData = mapper.Map<TaskData> (taskJson);
 
             Assert.AreEqual (taskData.Name, taskJson.Name);
             Assert.AreEqual (taskData.WorkspaceRemoteId, taskJson.WorkspaceRemoteId);
@@ -180,7 +182,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 UserRemoteId = 123
             };
 
-            var workspaceUserData = AutoMapper.Mapper.Map<WorkspaceUserData> (workspaceUserJson);
+            var workspaceUserData = mapper.Map<WorkspaceUserData> (workspaceUserJson);
 
             Assert.AreEqual (workspaceUserData.IsActive, workspaceUserJson.IsActive);
             Assert.AreEqual (workspaceUserData.IsAdmin, workspaceUserJson.IsAdmin);
@@ -211,7 +213,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 RoundingPercision = 1
             };
 
-            var wData = AutoMapper.Mapper.Map<WorkspaceData> (workspaceJson);
+            var wData = mapper.Map<WorkspaceData> (workspaceJson);
 
             Assert.AreEqual (wData.IsPremium, workspaceJson.IsPremium);
             Assert.AreEqual (wData.DefaultRate, workspaceJson.DefaultRate);
@@ -257,7 +259,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 Timezone = "TimeZone"
             };
 
-            var userData = AutoMapper.Mapper.Map<UserData> (userJson);
+            var userData = mapper.Map<UserData> (userJson);
 
             Assert.AreEqual (userData.ApiToken, userJson.ApiToken);
             Assert.AreEqual (userData.DateFormat, userJson.DateFormat);
@@ -305,7 +307,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 WorkspaceRemoteId = 222
             };
 
-            var teData = AutoMapper.Mapper.Map<TimeEntryData> (teJson);
+            var teData = mapper.Map<TimeEntryData> (teJson);
 
             Assert.AreEqual (teData.Description, teJson.Description);
             Assert.AreEqual (teData.DurationOnly, teJson.DurationOnly);
@@ -324,7 +326,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.AreEqual (teData.WorkspaceRemoteId, teJson.WorkspaceRemoteId);
 
             teJson.Duration = runningDuration;
-            teData = AutoMapper.Mapper.Map<TimeEntryData> (teJson);
+            teData = mapper.Map<TimeEntryData> (teJson);
 
             //TODO: check startTime.
             Assert.AreEqual (teData.StopTime, null);

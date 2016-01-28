@@ -54,7 +54,7 @@ namespace Toggl.Phoebe.Sync
             // TODO: Check internet connection
             // TODO: Check queue size, if it reaches a limit, empty it and request full sync next time
 
-            dataStore.ExecuteInTransactionWithMessagesAsync (async ctx => {
+            dataStore.ExecuteInTransactionSilent (async ctx => {
                 foreach (var msg in msgs) {
                     bool alreadyQueued = false;
                     var exported = msg.Data.Export (ctx);

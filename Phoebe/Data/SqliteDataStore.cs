@@ -152,6 +152,17 @@ namespace Toggl.Phoebe.Data
             return obj;
         }
 
+        /// <summary>
+        /// Throws exception if insert or replace wasn't successful
+        /// </summary>
+        public void PutSilent<T> (T obj) where T : class, new()
+        {
+            var success = cnn.InsertOrReplace (obj) == 1;
+            if (!success) {
+                throw new Exception (string.Format ("Cannot insert or replace {0} in database", obj));
+            }
+        }
+
         public async Task<bool> DeleteAsync (object obj)
         {
             obj = Clone (obj);
@@ -213,8 +224,7 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        // TODO: Temporary
-        public async Task<DataChangeMessage[]> ExecuteInTransactionWithMessagesAsync (
+        public async Task<DataChangeMessage[]> ExecuteInTransactionSilent (
             Action<IDataStoreContext> worker)
         {
             Context ctx = null;

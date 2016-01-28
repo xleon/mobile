@@ -39,6 +39,7 @@ namespace Toggl.Phoebe
     {
         DataTag Tag { get; }
         Type DataType { get; }
+        Either<object, Exception> RawData { get; }
     }
 
     public class DataMsg<T> : IDataMsg
@@ -46,6 +47,16 @@ namespace Toggl.Phoebe
         public DataTag Tag { get; private set; }
         public Type DataType { get { return typeof (T); } }
         public Either<T, Exception> Data { get; private set; }
+
+        public Either<object, Exception> RawData
+        {
+            get {
+                return Data.Match (
+                    x => Either<object, Exception>.Left (x),
+                    e => Either<object, Exception>.Right (e)
+                );
+            }
+        }
 
         internal DataMsg (DataTag tag, Either<T, Exception> data)
         {

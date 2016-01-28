@@ -10,6 +10,9 @@ namespace Toggl.Phoebe.Data
         Task<T> PutAsync<T> (T obj)
         where T : class, new();
 
+        void PutSilent<T> (T obj)
+        where T : class, new();
+
         Task<bool> DeleteAsync (object obj);
 
         Task<T> ExecuteScalarAsync<T> (string query, params object[] args);
@@ -41,7 +44,6 @@ namespace Toggl.Phoebe.Data
         /// <param name="worker">Worker function that is executed on the background thread.</param>
         Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker);
 
-        // TODO: Temporary
-        Task<DataChangeMessage[]> ExecuteInTransactionWithMessagesAsync (Action<IDataStoreContext> worker);
+        Task<DataChangeMessage[]> ExecuteInTransactionSilent (Action<IDataStoreContext> worker);
     }
 }

@@ -37,7 +37,7 @@ namespace Toggl.Phoebe.ViewModels
         public TimeEntryCollectionVM (TimeEntryGroupMethod groupMethod, int bufferMilliseconds = 500)
         {
             this.grouper = new TimeEntryGrouper (groupMethod);
-            disposable = Store
+            disposable = Store.Singleton
                          .Observe<TimeEntryMsg> ()
                          .TimedBuffer (bufferMilliseconds)
                          .Subscribe (HandleStoreResults);
@@ -83,7 +83,7 @@ namespace Toggl.Phoebe.ViewModels
                 // TODO: Temporary, every access to the database should be done in the Store component
                 foreach (var holder in timeHolders) {
                     if (holder.Info == null) {
-                        holder.Info = await Store.LoadTimeEntryInfoAsync (holder.Data);
+                        holder.Info = await StoreRegister.LoadTimeEntryInfoAsync (holder.Data);
                     }
                 }
 
@@ -148,7 +148,7 @@ namespace Toggl.Phoebe.ViewModels
         public void RestoreTimeEntryFromUndo ()
         {
             var msg = new TimeEntryMsg (DataDir.None, DataVerb.Put, lastRemovedItem.Data);
-            Dispatcher.Send (DataTag.TimeEntryRestoreFromUndo, msg);
+            Dispatcher.Singleton.Send (DataTag.TimeEntryRestoreFromUndo, msg);
         }
 
         public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
@@ -168,7 +168,7 @@ namespace Toggl.Phoebe.ViewModels
 
                 var msg = new TimeEntryMsg (DataDir.Outcoming, entries.Select (
                     x => Tuple.Create (DataVerb.Delete, x)));
-                Dispatcher.Send (DataTag.TimeEntryRemove, msg);
+                Dispatcher.Singleton.Send (DataTag.TimeEntryRemove, msg);
             };
 
             System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
@@ -183,13 +183,13 @@ namespace Toggl.Phoebe.ViewModels
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
                 var msg = new TimeEntryMsg (DataDir.Outcoming, DataVerb.Put, timeEntryHolder.Data);
-                Dispatcher.Send (DataTag.TimeEntryStop, msg);
+                Dispatcher.Singleton.Send (DataTag.TimeEntryStop, msg);
             }
             lastRemovedItem = timeEntryHolder;
 
             // Remove item only from list
             var rmMsg = new TimeEntryMsg (DataDir.None, DataVerb.Delete, timeEntryHolder.Data);
-            Dispatcher.Send (DataTag.TimeEntryRemoveWithUndo, rmMsg);
+            Dispatcher.Singleton.Send (DataTag.TimeEntryRemoveWithUndo, rmMsg);
 
             // Create Undo timer
             if (undoTimer != null) {

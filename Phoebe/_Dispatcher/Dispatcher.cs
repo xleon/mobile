@@ -10,39 +10,45 @@ using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Phoebe
 {
-    public static class Dispatcher
+    public class Dispatcher
     {
-        static readonly IObservable<IDataMsg> observable;
-        static readonly Subject<IDataMsg> subject = new Subject<IDataMsg> ();
+        public static Dispatcher Singleton { get; private set; }
 
-        static Dispatcher ()
+        public static void Init ()
+        {
+            Singleton = new Dispatcher ();
+        }
+        
+        readonly IObservable<IDataMsg> observable;
+        readonly Subject<IDataMsg> subject = new Subject<IDataMsg> ();
+
+        Dispatcher ()
         {
             // TODO: Scheduler.CurrentThread for unit tests
             observable =
                 subject
                 .Synchronize (Scheduler.Default)
-                .Select (msg => Tuple.Create (DispatcherRegister.GetAction (msg.Tag), msg))
-                .SelectAsync (async tup => await tup.Item1 (tup.Item2))
+                .SelectAsync (msg => DispatcherRegister.ResolveAction (msg))
                 .Catch<IDataMsg, Exception> (PropagateError)
                 .Where (x => x.Tag != DataTag.UncaughtError);
         }
 
-        public static void Send (DataTag tag)
+        public void Send (DataTag tag)
         {
             subject.OnNext (DataMsg.Success<object> (tag, null));
         }
 
-        public static void Send<T> (DataTag tag, T data)
+        public void Send<T> (DataTag tag, T data)
         {
             subject.OnNext (DataMsg.Success<T> (tag, data));
         }
 
-        public static void SendError<T> (DataTag tag, Exception ex)
+        public void SendError<T> (DataTag tag, Exception ex)
         {
             subject.OnNext (DataMsg.Error<T> (tag, ex));
         }
 
-        public static IObservable<IDataMsg> Observe ()
+        public IObservable<IDataMsg> Observe ()
         {
             return observable;
         }

@@ -14,21 +14,21 @@ namespace Toggl.Phoebe
 {
     public static class DispatcherRegister
     {
-        public static Func<IDataMsg, Task<IDataMsg>> GetAction (DataTag tag)
+        public static Task<IDataMsg> ResolveAction (IDataMsg msg)
         {
-            switch (tag) {
+            switch (msg.Tag) {
             case DataTag.TimeEntryLoadFromServer:
-                return TimeEntryLoadFromServer;
+                return TimeEntryLoadFromServer (msg);
 
             case DataTag.TimeEntryLoad:
             case DataTag.TimeEntryStop:
             case DataTag.TimeEntryRemoveWithUndo:
             case DataTag.TimeEntryRestoreFromUndo:
             case DataTag.TimeEntryRemove:
-                return LetGoThrough;
+                return LetGoThrough (msg);
 
             default:
-                throw new ActionNotFoundException (tag, typeof (DispatcherRegister));
+                throw new ActionNotFoundException (msg.Tag, typeof (DispatcherRegister));
             }
         }
 

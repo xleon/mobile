@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -20,112 +19,122 @@ namespace Toggl.Phoebe.Data.ViewModels
     {
         internal static readonly string DefaultTag = "mobile";
 
-        private TimeEntryModel model;
         private Timer durationTimer;
+        private TimeEntryData data;
+        private TimeEntryData initialState;
+        private List<TagData> initialTagList;
 
-        EditTimeEntryViewModel (TimeEntryModel model, List<TagData> tagList)
+        EditTimeEntryViewModel (TimeEntryData data, List<TagData> tagList)
         {
-            this.model = model;
-            durationTimer = new Timer ();
-            TagList = tagList;
+            this.data = data;
 
-            model.PropertyChanged += OnPropertyChange;
+            // Save previous state.
+            initialState = new TimeEntryData (data);
+            initialTagList = new List<TagData> (tagList);
+
+            durationTimer = new Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
+            TagList = tagList;
+            IsManual = data.Id == Guid.Empty;
+
+            if (IsManual) {
+                data.StartTime = Time.UtcNow.AddMinutes (-5);
+                data.StopTime = Time.UtcNow;
+                data.State = TimeEntryState.Finished;
+                initialTagList = new List<TagData> ();
+            }
+
             UpdateView ();
+            UpdateRelationships (data.ProjectId);
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
 
         public static async Task<EditTimeEntryViewModel> Init (Guid timeEntryId)
         {
-            var model = new TimeEntryModel (timeEntryId);
-            await model.LoadAsync ();
+            TimeEntryData data;
+            List<TagData> tagList;
 
-            var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryId);;
-
-            // If the entry is new, setup it a bit.
-            if (model.State == TimeEntryState.New) {
-                model.StartTime = Time.UtcNow.AddMinutes (-5);
-                model.StopTime = Time.UtcNow;
-                tagList = await GetDefaultTagList (model.Workspace.Id);
+            if (timeEntryId == Guid.Empty) {
+                data = TimeEntryModel.GetDraft ();
+                tagList = await GetDefaultTagList (data.WorkspaceId);
+            } else {
+                data = await TimeEntryModel.GetTimeEntryDataAsync (timeEntryId);
+                tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryId);;
             }
 
-            return new EditTimeEntryViewModel (model, tagList);
+            return new EditTimeEntryViewModel (data, tagList);
         }
 
         public void Dispose ()
         {
             durationTimer.Elapsed -= DurationTimerCallback;
             durationTimer.Dispose ();
-
-            model.PropertyChanged -= OnPropertyChange;
-            model = null;
         }
 
         #region viewModel State properties
-        public bool IsPremium { get; set; }
+        public bool IsPremium { get; private set; }
 
-        public bool IsRunning { get; set; }
+        public bool IsRunning { get; private set; }
 
-        public bool IsManual { get; set; }
+        public bool IsManual { get; private set; }
 
-        public string Duration { get; set; }
+        public string Duration { get; private set; }
 
-        public DateTime StartDate { get; set; }
+        public DateTime StartDate { get; private set; }
 
-        public DateTime StopDate { get; set; }
+        public DateTime StopDate { get; private set; }
 
-        public string ProjectName { get; set; }
+        public string ProjectName { get; private set; }
 
-        public string ClientName { get; set; }
+        public string ClientName { get; private set; }
 
         public string Description { get; set; }
 
-        public List<TagData> TagList { get; set; }
+        public List<TagData> TagList { get; private set; }
 
         public bool IsBillable { get; set; }
 
-        public Guid WorkspaceId { get; set; }
+        public Guid WorkspaceId { get; private set; }
+
+        public bool SyncError { get; private set; }
 
         #endregion
 
-        public async Task SetProjectAndTask (Guid projectId, Guid taskId)
+        public void SetProjectAndTask (Guid projectId, Guid taskId)
         {
-            if (projectId == Guid.Empty) {
-                model.Project = null;
-                model.Task = null;
-            } else {
-                var projectModel = new ProjectModel (projectId);
-                await projectModel.LoadAsync ();
-
-                model.Project = projectModel;
-                model.Workspace = new WorkspaceModel (projectModel.Workspace);
-                model.Task = taskId != Guid.Empty ? new TaskModel (taskId) : null;
+            if (projectId == data.ProjectId && taskId == data.TaskId) {
+                return;
             }
-            UpdateView ();
+
+            if (taskId != Guid.Empty) {
+                data.TaskId = taskId;
+            } else {
+                data.TaskId = null;
+            }
+
+            UpdateRelationships (projectId);
         }
 
         public void ChangeTimeEntryDuration (TimeSpan newDuration)
         {
-            model.SetDuration (newDuration);
+            data = TimeEntryModel.SetDuration (data, newDuration);
+            UpdateView ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         public void ChangeTimeEntryStart (TimeSpan diffTime)
         {
-            model.StartTime += diffTime;
+            data = TimeEntryModel.ChangeStartTime (data, data.StartTime + diffTime);
+            UpdateView ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
-            model.StopTime += diffTime;
-            if (diffTime.TotalSeconds > 0) {
-
-                model.StartTime = model.StartTime.Truncate (TimeSpan.TicksPerMinute);
-                model.StopTime = ((DateTime)model.StopTime).Truncate (TimeSpan.TicksPerMinute);
-            }
-
+            data = TimeEntryModel.ChangeStoptime (data, data.StopTime + diffTime);
+            UpdateView ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
@@ -141,37 +150,29 @@ namespace Toggl.Phoebe.Data.ViewModels
             RaisePropertyChanged (() => TagList);
         }
 
-        public async Task SaveModel ()
+        public async Task SaveAsync ()
         {
             if (IsManual) {
                 return;
             }
 
-            model.IsBillable = IsBillable;
-            model.Description = Description;
+            data.IsBillable = IsBillable;
+            data.Description = Description;
 
-            await SaveTagRelationships (TagList);
-            await model.SaveAsync ();
-        }
-
-        public async Task SaveModelManual ()
-        {
-            model.IsBillable = IsBillable;
-            model.Description = Description;
-            model.State = TimeEntryState.Finished;
-
-            await SaveTagRelationships (TagList);
-            await model.SaveAsync ();
-        }
-
-        private void OnPropertyChange (object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == "Data" ||
-                    e.PropertyName == "StartTime" ||
-                    e.PropertyName == "Duration" ||
-                    e.PropertyName == "StopTime") {
-                UpdateView ();
+            if (!data.PublicInstancePropertiesEqual (initialState)) {
+                data = await TimeEntryModel.PrepareForSync (data);
+                data = await TimeEntryModel.SaveTimeEntryDataAsync (data).ConfigureAwait (false);
             }
+
+            if (!AreEqual (initialTagList, TagList)) {
+                await SaveTagRelationships (data, TagList).ConfigureAwait (false);
+            }
+        }
+
+        public async Task SaveManualAsync ()
+        {
+            IsManual = false;
+            await SaveAsync ();
         }
 
         private void UpdateView ()
@@ -179,35 +180,64 @@ namespace Toggl.Phoebe.Data.ViewModels
             // Ensure that this content runs in UI thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
 
-                StartDate = model.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : model.StartTime.ToLocalTime ();
-                StopDate = model.StopTime.HasValue ? model.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
-                Duration = TimeSpan.FromSeconds (model.GetDuration ().TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
-                Description = model.Description;
-                ProjectName = model.Project != null ? model.Project.Name : string.Empty;
-                IsBillable = model.IsBillable;
-                IsPremium = model.Workspace.IsPremium;
-                WorkspaceId = model.Workspace.Id;
-                IsManual = model.State == TimeEntryState.New;
+                StartDate = data.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : data.StartTime.ToLocalTime ();
+                StopDate = data.StopTime.HasValue ? data.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
+                var duration = TimeEntryModel.GetDuration (data, Time.UtcNow);
+                Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
+                Description = data.Description;
+                WorkspaceId = data.WorkspaceId;
 
-                if (model.Project != null) {
-                    ClientName = model.Project.Client != null ? model.Project.Client.Name : string.Empty;
-                } else {
-                    ClientName = string.Empty;
-                }
-
-                if (model.State == TimeEntryState.Running && !IsRunning) {
+                if (data.State == TimeEntryState.Running && !IsRunning) {
                     IsRunning = true;
                     durationTimer.Start ();
-                } else if (model.State != TimeEntryState.Running) {
+                } else if (data.State != TimeEntryState.Running) {
                     IsRunning = false;
                     durationTimer.Stop ();
+                }
+
+                SyncError = (data.RemoteRejected || !data.RemoteId.HasValue);
+            });
+        }
+
+        private void UpdateRelationships (Guid? projectId)
+        {
+            // Ensure that this content runs in UI thread
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
+
+                if (projectId != Guid.Empty) {
+                    data.ProjectId = projectId;
+                } else {
+                    data.ProjectId = null;
+                }
+
+                if (data.ProjectId.HasValue) {
+                    var project = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
+                    ProjectName = project.Name;
+                    if (project.ClientId.HasValue) {
+                        var client = await TimeEntryModel.GetClientDataAsync (project.ClientId.Value);
+                        ClientName = client.Name;
+                    } else {
+                        ClientName = string.Empty;
+                    }
+
+                    // TODO: Workspace and Billable should change!
+                    data.WorkspaceId = project.WorkspaceId;
+                    data.IsBillable = project.IsBillable;
+                    var workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
+                    IsPremium = workspace.IsPremium;
+
+                    WorkspaceId = data.WorkspaceId;
+                    IsBillable = data.IsBillable;
+                } else {
+                    ProjectName = string.Empty;
+                    ClientName = string.Empty;
                 }
             });
         }
 
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)
         {
-            var duration = model.GetDuration ();
+            var duration = TimeEntryModel.GetDuration (data, Time.UtcNow);
             durationTimer.Interval = 1000 - duration.Milliseconds;
 
             // Update on UI Thread
@@ -216,14 +246,14 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private async Task SaveTagRelationships (List<TagData> newTagList)
+        private async Task<TimeEntryData> SaveTagRelationships (TimeEntryData timeEntry, List<TagData> newTagList)
         {
             // Create tag list.
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var existingTagRelations = new List<TimeEntryTagData> ();
 
             var tags = await dataStore.Table<TimeEntryTagData> ()
-                       .Where (r => r.TimeEntryId == model.Id && r.DeletedAt == null)
+                       .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
                        .ToListAsync();
             existingTagRelations.AddRange (tags);
 
@@ -236,18 +266,25 @@ namespace Toggl.Phoebe.Data.ViewModels
             // Create new tag relations:
             var createTasks = newTagList
                               .Where (newTag => existingTagRelations.All (oldTagRelation => oldTagRelation.TagId != newTag.Id))
-            .Select (data => new TimeEntryTagModel { TimeEntry = model, Tag = new TagModel (data)} .SaveAsync ())
+            .Select (data => new TimeEntryTagModel { TimeEntry = new TimeEntryModel (timeEntry), Tag = new TagModel (data)} .SaveAsync ())
             .ToList();
 
             await Task.WhenAll (deleteTasks.Concat (createTasks));
 
             if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
-                model.Touch (); // why it needs to be called?
+                timeEntry = await TimeEntryModel.PrepareForSync (timeEntry);
+                timeEntry = await TimeEntryModel.SaveTimeEntryDataAsync (timeEntry);
             }
+
+            return timeEntry;
         }
 
         private static async Task<List<TagData>> GetDefaultTagList (Guid workspaceId)
         {
+            if (!ServiceContainer.Resolve<ISettingsStore> ().UseDefaultTag) {
+                return new List<TagData> ();
+            }
+
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var defaultTagList = await dataStore.Table<TagData> ()
                                  .Where (r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null)
@@ -262,6 +299,19 @@ namespace Toggl.Phoebe.Data.ViewModels
                 defaultTagList.Add (defaultTag);
             }
             return defaultTagList;
+        }
+
+        private bool AreEqual (List<TagData> list1, List<TagData> list2)
+        {
+            if (list1.Count == list2.Count) {
+                foreach (var item in list1) {
+                    if (list2.Count (t => t.Id == item.Id) != 1) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
         }
     }
 }

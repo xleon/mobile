@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CoreAnimation;
@@ -14,6 +15,7 @@ using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
 
+
 namespace Toggl.Ross.ViewControllers
 {
     public class LogViewController : UITableViewController
@@ -24,13 +26,13 @@ namespace Toggl.Ross.ViewControllers
 
         private NavigationMenuController navMenuController;
         private UIView emptyView;
+        private UIView obmEmptyView;
         private UIButton durationButton;
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
-        private UIView EmptyView { get; set; }
 
         private Binding<bool, bool> syncBinding;
-        private Binding<ICollectionData<IHolder>, ICollectionData<IHolder>> collectionBinding;
+        private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
         protected LogTimeEntriesViewModel ViewModel {get; set;}
 
@@ -39,7 +41,7 @@ namespace Toggl.Ross.ViewControllers
             navMenuController = new NavigationMenuController ();
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
@@ -49,8 +51,13 @@ namespace Toggl.Ross.ViewControllers
                 Message = "LogEmptyMessage".Tr (),
             };
 
+            obmEmptyView = new OBMEmptyView () {
+                Title = "LogOBMEmptyTitle".Tr (),
+                Message = "LogOBMEmptyMessage".Tr (),
+            };
+
             // Create view model
-            ViewModel = await LogTimeEntriesViewModel.Init ();
+            ViewModel = LogTimeEntriesViewModel.Init ();
 
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
             TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
@@ -75,7 +82,7 @@ namespace Toggl.Ross.ViewControllers
             });
 
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
-                TableView.Source = new MySource (ViewModel.Collection);
+                TableView.Source = new MySource (TableView, ViewModel.Collection);
             });
 
             // Setup top toolbar
@@ -103,6 +110,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLayoutSubviews ();
             emptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+            obmEmptyView.Frame = new CGRect (25f, 15f, View.Frame.Size.Width - 50f, 200f);
         }
 
         private void SetupToolbar ()
@@ -139,7 +147,7 @@ namespace Toggl.Ross.ViewControllers
 
         class MySource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
         {
-            public MySource (UITableView tableView, ObservableRangeCollection<IHolder> data) : base (tableView, data)
+            public MySource (UITableView tableView, ObservableCollection<IHolder> data) : base (tableView, data)
             {
             }
 
@@ -245,14 +253,14 @@ namespace Toggl.Ross.ViewControllers
             {
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
-                var clientName = String.Empty;
+                var clientName = string.Empty;
                 var info = dataSource.Info;
 
-                if (!String.IsNullOrWhiteSpace (info.ProjectData.Name)) {
+                if (!string.IsNullOrWhiteSpace (info.ProjectData.Name)) {
                     projectName = info.ProjectData.Name;
                     projectColor = UIColor.Clear.FromHex (ProjectModel.HexColors [info.ProjectData.Color % ProjectModel.HexColors.Length]);
 
-                    if (!String.IsNullOrWhiteSpace (info.ClientData.Name)) {
+                    if (!string.IsNullOrWhiteSpace (info.ClientData.Name)) {
                         clientName = info.ClientData.Name;
                     }
                 }
@@ -268,9 +276,9 @@ namespace Toggl.Ross.ViewControllers
                 }
 
                 var taskName = info.TaskData.Name;
-                var taskHidden = String.IsNullOrWhiteSpace (taskName);
+                var taskHidden = string.IsNullOrWhiteSpace (taskName);
                 var description = info.Description;
-                var descHidden = String.IsNullOrWhiteSpace (description);
+                var descHidden = string.IsNullOrWhiteSpace (description);
 
                 if (taskHidden && descHidden) {
                     description = "LogCellNoDescription".Tr ();
@@ -435,7 +443,7 @@ namespace Toggl.Ross.ViewControllers
                 var attrs = new UIStringAttributes {
                     Font = view.Font,
                 };
-                var rect = ((NSString) (view.Text ?? String.Empty)).GetBoundingRect (
+                var rect = ((NSString) (view.Text ?? string.Empty)).GetBoundingRect (
                                new CGSize (Single.MaxValue, Single.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
@@ -496,7 +504,7 @@ namespace Toggl.Ross.ViewControllers
             private string FormatDuration (TimeSpan duration)
             {
                 if (duration.TotalHours >= 1f) {
-                    return String.Format (
+                    return string.Format (
                                "LogHeaderDurationHoursMinutes".Tr (),
                                (int)duration.TotalHours,
                                duration.Minutes
@@ -504,13 +512,13 @@ namespace Toggl.Ross.ViewControllers
                 }
 
                 if (duration.Minutes > 0) {
-                    return String.Format (
+                    return string.Format (
                                "LogHeaderDurationMinutes".Tr (),
                                duration.Minutes
                            );
                 }
 
-                return String.Empty;
+                return string.Empty;
             }
         }
     }

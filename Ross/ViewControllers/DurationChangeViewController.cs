@@ -90,7 +90,7 @@ namespace Toggl.Ross.ViewControllers
 
                 if (model == null) {
                     var m = await TimeEntryModel.CreateFinishedAsync (duration);
-                    var controller = new EditTimeEntryViewController (m);
+                    var controller = new EditTimeEntryViewController ((TimeEntryModel)m);
 
                     // Replace self with edit controller on the stack
                     var vcs = NavigationController.ViewControllers;

@@ -6,6 +6,12 @@ using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data.Utils
 {
+    public interface IGrouper<T, TGroup>
+    {
+        IEnumerable<TGroup> Group (IEnumerable<T> items);
+        IEnumerable<T> Ungroup (IEnumerable<TGroup> groups);
+    }
+
     public interface IHolder : IDiffComparable
     {
     }
@@ -20,12 +26,22 @@ namespace Toggl.Phoebe.Data.Utils
         Task LoadInfoAsync ();
         TimeSpan GetDuration ();
         DateTime GetStartTime ();
-        bool IsAffectedByPut (TimeEntryData data);
-        ITimeEntryHolder UpdateOrDelete (TimeEntryData data, out bool isAffectedByDelete);
     }
 
     public class TimeEntryHolder : ITimeEntryHolder
     {
+        public class Grouper : IGrouper<TimeEntryHolder, TimeEntryHolder>
+        {
+            public IEnumerable<TimeEntryHolder> Group (IEnumerable<TimeEntryHolder> items)
+            {
+                return items;
+            }
+            public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryHolder> groups)
+            {
+                return groups;
+            }
+        }
+
         public TimeEntryData Data { get; private set; }
         public TimeEntryInfo Info { get; private set; }
 
@@ -36,20 +52,15 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
-        public TimeEntryHolder (TimeEntryData data)
+        public TimeEntryHolder (TimeEntryData data, TimeEntryInfo info = null)
         {
             Data = data;
+            Info = info;
         }
 
         public async Task LoadInfoAsync ()
         {
             Info = await TimeEntryInfo.LoadAsync (Data);
-        }
-
-        public ITimeEntryHolder UpdateOrDelete (TimeEntryData data, out bool isAffectedByDelete)
-        {
-            isAffectedByDelete = data.Id == Data.Id;
-            return null; // Always delete if affected
         }
 
         public DiffComparison Compare (IDiffComparable other)
@@ -61,11 +72,6 @@ namespace Toggl.Phoebe.Data.Utils
                 return other2 != null && other2.Data.Id == Data.Id
                        ? DiffComparison.Update : DiffComparison.Different;
             }
-        }
-
-        public bool IsAffectedByPut (TimeEntryData data)
-        {
-            return data.Id == Data.Id;
         }
 
         public DateTime GetStartTime()

@@ -9,7 +9,8 @@ using UIKit;
 
 namespace Toggl.Ross.DataSources
 {
-    public abstract class ObservableCollectionViewSource<TData, TSection, TRow> : UITableViewSource where  TSection : TData where TRow : TData
+    public abstract class ObservableCollectionViewSource<TData, TSection, TRow> : UITableViewSource
+        where  TSection : TData where TRow : TData
     {
         protected readonly UITableView tableView;
         protected readonly ObservableCollection<TData> collection;
@@ -108,7 +109,21 @@ namespace Toggl.Ross.DataSources
 
         protected int GetPlainIndexFromSection (IEnumerable<TData> collection, nint sectionIndex)
         {
-            return collection.IndexOf (p => (TSection)p == collection.OfType <TSection> ().ElementAt ((int)sectionIndex));
+            nint sectionCount = 0;
+            int totalCount = 0;
+            TData obj;
+
+            while (totalCount < collection.Count ()) {
+                if (sectionCount == sectionIndex) {
+                    return totalCount;
+                }
+                obj = collection.ElementAt (totalCount);
+                if (obj is TSection) {
+                    sectionCount++;
+                }
+                totalCount++;
+            }
+            return totalCount;
         }
 
         protected int GetPlainIndexFromRow (IEnumerable<TData> collection, NSIndexPath rowIndexPath)
@@ -116,7 +131,7 @@ namespace Toggl.Ross.DataSources
             return GetPlainIndexFromSection (collection, rowIndexPath.Section) + rowIndexPath.Row + 1;
         }
 
-        public static int GetCurrentRowsBySection (IEnumerable<TData> collection, nint sectionIndex)
+        public int GetCurrentRowsBySection (IEnumerable<TData> collection, nint sectionIndex)
         {
             var enumerable = collection.ToArray ();
             var startIndex = GetPlainIndexFromSection (enumerable, sectionIndex);

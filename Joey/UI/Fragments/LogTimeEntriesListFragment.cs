@@ -83,12 +83,13 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = await LogTimeEntriesViewModel.Init ();
+            ViewModel = LogTimeEntriesViewModel.Init ();
 
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
+            hasMoreBinding = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (ShowEmptyState);
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
@@ -122,11 +123,10 @@ namespace Toggl.Joey.UI.Fragments
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
 
             if (ViewModel.HasMoreItems) {
-                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+                OBMExperimentManager.Send (OBMExperimentManager.HomeWithTEListState, "startButton", "click");
             }
 
-            if (ViewModel.IsTimeEntryRunning) {
-
+            if (timeEntryData.State == Toggl.Phoebe.Data.TimeEntryState.Running) {
                 NewTimeEntryStartedByFAB = true;
 
                 var ids = new List<string> { timeEntryData.Id.ToString () };
@@ -144,6 +144,12 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (drawerSyncFinished != null) {
+                bus.Unsubscribe (drawerSyncFinished);
+                drawerSyncFinished = null;
+            }
+
             // TODO: Remove bindings to ViewModel
             // check if it is needed or not.
             timerComponent.DetachBindind ();
@@ -152,6 +158,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroyView ();
         }
 
+        #region Menu setup
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
             inflater.Inflate (Resource.Menu.NewItemMenu, menu);
@@ -176,44 +183,7 @@ namespace Toggl.Joey.UI.Fragments
                 AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
             }
         }
-
-        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
-        {
-            // Touch listeners.
-            itemTouchListener = new ItemTouchListener (recyclerView, this);
-            recyclerView.AddOnItemTouchListener (itemTouchListener);
-
-            // Scroll listener
-            recyclerView.AddOnScrollListener (
-                new ScrollListener ((LinearLayoutManager)recyclerView.GetLayoutManager (), viewModel));
-
-            var touchCallback = new SwipeDismissCallback (ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
-            var touchHelper = new ItemTouchHelper (touchCallback);
-            touchHelper.AttachToRecyclerView (recyclerView);
-
-            // Decorations.
-            dividerDecoration = new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList);
-            shadowDecoration = new ShadowItemDecoration (Activity);
-            recyclerView.AddItemDecoration (dividerDecoration);
-            recyclerView.AddItemDecoration (shadowDecoration);
-            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
-        }
-
-        private void ReleaseRecyclerView ()
-        {
-            recyclerView.RemoveItemDecoration (shadowDecoration);
-            recyclerView.RemoveItemDecoration (dividerDecoration);
-            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
-
-            recyclerView.GetAdapter ().Dispose ();
-            recyclerView.Dispose ();
-            logAdapter = null;
-
-            itemTouchListener.Dispose ();
-            dividerDecoration.Dispose ();
-            shadowDecoration.Dispose ();
-        }
-
+        #endregion
 
         #region IDismissListener implementation
         public bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
@@ -285,6 +255,54 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
         #endregion
+
+        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
+        {
+            // Touch listeners.
+            itemTouchListener = new ItemTouchListener (recyclerView, this);
+            recyclerView.AddOnItemTouchListener (itemTouchListener);
+
+            // Scroll listener
+            recyclerView.AddOnScrollListener (
+                new ScrollListener ((LinearLayoutManager)recyclerView.GetLayoutManager (), viewModel));
+
+            var touchCallback = new SwipeDismissCallback (ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
+            var touchHelper = new ItemTouchHelper (touchCallback);
+            touchHelper.AttachToRecyclerView (recyclerView);
+
+            // Decorations.
+            dividerDecoration = new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList);
+            shadowDecoration = new ShadowItemDecoration (Activity);
+            recyclerView.AddItemDecoration (dividerDecoration);
+            recyclerView.AddItemDecoration (shadowDecoration);
+            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
+        }
+
+        private void ReleaseRecyclerView ()
+        {
+            recyclerView.RemoveItemDecoration (shadowDecoration);
+            recyclerView.RemoveItemDecoration (dividerDecoration);
+            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
+
+            recyclerView.GetAdapter ().Dispose ();
+            recyclerView.Dispose ();
+            logAdapter = null;
+
+            itemTouchListener.Dispose ();
+            dividerDecoration.Dispose ();
+            shadowDecoration.Dispose ();
+        }
+
+        private void ShowEmptyState ()
+        {
+            //Empty state is experimental.
+            if (!OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+                return;
+            }
+
+            recyclerView.Visibility = ViewModel.HasMoreItems ? ViewStates.Visible : ViewStates.Gone;
+            emptyMessageView.Visibility = ViewModel.HasMoreItems ? ViewStates.Gone : ViewStates.Visible;
+        }
 
         // Temporal hack to change the
         // action color in snack bar

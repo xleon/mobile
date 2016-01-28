@@ -47,20 +47,18 @@ namespace Toggl.Joey.Wear
             .Build ();
             googleApiClient.Connect ();
         }
+
         public override void OnCreate ()
         {
             base.OnCreate ();
             Init (this);
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            if (manager.Active == null) {
-                return;
-            }
             manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
         }
 
         private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (args.PropertyName == ActiveTimeEntryManager.PropertyActive) {
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyActiveTimeEntry) {
                 await UpdateSharedTimeEntryList ();
             }
         }
@@ -172,7 +170,7 @@ namespace Toggl.Joey.Wear
         {
             var model = new TimeEntryModel (id);
             await model.LoadAsync();
-            await model.ContinueAsync();
+            await TimeEntryModel.ContinueAsync (model.Data);
         }
 
         public async Task UpdateSharedTimeEntryList ()

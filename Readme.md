@@ -40,6 +40,12 @@ There is a pre-commit git hook, that prevents commits with invalid code style. T
 the source files, just run:
 
 	$ make format
+	
+### Beta testing
+
+Do you want to put our app to the limits? There is a bug that and you know how to simulate it? Join to our Beta tester community and give us your feedback, just write us at [support@toggl.com](mailto:support@toggl.com)
+
+Download the last [Android Beta](https://tsfr.io/xrkvaq)
 
 ## We are hiring!
 

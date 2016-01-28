@@ -46,16 +46,7 @@ namespace Toggl.Joey.UI.Activities
         private readonly List<int> pageStack = new List<int> ();
         private readonly Handler handler = new Handler ();
         private DrawerListAdapter drawerAdapter;
-        private TextView syncStatusText;
-        private long lastSyncInMillis;
-        private int syncStatus;
         private ToolbarModes toolbarMode;
-        private Subscription<SyncStartedMessage> drawerSyncStarted;
-        private Subscription<SyncFinishedMessage> drawerSyncFinished;
-        private static readonly int syncing = 0;
-        private static readonly int syncSuccessful = 1;
-        private static readonly int syncHadErrors = 2;
-        private static readonly int syncFatalError = 3;
 
         private ListView DrawerListView { get; set; }
 
@@ -114,14 +105,6 @@ namespace Toggl.Joey.UI.Activities
             SupportActionBar.SetCustomView (Timer.Root, lp);
             SupportActionBar.SetDisplayShowCustomEnabled (true);
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            drawerSyncStarted = bus.Subscribe<SyncStartedMessage> (SyncStarted);
-            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
-
-            DrawerSyncView = FindViewById<FrameLayout> (Resource.Id.DrawerSyncStatus);
-
-            syncStatusText = DrawerSyncView.FindViewById<TextView> (Resource.Id.SyncStatusText);
-
             if (state == null) {
                 OpenPage (DrawerListAdapter.TimerPageId);
             } else {
@@ -174,19 +157,8 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnSaveInstanceState (Bundle outState)
         {
             outState.PutIntArray (PageStackExtra, pageStack.ToArray ());
-            outState.PutLong (LastSyncArgument, lastSyncInMillis);
-            outState.PutInt (LastSyncResultArgument, syncStatus);
-            base.OnSaveInstanceState (outState);
-        }
 
-        protected override void OnPostCreate (Bundle savedInstanceState)
-        {
-            if (savedInstanceState != null) {
-                lastSyncInMillis = savedInstanceState.GetLong (LastSyncArgument);
-                syncStatus = savedInstanceState.GetInt (LastSyncResultArgument);
-                UpdateSyncStatus ();
-            }
-            base.OnPostCreate (savedInstanceState);
+            base.OnSaveInstanceState (outState);
         }
 
         public override void OnConfigurationChanged (Android.Content.Res.Configuration newConfig)
@@ -198,23 +170,6 @@ namespace Toggl.Joey.UI.Activities
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             return DrawerToggle.OnOptionsItemSelected (item) || base.OnOptionsItemSelected (item);
-        }
-
-        protected override void OnDestroy ()
-        {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-
-            if (drawerSyncStarted != null) {
-                bus.Unsubscribe (drawerSyncStarted);
-                drawerSyncStarted = null;
-            }
-
-            if (drawerSyncFinished != null) {
-                bus.Unsubscribe (drawerSyncFinished);
-                drawerSyncFinished = null;
-            }
-
-            base.OnDestroy ();
         }
 
         public override void OnBackPressed ()
@@ -349,49 +304,6 @@ namespace Toggl.Joey.UI.Activities
             }
 
             DrawerLayout.CloseDrawers ();
-        }
-
-        protected void SyncStarted (SyncStartedMessage msg)
-        {
-            syncStatus = syncing;
-            syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
-        }
-
-        private void SyncFinished (SyncFinishedMessage msg)
-        {
-            if (msg.FatalError != null) {
-                syncStatus = syncFatalError;
-            } else if (msg.HadErrors) {
-                syncStatus = syncHadErrors;
-            } else {
-                syncStatus = syncSuccessful;
-            }
-            lastSyncInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            UpdateSyncStatus ();
-        }
-
-        private void UpdateSyncStatus ()
-        {
-            if (syncStatus == syncing) {
-                syncStatusText.SetText (Resource.String.CurrentlySyncingStatusText);
-            } else if (syncStatus == syncHadErrors) {
-                syncStatusText.SetText (Resource.String.LastSyncHadErrors);
-            } else if (syncStatus == syncFatalError) {
-                syncStatusText.SetText (Resource.String.LastSyncFatalError);
-            } else {
-                syncStatusText.Text = String.Format (Resources.GetString (Resource.String.LastSyncStatusText), ResolveLastSyncTime ());
-            }
-            handler.RemoveCallbacks (UpdateSyncStatus);
-            handler.PostDelayed (UpdateSyncStatus, DateUtils.MinuteInMillis);
-        }
-
-        private String ResolveLastSyncTime ()
-        {
-            var NowInMillis = Toggl.Phoebe.Time.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            if (NowInMillis - lastSyncInMillis < DateUtils.MinuteInMillis) {
-                return Resources.GetString (Resource.String.LastSyncJustNow);
-            }
-            return DateUtils.GetRelativeTimeSpanString (lastSyncInMillis, NowInMillis, 0L);
         }
 
         public TimerComponent Timer

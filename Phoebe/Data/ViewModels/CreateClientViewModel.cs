@@ -34,7 +34,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public void Dispose ()
         {
-            model = null;
         }
 
         public string ClientName { get; set; }
@@ -51,9 +50,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             } else {
                 model.Name = ClientName;
             }
-
             await model.SaveAsync ();
-
             return model.Data;
         }
     }

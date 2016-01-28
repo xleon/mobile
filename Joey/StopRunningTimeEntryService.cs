@@ -57,8 +57,7 @@ namespace Toggl.Joey
                                  .ToListAsync ()
                                  .ConfigureAwait (false);
 
-            var stopTasks = runningEntries
-                            .Select (data => new TimeEntryModel (data).StopAsync ());
+            var stopTasks = runningEntries.Select (data => TimeEntryModel.StopAsync (data));
             await Task.WhenAll (stopTasks).ConfigureAwait (false);
 
             // Ping analytics

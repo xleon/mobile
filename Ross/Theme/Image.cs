@@ -121,5 +121,10 @@ namespace Toggl.Ross.Theme
         {
             get { return UIImage.FromBundle ("logo"); }
         }
+
+        public static UIImage ArrowEmptyState
+        {
+            get { return UIImage.FromBundle ("arrowUp"); }
+        }
     }
 }

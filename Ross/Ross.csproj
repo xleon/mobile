@@ -131,9 +131,6 @@
     </Reference>
     <Reference Include="System.Net.Http" />
     <Reference Include="Xamarin.iOS" />
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="Google.Core">
       <HintPath>..\packages\Xamarin.Google.iOS.Core.1.1.0.0\lib\Xamarin.iOS10\Google.Core.dll</HintPath>
     </Reference>
@@ -167,6 +164,9 @@
     <Reference Include="Mindscape.Raygun4Net.Xamarin.iOS.Unified">
       <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\Xamarin.iOS10\Mindscape.Raygun4Net.Xamarin.iOS.Unified.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.8.0.2\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
@@ -199,6 +199,8 @@
     <BundleResource Include="Resources\btn-arrow-up.png" />
     <BundleResource Include="Resources\btn-arrow-up%402x.png" />
     <BundleResource Include="GoogleService-Info.plist" />
+    <BundleResource Include="Resources\arrowUp%402x.png" />
+    <BundleResource Include="Resources\arrowUp.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -290,8 +292,10 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="UIImageEffects.cs" />
-    <Compile Include="Views\SimpleEmptyView.cs" />
     <Compile Include="Theme\Style.EmptyView.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Theme\Style.OBMEmptyView.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\SettingsViewController.cs" />
@@ -339,6 +343,8 @@
     <Compile Include="Net\APNSManager.cs" />
     <Compile Include="ViewControllers\NewClientViewController.cs" />
     <Compile Include="DataSources\ObservableCollectionViewSource.cs" />
+    <Compile Include="Views\SimpleEmptyView.cs" />
+    <Compile Include="Views\OBMEmptyView.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

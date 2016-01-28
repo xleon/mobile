@@ -48,7 +48,7 @@ namespace Toggl.Phoebe
                     jsonEntries.ForEach (json => json.Import (ctx)));
 
             var entryMsg = new TimeEntryMsg (DataDir.Incoming, dbMsgs.Select (
-                x => Tuple.Create (x.Action.ToVerb (), (TimeEntryData)x.Data)));
+                x => Tuple.Create (x.Action, (TimeEntryData)x.Data)));
 
             return DataMsg.Success (msg.Tag, entryMsg);
         }
@@ -72,7 +72,7 @@ namespace Toggl.Phoebe
                 .Take (Literals.TimeEntryLoadMaxInit);
 
             var dbMsgs = (await baseQuery.OrderByDescending (r => r.StartTime).ToListAsync ())
-                .Select (x => Tuple.Create (DataVerb.Post, x)).ToList ();
+                .Select (x => Tuple.Create (DataAction.Put, x)).ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
             Dispatcher.Singleton.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
@@ -82,32 +82,34 @@ namespace Toggl.Phoebe
             return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbMsgs));
         }
 
-        static async Task<IDataMsg> TimeEntryStop (IDataMsg msg, IDataStore dataStore)
+        static Task<IDataMsg> TimeEntryStop (IDataMsg msg, IDataStore dataStore)
         {
-            try {
-                var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
+            return Task.Run (() => {
+                try {
+                    var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
 
-                foreach (var tuple in entryMsg) {
-                    var entryData = tuple.Item2;
+                    foreach (var tuple in entryMsg) {
+                        var entryData = tuple.Item2;
 
-                    // Code from TimeEntryModel.StopAsync
-                    if (entryData.State != TimeEntryState.Running) {
-                        throw new InvalidOperationException (
-                            String.Format ("Cannot stop a time entry in {0} state.", entryData.State));
+                        // Code from TimeEntryModel.StopAsync
+                        if (entryData.State != TimeEntryState.Running) {
+                            throw new InvalidOperationException (
+                                String.Format ("Cannot stop a time entry in {0} state.", entryData.State));
+                        }
+
+                        entryData.State = TimeEntryState.Finished;
+                        entryData.StopTime = Time.UtcNow;
+
+                        // If this operation is not successful, an exception will be thrown
+                        dataStore.PutSilent (entryData);
                     }
 
-                    entryData.State = TimeEntryState.Finished;
-                    entryData.StopTime = Time.UtcNow;
-
-                    // If this operation is not successful, an exception will be thrown
-                    dataStore.PutSilent (entryData);
+                    return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Outcoming, entryMsg));
                 }
-
-                return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Outcoming, entryMsg));
-            }
-            catch (Exception ex) {
-                return DataMsg.Error<TimeEntryMsg> (msg.Tag, ex);
-            }
+                catch (Exception ex) {
+                    return DataMsg.Error<TimeEntryMsg> (msg.Tag, ex);
+                }
+            });
         }
 
         static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg, IDataStore dataStore)
@@ -128,7 +130,7 @@ namespace Toggl.Phoebe
 
             return DataMsg.Success (msg.Tag,
                 new TimeEntryMsg (DataDir.Outcoming,
-                    removed.Select (x => Tuple.Create (DataVerb.Delete, x))));
+                    removed.Select (x => Tuple.Create (DataAction.Delete, x))));
         }
 
         #region Util

@@ -23,12 +23,6 @@ namespace Toggl.Phoebe
         TimeEntryRestoreFromUndo,
     }
 
-    public enum DataVerb {
-        Post,
-        Put,
-        Delete
-    }
-
     public enum DataDir {
         Incoming,
         Outcoming,
@@ -68,13 +62,13 @@ namespace Toggl.Phoebe
     public class DataSyncMsg
     {
         public DataDir Dir { get; private set; }
-        public DataVerb Verb { get; private set; }
+        public DataAction Action { get; private set; }
         public CommonData Data { get; private set; }
 
-        public DataSyncMsg (DataDir dir, DataVerb verb, CommonData data)
+        public DataSyncMsg (DataDir dir, DataAction action, CommonData data)
         {
             Dir = dir;
-            Verb = verb;
+            Action = action;
             Data = data;
         }
     }
@@ -86,7 +80,7 @@ namespace Toggl.Phoebe
 
     public class DataJsonMsg
     {
-        public DataVerb Verb { get; set; }
+        public DataAction Action { get; set; }
         public string TypeName { get; set; }
         public IDictionary<string, object> RawData { get; set; }
 
@@ -111,9 +105,9 @@ namespace Toggl.Phoebe
             }
         }
 
-        public DataJsonMsg (DataVerb action, CommonJson json)
+        public DataJsonMsg (DataAction action, CommonJson json)
         {
-            Verb = action;
+            Action = action;
             Data = json;
             TypeName = json.GetType ().FullName;
         }
@@ -121,11 +115,6 @@ namespace Toggl.Phoebe
 
     public static class DataMsg
     {
-        public static DataVerb ToVerb (this DataAction action)
-        {
-            return action == DataAction.Put ? DataVerb.Put : DataVerb.Delete;
-        }
-
         public static U MatchData<T,U> (this IDataMsg msg, Func<T,U> left, Func<Exception,U> right)
         {
             var typedMsg = msg as DataMsg<T>;

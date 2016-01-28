@@ -61,14 +61,14 @@ namespace Toggl.Phoebe.Sync
 
                     try {
                         string json = null;
-                        ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Verb, exported)));
+                        ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Action, exported)));
                         alreadyQueued = true;
                         
                         if (ctx.TryDequeue (out json)) {
                             // Send queue to server
                             do {
                                 var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
-                                await SendMessage (jsonMsg.Verb, jsonMsg.Data);
+                                await SendMessage (jsonMsg.Action, jsonMsg.Data);
 
                                 // If we sent the message successfully, remove it from the queue
                                 ctx.TryDequeue (out json);
@@ -76,12 +76,12 @@ namespace Toggl.Phoebe.Sync
                         }
                         else {
                             // If there's no queue, try to send the message directly
-                            await SendMessage (msg.Verb, exported);
+                            await SendMessage (msg.Action, exported);
                         }
                     }
                     catch (Exception ex) {
                         if (!alreadyQueued) {
-                            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Verb, exported)));
+                            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (msg.Action, exported)));
                         }
                         var log = ServiceContainer.Resolve<ILogger> ();
                         log.Error (typeof(SyncOutManager).Name, ex, "Failed to send data to server");
@@ -91,16 +91,17 @@ namespace Toggl.Phoebe.Sync
         }
 
         // TODO: Check client methods results -> Assign ID for newly created json
-        async Task SendMessage (DataVerb action, CommonJson json)
+        async Task SendMessage (DataAction action, CommonJson json)
         {
+            // TODO: Check RemoteId to see if we need to Create or Update
             switch (action) {
-            case DataVerb.Post:
-                await client.Create (json);
-                break;
-            case DataVerb.Put:
+//            case DataAction.Post:
+//                await client.Create (json);
+//                break;
+            case DataAction.Put:
                 await client.Update (json);
                 break;
-            case DataVerb.Delete:
+            case DataAction.Delete:
                 await client.Delete (json);
                 break;
             }

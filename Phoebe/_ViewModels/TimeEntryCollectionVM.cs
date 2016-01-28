@@ -70,7 +70,7 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private async Task UpdateItems (IEnumerable<Tuple<DataVerb, TimeEntryData>> msgs)
+        private async Task UpdateItems (IEnumerable<Tuple<DataAction, TimeEntryData>> msgs)
         {
             try {
                 // 1. Get only TimeEntryHolders from current collection
@@ -119,20 +119,20 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void UpdateTimeHolders (IList<TimeEntryHolder> timeHolders, DataVerb action, TimeEntryData entry)
+        private void UpdateTimeHolders (IList<TimeEntryHolder> timeHolders, DataAction action, TimeEntryData entry)
         {
             for (var i = 0; i < timeHolders.Count; i++) {
                 if (entry.Id == timeHolders [i].Data.Id) {
-                    if (action == DataVerb.Put) {
+                    if (action == DataAction.Put) {
                         timeHolders [i] = new TimeEntryHolder (entry); // Replace
-                    } else if (action == DataVerb.Delete) {
+                    } else if (action == DataAction.Delete) {
                         timeHolders.RemoveAt (i); // Remove
                     }
                     return;
                 }
             }
 
-            if (action == DataVerb.Put || action == DataVerb.Post) {
+            if (action == DataAction.Put) {
                 timeHolders.Add (new TimeEntryHolder (entry)); // Add
             }
         }
@@ -148,7 +148,7 @@ namespace Toggl.Phoebe.ViewModels
 
         public void RestoreTimeEntryFromUndo ()
         {
-            var msg = new TimeEntryMsg (DataDir.None, DataVerb.Put, lastRemovedItem.Data);
+            var msg = new TimeEntryMsg (DataDir.None, DataAction.Put, lastRemovedItem.Data);
             Dispatcher.Singleton.Send (DataTag.TimeEntryRestoreFromUndo, msg);
         }
 
@@ -168,7 +168,7 @@ namespace Toggl.Phoebe.ViewModels
                 }
 
                 var msg = new TimeEntryMsg (DataDir.Outcoming, entries.Select (
-                    x => Tuple.Create (DataVerb.Delete, x)));
+                    x => Tuple.Create (DataAction.Delete, x)));
                 Dispatcher.Singleton.Send (DataTag.TimeEntryRemove, msg);
             };
 
@@ -183,13 +183,13 @@ namespace Toggl.Phoebe.ViewModels
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                var msg = new TimeEntryMsg (DataDir.Outcoming, DataVerb.Put, timeEntryHolder.Data);
+                var msg = new TimeEntryMsg (DataDir.Outcoming, DataAction.Put, timeEntryHolder.Data);
                 Dispatcher.Singleton.Send (DataTag.TimeEntryStop, msg);
             }
             lastRemovedItem = timeEntryHolder;
 
             // Remove item only from list
-            var rmMsg = new TimeEntryMsg (DataDir.None, DataVerb.Delete, timeEntryHolder.Data);
+            var rmMsg = new TimeEntryMsg (DataDir.None, DataAction.Delete, timeEntryHolder.Data);
             Dispatcher.Singleton.Send (DataTag.TimeEntryRemoveWithUndo, rmMsg);
 
             // Create Undo timer

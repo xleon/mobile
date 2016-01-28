@@ -3,6 +3,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Json.Converters;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Sync;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -33,6 +34,10 @@ namespace Toggl.Phoebe
 
             RegisterJsonConverters ();
             ServiceContainer.Register<LoggerUserManager> ();
+
+
+            // Start the Reactive chain
+            SyncOutManager.Init ();
         }
 
         private static void RegisterJsonConverters ()

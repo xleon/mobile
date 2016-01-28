@@ -19,14 +19,19 @@ namespace Toggl.Phoebe
             Singleton = new Dispatcher ();
         }
         
+        IObserver<IDataMsg> observer;
         readonly IObservable<IDataMsg> observable;
-        readonly Subject<IDataMsg> subject = new Subject<IDataMsg> ();
 
         Dispatcher ()
         {
-            // TODO: Scheduler.CurrentThread for unit tests
             observable =
-                subject
+                Observable.Create<IDataMsg> (obs => {
+                    observer = obs;
+                    return () => {
+                        throw new Exception ("Subscription to Dispatcher must end with the app");
+                    }; 
+                })
+                // TODO: Scheduler.CurrentThread for unit tests
                 .Synchronize (Scheduler.Default)
                 .SelectAsync (msg => DispatcherRegister.ResolveAction (msg))
                 .Catch<IDataMsg, Exception> (PropagateError)
@@ -35,17 +40,17 @@ namespace Toggl.Phoebe
 
         public void Send (DataTag tag)
         {
-            subject.OnNext (DataMsg.Success<object> (tag, null));
+            observer.OnNext (DataMsg.Success<object> (tag, null));
         }
 
         public void Send<T> (DataTag tag, T data)
         {
-            subject.OnNext (DataMsg.Success<T> (tag, data));
+            observer.OnNext (DataMsg.Success<T> (tag, data));
         }
 
         public void SendError<T> (DataTag tag, Exception ex)
         {
-            subject.OnNext (DataMsg.Error<T> (tag, ex));
+            observer.OnNext (DataMsg.Error<T> (tag, ex));
         }
 
         public IObservable<IDataMsg> Observe ()

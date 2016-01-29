@@ -8,6 +8,7 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
+using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
@@ -47,6 +48,7 @@ namespace Toggl.Joey.UI.Fragments
         private Animator currentAnimation;
         private LinearLayout reportsContainer;
         private LinearLayout nouserDisclaimer;
+        private Button noUserRegisterButton;
 
         public ZoomLevel ZoomLevel
         {
@@ -139,10 +141,12 @@ namespace Toggl.Joey.UI.Fragments
             syncRetry = view.FindViewById<ImageButton> (Resource.Id.ReportsSyncRetryButton);
             reportsContainer = view.FindViewById<LinearLayout> (Resource.Id.ReportsContainer);
             nouserDisclaimer = view.FindViewById<LinearLayout> (Resource.Id.NoUserDisclaimer);
+            noUserRegisterButton = view.FindViewById<Button> (Resource.Id.ReportsRegisterButton);
 
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
             syncRetry.Click += async (sender, e) => await ReloadCurrent ();
+            noUserRegisterButton.Click += (sender, e) => ((MainDrawerActivity)Activity).OpenPage (DrawerListAdapter.RegisterUserPageId);
 
             var activity = (MainDrawerActivity)Activity;
             toolbar = activity.MainToolbar;

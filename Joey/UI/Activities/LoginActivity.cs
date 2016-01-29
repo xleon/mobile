@@ -24,6 +24,7 @@ using XPlatUtils;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
+using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -69,9 +70,10 @@ namespace Toggl.Joey.UI.Activities
         {
         }
 
-		public LoginActivity ()
-		{
-		}
+        public LoginActivity ()
+        {
+        }
+        protected Toolbar LoginToolbar { get; private set; }
 
         private void FindViews ()
         {
@@ -86,6 +88,7 @@ namespace Toggl.Joey.UI.Activities
             NoUserButton = FindViewById<Button> (Resource.Id.NoUserButton).SetFont (Font.Roboto);
             LegalTextView = FindViewById<TextView> (Resource.Id.LegalTextView).SetFont (Font.RobotoLight);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
+            LoginToolbar = FindViewById<Toolbar> (Resource.Id.LoginActivityToolbar);
         }
 
         protected override bool StartAuthActivity ()
@@ -148,6 +151,9 @@ namespace Toggl.Joey.UI.Activities
             SwitchModeButton.Click += OnModeToggleButtonClick;
             hasGoogleAccounts = GoogleAccounts.Count > 0;
             GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
+            SetSupportActionBar (LoginToolbar);
+            SupportActionBar.SetDisplayHomeAsUpEnabled (true);
+            SupportActionBar.SetDisplayShowTitleEnabled (false);
 
             if (state != null) {
                 showPassword = state.GetBoolean (ExtraShowPassword);
@@ -389,6 +395,12 @@ namespace Toggl.Joey.UI.Activities
             }
 
             StartAuthActivity ();
+        }
+
+        public override bool OnOptionsItemSelected (IMenuItem item)
+        {
+            OnBackPressed ();
+            return base.OnOptionsItemSelected (item);
         }
 
         private void OnGoogleLoginButtonClick (object sender, EventArgs e)

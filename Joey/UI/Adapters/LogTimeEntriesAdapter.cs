@@ -532,7 +532,7 @@ namespace Toggl.Joey.UI.Adapters
 
                 if (authManager.OfflineMode) {
                     loadState = RecyclerLoadState.Finished;
-                }else if (state == RecyclerLoadState.Loading) {
+                } else if (state == RecyclerLoadState.Loading) {
                     progressBar.Visibility = ViewStates.Visible;
                 } else if (state == RecyclerLoadState.Retry) {
                     retryLayout.Visibility = ViewStates.Visible;

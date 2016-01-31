@@ -14,6 +14,7 @@ namespace Toggl.Ross.DataSources
     {
         protected readonly UITableView tableView;
         protected readonly ObservableCollection<TData> collection;
+        protected ObservableCollection<TData> lastCollectionState;
         protected UITableView TableView  { get { return tableView; }}
 
         protected ObservableCollectionViewSource (UITableView tableView, ObservableCollection<TData> collection)
@@ -49,8 +50,6 @@ namespace Toggl.Ross.DataSources
                 TableView.ReloadData();
             }
 
-            Console.WriteLine (e.Action + " " + e.NewStartingIndex);
-
             if (e.Action == NotifyCollectionChangedAction.Add) {
                 if (e.NewItems [0] is TSection) {
                     var indexSet = GetSectionFromPlainIndex (collectionData, e.NewStartingIndex);
@@ -63,10 +62,10 @@ namespace Toggl.Ross.DataSources
 
             if (e.Action == NotifyCollectionChangedAction.Remove) {
                 if (e.OldItems [0] is TSection) {
-                    var indexSet = GetSectionFromPlainIndex (collectionData, e.OldStartingIndex);
+                    var indexSet = GetSectionFromPlainIndex (lastCollectionState, e.OldStartingIndex);
                     TableView.DeleteSections (indexSet, UITableViewRowAnimation.Automatic);
                 } else {
-                    var indexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    var indexPath = GetRowFromPlainIndex (lastCollectionState, e.OldStartingIndex);
                     TableView.DeleteRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
                 }
             }
@@ -74,20 +73,22 @@ namespace Toggl.Ross.DataSources
             if (e.Action == NotifyCollectionChangedAction.Replace) {
                 if (e.NewItems [0] is TSection) {
                     var indexSet = GetSectionFromPlainIndex (collectionData, e.NewStartingIndex);
-                    TableView.ReloadSections (indexSet, UITableViewRowAnimation.Automatic);
+                    TableView.ReloadSections (indexSet, UITableViewRowAnimation.None);
                 } else {
                     var indexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
-                    TableView.ReloadRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                    TableView.ReloadRows (new [] {indexPath}, UITableViewRowAnimation.None);
                 }
             }
 
             if (e.Action == NotifyCollectionChangedAction.Move) {
                 if (! (e.NewItems [0] is TSection)) {
-                    var fromIndexPath = GetRowFromPlainIndex (collectionData, e.OldStartingIndex);
+                    var fromIndexPath = GetRowFromPlainIndex (lastCollectionState, e.OldStartingIndex);
                     var toIndexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
                     TableView.MoveRow (fromIndexPath, toIndexPath);
                 }
             }
+
+            lastCollectionState = new ObservableCollection<TData> (collectionData);
         }
 
         public UIView EmptyView { get; set; }
@@ -96,7 +97,11 @@ namespace Toggl.Ross.DataSources
         protected NSIndexSet GetSectionFromPlainIndex (IEnumerable<TData> collection, int headerIndex)
         {
             var index = collection.Take (headerIndex).OfType <TSection> ().Count ();
-            return NSIndexSet.FromIndex (index);
+
+            var x = NSIndexSet.FromIndex (index);
+            Console.WriteLine (x.Contains ((nuint)index));
+            return x;
+
         }
 
         protected NSIndexPath GetRowFromPlainIndex (IEnumerable<TData> collection, int holderIndex)
@@ -109,17 +114,17 @@ namespace Toggl.Ross.DataSources
 
         protected int GetPlainIndexFromSection (IEnumerable<TData> collection, nint sectionIndex)
         {
-            nint sectionCount = 0;
+            nint mSectionIndex = -1;
             int totalCount = 0;
             TData obj;
 
             while (totalCount < collection.Count ()) {
-                if (sectionCount == sectionIndex) {
-                    return totalCount;
-                }
                 obj = collection.ElementAt (totalCount);
                 if (obj is TSection) {
-                    sectionCount++;
+                    mSectionIndex++;
+                }
+                if (mSectionIndex == sectionIndex) {
+                    return totalCount;
                 }
                 totalCount++;
             }

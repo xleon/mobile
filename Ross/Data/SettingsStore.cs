@@ -167,7 +167,7 @@ namespace Toggl.Ross.Data
 
         public bool GroupedTimeEntries
         {
-            get { return (GetInt (PhoebeGroupedEntriesKey) ?? 1) == 1; }
+            get { return GetInt (PhoebeGroupedEntriesKey) == 1; }
             set {
                 SetInt (PhoebeGroupedEntriesKey, value ? 1 : 0);
                 OnSettingChanged (PhoebeGroupedEntriesKey);

@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
+using XPlatUtils;
 
 namespace Toggl.Phoebe._Reactive
 {
@@ -23,6 +24,8 @@ namespace Toggl.Phoebe._Reactive
 
         Dispatcher ()
         {
+            var schedulerProvider = ServiceContainer.Resolve<ISchedulerProvider> ();
+
             Observable.Create<IDataMsg> (obs => {
                 observer = obs;
                 return () => {
@@ -30,7 +33,7 @@ namespace Toggl.Phoebe._Reactive
                 }; 
             })
             // TODO: Scheduler.CurrentThread for unit tests
-            .Synchronize (Scheduler.Default)
+            .Synchronize (schedulerProvider.GetScheduler ())
             .SelectAsync (msg => DispatcherRegister.ResolveAction (msg))
             .Catch<IDataMsg, Exception> (PropagateError)
             .Where (x => x.Tag != DataTag.UncaughtError)

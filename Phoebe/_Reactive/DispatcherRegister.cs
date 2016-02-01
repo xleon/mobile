@@ -17,18 +17,20 @@ namespace Toggl.Phoebe._Reactive
         public static Task<IDataMsg> ResolveAction (IDataMsg msg)
         {
             switch (msg.Tag) {
-            case DataTag.TimeEntryLoadFromServer:
-                return TimeEntryLoadFromServer (msg);
+                case DataTag.TimeEntryLoadFromServer:
+                    return TimeEntryLoadFromServer (msg);
 
-            case DataTag.TimeEntryLoad:
-            case DataTag.TimeEntryStop:
-            case DataTag.TimeEntryRemoveWithUndo:
-            case DataTag.TimeEntryRestoreFromUndo:
-            case DataTag.TimeEntryRemove:
-                return LetGoThrough (msg);
+                case DataTag.TimeEntryLoad:
+                case DataTag.TimeEntryStop:
+                case DataTag.TimeEntryRemoveWithUndo:
+                case DataTag.TimeEntryRestoreFromUndo:
+                case DataTag.TimeEntryRemove:
 
-            default:
-                throw new ActionNotFoundException (msg.Tag, typeof (DispatcherRegister));
+                case DataTag.TestSyncOutManager:
+                    return LetGoThrough (msg);
+
+                default:
+                    throw new ActionNotFoundException (msg.Tag, typeof (DispatcherRegister));
             }
         }
 

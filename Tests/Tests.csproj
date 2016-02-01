@@ -117,6 +117,7 @@
     <Compile Include="Misc\ExceptionTest.cs" />
     <Compile Include="Data\Mapper\MapperJsonToDataTest.cs" />
     <Compile Include="Data\Mapper\MapperDataToJsonTest.cs" />
+    <Compile Include="Reactive\SyncOutManagerTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -141,5 +142,6 @@
     <Folder Include="Analytics\" />
     <Folder Include="Misc\" />
     <Folder Include="Data\Mapper\" />
+    <Folder Include="Reactive\" />
   </ItemGroup>
 </Project>

@@ -22,7 +22,13 @@ namespace Toggl.Phoebe._Reactive
         }
 
         readonly JsonMapper mapper = new JsonMapper ();
-        readonly Toggl.Phoebe.Data.IDataStore dataStore = ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
+
+        readonly Toggl.Phoebe.Net.INetworkPresence networkPresence =
+              ServiceContainer.Resolve<Toggl.Phoebe.Net.INetworkPresence> ();
+
+        readonly Toggl.Phoebe.Data.IDataStore dataStore =
+            ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
+
         readonly ITogglClient client = new TogglRestClient (
             Build.ApiUrl, ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().Token);
 
@@ -53,21 +59,29 @@ namespace Toggl.Phoebe._Reactive
         void EnqueueOrSend (IList<DataSyncMsg> msgs)
         {
             // TODO: Limit queue size?
-            // TODO: Check internet connection
+
+            // Check internet connection
+            var isConnected = networkPresence.IsNetworkPresent;
 
             dataStore.ExecuteInTransactionSilent (async ctx => {
                 foreach (var msg in msgs) {
                     bool alreadyQueued = false;
                     var exported = mapper.MapToJson (msg.Data);
 
+                    // If there's no connection, just enqueue the message
+                    if (!isConnected) {
+                        Enqueue (ctx, msg.Action, exported);
+                        continue;
+                    }
+
                     try {
                         string json = null;
-                        Enqueue (ctx, msg.Action, exported);
-                        alreadyQueued = true;
-                        
                         if (ctx.TryDequeue (out json)) {
                             // Send queue to server
                             do {
+								Enqueue (ctx, msg.Action, exported);
+								alreadyQueued = true;
+								
                                 var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
                                 await SendMessage (jsonMsg.Action, jsonMsg.Data);
 
@@ -93,7 +107,14 @@ namespace Toggl.Phoebe._Reactive
 
         void Enqueue (Toggl.Phoebe.Data.IDataStoreContext ctx, DataAction action, CommonJson json)
         {
-            ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (action, json)));
+            try {
+                ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (action, json)));
+            }
+            catch (Exception ex) {
+                // TODO: Retry?
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Error (typeof(SyncOutManager).Name, ex, "Failed to queue message");
+            }
         }
 
         async Task SendMessage (DataAction action, CommonJson json)

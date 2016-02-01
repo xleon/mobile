@@ -11,6 +11,8 @@ namespace Toggl.Phoebe.Data
 
         SQLiteConnection Connection { get; }
 
+        int GetQueueSize ();
+
         void Enqueue (string json);
         
         bool TryDequeue (out string json);

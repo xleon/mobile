@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
@@ -160,22 +161,23 @@ namespace Toggl.Ross.ViewControllers
                 defaultFooterView.StartAnimating ();
             } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
                 //loadState = RecyclerLoadState.Retry;
+                // TODO: add correct view.
             } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-                if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState) {
-                TableView.TableFooterView = obmEmptyView;
-            } else {
-                TableView.TableFooterView = emptyView;
+                if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+                    TableView.TableFooterView = obmEmptyView;
+                } else {
+                    TableView.TableFooterView = emptyView;
+                }
             }
         }
-    }
 
-    #region TableViewSource
-    class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
-    {
-        private Action onScrollEndAction;
-        private bool isLoading;
+        #region TableViewSource
+        class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
+        {
+            private Action onScrollEndAction;
+            private bool isLoading;
 
-        public TimeEntriesSource (UITableView tableView, ObservableCollection<IHolder> data, Action onScrollEndAction) : base (tableView, data)
+            public TimeEntriesSource (UITableView tableView, ObservableCollection<IHolder> data, Action onScrollEndAction) : base (tableView, data)
             {
                 this.onScrollEndAction = onScrollEndAction;
             }
@@ -250,6 +252,8 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableTagsImageView;
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
+            private Timer timer;
+            private ITimeEntryHolder holder;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -349,17 +353,34 @@ namespace Toggl.Ross.ViewControllers
                 RebindTags (dataSource);
                 RebindDuration (dataSource);
                 LayoutIfNeeded ();
+                holder = dataSource;
             }
 
+            // Rebind duration with the saved state "lastDataSource"
+            // TODO: Try to find a stateless method.
             private void RebindDuration (ITimeEntryHolder dataSource)
             {
-                if (dataSource == null) {
-                    return;
-                }
-
                 var duration = dataSource.GetDuration ();
                 durationLabel.Text = TimeEntryModel.GetFormattedDuration (duration);
                 runningImageView.Hidden = dataSource.Data.State != TimeEntryState.Running;
+
+                if (timer != null) {
+                    timer.Stop ();
+                    timer.Elapsed -= OnDurationElapsed;
+                    timer = null;
+                }
+
+                if (dataSource.Data.State == TimeEntryState.Running) {
+                    timer = new Timer (1000 - duration.Milliseconds);
+                    timer.Elapsed += OnDurationElapsed;
+                    timer.Start ();
+                }
+            }
+
+            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
+            {
+                Console.WriteLine (holder.Data.Description);
+                InvokeOnMainThread (() => RebindDuration (holder));
             }
 
             private void RebindTags (ITimeEntryHolder dataSource)
@@ -508,6 +529,10 @@ namespace Toggl.Ross.ViewControllers
             private const float HorizSpacing = 15f;
             private readonly UILabel dateLabel;
             private readonly UILabel totalDurationLabel;
+            private Timer timer;
+            private bool isRunning;
+            private TimeSpan duration;
+            private DateTime date;
 
             public SectionHeaderView (IntPtr ptr) : base (ptr)
             {
@@ -542,8 +567,35 @@ namespace Toggl.Ross.ViewControllers
 
             public void Bind (DateHolder data)
             {
-                dateLabel.Text = data.Date.ToLocalizedDateString ();
-                totalDurationLabel.Text = FormatDuration (data.TotalDuration);
+                date = data.Date;
+                duration = data.TotalDuration;
+                isRunning = data.IsRunning;
+                SetContentData ();
+            }
+
+            private void SetContentData ()
+            {
+                if (timer != null) {
+                    timer.Stop ();
+                    timer.Elapsed -= OnDurationElapsed;
+                    timer = null;
+                }
+
+                if (isRunning) {
+                    timer = new Timer (60000 - duration.Seconds * 1000 - duration.Milliseconds);
+                    timer.Elapsed += OnDurationElapsed;
+                    timer.Start ();
+                }
+
+                dateLabel.Text = date.ToLocalizedDateString ();
+                totalDurationLabel.Text = FormatDuration (duration);
+            }
+
+            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
+            {
+                // Update duration with new time.
+                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
+                InvokeOnMainThread (() => SetContentData ());
             }
 
             private string FormatDuration (TimeSpan duration)

@@ -6,6 +6,7 @@ using CoreAnimation;
 using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
@@ -30,8 +31,9 @@ namespace Toggl.Ross.ViewControllers
         private UIButton durationButton;
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
+        private UIActivityIndicatorView defaultFooterView;
 
-        private Binding<bool, bool> syncBinding;
+        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
         protected LogTimeEntriesViewModel ViewModel {get; set;}
@@ -46,6 +48,9 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLoad ();
 
             EdgesForExtendedLayout = UIRectEdge.None;
+            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
+            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+
             emptyView = new SimpleEmptyView {
                 Title = "LogEmptyTitle".Tr (),
                 Message = "LogEmptyMessage".Tr (),
@@ -59,9 +64,6 @@ namespace Toggl.Ross.ViewControllers
             // Create view model
             ViewModel = LogTimeEntriesViewModel.Init ();
 
-            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
-            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
-
             var headerView = new TableViewRefreshView ();
             RefreshControl = headerView;
             headerView.AdaptToTableView (TableView);
@@ -73,7 +75,8 @@ namespace Toggl.Ross.ViewControllers
                     headerView.EndRefreshing ();
                 }
             });
-
+            hasMoreBinding = this.SetBinding (() => ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
+            hasErrorBinding = this.SetBinding (() => ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (TableView, ViewModel.Collection, OnScrollEnds);
             });
@@ -146,13 +149,33 @@ namespace Toggl.Ross.ViewControllers
             await ViewModel.LoadMore ();
         }
 
-        #region TableViewSource
-        class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
+        private void SetFooterState ()
         {
-            private Action onScrollEndAction;
-            private bool isLoading;
+            if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+                if (defaultFooterView == null) {
+                    defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
+                    defaultFooterView.Frame = new CGRect (0, 0, 50, 50);
+                }
+                TableView.TableFooterView = defaultFooterView;
+                defaultFooterView.StartAnimating ();
+            } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
+                //loadState = RecyclerLoadState.Retry;
+            } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+                if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState) {
+                TableView.TableFooterView = obmEmptyView;
+            } else {
+                TableView.TableFooterView = emptyView;
+            }
+        }
+    }
 
-            public TimeEntriesSource (UITableView tableView, ObservableCollection<IHolder> data, Action onScrollEndAction) : base (tableView, data)
+    #region TableViewSource
+    class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
+    {
+        private Action onScrollEndAction;
+        private bool isLoading;
+
+        public TimeEntriesSource (UITableView tableView, ObservableCollection<IHolder> data, Action onScrollEndAction) : base (tableView, data)
             {
                 this.onScrollEndAction = onScrollEndAction;
             }

@@ -29,6 +29,7 @@ namespace Toggl.Joey.UI.Adapters
 
         public DrawerListAdapter ()
         {
+            authManager = ServiceContainer.Resolve<AuthManager> ();
             rowItems = new List<DrawerItem> () {
                 new DrawerItem () {
                     Id = TimerPageId,
@@ -59,6 +60,7 @@ namespace Toggl.Joey.UI.Adapters
                     TextResId = Resource.String.MainDrawerLogout,
                     ImageResId = Resource.Drawable.IcNavLogout,
                     IsEnabled = true,
+                    Visible = !authManager.OfflineMode,
                 },
                 new DrawerItem () {
                     Id = RegisterUserPageId,
@@ -68,6 +70,18 @@ namespace Toggl.Joey.UI.Adapters
                 }
             };
             authManager = ServiceContainer.Resolve<AuthManager> ();
+        }
+
+        private List<DrawerItem> FilterVisible (List<DrawerItem> list)
+        {
+            var newList = new List<DrawerItem> ();
+            foreach (var item in list) {
+                if (!item.Visible) {
+                    continue;
+                }
+                newList.Add (item);
+            }
+            return newList;
         }
 
         public override View GetView (int position, View convertView, ViewGroup parent)
@@ -124,6 +138,8 @@ namespace Toggl.Joey.UI.Adapters
             public int ImageResId;
             public int ChildOf = 0;
             public bool IsEnabled;
+            public bool Expanded = false;
+            public bool Visible = true;
         }
 
         private class DrawerItemViewHolder : BindableViewHolder<DrawerItem>

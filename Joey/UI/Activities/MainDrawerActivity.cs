@@ -46,6 +46,7 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<RegisterUserFragment> createUserFragment = new Lazy<RegisterUserFragment> ();
         private readonly List<int> pageStack = new List<int> ();
         private readonly Handler handler = new Handler ();
+        private AuthManager authManager;
         private DrawerListAdapter drawerAdapter;
         private ToolbarModes toolbarMode;
 
@@ -94,7 +95,7 @@ namespace Toggl.Joey.UI.Activities
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            authManager = ServiceContainer.Resolve<AuthManager> ();
             authManager.PropertyChanged += OnUserChangedEvent;
 
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
@@ -217,6 +218,7 @@ namespace Toggl.Joey.UI.Activities
                 } else {
                     SupportActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
                 }
+
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.FeedbackPageId) {
                 SupportActionBar.SetTitle (Resource.String.MainDrawerFeedback);

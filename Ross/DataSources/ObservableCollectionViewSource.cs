@@ -99,9 +99,7 @@ namespace Toggl.Ross.DataSources
             var index = collection.Take (headerIndex).OfType <TSection> ().Count ();
 
             var x = NSIndexSet.FromIndex (index);
-            Console.WriteLine (x.Contains ((nuint)index));
             return x;
-
         }
 
         protected NSIndexPath GetRowFromPlainIndex (IEnumerable<TData> collection, int holderIndex)

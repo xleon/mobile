@@ -61,15 +61,7 @@ namespace Toggl.Ross.ViewControllers
 
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
             TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
-            /*
-            TableView.Scrolled += async (sender, e) => {
-                var currentOffset = TableView.ContentOffset.Y;
-                var maximumOffset = TableView.ContentSize.Height - TableView.Frame.Height;
-                if (maximumOffset - currentOffset <= 200.0) {
-                    await ViewModel.LoadMore ();
-                }
-            };
-            */
+
             var headerView = new TableViewRefreshView ();
             RefreshControl = headerView;
             headerView.AdaptToTableView (TableView);
@@ -83,7 +75,7 @@ namespace Toggl.Ross.ViewControllers
             });
 
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
-                TableView.Source = new MySource (TableView, ViewModel.Collection);
+                TableView.Source = new TimeEntriesSource (TableView, ViewModel.Collection, OnScrollEnds);
             });
 
             // Setup top toolbar
@@ -149,10 +141,20 @@ namespace Toggl.Ross.ViewControllers
             await ViewModel.StartStopTimeEntry ();
         }
 
-        class MySource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
+        private async void OnScrollEnds ()
         {
-            public MySource (UITableView tableView, ObservableCollection<IHolder> data) : base (tableView, data)
+            await ViewModel.LoadMore ();
+        }
+
+        #region TableViewSource
+        class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
+        {
+            private Action onScrollEndAction;
+            private bool isLoading;
+
+            public TimeEntriesSource (UITableView tableView, ObservableCollection<IHolder> data, Action onScrollEndAction) : base (tableView, data)
             {
+                this.onScrollEndAction = onScrollEndAction;
             }
 
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
@@ -194,8 +196,25 @@ namespace Toggl.Ross.ViewControllers
             {
                 return false;
             }
-        }
 
+            public override void Scrolled (UIScrollView scrollView)
+            {
+                var currentOffset = scrollView.ContentOffset.Y;
+                var maximumOffset = scrollView.ContentSize.Height - scrollView.Frame.Height;
+
+                if (isLoading) {
+                    isLoading &= maximumOffset - currentOffset <= 200.0;
+                }
+
+                if (!isLoading && maximumOffset - currentOffset <= 200.0 && onScrollEndAction != null) {
+                    onScrollEndAction.Invoke ();
+                    isLoading = true;
+                }
+            }
+        }
+        #endregion
+
+        #region Cells
         class TimeEntryCell : SwipableTimeEntryTableViewCell
         {
             private const float HorizPadding = 15f;
@@ -254,7 +273,6 @@ namespace Toggl.Ross.ViewControllers
 
             public void Bind (ITimeEntryHolder dataSource)
             {
-                Console.WriteLine ("here: " + dataSource.Data.Description);
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
                 var clientName = string.Empty;
@@ -525,5 +543,6 @@ namespace Toggl.Ross.ViewControllers
                 return string.Empty;
             }
         }
+        #endregion
     }
 }

@@ -16,6 +16,7 @@ namespace Toggl.Phoebe.Data
         private const string QueueInsertSql = "INSERT INTO [__QUEUE__] VALUES (?)";
         private const string QueueSelectFirstSql = "SELECT ROWID, DATA FROM [__QUEUE__] ORDER BY ROWID LIMIT 1";
         private const string QueueDeleteSql = "DELETE FROM [__QUEUE__] WHERE ROWID = ?";
+        private const string QueueCountSql = "SELECT COUNT(*) FROM [__QUEUE__]";
 
         private readonly SQLiteConnectionWithLock cnn;
 #pragma warning disable 0414
@@ -262,6 +263,11 @@ namespace Toggl.Phoebe.Data
             public SQLiteConnection Connection
             {
                 get { return conn; }
+            }
+
+            public int GetQueueSize ()
+            {
+                return conn.ExecuteScalar<int> (QueueCountSql);
             }
 
             public void Enqueue (string json)

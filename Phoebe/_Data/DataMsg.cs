@@ -23,6 +23,8 @@ namespace Toggl.Phoebe._Data
         TimeEntryRemove,
         TimeEntryRemoveWithUndo,
         TimeEntryRestoreFromUndo,
+
+        TestSyncOutManager
     }
 
     public enum DataDir {

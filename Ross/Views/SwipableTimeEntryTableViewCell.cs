@@ -34,7 +34,7 @@ namespace Toggl.Ross.Views
             });
         }
 
-        protected abstract Task OnContinueAsync ();
+        protected abstract void OnContinueGestureFinished ();
 
         private CGPoint panStart;
         private nfloat panDeltaX;
@@ -85,10 +85,9 @@ namespace Toggl.Ross.Views
                 var absolutePanDeltaX = Math.Abs (panDeltaX);
                 var duration = Math.Max (MinDuration, Math.Min (MaxDuration, (absolutePanDeltaX) / velocityX));
 
-                UIView.AnimateNotify (duration, () => LayoutActualContentView (0),
-                async isFinished =>  {
+                UIView.AnimateNotify (duration, () => LayoutActualContentView (0), isFinished => {
                     if (isFinished && absolutePanDeltaX > SwipeWidth - 5) {
-                        await OnContinueAsync ();
+                        OnContinueGestureFinished ();
                     }
                 });
 

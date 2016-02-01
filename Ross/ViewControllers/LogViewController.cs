@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Timers;
 using CoreAnimation;
 using CoreGraphics;
@@ -12,11 +12,12 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Ross.Data;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
-
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -34,7 +35,8 @@ namespace Toggl.Ross.ViewControllers
         private UIBarButtonItem navigationButton;
         private UIActivityIndicatorView defaultFooterView;
 
-        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding;
+        private Binding<string, string> durationBinding;
+        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
         protected LogTimeEntriesViewModel ViewModel {get; set;}
@@ -47,6 +49,10 @@ namespace Toggl.Ross.ViewControllers
         public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
+
+            // Setup top toolbar
+            SetupToolbar ();
+            navMenuController.Attach (this);
 
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
@@ -79,12 +85,10 @@ namespace Toggl.Ross.ViewControllers
             hasMoreBinding = this.SetBinding (() => ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             hasErrorBinding = this.SetBinding (() => ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
-                TableView.Source = new TimeEntriesSource (TableView, ViewModel.Collection, OnScrollEnds);
+                TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
-
-            // Setup top toolbar
-            SetupToolbar ();
-            navMenuController.Attach (this);
+            isRunningBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning).WhenSourceChanges (SetStartStopButtonState);
+            durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
 
             // TODO: Review this line.
             // Get data to fill the list. For the moment,
@@ -103,6 +107,7 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
+            ViewModel.Dispose ();
             base.Dispose (disposing);
         }
 
@@ -138,16 +143,37 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
         {
+
         }
 
         private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
-            await ViewModel.StartStopTimeEntry ();
+            var entry = await ViewModel.StartStopTimeEntry ();
+
+            if (entry.State == TimeEntryState.Running) {
+                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+                // Show next viewController.
+                var controllers = new List<UIViewController> (NavigationController.ViewControllers);
+                controllers.Add (new EditTimeEntryViewController ((TimeEntryModel)entry));
+                if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
+                    controllers.Add (new ProjectSelectionViewController ((TimeEntryModel)entry));
+                }
+                NavigationController.SetViewControllers (controllers.ToArray (), true);
+            }
         }
 
         private async void OnScrollEnds ()
         {
             await ViewModel.LoadMore ();
+        }
+
+        private void SetStartStopButtonState ()
+        {
+            if (ViewModel.IsTimeEntryRunning) {
+                actionButton.Apply (Style.NavTimer.StopButton);
+            } else {
+                actionButton.Apply (Style.NavTimer.StartButton);
+            }
         }
 
         private void SetFooterState ()
@@ -171,22 +197,29 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private async void OnCountinueTimeEntry (int index)
+        {
+            await ViewModel.ContinueTimeEntryAsync (index);
+        }
+
         #region TableViewSource
         class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
         {
-            private Action onScrollEndAction;
             private bool isLoading;
+            private LogTimeEntriesViewModel VM;
+            private LogViewController owner;
 
-            public TimeEntriesSource (UITableView tableView, ObservableCollection<IHolder> data, Action onScrollEndAction) : base (tableView, data)
+            public TimeEntriesSource (LogViewController owner, LogTimeEntriesViewModel viewModel) : base (owner.TableView, viewModel.Collection)
             {
-                this.onScrollEndAction = onScrollEndAction;
+                this.owner = owner;
+                VM = viewModel;
             }
 
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
                 var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
                 var holder = (ITimeEntryHolder)collection.ElementAt (GetPlainIndexFromRow (collection, indexPath));
-                cell.Bind (holder);
+                cell.Bind (holder, OnContinueTimeEntry);
                 return cell;
             }
 
@@ -219,10 +252,25 @@ namespace Toggl.Ross.ViewControllers
 
             public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
             {
-                return false;
+                return true;
             }
 
-            public override void Scrolled (UIScrollView scrollView)
+            public async override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
+            {
+                if (editingStyle == UITableViewCellEditingStyle.Delete) {
+                    var rowIndex = GetPlainIndexFromRow (collection, indexPath);
+                    await VM.RemoveItem (rowIndex);
+                }
+            }
+
+            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
+            {
+                var rowIndex = GetPlainIndexFromRow (collection, indexPath);
+                var holder = collection.ElementAt (rowIndex) as ITimeEntryHolder;
+                owner.NavigationController.PushViewController (new EditTimeEntryViewController ((TimeEntryModel)holder.Data), true);
+            }
+
+            public async override void Scrolled (UIScrollView scrollView)
             {
                 var currentOffset = scrollView.ContentOffset.Y;
                 var maximumOffset = scrollView.ContentSize.Height - scrollView.Frame.Height;
@@ -231,10 +279,17 @@ namespace Toggl.Ross.ViewControllers
                     isLoading &= maximumOffset - currentOffset <= 200.0;
                 }
 
-                if (!isLoading && maximumOffset - currentOffset <= 200.0 && onScrollEndAction != null) {
-                    onScrollEndAction.Invoke ();
+                if (!isLoading && maximumOffset - currentOffset <= 200.0) {
                     isLoading = true;
+                    await VM.LoadMore ();
                 }
+            }
+
+            private async void OnContinueTimeEntry (TimeEntryCell cell)
+            {
+                var indexPath = TableView.IndexPathForCell (cell);
+                var rowIndex = GetPlainIndexFromRow (collection, indexPath);
+                await VM.ContinueTimeEntryAsync (rowIndex);
             }
         }
         #endregion
@@ -254,6 +309,8 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView runningImageView;
             private Timer timer;
             private ITimeEntryHolder holder;
+            private Action<TimeEntryCell> OnContinueAction;
+
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -298,8 +355,10 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            public void Bind (ITimeEntryHolder dataSource)
+            public void Bind (ITimeEntryHolder dataSource, Action<TimeEntryCell> OnContinueAction)
             {
+                this.OnContinueAction = OnContinueAction;
+
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
                 var clientName = string.Empty;
@@ -379,7 +438,6 @@ namespace Toggl.Ross.ViewControllers
 
             private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
-                Console.WriteLine (holder.Data.Description);
                 InvokeOnMainThread (() => RebindDuration (holder));
             }
 
@@ -399,7 +457,12 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public Action<TimeEntryModel> ContinueCallback { get; set; }
+            protected override void OnContinueGestureFinished ()
+            {
+                if (OnContinueAction != null) {
+                    OnContinueAction.Invoke (this);
+                }
+            }
 
             public override void LayoutSubviews ()
             {
@@ -516,12 +579,6 @@ namespace Toggl.Ross.ViewControllers
                 rect.Height = (float)Math.Ceiling (rect.Height);
                 return rect;
             }
-
-            protected override Task OnContinueAsync ()
-            {
-                Console.WriteLine ("OnContinueAsync");
-                return null;
-            }
         }
 
         class SectionHeaderView : UITableViewHeaderFooterView
@@ -593,6 +650,7 @@ namespace Toggl.Ross.ViewControllers
 
             private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
+                Console.WriteLine (duration);
                 // Update duration with new time.
                 duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
                 InvokeOnMainThread (() => SetContentData ());

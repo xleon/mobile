@@ -169,6 +169,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             return active;
         }
 
+        public Task RemoveItem (int index)
+        {
+            var te = Collection.ElementAt (index) as ITimeEntryHolder;
+            return TimeEntryModel.DeleteTimeEntryDataAsync (te.Data);
+        }
+
         public Task RemoveItemWithUndoAsync (int index)
         {
             return collectionFeed.RemoveItemWithUndoAsync (

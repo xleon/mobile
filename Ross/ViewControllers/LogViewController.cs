@@ -30,6 +30,7 @@ namespace Toggl.Ross.ViewControllers
         private NavigationMenuController navMenuController;
         private UIView emptyView;
         private UIView obmEmptyView;
+        private UIView reloadView;
         private UIButton durationButton;
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
@@ -63,9 +64,13 @@ namespace Toggl.Ross.ViewControllers
                 Message = "LogEmptyMessage".Tr (),
             };
 
-            obmEmptyView = new OBMEmptyView () {
+            obmEmptyView = new OBMEmptyView {
                 Title = "LogOBMEmptyTitle".Tr (),
                 Message = "LogOBMEmptyMessage".Tr (),
+            };
+
+            reloadView = new ReloadTableViewFooter () {
+                SyncButtonPressedHandler = OnTryAgainBtnPressed
             };
 
             // Create view model
@@ -116,6 +121,8 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidLayoutSubviews ();
             emptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
             obmEmptyView.Frame = new CGRect (25f, 15f, View.Frame.Size.Width - 50f, 200f);
+            reloadView.Bounds = new CGRect (0f, 0f, View.Frame.Size.Width, 70f);
+            reloadView.Center = new CGPoint (View.Center.X, reloadView.Center.Y);
         }
 
         private void SetupToolbar ()
@@ -186,8 +193,7 @@ namespace Toggl.Ross.ViewControllers
                 TableView.TableFooterView = defaultFooterView;
                 defaultFooterView.StartAnimating ();
             } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
-                //loadState = RecyclerLoadState.Retry;
-                // TODO: add correct view.
+                TableView.TableFooterView = reloadView;
             } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
                 if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
                     TableView.TableFooterView = obmEmptyView;
@@ -200,6 +206,11 @@ namespace Toggl.Ross.ViewControllers
         private async void OnCountinueTimeEntry (int index)
         {
             await ViewModel.ContinueTimeEntryAsync (index);
+        }
+
+        private async void OnTryAgainBtnPressed ()
+        {
+            await ViewModel.LoadMore ();
         }
 
         #region TableViewSource
@@ -650,7 +661,6 @@ namespace Toggl.Ross.ViewControllers
 
             private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
-                Console.WriteLine (duration);
                 // Update duration with new time.
                 duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
                 InvokeOnMainThread (() => SetContentData ());

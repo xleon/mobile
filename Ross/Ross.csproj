@@ -345,6 +345,7 @@
     <Compile Include="DataSources\ObservableCollectionViewSource.cs" />
     <Compile Include="Views\SimpleEmptyView.cs" />
     <Compile Include="Views\OBMEmptyView.cs" />
+    <Compile Include="Views\ReloadTableViewFooter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

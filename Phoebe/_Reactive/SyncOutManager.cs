@@ -15,6 +15,8 @@ namespace Toggl.Phoebe._Reactive
     {
         public static SyncOutManager Singleton { get; private set; }
 
+        public event EventHandler<DataTag> MessageHandled;
+
         public static void Init ()
         {
             Store.Init ();
@@ -29,8 +31,7 @@ namespace Toggl.Phoebe._Reactive
         readonly Toggl.Phoebe.Data.IDataStore dataStore =
             ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
 
-        readonly ITogglClient client = new TogglRestClient (
-            Build.ApiUrl, ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().Token);
+        readonly ITogglClient client = ServiceContainer.Resolve<ITogglClient> ();
 
         SyncOutManager ()
         {
@@ -41,14 +42,14 @@ namespace Toggl.Phoebe._Reactive
                         IDataSyncGroup groupMsg;
                         if ((singleMsg = x as DataSyncMsg) != null
                             && singleMsg.Dir == DataDir.Outcoming) {
-                            EnqueueOrSend (new [] { singleMsg });
+                            EnqueueOrSend (msg.Tag, new [] { singleMsg });
                         }
                         else if ((groupMsg = x as IDataSyncGroup) != null) {
                             var outMsgs = groupMsg.SyncMessages.Where (
                                 y => y.Dir == DataDir.Outcoming).ToList ();
 
                             if (outMsgs.Count > 0)
-                                EnqueueOrSend (outMsgs);
+                                EnqueueOrSend (msg.Tag, outMsgs);
                         }
                     },
                     e => {}
@@ -56,7 +57,7 @@ namespace Toggl.Phoebe._Reactive
             );
         }
 
-        void EnqueueOrSend (IList<DataSyncMsg> msgs)
+        void EnqueueOrSend (DataTag tag, IList<DataSyncMsg> msgs)
         {
             // TODO: Limit queue size?
 
@@ -76,12 +77,12 @@ namespace Toggl.Phoebe._Reactive
 
                     try {
                         string json = null;
-                        if (ctx.TryDequeue (out json)) {
+                        if (ctx.TryPeekQueue (out json)) {
+                            Enqueue (ctx, msg.Action, exported);
+                            alreadyQueued = true;
+                            
                             // Send queue to server
                             do {
-								Enqueue (ctx, msg.Action, exported);
-								alreadyQueued = true;
-								
                                 var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
                                 await SendMessage (jsonMsg.Action, jsonMsg.Data);
 
@@ -102,13 +103,17 @@ namespace Toggl.Phoebe._Reactive
                         log.Error (typeof(SyncOutManager).Name, ex, "Failed to send data to server");
                     }
                 }
+
+                if (MessageHandled != null)
+                    MessageHandled (this, tag);
             });
         }
 
         void Enqueue (Toggl.Phoebe.Data.IDataStoreContext ctx, DataAction action, CommonJson json)
         {
             try {
-                ctx.Enqueue (JsonConvert.SerializeObject (new DataJsonMsg (action, json)));
+                var serialized = JsonConvert.SerializeObject (new DataJsonMsg (action, json));
+                ctx.Enqueue (serialized);
             }
             catch (Exception ex) {
                 // TODO: Retry?

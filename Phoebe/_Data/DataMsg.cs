@@ -88,7 +88,7 @@ namespace Toggl.Phoebe._Data
 
         public DataAction Action { get; set; }
         public string TypeName { get; set; }
-        public IDictionary<string, object> RawData { get; set; }
+        public string RawData { get; set; }
 
         [JsonIgnore]
         public CommonJson Data
@@ -99,20 +99,15 @@ namespace Toggl.Phoebe._Data
                     type = Assembly.GetExecutingAssembly ().GetType (TypeName);
                     typeCache.Add (TypeName, type);
                 }
-                var data = Activator.CreateInstance (type);
-                foreach (var prop in type.GetProperties ()) {
-                    prop.SetValue (data, RawData [prop.Name]);
-                }
-                return (CommonJson)data;
+                return (CommonJson)JsonConvert.DeserializeObject (RawData, type);
             }
             set {
-                var data = value;
-                var dic = new Dictionary<string, object> ();
-                foreach (var prop in data.GetType ().GetProperties ()) {
-                    dic.Add (prop.Name, prop.GetValue (data, null));
-                }
-                RawData = dic;
+                RawData = JsonConvert.SerializeObject (value);
             }
+        }
+
+        public DataJsonMsg ()
+        {
         }
 
         public DataJsonMsg (DataAction action, CommonJson json)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,11 +19,11 @@ namespace Toggl.Phoebe.Data.ViewModels
     [ImplementPropertyChanged]
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
+        private readonly Timer durationTimer;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
         private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
         private TimeEntriesFeed collectionFeed;
-        private readonly Timer durationTimer;
         private readonly ActiveTimeEntryManager activeTimeEntryManager;
 
         LogTimeEntriesViewModel ()
@@ -78,7 +79,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             if (Collection != null) {
-                Collection.Dispose ();
+                ((TimeEntriesCollection<ITimeEntryHolder>)Collection).Dispose ();
             }
         }
 
@@ -101,7 +102,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string Duration { get; private set; }
 
-        public ICollectionData<IHolder> Collection { get; private set; }
+        public ObservableCollection<IHolder> Collection { get; private set; }
         #endregion
 
         #region Sync operations
@@ -128,7 +129,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         public async Task<TimeEntryData> ContinueTimeEntryAsync (int index)
         {
             var newTimeEntry = new TimeEntryData ();
-            var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
+            var timeEntryHolder = Collection.ElementAt (index) as ITimeEntryHolder;
+
             if (timeEntryHolder == null) {
                 return newTimeEntry;
             }
@@ -167,10 +169,16 @@ namespace Toggl.Phoebe.Data.ViewModels
             return active;
         }
 
+        public Task RemoveItem (int index)
+        {
+            var te = Collection.ElementAt (index) as ITimeEntryHolder;
+            return TimeEntryModel.DeleteTimeEntryDataAsync (te.Data);
+        }
+
         public Task RemoveItemWithUndoAsync (int index)
         {
             return collectionFeed.RemoveItemWithUndoAsync (
-                       Collection.Data.ElementAt (index) as ITimeEntryHolder);
+                       Collection.ElementAt (index) as ITimeEntryHolder);
         }
 
         public void RestoreItemFromUndo()
@@ -191,7 +199,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             collectionFeed = new TimeEntriesFeed ();
             Collection = IsGroupedMode
-                         ? (ICollectionData<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed)
+                         ?        (ObservableCollection<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed)
                          : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
         }
 

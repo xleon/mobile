@@ -233,7 +233,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Theme\UIColorExtensions.cs" />
-    <Compile Include="ViewControllers\BaseTimerTableViewController.cs" />
     <Compile Include="ViewControllers\TimerNavigationController.cs" />
     <Compile Include="Theme\Style.NavTimer.cs">
       <DependentUpon>Style.cs</DependentUpon>
@@ -343,8 +342,10 @@
     <Compile Include="ViewControllers\WebViewController.cs" />
     <Compile Include="Net\APNSManager.cs" />
     <Compile Include="ViewControllers\NewClientViewController.cs" />
+    <Compile Include="DataSources\ObservableCollectionViewSource.cs" />
     <Compile Include="Views\SimpleEmptyView.cs" />
     <Compile Include="Views\OBMEmptyView.cs" />
+    <Compile Include="Views\ReloadTableViewFooter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

@@ -1,7 +1,6 @@
-﻿using System;
-using CoreGraphics;
-using UIKit;
+﻿using CoreGraphics;
 using Toggl.Ross.Theme;
+using UIKit;
 
 namespace Toggl.Ross.Views
 {

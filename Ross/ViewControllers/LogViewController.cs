@@ -1,19 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Timers;
 using CoreAnimation;
-using CoreFoundation;
 using CoreGraphics;
 using Foundation;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Views;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Ross.Data;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
@@ -22,27 +21,86 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class LogViewController : SyncStatusViewController
+    public class LogViewController : UITableViewController
     {
-        private NavigationMenuController navMenuController;
+        private const string DefaultDurationText = " 00:00:00 ";
+        readonly static NSString EntryCellId = new NSString ("EntryCellId");
+        readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
 
-        public LogViewController () : base (new ContentController ())
+        private NavigationMenuController navMenuController;
+        private UIView emptyView;
+        private UIView obmEmptyView;
+        private UIView reloadView;
+        private UIButton durationButton;
+        private UIButton actionButton;
+        private UIBarButtonItem navigationButton;
+        private UIActivityIndicatorView defaultFooterView;
+
+        private Binding<string, string> durationBinding;
+        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
+        private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
+
+        protected LogTimeEntriesViewModel ViewModel {get; set;}
+
+        public LogViewController () : base (UITableViewStyle.Plain)
         {
             navMenuController = new NavigationMenuController ();
         }
 
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Log";
-        }
-
-        public override void ViewDidLoad ()
+        public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
+            // Setup top toolbar
+            SetupToolbar ();
             navMenuController.Attach (this);
+
+            EdgesForExtendedLayout = UIRectEdge.None;
+            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
+            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+
+            emptyView = new SimpleEmptyView {
+                Title = "LogEmptyTitle".Tr (),
+                Message = "LogEmptyMessage".Tr (),
+            };
+
+            obmEmptyView = new OBMEmptyView {
+                Title = "LogOBMEmptyTitle".Tr (),
+                Message = "LogOBMEmptyMessage".Tr (),
+            };
+
+            reloadView = new ReloadTableViewFooter () {
+                SyncButtonPressedHandler = OnTryAgainBtnPressed
+            };
+
+            // Create view model
+            ViewModel = LogTimeEntriesViewModel.Init ();
+
+            var headerView = new TableViewRefreshView ();
+            RefreshControl = headerView;
+            headerView.AdaptToTableView (TableView);
+            headerView.ValueChanged += (sender, e) => ViewModel.TriggerFullSync ();
+
+            // Bindings
+            syncBinding = this.SetBinding (() => ViewModel.IsAppSyncing).WhenSourceChanges (() => {
+                if (!ViewModel.IsAppSyncing) {
+                    headerView.EndRefreshing ();
+                }
+            });
+            hasMoreBinding = this.SetBinding (() => ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
+            hasErrorBinding = this.SetBinding (() => ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
+            collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
+                TableView.Source = new TimeEntriesSource (this, ViewModel);
+            });
+            isRunningBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning).WhenSourceChanges (SetStartStopButtonState);
+            durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
+
+            // TODO: Review this line.
+            // Get data to fill the list. For the moment,
+            // until a screenloader is added to the screen
+            // is better to load the items after create
+            // the viewModel and show the loader from RecyclerView
+            await ViewModel.LoadMore ();
         }
 
         protected override void Dispose (bool disposing)
@@ -54,104 +112,143 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
+            ViewModel.Dispose ();
             base.Dispose (disposing);
         }
 
-        private class ContentController : BaseTimerTableViewController
+        public override void ViewDidLayoutSubviews ()
         {
-            private UIView emptyView;
-            private UIView OBMemptyView;
+            base.ViewDidLayoutSubviews ();
+            emptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+            obmEmptyView.Frame = new CGRect (25f, 15f, View.Frame.Size.Width - 50f, 200f);
+            reloadView.Bounds = new CGRect (0f, 0f, View.Frame.Size.Width, 70f);
+            reloadView.Center = new CGPoint (View.Center.X, reloadView.Center.Y);
+        }
 
-            public ContentController () : base (UITableViewStyle.Plain)
-            {
+        private void SetupToolbar ()
+        {
+            // Lazyily create views
+            if (durationButton == null) {
+                durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
+                durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
+                durationButton.SizeToFit ();
+                durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
             }
 
-            public override void ViewDidLoad ()
-            {
-                base.ViewDidLoad ();
-
-                EdgesForExtendedLayout = UIRectEdge.None;
-
-                OBMemptyView = new OBMEmptyView () {
-                    Title = "LogOBMEmptyTitle".Tr (),
-                    Message = "LogOBMEmptyMessage".Tr (),
-                };
-                emptyView = new SimpleEmptyView () {
-                    Title = "LogEmptyTitle".Tr (),
-                    Message = "LogEmptyMessage".Tr (),
-                };
-
-                var headerView = new TableViewRefreshView ();
-
-                var source = new Source (this) {
-                    EmptyView = emptyView,
-                    OBMEmptyView = OBMemptyView,
-                    HeaderView = headerView
-                };
-                source.Attach ();
-
-                RefreshControl = headerView;
-                headerView.AdaptToTableView (TableView);
+            if (navigationButton == null) {
+                actionButton = new UIButton ().Apply (Style.NavTimer.StartButton);
+                actionButton.SizeToFit ();
+                actionButton.TouchUpInside += OnActionButtonTouchUpInside;
+                navigationButton = new UIBarButtonItem (actionButton);
             }
 
-            public override void ViewDidLayoutSubviews ()
-            {
-                base.ViewDidLayoutSubviews ();
+            // Attach views
+            var navigationItem = NavigationItem;
+            navigationItem.TitleView = durationButton;
+            navigationItem.RightBarButtonItem = navigationButton;
+        }
 
-                emptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
-                OBMemptyView.Frame = new CGRect (25f, 15f, View.Frame.Size.Width - 50f, 200f);
+        private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
+        {
 
+        }
+
+        private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
+        {
+            var entry = await ViewModel.StartStopTimeEntry ();
+
+            if (entry.State == TimeEntryState.Running) {
+                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+                // Show next viewController.
+                var controllers = new List<UIViewController> (NavigationController.ViewControllers);
+                controllers.Add (new EditTimeEntryViewController ((TimeEntryModel)entry));
+                if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
+                    controllers.Add (new ProjectSelectionViewController ((TimeEntryModel)entry));
+                }
+                NavigationController.SetViewControllers (controllers.ToArray (), true);
             }
         }
 
-        class Source : GroupedDataViewSource<object, AllTimeEntriesView.DateGroup, TimeEntryData>, IDisposable
+        private async void OnScrollEnds ()
         {
-            readonly static NSString EntryCellId = new NSString ("EntryCellId");
-            readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
-            readonly ContentController controller;
-            readonly AllTimeEntriesView dataView;
-            private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-            public UIRefreshControl HeaderView { get; set; }
+            await ViewModel.LoadMore ();
+        }
 
-            public Source (ContentController controller) : this (controller, new AllTimeEntriesView ())
-            {
+        private void SetStartStopButtonState ()
+        {
+            if (ViewModel.IsTimeEntryRunning) {
+                actionButton.Apply (Style.NavTimer.StopButton);
+            } else {
+                actionButton.Apply (Style.NavTimer.StartButton);
             }
+        }
 
-            private Source (ContentController controller, AllTimeEntriesView dataView) : base (controller.TableView, dataView)
-            {
-                this.controller = controller;
-                this.dataView = dataView;
-
-                controller.TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
-                controller.TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
-            }
-
-            public override void Attach ()
-            {
-                base.Attach ();
-
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
-
-                if (HeaderView != null) {
-                    HeaderView.ValueChanged += (sender, e) => ServiceContainer.Resolve<ISyncManager> ().Run();
-                    dataView.Updated += (sender, e) => HeaderView.EndRefreshing ();
+        private void SetFooterState ()
+        {
+            if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+                if (defaultFooterView == null) {
+                    defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
+                    defaultFooterView.Frame = new CGRect (0, 0, 50, 50);
+                }
+                TableView.TableFooterView = defaultFooterView;
+                defaultFooterView.StartAnimating ();
+            } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
+                TableView.TableFooterView = reloadView;
+            } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+                if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+                    TableView.TableFooterView = obmEmptyView;
+                } else {
+                    TableView.TableFooterView = emptyView;
                 }
             }
+        }
 
-            private void OnSyncFinished (SyncFinishedMessage msg)
+        private async void OnCountinueTimeEntry (int index)
+        {
+            await ViewModel.ContinueTimeEntryAsync (index);
+        }
+
+        private async void OnTryAgainBtnPressed ()
+        {
+            await ViewModel.LoadMore ();
+        }
+
+        #region TableViewSource
+        class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
+        {
+            private bool isLoading;
+            private LogTimeEntriesViewModel VM;
+            private LogViewController owner;
+
+            public TimeEntriesSource (LogViewController owner, LogTimeEntriesViewModel viewModel) : base (owner.TableView, viewModel.Collection)
             {
-                HeaderView.EndRefreshing ();
+                this.owner = owner;
+                VM = viewModel;
             }
 
-            protected override IEnumerable<AllTimeEntriesView.DateGroup> GetSections ()
+            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
-                return dataView.DateGroups;
+                var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
+                var holder = (ITimeEntryHolder)collection.ElementAt (GetPlainIndexFromRow (collection, indexPath));
+                cell.Bind (holder, OnContinueTimeEntry);
+                return cell;
             }
 
-            protected override IEnumerable<TimeEntryData> GetRows (AllTimeEntriesView.DateGroup section)
+            public override UIView GetViewForHeader (UITableView tableView, nint section)
             {
-                return section.DataObjects;
+                var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (SectionHeaderId);
+                view.Bind (collection.OfType<DateHolder> ().ElementAt ((int)section));
+                return view;
+            }
+
+            public override nfloat GetHeightForHeader (UITableView tableView, nint section)
+            {
+                return EstimatedHeightForHeader (tableView, section);
+            }
+
+            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
+            {
+                return 42f;
             }
 
             public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
@@ -164,86 +261,51 @@ namespace Toggl.Ross.ViewControllers
                 return EstimatedHeight (tableView, indexPath);
             }
 
-            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
-            {
-                var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
-                cell.ContinueCallback = OnContinue;
-                cell.Bind ((TimeEntryModel)GetRow (indexPath));
-                return cell;
-            }
-
-            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
-            {
-                return 42f;
-            }
-
-            public override nfloat GetHeightForHeader (UITableView tableView, nint section)
-            {
-                return EstimatedHeightForHeader (tableView, section);
-            }
-
-            public override UIView GetViewForHeader (UITableView tableView, nint section)
-            {
-                var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (SectionHeaderId);
-                view.Bind (GetSection (section));
-                return view;
-            }
-
             public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
             {
                 return true;
             }
 
-            public override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
+            public async override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
             {
                 if (editingStyle == UITableViewCellEditingStyle.Delete) {
-                    var cell = tableView.CellAt (indexPath) as TimeEntryCell;
-                    if (cell != null) {
-                        cell.DeleteData ();
-                    }
+                    var rowIndex = GetPlainIndexFromRow (collection, indexPath);
+                    await VM.RemoveItem (rowIndex);
                 }
             }
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                var data = GetRow (indexPath);
-                if (data != null) {
-                    controller.NavigationController.PushViewController (
-                        new EditTimeEntryViewController ((TimeEntryModel)data), true);
-                } else {
-                    tableView.DeselectRow (indexPath, true);
+                var rowIndex = GetPlainIndexFromRow (collection, indexPath);
+                var holder = collection.ElementAt (rowIndex) as ITimeEntryHolder;
+                owner.NavigationController.PushViewController (new EditTimeEntryViewController ((TimeEntryModel)holder.Data), true);
+            }
+
+            public async override void Scrolled (UIScrollView scrollView)
+            {
+                var currentOffset = scrollView.ContentOffset.Y;
+                var maximumOffset = scrollView.ContentSize.Height - scrollView.Frame.Height;
+
+                if (isLoading) {
+                    isLoading &= maximumOffset - currentOffset <= 200.0;
+                }
+
+                if (!isLoading && maximumOffset - currentOffset <= 200.0) {
+                    isLoading = true;
+                    await VM.LoadMore ();
                 }
             }
 
-            private void OnContinue (TimeEntryModel model)
+            private async void OnContinueTimeEntry (TimeEntryCell cell)
             {
-                DurationOnlyNoticeAlertView.TryShow ();
-                controller.TableView.ScrollRectToVisible (new CGRect (0, 0, 1, 1), true);
-            }
-
-            protected override void Update ()
-            {
-                CATransaction.Begin ();
-                CATransaction.CompletionBlock = delegate {
-                    TableView.ReloadData ();
-                };
-                base.Update ();
-                CATransaction.Commit();
-            }
-
-            protected override void Dispose (bool disposing)
-            {
-                if (disposing) {
-                    if (subscriptionSyncFinished != null) {
-                        var bus = ServiceContainer.Resolve<MessageBus> ();
-                        bus.Unsubscribe (subscriptionSyncFinished);
-                        subscriptionSyncFinished = null;
-                    }
-                }
-                base.Dispose (disposing);
+                var indexPath = TableView.IndexPathForCell (cell);
+                var rowIndex = GetPlainIndexFromRow (collection, indexPath);
+                await VM.ContinueTimeEntryAsync (rowIndex);
             }
         }
+        #endregion
 
+        #region Cells
         class TimeEntryCell : SwipableTimeEntryTableViewCell
         {
             private const float HorizPadding = 15f;
@@ -256,8 +318,10 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableTagsImageView;
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
-            private TimeEntryTagsView tagsView;
-            private nint rebindCounter;
+            private Timer timer;
+            private ITimeEntryHolder holder;
+            private Action<TimeEntryCell> OnContinueAction;
+
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -302,58 +366,113 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            protected override void Dispose (bool disposing)
+            public void Bind (ITimeEntryHolder dataSource, Action<TimeEntryCell> OnContinueAction)
             {
-                if (disposing) {
-                    if (tagsView != null) {
-                        tagsView.Updated -= OnTagsUpdated;
-                        tagsView = null;
+                this.OnContinueAction = OnContinueAction;
+
+                var projectName = "LogCellNoProject".Tr ();
+                var projectColor = Color.Gray;
+                var clientName = string.Empty;
+                var info = dataSource.Info;
+
+                if (!string.IsNullOrWhiteSpace (info.ProjectData.Name)) {
+                    projectName = info.ProjectData.Name;
+                    projectColor = UIColor.Clear.FromHex (ProjectModel.HexColors [info.ProjectData.Color % ProjectModel.HexColors.Length]);
+
+                    if (!string.IsNullOrWhiteSpace (info.ClientData.Name)) {
+                        clientName = info.ClientData.Name;
                     }
                 }
 
-                base.Dispose (disposing);
+                projectLabel.TextColor = projectColor;
+                if (projectLabel.Text != projectName) {
+                    projectLabel.Text = projectName;
+                    SetNeedsLayout ();
+                }
+                if (clientLabel.Text != clientName) {
+                    clientLabel.Text = clientName;
+                    SetNeedsLayout ();
+                }
+
+                var taskName = info.TaskData.Name;
+                var taskHidden = string.IsNullOrWhiteSpace (taskName);
+                var description = info.Description;
+                var descHidden = string.IsNullOrWhiteSpace (description);
+
+                if (taskHidden && descHidden) {
+                    description = "LogCellNoDescription".Tr ();
+                    descHidden = false;
+                }
+                var taskDeskSepHidden = taskHidden || descHidden;
+
+                if (taskLabel.Hidden != taskHidden || taskLabel.Text != taskName) {
+                    taskLabel.Hidden = taskHidden;
+                    taskLabel.Text = taskName;
+                    SetNeedsLayout ();
+                }
+                if (descriptionLabel.Hidden != descHidden || descriptionLabel.Text != description) {
+                    descriptionLabel.Hidden = descHidden;
+                    descriptionLabel.Text = description;
+                    SetNeedsLayout ();
+                }
+                if (taskSeparatorImageView.Hidden != taskDeskSepHidden) {
+                    taskSeparatorImageView.Hidden = taskDeskSepHidden;
+                    SetNeedsLayout ();
+                }
+
+                RebindTags (dataSource);
+                RebindDuration (dataSource);
+                LayoutIfNeeded ();
+                holder = dataSource;
             }
 
-            protected override void OnDataSourceChanged ()
+            // Rebind duration with the saved state "lastDataSource"
+            // TODO: Try to find a stateless method.
+            private void RebindDuration (ITimeEntryHolder dataSource)
             {
-                if (tagsView != null && (DataSource == null || DataSource.Id == tagsView.TimeEntryId)) {
-                    tagsView.Updated -= OnTagsUpdated;
-                    tagsView = null;
+                var duration = dataSource.GetDuration ();
+                durationLabel.Text = TimeEntryModel.GetFormattedDuration (duration);
+                runningImageView.Hidden = dataSource.Data.State != TimeEntryState.Running;
+
+                if (timer != null) {
+                    timer.Stop ();
+                    timer.Elapsed -= OnDurationElapsed;
+                    timer = null;
                 }
 
-                if (DataSource != null) {
-                    tagsView = new TimeEntryTagsView (DataSource.Id);
-                    tagsView.Updated += OnTagsUpdated;
+                if (dataSource.Data.State == TimeEntryState.Running) {
+                    timer = new Timer (1000 - duration.Milliseconds);
+                    timer.Elapsed += OnDurationElapsed;
+                    timer.Start ();
                 }
-
-                base.OnDataSourceChanged ();
             }
 
-            private void OnTagsUpdated (object sender, EventArgs args)
+            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
-                RebindTags ();
+                InvokeOnMainThread (() => RebindDuration (holder));
             }
 
-            protected override async Task OnContinueAsync ()
+            private void RebindTags (ITimeEntryHolder dataSource)
             {
-                if (DataSource == null) {
-                    return;
-                }
-                await TimeEntryModel.ContinueAsync (DataSource);
-                if (ContinueCallback != null) {
-                    ContinueCallback (DataSource);
-                }
+                var hasTags = dataSource.Info.NumberOfTags > 0;
+                var isBillable = dataSource.Info.IsBillable;
 
-                // Ping analytics
-                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
+                if (hasTags && isBillable) {
+                    billableTagsImageView.Apply (Style.Log.BillableAndTaggedEntry);
+                } else if (hasTags) {
+                    billableTagsImageView.Apply (Style.Log.TaggedEntry);
+                } else if (isBillable) {
+                    billableTagsImageView.Apply (Style.Log.BillableEntry);
+                } else {
+                    billableTagsImageView.Apply (Style.Log.PlainEntry);
+                }
             }
 
-            public async void DeleteData()
+            protected override void OnContinueGestureFinished ()
             {
-                if (DataSource == null) {
-                    return;
+                if (OnContinueAction != null) {
+                    OnContinueAction.Invoke (this);
                 }
-                await DataSource.DeleteAsync ();
             }
 
             public override void LayoutSubviews ()
@@ -461,179 +580,16 @@ namespace Toggl.Ross.ViewControllers
 
             private static CGRect GetBoundingRect (UILabel view)
             {
-                var attrs = new UIStringAttributes () {
+                var attrs = new UIStringAttributes {
                     Font = view.Font,
                 };
-                var rect = ((NSString) (view.Text ?? String.Empty)).GetBoundingRect (
+                var rect = ((NSString) (view.Text ?? string.Empty)).GetBoundingRect (
                                new CGSize (Single.MaxValue, Single.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
                 rect.Height = (float)Math.Ceiling (rect.Height);
                 return rect;
             }
-
-            protected override void Rebind ()
-            {
-                ResetTrackedObservables ();
-
-                if (DataSource == null) {
-                    return;
-                }
-
-                rebindCounter++;
-
-                var model = DataSource;
-                var projectName = "LogCellNoProject".Tr ();
-                var projectColor = Color.Gray;
-                var clientName = String.Empty;
-
-                if (model.Project != null) {
-                    projectName = model.Project.Name;
-                    projectColor = UIColor.Clear.FromHex (model.Project.GetHexColor ());
-
-                    if (model.Project.Client != null) {
-                        clientName = model.Project.Client.Name;
-                    }
-                }
-
-                projectLabel.TextColor = projectColor;
-                if (projectLabel.Text != projectName) {
-                    projectLabel.Text = projectName;
-                    SetNeedsLayout ();
-                }
-                if (clientLabel.Text != clientName) {
-                    clientLabel.Text = clientName;
-                    SetNeedsLayout ();
-                }
-
-                var taskName = model.Task != null ? model.Task.Name : String.Empty;
-                var taskHidden = String.IsNullOrWhiteSpace (taskName);
-                var description = model.Description;
-                var descHidden = String.IsNullOrWhiteSpace (description);
-
-                if (taskHidden && descHidden) {
-                    description = "LogCellNoDescription".Tr ();
-                    descHidden = false;
-                }
-                var taskDeskSepHidden = taskHidden || descHidden;
-
-                if (taskLabel.Hidden != taskHidden || taskLabel.Text != taskName) {
-                    taskLabel.Hidden = taskHidden;
-                    taskLabel.Text = taskName;
-                    SetNeedsLayout ();
-                }
-                if (descriptionLabel.Hidden != descHidden || descriptionLabel.Text != description) {
-                    descriptionLabel.Hidden = descHidden;
-                    descriptionLabel.Text = description;
-                    SetNeedsLayout ();
-                }
-                if (taskSeparatorImageView.Hidden != taskDeskSepHidden) {
-                    taskSeparatorImageView.Hidden = taskDeskSepHidden;
-                    SetNeedsLayout ();
-                }
-
-                RebindTags ();
-
-                var duration = model.GetDuration ();
-                durationLabel.Text = TimeEntryModel.GetFormattedDuration (model.Data);
-
-                runningImageView.Hidden = model.State != TimeEntryState.Running;
-
-                if (model.State == TimeEntryState.Running) {
-                    // Schedule rebind
-                    var counter = rebindCounter;
-                    DispatchQueue.MainQueue.DispatchAfter (
-                        TimeSpan.FromMilliseconds (1000 - duration.Milliseconds),
-                    delegate {
-                        if (counter == rebindCounter) {
-                            Rebind ();
-                        }
-                    });
-                }
-
-                LayoutIfNeeded ();
-            }
-
-            private void RebindTags ()
-            {
-                var model = DataSource;
-                if (model == null || tagsView == null) {
-                    return;
-                }
-
-                var hasTags = tagsView.HasNonDefault;
-                var isBillable = model.IsBillable;
-                if (hasTags && isBillable) {
-                    billableTagsImageView.Apply (Style.Log.BillableAndTaggedEntry);
-                } else if (hasTags) {
-                    billableTagsImageView.Apply (Style.Log.TaggedEntry);
-                } else if (isBillable) {
-                    billableTagsImageView.Apply (Style.Log.BillableEntry);
-                } else {
-                    billableTagsImageView.Apply (Style.Log.PlainEntry);
-                }
-            }
-
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleTimeEntryPropertyChanged);
-
-                    if (DataSource.Project != null) {
-                        Tracker.Add (DataSource.Project, HandleProjectPropertyChanged);
-
-                        if (DataSource.Project.Client != null) {
-                            Tracker.Add (DataSource.Project.Client, HandleClientPropertyChanged);
-                        }
-                    }
-
-                    if (DataSource.Task != null) {
-                        Tracker.Add (DataSource.Task, HandleTaskPropertyChanged);
-                    }
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleTimeEntryPropertyChanged (string prop)
-            {
-                if (prop == TimeEntryModel.PropertyProject
-                        || prop == TimeEntryModel.PropertyTask
-                        || prop == TimeEntryModel.PropertyStartTime
-                        || prop == TimeEntryModel.PropertyStopTime
-                        || prop == TimeEntryModel.PropertyState
-                        || prop == TimeEntryModel.PropertyIsBillable
-                        || prop == TimeEntryModel.PropertyDescription) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleProjectPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyClient
-                        || prop == ProjectModel.PropertyName
-                        || prop == ProjectModel.PropertyColor) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == ClientModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleTaskPropertyChanged (string prop)
-            {
-                if (prop == TaskModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            public Action<TimeEntryModel> ContinueCallback { get; set; }
         }
 
         class SectionHeaderView : UITableViewHeaderFooterView
@@ -641,10 +597,10 @@ namespace Toggl.Ross.ViewControllers
             private const float HorizSpacing = 15f;
             private readonly UILabel dateLabel;
             private readonly UILabel totalDurationLabel;
-            private AllTimeEntriesView.DateGroup data;
-            private List<TimeEntryModel> models;
-            private PropertyChangeTracker propertyTracker = new PropertyChangeTracker ();
-            private int rebindCounter;
+            private Timer timer;
+            private bool isRunning;
+            private TimeSpan duration;
+            private DateTime date;
 
             public SectionHeaderView (IntPtr ptr) : base (ptr)
             {
@@ -677,101 +633,43 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            protected override void Dispose (bool disposing)
+            public void Bind (DateHolder data)
             {
-                if (disposing) {
-                    if (propertyTracker != null) {
-                        propertyTracker.Dispose ();
-                        propertyTracker = null;
-                    }
-                    if (data != null) {
-                        data.Updated -= OnDateGroupUpdated;
-                        data = null;
-                    }
-                    if (models != null) {
-                        models.Clear ();
-                        models = null;
-                    }
-                }
-                base.Dispose (disposing);
+                date = data.Date;
+                duration = data.TotalDuration;
+                isRunning = data.IsRunning;
+                SetContentData ();
             }
 
-            public void Bind (AllTimeEntriesView.DateGroup data)
+            private void SetContentData ()
             {
-                if (this.data != null) {
-                    this.data.Updated -= OnDateGroupUpdated;
-                    this.data = null;
+                if (timer != null) {
+                    timer.Stop ();
+                    timer.Elapsed -= OnDurationElapsed;
+                    timer = null;
                 }
 
-                this.data = data;
-                this.data.Updated += OnDateGroupUpdated;
-
-                Rebind ();
-            }
-
-            private void ResetTrackedObservables ()
-            {
-                if (propertyTracker == null) {
-                    return;
+                if (isRunning) {
+                    timer = new Timer (60000 - duration.Seconds * 1000 - duration.Milliseconds);
+                    timer.Elapsed += OnDurationElapsed;
+                    timer.Start ();
                 }
 
-                propertyTracker.MarkAllStale ();
-
-                foreach (var model in models) {
-                    propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
-                }
-
-                propertyTracker.ClearStale ();
-            }
-
-            private void HandleTimeEntryPropertyChanged (string prop)
-            {
-                if (prop == TimeEntryModel.PropertyState
-                        || prop == TimeEntryModel.PropertyStartTime
-                        || prop == TimeEntryModel.PropertyStopTime) {
-                    RebindDuration ();
-                }
-            }
-
-            private void OnDateGroupUpdated (object sender, EventArgs args)
-            {
-                Rebind ();
-            }
-
-            private void Rebind ()
-            {
-                models = data.DataObjects.Select (d => new TimeEntryModel (d)).ToList ();
-
-                ResetTrackedObservables ();
-                RebindDuration ();
-            }
-
-            private void RebindDuration ()
-            {
-                rebindCounter++;
-
-                dateLabel.Text = data.Date.ToLocalizedDateString ();
-
-                var duration = TimeSpan.FromSeconds (models.Sum (m => m.GetDuration ().TotalSeconds));
+                dateLabel.Text = date.ToLocalizedDateString ();
                 totalDurationLabel.Text = FormatDuration (duration);
+            }
 
-                if (models.Any (m => m.State == TimeEntryState.Running)) {
-                    // Schedule rebind
-                    var counter = rebindCounter;
-                    DispatchQueue.MainQueue.DispatchAfter (
-                        TimeSpan.FromMilliseconds (60000 - duration.Seconds * 1000 - duration.Milliseconds),
-                    delegate {
-                        if (counter == rebindCounter) {
-                            RebindDuration ();
-                        }
-                    });
-                }
+            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
+            {
+                // Update duration with new time.
+                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
+                InvokeOnMainThread (() => SetContentData ());
             }
 
             private string FormatDuration (TimeSpan duration)
             {
                 if (duration.TotalHours >= 1f) {
-                    return String.Format (
+                    return string.Format (
                                "LogHeaderDurationHoursMinutes".Tr (),
                                (int)duration.TotalHours,
                                duration.Minutes
@@ -779,14 +677,15 @@ namespace Toggl.Ross.ViewControllers
                 }
 
                 if (duration.Minutes > 0) {
-                    return String.Format (
+                    return string.Format (
                                "LogHeaderDurationMinutes".Tr (),
                                duration.Minutes
                            );
                 }
 
-                return String.Empty;
+                return string.Empty;
             }
         }
+        #endregion
     }
 }

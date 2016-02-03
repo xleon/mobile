@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -18,17 +18,17 @@ namespace Toggl.Joey.UI.Adapters
 
         public const int ViewTypeLoaderPlaceholder = 0;
         public const int ViewTypeContent = 1;
-        protected ICollectionData<T> CollectionData;
+        protected ObservableCollection<T> Collection;
         protected RecyclerView Owner;
 
         protected RecyclerCollectionDataAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        protected RecyclerCollectionDataAdapter (RecyclerView owner, ICollectionData<T> collectionData)
+        protected RecyclerCollectionDataAdapter (RecyclerView owner, ObservableCollection<T> collectionData)
         {
-            CollectionData = collectionData;
-            CollectionData.CollectionChanged += OnCollectionChanged;
+            Collection = collectionData;
+            Collection.CollectionChanged += OnCollectionChanged;
             Owner = owner;
             HasStableIds = false;
         }
@@ -36,7 +36,7 @@ namespace Toggl.Joey.UI.Adapters
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                CollectionData.CollectionChanged -= OnCollectionChanged;
+                Collection.CollectionChanged -= OnCollectionChanged;
             }
 
             base.Dispose (disposing);
@@ -88,12 +88,12 @@ namespace Toggl.Joey.UI.Adapters
 
         protected T GetItem (int index)
         {
-            return index < CollectionData.Count ? CollectionData.Data.ElementAt (index) : default (T);
+            return index < Collection.Count ? Collection.ElementAt (index) : default (T);
         }
 
         public override int GetItemViewType (int position)
         {
-            return position >= CollectionData.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
+            return position >= Collection.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
@@ -110,7 +110,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             get {
                 // Return one element more to return the footer.
-                return CollectionData.Count + 1;
+                return Collection.Count + 1;
             }
         }
 

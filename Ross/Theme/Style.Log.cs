@@ -26,6 +26,19 @@ namespace Toggl.Ross.Theme
                 v.Font = UIFont.FromName ("HelveticaNeue", 14f);
             }
 
+            public static void ReloadTableViewFooterLabel (UILabel v)
+            {
+                v.TextColor = Color.Gray;
+                v.TextAlignment = UITextAlignment.Center;
+                v.Font = UIFont.FromName ("HelveticaNeue-Light", 12f);
+            }
+
+            public static void ReloadTableViewFooterButton (UIButton v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue", 13f);
+                v.SetTitleColor (Color.DarkGray, UIControlState.Normal);
+            }
+
             public static void CellContentView (UIView v)
             {
                 v.Apply (TimeEntryCell.ContentView);

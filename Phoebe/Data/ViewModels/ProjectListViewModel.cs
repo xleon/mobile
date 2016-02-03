@@ -57,7 +57,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public void Dispose ()
         {
-            ProjectList.Dispose ();
         }
 
         #region Observable properties

@@ -61,8 +61,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 tagList = await GetDefaultTagList (data.WorkspaceId);
             } else {
                 data = await TimeEntryModel.GetTimeEntryDataAsync (timeEntryId);
-                var tagsView = await TimeEntryTagCollectionView.Init (timeEntryId);
-                tagList = tagsView.Data.ToList ();
+                tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryId);;
             }
 
             return new EditTimeEntryViewModel (data, tagList);

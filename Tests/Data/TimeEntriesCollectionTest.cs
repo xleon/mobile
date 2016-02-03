@@ -91,6 +91,7 @@ namespace Toggl.Phoebe.Tests.Data
             ServiceContainer.Register<IPlatformUtils> (new UpgradeManagerTest.PlatformUtils ());
         }
 
+        #region Utils
         // TODO: Extract these methods to a Test.Util class
         public TimeEntryData CreateTimeEntry (DateTime startTime, Guid taskId = default (Guid), Guid projId = default (Guid))
         {
@@ -248,6 +249,34 @@ namespace Toggl.Phoebe.Tests.Data
             if (++i < items.Length) {
                 Assert.Fail ("Collection has less items than expected");
             }
+        }
+        #endregion
+
+        [Test]
+        public async void TestMoveOneEntryFromPast ()
+        {
+            var dt = new DateTime (2015, 12, 14, 19, 0, 0);
+            var entries = new [] {
+                CreateTimeEntry (dt),
+                CreateTimeEntry (dt.AddDays (-1)),
+            };
+
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed ();
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entries);
+
+            AssertList (singleView, dt, entries[0], dt.AddDays (-1), entries[1]);
+
+            var evs = await GetEvents (3, singleView, feed, () => {
+                feed.Push (CreateTimeEntry (entries[1], 1), DataAction.Put); // Move entry to previous day
+            });
+
+            Assert.AreEqual (3, evs.Count);
+            AssertList (singleView, dt, entries[0], entries[1]);
+
+            AssertEvent (evs[0], "replace", "date header"); // Update today's header
+            AssertEvent (evs[1], "remove", "date header");   // Remove old header
+            AssertEvent (evs[2], "replace", "time entry");   // Replace time entry
         }
 
         [Test]

@@ -12,8 +12,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Utils
 {
-    public class TimeEntriesCollection<T>
-        : ObservableRangeCollection<IHolder>, ICollectionData<IHolder> where T : ITimeEntryHolder
+    public class TimeEntriesCollection<T> : ObservableRangeCollection<IHolder>, IDisposable where T : ITimeEntryHolder
     {
         private IDisposable disposable;
         private readonly bool loadTimeEntryInfo;

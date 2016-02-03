@@ -26,8 +26,6 @@ namespace Toggl.Ross.Views
             var arrowHeight = arrowImageView.Image.Size.Height;
             var arrowWidth = arrowImageView.Image.Size.Width;
 
-            var topOffset = (Frame.Height - titleSize.Height - spacing) / 2;
-
             titleLabel.Frame = new CGRect (
                 (Frame.Width - titleSize.Width) / 2,
                 arrowHeight - titleSize.Height - messageSize.Height,

@@ -113,6 +113,7 @@ namespace Toggl.Phoebe.Data
                         "SELECT t.* FROM ", tagTbl, " AS t ",
                         "INNER JOIN ", timeEntryTagTbl, " AS tet ON tet.TagId = t.Id ",
                         "WHERE t.DeletedAt IS NULL AND tet.DeletedAt IS NULL ",
+                        "ORDER BY t.Name ",
                         "AND tet.TimeEntryId=?");
             return await ds.QueryAsync<TagData> (q, timeEntryId);
         }

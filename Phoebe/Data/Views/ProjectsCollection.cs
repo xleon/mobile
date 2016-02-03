@@ -9,7 +9,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
 {
-    public class ProjectsCollection : ObservableRangeCollection<CommonData>, ICollectionData<CommonData>
+    public class ProjectsCollection : ObservableRangeCollection<CommonData>
     {
         private List<ClientData> clients;
         private List<SuperProjectData> projects;
@@ -27,10 +27,6 @@ namespace Toggl.Phoebe.Data.Views
         {
             this.sortBy = sortBy;
             this.workspaceId = workspaceId;
-        }
-
-        public void Dispose ()
-        {
         }
 
         public static async Task<ProjectsCollection> Init (SortProjectsBy sortBy, Guid workspaceId)

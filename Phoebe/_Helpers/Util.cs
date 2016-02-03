@@ -45,6 +45,25 @@ namespace Toggl.Phoebe._Helpers
             }
         }
 
+        public static Dictionary<K,V> ReplaceInPlace<K,V> (this Dictionary<K,V> dic, K key, V value)
+        {
+            dic.Remove (key);
+            dic.Add (key, value);
+            return dic;
+        }
+
+        public static Dictionary<K,V> AddInPlace<K,V> (this Dictionary<K,V> dic, K key, V value)
+        {
+            dic.Add (key, value);
+            return dic;
+        }
+
+        public static Dictionary<K,V> RemoveInPlace<K,V> (this Dictionary<K,V> dic, K key)
+        {
+            dic.Remove (key);
+            return dic;
+        }
+
         public static EitherGroup<TL,TR> Split<TL,TR> (this IEnumerable<Either<TL,TR>> items)
         {
             var leftList = new List<TL> ();

@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 
 namespace Toggl.Phoebe._Reactive
 {
-    // TODO: Dummy interface
+    // TODO: Expand this interface if needed
     public interface IAction
     {
+        IDataMsg Message { get; }
     }
 
-    public interface Reducer
+    public interface IReducer
     {
         object ReduceLeaf (IAction action, object oldLeaf);
         ITreeNode ReduceNode (IAction action, ITreeNode oldNode, IEnumerable<object> newChildren);
@@ -25,9 +27,9 @@ namespace Toggl.Phoebe._Reactive
 
     public class TreeVisitor
     {
-        public IDictionary<Type, Reducer> Actions { get; private set; }
+        public Dictionary<Type, IReducer> Actions { get; private set; }
 
-        public TreeVisitor (IDictionary<Type, Reducer> actions)
+        public TreeVisitor (Dictionary<Type, IReducer> actions)
         {
             Actions = actions;
         }
@@ -39,7 +41,7 @@ namespace Toggl.Phoebe._Reactive
                 ? node.Children.Select (x => VisitNode (action, node, typ))
                 : VisitLeafs (action, node.Children, typ);
 
-            Reducer reducer;
+            IReducer reducer;
             if (Actions.TryGetValue (nodeType, out reducer)) {
                 return reducer.ReduceNode (action, node, newChildren);
             }
@@ -50,7 +52,7 @@ namespace Toggl.Phoebe._Reactive
 
         public IEnumerable<object> VisitLeafs (IAction action, IEnumerable<object> leafs, Type leafType)
         {
-            Reducer reducer;
+            IReducer reducer;
             if (Actions.TryGetValue (leafType, out reducer)) {
                 return leafs.Select (x => reducer.ReduceLeaf (action, x));
             }
@@ -62,50 +64,26 @@ namespace Toggl.Phoebe._Reactive
 
     public class AppState : ITreeNode
     {
-        public UserNode User { get; private set; }
-
-        public AppState ()
-        {
-        }
-
-        public IEnumerable<object> Children {
-            get {
-                return new[] { User };
-            }
-        }
-
-        public Type ChildrenType {
-            get {
-                return typeof(UserNode);
-            }
-        }
-
-        public ITreeNode CreateNew (IEnumerable<object> newChildren)
-        {
-            throw new NotImplementedException ();
-        }
-    }
-
-    public class UserNode : ITreeNode
-    {
         public static WorkspaceNode EmptyWorkspace = new WorkspaceNode ();
 
         public UserData Data { get; private set; }
-        public IList<WorkspaceNode> Workspaces { get; private set; }
+        public Dictionary<Guid, WorkspaceNode> Workspaces { get; private set; }
 
-        public UserNode ()
+        // TODO: Other AppState values: IsLoading, etc...
+
+        public AppState ()
         {
-            Workspaces = new List<WorkspaceNode> () { EmptyWorkspace };
+            Workspaces = new Dictionary<Guid, WorkspaceNode> { { Guid.Empty, EmptyWorkspace } };
         }
 
-        public UserNode (UserData data) : this()
+        public AppState (UserData data) : this()
         {
             Data = data;
         }
 
         public IEnumerable<object> Children {
             get {
-                return Workspaces;
+                return Workspaces.Values;
             }
         }
 
@@ -117,20 +95,28 @@ namespace Toggl.Phoebe._Reactive
 
         public ITreeNode CreateNew (IEnumerable<object> newChildren)
         {
-            throw new NotImplementedException ();
+            // TODO: Copy other AppState values
+            var newNode = new AppState (Data);
+
+            foreach (var child in newChildren.Cast<WorkspaceNode> ()) {
+                newNode.Workspaces.Add (child.Data.Id, child);
+            }
+            return newNode;
         }
     }
 
     public class WorkspaceNode : ITreeNode
     {
-        public static ClientNode EmptyClient = new ClientNode ();
+        public static ProjectNode EmptyProject = new ProjectNode ();
 
         public WorkspaceData Data { get; private set; }
-        public IList<ClientNode> Clients { get; private set; }
+        public Dictionary<Guid, ClientData> Clients { get; private set; }
+        public Dictionary<Guid, ProjectNode> Projects { get; private set; }
 
         public WorkspaceNode ()
         {
-            Clients = new List<ClientNode> () { EmptyClient };
+            Clients = new Dictionary<Guid, ClientData> ();
+            Projects = new Dictionary<Guid, ProjectNode> { { Guid.Empty, EmptyProject } };
         }
 
         public WorkspaceNode (WorkspaceData data) : this()
@@ -140,42 +126,7 @@ namespace Toggl.Phoebe._Reactive
 
         public IEnumerable<object> Children {
             get {
-                return Clients;
-            }
-        }
-
-        public Type ChildrenType {
-            get {
-                return typeof(ClientNode);
-            }
-        }
-
-        public ITreeNode CreateNew (IEnumerable<object> newChildren)
-        {
-            throw new NotImplementedException ();
-        }
-    }
-
-    public class ClientNode : ITreeNode
-    {
-        public static ProjectNode EmptyProject = new ProjectNode ();
-
-        public ClientData Data { get; private set; }
-        public IList<ProjectNode> Projects { get; private set; }
-
-        public ClientNode ()
-        {
-            Projects = new List<ProjectNode> () { EmptyProject };
-        }
-
-        public ClientNode (ClientData data) : this()
-        {
-            Data = data;
-        }
-
-        public IEnumerable<object> Children {
-            get {
-                return Projects;
+                return Projects.Values;
             }
         }
 
@@ -187,7 +138,14 @@ namespace Toggl.Phoebe._Reactive
 
         public ITreeNode CreateNew (IEnumerable<object> newChildren)
         {
-            throw new NotImplementedException ();
+            var newNode = new WorkspaceNode (Data);
+            foreach (var client in Clients) {
+                newNode.Clients.Add (client.Key, client.Value);
+            }
+            foreach (var child in newChildren.Cast<ProjectNode> ()) {
+                newNode.Projects.Add (child.Data.Id, child);
+            }
+            return newNode;
         }
     }
 
@@ -196,11 +154,11 @@ namespace Toggl.Phoebe._Reactive
         public static TaskNode EmptyTask = new TaskNode ();
 
         public ProjectData Data { get; private set; }
-        public IList<TaskNode> Tasks { get; private set; }
+        public Dictionary<Guid, TaskNode> Tasks { get; private set; }
 
         public ProjectNode ()
         {
-            Tasks = new List<TaskNode> () { EmptyTask };
+            Tasks = new Dictionary<Guid, TaskNode> { { Guid.Empty, EmptyTask } };
         }
 
         public ProjectNode (ProjectData data) : this()
@@ -210,7 +168,7 @@ namespace Toggl.Phoebe._Reactive
 
         public IEnumerable<object> Children {
             get {
-                return Tasks;
+                return Tasks.Values;
             }
         }
 
@@ -222,18 +180,22 @@ namespace Toggl.Phoebe._Reactive
 
         public ITreeNode CreateNew (IEnumerable<object> newChildren)
         {
-            throw new NotImplementedException ();
+            var newNode = new ProjectNode (Data);
+            foreach (var child in newChildren.Cast<TaskNode> ()) {
+                newNode.Tasks.Add (child.Data.Id, child);
+            }
+            return newNode;
         }
     }
 
     public class TaskNode : ITreeNode
     {
         public TaskData Data { get; private set; }
-        public IList<TimeEntryData> TimeEntries { get; private set; }
+        public Dictionary<Guid, TimeEntryData> TimeEntries { get; private set; }
 
         public TaskNode ()
         {
-            TimeEntries = new List<TimeEntryData> ();
+            TimeEntries = new Dictionary<Guid, TimeEntryData> ();
         }
 
         public TaskNode (TaskData data) : this()
@@ -243,7 +205,7 @@ namespace Toggl.Phoebe._Reactive
 
         public IEnumerable<object> Children {
             get {
-                return TimeEntries;
+                return TimeEntries.Values;
             }
         }
 
@@ -255,7 +217,11 @@ namespace Toggl.Phoebe._Reactive
 
         public ITreeNode CreateNew (IEnumerable<object> newChildren)
         {
-            throw new NotImplementedException ();
+            var newNode = new TaskNode (Data);
+            foreach (var child in newChildren.Cast<TimeEntryData> ()) {
+                newNode.TimeEntries.Add (child.Id, child);
+            }
+            return newNode;
         }
     }
 }

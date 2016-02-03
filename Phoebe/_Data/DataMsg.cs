@@ -138,6 +138,16 @@ namespace Toggl.Phoebe._Data
             return typedMsg.Data.Match (left, ex => Task.Run (() => right (ex)));
         }
 
+        public static T GetDataOrDefault<T> (this IDataMsg msg)
+        {
+            var typedMsg = msg as DataMsg<T>;
+            if (typedMsg == null) {
+                return default(T);
+            }
+
+            return typedMsg.Data.Match (x => x, e => default(T));
+        }
+
         public static T ForceGetData<T> (this IDataMsg msg)
         {
             var typedMsg = msg as DataMsg<T>;

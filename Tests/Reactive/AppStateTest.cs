@@ -38,14 +38,14 @@ namespace Toggl.Phoebe.Tests.Reactive
             var info = new TimeEntryInfo ();
 
             // TODO: Check if dictionaries contain ids
-            info.ProjectData = teData.ProjectId.HasValue
-                ? state.Projects[teData.ProjectId.Value]
+            info.ProjectData = teData.ProjectId != Guid.Empty
+                ? state.Projects[teData.ProjectId]
                 : new ProjectData ();
-            info.ClientData = info.ProjectData.ClientId.HasValue
-                ? state.Clients[info.ProjectData.ClientId.Value]
+            info.ClientData = info.ProjectData.ClientId != Guid.Empty
+                ? state.Clients[info.ProjectData.ClientId]
                 : new ClientData ();
-            info.TaskData = teData.TaskId.HasValue
-                ? state.Tasks[teData.TaskId.Value]
+            info.TaskData = teData.TaskId != Guid.Empty
+                ? state.Tasks[teData.TaskId]
                 : new TaskData ();
             info.Description = teData.Description;
             info.Color = (info.ProjectData.Id != Guid.Empty) ? info.ProjectData.Color : -1;

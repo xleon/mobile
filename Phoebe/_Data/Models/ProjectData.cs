@@ -52,6 +52,6 @@ namespace Toggl.Phoebe._Data.Models
 
         public Guid WorkspaceId { get; set; }
 
-        public Guid? ClientId { get; set; }
+        public Guid ClientId { get; set; }
     }
 }

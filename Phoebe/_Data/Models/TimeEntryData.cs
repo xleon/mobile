@@ -61,9 +61,9 @@ namespace Toggl.Phoebe._Data.Models
 
         public Guid WorkspaceId { get; set; }
 
-        public Guid? ProjectId { get; set; }
+        public Guid ProjectId { get; set; }
 
-        public Guid? TaskId { get; set; }
+        public Guid TaskId { get; set; }
 
         public List<string> Tags { get; set; }
     }

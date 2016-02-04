@@ -13,6 +13,7 @@ namespace Toggl.Ross
         {
             startTimeMeasure = Stopwatch.StartNew ();
 
+
             UIApplication.Main (args, null, "AppDelegate");
         }
 

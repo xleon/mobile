@@ -105,13 +105,6 @@ namespace Toggl.Ross.ViewControllers
 
         protected override void Dispose (bool disposing)
         {
-            if (disposing) {
-                if (navMenuController != null) {
-                    navMenuController.Detach ();
-                    navMenuController = null;
-                }
-            }
-
             ViewModel.Dispose ();
             base.Dispose (disposing);
         }
@@ -321,7 +314,6 @@ namespace Toggl.Ross.ViewControllers
             private Timer timer;
             private ITimeEntryHolder holder;
             private Action<TimeEntryCell> OnContinueAction;
-
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {

@@ -172,35 +172,6 @@
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
     <BundleResource Include="Resources\*.png" />
     <BundleResource Include="Resources\Fonts\icomoon.ttf" />
-    <BundleResource Include="Resources\icon-negative-filled.png" />
-    <BundleResource Include="Resources\icon-negative-filled%402x.png" />
-    <BundleResource Include="Resources\icon-negative.png" />
-    <BundleResource Include="Resources\icon-negative%402x.png" />
-    <BundleResource Include="Resources\icon-neutral-filled.png" />
-    <BundleResource Include="Resources\icon-neutral-filled%402x.png" />
-    <BundleResource Include="Resources\icon-neutral.png" />
-    <BundleResource Include="Resources\icon-neutral%402x.png" />
-    <BundleResource Include="Resources\icon-positive-filled.png" />
-    <BundleResource Include="Resources\icon-positive-filled%402x.png" />
-    <BundleResource Include="Resources\icon-positive.png" />
-    <BundleResource Include="Resources\icon-positive%402x.png" />
-    <BundleResource Include="Resources\icon-cancel.png" />
-    <BundleResource Include="Resources\icon-cancel%402x.png" />
-    <BundleResource Include="Resources\icon-retry.png" />
-    <BundleResource Include="Resources\icon-retry%402x.png" />
-    <BundleResource Include="Resources\bg-tag.png" />
-    <BundleResource Include="Resources\bg-tag%402x.png" />
-    <BundleResource Include="Resources\btn-arrow-left.png" />
-    <BundleResource Include="Resources\btn-arrow-left%402x.png" />
-    <BundleResource Include="Resources\btn-arrow-right.png" />
-    <BundleResource Include="Resources\btn-arrow-right%402x.png" />
-    <BundleResource Include="Resources\btn-arrow-down.png" />
-    <BundleResource Include="Resources\btn-arrow-down%402x.png" />
-    <BundleResource Include="Resources\btn-arrow-up.png" />
-    <BundleResource Include="Resources\btn-arrow-up%402x.png" />
-    <BundleResource Include="GoogleService-Info.plist" />
-    <BundleResource Include="Resources\arrowUp%402x.png" />
-    <BundleResource Include="Resources\arrowUp.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -346,6 +317,10 @@
     <Compile Include="Views\SimpleEmptyView.cs" />
     <Compile Include="Views\OBMEmptyView.cs" />
     <Compile Include="Views\ReloadTableViewFooter.cs" />
+    <Compile Include="ViewControllers\LeftViewController.cs" />
+    <Compile Include="Theme\Style.LeftView.cs">
+      <DependentUpon>Style.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">

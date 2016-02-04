@@ -67,6 +67,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             return new EditTimeEntryViewModel (data, tagList);
         }
 
+        public static async Task<EditTimeEntryViewModel> Init (TimeEntryData timeEntryData)
+        {
+            var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryData.Id);
+            return new EditTimeEntryViewModel (timeEntryData, tagList);
+        }
+
         public void Dispose ()
         {
             durationTimer.Elapsed -= DurationTimerCallback;
@@ -87,6 +93,10 @@ namespace Toggl.Phoebe.Data.ViewModels
         public DateTime StopDate { get; private set; }
 
         public string ProjectName { get; private set; }
+
+        public string TaskName { get; private set; }
+
+        public string ProjectColorHex { get; private set; }
 
         public string ClientName { get; private set; }
 
@@ -213,11 +223,20 @@ namespace Toggl.Phoebe.Data.ViewModels
                 if (data.ProjectId.HasValue) {
                     var project = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
                     ProjectName = project.Name;
+                    ProjectColorHex = ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length];
+
                     if (project.ClientId.HasValue) {
                         var client = await TimeEntryModel.GetClientDataAsync (project.ClientId.Value);
                         ClientName = client.Name;
                     } else {
                         ClientName = string.Empty;
+                    }
+
+                    if (data.TaskId.HasValue) {
+                        var task = await TimeEntryModel.GetTaskDataAsync (data.TaskId.Value);
+                        TaskName = task.Name;
+                    } else {
+                        TaskName = string.Empty;
                     }
 
                     // TODO: Workspace and Billable should change!
@@ -231,6 +250,8 @@ namespace Toggl.Phoebe.Data.ViewModels
                 } else {
                     ProjectName = string.Empty;
                     ClientName = string.Empty;
+                    TaskName = string.Empty;
+                    ProjectColorHex = ProjectModel.HexColors [ProjectModel.DefaultColor];
                 }
             });
         }

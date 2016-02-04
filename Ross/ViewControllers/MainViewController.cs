@@ -68,26 +68,25 @@ namespace Toggl.Ross.ViewControllers
             NavigationBar.Apply (Style.NavigationBar);
             Delegate = new NavDelegate ();
 
-            tapGesture = new UITapGestureRecognizer (OnTapGesture) {
-                ShouldReceiveTouch = (a, b) => true,
-                ShouldRecognizeSimultaneously = (a, b) => true,
-                CancelsTouchesInView = true
-            };
-
             panGesture = new UIPanGestureRecognizer (OnPanGesture) {
                 // TODO: TableView scroll gestures are not
                 // compatible with the open / close pan gesture.
                 ShouldRecognizeSimultaneously = (a, b) => ! (b.View is UITableView),
                 CancelsTouchesInView = true,
             };
-
-            View.AddGestureRecognizer (tapGesture);
             View.AddGestureRecognizer (panGesture);
 
             fadeView = new UIView();
             fadeView.BackgroundColor = UIColor.FromRGBA (29f / 255f, 29f / 255f, 28f / 255f, 0.5f);
             fadeView.Frame = new CGRect (0, 0, View.Frame.Width, View.Frame.Height);
             fadeView.Hidden = true;
+
+            tapGesture = new UITapGestureRecognizer (CloseMenu) {
+                ShouldReceiveTouch = (a, b) => true,
+                ShouldRecognizeSimultaneously = (a, b) => true,
+                CancelsTouchesInView = true,
+            };
+            fadeView.AddGestureRecognizer (tapGesture);
             View.Add (fadeView);
         }
 
@@ -148,7 +147,6 @@ namespace Toggl.Ross.ViewControllers
         public void CloseMenu()
         {
             fadeView.Hidden = true;
-            tapGesture.Enabled = false;
             UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, () => MoveToLocation (0), null);
         }
 
@@ -156,7 +154,6 @@ namespace Toggl.Ross.ViewControllers
         {
             UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, () => MoveToLocation (Width-menuOffset), () => {
                 fadeView.Hidden = false;
-                tapGesture.Enabled = true;
             });
         }
 
@@ -175,17 +172,6 @@ namespace Toggl.Ross.ViewControllers
             rect.Y = 0;
             rect.X = x;
             View.Frame = rect;
-        }
-
-        private void OnTapGesture (UITapGestureRecognizer recognizer)
-        {
-            if (!MenuEnabled || !tapGesture.Enabled) {
-                return;
-            }
-
-            if (CurrentX > 0) {
-                CloseMenu ();
-            }
         }
 
         protected override void Dispose (bool disposing)

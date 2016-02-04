@@ -83,10 +83,9 @@ namespace Toggl.Phoebe._ViewModels
                     UpdateTimeHolders (timeHolders, msg.Item1, msg.Item2);
                 }
 
-                // TODO: Temporary, every access to the database should be done in the Store component
                 foreach (var holder in timeHolders) {
                     if (holder.Info == null) {
-                        holder.Info = await StoreRegister.LoadTimeEntryInfoAsync (holder.Data);
+                        // TODO TODO TODO: Access TimeEntryInfo
                     }
                 }
 

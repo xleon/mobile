@@ -18,122 +18,122 @@ namespace Toggl.Phoebe.Tests.Reactive
     [TestFixture]
     public class AppStateTest : Test
     {
-        public class TestReducer : IReducer
-        {
-            public object ReduceLeaf (IAction action, object oldLeaf)
-            {
-                // We're not dealing with leafs here
-                return oldLeaf;
-            }
-
-            // TODO: Make all dic additions and replacements totally immutable?
-            Dictionary<Guid, TaskNode> createTask (
-                Dictionary<Guid, TaskNode> oldDic, TimeEntryData teData)
-            {
-                throw new NotImplementedException ();
-            }
-
-            Dictionary<Guid, TaskNode> createOrReplaceTask (
-                Dictionary<Guid, TaskNode> oldDic, DataAction action, TimeEntryData teData)
-            {
-                if (!teData.TaskId.HasValue)
-                    throw new Exception ("TimeEntryData must have TaskId at this point");
-
-                TaskNode task;
-                if (oldDic.TryGetValue (teData.TaskId.Value, out task)) {
-                    TimeEntryData te;
-                    if (task.TimeEntries.TryGetValue (teData.Id, out te)) {
-                        var newEntries = action == DataAction.Put
-                            ? task.TimeEntries.ReplaceInPlace (te.Id, teData)   // Replace
-                            : task.TimeEntries.RemoveInPlace (te.Id);           // Delete
-
-                        return oldDic.ReplaceInPlace (task.Data.Id, (TaskNode)task.CreateNew (newEntries.Values));
-                    }
-                    else {
-                        if (action == DataAction.Put) {                         // Insert
-                            var newEntries = task.TimeEntries.AddInPlace (teData.Id, teData);
-                            return oldDic.ReplaceInPlace (task.Data.Id, (TaskNode)task.CreateNew (newEntries.Values));
-                        }
-                        else {                                                  // Do nothing
-                            return oldDic;
-                        }
-                    }
-                }
-                else {
-                    return action == DataAction.Put
-                        ? createTask (oldDic, teData)    // Insert new task
-                        : oldDic;                        // Do nothing
-                }
-
-                return oldDic;
-            }
-
-            Dictionary<Guid, ProjectNode> createProject (
-                Dictionary<Guid, ProjectNode> oldDic, TimeEntryData teData)
-            {
-                throw new NotImplementedException ();
-            }
-
-            Dictionary<Guid, ProjectNode> createOrReplaceProject (
-                Dictionary<Guid, ProjectNode> oldDic, DataAction action, TimeEntryData teData)
-            {
-                if (!teData.ProjectId.HasValue)
-                    throw new Exception ("TimeEntryData must have ProjectId at this point");
-
-                ProjectNode project;
-                if (oldDic.TryGetValue (teData.ProjectId.Value, out project)) {
-                    var newTasks = createOrReplaceTask (project.Tasks, action, teData);
-                    return oldDic.ReplaceInPlace (project.Data.Id, (ProjectNode)project.CreateNew (newTasks.Values));
-                }
-                else {
-                    return action == DataAction.Put
-                        ? createProject (oldDic, teData) // Insert new project
-                        : oldDic;                        // Do nothing 
-                }
-            }
-
-            Dictionary<Guid, WorkspaceNode> createWorkspace (
-                Dictionary<Guid, WorkspaceNode> oldDic, TimeEntryData teData)
-            {
-                throw new NotImplementedException ();
-            }
-
-            Dictionary<Guid, WorkspaceNode> createOrReplaceWorkspace (
-                Dictionary<Guid, WorkspaceNode> oldDic, DataAction action, TimeEntryData teData)
-            {
-                WorkspaceNode ws;
-                if (oldDic.TryGetValue (teData.WorkspaceId, out ws)) {
-                    var newProjects = createOrReplaceProject (ws.Projects, action, teData);
-                    return oldDic.ReplaceInPlace (ws.Data.Id, (WorkspaceNode)ws.CreateNew (newProjects.Values));
-                }
-                else {
-                    return action == DataAction.Put
-                            ? createWorkspace (oldDic, teData)  // Insert new project
-                            : oldDic;                           // Do nothing 
-                }
-            }
-
-            public ITreeNode ReduceNode (IAction action, ITreeNode oldNode, IEnumerable<object> newChildren)
-            {
-                var app = oldNode as AppState;
-                var messsages = action.Message.GetDataOrDefault<TimeEntryMsg> ();
-
-                if (app == null || messsages == null) {
-                    return oldNode;
-                }
-
-                var seed = newChildren.Cast <WorkspaceNode> ()
-                    .ToDictionary (x => x.Data.Id); 
-
-                var newChildren2 = messsages.Aggregate (seed,
-                    (workspaces, msg) => createOrReplaceWorkspace (workspaces, msg.Item1, msg.Item2));
-
-                return app.CreateNew (newChildren2.Values);
-            }
-        }
+        Guid userId = Guid.NewGuid ();
+        Guid workspaceId = Guid.NewGuid ();
+        AppState appState;
+        CompositeUpdater<AppState> updater;
 
         public override void SetUp ()
         {
+            base.SetUp ();
+
+            // TODO: Get initial state of application
+            appState = new AppState ();
+            updater = new CompositeUpdater<AppState> ()
+                .Add (x => x.TimerState, TestUpdater);
+        }
+
+        public static TimeEntryInfo LoadTimeEntryInfo (TimerState state, TimeEntryData teData)
+        {
+            var info = new TimeEntryInfo ();
+
+            // TODO: Check if dictionaries contain ids
+            info.ProjectData = teData.ProjectId.HasValue
+                ? state.Projects[teData.ProjectId.Value]
+                : new ProjectData ();
+            info.ClientData = info.ProjectData.ClientId.HasValue
+                ? state.Clients[info.ProjectData.ClientId.Value]
+                : new ClientData ();
+            info.TaskData = teData.TaskId.HasValue
+                ? state.Tasks[teData.TaskId.Value]
+                : new TaskData ();
+            info.Description = teData.Description;
+            info.Color = (info.ProjectData.Id != Guid.Empty) ? info.ProjectData.Color : -1;
+            info.IsBillable = teData.IsBillable;
+
+            // TODO: Tags
+            //info.NumberOfTags
+
+            return info;
+        }
+
+        public void TestUpdater(TimerState state, IDataMsg dataMsg)
+        {
+            var teMsg = dataMsg.GetDataOrDefault<TimeEntryMsg> ();
+            if (teMsg == null) {
+                return;
+            }
+
+            foreach (var msg in teMsg) {
+
+                // TODO: Check this condition
+                if (msg.Item2.StartTime < state.LowerLimit) {
+                    continue;
+                }
+
+                RichTimeEntry oldTe;
+                if (state.TimeEntries.TryGetValue (msg.Item2.Id, out oldTe)) {
+                    // Remove old time entry
+                    state.TimeEntries.Remove (msg.Item2.Id);
+                }
+
+                if (msg.Item1 == DataAction.Put) {
+                    // Load info and insert new entry
+                    var newTe = new TimeEntryData (msg.Item2); // Protect the reference
+					var newInfo = LoadTimeEntryInfo (state, newTe);
+                    state.TimeEntries.Add (newTe.Id, new RichTimeEntry (newTe, newInfo));
+                }
+            }
+        }
+
+        public TimeEntryData CreateTimeEntryData (DateTime startTime)
+        {
+            return new TimeEntryData {
+                Id = Guid.NewGuid (),
+                StartTime = startTime,
+                StopTime = startTime.AddMinutes (1),
+                UserId = userId,
+                WorkspaceId = workspaceId,
+                Description = "Test Entry",
+                State = TimeEntryState.Finished,
+                Tags = new List<string> ()
+            };
+        }
+
+        public IAppState GetState ()
+        {
+            return appState;
+        }
+
+        public void SendMessage (DataAction action, TimeEntryData data)
+        {
+            var teMsg = new TimeEntryMsg (DataDir.Outcoming, action, data);
+            updater.Update (appState, DataMsg.Success(DataTag.TimeEntryLoad, teMsg));
+        }
+
+        [Test]
+        public void TestAddEntry ()
+        {
+            var oldCount = GetState ().TimerState.TimeEntries.Count;
+            var te = CreateTimeEntryData (DateTime.Now);
+            SendMessage (DataAction.Put, te);
+
+            var newCount = GetState ().TimerState.TimeEntries.Count;
+            Assert.AreEqual (oldCount + 1, newCount);
+        }
+
+        [Test]
+        public void TestTryModifyEntry ()
+        {
+            var oldDescription = "OLD";
+            var te = CreateTimeEntryData (DateTime.Now);
+            te.Description = oldDescription;
+            SendMessage (DataAction.Put, te);
+
+            // Modifying the entry now shouldn't affect the state
+            te.Description = "NEW";
+            var description = GetState ().TimerState.TimeEntries[te.Id].Data.Description;
+            Assert.AreEqual (oldDescription, description);
         }
     }
 }

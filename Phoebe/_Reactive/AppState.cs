@@ -3,226 +3,92 @@ using System.Linq;
 using System.Collections.Generic;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
+using XPlatUtils;
+using Toggl.Phoebe.Logging;
 
 namespace Toggl.Phoebe._Reactive
 {
-    // TODO: Expand this interface if needed
-    public interface IAction
+    public class CompositeUpdater<T>
     {
-        IDataMsg Message { get; }
-    }
+        readonly List<Tuple<Delegate, Delegate>> updaters = new List<Tuple<Delegate, Delegate>> ();
 
-    public interface IReducer
-    {
-        object ReduceLeaf (IAction action, object oldLeaf);
-        ITreeNode ReduceNode (IAction action, ITreeNode oldNode, IEnumerable<object> newChildren);
-    }
-
-    public interface ITreeNode
-    {
-        Type ChildrenType { get; }
-        IEnumerable<object> Children { get; }
-        ITreeNode CreateNew (IEnumerable<object> newChildren);
-    }
-
-    public class TreeVisitor
-    {
-        public Dictionary<Type, IReducer> Actions { get; private set; }
-
-        public TreeVisitor (Dictionary<Type, IReducer> actions)
+        public CompositeUpdater<T> Add<U> (Func<T,U> selector, Action<U, IDataMsg> updater)
         {
-            Actions = actions;
+            updaters.Add (Tuple.Create<Delegate, Delegate>(selector, updater));
+            return this;
         }
 
-        public ITreeNode VisitNode (IAction action, ITreeNode node, Type nodeType)
+        public void Update (T state, IDataMsg msg)
         {
-            var typ = node.ChildrenType;
-            var newChildren = typ is ITreeNode
-                ? node.Children.Select (x => VisitNode (action, node, typ))
-                : VisitLeafs (action, node.Children, typ);
-
-            IReducer reducer;
-            if (Actions.TryGetValue (nodeType, out reducer)) {
-                return reducer.ReduceNode (action, node, newChildren);
+            try {
+                foreach (var tuple in updaters) {
+                    var selection = tuple.Item1.DynamicInvoke (state);
+                    tuple.Item2.DynamicInvoke (selection, msg);
+                }
             }
-            else {
-                return node.CreateNew (newChildren);
-            }
-        }
-
-        public IEnumerable<object> VisitLeafs (IAction action, IEnumerable<object> leafs, Type leafType)
-        {
-            IReducer reducer;
-            if (Actions.TryGetValue (leafType, out reducer)) {
-                return leafs.Select (x => reducer.ReduceLeaf (action, x));
-            }
-            else {
-                return leafs;
+            catch (Exception ex) {
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Error (typeof(CompositeUpdater<T>).Name, ex, "Failed to update estate");
             }
         }
     }
 
-    public class AppState : ITreeNode
+    public interface IAppState
     {
-        public static WorkspaceNode EmptyWorkspace = new WorkspaceNode ();
+        ITimerState TimerState { get; }
+    }
 
-        public UserData Data { get; private set; }
-        public Dictionary<Guid, WorkspaceNode> Workspaces { get; private set; }
+    public class AppState : IAppState
+    {
+        public TimerState TimerState { get; set; } = new TimerState ();
+        ITimerState IAppState.TimerState => TimerState;
+    }
 
-        // TODO: Other AppState values: IsLoading, etc...
+    public class RichTimeEntry
+    {
+        public TimeEntryInfo Info { get; private set; }
+        public TimeEntryData Data { get; private set; }
 
-        public AppState ()
+        public RichTimeEntry (TimeEntryData data, TimeEntryInfo info)
         {
-            Workspaces = new Dictionary<Guid, WorkspaceNode> { { Guid.Empty, EmptyWorkspace } };
-        }
-
-        public AppState (UserData data) : this()
-        {
+            Info = info;
             Data = data;
         }
-
-        public IEnumerable<object> Children {
-            get {
-                return Workspaces.Values;
-            }
-        }
-
-        public Type ChildrenType {
-            get {
-                return typeof(WorkspaceNode);
-            }
-        }
-
-        public ITreeNode CreateNew (IEnumerable<object> newChildren)
-        {
-            // TODO: Copy other AppState values
-            var newNode = new AppState (Data);
-
-            foreach (var child in newChildren.Cast<WorkspaceNode> ()) {
-                newNode.Workspaces.Add (child.Data.Id, child);
-            }
-            return newNode;
-        }
     }
 
-    public class WorkspaceNode : ITreeNode
+    public interface ITimerState
     {
-        public static ProjectNode EmptyProject = new ProjectNode ();
+        UserData User { get; }
+        DateTime LowerLimit { get; }
 
-        public WorkspaceData Data { get; private set; }
-        public Dictionary<Guid, ClientData> Clients { get; private set; }
-        public Dictionary<Guid, ProjectNode> Projects { get; private set; }
+        IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; }
+        IReadOnlyDictionary<Guid, ProjectData> Projects { get; }
+        IReadOnlyDictionary<Guid, ClientData> Clients { get; }
+        IReadOnlyDictionary<Guid, TaskData> Tasks { get; }
+        IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; }
 
-        public WorkspaceNode ()
-        {
-            Clients = new Dictionary<Guid, ClientData> ();
-            Projects = new Dictionary<Guid, ProjectNode> { { Guid.Empty, EmptyProject } };
-        }
-
-        public WorkspaceNode (WorkspaceData data) : this()
-        {
-            Data = data;
-        }
-
-        public IEnumerable<object> Children {
-            get {
-                return Projects.Values;
-            }
-        }
-
-        public Type ChildrenType {
-            get {
-                return typeof(ProjectNode);
-            }
-        }
-
-        public ITreeNode CreateNew (IEnumerable<object> newChildren)
-        {
-            var newNode = new WorkspaceNode (Data);
-            foreach (var client in Clients) {
-                newNode.Clients.Add (client.Key, client.Value);
-            }
-            foreach (var child in newChildren.Cast<ProjectNode> ()) {
-                newNode.Projects.Add (child.Data.Id, child);
-            }
-            return newNode;
-        }
+        // TODO: Tags
     }
 
-    public class ProjectNode : ITreeNode
+
+    public class TimerState : ITimerState
     {
-        public static TaskNode EmptyTask = new TaskNode ();
+        public UserData User { get; set; } = new UserData ();
+        public DateTime LowerLimit { get; set; } = DateTime.MinValue;
 
-        public ProjectData Data { get; private set; }
-        public Dictionary<Guid, TaskNode> Tasks { get; private set; }
+        public Dictionary<Guid, WorkspaceData> Workspaces { get; set; } = new Dictionary<Guid, WorkspaceData> ();
+        public Dictionary<Guid, ProjectData> Projects { get; set; } = new Dictionary<Guid, ProjectData> ();
+        public Dictionary<Guid, ClientData> Clients { get; set; } = new Dictionary<Guid, ClientData> ();
+        public Dictionary<Guid, TaskData> Tasks { get; set; } = new Dictionary<Guid, TaskData> ();
+        public Dictionary<Guid, RichTimeEntry> TimeEntries { get; set; } = new Dictionary<Guid, RichTimeEntry> ();
 
-        public ProjectNode ()
-        {
-            Tasks = new Dictionary<Guid, TaskNode> { { Guid.Empty, EmptyTask } };
-        }
+        IReadOnlyDictionary<Guid, WorkspaceData> ITimerState.Workspaces => Workspaces;
+        IReadOnlyDictionary<Guid, ProjectData> ITimerState.Projects => Projects;
+        IReadOnlyDictionary<Guid, ClientData> ITimerState.Clients => Clients;
+        IReadOnlyDictionary<Guid, TaskData> ITimerState.Tasks => Tasks;
+        IReadOnlyDictionary<Guid, RichTimeEntry> ITimerState.TimeEntries => TimeEntries;
 
-        public ProjectNode (ProjectData data) : this()
-        {
-            Data = data;
-        }
-
-        public IEnumerable<object> Children {
-            get {
-                return Tasks.Values;
-            }
-        }
-
-        public Type ChildrenType {
-            get {
-                return typeof(TaskNode);
-            }
-        }
-
-        public ITreeNode CreateNew (IEnumerable<object> newChildren)
-        {
-            var newNode = new ProjectNode (Data);
-            foreach (var child in newChildren.Cast<TaskNode> ()) {
-                newNode.Tasks.Add (child.Data.Id, child);
-            }
-            return newNode;
-        }
-    }
-
-    public class TaskNode : ITreeNode
-    {
-        public TaskData Data { get; private set; }
-        public Dictionary<Guid, TimeEntryData> TimeEntries { get; private set; }
-
-        public TaskNode ()
-        {
-            TimeEntries = new Dictionary<Guid, TimeEntryData> ();
-        }
-
-        public TaskNode (TaskData data) : this()
-        {
-            Data = data;
-        }
-
-        public IEnumerable<object> Children {
-            get {
-                return TimeEntries.Values;
-            }
-        }
-
-        public Type ChildrenType {
-            get {
-                return typeof(TimeEntryData);
-            }
-        }
-
-        public ITreeNode CreateNew (IEnumerable<object> newChildren)
-        {
-            var newNode = new TaskNode (Data);
-            foreach (var child in newChildren.Cast<TimeEntryData> ()) {
-                newNode.TimeEntries.Add (child.Id, child);
-            }
-            return newNode;
-        }
+        // TODO: Tags
     }
 }
 

@@ -192,7 +192,7 @@ namespace Toggl.Phoebe._ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
                 // Check if an entry is running.
                 if (isRunning) {
-                    var info = await StoreRegister.LoadTimeEntryInfoAsync (data);
+                    Toggl.Phoebe._Data.Models.TimeEntryInfo info = null;  //TODO TODO TODO await StoreRegister.LoadTimeEntryInfoAsync (data);
                     Description = info.Description;
                     ProjectName = info.ProjectData != null ? info.ProjectData.Name : string.Empty;
                     IsTimeEntryRunning = true;

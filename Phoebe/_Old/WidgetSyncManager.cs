@@ -67,7 +67,7 @@ namespace Toggl.Phoebe
         public async Task StartStopTimeEntry ()
         {
             if (activeTimeEntryManager.IsRunning) {
-                Dispatcher.Singleton.Send (DataTag.TimeEntryStop, activeTimeEntryManager.ActiveTimeEntry);
+                RxChain.Send (DataTag.TimeEntryStop, activeTimeEntryManager.ActiveTimeEntry);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.Widget);
             } else {
                 var startedEntry = await TimeEntryModel.StartAsync (TimeEntryModel.GetDraft ());

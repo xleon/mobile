@@ -24,7 +24,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
             }
         }
 
-        public TimeEntryHolder (TimeEntryData data, TimeEntryInfo info = null)
+        public TimeEntryHolder (TimeEntryData data, TimeEntryInfo info)
         {
             Data = data;
             Info = info;

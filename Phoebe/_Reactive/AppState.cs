@@ -8,27 +8,45 @@ using Toggl.Phoebe.Logging;
 
 namespace Toggl.Phoebe._Reactive
 {
+    public interface IUpdater
+    {
+        object Select (object source);
+        void Update (object state, IDataMsg msg);
+    }
+
+    public class Updater<T,TSource> : IUpdater 
+    {
+        readonly Func<TSource,T> selector;
+        readonly Action<T,IDataMsg> updater;
+
+        public T Select (TSource source) => selector (source);
+        public void Update (T state, IDataMsg msg) => updater (state, msg);
+
+        object IUpdater.Select (object source) => selector ((TSource)source);
+        void IUpdater.Update (object state, IDataMsg msg) => updater ((T)state, msg);
+
+        public Updater (Func<TSource,T> selector, Action<T,IDataMsg> updater)
+        {
+            this.selector = selector;
+            this.updater = updater;
+        }
+    }
+
     public class CompositeUpdater<T>
     {
-        readonly List<Tuple<Delegate, Delegate>> updaters = new List<Tuple<Delegate, Delegate>> ();
+        readonly List<IUpdater> updaters = new List<IUpdater> ();
 
-        public CompositeUpdater<T> Add<U> (Func<T,U> selector, Action<U, IDataMsg> updater)
+        public CompositeUpdater<T> Add<TPart> (Func<T,TPart> selector, Action<TPart,IDataMsg> updater)
         {
-            updaters.Add (Tuple.Create<Delegate, Delegate>(selector, updater));
+            updaters.Add (new Updater<TPart,T> (selector, updater));
             return this;
         }
 
         public void Update (T state, IDataMsg msg)
         {
-            try {
-                foreach (var tuple in updaters) {
-                    var selection = tuple.Item1.DynamicInvoke (state);
-                    tuple.Item2.DynamicInvoke (selection, msg);
-                }
-            }
-            catch (Exception ex) {
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error (typeof(CompositeUpdater<T>).Name, ex, "Failed to update estate");
+            foreach (var updater in updaters) {
+                var selection = updater.Select (state);
+                updater.Update (selection, msg);
             }
         }
     }

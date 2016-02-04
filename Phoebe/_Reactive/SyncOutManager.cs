@@ -15,12 +15,12 @@ namespace Toggl.Phoebe._Reactive
     {
         public static SyncOutManager Singleton { get; private set; }
 
+        // TODO: Make this an observable
         public event EventHandler<DataTag> MessageHandled;
 
         public static void Init ()
         {
-            Store.Init ();
-            Singleton = new SyncOutManager ();
+            Singleton = Singleton ?? new SyncOutManager ();
         }
 
         readonly JsonMapper mapper = new JsonMapper ();
@@ -35,7 +35,7 @@ namespace Toggl.Phoebe._Reactive
 
         SyncOutManager ()
         {
-            Store.Singleton.Observe ()
+            StoreManager.Singleton.Observe ()
                 .Subscribe (msg => msg.RawData.Match (
                     x => {
                         DataSyncMsg singleMsg;

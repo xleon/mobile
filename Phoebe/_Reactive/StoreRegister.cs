@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe._Net;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
-using XPlatUtils;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe._ViewModels.Timer;
+using XPlatUtils;
 
 namespace Toggl.Phoebe._Reactive
 {
@@ -34,23 +35,47 @@ namespace Toggl.Phoebe._Reactive
                 case DataTag.TimeEntryRestoreFromUndo:
 
                 case DataTag.TestSyncOutManager:
-                    return DispatcherRegister.LetGoThrough (msg);
+                    return LetGoThrough (msg);
                     
                 default:
-                    throw new ActionNotFoundException (msg.Tag, typeof (DispatcherRegister));
+                    throw new ActionNotFoundException (msg.Tag, typeof (StoreRegister));
             }
+        }
+
+        static Task<IDataMsg> LetGoThrough (IDataMsg msg)
+        {
+            return Task.Run (() => msg);
         }
 
         static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
         {
-            var jsonEntries = msg.ForceGetData<List<TimeEntryJson>> ();
+            const int daysLoad = Literals.TimeEntryLoadDays;
+            var startFrom = msg.ForceGetData<DateTime> ();
 
-//            var dbMsgs = await dataStore.ExecuteInTransactionSilent (ctx =>
-//                    jsonEntries.ForEach (json => json.Import (ctx)));
-//            var msgs = dbMsgs.Select (x => Tuple.Create (x.Action, (TimeEntryData)x.Data));
-//            var entryMsg = new TimeEntryMsg (DataDir.Incoming, msgs);
+            try {
+                // Download new Entries
+                var client = ServiceContainer.Resolve<ITogglClient> ();
+                var jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
 
-            return DataMsg.Success<TimeEntryMsg> (msg.Tag, null);
+                //            var dbMsgs = await dataStore.ExecuteInTransactionSilent (ctx =>
+                //                    jsonEntries.ForEach (json => json.Import (ctx)));
+                //            var msgs = dbMsgs.Select (x => Tuple.Create (x.Action, (TimeEntryData)x.Data));
+                //            var entryMsg = new TimeEntryMsg (DataDir.Incoming, msgs);
+
+                return DataMsg.Success<TimeEntryMsg> (msg.Tag, null);
+            } catch (Exception exc) {
+                var tag = typeof (StoreRegister).Name;
+                var log = ServiceContainer.Resolve<ILogger> ();
+                const string errorMsg = "Failed to fetch time entries {1} days up to {0}";
+
+                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
+                    log.Info (tag, exc, errorMsg, startFrom, daysLoad);
+                } else {
+                    log.Warning (tag, exc, errorMsg, startFrom, daysLoad);
+                }
+
+                return DataMsg.Error<TimeEntryData> (msg.Tag, exc);
+            }
         }
 
         // Set initial pagination Date to the beginning of the next day.
@@ -75,7 +100,7 @@ namespace Toggl.Phoebe._Reactive
                 .Select (x => Tuple.Create (DataAction.Put, x)).ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            Dispatcher.Singleton.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
+            RxChain.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
             paginationDate = dbMsgs.Count > 0 ? startDate : paginationDate;
 
             // TODO: Check if there're entries in the db that hasn't been synced

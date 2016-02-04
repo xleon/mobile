@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
 using CoreGraphics;
 using Foundation;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
@@ -58,20 +57,24 @@ namespace Toggl.Ross.ViewControllers
                 (signOutButton = new UIButton ()),
             };
             logButton.SetTitle ("LeftPanelMenuLog".Tr (), UIControlState.Normal);
-            logButton.SetImage (Image.TimerButtonPressed, UIControlState.Normal);
+            logButton.SetImage (Image.TimerButton, UIControlState.Normal);
+            logButton.SetImage (Image.TimerButtonPressed, UIControlState.Highlighted);
 
             reportsButton.SetTitle ("LeftPanelMenuReports".Tr (), UIControlState.Normal);
             reportsButton.SetImage (Image.ReportsButton, UIControlState.Normal);
+            reportsButton.SetImage (Image.ReportsButtonPressed, UIControlState.Highlighted);
 
             settingsButton.SetTitle ("LeftPanelMenuSettings".Tr (), UIControlState.Normal);
             settingsButton.SetImage (Image.SettingsButton, UIControlState.Normal);
+            settingsButton.SetImage (Image.SettingsButtonPressed, UIControlState.Highlighted);
 
             feedbackButton.SetTitle ("LeftPanelMenuFeedback".Tr (), UIControlState.Normal);
             feedbackButton.SetImage (Image.FeedbackButton, UIControlState.Normal);
+            feedbackButton.SetImage (Image.FeedbackButtonPressed, UIControlState.Highlighted);
 
             signOutButton.SetTitle ("LeftPanelMenuSignOut".Tr (), UIControlState.Normal);
             signOutButton.SetImage (Image.SignoutButton, UIControlState.Normal);
-
+            signOutButton.SetImage (Image.SignoutButtonPressed, UIControlState.Highlighted);
 
             logButton.HorizontalAlignment = reportsButton.HorizontalAlignment = settingsButton.HorizontalAlignment =
                                                 feedbackButton.HorizontalAlignment = signOutButton.HorizontalAlignment = UIControlContentHorizontalAlignment.Left;
@@ -115,7 +118,9 @@ namespace Toggl.Ross.ViewControllers
 
             separatorLineImage = new UIImageView (UIImage.FromFile ("line.png"));
             separatorLineImage.Frame = new CGRect (0f, View.Frame.Height - 140f, height: 1f, width: View.Frame.Width - menuOffset);
-            View.AddSubview (separatorLineImage);
+            if (View.Frame.Height > 480) {
+                View.AddSubview (separatorLineImage);
+            }
         }
 
         private void OnUserLoad (object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -215,51 +220,20 @@ namespace Toggl.Ross.ViewControllers
         {
             var main = window.RootViewController as MainViewController;
             if (sender == logButton) {
-                SelectMenuItem (TimerPageId);
                 ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
                 main.SetViewControllers (new[] {
                     new LogViewController ()
                 }, true);
             } else if (sender == reportsButton) {
-                SelectMenuItem (ReportsPageId);
                 main.PushViewController (new ReportsViewController (), true);
             } else if (sender == settingsButton) {
-                SelectMenuItem (SettingsPageId);
                 main.PushViewController (new SettingsViewController (), true);
             } else if (sender == feedbackButton) {
-                SelectMenuItem (FeedbackPageId);
                 main.PushViewController (new FeedbackViewController (), true);
             } else {
-                SelectMenuItem (LogoutPageId);
                 ServiceContainer.Resolve<AuthManager> ().Forget ();
             }
             main.CloseMenu();
         }
-
-        public void SelectMenuItem (int id)
-        {
-            ResetButtons ();
-            if (id == TimerPageId) {
-                logButton.SetImage (Image.TimerButtonPressed, UIControlState.Normal);
-            } else if (id == ReportsPageId) {
-                reportsButton.SetImage (Image.ReportsButtonPressed, UIControlState.Normal);
-            } else if (id == SettingsPageId) {
-                settingsButton.SetImage (Image.SettingsButtonPressed, UIControlState.Normal);
-            } else if (id == FeedbackPageId) {
-                feedbackButton.SetImage (Image.FeedbackButtonPressed, UIControlState.Normal);
-            } else {
-                signOutButton.SetImage (Image.SignoutButtonPressed, UIControlState.Normal);
-            }
-        }
-
-        private void ResetButtons ()
-        {
-            logButton.SetImage (Image.TimerButton, UIControlState.Normal);
-            reportsButton.SetImage (Image.ReportsButton, UIControlState.Normal);
-            settingsButton.SetImage (Image.SettingsButton, UIControlState.Normal);
-            feedbackButton.SetImage (Image.FeedbackButton, UIControlState.Normal);
-            signOutButton.SetImage (Image.SignoutButton, UIControlState.Normal);
-        }
-
     }
 }

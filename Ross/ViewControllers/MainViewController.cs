@@ -5,7 +5,6 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using CoreGraphics;
-using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 
 namespace Toggl.Ross.ViewControllers
@@ -14,23 +13,52 @@ namespace Toggl.Ross.ViewControllers
     {
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private Subscription<TogglHttpResponseMessage> subscriptionTogglHttpResponse;
-        private NavDelegate navDelegate;
-        private UIScreenEdgePanGestureRecognizer interactiveEdgePanGestureRecognizer;
         private UIAlertView upgradeAlert;
         private UIView fadeView;
 
-        private UITapGestureRecognizer _tapGesture;
-        private UIPanGestureRecognizer _panGesture;
+        private UITapGestureRecognizer tapGesture;
+        private UIPanGestureRecognizer panGesture;
         private CGPoint draggingPoint;
-
 
         private const float menuSlideAnimationDuration = .3f;
         private const int menuOffset = 60;
         private const int velocityTreshold = 100;
-
         private LeftViewController menu;
 
-        public bool MenuEnabled { get; private set; }
+        private nfloat Width { get { return View.Frame.Width; } }
+        private nfloat CurrentX { get { return View.Frame.X; } }
+        private nfloat MaxDraggingX { get { return Width - menuOffset; } }
+        private nfloat MinDraggingX { get { return 0; } }
+        private bool MenuOpen {  get { return 0 != CurrentX; }}
+
+        // TODO: Because the gesture of some events
+        // is the same to the gesture of open/close
+        // main Menu, this flag could let external objects to
+        // deactivate it. This behaviour will change soon.
+        public bool MenuEnabled { get; set; }
+
+        public override void ViewWillAppear (bool animated)
+        {
+            base.ViewWillAppear (animated);
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionAuthChanged == null) {
+                subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
+            }
+            if (subscriptionTogglHttpResponse == null) {
+                subscriptionTogglHttpResponse = bus.Subscribe<TogglHttpResponseMessage> (OnTogglHttpResponse);
+            }
+            ResetRootViewController ();
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+
+            Application.MarkLaunched ();
+            menu = new LeftViewController ();
+            View.Window.InsertSubview (menu.View, 0);
+        }
 
         public override void ViewDidLoad ()
         {
@@ -38,73 +66,44 @@ namespace Toggl.Ross.ViewControllers
 
             View.Apply (Style.Screen);
             NavigationBar.Apply (Style.NavigationBar);
-            Delegate = navDelegate = new NavDelegate ();
+            Delegate = new NavDelegate ();
 
-            InteractivePopGestureRecognizer.ShouldBegin = GestureRecognizerShouldBegin;
-
-            interactiveEdgePanGestureRecognizer = new UIScreenEdgePanGestureRecognizer (OnEdgePanGesture) {
-                Edges = UIRectEdge.Left,
-                ShouldBegin = GestureRecognizerShouldBegin,
-            };
-            View.AddGestureRecognizer (interactiveEdgePanGestureRecognizer);
-
-            _tapGesture = new UITapGestureRecognizer (OnTapGesture) {
-                ShouldReceiveTouch = delegate {
-                    return true;
-                },
-                ShouldRecognizeSimultaneously = delegate {
-                    return true;
-                },
+            tapGesture = new UITapGestureRecognizer (OnTapGesture) {
+                ShouldReceiveTouch = (a, b) => true,
+                ShouldRecognizeSimultaneously = (a, b) => true,
                 CancelsTouchesInView = true
             };
 
-            _panGesture = new UIPanGestureRecognizer (OnPanGesture) {
-                CancelsTouchesInView = true
+            panGesture = new UIPanGestureRecognizer (OnPanGesture) {
+                // TODO: TableView scroll gestures are not
+                // compatible with the open / close pan gesture.
+                ShouldRecognizeSimultaneously = (a, b) => ! (b.View is UITableView),
+                CancelsTouchesInView = true,
             };
 
-            View.AddGestureRecognizer (_tapGesture);
-            View.AddGestureRecognizer (_panGesture);
+            View.AddGestureRecognizer (tapGesture);
+            View.AddGestureRecognizer (panGesture);
 
             fadeView = new UIView();
             fadeView.BackgroundColor = UIColor.FromRGBA (29f / 255f, 29f / 255f, 28f / 255f, 0.5f);
-            fadeView.Frame = new CGRect (0, 0, width: View.Frame.Width, height: View.Frame.Height);
-            View.Add (fadeView);
+            fadeView.Frame = new CGRect (0, 0, View.Frame.Width, View.Frame.Height);
             fadeView.Hidden = true;
+            View.Add (fadeView);
         }
 
-        public nfloat Width
+        public override void ViewWillDisappear (bool animated)
         {
-            get {
-                return View.Frame.Width;
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            if (subscriptionAuthChanged != null) {
+                bus.Unsubscribe (subscriptionAuthChanged);
+                subscriptionAuthChanged = null;
             }
-        }
+            if (subscriptionTogglHttpResponse != null) {
+                bus.Unsubscribe (subscriptionTogglHttpResponse);
+                subscriptionTogglHttpResponse = null;
+            }
 
-        public nfloat CurrentX
-        {
-            get {
-                return View.Frame.X;
-            }
-        }
-
-        public nfloat MaxDraggingX
-        {
-            get {
-                return Width - menuOffset;
-            }
-        }
-
-        public nfloat MinDraggingX
-        {
-            get {
-                return 0;
-            }
-        }
-
-        public bool MenuOpen
-        {
-            get {
-                return 0 != CurrentX;
-            }
+            base.ViewWillDisappear (animated);
         }
 
         private void OnPanGesture (UIPanGestureRecognizer recognizer)
@@ -112,6 +111,7 @@ namespace Toggl.Ross.ViewControllers
             if (!MenuEnabled) {
                 return;
             }
+
             var translation = recognizer.TranslationInView (recognizer.View);
             var movement = translation.X - draggingPoint.X;
 
@@ -148,33 +148,16 @@ namespace Toggl.Ross.ViewControllers
         public void CloseMenu()
         {
             fadeView.Hidden = true;
-            _tapGesture.Enabled = false;
-
-            UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, delegate {
-                MoveToLocation (0);
-            }, null);
+            tapGesture.Enabled = false;
+            UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, () => MoveToLocation (0), null);
         }
 
         public void OpenMenu()
         {
-            fadeView.Hidden = false;
-            _tapGesture.Enabled = true;
-
-            if (VisibleViewController is LogViewController) {
-                menu.SelectMenuItem (LeftViewController.TimerPageId);
-            } else if (VisibleViewController is ReportsViewController) {
-                menu.SelectMenuItem (LeftViewController.ReportsPageId);
-            } else if (VisibleViewController is SettingsViewController) {
-                menu.SelectMenuItem (LeftViewController.SettingsPageId);
-            } else if (VisibleViewController is FeedbackViewController) {
-                menu.SelectMenuItem (LeftViewController.FeedbackPageId);
-            } else {
-                menu.SelectMenuItem (LeftViewController.LogoutPageId);
-            }
-
-            UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, delegate {
-                MoveToLocation (Width-menuOffset);
-            }, null);
+            UIView.Animate (menuSlideAnimationDuration, 0, UIViewAnimationOptions.CurveEaseOut, () => MoveToLocation (Width-menuOffset), () => {
+                fadeView.Hidden = false;
+                tapGesture.Enabled = true;
+            });
         }
 
         public void ToggleMenu()
@@ -191,57 +174,18 @@ namespace Toggl.Ross.ViewControllers
             var rect = View.Frame;
             rect.Y = 0;
             rect.X = x;
-            this.View.Frame = rect;
+            View.Frame = rect;
         }
 
         private void OnTapGesture (UITapGestureRecognizer recognizer)
         {
-            if (!MenuEnabled || !_tapGesture.Enabled) {
+            if (!MenuEnabled || !tapGesture.Enabled) {
                 return;
             }
 
             if (CurrentX > 0) {
                 CloseMenu ();
             }
-        }
-
-        public override void ViewWillAppear (bool animated)
-        {
-            base.ViewWillAppear (animated);
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionAuthChanged == null) {
-                subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
-            }
-            if (subscriptionTogglHttpResponse == null) {
-                subscriptionTogglHttpResponse = bus.Subscribe<TogglHttpResponseMessage> (OnTogglHttpResponse);
-            }
-
-            ResetRootViewController ();
-        }
-
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-
-            Application.MarkLaunched ();
-
-            PrepareMenu ();
-        }
-
-        public override void ViewWillDisappear (bool animated)
-        {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionAuthChanged != null) {
-                bus.Unsubscribe (subscriptionAuthChanged);
-                subscriptionAuthChanged = null;
-            }
-            if (subscriptionTogglHttpResponse != null) {
-                bus.Unsubscribe (subscriptionTogglHttpResponse);
-                subscriptionTogglHttpResponse = null;
-            }
-
-            base.ViewWillDisappear (animated);
         }
 
         protected override void Dispose (bool disposing)
@@ -294,64 +238,6 @@ namespace Toggl.Ross.ViewControllers
             if (vc != null) {
                 SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
             }
-        }
-
-        private void PrepareMenu()
-        {
-            menu = new LeftViewController ();
-            this.View.Window.InsertSubview (menu.View, 0);
-        }
-
-        private void OnEdgePanGesture ()
-        {
-            var progress = interactiveEdgePanGestureRecognizer.TranslationInView (View).X / View.Bounds.Width;
-            progress = (float)Math.Min (1, Math.Max (0, progress));
-
-            switch (interactiveEdgePanGestureRecognizer.State) {
-            case UIGestureRecognizerState.Began:
-                navDelegate.InteractiveTransition = new UIPercentDrivenInteractiveTransition ();
-                PopViewController (true);
-                break;
-            case UIGestureRecognizerState.Changed:
-                navDelegate.InteractiveTransition.UpdateInteractiveTransition (progress);
-                break;
-            case UIGestureRecognizerState.Ended:
-            case UIGestureRecognizerState.Cancelled:
-                if (progress > 0.5) {
-                    navDelegate.InteractiveTransition.FinishInteractiveTransition ();
-                } else {
-                    navDelegate.InteractiveTransition.CancelInteractiveTransition ();
-                }
-                navDelegate.InteractiveTransition = null;
-                break;
-            }
-        }
-
-        private bool GestureRecognizerShouldBegin (UIGestureRecognizer recognizer)
-        {
-            // Make sure we're not mid transition or have too few view controllers
-            var transitionCoordinator = this.GetTransitionCoordinator ();
-            if (transitionCoordinator != null && transitionCoordinator.IsAnimated) {
-                return false;
-            }
-            if (ViewControllers.Length <= 1) {
-                return false;
-            }
-
-            var fromViewController = ViewControllers [ViewControllers.Length - 1];
-            var toViewController = ViewControllers [ViewControllers.Length - 2];
-
-            var fromDurationViewController = fromViewController as DurationChangeViewController;
-
-            if (fromDurationViewController != null && fromDurationViewController.PreviousControllerType == toViewController.GetType ()) {
-                if (recognizer == interactiveEdgePanGestureRecognizer) {
-                    return true;
-                }
-            } else if (recognizer == InteractivePopGestureRecognizer) {
-                return true;
-            }
-
-            return false;
         }
 
         private class NavDelegate : UINavigationControllerDelegate

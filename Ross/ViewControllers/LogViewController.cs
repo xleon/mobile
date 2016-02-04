@@ -315,7 +315,6 @@ namespace Toggl.Ross.ViewControllers
             private ITimeEntryHolder holder;
             private Action<TimeEntryCell> OnContinueAction;
 
-
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
                 textContentView = new UIView ();

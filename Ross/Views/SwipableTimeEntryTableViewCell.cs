@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using CoreGraphics;
 using Toggl.Ross.Theme;
 using UIKit;
@@ -44,6 +43,7 @@ namespace Toggl.Ross.Views
         {
             switch (gesture.State) {
             case UIGestureRecognizerState.Began:
+                SetMainMenuActive (false);
                 panStart = gesture.TranslationInView (actualContentView);
                 panLockInHorizDirection = false;
                 break;
@@ -74,6 +74,7 @@ namespace Toggl.Ross.Views
                 break;
             case UIGestureRecognizerState.Ended:
                 if (Editing) {
+                    SetMainMenuActive (true);
                     break;
                 }
 
@@ -89,14 +90,17 @@ namespace Toggl.Ross.Views
                     if (isFinished && absolutePanDeltaX > SwipeWidth - 5) {
                         OnContinueGestureFinished ();
                     }
+                    SetMainMenuActive (true);
                 });
 
                 break;
             case UIGestureRecognizerState.Cancelled:
-                UIView.AnimateNotify (0.3, () => LayoutActualContentView (0), isFinished => gesture.Enabled = isFinished);
+                UIView.AnimateNotify (0.3, () => LayoutActualContentView (0), (isFinished) => {
+                    gesture.Enabled = isFinished;
+                    SetMainMenuActive (true);
+                });
                 break;
             }
-
         }
 
         private void LayoutActualContentView (float maxEdge)
@@ -111,6 +115,16 @@ namespace Toggl.Ross.Views
             var frame = ContentView.Frame;
             frame.X -= panDeltaX;
             actualContentView.Frame = frame;
+        }
+
+        // TODO: Due a a bad or questionable gesture design, the
+        // swypable cells from any table must deactivate
+        // the main app menu in order to swype correctly
+        // This behaviour will change soon.
+
+        private void SetMainMenuActive (bool active)
+        {
+            ((ViewControllers.MainViewController)AppDelegate.TogglWindow.RootViewController).MenuEnabled = active;
         }
 
         public override void LayoutSubviews ()

@@ -27,7 +27,6 @@ namespace Toggl.Ross.ViewControllers
         readonly static NSString EntryCellId = new NSString ("EntryCellId");
         readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
 
-        private NavigationMenuController navMenuController;
         private UIView emptyView;
         private UIView obmEmptyView;
         private UIView reloadView;
@@ -44,20 +43,15 @@ namespace Toggl.Ross.ViewControllers
 
         public LogViewController () : base (UITableViewStyle.Plain)
         {
-            navMenuController = new NavigationMenuController ();
         }
 
-        public async override void ViewDidLoad ()
+        public override void LoadView()
         {
-            base.ViewDidLoad ();
+            base.LoadView();
 
-            // Setup top toolbar
-            SetupToolbar ();
-            navMenuController.Attach (this);
-
-            EdgesForExtendedLayout = UIRectEdge.None;
-            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
-            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+            NavigationItem.LeftBarButtonItem = new UIBarButtonItem (
+                Image.IconNav.ImageWithRenderingMode (UIImageRenderingMode.AlwaysOriginal),
+                UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
 
             emptyView = new SimpleEmptyView {
                 Title = "LogEmptyTitle".Tr (),
@@ -72,6 +66,18 @@ namespace Toggl.Ross.ViewControllers
             reloadView = new ReloadTableViewFooter () {
                 SyncButtonPressedHandler = OnTryAgainBtnPressed
             };
+        }
+
+        public async override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
+
+            // Setup top toolbar
+            SetupToolbar ();
+
+            EdgesForExtendedLayout = UIRectEdge.None;
+            TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
+            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
 
             // Create view model
             ViewModel = LogTimeEntriesViewModel.Init ();
@@ -204,6 +210,12 @@ namespace Toggl.Ross.ViewControllers
         private async void OnTryAgainBtnPressed ()
         {
             await ViewModel.LoadMore ();
+        }
+
+        private void OnNavigationButtonTouched (object sender, EventArgs e)
+        {
+            var main = AppDelegate.TogglWindow.RootViewController as MainViewController;
+            main.ToggleMenu ();
         }
 
         #region TableViewSource

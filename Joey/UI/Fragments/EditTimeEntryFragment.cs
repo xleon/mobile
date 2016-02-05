@@ -15,6 +15,7 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
@@ -188,6 +189,10 @@ namespace Toggl.Joey.UI.Fragments
             .WhenSourceChanges (() => {
                 var label = ViewModel.IsBillable ? GetString (Resource.String.CurrentTimeEntryEditBillableChecked) : GetString (Resource.String.CurrentTimeEntryEditBillableUnchecked);
                 BillableCheckBox.Text = label;
+            });
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            syncErrorBinding = this.SetBinding (() => ViewModel.SyncError).WhenSourceChanges (() => {
+                SyncError.Visibility = (ViewModel.SyncError && !authManager.OfflineMode) ? ViewStates.Visible : ViewStates.Gone;
             });
 
             // Configure option menu.

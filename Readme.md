@@ -1,7 +1,7 @@
 # Toggl Mobile
 
 This repository contains the source code for building the native Toggl Android and iOS applications.
-These applications are build using [Xamarin](http://xamarin.com/) products to allow for maximum
+These applications are built using [Xamarin](http://xamarin.com/) products to allow for maximum
 code reuse and faster development times.
 
 ## Repository structure
@@ -40,7 +40,7 @@ There is a pre-commit git hook, that prevents commits with invalid code style. T
 the source files, just run:
 
 	$ make format
-	
+
 ### Beta testing
 
 Do you want to put our app to the limits? There is a bug that and you know how to simulate it? Join to our Beta tester community and give us your feedback, just write us at [support@toggl.com](mailto:support@toggl.com)

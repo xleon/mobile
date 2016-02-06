@@ -141,9 +141,23 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
+        public void ChangeTimeEntryStart (DateTime newStartTime)
+        {
+            data = TimeEntryModel.ChangeStartTime (data, newStartTime);
+            UpdateView ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
+        }
+
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
             data = TimeEntryModel.ChangeStoptime (data, data.StopTime + diffTime);
+            UpdateView ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
+        }
+
+        public void ChangeTimeEntryStop (DateTime newStopTime)
+        {
+            data = TimeEntryModel.ChangeStoptime (data, newStopTime);
             UpdateView ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }

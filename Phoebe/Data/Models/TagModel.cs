@@ -1,6 +1,8 @@
 using System;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data.DataObjects;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Models
 {
@@ -96,5 +98,23 @@ namespace Toggl.Phoebe.Data.Models
         {
             return model.Data;
         }
+
+        #region Static methods
+
+
+        public async static Task<TagData> AddTag (Guid workspaceId, string name)
+        {
+            var newTag = new TagData {
+                WorkspaceId = workspaceId,
+                Name = name
+            };
+
+            MarkDirty (newTag);
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            return await dataStore.PutAsync (newTag);
+        }
+
+
+        #endregion
     }
 }

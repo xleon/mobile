@@ -4,12 +4,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
+    public interface IUpdateTagList
+    {
+        void OnCreateNewTag (TagData newTagData);
+
+        void OnModifyTagList (List<TagData> newTagList);
+    }
+
     public class TagListViewModel : IDisposable
     {
         // This viewMode is apparently simple but

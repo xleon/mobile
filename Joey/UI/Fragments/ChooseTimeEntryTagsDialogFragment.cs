@@ -15,13 +15,6 @@ using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public interface IUpdateTagList
-    {
-        void OnCreateNewTag (TagData newTagData);
-
-        void OnModifyTagList (List<TagData> newTagList);
-    }
-
     public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
         private static readonly string SelectedTagNamesArgument = "com.toggl.timer.selected_tag_names";

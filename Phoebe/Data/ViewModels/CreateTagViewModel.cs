@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
@@ -10,39 +10,32 @@ namespace Toggl.Phoebe.Data.ViewModels
 {
     public class CreateTagViewModel : IDisposable
     {
-        private WorkspaceModel workspace;
+        Guid workspaceId;
 
         public CreateTagViewModel (Guid workspaceId)
         {
-            this.workspace = new WorkspaceModel (workspaceId);
+            this.workspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Tag Screen";
         }
 
-        public string TagName { get; set; }
-
         public void Dispose ()
         {
-            workspace = null;
         }
 
-        public async Task<TagData> SaveTagModel ()
+        public async Task<TagData> SaveTagModel (string tagName)
         {
             var store = ServiceContainer.Resolve<IDataStore>();
             var existing = await store.Table<TagData>()
-                           .Where (r => r.WorkspaceId == workspace.Id && r.Name == TagName)
+                           .Where (r => r.WorkspaceId == workspaceId && r.Name == tagName)
                            .ToListAsync().ConfigureAwait (false);
 
-            TagModel tag;
+            TagData tag;
             if (existing.Count > 0) {
-                tag = new TagModel (existing [0]);
+                tag = existing.FirstOrDefault ();
             } else {
-                tag = new TagModel {
-                    Name = TagName,
-                    Workspace = workspace,
-                };
-                await tag.SaveAsync ().ConfigureAwait (false);
+                tag = await TagModel.AddTag (workspaceId, tagName);
             }
-            return tag.Data;
+            return tag;
         }
     }
 }

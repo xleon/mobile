@@ -1,123 +1,69 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
 using UIKit;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class NewTagViewController : UIViewController
     {
-        private readonly TagModel model;
         private TextField nameTextField;
-        private bool shouldRebindOnAppear;
-        private bool isSaving;
+        private CreateTagViewModel viewModel { get; set;}
+        private IUpdateTagList handler;
 
-        public NewTagViewController (WorkspaceModel workspace)
+        public NewTagViewController (Guid workspaceId, IUpdateTagList handler)
         {
-            this.model = new TagModel () {
-                Workspace = workspace,
-            };
             Title = "NewTagTitle".Tr ();
-        }
-
-        public Action<TagModel> TagCreated { get; set; }
-
-        private void BindNameField (TextField v)
-        {
-            if (v.Text != model.Name) {
-                v.Text = model.Name;
-            }
-        }
-
-        private void Rebind ()
-        {
-            nameTextField.Apply (BindNameField);
+            viewModel = new CreateTagViewModel (workspaceId);
+            this.handler = handler;
         }
 
         public override void LoadView ()
         {
+            NavigationItem.RightBarButtonItem = new UIBarButtonItem (
+                "NewTagAdd".Tr (), UIBarButtonItemStyle.Plain, OnAddTag)
+            .Apply (Style.NavLabelButton);
+            NavigationItem.RightBarButtonItem.Enabled = false;
+
             var view = new UIView ().Apply (Style.Screen);
 
-            view.Add (nameTextField = new TextField () {
+            view.Add (nameTextField = new TextField {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 AttributedPlaceholder = new NSAttributedString (
                     "NewTagNameHint".Tr (),
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder (),
-            } .Apply (Style.NewProject.NameField).Apply (BindNameField));
-            nameTextField.EditingChanged += OnNameFieldEditingChanged;
+            } .Apply (Style.NewProject.NameField));
+
+            nameTextField.EditingChanged += (sender, e) => {
+                NavigationItem.RightBarButtonItem.Enabled = !string.IsNullOrWhiteSpace (nameTextField.Text);
+            };
 
             view.AddConstraints (VerticalLinearLayout (view));
 
             EdgesForExtendedLayout = UIRectEdge.None;
             View = view;
-
-            NavigationItem.RightBarButtonItem = new UIBarButtonItem (
-                "NewTagAdd".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
-            .Apply (Style.NavLabelButton);
         }
 
-        private void OnNameFieldEditingChanged (object sender, EventArgs e)
+        public override void ViewDidAppear (bool animated)
         {
-            model.Name = nameTextField.Text;
+            base.ViewDidAppear (animated);
+            nameTextField.BecomeFirstResponder ();
         }
 
-        private async void OnNavigationBarAddClicked (object sender, EventArgs e)
+        private async void OnAddTag (object sender, EventArgs e)
         {
-            if (String.IsNullOrWhiteSpace (model.Name)) {
-                // TODO: Show error dialog?
-                return;
-            }
+            var newTagData = await viewModel.SaveTagModel (nameTextField.Text);
+            handler.OnCreateNewTag (newTagData);
 
-            if (isSaving) {
-                return;
-            }
-
-            isSaving = true;
-            try {
-                // Create new tag:
-                var tag = await CreateTag (model);
-
-                // Invoke callback hook
-                var cb = TagCreated;
-                if (cb != null) {
-                    cb (tag);
-                } else {
-                    NavigationController.PopViewController (true);
-                }
-            } finally {
-                isSaving = false;
-            }
-        }
-
-        private static async Task<TagModel> CreateTag (TagModel model)
-        {
-            var store = ServiceContainer.Resolve<IDataStore>();
-            var existing = await store.Table<TagData>()
-                           .Where (r => r.WorkspaceId == model.Workspace.Id && r.Name == model.Name)
-                           .ToListAsync ()
-                           .ConfigureAwait (false);
-
-            TagModel tag;
-            if (existing.Count > 0) {
-                tag = new TagModel (existing [0]);
-            } else {
-                tag = model;
-                await tag.SaveAsync ().ConfigureAwait (false);
-            }
-
-            return tag;
+            var editController = NavigationController.ViewControllers.Where (vc => vc is EditTimeEntryViewController).FirstOrDefault ();
+            NavigationController.PopToViewController (editController, true);
         }
 
         private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
@@ -138,25 +84,6 @@ namespace Toggl.Ross.ViewControllers
 
                 prev = v;
             }
-        }
-
-        public override void ViewWillAppear (bool animated)
-        {
-            base.ViewWillAppear (animated);
-
-            if (shouldRebindOnAppear) {
-                Rebind ();
-            } else {
-                shouldRebindOnAppear = true;
-            }
-        }
-
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-            nameTextField.BecomeFirstResponder ();
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Tag";
         }
     }
 }

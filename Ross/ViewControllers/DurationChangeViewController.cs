@@ -1,24 +1,28 @@
 using System;
 using UIKit;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using Toggl.Phoebe;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class DurationChangeViewController : UIViewController
     {
-        private readonly TimeEntryModel model;
+        public interface IChangeDuration
+        {
+            void OnChangeDuration (TimeSpan newDuration);
+        }
+
         private DurationView durationView;
         private UIBarButtonItem barButtonItem;
-        private bool isSaving;
+        private TimeSpan duration;
+        private readonly IChangeDuration handler;
 
-        public DurationChangeViewController (TimeEntryModel model)
+        public DurationChangeViewController (DateTime stopTime, DateTime startTime, IChangeDuration handler)
         {
-            this.model = model;
+            duration = GetDuration (stopTime, startTime);
+            this.handler = handler;
         }
 
         public override void LoadView ()
@@ -35,13 +39,13 @@ namespace Toggl.Ross.ViewControllers
 
             // Configure navigation item
             NavigationItem.TitleView = durationView = new DurationView () {
-                Hint = model != null ? model.GetDuration () : TimeSpan.Zero,
+                Hint = new Duration (duration.Hours, duration.Minutes),
             } .Apply (Style.DurationEdit.DurationView);
             durationView.DurationChanged += (s, e) => Rebind ();
             durationView.SizeToFit ();
 
             barButtonItem = new UIBarButtonItem (
-                model == null ? "DurationAdd".Tr () : "DurationSet".Tr (),
+                "DurationSet".Tr (),
                 UIBarButtonItemStyle.Plain,
                 OnNavigationBarRightClicked
             ).Apply (Style.NavLabelButton);
@@ -59,8 +63,6 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
             durationView.BecomeFirstResponder ();
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         public override void ViewWillDisappear (bool animated)
@@ -69,45 +71,28 @@ namespace Toggl.Ross.ViewControllers
             durationView.ResignFirstResponder ();
         }
 
-        private async void OnNavigationBarRightClicked (object sender, EventArgs args)
+        private void OnNavigationBarRightClicked (object sender, EventArgs args)
         {
-            if (isSaving) {
-                return;
-            }
-
-            try {
-                isSaving = true;
-                var duration = TimeSpan.Zero;
-
-                var entered = durationView.EnteredDuration;
-                if (model == null || model.State == TimeEntryState.New) {
-                    duration = new TimeSpan (entered.Hours, entered.Minutes, 0);
-                } else {
-                    duration = model.GetDuration ();
-                    // Keep the current seconds and milliseconds
-                    duration = new TimeSpan (0, entered.Hours, entered.Minutes, duration.Seconds, duration.Milliseconds);
-                }
-
-                if (model == null) {
-                    var m = await TimeEntryModel.CreateFinishedAsync (duration);
-                    var controller = new EditTimeEntryViewController ((TimeEntryModel)m);
-
-                    // Replace self with edit controller on the stack
-                    var vcs = NavigationController.ViewControllers;
-                    vcs [vcs.Length - 1] = controller;
-                    NavigationController.SetViewControllers (vcs, true);
-
-                    // Ping analytics
-                    ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppManual);
-                } else {
-                    model.SetDuration (duration);
-                    await model.SaveAsync ();
-                    NavigationController.PopViewController (true);
-                }
-            } finally {
-                isSaving = false;
-            }
+            var entered = durationView.EnteredDuration;
+            duration = new TimeSpan (entered.Hours, entered.Minutes, 0);
+            handler.OnChangeDuration (duration);
+            NavigationController.PopViewController (true);
         }
+
+        private TimeSpan GetDuration (DateTime stopTime, DateTime startTime)
+        {
+            if (startTime.IsMinValue ()) {
+                return TimeSpan.Zero;
+            }
+
+            var duration = stopTime - startTime;
+            if (duration < TimeSpan.Zero) {
+                duration = TimeSpan.Zero;
+            }
+            return duration;
+        }
+
+        #region Navigation classes
 
         public Type PreviousControllerType { get; set; }
 
@@ -142,18 +127,14 @@ namespace Toggl.Ross.ViewControllers
                 toController.View.Alpha = 0;
                 container.InsertSubviewAbove (toController.View, fromController.View);
 
-                UIView.Animate (
-                    TransitionDuration (transitionContext),
-                delegate {
-                    toController.View.Alpha = 1;
-                },
-                delegate {
+                UIView.Animate (TransitionDuration (transitionContext)
+                                ,() => toController.View.Alpha = 1
+                ,() => {
                     if (!transitionContext.TransitionWasCancelled) {
                         fromController.View.RemoveFromSuperview ();
                     }
                     transitionContext.CompleteTransition (!transitionContext.TransitionWasCancelled);
-                }
-                );
+                });
             }
 
             public override double TransitionDuration (IUIViewControllerContextTransitioning transitionContext)
@@ -193,5 +174,7 @@ namespace Toggl.Ross.ViewControllers
                 return 0.4f;
             }
         }
+
+        #endregion
     }
 }

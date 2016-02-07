@@ -204,7 +204,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Theme\UIColorExtensions.cs" />
-    <Compile Include="ViewControllers\TimerNavigationController.cs" />
     <Compile Include="Theme\Style.NavTimer.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>

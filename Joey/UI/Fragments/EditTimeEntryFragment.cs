@@ -134,10 +134,15 @@ namespace Toggl.Joey.UI.Fragments
                 ViewModel.IsBillable = BillableCheckBox.Checked;
             };
 
-            DurationTextView.Click += (sender, e) =>
-                                      ChangeTimeEntryDurationDialogFragment.NewInstance (ViewModel.StopDate, ViewModel.StartDate)
-                                      .SetChangeDurationHandler (this)
-                                      .Show (FragmentManager, "duration_dialog");
+            DurationTextView.Click += (sender, e) => {
+                // TODO: Don't edit duration if Time entry is running?
+                if (ViewModel.IsRunning) {
+                    return;
+                }
+                ChangeTimeEntryDurationDialogFragment.NewInstance (ViewModel.StopDate, ViewModel.StartDate)
+                .SetChangeDurationHandler (this)
+                .Show (FragmentManager, "duration_dialog");
+            };
 
             StartTimeEditText.Click += (sender, e) => {
                 var title = GetString (Resource.String.ChangeTimeEntryStartTimeDialogTitle);

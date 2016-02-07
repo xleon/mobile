@@ -17,9 +17,10 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class EditTimeEntryViewController : UIViewController, IUpdateTagList
+    public class EditTimeEntryViewController : UIViewController, DurationChangeViewController.IChangeDuration, IUpdateTagList
     {
-        private readonly TimerNavigationController timerController;
+        private const string DefaultDurationText = " 00:00:00 ";
+
         private NSLayoutConstraint[] trackedWrapperConstraints;
         private UIView wrapper;
         private StartStopView startStopView { get; set; }
@@ -29,11 +30,9 @@ namespace Toggl.Ross.ViewControllers
         private UIDatePicker datePicker;
         private UIButton tagsButton;
         private UIButton deleteButton;
+        private UIButton durationButton;
         private bool hideDatePicker = true;
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
-        private UITableView autoCompletionTableView;
-        private UIBarButtonItem autoCompletionDoneBarButtonItem;
-        private Stack<UIBarButtonItem> barButtonItemsStack = new Stack<UIBarButtonItem> ();
 
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
@@ -44,7 +43,6 @@ namespace Toggl.Ross.ViewControllers
 
         private readonly TimeEntryData data;
         protected EditTimeEntryViewModel ViewModel { get; set; }
-
 
         public EditTimeEntryViewController (TimeEntryData data)
         {
@@ -58,6 +56,12 @@ namespace Toggl.Ross.ViewControllers
 
         public override void LoadView ()
         {
+            durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
+            durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
+            durationButton.SizeToFit ();
+            durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
+            NavigationItem.TitleView = durationButton;
+
             var scrollView = new UIScrollView ().Apply (Style.Screen);
 
             scrollView.Add (wrapper = new UIView () {
@@ -132,11 +136,11 @@ namespace Toggl.Ross.ViewControllers
         public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
-            //timerController.Attach (this);
 
             ViewModel = await EditTimeEntryViewModel.Init (data);
 
             // Bindings.
+            durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
             startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => startStopView.StartTime);
             stopTimeBinding = this.SetBinding (() => ViewModel.StopDate, () => startStopView.StopTime);
             projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => projectButton.ProjectName);
@@ -146,7 +150,7 @@ namespace Toggl.Ross.ViewControllers
             tagBinding = this.SetBinding (() => ViewModel.TagList).WhenSourceChanges (() => {
                 FeedTags (ViewModel.TagList.Select (tag => tag.Name).ToList (), tagsButton);
             });
-            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => descriptionTextField.Text);
+            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => descriptionTextField.Text).UpdateTargetTrigger (nameof (UITextField.EditingChanged));
             isPremiumBinding = this.SetBinding (() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget (isPremium => !isPremium);
             isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {
                 if (ViewModel.IsRunning) {
@@ -155,14 +159,16 @@ namespace Toggl.Ross.ViewControllers
                     startStopView.StopTime = ViewModel.StopDate;
                 }
             });
-            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
+            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On).UpdateTargetTrigger (nameof (UISwitch.ValueChanged));
         }
 
-        public override void ViewWillDisappear (bool animated)
+        public async override void ViewWillDisappear (bool animated)
         {
             base.ViewWillDisappear (animated);
             NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
             notificationObjects.Clear ();
+
+            await ViewModel.SaveAsync ();
             ViewModel.Dispose ();
         }
 
@@ -207,6 +213,17 @@ namespace Toggl.Ross.ViewControllers
         {
             //var controller = new ProjectSelectionViewController ();
             //NavigationController.PushViewController (controller, true);
+        }
+
+        private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
+        {
+            // TODO: This condition is valid or not?
+            if (ViewModel.IsRunning) {
+                return;
+            }
+
+            var controller = new DurationChangeViewController (ViewModel.StopDate, ViewModel.StartDate, this);
+            NavigationController.PushViewController (controller, true);
         }
 
         private void OnTagsButtonTouchUpInside (object sender, EventArgs e)
@@ -268,6 +285,15 @@ namespace Toggl.Ross.ViewControllers
             DatePickerHidden = true;
             startStopView.Selected = TimeKind.None;
         }
+
+        #region IChangeDuration implementation
+
+        public void OnChangeDuration (TimeSpan newDuration)
+        {
+            ViewModel.ChangeTimeEntryDuration (newDuration);
+        }
+
+        #endregion
 
         #region IUpdateTagList implementation
 

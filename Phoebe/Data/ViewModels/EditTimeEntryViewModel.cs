@@ -8,8 +8,6 @@ using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
@@ -215,6 +213,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
                 Description = data.Description;
                 WorkspaceId = data.WorkspaceId;
+                IsBillable = data.IsBillable;
 
                 if (data.State == TimeEntryState.Running && !IsRunning) {
                     IsRunning = true;
@@ -232,6 +231,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             // Ensure that this content runs in UI thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
+
+                var workspace = await TimeEntryModel.GetWorkspaceDataAsync (data.WorkspaceId);
 
                 if (projectId != Guid.Empty) {
                     data.ProjectId = projectId;
@@ -258,20 +259,20 @@ namespace Toggl.Phoebe.Data.ViewModels
                         TaskName = string.Empty;
                     }
 
-                    // TODO: Workspace and Billable should change!
-                    data.WorkspaceId = project.WorkspaceId;
-                    data.IsBillable = project.IsBillable;
-                    var workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
-                    IsPremium = workspace.IsPremium;
-
-                    WorkspaceId = data.WorkspaceId;
-                    IsBillable = data.IsBillable;
+                    // TODO: Workspace and Billable should change!?
+                    if (data.WorkspaceId != project.WorkspaceId) {
+                        data.WorkspaceId = project.WorkspaceId;
+                        workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
+                    }
                 } else {
                     ProjectName = string.Empty;
                     ClientName = string.Empty;
                     TaskName = string.Empty;
                     ProjectColorHex = ProjectModel.HexColors [ProjectModel.DefaultColor];
                 }
+
+                WorkspaceId = data.WorkspaceId;
+                IsPremium = workspace.IsPremium;
             });
         }
 

@@ -3,18 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using CoreAnimation;
-using CoreFoundation;
 using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.Views;
-using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -22,26 +17,8 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class EditTimeEntryViewController : UIViewController
+    public class EditTimeEntryViewController : UIViewController, IUpdateTagList
     {
-        private enum LayoutVariant {
-            Default,
-            Description
-        }
-
-        class TGTableView : UITableView
-        {
-            public override UIView TableFooterView
-            {
-                get {
-                    return base.TableFooterView;
-                } set {
-                    base.TableFooterView = value ?? new UIView ();
-                }
-            }
-        }
-
-        private LayoutVariant layoutVariant = LayoutVariant.Default;
         private readonly TimerNavigationController timerController;
         private NSLayoutConstraint[] trackedWrapperConstraints;
         private UIView wrapper;
@@ -61,12 +38,13 @@ namespace Toggl.Ross.ViewControllers
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
         private Binding<DateTime, DateTime> startTimeBinding;
-        private Binding<DateTime, DateTime?> stopTimeBinding;
+        private Binding<DateTime, DateTime> stopTimeBinding;
         private Binding<List<TagData>, List<TagData>> tagBinding;
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, isPremiumBinding;
 
         private readonly TimeEntryData data;
         protected EditTimeEntryViewModel ViewModel { get; set; }
+
 
         public EditTimeEntryViewController (TimeEntryData data)
         {
@@ -76,33 +54,6 @@ namespace Toggl.Ross.ViewControllers
         protected override void Dispose (bool disposing)
         {
             base.Dispose (disposing);
-        }
-
-        private void ResetWrapperConstraints()
-        {
-            if (trackedWrapperConstraints != null) {
-                wrapper.RemoveConstraints (trackedWrapperConstraints);
-                trackedWrapperConstraints = null;
-            }
-
-            switch (layoutVariant) {
-            case LayoutVariant.Default:
-                trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
-                break;
-            case LayoutVariant.Description:
-                trackedWrapperConstraints = new [] {
-                    descriptionTextField.AtTopOf (wrapper),
-                    descriptionTextField.AtLeftOf (wrapper),
-                    descriptionTextField.AtRightOf (wrapper),
-                    descriptionTextField.Height ().EqualTo (60.0f),
-                    autoCompletionTableView.AtTopOf (wrapper, 65.0f),
-                    autoCompletionTableView.AtLeftOf (wrapper),
-                    autoCompletionTableView.AtRightOf (wrapper),
-                    autoCompletionTableView.AtBottomOf (wrapper)
-                } .ToLayoutConstraints ();
-                break;
-            }
-            wrapper.AddConstraints (trackedWrapperConstraints);
         }
 
         public override void LoadView ()
@@ -158,12 +109,6 @@ namespace Toggl.Ross.ViewControllers
             } .Apply (Style.EditTimeEntry.BillableContainer));
             billableSwitch.Label.Apply (Style.EditTimeEntry.BillableLabel);
 
-            wrapper.Add (autoCompletionTableView = new TGTableView() {
-                TranslatesAutoresizingMaskIntoConstraints = false,
-                EstimatedRowHeight = 60.0f,
-                BackgroundColor = UIColor.Clear
-            });
-
             wrapper.Add (deleteButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.EditTimeEntry.DeleteButton));
@@ -194,8 +139,7 @@ namespace Toggl.Ross.ViewControllers
             // Bindings.
             startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => startStopView.StartTime);
             stopTimeBinding = this.SetBinding (() => ViewModel.StopDate, () => startStopView.StopTime);
-            projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => projectButton.ProjectName)
-                             .ConvertSourceToTarget (name => string.IsNullOrEmpty (name) ? "EditEntryProjectHint".Tr () : name);
+            projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => projectButton.ProjectName);
             projectColorBinding = this.SetBinding (() => ViewModel.ProjectColorHex, () => projectButton.ProjectColorHex);
             taskBinding = this.SetBinding (() => ViewModel.TaskName, () => projectButton.TaskName);
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => projectButton.ClientName);
@@ -206,7 +150,7 @@ namespace Toggl.Ross.ViewControllers
             isPremiumBinding = this.SetBinding (() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget (isPremium => !isPremium);
             isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {
                 if (ViewModel.IsRunning) {
-                    startStopView.StopTime = null;
+                    startStopView.StopTime = DateTime.MaxValue;
                 } else {
                     startStopView.StopTime = ViewModel.StopDate;
                 }
@@ -214,22 +158,12 @@ namespace Toggl.Ross.ViewControllers
             isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
         }
 
-        private void SetEditingModeViewsHidden (bool editingMode)
+        public override void ViewWillDisappear (bool animated)
         {
-            billableSwitch.Alpha = tagsButton.Alpha = startStopView.Alpha = projectButton.Alpha = deleteButton.Alpha = editingMode ? 0 : 1;
-            autoCompletionTableView.Alpha = 1 - tagsButton.Alpha;
-        }
-
-        private void OnDatePickerValueChanged (object sender, EventArgs e)
-        {
-            switch (startStopView.Selected) {
-            case TimeKind.Start:
-                //model.StartTime = datePicker.Date.ToDateTime ();
-                break;
-            case TimeKind.Stop:
-                //model.StopTime = datePicker.Date.ToDateTime ();
-                break;
-            }
+            base.ViewWillDisappear (animated);
+            NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
+            notificationObjects.Clear ();
+            ViewModel.Dispose ();
         }
 
         private void FeedTags (List<string> tagNames, UIButton btn)
@@ -257,19 +191,28 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private void OnDatePickerValueChanged (object sender, EventArgs e)
+        {
+            switch (startStopView.Selected) {
+            case TimeKind.Start:
+                ViewModel.ChangeTimeEntryStart (datePicker.Date.ToDateTime ());
+                break;
+            case TimeKind.Stop:
+                ViewModel.ChangeTimeEntryStop (datePicker.Date.ToDateTime ());
+                break;
+            }
+        }
+
         private void OnProjectButtonTouchUpInside (object sender, EventArgs e)
         {
-            //var controller = new ProjectSelectionViewController (model);
+            //var controller = new ProjectSelectionViewController ();
             //NavigationController.PushViewController (controller, true);
         }
 
-        bool shouldUpdateAutocompletionTableViewSource = false;
-        NSTimer autocompletionModeTimeoutTimer;
-
         private void OnTagsButtonTouchUpInside (object sender, EventArgs e)
         {
-            //var controller = new TagSelectionViewController (model);
-            //NavigationController.PushViewController (controller, true);
+            var controller = new TagSelectionViewController (ViewModel.WorkspaceId, ViewModel.TagList, this);
+            NavigationController.PushViewController (controller, true);
         }
 
         private void OnDeleteButtonTouchUpInside (object sender, EventArgs e)
@@ -282,61 +225,11 @@ namespace Toggl.Ross.ViewControllers
                 "EditEntryConfirmDelete".Tr ());
             alert.Clicked += async (s, ev) => {
                 if (ev.ButtonIndex == 1) {
+                    await ViewModel.DeleteAsync ();
                     NavigationController.PopToRootViewController (true);
                 }
             };
             alert.Show ();
-        }
-
-        public override void ViewWillAppear (bool animated)
-        {
-            base.ViewWillAppear (animated);
-
-            //timerController.Start ();
-
-            ObserveNotification (UIKeyboard.WillHideNotification, (notif) => {
-                OnKeyboardHeightChanged (0);
-            });
-            ObserveNotification (UIKeyboard.WillShowNotification, (notif) => {
-                var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
-                if (val != null) {
-                    OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
-                }
-            });
-            ObserveNotification (UIKeyboard.WillChangeFrameNotification, (notif) => {
-                var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
-                if (val != null) {
-                    OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
-                }
-            });
-        }
-
-        private void ObserveNotification (string name, Action<NSNotification> callback)
-        {
-            var obj = NSNotificationCenter.DefaultCenter.AddObserver (new NSString ( name), callback);
-            if (obj != null) {
-                notificationObjects.Add (obj);
-            }
-        }
-
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
-        }
-
-        public override void ViewWillDisappear (bool animated)
-        {
-            base.ViewWillDisappear (animated);
-            NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
-            notificationObjects.Clear ();
-        }
-
-        public override void ViewDidDisappear (bool animated)
-        {
-            base.ViewDidDisappear (animated);
-            //timerController.Stop ();
         }
 
         private void OnKeyboardHeightChanged (int height)
@@ -354,6 +247,19 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnStartStopViewSelectedChanged (object sender, EventArgs e)
         {
+            var currentValue = datePicker.Date.ToDateTime ().ToUtc ();
+            switch (startStopView.Selected) {
+            case TimeKind.Start:
+                if (currentValue != ViewModel.StartDate) {
+                    datePicker.SetDate (ViewModel.StartDate.ToNSDate (), !datePicker.Hidden);
+                }
+                break;
+            case TimeKind.Stop:
+                if (currentValue != ViewModel.StopDate) {
+                    datePicker.SetDate (ViewModel.StopDate.ToNSDate (), !datePicker.Hidden);
+                }
+                break;
+            }
             DatePickerHidden = startStopView.Selected == TimeKind.None;
         }
 
@@ -362,6 +268,22 @@ namespace Toggl.Ross.ViewControllers
             DatePickerHidden = true;
             startStopView.Selected = TimeKind.None;
         }
+
+        #region IUpdateTagList implementation
+
+        public void OnCreateNewTag (TagData newTagData)
+        {
+            ViewModel.AddTag (newTagData);
+        }
+
+        public void OnModifyTagList (List<TagData> newTagList)
+        {
+            ViewModel.ChangeTagList (newTagList);
+        }
+
+        #endregion
+
+        #region UI layout helpers
 
         private bool DatePickerHidden
         {
@@ -411,6 +333,18 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private void ResetWrapperConstraints()
+        {
+            if (trackedWrapperConstraints != null) {
+                wrapper.RemoveConstraints (trackedWrapperConstraints);
+                trackedWrapperConstraints = null;
+            }
+
+            trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
+            wrapper.AddConstraints (trackedWrapperConstraints);
+        }
+
+
         private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
         {
             UIView prev = null;
@@ -439,6 +373,9 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        #endregion
+
+        #region Custom UI components
         private class StartStopView : UIView
         {
             private readonly List<NSLayoutConstraint> trackedConstraints = new List<NSLayoutConstraint>();
@@ -452,7 +389,7 @@ namespace Toggl.Ross.ViewControllers
             private LayoutVariant viewLayout = LayoutVariant.StartOnly;
             private bool stopTimeHidden = true;
             private DateTime startTime;
-            private DateTime? stopTime;
+            private DateTime stopTime;
             private TimeKind selectedTime;
 
             public StartStopView ()
@@ -503,23 +440,24 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public DateTime? StopTime
+            public DateTime StopTime
             {
                 get { return stopTime; }
                 set {
+
                     if (stopTime == value) {
                         return;
                     }
-
                     stopTime = value;
-                    if (stopTime.HasValue) {
-                        var time = stopTime.Value.ToLocalTime ();
+
+                    if (stopTime != DateTime.MaxValue) {
+                        var time = stopTime.ToLocalTime ();
                         stopDateLabel.Text = time.ToLocalizedDateString ();
                         stopTimeLabel.Text = time.ToLocalizedTimeString ();
                     }
-                    SetStopTimeHidden (stopTime == null, animate: Superview != null);
+                    SetStopTimeHidden (stopTime == DateTime.MaxValue, Superview != null);
 
-                    if (stopTime == null && Selected == TimeKind.Stop) {
+                    if (stopTime == DateTime.MaxValue && Selected == TimeKind.Stop) {
                         Selected = TimeKind.None;
                     }
                 }
@@ -836,7 +774,10 @@ namespace Toggl.Ross.ViewControllers
             public string ProjectName
             {
                 get { return projectLabel.Text; }
-                set { projectLabel.Text = value; }
+                set {
+                    var projectName = string.IsNullOrEmpty (value) ? "EditEntryProjectHint".Tr () : value;
+                    projectLabel.Text = projectName;
+                }
             }
 
             public string ClientName
@@ -847,12 +788,12 @@ namespace Toggl.Ross.ViewControllers
                         return;
                     }
 
-                    var visibilityChanged = String.IsNullOrWhiteSpace (clientLabel.Text) != String.IsNullOrWhiteSpace (value);
+                    var visibilityChanged = string.IsNullOrWhiteSpace (clientLabel.Text) != string.IsNullOrWhiteSpace (value);
                     clientLabel.Text = value;
 
                     if (visibilityChanged) {
                         SetNeedsUpdateConstraints ();
-                        clientLabel.Hidden = String.IsNullOrWhiteSpace (value);
+                        clientLabel.Hidden = string.IsNullOrWhiteSpace (value);
                     }
                 }
             }
@@ -865,12 +806,12 @@ namespace Toggl.Ross.ViewControllers
                         return;
                     }
 
-                    var visibilityChanged = string.IsNullOrWhiteSpace (taskLabel.Text) != String.IsNullOrWhiteSpace (value);
+                    var visibilityChanged = string.IsNullOrWhiteSpace (taskLabel.Text) != string.IsNullOrWhiteSpace (value);
                     taskLabel.Text = value;
 
                     if (visibilityChanged) {
                         SetNeedsUpdateConstraints ();
-                        taskLabel.Hidden = String.IsNullOrWhiteSpace (value);
+                        taskLabel.Hidden = string.IsNullOrWhiteSpace (value);
                     }
                 }
             }
@@ -879,16 +820,14 @@ namespace Toggl.Ross.ViewControllers
             {
                 get { return "#ffffff"; }
                 set {
-                    var colorHex = (value == "#4dc3ff" || string.IsNullOrEmpty (value)) ? "#ffffff" : value;
-                    var color = UIColor.Clear.FromHex (colorHex);
-
-                    if (color == Color.White) {
+                    // If string Hex color is default or null:
+                    if (value == ProjectModel.HexColors [ProjectModel.DefaultColor] || string.IsNullOrEmpty (value)) {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectHintLabel);
                         SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
                         SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);
                     } else {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectLabel);
-                        SetBackgroundImage (color.ToImage (), UIControlState.Normal);
+                        SetBackgroundImage (UIColor.Clear.FromHex (value).ToImage (), UIControlState.Normal);
                         SetBackgroundImage (null, UIControlState.Highlighted);
                     }
                 }
@@ -900,5 +839,6 @@ namespace Toggl.Ross.ViewControllers
                 return true;
             }
         }
+        #endregion
     }
 }

@@ -193,6 +193,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
+        public async Task DeleteAsync ()
+        {
+            await TimeEntryModel.DeleteTimeEntryDataAsync (data);
+        }
+
         public async Task SaveManualAsync ()
         {
             IsManual = false;
@@ -205,7 +210,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
 
                 StartDate = data.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : data.StartTime.ToLocalTime ();
-                StopDate = data.StopTime.HasValue ? data.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
+                StopDate = data.StopTime.HasValue ? data.StopTime.Value.ToLocalTime () : DateTime.MaxValue;
                 var duration = TimeEntryModel.GetDuration (data, Time.UtcNow);
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
                 Description = data.Description;

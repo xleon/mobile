@@ -8,6 +8,7 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Net;
 using XPlatUtils;
+using Toggl.Phoebe._Helpers;
 
 namespace Toggl.Phoebe._Reactive
 {
@@ -135,6 +136,33 @@ namespace Toggl.Phoebe._Reactive
             }
             else {
                 await client.Delete (json);
+            }
+        }
+
+
+        async void DownloadEntries(DateTime startFrom)
+        {
+            const int daysLoad = Literals.TimeEntryLoadDays;
+            try {
+                // Download new Entries
+                var client = ServiceContainer.Resolve<ITogglClient> ();
+                var jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
+
+                RxChain.Send (this.GetType (), DataTag.TimeEntryReceivedFromServer, jsonEntries);
+            }
+            catch (Exception exc) {
+                var tag = typeof(StoreRegister).Name;
+                var log = ServiceContainer.Resolve<ILogger> ();
+                const string errorMsg = "Failed to fetch time entries {1} days up to {0}";
+
+                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
+                    log.Info (tag, exc, errorMsg, startFrom, daysLoad);
+                }
+                else {
+                    log.Warning (tag, exc, errorMsg, startFrom, daysLoad);
+                }
+
+                RxChain.SendError<List<TimeEntryJson>> (this.GetType (), DataTag.TimeEntryRemove, exc);
             }
         }
     }

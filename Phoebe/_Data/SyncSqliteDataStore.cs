@@ -10,7 +10,6 @@ namespace Toggl.Phoebe._Data
 {
     public class SyncSqliteDataStore 
     {
-
         readonly SQLiteConnectionWithLock cnn;
         readonly ISQLitePlatform platformInfo;
 
@@ -47,35 +46,66 @@ namespace Toggl.Phoebe._Data
                 select t;
         }
 
-        public void ExecuteInTransaction (Action<ISyncDataStoreContext> worker)
+        public TableQuery<T> Table<T> () where T : CommonData
         {
+            return cnn.Table<T> ();
+        }
+
+        public IReadOnlyList<DataSyncMsg> Update (DataDir dir, Action<ISyncDataStoreContext> worker)
+        {
+            IReadOnlyList<DataSyncMsg> msgs = new List<DataSyncMsg> ();
+
             cnn.RunInTransaction (() => {
-                worker(new SyncSqliteDataStoreContext(cnn));
+                var ctx = new SyncSqliteDataStoreContext (dir, cnn);
+                worker (ctx);
+                msgs = ctx.Messages;
             });
+
+            return msgs;
+        }
+
+        public void UpdateQueue (DataDir dir, Action<ISyncDataStoreQueue> worker)
+        {
+            cnn.RunInTransaction (() => worker(new SyncSqliteDataStoreQueue (cnn)));
         }
 
         public class SyncSqliteDataStoreContext : ISyncDataStoreContext
         {
+            readonly DataDir dir;
             readonly SQLiteConnectionWithLock conn;
+            readonly List<DataSyncMsg> messages;
 
-            public SyncSqliteDataStoreContext(SQLiteConnectionWithLock conn)
+            public SyncSqliteDataStoreContext(DataDir dir, SQLiteConnectionWithLock conn)
             {
+                this.dir = dir;
                 this.conn = conn;
+                this.messages = new List<DataSyncMsg> ();
             }
 
-            public bool Put (object obj)
+            public IReadOnlyList<DataSyncMsg> Messages
+            {
+                get { return messages; }
+            }
+
+            public void Put<T> (T obj) where T : CommonData
             {
                 var success = conn.InsertOrReplace (obj) == 1;
-                return success;
+                if (success) {
+                    messages.Add (new DataSyncMsg (dir, DataAction.Put, obj));
+                }
             }
 
-            public bool Delete (object obj)
+            public void Delete<T> (T obj) where T : CommonData
             {
                 var success = conn.Delete (obj) == 1;
-                return success;
+                if (success) {
+                    messages.Add (new DataSyncMsg (dir, DataAction.Delete, obj));
+                }
             }
+        }
 
-            #region Queue methods
+        public class SyncSqliteDataStoreQueue : ISyncDataStoreQueue
+        {
             const string QueueCreateSql = "CREATE TABLE IF NOT EXISTS [__QUEUE__{0}] (Data TEXT)";
             const string QueueInsertSql = "INSERT INTO [__QUEUE__{0}] VALUES (?)";
             const string QueueSelectFirstSql = "SELECT rowid, * FROM [__QUEUE__{0}] ORDER BY rowid LIMIT 1";
@@ -87,6 +117,13 @@ namespace Toggl.Phoebe._Data
                 [SQLite.Net.Attributes.Column("rowid")]
                 public long RowId { get; set; }
                 public string Data { get; set; }
+            }
+
+            readonly SQLiteConnectionWithLock conn;
+
+            public SyncSqliteDataStoreQueue(SQLiteConnectionWithLock conn)
+            {
+                this.conn = conn;
             }
 
             private void CreateQueueTable (string queueId)
@@ -145,7 +182,6 @@ namespace Toggl.Phoebe._Data
                     return false;
                 }
             }
-            #endregion
         }
     }
 }

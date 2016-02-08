@@ -18,8 +18,8 @@ namespace Toggl.Phoebe._Reactive
 		IObserver<IDataMsg> observer;
         event EventHandler<IDataMsg> notify;
 
-        readonly Toggl.Phoebe.Data.IDataStore dataStore =
-            ServiceContainer.Resolve<Toggl.Phoebe.Data.IDataStore> ();
+        readonly ISyncDataStore dataStore =
+            ServiceContainer.Resolve<ISyncDataStore> ();
 
         StoreManager ()
         {
@@ -31,7 +31,7 @@ namespace Toggl.Phoebe._Reactive
                 }; 
             })
             .Synchronize (schedulerProvider.GetScheduler ())
-            .SelectAsync (msg => StoreRegister.ResolveAction (msg, dataStore))
+            .Select (msg => StoreRegister.ResolveAction (msg, dataStore))
             .Catch<IDataMsg, Exception> (RxChain.PropagateError)
             .Where (x => x.Tag != DataTag.UncaughtError)
             .Subscribe (msg => notify.SafeInvoke (this, msg));

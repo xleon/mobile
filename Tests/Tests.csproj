@@ -68,57 +68,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Test.cs" />
-    <Compile Include="MessageBusTest.cs" />
-    <Compile Include="Data\DataStoreTest.cs" />
-    <Compile Include="Data\Models\ModelTest.cs" />
-    <Compile Include="Data\Models\ClientModelTest.cs" />
-    <Compile Include="Data\Models\ProjectModelTest.cs" />
-    <Compile Include="Data\Models\ProjectUserModelTest.cs" />
-    <Compile Include="Data\Models\TagModelTest.cs" />
-    <Compile Include="Data\Models\TaskModelTest.cs" />
-    <Compile Include="Data\Models\TimeEntryModelTest.cs" />
-    <Compile Include="Data\Models\TimeEntryTagModelTest.cs" />
-    <Compile Include="Data\Models\UserModelTest.cs" />
-    <Compile Include="Data\Models\WorkspaceModelTest.cs" />
-    <Compile Include="Data\Models\WorkspaceUserModelTest.cs" />
-    <Compile Include="Data\Json\Converters\ClientJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\ProjectJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\ProjectUserJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\WorkspaceUserJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\TagJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\TaskJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\WorkspaceJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\UserJsonConverterTest.cs" />
-    <Compile Include="Data\Json\Converters\TimeEntryJsonConverterTest.cs" />
-    <Compile Include="Data\ForeignRelationManagerTest.cs" />
-    <Compile Include="Data\RelatedDataGraphTest.cs" />
-    <Compile Include="MainThreadSynchronizationContext.cs" />
-    <Compile Include="Data\ActiveTimeEntryManagerTest.cs" />
-    <Compile Include="Views\TimeEntryTagsViewTest.cs" />
-    <Compile Include="Views\DataViewTest.cs" />
-    <Compile Include="Data\DataCacheTest.cs" />
-    <Compile Include="UpgradeManagerTest.cs" />
-    <Compile Include="TimeCorrectionManagerTest.cs" />
-    <Compile Include="Data\Merge\ClientMergerTest.cs" />
-    <Compile Include="Data\Merge\MergeTest.cs" />
-    <Compile Include="Data\Merge\ProjectMergerTest.cs" />
-    <Compile Include="Data\Merge\ProjectUserMergerTest.cs" />
-    <Compile Include="Data\Merge\TagMergerTest.cs" />
-    <Compile Include="Data\Merge\TaskMergerTest.cs" />
-    <Compile Include="Data\Merge\TimeEntryMergerTest.cs" />
-    <Compile Include="Data\Merge\UserMergerTest.cs" />
-    <Compile Include="Data\Merge\WorkspaceMergerTest.cs" />
-    <Compile Include="Data\Merge\WorkspaceUserMergerTest.cs" />
-    <Compile Include="Analytics\ExperimentManagerTest.cs" />
     <Compile Include="VoidLogger.cs" />
-    <Compile Include="Views\SummaryReportViewTest.cs" />
-    <Compile Include="Analytics\TestTracker.cs" />
-    <Compile Include="Analytics\BaseTrackerTest.cs" />
-    <Compile Include="Misc\ExceptionTest.cs" />
-    <Compile Include="Data\Mapper\MapperJsonToDataTest.cs" />
-    <Compile Include="Data\Mapper\MapperDataToJsonTest.cs" />
-    <Compile Include="Reactive\SyncOutManagerTests.cs" />
-    <Compile Include="Reactive\AppStateTest.cs" />
+    <Compile Include="MainThreadSynchronizationContext.cs" />
+    <!-- <Compile Include="UpgradeManagerTest.cs" />
+    <Compile Include="TimeCorrectionManagerTest.cs" /> -->
+    <!-- <Compile Include="Data\**\*.cs" />
+    <Compile Include="Views\**\*.cs" />
+    <Compile Include="Analytics\**\*.cs" />
+    <Compile Include="Misc\**\*.cs" />     -->
+    <Compile Include="Reactive\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -126,23 +87,5 @@
       <Project>{C50664AF-B4E8-4B23-A3E4-67162EA6D895}</Project>
       <Name>Phoebe.Desktop</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-    <None Include="Data\RelatedModelsCollectionTest.cs" />
-    <None Include="Data\TimeEntryCollectionTest.cs" />
-    <None Include="Data\ActiveTimeEntryManagerTest.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Data\" />
-    <Folder Include="Views\" />
-    <Folder Include="Data\Models\" />
-    <Folder Include="Data\Json\" />
-    <Folder Include="Data\Json\Converters\" />
-    <Folder Include="Data\Merge\" />
-    <Folder Include="Analytics\" />
-    <Folder Include="Misc\" />
-    <Folder Include="Data\Mapper\" />
-    <Folder Include="Reactive\" />
   </ItemGroup>
 </Project>

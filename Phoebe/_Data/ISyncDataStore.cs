@@ -8,23 +8,19 @@ namespace Toggl.Phoebe._Data
     public interface ISyncDataStore
     {
         TableQuery<T> Table<T> () where T : CommonData;
-        void UpdateQueue (Action<ISyncDataStoreQueue> worker);
-        IReadOnlyList<DataSyncMsg> Update (DataDir dir, Action<ISyncDataStoreContext> worker);
+        IReadOnlyList<CommonData> Update (Action<ISyncDataStoreContext> worker);
+
+        int GetSize (string queueId);
+        bool TryEnqueue (string queueId, string json);
+        bool TryDequeue (string queueId, out string json);
+        bool TryPeek (string queueId, out string json);
     }
 
     public interface ISyncDataStoreContext
     {
-        void Put<T> (T obj) where T : CommonData;
-        void Delete<T> (T obj) where T : CommonData;
-        IReadOnlyList<DataSyncMsg> Messages { get; }
-    }
-
-    public interface ISyncDataStoreQueue
-    {
-        int GetQueueSize (string queueId);
-        bool TryEnqueue (string queueId, string json);
-        bool TryDequeue (string queueId, out string json);
-        bool TryPeekQueue (string queueId, out string json);
+        void Put (CommonData obj);
+        void Delete (CommonData obj);
+        IReadOnlyList<CommonData> UpdatedItems { get; }
     }
 }
 

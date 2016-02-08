@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 
@@ -33,6 +34,12 @@ namespace Toggl.Phoebe._Helpers
         /// Processes async operations one after the other (SelectMany does it in parallel)
         /// </summary>
         public static IObservable<U> SelectAsync<T,U> (this IObservable<T> observable, Func<T,Task<U>> selector)
+        {
+            // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
+            return observable.Select (x => Observable.FromAsync (() => selector (x))).Concat ();
+        }
+
+        public static IObservable<Unit> SelectAsync<T> (this IObservable<T> observable, Func<T,Task> selector)
         {
             // SelectMany would process tasks in parallel, see https://goo.gl/eayv5N
             return observable.Select (x => Observable.FromAsync (() => selector (x))).Concat ();

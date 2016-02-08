@@ -15,25 +15,20 @@ namespace Toggl.Phoebe._Data
 {
     public enum DataTag {
         UncaughtError,
+
         TimeEntryLoad,
         TimeEntryReceivedFromServer,
-        TimeEntryStart,
-        TimeEntryStop,
-        TimeEntryContinue,
-        TimeEntryRemove,
-        TimeEntryRemoveWithUndo,
-        TimeEntryRestoreFromUndo,
+
+        TimeEntryUpdate,
+        TimeEntryUpdateOnlyAppState,
 
         EmptyQueue,
-        EmptyQueueAndSync,
-
-        TestSyncOutManager
+        EmptyQueueAndSync
     }
 
     public enum DataDir {
         Incoming,
-        Outcoming,
-        None
+        Outcoming
     }
 
     public interface IDataMsg
@@ -66,30 +61,16 @@ namespace Toggl.Phoebe._Data
         }
     }
 
-    public class DataSyncMsg
+    public interface IDataSyncMsg
     {
-        public DataDir Dir { get; private set; }
-        public DataAction Action { get; private set; }
-        public CommonData Data { get; private set; }
-
-        public DataSyncMsg (DataDir dir, DataAction action, CommonData data)
-        {
-            Dir = dir;
-            Action = action;
-            Data = data;
-        }
-    }
-
-    public interface IDataSyncGroup
-    {
-        IEnumerable<DataSyncMsg> SyncMessages { get; }
+        DataDir Dir { get; }
+        IReadOnlyList<CommonData> Data { get; }
     }
 
     public class DataJsonMsg
     {
         static readonly IDictionary<string, Type> typeCache = new Dictionary<string, Type> ();
 
-        public DataAction Action { get; set; }
         public string TypeName { get; set; }
         public string RawData { get; set; }
 
@@ -113,9 +94,8 @@ namespace Toggl.Phoebe._Data
         {
         }
 
-        public DataJsonMsg (DataAction action, CommonJson json)
+        public DataJsonMsg (CommonJson json)
         {
-            Action = action;
             Data = json;
             TypeName = json.GetType ().FullName;
         }

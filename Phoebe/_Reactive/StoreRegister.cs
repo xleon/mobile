@@ -24,16 +24,11 @@ namespace Toggl.Phoebe._Reactive
                 case DataTag.TimeEntryReceivedFromServer:
                     return TimeEntryReceivedFromServer (msg, dataStore);
 
-                case DataTag.TimeEntryStop:
-                    return TimeEntryStop (msg, dataStore);
+                case DataTag.TimeEntryUpdate:
+                    return TimeEntryUpdate (msg, dataStore);
 
-                case DataTag.TimeEntryRemove:
-                    return TimeEntryRemove (msg, dataStore);
-
-                // These operations don't really do anything with the database
-                case DataTag.TimeEntryRemoveWithUndo:
-                case DataTag.TimeEntryRestoreFromUndo:
-                case DataTag.TestSyncOutManager:
+                // Don't touch the database
+                case DataTag.TimeEntryUpdateOnlyAppState:
                     return msg;
                     
                 default:
@@ -48,28 +43,27 @@ namespace Toggl.Phoebe._Reactive
             var startDate = GetDatesByDays (dataStore, paginationDate, Literals.TimeEntryLoadDays);
 
             // Always fall back to local data:
-            var userId = ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().GetUserId ();
-            var baseQuery =
-                dataStore.Table<TimeEntryData> ()
+            var userId = ServiceContainer
+                .Resolve<Toggl.Phoebe.Net.AuthManager> ()
+                .GetUserId ();
+
+            var dbEntries = dataStore
+                .Table<TimeEntryData> ()
                 .Where (r =>
                         r.State != TimeEntryState.New &&
                         r.StartTime >= startDate && r.StartTime < paginationDate &&
                         r.DeletedAt == null &&
                         r.UserId == userId)
-                .Take (Literals.TimeEntryLoadMaxInit);
-
-            var dbMsgs = baseQuery
+                .Take (Literals.TimeEntryLoadMaxInit)
                 .OrderByDescending (r => r.StartTime)
-                .ToList ()  // Force SQL execution
-                .Select (x => Tuple.Create (DataAction.Put, x))
                 .ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
             RxChain.Send (typeof(StoreRegister), DataTag.EmptyQueueAndSync, paginationDate);
-            paginationDate = dbMsgs.Count > 0 ? startDate : paginationDate;
+            paginationDate = dbEntries.Count > 0 ? startDate : paginationDate;
 
             // TODO: Check if there're entries in the db that haven't been synced
-            return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbMsgs));
+            return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbEntries));
         }
 
         static IDataMsg TimeEntryReceivedFromServer (IDataMsg msg, ISyncDataStore dataStore)
@@ -83,7 +77,7 @@ namespace Toggl.Phoebe._Reactive
             var mapper = new JsonMapper ();
             var dir = DataDir.Incoming;
 
-            var msgs = dataStore.Update (dir, ctx => {
+            var msgs = dataStore.Update (ctx => {
                 foreach (var jsonEntry in jsonEntries) {
                     var dataEntry = mapper.Map<TimeEntryData> (jsonEntry);
 
@@ -96,37 +90,30 @@ namespace Toggl.Phoebe._Reactive
                 }
             });
 
-            var entryMsg = new TimeEntryMsg (dir,
-                msgs.Select (x => Tuple.Create (x.Action, (TimeEntryData)x.Data)));
+            var entryMsg = new TimeEntryMsg (dir, msgs.Cast<TimeEntryData> ());
             return DataMsg.Success<TimeEntryMsg> (msg.Tag, entryMsg);
         }
 
-        static IDataMsg TimeEntryStop (IDataMsg msg, ISyncDataStore dataStore)
+        static IDataMsg TimeEntryUpdate (IDataMsg msg, ISyncDataStore dataStore)
         {
             try {
-                var dir = DataDir.Outcoming;
                 var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
+                // TODO: Sanity check: DataDir.Outcoming, etc...
 
-                var dbMsgs = dataStore.Update (dir, ctx => {
-                    foreach (var tuple in entryMsg) {
-                        var entryData = tuple.Item2;
-
-                        // Code from TimeEntryModel.StopAsync
-                        if (entryData.State != TimeEntryState.Running) {
-                            throw new InvalidOperationException (
-                                String.Format ("Cannot stop a time entry ({0}) in {1} state.",
-                                    entryData.Id, entryData.State));
+                var dbMsgs = dataStore.Update (ctx => {
+                    foreach (var entry in entryMsg.Data) {
+                        if (entry.DeletedAt == null) {
+                            ctx.Put (entry);
                         }
-
-                        entryData.State = TimeEntryState.Finished;
-                        entryData.StopTime = Time.UtcNow;
-                        ctx.Put (entryData);
+                        else {
+                            ctx.Delete (entry);
+                        }
                     }
 
-                    if (ctx.Messages.Count != entryMsg.Count) {
-                        var missing = entryMsg
-                            .Where(x => ctx.Messages.All (y => y.Data.Id != x.Item2.Id))
-                            .Select(x => x.Item2.Id);
+                    if (ctx.UpdatedItems.Count != entryMsg.Data.Count) {
+                        var missing = entryMsg.Data
+                            .Where(x => ctx.UpdatedItems.All (y => y.Id != x.Id))
+                            .Select(x => x.Id);
 
                         // Throw an exception to roll back any change
                         throw new Exception(string.Format("Couldn't stop time entries: {0}",
@@ -134,32 +121,11 @@ namespace Toggl.Phoebe._Reactive
                     }
                 });
 
-                return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Outcoming, entryMsg));
+                return DataMsg.Success (msg.Tag, entryMsg);
             }
             catch (Exception ex) {
                 return DataMsg.Error<TimeEntryMsg> (msg.Tag, ex);
             }
-        }
-
-        static IDataMsg TimeEntryRemove (IDataMsg msg, ISyncDataStore dataStore)
-        {
-            var dir = DataDir.Outcoming;
-            var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
-
-            var msgs = dataStore.Update (dir, ctx => {
-                foreach (var tuple in entryMsg) {
-                    ctx.Delete (tuple.Item2);
-                }
-            });
-
-            var removed = msgs
-                .Select (x => x.Data as TimeEntryData)
-                // If the entry wasn't synced with the server we don't need to notify
-                // (the entry was already removed in the view at the start of the undo timeout)
-                .Where (x => x.RemoteId != null)
-                .Select (x => Tuple.Create (DataAction.Delete, x));
-
-            return DataMsg.Success (msg.Tag, new TimeEntryMsg (dir, removed));
         }
 
         #region Util

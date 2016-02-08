@@ -134,7 +134,7 @@ namespace Toggl.Phoebe._ViewModels
         #endregion
 
         #region Time entry operations
-        public async Task ContinueTimeEntry (int index)
+        public void ContinueTimeEntry (int index)
         {
             var newTimeEntry = new TimeEntryData ();
             var timeEntryHolder = Collection.ElementAt (index) as ITimeEntryHolder;
@@ -144,15 +144,15 @@ namespace Toggl.Phoebe._ViewModels
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, timeEntryHolder.Data);
+                TimeEntryMsg.StopAndSend (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                RxChain.Send (this.GetType (), DataTag.TimeEntryContinue, timeEntryHolder.Data);
+                TimeEntryMsg.StartAndSend (timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
         }
 
-        public async Task<TimeEntryData> StartStopTimeEntry ()
+        public TimeEntryData StartStopTimeEntry ()
         {
             // Protect from double clicks?
             if (IsProcessingAction) {
@@ -165,7 +165,13 @@ namespace Toggl.Phoebe._ViewModels
             active = active.State == TimeEntryState.Running ? await TimeEntryModel.StopAsync (active) : await TimeEntryModel.StartAsync (active);
 
             IsProcessingAction = true;
-            RxChain.Send (this.GetType (), msgTag, active);
+            var active = activeTimeEntryManager.ActiveTimeEntry;
+            if (active.State == TimeEntryState.Running) {
+                TimeEntryMsg.StopAndSend (active);
+            }
+            else {
+                TimeEntryMsg.StartAndSend (active);
+            }
             // TODO: This must be at the end of the Reactive chain
             IsProcessingAction = false;
 

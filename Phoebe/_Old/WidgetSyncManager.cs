@@ -12,6 +12,7 @@ using Toggl.Phoebe.Net;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Reactive;
 using XPlatUtils;
+using Toggl.Phoebe._ViewModels.Timer;
 
 namespace Toggl.Phoebe
 {
@@ -67,7 +68,7 @@ namespace Toggl.Phoebe
         public async Task StartStopTimeEntry ()
         {
             if (activeTimeEntryManager.IsRunning) {
-                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, activeTimeEntryManager.ActiveTimeEntry);
+                TimeEntryMsg.StopAndSend (activeTimeEntryManager.ActiveTimeEntry);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.Widget);
             } else {
                 var startedEntry = await TimeEntryModel.StartAsync (TimeEntryModel.GetDraft ());

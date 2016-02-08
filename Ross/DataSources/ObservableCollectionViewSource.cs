@@ -134,13 +134,12 @@ namespace Toggl.Ross.DataSources
             return GetPlainIndexFromSection (collection, rowIndexPath.Section) + rowIndexPath.Row + 1;
         }
 
-        public int GetCurrentRowsBySection (IEnumerable<TData> collection, nint sectionIndex)
+        public virtual int GetCurrentRowsBySection (IEnumerable<TData> collection, nint sectionIndex)
         {
             var enumerable = collection.ToArray ();
             var startIndex = GetPlainIndexFromSection (enumerable, sectionIndex);
-            return enumerable.Skip (startIndex + 1).TakeWhile (p => p is TRow).Count ();
+            return enumerable.Skip (startIndex + 1).TakeWhile (p => ! (p is TSection)).Count ();
         }
         #endregion
     }
-
 }

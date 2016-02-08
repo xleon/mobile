@@ -17,7 +17,7 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class EditTimeEntryViewController : UIViewController, DurationChangeViewController.IChangeDuration, IUpdateTagList
+    public class EditTimeEntryViewController : UIViewController, DurationChangeViewController.IChangeDuration, IUpdateTagList, ProjectSelectionViewController.IProjectSelected
     {
         private const string DefaultDurationText = " 00:00:00 ";
 
@@ -211,8 +211,8 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnProjectButtonTouchUpInside (object sender, EventArgs e)
         {
-            //var controller = new ProjectSelectionViewController ();
-            //NavigationController.PushViewController (controller, true);
+            var controller = new ProjectSelectionViewController (ViewModel.WorkspaceId, this);
+            NavigationController.PushViewController (controller, true);
         }
 
         private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
@@ -286,17 +286,21 @@ namespace Toggl.Ross.ViewControllers
             startStopView.Selected = TimeKind.None;
         }
 
-        #region IChangeDuration implementation
+        #region IProjectSelected implementation
+        public void OnProjectSelected (Guid projectId, Guid taskId)
+        {
+            ViewModel.SetProjectAndTask (projectId, taskId);
+        }
+        #endregion
 
+        #region IChangeDuration implementation
         public void OnChangeDuration (TimeSpan newDuration)
         {
             ViewModel.ChangeTimeEntryDuration (newDuration);
         }
-
         #endregion
 
         #region IUpdateTagList implementation
-
         public void OnCreateNewTag (TagData newTagData)
         {
             ViewModel.AddTag (newTagData);
@@ -306,11 +310,9 @@ namespace Toggl.Ross.ViewControllers
         {
             ViewModel.ChangeTagList (newTagList);
         }
-
         #endregion
 
         #region UI layout helpers
-
         private bool DatePickerHidden
         {
             get { return hideDatePicker; }
@@ -398,7 +400,6 @@ namespace Toggl.Ross.ViewControllers
                 yield return prev.AtBottomOf (container);
             }
         }
-
         #endregion
 
         #region Custom UI components

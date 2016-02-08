@@ -66,14 +66,31 @@ namespace Toggl.Ross.ViewControllers
             reloadView = new ReloadTableViewFooter () {
                 SyncButtonPressedHandler = OnTryAgainBtnPressed
             };
+
+            // Setup top toolbar
+            if (durationButton == null) {
+                durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
+                durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
+                durationButton.SizeToFit ();
+                durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
+            }
+
+            if (navigationButton == null) {
+                actionButton = new UIButton ().Apply (Style.NavTimer.StartButton);
+                actionButton.SizeToFit ();
+                actionButton.TouchUpInside += OnActionButtonTouchUpInside;
+                navigationButton = new UIBarButtonItem (actionButton);
+            }
+
+            // Attach views
+            var navigationItem = NavigationItem;
+            navigationItem.TitleView = durationButton;
+            navigationItem.RightBarButtonItem = navigationButton;
         }
 
         public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
-
-            // Setup top toolbar
-            SetupToolbar ();
 
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
@@ -124,29 +141,6 @@ namespace Toggl.Ross.ViewControllers
             reloadView.Center = new CGPoint (View.Center.X, reloadView.Center.Y);
         }
 
-        private void SetupToolbar ()
-        {
-            // Lazyily create views
-            if (durationButton == null) {
-                durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
-                durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
-                durationButton.SizeToFit ();
-                durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
-            }
-
-            if (navigationButton == null) {
-                actionButton = new UIButton ().Apply (Style.NavTimer.StartButton);
-                actionButton.SizeToFit ();
-                actionButton.TouchUpInside += OnActionButtonTouchUpInside;
-                navigationButton = new UIBarButtonItem (actionButton);
-            }
-
-            // Attach views
-            var navigationItem = NavigationItem;
-            navigationItem.TitleView = durationButton;
-            navigationItem.RightBarButtonItem = navigationButton;
-        }
-
         private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
         {
 
@@ -160,9 +154,10 @@ namespace Toggl.Ross.ViewControllers
                 OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
                 // Show next viewController.
                 var controllers = new List<UIViewController> (NavigationController.ViewControllers);
-                controllers.Add (new EditTimeEntryViewController ((TimeEntryModel)entry));
+                var editController = new EditTimeEntryViewController (entry);
+                controllers.Add (editController);
                 if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
-                    controllers.Add (new ProjectSelectionViewController ((TimeEntryModel)entry));
+                    controllers.Add (new ProjectSelectionViewController (entry.WorkspaceId, editController));
                 }
                 NavigationController.SetViewControllers (controllers.ToArray (), true);
             }

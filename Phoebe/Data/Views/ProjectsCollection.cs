@@ -143,13 +143,6 @@ namespace Toggl.Phoebe.Data.Views
             }
         }
 
-        public IEnumerable<CommonData> Data
-        {
-            get {
-                return this;
-            }
-        }
-
         public class SuperProjectData : ProjectData
         {
             public string ClientName { get; private set; }

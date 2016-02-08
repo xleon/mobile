@@ -1,136 +1,116 @@
 using System;
-using System.Collections.Generic;
 using CoreGraphics;
 using CoreAnimation;
 using Foundation;
 using UIKit;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
-using Toggl.Ross.Views;
+using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class ProjectSelectionViewController : UITableViewController
     {
-        private const float CellSpacing = 4f;
-        private readonly TimeEntryModel model;
-
-        public ProjectSelectionViewController (TimeEntryModel model) : base (UITableViewStyle.Plain)
+        public interface IProjectSelected
         {
-            this.model = model;
-
-            Title = "ProjectTitle".Tr ();
+            void OnProjectSelected (Guid projectId, Guid taskId);
         }
 
-        public override void ViewDidLoad ()
+        private readonly static NSString ClientHeaderId = new NSString ("ClientHeaderId");
+        private readonly static NSString ProjectCellId = new NSString ("ProjectCellId");
+        private readonly static NSString TaskCellId = new NSString ("TaskCellId");
+
+        private const float CellSpacing = 4f;
+        private Guid workspaceId;
+        private ProjectListViewModel viewModel;
+        private readonly IProjectSelected handler;
+
+        public ProjectSelectionViewController (Guid workspaceId, IProjectSelected handler) : base (UITableViewStyle.Plain)
+        {
+            Title = "ProjectTitle".Tr ();
+            this.workspaceId = workspaceId;
+            this.handler = handler;
+        }
+
+        public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-            new Source (this).Attach ();
+
+            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), ClientHeaderId);
+            TableView.RegisterClassForCellReuse (typeof (ProjectCell), ProjectCellId);
+            TableView.RegisterClassForCellReuse (typeof (TaskCell), TaskCellId);
+            TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
+
+            viewModel = await ProjectListViewModel.Init (workspaceId);
+            TableView.Source = new Source (this, viewModel);
         }
 
-        public override void ViewDidAppear (bool animated)
+        public override void ViewWillUnload()
         {
-            base.ViewDidAppear (animated);
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
+            viewModel.Dispose ();
+            base.ViewWillUnload();
         }
 
-        public Action ProjectSelected { get; set; }
-
-        private async void Finish (TaskModel task = null, ProjectModel project = null, WorkspaceModel workspace = null)
+        protected void OnItemSelected (CommonData m)
         {
-            project = task != null ? task.Project : project;
-            if (project != null) {
-                await project.LoadAsync ();
-                workspace = project.Workspace;
-            }
+            Guid projectId = Guid.Empty;
+            Guid taskId = Guid.Empty;
 
-            if (project != null || task != null || workspace != null) {
-                model.Workspace = workspace;
-                model.Project = project;
-                model.Task = task;
-                await model.SaveAsync ();
-            }
-
-            var cb = ProjectSelected;
-            if (cb != null) {
-                cb ();
-            } else {
-                // Pop to previous view controller
-                var vc = NavigationController.ViewControllers;
-                var i = Array.IndexOf (vc, this) - 1;
-                if (i >= 0) {
-                    NavigationController.PopToViewController (vc [i], true);
+            if (m is ProjectData) {
+                if (! ((ProjectsCollection.SuperProjectData)m).IsEmpty) {
+                    projectId = m.Id;
                 }
+            } else if (m is TaskData) {
+                var task = (TaskData)m;
+                projectId = task.ProjectId;
+                taskId = task.Id;
             }
+
+            handler.OnProjectSelected (projectId, taskId);
+            NavigationController.PopViewController (true);
         }
 
-        class Source : PlainDataViewSource<object>
+        class Source : ObservableCollectionViewSource<CommonData, ClientData, ProjectData>
         {
-            private readonly static NSString WorkspaceHeaderId = new NSString ("SectionHeaderId");
-            private readonly static NSString ProjectCellId = new NSString ("ProjectCellId");
-            private readonly static NSString TaskCellId = new NSString ("TaskCellId");
-            private readonly ProjectSelectionViewController controller;
-            private readonly HashSet<Guid> expandedProjects = new HashSet<Guid> ();
+            private readonly ProjectSelectionViewController owner;
+            private readonly ProjectListViewModel viewModel;
 
-            public Source (ProjectSelectionViewController controller)
-            : base (controller.TableView, new ProjectAndTaskView ())
+            public Source (ProjectSelectionViewController owner, ProjectListViewModel viewModel)  : base (owner.TableView, viewModel.ProjectList)
             {
-                this.controller = controller;
+                this.owner = owner;
+                this.viewModel = viewModel;
             }
 
-            public override void Attach ()
+            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
-                base.Attach ();
+                var index = GetPlainIndexFromRow (collection, indexPath);
+                var data = collection [index];
 
-                controller.TableView.RegisterClassForCellReuse (typeof (WorkspaceHeaderCell), WorkspaceHeaderId);
-                controller.TableView.RegisterClassForCellReuse (typeof (ProjectCell), ProjectCellId);
-                controller.TableView.RegisterClassForCellReuse (typeof (TaskCell), TaskCellId);
-                controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
-            }
-
-            private void ToggleTasksExpanded (Guid projectId)
-            {
-                SetTasksExpanded (projectId, !expandedProjects.Contains (projectId));
-            }
-
-            private void SetTasksExpanded (Guid projectId, bool expand)
-            {
-                if (expand && expandedProjects.Add (projectId)) {
-                    Update ();
-                } else if (!expand && expandedProjects.Remove (projectId)) {
-                    Update ();
+                if (data is ProjectData) {
+                    var cell = (ProjectCell)tableView.DequeueReusableCell (ProjectCellId, indexPath);
+                    cell.Bind ((ProjectsCollection.SuperProjectData)data, viewModel.ProjectList.AddTasks);
+                    return cell;
+                } else {
+                    var cell = (TaskCell)tableView.DequeueReusableCell (TaskCellId, indexPath);
+                    cell.Bind ((TaskData)data);
+                    return cell;
                 }
             }
 
-            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            public override UIView GetViewForHeader (UITableView tableView, nint section)
             {
-                return 60f;
-            }
+                var index = GetPlainIndexFromSection (collection, section);
+                var data = (ClientData)collection [index];
 
-            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
-            {
-                var row = GetRow (indexPath);
-                if (row is ProjectAndTaskView.Workspace) {
-                    return 42f;
-                }
-                if (row is TaskModel) {
-                    return 49f;
-                }
-                return EstimatedHeight (tableView, indexPath);
-            }
-
-            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
-            {
-                return -1f;
+                var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (ClientHeaderId);
+                view.Bind (data);
+                return view;
             }
 
             public override nfloat GetHeightForHeader (UITableView tableView, nint section)
@@ -138,47 +118,14 @@ namespace Toggl.Ross.ViewControllers
                 return EstimatedHeightForHeader (tableView, section);
             }
 
-            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
             {
-                var row = GetRow (indexPath);
-
-                var project = row as ProjectAndTaskView.Project;
-                if (project != null) {
-                    var cell = (ProjectCell)tableView.DequeueReusableCell (ProjectCellId, indexPath);
-                    cell.Bind (project);
-                    if (project.Data != null && project.Data.Id != Guid.Empty) {
-                        var projectId = project.Data.Id;
-                        cell.ToggleTasks = () => ToggleTasksExpanded (projectId);
-                    } else {
-                        cell.ToggleTasks = null;
-                    }
-                    return cell;
-                }
-
-                var taskData = row as TaskData;
-                if (taskData != null) {
-                    var cell = (TaskCell)tableView.DequeueReusableCell (TaskCellId, indexPath);
-                    cell.Bind ((TaskModel)taskData);
-
-                    var rows = GetCachedRows (GetSection (indexPath.Section));
-                    cell.IsFirst = indexPath.Row < 1 || ! (rows [indexPath.Row - 1] is TaskModel);
-                    cell.IsLast = indexPath.Row >= rows.Count || ! (rows [indexPath.Row + 1] is TaskModel);
-                    return cell;
-                }
-
-                var workspace = row as ProjectAndTaskView.Workspace;
-                if (workspace != null) {
-                    var cell = (WorkspaceHeaderCell)tableView.DequeueReusableCell (WorkspaceHeaderId, indexPath);
-                    cell.Bind (workspace);
-                    return cell;
-                }
-
-                throw new InvalidOperationException (String.Format ("Unknown row type {0}", row.GetType ()));
+                return 60f;
             }
 
-            public override UIView GetViewForHeader (UITableView tableView, nint section)
+            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
             {
-                return new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
+                return 42f;
             }
 
             public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
@@ -188,53 +135,22 @@ namespace Toggl.Ross.ViewControllers
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                var m = GetRow (indexPath);
-
-                if (m is TaskData) {
-                    var data = (TaskData)m;
-                    controller.Finish ((TaskModel)data);
-                } else if (m is ProjectAndTaskView.Project) {
-                    var wrap = (ProjectAndTaskView.Project)m;
-                    if (wrap.IsNoProject) {
-                        controller.Finish (workspace: new WorkspaceModel (wrap.WorkspaceId));
-                    } else if (wrap.IsNewProject) {
-                        var proj = (ProjectModel)wrap.Data;
-                        // Show create project dialog instead
-                        var next = new NewProjectViewController (proj.Workspace, proj.Color) {
-                            ProjectCreated = (p) => controller.Finish (project: p),
-                        };
-                        controller.NavigationController.PushViewController (next, true);
-                    } else {
-                        controller.Finish (project: (ProjectModel)wrap.Data);
-                    }
-                } else if (m is ProjectAndTaskView.Workspace) {
-                    var wrap = (ProjectAndTaskView.Workspace)m;
-                    controller.Finish (workspace: (WorkspaceModel)wrap.Data);
-                }
+                var index = GetPlainIndexFromRow (collection, indexPath);
+                var data = collection [index];
+                owner.OnItemSelected (data);
 
                 tableView.DeselectRow (indexPath, true);
             }
-
-            protected override IEnumerable<object> GetRows (string section)
-            {
-                foreach (var row in DataView.Data) {
-                    var task = row as TaskData;
-                    if (task != null && !expandedProjects.Contains (task.ProjectId)) {
-                        continue;
-                    }
-
-                    yield return row;
-                }
-            }
         }
 
-        private class ProjectCell : ModelTableViewCell<ProjectAndTaskView.Project>
+        class ProjectCell : UITableViewCell
         {
             private UIView textContentView;
             private UILabel projectLabel;
             private UILabel clientLabel;
             private UIButton tasksButton;
-            private ProjectModel model;
+            private ProjectsCollection.SuperProjectData projectData;
+            private Action<ProjectData> onPressedTagBtn;
 
             public ProjectCell (IntPtr handle) : base (handle)
             {
@@ -261,30 +177,10 @@ namespace Toggl.Ross.ViewControllers
                         NSNumber.FromFloat (1f),
                     },
                 };
-                textContentView.Layer.Mask = maskLayer;
 
+                textContentView.Layer.Mask = maskLayer;
                 tasksButton.TouchUpInside += OnTasksButtonTouchUpInside;
             }
-
-            protected override void OnDataSourceChanged ()
-            {
-                model = null;
-                if (DataSource != null) {
-                    model = (ProjectModel)DataSource.Data;
-                }
-
-                base.OnDataSourceChanged ();
-            }
-
-            private void OnTasksButtonTouchUpInside (object sender, EventArgs e)
-            {
-                var cb = ToggleTasks;
-                if (cb != null) {
-                    cb ();
-                }
-            }
-
-            public Action ToggleTasks { get; set; }
 
             public override void LayoutSubviews ()
             {
@@ -340,114 +236,60 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
+            public void Bind (ProjectsCollection.SuperProjectData projectData, Action<ProjectData> onPressedTagBtn, bool showClient = false)
+            {
+                this.projectData = projectData;
+                this.onPressedTagBtn = onPressedTagBtn;
+
+                if (projectData.IsEmpty) {
+                    projectLabel.Text = "ProjectNoProject".Tr ();
+                    clientLabel.Hidden = true;
+                    tasksButton.Hidden = true;
+                    BackgroundView.BackgroundColor = Color.Gray;
+                    projectLabel.Apply (Style.ProjectList.NoProjectLabel);
+                    return;
+                }
+
+                var color = UIColor.Clear.FromHex (ProjectModel.HexColors [projectData.Color % ProjectModel.HexColors.Length]);
+                BackgroundView.BackgroundColor = color;
+
+                projectLabel.Text = projectData.Name;
+                clientLabel.Text = projectData.ClientName;
+                clientLabel.Hidden = !showClient;
+                tasksButton.Hidden = projectData.TaskNumber == 0;
+                tasksButton.Selected = false;
+                tasksButton.SetTitleColor (color, UIControlState.Normal);
+                tasksButton.SetTitle (projectData.TaskNumber.ToString (), UIControlState.Normal);
+
+                // Layout content.
+                LayoutSubviews ();
+            }
+
+            private void OnTasksButtonTouchUpInside (object sender, EventArgs e)
+            {
+                if (onPressedTagBtn != null && projectData != null) {
+                    onPressedTagBtn.Invoke (projectData);
+                }
+            }
+
             private static CGRect GetBoundingRect (UILabel view)
             {
                 var attrs = new UIStringAttributes () {
                     Font = view.Font,
                 };
-                var rect = ((NSString) (view.Text ?? String.Empty)).GetBoundingRect (
-                               new CGSize (Single.MaxValue, Single.MaxValue),
+                var rect = ((NSString) (view.Text ?? string.Empty)).GetBoundingRect (
+                               new CGSize (float.MaxValue, float.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
                 rect.Height = (float)Math.Ceiling (rect.Height);
                 return rect;
             }
-
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (model != null) {
-                    Tracker.Add (model, HandleProjectPropertyChanged);
-
-                    if (model.Client != null) {
-                        Tracker.Add (model.Client, HandleClientPropertyChanged);
-                    }
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleProjectPropertyChanged (string prop)
-            {
-                if (prop == ProjectModel.PropertyClient
-                        || prop == ProjectModel.PropertyName
-                        || prop == ProjectModel.PropertyColor) {
-                    Rebind ();
-                }
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == ClientModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            protected override void Rebind ()
-            {
-                ResetTrackedObservables ();
-
-                UIColor projectColor;
-                string projectName;
-                string clientName = String.Empty;
-                int taskCount = 0;
-
-                if (DataSource.IsNoProject) {
-                    projectColor = Color.Gray;
-                    projectName = "ProjectNoProject".Tr ();
-                    projectLabel.Apply (Style.ProjectList.NoProjectLabel);
-                } else if (DataSource.IsNewProject) {
-                    projectColor = Color.LightestGray;
-                    projectName = "ProjectNewProject".Tr ();
-                    projectLabel.Apply (Style.ProjectList.NewProjectLabel);
-                } else if (model != null) {
-                    projectColor = UIColor.Clear.FromHex (model.GetHexColor ());
-
-                    projectName = model.Name;
-                    clientName = model.Client != null ? model.Client.Name : String.Empty;
-                    taskCount = DataSource.Tasks.Count;
-                    projectLabel.Apply (Style.ProjectList.ProjectLabel);
-                } else {
-                    return;
-                }
-
-                if (String.IsNullOrWhiteSpace (projectName)) {
-                    projectName = "ProjectNoNameProject".Tr ();
-                    clientName = String.Empty;
-                }
-
-                if (!String.IsNullOrWhiteSpace (projectName)) {
-                    projectLabel.Text = projectName;
-                    projectLabel.Hidden = false;
-
-                    if (!String.IsNullOrEmpty (clientName)) {
-                        clientLabel.Text = clientName;
-                        clientLabel.Hidden = false;
-                    } else {
-                        clientLabel.Hidden = true;
-                    }
-                } else {
-                    projectLabel.Hidden = true;
-                    clientLabel.Hidden = true;
-                }
-
-                tasksButton.Hidden = taskCount < 1;
-                if (!tasksButton.Hidden) {
-                    tasksButton.SetTitle (taskCount.ToString (), UIControlState.Normal);
-                    tasksButton.SetTitleColor (projectColor, UIControlState.Normal);
-                }
-
-                BackgroundView.BackgroundColor = projectColor;
-            }
         }
 
-        private class TaskCell : ModelTableViewCell<TaskModel>
+        class TaskCell : UITableViewCell
         {
             private readonly UILabel nameLabel;
             private readonly UIView separatorView;
-            private bool isFirst;
-            private bool isLast;
 
             public TaskCell (IntPtr handle) : base (handle)
             {
@@ -462,16 +304,6 @@ namespace Toggl.Ross.ViewControllers
                 base.LayoutSubviews ();
 
                 var contentFrame = new CGRect (0, 0, Frame.Width, Frame.Height);
-
-                if (isFirst) {
-                    contentFrame.Y += CellSpacing / 2;
-                    contentFrame.Height -= CellSpacing / 2;
-                }
-
-                if (isLast) {
-                    contentFrame.Height -= CellSpacing / 2;
-                }
-
                 SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
 
                 // Add padding
@@ -485,86 +317,26 @@ namespace Toggl.Ross.ViewControllers
                     contentFrame.Width, 1f);
             }
 
-            protected override void Rebind ()
+            public void Bind (TaskData data)
             {
-                ResetTrackedObservables ();
-
-                var taskName = DataSource.Name;
-                if (String.IsNullOrWhiteSpace (taskName)) {
+                var taskName = data.Name;
+                if (string.IsNullOrWhiteSpace (taskName)) {
                     taskName = "ProjectNoNameTask".Tr ();
                 }
                 nameLabel.Text = taskName;
             }
-
-            protected override void ResetTrackedObservables ()
-            {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleTaskPropertyChanged);
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleTaskPropertyChanged (string prop)
-            {
-                if (prop == TaskModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            public bool IsFirst
-            {
-                get { return isFirst; }
-                set {
-                    if (isFirst == value) {
-                        return;
-                    }
-                    isFirst = value;
-                    SetNeedsLayout ();
-                }
-            }
-
-            public bool IsLast
-            {
-                get { return isLast; }
-                set {
-                    if (isLast == value) {
-                        return;
-                    }
-                    isLast = value;
-                    SetNeedsLayout ();
-
-                    separatorView.Hidden = isLast;
-                }
-            }
         }
 
-        private class WorkspaceHeaderCell : ModelTableViewCell<ProjectAndTaskView.Workspace>
+        class SectionHeaderView : UITableViewHeaderFooterView
         {
             private const float HorizSpacing = 15f;
             private readonly UILabel nameLabel;
-            private WorkspaceModel model;
 
-            public WorkspaceHeaderCell (IntPtr handle) : base (handle)
+            public SectionHeaderView (IntPtr ptr) : base (ptr)
             {
-                this.Apply (Style.Screen);
-                nameLabel = new UILabel ().Apply (Style.ProjectList.HeaderLabel);
+                nameLabel = new UILabel ().Apply (Style.Log.HeaderDateLabel);
                 ContentView.AddSubview (nameLabel);
-
-                BackgroundView = new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
-                UserInteractionEnabled = false;
-            }
-
-            protected override void OnDataSourceChanged ()
-            {
-                model = null;
-                if (DataSource != null) {
-                    model = (WorkspaceModel)DataSource.Data;
-                }
-
-                base.OnDataSourceChanged ();
+                BackgroundView = new UIView ().Apply (Style.Log.HeaderBackgroundView);
             }
 
             public override void LayoutSubviews ()
@@ -575,36 +347,14 @@ namespace Toggl.Ross.ViewControllers
                 nameLabel.Frame = new CGRect (
                     x: HorizSpacing,
                     y: 0,
-                    width: contentFrame.Width - 2 * HorizSpacing,
+                    width: (contentFrame.Width - 3 * HorizSpacing) / 2,
                     height: contentFrame.Height
                 );
             }
 
-            protected override void ResetTrackedObservables ()
+            public void Bind (ClientData data)
             {
-                Tracker.MarkAllStale ();
-
-                if (model != null) {
-                    Tracker.Add (model, HandleClientPropertyChanged);
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleClientPropertyChanged (string prop)
-            {
-                if (prop == WorkspaceModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            protected override void Rebind ()
-            {
-                ResetTrackedObservables ();
-
-                if (model != null) {
-                    nameLabel.Text = model.Name;
-                }
+                nameLabel.Text = string.IsNullOrEmpty (data.Name) ? "ProjectNoClient".Tr () : data.Name;
             }
         }
     }

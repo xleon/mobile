@@ -51,23 +51,31 @@ namespace Toggl.Ross.DataSources
             }
 
             if (e.Action == NotifyCollectionChangedAction.Add) {
-                if (e.NewItems [0] is TSection) {
-                    var indexSet = GetSectionFromPlainIndex (collectionData, e.NewStartingIndex);
-                    TableView.InsertSections (indexSet, UITableViewRowAnimation.Automatic);
-                } else {
-                    var indexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex);
-                    TableView.InsertRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                TableView.BeginUpdates ();
+                for (int i = 0; i < e.NewItems.Count; i++) {
+                    if (e.NewItems [i] is TSection) {
+                        var indexSet = GetSectionFromPlainIndex (collectionData, e.NewStartingIndex + i);
+                        TableView.InsertSections (indexSet, UITableViewRowAnimation.Automatic);
+                    } else {
+                        var indexPath = GetRowFromPlainIndex (collectionData, e.NewStartingIndex + i);
+                        TableView.InsertRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                    }
                 }
+                TableView.EndUpdates ();
             }
 
             if (e.Action == NotifyCollectionChangedAction.Remove) {
-                if (e.OldItems [0] is TSection) {
-                    var indexSet = GetSectionFromPlainIndex (lastCollectionState, e.OldStartingIndex);
-                    TableView.DeleteSections (indexSet, UITableViewRowAnimation.Automatic);
-                } else {
-                    var indexPath = GetRowFromPlainIndex (lastCollectionState, e.OldStartingIndex);
-                    TableView.DeleteRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                TableView.BeginUpdates ();
+                for (int i = 0; i < e.OldItems.Count; i++) {
+                    if (e.OldItems [i] is TSection) {
+                        var indexSet = GetSectionFromPlainIndex (lastCollectionState, e.OldStartingIndex + i);
+                        TableView.DeleteSections (indexSet, UITableViewRowAnimation.Automatic);
+                    } else {
+                        var indexPath = GetRowFromPlainIndex (lastCollectionState, e.OldStartingIndex + i);
+                        TableView.DeleteRows (new [] {indexPath}, UITableViewRowAnimation.Automatic);
+                    }
                 }
+                TableView.EndUpdates ();
             }
 
             if (e.Action == NotifyCollectionChangedAction.Replace) {

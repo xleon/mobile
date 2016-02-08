@@ -105,7 +105,7 @@ namespace Toggl.Phoebe._ViewModels
 		public void RestoreTimeEntryFromUndo ()
 		{
 			var msg = new TimeEntryMsg (DataDir.None, DataAction.Put, lastRemovedItem.Data);
-			RxChain.Send (DataTag.TimeEntryRestoreFromUndo, msg);
+            RxChain.Send (this.GetType (), DataTag.TimeEntryRestoreFromUndo, msg);
 		}
 
 		public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
@@ -127,7 +127,7 @@ namespace Toggl.Phoebe._ViewModels
 				var msg = new TimeEntryMsg (DataDir.Outcoming, entries.Select (
 					x => Tuple.Create (DataAction.Delete, x)));
                 
-				RxChain.Send (DataTag.TimeEntryRemove, msg);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryRemove, msg);
 			};
 
 			System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
@@ -142,13 +142,13 @@ namespace Toggl.Phoebe._ViewModels
 
 			if (timeEntryHolder.Data.State == TimeEntryState.Running) {
 				var msg = new TimeEntryMsg (DataDir.Outcoming, DataAction.Put, timeEntryHolder.Data);
-				RxChain.Send (DataTag.TimeEntryStop, msg);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, msg);
 			}
 			lastRemovedItem = timeEntryHolder;
 
 			// Remove item only from list
 			var rmMsg = new TimeEntryMsg (DataDir.None, DataAction.Delete, timeEntryHolder.Data);
-			RxChain.Send (DataTag.TimeEntryRemoveWithUndo, rmMsg);
+            RxChain.Send (this.GetType (), DataTag.TimeEntryRemoveWithUndo, rmMsg);
 
 			// Create Undo timer
 			if (undoTimer != null) {

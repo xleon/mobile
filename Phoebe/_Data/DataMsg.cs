@@ -16,13 +16,16 @@ namespace Toggl.Phoebe._Data
     public enum DataTag {
         UncaughtError,
         TimeEntryLoad,
-        TimeEntryLoadFromServer,
+        TimeEntryReceivedFromServer,
         TimeEntryStart,
         TimeEntryStop,
         TimeEntryContinue,
         TimeEntryRemove,
         TimeEntryRemoveWithUndo,
         TimeEntryRestoreFromUndo,
+
+        EmptyQueue,
+        EmptyQueueAndSync,
 
         TestSyncOutManager
     }

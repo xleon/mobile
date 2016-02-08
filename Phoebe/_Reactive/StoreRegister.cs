@@ -15,14 +15,14 @@ namespace Toggl.Phoebe._Reactive
 {
     public static class StoreRegister
     {
-        public static Task<IDataMsg> ResolveAction (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
+        public static IDataMsg ResolveAction (IDataMsg msg, ISyncDataStore dataStore)
         {
             switch (msg.Tag) {
                 case DataTag.TimeEntryLoad:
                     return TimeEntryLoad (msg, dataStore);
 
-                case DataTag.TimeEntryLoadFromServer:
-                    return TimeEntryLoadFromServer (msg, dataStore);
+                case DataTag.TimeEntryReceivedFromServer:
+                    return TimeEntryReceivedFromServer (msg, dataStore);
 
                 case DataTag.TimeEntryStop:
                     return TimeEntryStop (msg, dataStore);
@@ -33,57 +33,19 @@ namespace Toggl.Phoebe._Reactive
                 // These operations don't really do anything with the database
                 case DataTag.TimeEntryRemoveWithUndo:
                 case DataTag.TimeEntryRestoreFromUndo:
-
                 case DataTag.TestSyncOutManager:
-                    return LetGoThrough (msg);
+                    return msg;
                     
                 default:
                     throw new ActionNotFoundException (msg.Tag, typeof (StoreRegister));
             }
         }
-
-        static Task<IDataMsg> LetGoThrough (IDataMsg msg)
-        {
-            return Task.Run (() => msg);
-        }
-
-        static async Task<IDataMsg> TimeEntryLoadFromServer (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
-        {
-            const int daysLoad = Literals.TimeEntryLoadDays;
-            var startFrom = msg.ForceGetData<DateTime> ();
-
-            try {
-                // Download new Entries
-                var client = ServiceContainer.Resolve<ITogglClient> ();
-                var jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
-
-                //            var dbMsgs = await dataStore.ExecuteInTransactionSilent (ctx =>
-                //                    jsonEntries.ForEach (json => json.Import (ctx)));
-                //            var msgs = dbMsgs.Select (x => Tuple.Create (x.Action, (TimeEntryData)x.Data));
-                //            var entryMsg = new TimeEntryMsg (DataDir.Incoming, msgs);
-
-                return DataMsg.Success<TimeEntryMsg> (msg.Tag, null);
-            } catch (Exception exc) {
-                var tag = typeof (StoreRegister).Name;
-                var log = ServiceContainer.Resolve<ILogger> ();
-                const string errorMsg = "Failed to fetch time entries {1} days up to {0}";
-
-                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                    log.Info (tag, exc, errorMsg, startFrom, daysLoad);
-                } else {
-                    log.Warning (tag, exc, errorMsg, startFrom, daysLoad);
-                }
-
-                return DataMsg.Error<TimeEntryData> (msg.Tag, exc);
-            }
-        }
-
         // Set initial pagination Date to the beginning of the next day.
         // So, we can include all entries created -Today-.
         static DateTime paginationDate = Time.UtcNow.Date.AddDays (1);
-        static async Task<IDataMsg> TimeEntryLoad (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
+        static IDataMsg TimeEntryLoad (IDataMsg msg, ISyncDataStore dataStore)
         {
-            var startDate = await GetDatesByDays (dataStore, paginationDate, Literals.TimeEntryLoadDays);
+            var startDate = GetDatesByDays (dataStore, paginationDate, Literals.TimeEntryLoadDays);
 
             // Always fall back to local data:
             var userId = ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().GetUserId ();
@@ -96,80 +58,126 @@ namespace Toggl.Phoebe._Reactive
                         r.UserId == userId)
                 .Take (Literals.TimeEntryLoadMaxInit);
 
-            var dbMsgs = (await baseQuery.OrderByDescending (r => r.StartTime).ToListAsync ())
-                .Select (x => Tuple.Create (DataAction.Put, x)).ToList ();
+            var dbMsgs = baseQuery
+                .OrderByDescending (r => r.StartTime)
+                .ToList ()  // Force SQL execution
+                .Select (x => Tuple.Create (DataAction.Put, x))
+                .ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            RxChain.Send (DataTag.TimeEntryLoadFromServer, paginationDate);
+            RxChain.Send (typeof(StoreRegister), DataTag.EmptyQueueAndSync, paginationDate);
             paginationDate = dbMsgs.Count > 0 ? startDate : paginationDate;
 
-            // TODO: Check if there're entries in the db that hasn't been synced
+            // TODO: Check if there're entries in the db that haven't been synced
             return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbMsgs));
         }
 
-        static Task<IDataMsg> TimeEntryStop (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
+        static IDataMsg TimeEntryReceivedFromServer (IDataMsg msg, ISyncDataStore dataStore)
         {
-            return Task.Run (() => {
-                try {
-                    var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
+            var jsonEntries = msg.GetDataOrDefault<List<TimeEntryJson>> ();
+            if (jsonEntries == null) {
+                // TODO: Error management
+            }
 
+            // TODO: Error management when mapping JSON or storing in db
+            var mapper = new JsonMapper ();
+            var dir = DataDir.Incoming;
+
+            var msgs = dataStore.Update (dir, ctx => {
+                foreach (var jsonEntry in jsonEntries) {
+                    var dataEntry = mapper.Map<TimeEntryData> (jsonEntry);
+
+                    if (dataEntry.DeletedAt != null) {
+                        ctx.Delete (dataEntry);
+                    }
+                    else {
+                        ctx.Put (dataEntry);
+                    }
+                }
+            });
+
+            var entryMsg = new TimeEntryMsg (dir,
+                msgs.Select (x => Tuple.Create (x.Action, (TimeEntryData)x.Data)));
+            return DataMsg.Success<TimeEntryMsg> (msg.Tag, entryMsg);
+        }
+
+        static IDataMsg TimeEntryStop (IDataMsg msg, ISyncDataStore dataStore)
+        {
+            try {
+                var dir = DataDir.Outcoming;
+                var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
+
+                var dbMsgs = dataStore.Update (dir, ctx => {
                     foreach (var tuple in entryMsg) {
                         var entryData = tuple.Item2;
 
                         // Code from TimeEntryModel.StopAsync
                         if (entryData.State != TimeEntryState.Running) {
                             throw new InvalidOperationException (
-                                String.Format ("Cannot stop a time entry in {0} state.", entryData.State));
+                                String.Format ("Cannot stop a time entry ({0}) in {1} state.",
+                                    entryData.Id, entryData.State));
                         }
 
                         entryData.State = TimeEntryState.Finished;
                         entryData.StopTime = Time.UtcNow;
-
-                        // If this operation is not successful, an exception will be thrown
-                        dataStore.PutSilent (entryData);
+                        ctx.Put (entryData);
                     }
 
-                    return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Outcoming, entryMsg));
-                }
-                catch (Exception ex) {
-                    return DataMsg.Error<TimeEntryMsg> (msg.Tag, ex);
-                }
-            });
+                    if (ctx.Messages.Count != entryMsg.Count) {
+                        var missing = entryMsg
+                            .Where(x => ctx.Messages.All (y => y.Data.Id != x.Item2.Id))
+                            .Select(x => x.Item2.Id);
+
+                        // Throw an exception to roll back any change
+                        throw new Exception(string.Format("Couldn't stop time entries: {0}",
+                            string.Join (", ", missing))); 
+                    }
+                });
+
+                return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Outcoming, entryMsg));
+            }
+            catch (Exception ex) {
+                return DataMsg.Error<TimeEntryMsg> (msg.Tag, ex);
+            }
         }
 
-        static async Task<IDataMsg> TimeEntryRemove (IDataMsg msg, Toggl.Phoebe.Data.IDataStore dataStore)
+        static IDataMsg TimeEntryRemove (IDataMsg msg, ISyncDataStore dataStore)
         {
+            var dir = DataDir.Outcoming;
             var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
 
-            var removed = new List<TimeEntryData> ();
-            foreach (var tuple in entryMsg) {
-                var entryData = tuple.Item2;
-                await dataStore.DeleteAsync (entryData);
+            var msgs = dataStore.Update (dir, ctx => {
+                foreach (var tuple in entryMsg) {
+                    ctx.Delete (tuple.Item2);
+                }
+            });
 
+            var removed = msgs
+                .Select (x => x.Data as TimeEntryData)
                 // If the entry wasn't synced with the server we don't need to notify
                 // (the entry was already removed in the view at the start of the undo timeout)
-                if (entryData.RemoteId != null) {
-                    removed.Add (entryData);
-                }
-            }
+                .Where (x => x.RemoteId != null)
+                .Select (x => Tuple.Create (DataAction.Delete, x));
 
-            return DataMsg.Success (msg.Tag,
-                new TimeEntryMsg (DataDir.Outcoming,
-                    removed.Select (x => Tuple.Create (DataAction.Delete, x))));
+            return DataMsg.Success (msg.Tag, new TimeEntryMsg (dir, removed));
         }
 
         #region Util
         // TODO: replace this method with the SQLite equivalent.
-        static async Task<DateTime> GetDatesByDays (Toggl.Phoebe.Data.IDataStore dataStore, DateTime startDate, int numDays)
+        static DateTime GetDatesByDays (ISyncDataStore dataStore, DateTime startDate, int numDays)
         {
-            var baseQuery = dataStore.Table<TimeEntryData> ().Where (r =>
-                            r.State != TimeEntryState.New &&
-                            r.StartTime < startDate &&
-                            r.DeletedAt == null);
+            var baseQuery = dataStore.Table<TimeEntryData> ().Where (
+                r => r.State != TimeEntryState.New &&
+                r.StartTime < startDate &&
+                r.DeletedAt == null);
 
-            var entries = await baseQuery.ToListAsync ();
+            var entries = baseQuery.ToList ();
             if (entries.Count > 0) {
-                var group = entries.OrderByDescending (r => r.StartTime).GroupBy (t => t.StartTime.Date).Take (numDays).LastOrDefault ();
+                var group = entries
+                    .OrderByDescending (r => r.StartTime)
+                    .GroupBy (t => t.StartTime.Date)
+                    .Take (numDays)
+                    .LastOrDefault ();
                 return group.Key;
             }
             return DateTime.MinValue;

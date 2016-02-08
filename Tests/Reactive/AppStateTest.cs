@@ -86,20 +86,6 @@ namespace Toggl.Phoebe.Tests.Reactive
             }
         }
 
-        public TimeEntryData CreateTimeEntryData (DateTime startTime)
-        {
-            return new TimeEntryData {
-                Id = Guid.NewGuid (),
-                StartTime = startTime,
-                StopTime = startTime.AddMinutes (1),
-                UserId = userId,
-                WorkspaceId = workspaceId,
-                Description = "Test Entry",
-                State = TimeEntryState.Finished,
-                Tags = new List<string> ()
-            };
-        }
-
         public IAppState GetState ()
         {
             return appState;
@@ -115,7 +101,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void TestAddEntry ()
         {
             var oldCount = GetState ().TimerState.TimeEntries.Count;
-            var te = CreateTimeEntryData (DateTime.Now);
+            var te = Util.CreateTimeEntryData (DateTime.Now);
             SendMessage (DataAction.Put, te);
 
             var newCount = GetState ().TimerState.TimeEntries.Count;
@@ -126,7 +112,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void TestTryModifyEntry ()
         {
             var oldDescription = "OLD";
-            var te = CreateTimeEntryData (DateTime.Now);
+            var te = Util.CreateTimeEntryData (DateTime.Now);
             te.Description = oldDescription;
             SendMessage (DataAction.Put, te);
 

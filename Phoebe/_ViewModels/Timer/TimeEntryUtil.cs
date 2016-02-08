@@ -5,6 +5,7 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Diff;
 using Toggl.Phoebe._Data.Models;
 using XPlatUtils;
+using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Phoebe._ViewModels.Timer
 {
@@ -51,27 +52,57 @@ namespace Toggl.Phoebe._ViewModels.Timer
         }
     }
 
-    public class TimeEntryMsg : List<Tuple<DataAction, TimeEntryData>>, IDataSyncGroup
+    public class TimeEntryMsg : IDataSyncMsg
     {
         public DataDir Dir { get; private set; }
-        public Type DataType { get { return typeof(TimeEntryData); } }
+        public IReadOnlyList<TimeEntryData> Data { get; private set; }
 
-        public IEnumerable<DataSyncMsg> SyncMessages {
-            get { 
-                return this.Select (x => new DataSyncMsg (Dir, x.Item1, x.Item2));
-            }
+        IReadOnlyList<CommonData> IDataSyncMsg.Data
+        {
+            get { return Data; }
         }
 
-        public TimeEntryMsg (DataDir dir, IEnumerable<Tuple<DataAction, TimeEntryData>> msgs)
-            : base (msgs)
+        public TimeEntryMsg (DataDir dir, IEnumerable<TimeEntryData> data)
         {
             Dir = dir;
+            Data = new List<TimeEntryData> (data);
         }
 
-        public TimeEntryMsg (DataDir dir, DataAction action, TimeEntryData data)
-            : base (new [] { Tuple.Create (action, data) })
+        public TimeEntryMsg (DataDir dir, TimeEntryData data)
         {
             Dir = dir;
+            Data = new List<TimeEntryData> { data };
+        }
+
+        static void send (TimeEntryData oldEntry, Action<TimeEntryData> update)
+        {
+            var newEntry = new TimeEntryData (oldEntry);
+            update (newEntry);
+            var msg = new TimeEntryMsg (DataDir.Outcoming, newEntry);
+            RxChain.Send (typeof(TimeEntryMsg), DataTag.TimeEntryUpdate, msg);
+        }
+
+        public static void StopAndSend (TimeEntryData data)
+        {
+            send (data, newEntry => {
+                newEntry.State = TimeEntryState.Finished;
+                newEntry.StopTime = Time.UtcNow;
+            });
+        }
+
+        public static void StartAndSend (TimeEntryData data)
+        {
+            send (data, newEntry => {
+                // TODO: Create new Guid?
+                throw new NotImplementedException ();
+            });
+        }
+
+        public static void DeleteAndSend (TimeEntryData data)
+        {
+            send (data, newEntry => {
+                newEntry.DeletedAt = Time.UtcNow;
+            });
         }
     }
 

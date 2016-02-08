@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Helpers;
 using XPlatUtils;
@@ -15,8 +16,8 @@ namespace Toggl.Phoebe._Reactive
             Singleton = Singleton ?? new StoreManager ();
         }
 
-		IObserver<IDataMsg> observer;
-        event EventHandler<IDataMsg> notify;
+        readonly Subject<IDataMsg> subject1 = new Subject<IDataMsg> ();
+        readonly Subject<IDataMsg> subject2 = new Subject<IDataMsg> ();
 
         readonly ISyncDataStore dataStore =
             ServiceContainer.Resolve<ISyncDataStore> ();
@@ -24,31 +25,22 @@ namespace Toggl.Phoebe._Reactive
         StoreManager ()
         {
             var schedulerProvider = ServiceContainer.Resolve<ISchedulerProvider> ();
-            Observable.Create<IDataMsg> (obs => {
-                observer = obs;
-                return () => {
-                    throw new Exception ("Subscription must end with the app");
-                }; 
-            })
+            subject1
             .Synchronize (schedulerProvider.GetScheduler ())
             .Select (msg => StoreRegister.ResolveAction (msg, dataStore))
             .Catch<IDataMsg, Exception> (RxChain.PropagateError)
             .Where (x => x.Tag != DataTag.UncaughtError)
-            .Subscribe (msg => notify.SafeInvoke (this, msg));
+            .Subscribe (subject2.OnNext);
         }
 
         public void Send (IDataMsg msg)
         {
-            observer.OnNext (msg);
+            subject1.OnNext (msg);
         }
 
         public IObservable<IDataMsg> Observe ()
         {
-            return Observable.FromEventPattern<IDataMsg> (
-                h => notify += h,
-                h => notify -= h
-            )
-            .Select (ev => ev.EventArgs);
+            return subject2.AsObservable ();
         }
     }
 }

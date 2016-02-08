@@ -8,10 +8,14 @@ namespace Toggl.Phoebe._Reactive
 {
     public static class RxChain
     {
-        readonly static Dictionary<DataTag, Type> protectedTags = new Dictionary<DataTag, Type>
+        public enum InitMode
         {
-            { DataTag.TestSyncOutManager, typeof(SyncOutManager) }
-        };
+            Full,
+            TestStoreManager
+        }
+
+        // TODO: Put protected tags here
+        readonly static Dictionary<DataTag, Type> protectedTags = new Dictionary<DataTag, Type> ();
 
         static void checkSource (Type source, DataTag tag)
         {
@@ -24,10 +28,19 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        public static void Init ()
+        public static void Init (InitMode mode = InitMode.Full)
         {
-            StoreManager.Init ();
-            SyncOutManager.Init ();
+            switch (mode) {
+            case InitMode.TestStoreManager:
+                StoreManager.Init ();
+                break;
+
+            // Full
+            default:
+                StoreManager.Init ();
+                SyncOutManager.Init ();
+                break;
+            }
         }
 
 

@@ -34,7 +34,6 @@ namespace Toggl.Phoebe._Data.Models
             WorkspaceRemoteId = other.WorkspaceRemoteId;
             ProjectRemoteId = other.ProjectRemoteId;
             TaskRemoteId = other.TaskRemoteId;
-            Tags = new List<string> (other.Tags);
         }
 
         public TimeEntryState State { get; set; }
@@ -64,7 +63,5 @@ namespace Toggl.Phoebe._Data.Models
         public Guid ProjectId { get; set; }
 
         public Guid TaskId { get; set; }
-
-        public List<string> Tags { get; set; }
     }
 }

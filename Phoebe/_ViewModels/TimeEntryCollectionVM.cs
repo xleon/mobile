@@ -104,8 +104,9 @@ namespace Toggl.Phoebe._ViewModels
 
 		public void RestoreTimeEntryFromUndo ()
 		{
-			var msg = new TimeEntryMsg (DataDir.None, DataAction.Put, lastRemovedItem.Data);
-            RxChain.Send (this.GetType (), DataTag.TimeEntryRestoreFromUndo, msg);
+            // Use DataDir.Incoming to prevent SyncOut from sending the message
+            var msg = new TimeEntryMsg (DataDir.Incoming, lastRemovedItem.DataCollection);
+            RxChain.Send (this.GetType (), DataTag.TimeEntryUpdateOnlyAppState, msg);
 		}
 
 		public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
@@ -115,19 +116,8 @@ namespace Toggl.Phoebe._ViewModels
 			}
 
 			Action<ITimeEntryHolder> removeTimeEntryPermanently = holder => {
-				IList<TimeEntryData> entries = null;
-				var groupHolder = holder as TimeEntryGroup;
-				if (groupHolder != null) {
-					entries = groupHolder.DataCollection;
-				}
-				else {
-					entries = new[] { holder.Data };
-				}
-
-				var msg = new TimeEntryMsg (DataDir.Outcoming, entries.Select (
-					x => Tuple.Create (DataAction.Delete, x)));
-                
-                RxChain.Send (this.GetType (), DataTag.TimeEntryRemove, msg);
+                var msg = new TimeEntryMsg (DataDir.Outcoming, holder.DataCollection);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryUpdate, msg);
 			};
 
 			System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
@@ -141,14 +131,13 @@ namespace Toggl.Phoebe._ViewModels
 			}
 
 			if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-				var msg = new TimeEntryMsg (DataDir.Outcoming, DataAction.Put, timeEntryHolder.Data);
-                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, msg);
+                TimeEntryMsg.StopAndSend (timeEntryHolder.Data);
 			}
 			lastRemovedItem = timeEntryHolder;
 
-			// Remove item only from list
-			var rmMsg = new TimeEntryMsg (DataDir.None, DataAction.Delete, timeEntryHolder.Data);
-            RxChain.Send (this.GetType (), DataTag.TimeEntryRemoveWithUndo, rmMsg);
+            // Use DataDir.Incoming to prevent SyncOut from sending the message
+			var rmMsg = new TimeEntryMsg (DataDir.Incoming, timeEntryHolder.DataCollection);
+            RxChain.Send (this.GetType (), DataTag.TimeEntryUpdateOnlyAppState, rmMsg);
 
 			// Create Undo timer
 			if (undoTimer != null) {

@@ -8,7 +8,7 @@ using Toggl.Phoebe._Data.Models;
 
 namespace Toggl.Phoebe._Data
 {
-    public class SyncSqliteDataStore 
+    public class SyncSqliteDataStore : ISyncDataStore
     {
         readonly SQLiteConnectionWithLock cnn;
         readonly ISQLitePlatform platformInfo;
@@ -25,7 +25,7 @@ namespace Toggl.Phoebe._Data
 
         private void CreateTables ()
         {
-            var dataObjects = DiscoverDataObjectTypes ();
+            var dataObjects = DiscoverDataModels ();
             foreach (var t in dataObjects) {
                 cnn.CreateTable (t);
             }
@@ -38,12 +38,16 @@ namespace Toggl.Phoebe._Data
             cnn.Table <TimeEntryData> ().Delete (t => t.State == TimeEntryState.New);
         }
 
-        internal static IEnumerable<Type> DiscoverDataObjectTypes ()
+        internal static List<Type> DiscoverDataModels ()
         {
             var dataType = typeof (TimeEntryData);
-            return from t in dataType.Assembly.GetTypes ()
-                    where t.Namespace == dataType.Namespace && !t.IsAbstract
-                select t;
+            return dataType
+                .Assembly
+                .GetTypes ()
+                .Where (t =>
+                    t.Namespace == dataType.Namespace &&
+                    t.CustomAttributes.Any (att => att.AttributeType.Name == "TableAttribute"))
+                .ToList ();
         }
 
         public TableQuery<T> Table<T> () where T : CommonData
@@ -51,135 +55,120 @@ namespace Toggl.Phoebe._Data
             return cnn.Table<T> ();
         }
 
-        public IReadOnlyList<DataSyncMsg> Update (DataDir dir, Action<ISyncDataStoreContext> worker)
+        public IReadOnlyList<CommonData> Update (Action<ISyncDataStoreContext> worker)
         {
-            IReadOnlyList<DataSyncMsg> msgs = new List<DataSyncMsg> ();
+            IReadOnlyList<CommonData> msgs = null;
 
             cnn.RunInTransaction (() => {
-                var ctx = new SyncSqliteDataStoreContext (dir, cnn);
+                var ctx = new SyncSqliteDataStoreContext (cnn);
                 worker (ctx);
-                msgs = ctx.Messages;
+                msgs = ctx.UpdatedItems;
             });
 
             return msgs;
         }
 
-        public void UpdateQueue (DataDir dir, Action<ISyncDataStoreQueue> worker)
+        #region Queue
+        const string QueueCreateSql = "CREATE TABLE IF NOT EXISTS [__QUEUE__{0}] (Data TEXT)";
+        const string QueueInsertSql = "INSERT INTO [__QUEUE__{0}] VALUES (?)";
+        const string QueueSelectFirstSql = "SELECT rowid, * FROM [__QUEUE__{0}] ORDER BY rowid LIMIT 1";
+        const string QueueDeleteSql = "DELETE FROM [__QUEUE__{0}] WHERE rowid = ?";
+        const string QueueCountSql = "SELECT COUNT(*) FROM [__QUEUE__{0}]";
+
+        class QueueItem
         {
-            cnn.RunInTransaction (() => worker(new SyncSqliteDataStoreQueue (cnn)));
+            [SQLite.Net.Attributes.Column("rowid")]
+            public long RowId { get; set; }
+            public string Data { get; set; }
         }
+
+        private void CreateQueueTable (string queueId)
+        {
+            cnn.Execute (string.Format(QueueCreateSql, queueId));
+        }
+
+        public int GetSize (string queueId)
+        {
+            CreateQueueTable (queueId);
+            return cnn.ExecuteScalar<int> (QueueCountSql);
+        }
+
+        public bool TryEnqueue (string queueId, string json)
+        {
+            CreateQueueTable (queueId);
+            var res = cnn.Execute (string.Format(QueueInsertSql, queueId), json);
+            return res == 1;
+        }
+
+        public bool TryDequeue (string queueId, out string json)
+        {
+            json = null;
+            CreateQueueTable (queueId);
+
+            var cmd = cnn.CreateCommand (string.Format(QueueSelectFirstSql, queueId));
+            var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
+            if (record != null) {
+                cmd = cnn.CreateCommand (string.Format(QueueDeleteSql, queueId), record.RowId);
+                var res = cmd.ExecuteNonQuery ();
+                if (res != 1) {
+                    return false;
+                }
+                else {
+                    json = record.Data;
+                    return true;
+                }   
+            }
+            else {
+                return false;
+            }
+        }
+
+        public bool TryPeek (string queueId, out string json)
+        {
+            CreateQueueTable (queueId);
+
+            var cmd = cnn.CreateCommand (string.Format(QueueSelectFirstSql, queueId));
+            var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
+            if (record != null) {
+                json = record.Data;
+                return true;
+            }
+            else {
+                json = null;
+                return false;
+            }
+        }
+        #endregion
 
         public class SyncSqliteDataStoreContext : ISyncDataStoreContext
         {
-            readonly DataDir dir;
             readonly SQLiteConnectionWithLock conn;
-            readonly List<DataSyncMsg> messages;
+            readonly List<CommonData> updated;
 
-            public SyncSqliteDataStoreContext(DataDir dir, SQLiteConnectionWithLock conn)
+            public SyncSqliteDataStoreContext(SQLiteConnectionWithLock conn)
             {
-                this.dir = dir;
                 this.conn = conn;
-                this.messages = new List<DataSyncMsg> ();
+                this.updated = new List<CommonData> ();
             }
 
-            public IReadOnlyList<DataSyncMsg> Messages
+            public IReadOnlyList<CommonData> UpdatedItems
             {
-                get { return messages; }
+                get { return updated; }
             }
 
-            public void Put<T> (T obj) where T : CommonData
+            public void Put (CommonData obj)
             {
                 var success = conn.InsertOrReplace (obj) == 1;
                 if (success) {
-                    messages.Add (new DataSyncMsg (dir, DataAction.Put, obj));
+                    updated.Add (obj);
                 }
             }
 
-            public void Delete<T> (T obj) where T : CommonData
+            public void Delete (CommonData obj)
             {
                 var success = conn.Delete (obj) == 1;
                 if (success) {
-                    messages.Add (new DataSyncMsg (dir, DataAction.Delete, obj));
-                }
-            }
-        }
-
-        public class SyncSqliteDataStoreQueue : ISyncDataStoreQueue
-        {
-            const string QueueCreateSql = "CREATE TABLE IF NOT EXISTS [__QUEUE__{0}] (Data TEXT)";
-            const string QueueInsertSql = "INSERT INTO [__QUEUE__{0}] VALUES (?)";
-            const string QueueSelectFirstSql = "SELECT rowid, * FROM [__QUEUE__{0}] ORDER BY rowid LIMIT 1";
-            const string QueueDeleteSql = "DELETE FROM [__QUEUE__{0}] WHERE rowid = ?";
-            const string QueueCountSql = "SELECT COUNT(*) FROM [__QUEUE__{0}]";
-
-            class QueueItem
-            {
-                [SQLite.Net.Attributes.Column("rowid")]
-                public long RowId { get; set; }
-                public string Data { get; set; }
-            }
-
-            readonly SQLiteConnectionWithLock conn;
-
-            public SyncSqliteDataStoreQueue(SQLiteConnectionWithLock conn)
-            {
-                this.conn = conn;
-            }
-
-            private void CreateQueueTable (string queueId)
-            {
-                conn.Execute (string.Format(QueueCreateSql, queueId));
-            }
-
-            public int GetQueueSize (string queueId)
-            {
-                CreateQueueTable (queueId);
-                return conn.ExecuteScalar<int> (QueueCountSql);
-            }
-
-            public bool TryEnqueue (string queueId, string json)
-            {
-                CreateQueueTable (queueId);
-                var res = conn.Execute (string.Format(QueueInsertSql, queueId), json);
-                return res == 1;
-            }
-
-            public bool TryDequeue (string queueId, out string json)
-            {
-                json = null;
-                CreateQueueTable (queueId);
-
-                var cmd = conn.CreateCommand (string.Format(QueueSelectFirstSql, queueId));
-                var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
-                if (record != null) {
-                    cmd = conn.CreateCommand (string.Format(QueueDeleteSql, queueId), record.RowId);
-                    var res = cmd.ExecuteNonQuery ();
-                    if (res != 1) {
-                        return false;
-                    }
-                    else {
-                        json = record.Data;
-                        return true;
-                    }   
-                }
-                else {
-                    return false;
-                }
-            }
-
-            public bool TryPeekQueue (string queueId, out string json)
-            {
-                CreateQueueTable (queueId);
-
-                var cmd = conn.CreateCommand (string.Format(QueueSelectFirstSql, queueId));
-                var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
-                if (record != null) {
-                    json = record.Data;
-                    return true;
-                }
-                else {
-                    json = null;
-                    return false;
+                    updated.Add (obj);
                 }
             }
         }

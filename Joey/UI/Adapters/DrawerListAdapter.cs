@@ -1,4 +1,4 @@
-﻿using System;
+﻿  using System;
 using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
@@ -60,14 +60,14 @@ namespace Toggl.Joey.UI.Adapters
                     TextResId = Resource.String.MainDrawerLogout,
                     ImageResId = Resource.Drawable.IcNavLogout,
                     IsEnabled = true,
-                    Visible = !authManager.OfflineMode,
+                    VMode = VisibilityMode.Normal,
                 },
                 new DrawerItem () {
                     Id = RegisterUserPageId,
                     TextResId = Resource.String.MainDrawerSignup,
                     ImageResId = Resource.Drawable.IcNavLogout,
                     IsEnabled = true,
-                    Visible = authManager.OfflineMode,
+                    VMode = VisibilityMode.Offline,
                 }
             };
             authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -77,7 +77,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             var newList = new List<DrawerItem> ();
             foreach (var item in list) {
-                if (!item.Visible) {
+                if (item.VMode == VisibilityMode.Normal && authManager.OfflineMode || item.VMode == VisibilityMode.Offline && !authManager.OfflineMode) {
                     continue;
                 }
                 newList.Add (item);
@@ -140,7 +140,7 @@ namespace Toggl.Joey.UI.Adapters
             public int ChildOf = 0;
             public bool IsEnabled;
             public bool Expanded = false;
-            public bool Visible = true;
+            public VisibilityMode VMode = VisibilityMode.Both;
         }
 
         private class DrawerItemViewHolder : BindableViewHolder<DrawerItem>
@@ -172,6 +172,11 @@ namespace Toggl.Joey.UI.Adapters
                 TitleTextView.Enabled = DataSource.IsEnabled;
             }
         }
+
+        public enum VisibilityMode {
+            Normal,
+            Offline,
+            Both
+        }
     }
 }
-

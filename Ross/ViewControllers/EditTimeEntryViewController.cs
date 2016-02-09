@@ -17,7 +17,7 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class EditTimeEntryViewController : UIViewController, DurationChangeViewController.IChangeDuration, IUpdateTagList, ProjectSelectionViewController.IProjectSelected
+    public class EditTimeEntryViewController : UIViewController, DurationChangeViewController.IChangeDuration, IOnTagSelectedHandler, IOnProjectSelectedHandler
     {
         private const string DefaultDurationText = " 00:00:00 ";
 
@@ -290,6 +290,7 @@ namespace Toggl.Ross.ViewControllers
         public void OnProjectSelected (Guid projectId, Guid taskId)
         {
             ViewModel.SetProjectAndTask (projectId, taskId);
+            NavigationController.PopToViewController (this, true);
         }
         #endregion
 
@@ -297,6 +298,7 @@ namespace Toggl.Ross.ViewControllers
         public void OnChangeDuration (TimeSpan newDuration)
         {
             ViewModel.ChangeTimeEntryDuration (newDuration);
+            NavigationController.PopViewController (true);
         }
         #endregion
 
@@ -304,11 +306,13 @@ namespace Toggl.Ross.ViewControllers
         public void OnCreateNewTag (TagData newTagData)
         {
             ViewModel.AddTag (newTagData);
+            NavigationController.PopToViewController (this, true);
         }
 
         public void OnModifyTagList (List<TagData> newTagList)
         {
             ViewModel.ChangeTagList (newTagList);
+            NavigationController.PopToViewController (this, true);
         }
         #endregion
 

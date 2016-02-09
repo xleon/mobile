@@ -76,7 +76,6 @@ namespace Toggl.Ross.ViewControllers
             var entered = durationView.EnteredDuration;
             duration = new TimeSpan (entered.Hours, entered.Minutes, 0);
             handler.OnChangeDuration (duration);
-            NavigationController.PopViewController (true);
         }
 
         private TimeSpan GetDuration (DateTime stopTime, DateTime startTime)

@@ -7,8 +7,7 @@ namespace Toggl.Phoebe
 {
     public static class OBMExperimentManager
     {
-        public const int HomeEmptyState = 75;
-        public const int HomeWithTEListState = 90;
+        public const int HomeWithTEListState = 93;
 
         public static async void Send (int experimentNumber, string actionKey, string actionValue)
         {

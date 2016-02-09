@@ -210,7 +210,7 @@ namespace Toggl.Joey.UI.Fragments
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-            IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.Data.ElementAt (position)).Guids;
+            IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt (position)).Guids;
             intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
             intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
 
@@ -296,7 +296,7 @@ namespace Toggl.Joey.UI.Fragments
         private void ShowEmptyState ()
         {
             //Empty state is experimental.
-            if (!OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+            if (!OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeWithTEListState)) {
                 return;
             }
 

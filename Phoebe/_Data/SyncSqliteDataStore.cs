@@ -50,22 +50,22 @@ namespace Toggl.Phoebe._Data
                 .ToList ();
         }
 
-        public TableQuery<T> Table<T> () where T : CommonData
+        public TableQuery<T> Table<T> () where T : CommonData, new()
         {
             return cnn.Table<T> ();
         }
 
-        public IReadOnlyList<CommonData> Update (Action<ISyncDataStoreContext> worker)
+        public IReadOnlyList<ICommonData> Update (Action<ISyncDataStoreContext> worker)
         {
-            IReadOnlyList<CommonData> msgs = null;
+            IReadOnlyList<ICommonData> updated = null;
 
             cnn.RunInTransaction (() => {
                 var ctx = new SyncSqliteDataStoreContext (cnn);
                 worker (ctx);
-                msgs = ctx.UpdatedItems;
+                updated = ctx.UpdatedItems;
             });
 
-            return msgs;
+            return updated;
         }
 
         #region Queue
@@ -143,20 +143,20 @@ namespace Toggl.Phoebe._Data
         public class SyncSqliteDataStoreContext : ISyncDataStoreContext
         {
             readonly SQLiteConnectionWithLock conn;
-            readonly List<CommonData> updated;
+            readonly List<ICommonData> updated;
 
             public SyncSqliteDataStoreContext(SQLiteConnectionWithLock conn)
             {
                 this.conn = conn;
-                this.updated = new List<CommonData> ();
+                this.updated = new List<ICommonData> ();
             }
 
-            public IReadOnlyList<CommonData> UpdatedItems
+            public IReadOnlyList<ICommonData> UpdatedItems
             {
                 get { return updated; }
             }
 
-            public void Put (CommonData obj)
+            public void Put (ICommonData obj)
             {
                 var success = conn.InsertOrReplace (obj) == 1;
                 if (success) {
@@ -164,7 +164,7 @@ namespace Toggl.Phoebe._Data
                 }
             }
 
-            public void Delete (CommonData obj)
+            public void Delete (ICommonData obj)
             {
                 var success = conn.Delete (obj) == 1;
                 if (success) {

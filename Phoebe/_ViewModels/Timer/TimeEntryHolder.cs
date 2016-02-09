@@ -9,8 +9,8 @@ namespace Toggl.Phoebe._ViewModels.Timer
     public class TimeEntryHolder : ITimeEntryHolder
     {
         public TimeEntryInfo Info { get; set; } // TODO: Make set private again?
-        public TimeEntryData Data { get; private set; }
-        public IList<TimeEntryData> DataCollection
+        public ITimeEntryData Data { get; private set; }
+        public IList<ITimeEntryData> DataCollection
         {
             get {
                 return new[] { Data };
@@ -24,7 +24,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
             }
         }
 
-        public TimeEntryHolder (TimeEntryData data, TimeEntryInfo info)
+        public TimeEntryHolder (ITimeEntryData data, TimeEntryInfo info)
         {
             Data = data;
             Info = info;

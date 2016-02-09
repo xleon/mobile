@@ -136,7 +136,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         Guid userId = Guid.NewGuid ();
         Guid workspaceId = Guid.NewGuid ();
         bool messageHandled = false;
-        DataTag tag = DataTag.TestSyncOutManager;
+        DataTag tag = DataTag.TimeEntryUpdateOnlyAppState;
 
 //        public override void SetUp ()
 //        {

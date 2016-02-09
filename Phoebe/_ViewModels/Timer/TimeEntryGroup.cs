@@ -40,9 +40,9 @@ namespace Toggl.Phoebe._ViewModels.Timer
         }
 
         public TimeEntryInfo Info { get; private set; }
-        public IList<TimeEntryData> DataCollection { get; private set; }
+        public IList<ITimeEntryData> DataCollection { get; private set; }
 
-        public TimeEntryData Data
+        public ITimeEntryData Data
         {
             get { return DataCollection [0]; }
         }
@@ -54,12 +54,12 @@ namespace Toggl.Phoebe._ViewModels.Timer
             }
         }
 
-        public TimeEntryGroup (TimeEntryData data)
+        public TimeEntryGroup (ITimeEntryData data)
         {
-            DataCollection = new List<TimeEntryData> { data };
+            DataCollection = new List<ITimeEntryData> { data };
         }
 
-        public TimeEntryGroup (IEnumerable<TimeEntryData> dataCollection, TimeEntryInfo info)
+        public TimeEntryGroup (IEnumerable<ITimeEntryData> dataCollection, TimeEntryInfo info)
         {
             DataCollection = dataCollection.OrderByDescending (x => x.StartTime).ToList ();
             Info = info;

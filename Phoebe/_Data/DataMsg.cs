@@ -64,7 +64,7 @@ namespace Toggl.Phoebe._Data
     public interface IDataSyncMsg
     {
         DataDir Dir { get; }
-        IReadOnlyList<CommonData> Data { get; }
+        IReadOnlyList<ICommonData> Data { get; }
     }
 
     public class DataJsonMsg

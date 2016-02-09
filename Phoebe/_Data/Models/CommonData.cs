@@ -3,7 +3,17 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
-    public abstract class CommonData
+    public interface ICommonData
+    {
+        Guid Id { get; }
+        DateTime ModifiedAt { get; }
+        DateTime? DeletedAt { get; }
+        bool IsDirty { get; }
+        long? RemoteId { get; }
+        bool RemoteRejected { get; }
+    }
+
+    public abstract class CommonData : ICommonData
     {
         protected CommonData ()
         {
@@ -15,7 +25,7 @@ namespace Toggl.Phoebe._Data.Models
         /// the data from the other object.
         /// </summary>
         /// <param name="other">Instance to copy data from.</param>
-        protected CommonData (CommonData other)
+        protected CommonData (ICommonData other)
         {
             Id = other.Id;
             ModifiedAt = other.ModifiedAt;

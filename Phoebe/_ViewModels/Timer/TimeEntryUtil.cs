@@ -16,8 +16,8 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
     public interface ITimeEntryHolder : IHolder
     {
-        TimeEntryData Data { get; }
-        IList<TimeEntryData> DataCollection { get; }
+        ITimeEntryData Data { get; }
+        IList<ITimeEntryData> DataCollection { get; }
         TimeEntryInfo Info { get; }
         IList<string> Guids { get; }
 
@@ -55,26 +55,26 @@ namespace Toggl.Phoebe._ViewModels.Timer
     public class TimeEntryMsg : IDataSyncMsg
     {
         public DataDir Dir { get; private set; }
-        public IReadOnlyList<TimeEntryData> Data { get; private set; }
+        public IReadOnlyList<ITimeEntryData> Data { get; private set; }
 
-        IReadOnlyList<CommonData> IDataSyncMsg.Data
+        IReadOnlyList<ICommonData> IDataSyncMsg.Data
         {
             get { return Data; }
         }
 
-        public TimeEntryMsg (DataDir dir, IEnumerable<TimeEntryData> data)
+        public TimeEntryMsg (DataDir dir, IEnumerable<ITimeEntryData> data)
         {
             Dir = dir;
-            Data = new List<TimeEntryData> (data);
+            Data = new List<ITimeEntryData> (data);
         }
 
-        public TimeEntryMsg (DataDir dir, TimeEntryData data)
+        public TimeEntryMsg (DataDir dir, ITimeEntryData data)
         {
             Dir = dir;
-            Data = new List<TimeEntryData> { data };
+            Data = new List<ITimeEntryData> { data };
         }
 
-        static void send (TimeEntryData oldEntry, Action<TimeEntryData> update)
+        static void send (ITimeEntryData oldEntry, Action<TimeEntryData> update)
         {
             var newEntry = new TimeEntryData (oldEntry);
             update (newEntry);
@@ -82,7 +82,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
             RxChain.Send (typeof(TimeEntryMsg), DataTag.TimeEntryUpdate, msg);
         }
 
-        public static void StopAndSend (TimeEntryData data)
+        public static void StopAndSend (ITimeEntryData data)
         {
             send (data, newEntry => {
                 newEntry.State = TimeEntryState.Finished;
@@ -90,7 +90,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
             });
         }
 
-        public static void StartAndSend (TimeEntryData data)
+        public static void StartAndSend (ITimeEntryData data)
         {
             send (data, newEntry => {
                 // TODO: Create new Guid?
@@ -98,7 +98,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
             });
         }
 
-        public static void DeleteAndSend (TimeEntryData data)
+        public static void DeleteAndSend (ITimeEntryData data)
         {
             send (data, newEntry => {
                 newEntry.DeletedAt = Time.UtcNow;

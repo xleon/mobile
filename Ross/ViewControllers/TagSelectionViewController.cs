@@ -16,9 +16,9 @@ namespace Toggl.Ross.ViewControllers
         private TagListViewModel viewModel;
         private Guid workspaceId;
         private List<TagData> previousSelectedTags;
-        private IUpdateTagList handler;
+        private IOnTagSelectedHandler handler;
 
-        public TagSelectionViewController (Guid workspaceId, List<TagData> previousSelectedTags, IUpdateTagList handler) : base (UITableViewStyle.Plain)
+        public TagSelectionViewController (Guid workspaceId, List<TagData> previousSelectedTags, IOnTagSelectedHandler handler) : base (UITableViewStyle.Plain)
         {
             Title = "TagTitle".Tr ();
             this.workspaceId = workspaceId;
@@ -50,7 +50,7 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItems = new [] { saveBtn, addBtn};
         }
 
-        public override void ViewDidUnload ()
+        public override void ViewWillUnload ()
         {
             viewModel.Dispose ();
             base.ViewDidUnload ();
@@ -71,6 +71,7 @@ namespace Toggl.Ross.ViewControllers
         protected override void OnRowSelected (object item, NSIndexPath indexPath)
         {
             base.OnRowSelected (item, indexPath);
+
             var cell = (TagCell)TableView.CellAt (indexPath);
             cell.Checked = !cell.Checked;
 
@@ -79,6 +80,8 @@ namespace Toggl.Ross.ViewControllers
             } else {
                 previousSelectedTags.RemoveAll (t => t.Id == ((TagData)item).Id);
             }
+
+            TableView.DeselectRow (indexPath, true);
         }
 
         private void OnAddNewTag (object sender, EventArgs evnt)
@@ -90,7 +93,6 @@ namespace Toggl.Ross.ViewControllers
         private void OnSaveBtn (object s, EventArgs e)
         {
             handler.OnModifyTagList (previousSelectedTags);
-            NavigationController.PopViewController (true);
         }
 
         private class TagCell : UITableViewCell

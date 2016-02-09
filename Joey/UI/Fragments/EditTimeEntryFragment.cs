@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
@@ -20,7 +19,6 @@ using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
-using MeasureSpec = Android.Views.View.MeasureSpec;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
@@ -28,7 +26,7 @@ namespace Toggl.Joey.UI.Fragments
     public class EditTimeEntryFragment : Fragment,
         ChangeTimeEntryDurationDialogFragment.IChangeDuration,
         ChangeDateTimeDialogFragment.IChangeDateTime,
-        IUpdateTagList
+        IOnTagSelectedHandler
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
 

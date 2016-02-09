@@ -21,7 +21,7 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
         private ListView listView;
         private TagListViewModel viewModel;
-        private IUpdateTagList updateTagHandler;
+        private IOnTagSelectedHandler updateTagHandler;
 
         private Guid WorkspaceId
         {
@@ -101,7 +101,7 @@ namespace Toggl.Joey.UI.Fragments
             return dia;
         }
 
-        public ChooseTimeEntryTagsDialogFragment SetOnModifyTagListHandler (IUpdateTagList handler)
+        public ChooseTimeEntryTagsDialogFragment SetOnModifyTagListHandler (IOnTagSelectedHandler handler)
         {
             updateTagHandler = handler;
             return this;

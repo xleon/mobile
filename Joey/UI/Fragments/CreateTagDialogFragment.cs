@@ -5,7 +5,6 @@ using Android.OS;
 using Android.Text;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
@@ -18,7 +17,7 @@ namespace Toggl.Joey.UI.Fragments
         private EditText nameEditText { get; set;}
         private CreateTagViewModel viewModel { get; set;}
         private Binding<string, string> tagBinding;
-        private IUpdateTagList updateTagHandler;
+        private IOnTagSelectedHandler updateTagHandler;
 
         private Guid WorkspaceId
         {
@@ -63,9 +62,6 @@ namespace Toggl.Joey.UI.Fragments
             nameEditText.InputType = InputTypes.TextFlagCapSentences;
             nameEditText.TextChanged += OnNameEditTextTextChanged;
 
-            // Again we need to define binding inside OnCreateDialog
-            tagBinding = this.SetBinding (() => viewModel.TagName, () => nameEditText.Text, BindingMode.TwoWay);
-
             return new AlertDialog.Builder (Activity)
                    .SetTitle (Resource.String.CreateTagDialogTitle)
                    .SetView (nameEditText)
@@ -86,7 +82,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroy ();
         }
 
-        public CreateTagDialogFragment SetCreateNewTagHandler (IUpdateTagList handler)
+        public CreateTagDialogFragment SetCreateNewTagHandler (IOnTagSelectedHandler handler)
         {
             updateTagHandler = handler;
             return this;
@@ -99,7 +95,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            var newTagData = await viewModel.SaveTagModel ();
+            var newTagData = await viewModel.SaveTagModel (nameEditText.Text);
             if (updateTagHandler != null) {
                 updateTagHandler.OnCreateNewTag (newTagData);
             }
@@ -111,7 +107,7 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            positiveButton.Enabled = !String.IsNullOrWhiteSpace (nameEditText.Text);
+            positiveButton.Enabled = !string.IsNullOrWhiteSpace (nameEditText.Text);
         }
     }
 }

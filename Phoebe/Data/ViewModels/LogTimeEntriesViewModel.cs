@@ -79,7 +79,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             if (Collection != null) {
-                ((TimeEntriesCollection<ITimeEntryHolder>)Collection).Dispose ();
+                if (Collection is TimeEntriesCollection<TimeEntryHolder>) {
+                    ((TimeEntriesCollection<TimeEntryHolder>)Collection).Dispose ();
+                } else {
+                    ((TimeEntriesCollection<TimeEntryGroup>)Collection).Dispose ();
+                }
             }
         }
 

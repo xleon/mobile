@@ -6,11 +6,7 @@ using Android.Views;
 using Android.Widget;
 using Android.Graphics;
 using Android.Support.V7.Widget;
-using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.Models;
-
-using Fragment = Android.Support.V4.App.Fragment;
-using MeasureSpec = Android.Views.View.MeasureSpec;
 
 namespace Toggl.Joey.UI.Views
 {
@@ -63,7 +59,7 @@ namespace Toggl.Joey.UI.Views
 
             public ColorPickerAdapter()
             {
-                SelectedColor = -1;
+                SelectedColor = 0;
             }
 
             public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)

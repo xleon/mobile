@@ -9,7 +9,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
-    public interface IUpdateTagList
+    public interface IOnTagSelectedHandler
     {
         void OnCreateNewTag (TagData newTagData);
 

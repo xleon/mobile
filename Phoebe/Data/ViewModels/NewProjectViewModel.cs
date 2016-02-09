@@ -17,13 +17,13 @@ namespace Toggl.Phoebe.Data.ViewModels
         public NewProjectViewModel (ProjectModel model)
         {
             this.model = model;
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
+            ServiceContainer.Resolve<ITracker>().CurrentScreen = "New Project";
         }
 
         public static async Task<NewProjectViewModel> Init (Guid workspaceId)
         {
             var workspaceModel = new WorkspaceModel (workspaceId);
-            await workspaceModel.LoadAsync ();
+            await workspaceModel.LoadAsync();
 
             return new NewProjectViewModel (new ProjectModel {
                 Workspace = workspaceModel,
@@ -32,18 +32,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
             model = null;
         }
 
-        public string ProjectName { get; set; }
-
-        public int ProjectColor { get; set; }
-
         public string ClientName { get; set; }
-
-        public Guid ProjectId {  get { return model.Id; } } // TODO: not good :(
 
         public void SetClient (ClientData clientData)
         {
@@ -51,41 +45,30 @@ namespace Toggl.Phoebe.Data.ViewModels
             ClientName = clientData.Name;
         }
 
-        public async Task<SaveProjectResult> SaveProjectModel ()
+        public async Task<ProjectData> SaveProject (string projectName, int projectColor)
         {
-            // Project name is empty
-            if (string.IsNullOrEmpty (ProjectName)) {
-                return SaveProjectResult.NameIsEmpty;
-            }
-
-            // Project name is used
-            var exists = await ExistProjectWithName (ProjectName);
-            if (exists) {
-                return SaveProjectResult.NameExists;
-            }
-
-            model.Name = ProjectName;
-            model.Color = ProjectColor;
+            model.Name = projectName;
+            model.Color = projectColor;
 
             // Save new project.
             await model.SaveAsync();
 
             // Create an extra model for Project / User relationship
-            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            var userData = ServiceContainer.Resolve<AuthManager>().User;
 
-            var projectUserModel = new ProjectUserModel ();
+            var projectUserModel = new ProjectUserModel();
             projectUserModel.Project = model;
             projectUserModel.User = new UserModel (userData);
 
             // Save relationship.
-            await projectUserModel.SaveAsync ();
+            await projectUserModel.SaveAsync();
 
-            return SaveProjectResult.SaveOk;
+            return model.Data;
         }
 
-        private async Task<bool> ExistProjectWithName (string projectName)
+        public async Task<bool> ExistProjectWithName (string projectName)
         {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            var dataStore = ServiceContainer.Resolve<IDataStore>();
             Guid clientId = (model.Client == null) ? Guid.Empty : model.Client.Id;
             var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync (projectName, clientId);
             return existWithName;

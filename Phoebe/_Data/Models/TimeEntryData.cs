@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SQLite.Net.Attributes;
+using Newtonsoft.Json;
 
 namespace Toggl.Phoebe._Data.Models
 {
@@ -26,6 +27,7 @@ namespace Toggl.Phoebe._Data.Models
        Guid WorkspaceId { get; }
        Guid ProjectId { get; }
        Guid TaskId { get; }
+       IReadOnlyList<string> Tags { get; }
     }
 
     [Table ("TimeEntryModel")]
@@ -81,5 +83,20 @@ namespace Toggl.Phoebe._Data.Models
         public Guid ProjectId { get; set; }
 
         public Guid TaskId { get; set; }
+
+        [Ignore]
+        public List<string> Tags
+        {
+            get {
+                return JsonConvert.DeserializeObject<List<string>> (RawTags);
+            }
+            set {
+                RawTags = JsonConvert.SerializeObject (value);
+            }
+        }
+
+        IReadOnlyList<string> ITimeEntryData.Tags => Tags;
+
+        public string RawTags { get; set; }
     }
 }

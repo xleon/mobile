@@ -106,7 +106,7 @@ namespace Toggl.Ross.ViewControllers
             clientButton.Apply (Style.NewProject.WithClient);
             clientButton.SetTitle (btnLabel, UIControlState.Normal);
 
-            NavigationController.PopViewController (true);
+            NavigationController.PopToViewController (this, true);
         }
         #endregion
 

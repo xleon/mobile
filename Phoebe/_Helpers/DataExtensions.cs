@@ -70,7 +70,7 @@ namespace Toggl.Phoebe._Helpers
         }
 
         // TODO: Check also IsBillable, Tags?
-        public static bool IsGroupableWith (this TimeEntryData data, TimeEntryData other)
+        public static bool IsGroupableWith (this ITimeEntryData data, ITimeEntryData other)
         {
             var groupable = data.ProjectId == other.ProjectId &&
                             string.Compare (data.Description, other.Description, StringComparison.Ordinal) == 0 &&
@@ -87,7 +87,7 @@ namespace Toggl.Phoebe._Helpers
         }
 
 
-        public static TimeSpan GetDuration (this TimeEntryData data, DateTime now)
+        public static TimeSpan GetDuration (this ITimeEntryData data, DateTime now)
         {
             if (data.StartTime.IsMinValue ()) {
                 return TimeSpan.Zero;

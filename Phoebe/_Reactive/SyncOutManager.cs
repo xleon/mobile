@@ -53,7 +53,7 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        async Task EnqueueOrSend (IReadOnlyList<CommonData> msgs)
+        async Task EnqueueOrSend (IReadOnlyList<ICommonData> msgs)
         {
             // TODO: Limit queue size?
 

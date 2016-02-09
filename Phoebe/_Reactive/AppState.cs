@@ -65,7 +65,7 @@ namespace Toggl.Phoebe._Reactive
     public class RichTimeEntry
     {
         public TimeEntryInfo Info { get; private set; }
-        public TimeEntryData Data { get; private set; }
+        public ITimeEntryData Data { get; private set; }
 
         public RichTimeEntry (TimeEntryData data, TimeEntryInfo info)
         {

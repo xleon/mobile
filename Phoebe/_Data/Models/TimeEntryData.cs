@@ -10,15 +10,33 @@ namespace Toggl.Phoebe._Data.Models
         Finished
     }
 
+    public interface ITimeEntryData : ICommonData
+    {
+       TimeEntryState State { get; }
+       string Description { get; }
+       DateTime StartTime { get; }
+       DateTime? StopTime { get; }
+       bool DurationOnly { get; }
+       bool IsBillable { get; }
+       long UserRemoteId { get; }
+       long WorkspaceRemoteId { get; }
+       long? ProjectRemoteId { get; }
+       long? TaskRemoteId { get; }
+       Guid UserId { get; }
+       Guid WorkspaceId { get; }
+       Guid ProjectId { get; }
+       Guid TaskId { get; }
+    }
+
     [Table ("TimeEntryModel")]
-    public class TimeEntryData : CommonData
+    public class TimeEntryData : CommonData, ITimeEntryData
     {
         public TimeEntryData ()
         {
             State = TimeEntryState.New;
         }
 
-        public TimeEntryData (TimeEntryData other) : base (other)
+        public TimeEntryData (ITimeEntryData other) : base (other)
         {
             State = other.State;
             Description = other.Description;

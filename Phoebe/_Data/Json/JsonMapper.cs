@@ -76,7 +76,7 @@ namespace Toggl.Phoebe._Data.Json
             return mapper.Map<T> (source);
         }
 
-        public CommonJson MapToJson (CommonData source)
+        public CommonJson MapToJson (ICommonData source)
         {
             Type destinationType = null;
             Type sourceType = source.GetType ();

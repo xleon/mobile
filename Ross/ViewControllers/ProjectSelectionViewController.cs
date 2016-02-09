@@ -14,11 +14,6 @@ namespace Toggl.Ross.ViewControllers
 {
     public class ProjectSelectionViewController : UITableViewController
     {
-        public interface IProjectSelected
-        {
-            void OnProjectSelected (Guid projectId, Guid taskId);
-        }
-
         private readonly static NSString ClientHeaderId = new NSString ("ClientHeaderId");
         private readonly static NSString ProjectCellId = new NSString ("ProjectCellId");
         private readonly static NSString TaskCellId = new NSString ("TaskCellId");
@@ -26,9 +21,9 @@ namespace Toggl.Ross.ViewControllers
         private const float CellSpacing = 4f;
         private Guid workspaceId;
         private ProjectListViewModel viewModel;
-        private readonly IProjectSelected handler;
+        private readonly IOnProjectSelectedHandler handler;
 
-        public ProjectSelectionViewController (Guid workspaceId, IProjectSelected handler) : base (UITableViewStyle.Plain)
+        public ProjectSelectionViewController (Guid workspaceId, IOnProjectSelectedHandler handler) : base (UITableViewStyle.Plain)
         {
             Title = "ProjectTitle".Tr ();
             this.workspaceId = workspaceId;
@@ -49,6 +44,10 @@ namespace Toggl.Ross.ViewControllers
 
             viewModel = await ProjectListViewModel.Init (workspaceId);
             TableView.Source = new Source (this, viewModel);
+
+            var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, OnAddNewProject);
+            var saveBtn = new UIBarButtonItem (UIBarButtonSystemItem.FixedSpace, OnShowWorkspaceFilter);
+            NavigationItem.RightBarButtonItems = new [] { saveBtn, addBtn};
         }
 
         public override void ViewWillUnload()
@@ -73,7 +72,17 @@ namespace Toggl.Ross.ViewControllers
             }
 
             handler.OnProjectSelected (projectId, taskId);
-            NavigationController.PopViewController (true);
+        }
+
+        private void OnAddNewProject (object sender, EventArgs evt)
+        {
+            var newProjectController = new NewProjectViewController (workspaceId, handler);
+            NavigationController.PushViewController (newProjectController, true);
+        }
+
+        private void OnShowWorkspaceFilter (object sender, EventArgs evt)
+        {
+
         }
 
         class Source : ObservableCollectionViewSource<CommonData, ClientData, ProjectData>

@@ -4,64 +4,28 @@ using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
 using UIKit;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Data.DataObjects;
+using GalaSoft.MvvmLight.Helpers;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class NewProjectViewController : UIViewController
+    public class NewProjectViewController : UIViewController, IOnClientSelectedHandler
     {
-        private readonly ProjectModel model;
         private TextField nameTextField;
         private UIButton clientButton;
-        private bool shouldRebindOnAppear;
-        private bool isSaving;
+        private Guid workspaceId;
+        private IOnProjectSelectedHandler handler;
+        private NewProjectViewModel ViewModel {get; set;}
+        private Binding<string, string> clientBinding;
 
-        public NewProjectViewController (WorkspaceModel workspace, int color)
+        public NewProjectViewController (Guid workspaceId, IOnProjectSelectedHandler handler)
         {
-            model = new ProjectModel {
-                Workspace = workspace,
-                Color = color,
-                IsActive = true,
-                IsPrivate = true
-            };
+            this.workspaceId = workspaceId;
+            this.handler = handler;
             Title = "NewProjectTitle".Tr ();
-        }
-
-        public Action<ProjectModel> ProjectCreated { get; set; }
-
-        private void BindNameField (TextField v)
-        {
-            if (v.Text != model.Name) {
-                v.Text = model.Name;
-            }
-        }
-
-        private void BindClientButton (UIButton v)
-        {
-            if (model.Client == null) {
-                v.Apply (Style.NewProject.NoClient);
-                v.SetTitle ("NewProjectClientHint".Tr (), UIControlState.Normal);
-            } else {
-                var text = model.Client.Name;
-                if (String.IsNullOrEmpty (text)) {
-                    text = "NewProjectNoNameClient".Tr ();
-                }
-
-                v.Apply (Style.NewProject.WithClient);
-                v.SetTitle (text, UIControlState.Normal);
-            }
-        }
-
-        private void Rebind ()
-        {
-            nameTextField.Apply (BindNameField);
-            clientButton.Apply (BindClientButton);
         }
 
         public override void LoadView ()
@@ -75,12 +39,13 @@ namespace Toggl.Ross.ViewControllers
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder (),
-            } .Apply (Style.NewProject.NameField).Apply (BindNameField));
-            nameTextField.EditingChanged += OnNameFieldEditingChanged;
+            } .Apply (Style.NewProject.NameField));
+            nameTextField.EditingChanged += (sender, e) => ValidateProjectName ();
 
             view.Add (clientButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.NewProject.ClientButton).Apply (BindClientButton));
+            } .Apply (Style.NewProject.ClientButton).Apply (Style.NewProject.NoClient));
+            clientButton.SetTitle ("NewProjectClientHint".Tr (), UIControlState.Normal);
             clientButton.TouchUpInside += OnClientButtonTouchUpInside;
 
             view.AddConstraints (VerticalLinearLayout (view));
@@ -88,75 +53,86 @@ namespace Toggl.Ross.ViewControllers
             EdgesForExtendedLayout = UIRectEdge.None;
             View = view;
 
-            NavigationItem.RightBarButtonItem = new UIBarButtonItem (
-                "NewProjectAdd".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
-            .Apply (Style.NavLabelButton);
+            var addBtn = new UIBarButtonItem (
+                "NewProjectAdd".Tr (), UIBarButtonItemStyle.Plain, OnSetBtnPressed)
+            .Apply (Style.NavLabelButton).Apply (Style.DisableNavLabelButton);
+            addBtn.Enabled = false;
+            NavigationItem.RightBarButtonItem = addBtn;
         }
 
-        private void OnNameFieldEditingChanged (object sender, EventArgs e)
+        public async override void ViewDidLoad ()
         {
-            model.Name = nameTextField.Text;
+            base.ViewDidLoad ();
+
+            ViewModel = await NewProjectViewModel.Init (workspaceId);
+            clientBinding = this.SetBinding (() => ViewModel.ClientName).WhenSourceChanges (() => {
+                var name = string.IsNullOrEmpty (ViewModel.ClientName) ? "NewProjectClientHint".Tr () : ViewModel.ClientName;
+                if (string.IsNullOrEmpty (ViewModel.ClientName)) {
+                    clientButton.Apply (Style.NewProject.ClientButton).Apply (Style.NewProject.NoClient);
+                } else {
+                    clientButton.Apply (Style.NewProject.WithClient);
+                }
+                clientButton.SetTitle (name, UIControlState.Normal);
+            });
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+            nameTextField.BecomeFirstResponder ();
+        }
+
+        public override void ViewWillUnload ()
+        {
+            ViewModel.Dispose ();
+            base.ViewWillUnload();
         }
 
         private void OnClientButtonTouchUpInside (object sender, EventArgs e)
         {
-            var controller = new ClientSelectionViewController (model.Workspace) {
-                ClientSelected = (client) => {
-                    model.Client = new ClientModel (client);
-                    NavigationController.PopToViewController (this, true);
-                }
-            };
+            var controller = new ClientSelectionViewController (workspaceId, this);
             NavigationController.PushViewController (controller, true);
         }
 
-        private async void OnNavigationBarAddClicked (object sender, EventArgs e)
+        #region IOnClientSelectedHandler implementation
+        public void OnClientSelected (ClientData data)
         {
-            if (String.IsNullOrWhiteSpace (model.Name)) {
-                // TODO: Show error dialog?
-                return;
+            ViewModel.SetClient (data);
+
+            var btnLabel = "NewProjectNoNameClient".Tr ();
+            if (!string.IsNullOrEmpty (data.Name)) {
+                btnLabel = data.Name;
             }
+            clientButton.Apply (Style.NewProject.WithClient);
+            clientButton.SetTitle (btnLabel, UIControlState.Normal);
 
-            if (isSaving) {
-                return;
-            }
+            NavigationController.PopViewController (true);
+        }
+        #endregion
 
-            isSaving = true;
-
-            try {
-                // Check for existing name
-                var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                Guid clientId = (model.Client == null) ?  Guid.Empty : model.Client.Id;
-                var existWithName = await dataStore.Table<ProjectData>().ExistWithNameAsync (model.Name, clientId);
-
-                if (existWithName) {
-                    var alert = new UIAlertView (
-                        "NewProjectNameExistTitle".Tr (),
-                        "NewProjectNameExistMessage".Tr (),
-                        null,
-                        "NewProjectNameExistOk".Tr (),
-                        null);
-                    alert.Clicked += async (s, ev) => {
-                        if (ev.ButtonIndex == 0) {
-                            nameTextField.BecomeFirstResponder ();
-                        }
-                    };
-                    alert.Show ();
-                } else {
-
-                    // Create new project:
-                    await model.SaveAsync ();
-
-                    // Invoke callback hook
-                    var cb = ProjectCreated;
-                    if (cb != null) {
-                        cb (model);
-                    } else {
-                        NavigationController.PopViewController (true);
+        private async void OnSetBtnPressed (object sender, EventArgs e)
+        {
+            var projectName = nameTextField.Text;
+            var existsName = await ViewModel.ExistProjectWithName (projectName);
+            if (existsName) {
+                var alert = new UIAlertView (
+                    "NewProjectNameExistTitle".Tr (),
+                    "NewProjectNameExistMessage".Tr (),
+                    null,
+                    "NewProjectNameExistOk".Tr (),
+                    null);
+                alert.Clicked += (s, ev) => {
+                    if (ev.ButtonIndex == 0) {
+                        nameTextField.BecomeFirstResponder ();
                     }
-                }
-            } finally {
-                isSaving = false;
+                };
+                alert.Show ();
+                return;
             }
+
+            var random = new Random ();
+            var newProjectData = await ViewModel.SaveProject (projectName, random.Next (Phoebe.Data.Models.ProjectModel.HexColors.Length - 1));
+            handler.OnProjectSelected (newProjectData.Id, Guid.Empty);
         }
 
         private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
@@ -179,23 +155,22 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public override void ViewWillAppear (bool animated)
+        private void ValidateProjectName ()
         {
-            base.ViewWillAppear (animated);
+            var valid = true;
+            var name = nameTextField.Text;
 
-            if (shouldRebindOnAppear) {
-                Rebind ();
-            } else {
-                shouldRebindOnAppear = true;
+            if (string.IsNullOrWhiteSpace (name)) {
+                valid = false;
             }
-        }
 
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-            nameTextField.BecomeFirstResponder ();
+            if (valid) {
+                NavigationItem.RightBarButtonItem.Apply (Style.NavLabelButton);
+            } else {
+                NavigationItem.RightBarButtonItem.Apply (Style.DisableNavLabelButton);
+            }
 
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
+            NavigationItem.RightBarButtonItem.Enabled = valid;
         }
     }
 }

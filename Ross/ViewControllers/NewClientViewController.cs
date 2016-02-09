@@ -4,8 +4,6 @@ using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
@@ -15,31 +13,16 @@ namespace Toggl.Ross.ViewControllers
 {
     public class NewClientViewController : UIViewController
     {
-        public Action<ClientData> ClientCreated { get; set; }
-        protected CreateClientViewModel ViewModel {get; set;}
-        protected TextField NameTextField { get; set; }
-        private WorkspaceModel workspace;
+        private CreateClientViewModel ViewModel {get; set;}
+        private TextField NameTextField { get; set; }
+        private Guid workspaceId;
+        private IOnClientSelectedHandler handler;
 
-        public NewClientViewController (WorkspaceModel workspace)
+        public NewClientViewController (Guid workspaceId, IOnClientSelectedHandler handler)
         {
             Title = "NewClientTitle".Tr ();
-            this.workspace = workspace;
-        }
-
-
-        public override void ViewDidLoad ()
-        {
-            base.ViewDidLoad ();
-            ViewModel = CreateClientViewModel.Init (workspace);
-
-            this.SetBinding (() => ViewModel.ClientName, () => NameTextField.Text, BindingMode.TwoWay)
-            .UpdateTargetTrigger ("EditingChanged");
-        }
-
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-            NameTextField.BecomeFirstResponder ();
+            this.workspaceId = workspaceId;
+            this.handler = handler;
         }
 
         public override void LoadView ()
@@ -63,14 +46,33 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (
                 "NewClientAdd".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
             .Apply (Style.DisableNavLabelButton);
+            NavigationItem.RightBarButtonItem.Enabled = false;
+        }
+
+        public async override void ViewDidLoad ()
+        {
+            base.ViewDidLoad ();
+            ViewModel = await CreateClientViewModel.Init (workspaceId);
+            this.SetBinding (() => ViewModel.ClientName, () => NameTextField.Text, BindingMode.TwoWay)
+            .UpdateTargetTrigger ("EditingChanged");
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+            NameTextField.BecomeFirstResponder ();
+        }
+
+        public override void ViewWillUnload ()
+        {
+            ViewModel.Dispose ();
+            base.ViewWillUnload();
         }
 
         private async void OnNavigationBarAddClicked (object sender, EventArgs e)
         {
             var clientData = await ViewModel.SaveNewClient ();
-            if (ClientCreated != null) {
-                ClientCreated.Invoke (clientData);
-            }
+            handler.OnClientSelected (clientData);
         }
 
         private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
@@ -98,7 +100,7 @@ namespace Toggl.Ross.ViewControllers
             var valid = true;
             var name = NameTextField.Text;
 
-            if (String.IsNullOrWhiteSpace (name)) {
+            if (string.IsNullOrWhiteSpace (name)) {
                 valid = false;
             }
 
@@ -109,7 +111,6 @@ namespace Toggl.Ross.ViewControllers
             }
 
             NavigationItem.RightBarButtonItem.Enabled = valid;
-
         }
     }
 }

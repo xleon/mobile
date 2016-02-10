@@ -17,19 +17,27 @@ namespace Toggl.Phoebe._Reactive
 
     public interface IReducer
     {
-        object Reduce (object state, IDataMsg msg);
+        DataSyncMsg<object> Reduce (object state, IDataMsg msg);
     }
 
-    public class Reducer<T> : IReducer 
+    public class Reducer<T> : IReducer
     {
-        readonly Func<T,IDataMsg,T> reducer;
+        readonly Func<T, IDataMsg, DataSyncMsg<T>> reducer;
 
-        public virtual T Reduce (T state, IDataMsg msg) => reducer (state, msg);
-        object IReducer.Reduce (object state, IDataMsg msg) => reducer ((T)state, msg);
+        public virtual DataSyncMsg<T> Reduce (T state, IDataMsg msg)
+        {
+            return reducer (state, msg);
+        }
+
+        DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
+        {
+            var res = reducer ((T)state, msg);
+            return DataSyncMsg.Create ((object)res.State, res.SyncData);
+        }
 
         protected Reducer () { }
 
-        public Reducer (Func<T,IDataMsg,T> reducer)
+        public Reducer (Func<T, IDataMsg, DataSyncMsg<T>> reducer)
         {
             this.reducer = reducer;
         }
@@ -37,9 +45,9 @@ namespace Toggl.Phoebe._Reactive
 
     public class TagCompositeReducer<T> : Reducer<T>
     {
-        readonly Dictionary<DataTag,Reducer<T>> reducers = new Dictionary<DataTag,Reducer<T>> ();
+        readonly Dictionary<DataTag, Reducer<T>> reducers = new Dictionary<DataTag, Reducer<T>> ();
 
-        public TagCompositeReducer<T> Add (DataTag tag, Func<T,IDataMsg,T> reducer)
+        public TagCompositeReducer<T> Add (DataTag tag, Func<T, IDataMsg, DataSyncMsg<T>> reducer)
         {
             return Add (tag, new Reducer<T> (reducer));
         }
@@ -50,24 +58,25 @@ namespace Toggl.Phoebe._Reactive
             return this;
         }
 
-        public override T Reduce (T state, IDataMsg msg)
+        public override DataSyncMsg<T> Reduce (T state, IDataMsg msg)
         {
             Reducer<T> reducer;
             if (reducers.TryGetValue (msg.Tag, out reducer)) {
                 return reducer.Reduce (state, msg);
-            }
-            else {
-                return state;
+            } else {
+                return DataSyncMsg.Create (state);
             }
         }
     }
 
-    public class FieldCompositeReducer<T> : IReducer
+    public class FieldCompositeReducer<T> : Reducer<T>
         where T : IWithDictionary<T>
     {
         readonly List<Tuple<FieldInfo,IReducer>> reducers = new List<Tuple<FieldInfo,IReducer>> ();
 
-        public FieldCompositeReducer<T> Add<TPart> (Expression<Func<T,TPart>> selector, Func<TPart,IDataMsg,TPart> reducer)
+        public FieldCompositeReducer<T> Add<TPart> (
+            Expression<Func<T,TPart>> selector,
+            Func<TPart, IDataMsg, DataSyncMsg<TPart>> reducer)
         {
             return Add (selector, new Reducer<TPart> (reducer));
         }
@@ -78,29 +87,33 @@ namespace Toggl.Phoebe._Reactive
             var member = (FieldInfo) memberExpr.Member;
 
             if (memberExpr == null)
-                throw new ArgumentException(string.Format(
-                    "Expression '{0}' should be a field.",
-                    selector.ToString()));
+                throw new ArgumentException (string.Format (
+                                                 "Expression '{0}' should be a field.",
+                                                 selector.ToString()));
             if (member == null)
-                throw new ArgumentException(string.Format(
-                    "Expression '{0}' should be a constant expression",
-                    selector.ToString()));
+                throw new ArgumentException (string.Format (
+                                                 "Expression '{0}' should be a constant expression",
+                                                 selector.ToString()));
 
-            reducers.Add(Tuple.Create(member, (IReducer)reducer));
+            reducers.Add (Tuple.Create (member, (IReducer)reducer));
             return this;
         }
 
-        public T Reduce (T state, IDataMsg msg)
+        public override DataSyncMsg<T> Reduce (T state, IDataMsg msg)
         {
+            var syncData = new List<ICommonData> ();
             var dic = new Dictionary<string, object> ();
+
             foreach (var reducer in reducers) {
                 var field = reducer.Item1.GetValue (state);
-                dic.Add (reducer.Item1.Name, reducer.Item2.Reduce (field, msg));
-            }
-            return state.WithDictionary (dic);
-        }
+                var res = reducer.Item2.Reduce (field, msg);
 
-        object IReducer.Reduce (object state, IDataMsg msg) => Reduce ((T)state, msg);
+                dic.Add (reducer.Item1.Name, res.State);
+                syncData.AddRange (res.SyncData);
+            }
+
+            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData);
+        }
     }
 
     public class AppState : IWithDictionary<AppState>
@@ -116,7 +129,7 @@ namespace Toggl.Phoebe._Reactive
         public AppState WithDictionary (IReadOnlyDictionary<string, object> dic)
         {
             return new AppState (
-                dic.ContainsKey (nameof(TimerState)) ? (TimerState)dic[nameof(TimerState)] : this.TimerState);
+                       dic.ContainsKey (nameof (TimerState)) ? (TimerState)dic[nameof (TimerState)] : this.TimerState);
         }
     }
 
@@ -134,7 +147,12 @@ namespace Toggl.Phoebe._Reactive
 
     public class TimerState
     {
+        // Set initial pagination Date to the beginning of the next day.
+        // So, we can include all entries created -Today-.
+        // PaginationDate = Time.UtcNow.Date.AddDays (1);
+
         public UserData User { get; private set; }
+        public DateTime PaginationDate { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
         public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
         public IReadOnlyDictionary<Guid, ClientData> Clients { get; private set; }
@@ -144,7 +162,8 @@ namespace Toggl.Phoebe._Reactive
 
         public TimerState (
             UserData user,
-            IReadOnlyDictionary<Guid, WorkspaceData> workspaces, 
+            DateTime paginationDate,
+            IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, ProjectData> projects,
             IReadOnlyDictionary<Guid, ClientData> clients,
             IReadOnlyDictionary<Guid, TaskData> tasks,
@@ -152,6 +171,7 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
             User = user;
+            PaginationDate = paginationDate;
             Workspaces = workspaces;
             Projects = projects;
             Clients = clients;
@@ -160,8 +180,9 @@ namespace Toggl.Phoebe._Reactive
             TimeEntries = timeEntries;
         }
 
-        TimerState With (
+        public TimerState With (
             UserData user = null,
+            DateTime paginationDate = default (DateTime),
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
             IReadOnlyDictionary<Guid, ClientData> clients = null,
@@ -170,13 +191,73 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new TimerState (
-                user ?? this.User,
-                workspaces ?? this.Workspaces,
-                projects ?? this.Projects,
-                clients ?? this.Clients,
-                tasks ?? this.Tasks,
-                tags ?? this.Tags,
-                timeEntries ?? this.TimeEntries);
+                       user ?? this.User,
+                       paginationDate == default (DateTime) ? this.PaginationDate : paginationDate,
+                       workspaces ?? this.Workspaces,
+                       projects ?? this.Projects,
+                       clients ?? this.Clients,
+                       tasks ?? this.Tasks,
+                       tags ?? this.Tags,
+                       timeEntries ?? this.TimeEntries);
+        }
+
+        /// <summary>
+        /// This doesn't check ModifiedAt or DeletedAt, so call it
+        /// always after putting items first in the database
+        /// </summary>
+        public IReadOnlyDictionary<Guid, T> Update<T> (
+            IReadOnlyDictionary<Guid, T> oldItems, IEnumerable<ICommonData> newItems)
+        where T : CommonData
+        {
+            var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
+            foreach (var newItem in newItems.OfType<T> ()) {
+                if (dic.ContainsKey (newItem.Id)) {
+                    dic [newItem.Id] = newItem;
+                } else {
+                    dic.Add (newItem.Id, newItem);
+                }
+            }
+            return dic;
+        }
+
+        /// <summary>
+        /// This doesn't check ModifiedAt or DeletedAt, so call it
+        /// always after putting items first in the database
+        /// </summary>
+        public IReadOnlyDictionary<Guid, RichTimeEntry> UpdateTimeEntries (
+            IEnumerable<ICommonData> newItems)
+        {
+            var dic = TimeEntries.ToDictionary (x => x.Key, x => x.Value);
+            foreach (var newItem in newItems.OfType<TimeEntryData> ()) {
+                if (dic.ContainsKey (newItem.Id)) {
+                    dic [newItem.Id] = new RichTimeEntry (
+                        newItem, LoadTimeEntryInfo (newItem));
+                } else {
+                    dic.Add (newItem.Id, new RichTimeEntry (
+                                 newItem, LoadTimeEntryInfo (newItem)));
+                }
+            }
+            return dic;
+        }
+
+        public TimeEntryInfo LoadTimeEntryInfo (TimeEntryData teData)
+        {
+            var projectData = teData.ProjectId != Guid.Empty
+                              ? this.Projects[teData.ProjectId]
+                              : new ProjectData ();
+            var clientData = projectData.ClientId != Guid.Empty
+                             ? this.Clients[projectData.ClientId]
+                             : new ClientData ();
+            var taskData = teData.TaskId != Guid.Empty
+                           ? this.Tasks[teData.TaskId]
+                           : new TaskData ();
+            var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
+
+            return new TimeEntryInfo (
+                       projectData,
+                       clientData,
+                       taskData,
+                       color);
         }
     }
 }

@@ -127,10 +127,10 @@ namespace Toggl.Phoebe._ViewModels
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                TimeEntryMsg.StopAndSend (timeEntryHolder.Data);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                TimeEntryMsg.StartAndSend (timeEntryHolder.Data);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryContinue, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
         }
@@ -145,10 +145,9 @@ namespace Toggl.Phoebe._ViewModels
             IsProcessingAction = true;
             var active = activeTimeEntryManager.ActiveTimeEntry;
             if (active.State == TimeEntryState.Running) {
-                TimeEntryMsg.StopAndSend (active);
-            }
-            else {
-                TimeEntryMsg.StartAndSend (active);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, active);
+            } else {
+                RxChain.Send (this.GetType (), DataTag.TimeEntryContinue, active);
             }
             // TODO: This must be at the end of the Reactive chain
             IsProcessingAction = false;
@@ -191,11 +190,11 @@ namespace Toggl.Phoebe._ViewModels
 
         private void UpdateView (bool isRunning, TimeEntryData data)
         {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 // Check if an entry is running.
                 if (isRunning) {
                     Toggl.Phoebe._Data.Models.TimeEntryInfo info = null;  //TODO TODO TODO await StoreRegister.LoadTimeEntryInfoAsync (data);
-                    Description = info.Description;
+                    Description = data.Description;
                     ProjectName = info.ProjectData != null ? info.ProjectData.Name : string.Empty;
                     IsTimeEntryRunning = true;
                     durationTimer.Start ();

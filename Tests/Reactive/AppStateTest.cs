@@ -30,31 +30,31 @@ namespace Toggl.Phoebe.Tests.Reactive
             // TODO: Get initial state of application
             appState = new AppState ();
             updater = new CompositeUpdater<AppState> ()
-                .Add (x => x.TimerState, TestUpdater);
+            .Add (x => x.TimerState, TestUpdater);
         }
 
         public static TimeEntryInfo LoadTimeEntryInfo (TimerState state, TimeEntryData teData)
         {
             // TODO: Check if dictionaries contain ids
             var projectData = teData.ProjectId != Guid.Empty
-                ? state.Projects[teData.ProjectId]
-                : new ProjectData ();
+                              ? state.Projects[teData.ProjectId]
+                              : new ProjectData ();
             var clientData = projectData.ClientId != Guid.Empty
-                ? state.Clients[projectData.ClientId]
-                : new ClientData ();
+                             ? state.Clients[projectData.ClientId]
+                             : new ClientData ();
             var taskData = teData.TaskId != Guid.Empty
-                ? state.Tasks[teData.TaskId]
-                : new TaskData ();
+                           ? state.Tasks[teData.TaskId]
+                           : new TaskData ();
             var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
 
             return new TimeEntryInfo (
-                projectData,
-                clientData,
-                taskData,
-                color);
+                       projectData,
+                       clientData,
+                       taskData,
+                       color);
         }
 
-        public void TestUpdater(TimerState state, IDataMsg dataMsg)
+        public void TestUpdater (TimerState state, IDataMsg dataMsg)
         {
             var teMsg = dataMsg.GetDataOrDefault<TimeEntryMsg> ();
             if (teMsg == null) {
@@ -77,7 +77,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 //                if (msg.Item1 == DataAction.Put) {
 //                    // Load info and insert new entry
 //                    var newTe = new TimeEntryData (msg.Item2); // Protect the reference
-//					var newInfo = LoadTimeEntryInfo (state, newTe);
+//                  var newInfo = LoadTimeEntryInfo (state, newTe);
 //                    state.TimeEntries.Add (newTe.Id, new RichTimeEntry (newTe, newInfo));
 //                }
 //            }
@@ -91,7 +91,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void SendMessage (TimeEntryData data)
         {
             var teMsg = new TimeEntryMsg (DataDir.Outcoming, data);
-            updater.Update (appState, DataMsg.Success(DataTag.TimeEntryLoad, teMsg));
+            updater.Update (appState, DataMsg.Success (DataTag.TimeEntryLoad, teMsg));
         }
 
 //        [Test]

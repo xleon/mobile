@@ -68,8 +68,8 @@ namespace Toggl.Phoebe._Data
         private void OnTimeEntryStateChanged (StartStopMessage msg)
         {
             ActiveTimeEntry = msg.TimeEntry.State == TimeEntryState.Running
-                ? msg.TimeEntry : TimeEntryUtil.CreateTimeEntryDraft ();
-            
+                              ? msg.TimeEntry : TimeEntryUtil.CreateTimeEntryDraft ();
+
             IsRunning = msg.TimeEntry.State == TimeEntryState.Running;
         }
 
@@ -82,8 +82,8 @@ namespace Toggl.Phoebe._Data
                          .ToListAsync ();
 
             ActiveTimeEntry = teList.Any ()
-                ? teList.FirstOrDefault () : TimeEntryUtil.CreateTimeEntryDraft ();
-            
+                              ? teList.FirstOrDefault () : TimeEntryUtil.CreateTimeEntryDraft ();
+
             IsRunning = ActiveTimeEntry.State == TimeEntryState.Running;
         }
 

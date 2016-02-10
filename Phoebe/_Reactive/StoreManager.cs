@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Helpers;
 using XPlatUtils;
@@ -11,25 +12,30 @@ namespace Toggl.Phoebe._Reactive
     {
         public static StoreManager Singleton { get; private set; }
 
-        public static void Init ()
+        public static void Init (AppState initState, Reducer<AppState> reducer)
         {
-            Singleton = Singleton ?? new StoreManager ();
+            Singleton = Singleton ?? new StoreManager (initState, reducer);
         }
 
         readonly Subject<IDataMsg> subject1 = new Subject<IDataMsg> ();
-        readonly Subject<IDataMsg> subject2 = new Subject<IDataMsg> ();
+        readonly Subject<DataSyncMsg<AppState>> subject2 = new Subject<DataSyncMsg<AppState>> ();
 
         readonly ISyncDataStore dataStore =
             ServiceContainer.Resolve<ISyncDataStore> ();
 
-        StoreManager ()
+        StoreManager (AppState initState, Reducer<AppState> reducer)
         {
-            var schedulerProvider = ServiceContainer.Resolve<ISchedulerProvider> ();
             subject1
-            .Synchronize (schedulerProvider.GetScheduler ())
-            .Select (msg => StoreRegister.ResolveAction (msg, dataStore))
-            .Catch<IDataMsg, Exception> (RxChain.PropagateError)
-            .Where (x => x.Tag != DataTag.UncaughtError)
+            .Synchronize (ServiceContainer.Resolve<ISchedulerProvider> ().GetScheduler ())
+            .Scan (DataSyncMsg.Create (initState), (acc, msg) => {
+                try {
+                    return reducer.Reduce (acc.State, msg);
+                } catch (Exception ex) {
+                    var log = ServiceContainer.Resolve<ILogger> ();
+                    log.Error (GetType ().Name, ex, "Failed to update state");
+                    return acc;
+                }
+            })
             .Subscribe (subject2.OnNext);
         }
 
@@ -38,18 +44,16 @@ namespace Toggl.Phoebe._Reactive
             subject1.OnNext (msg);
         }
 
-        public IObservable<IDataMsg> Observe ()
+        public IObservable<DataSyncMsg<AppState>> Observe ()
         {
             return subject2.AsObservable ();
         }
 
         public IObservable<T> Observe<T> (Func<AppState, T> selector)
         {
-            
             return subject2.AsObservable ()
-                .Cast<AppState> ()  // TODO
-                .Select (state => selector (state))
-                .DistinctUntilChanged ();
+                   .Select (syncMsg => selector (syncMsg.State))
+                   .DistinctUntilChanged ();
         }
     }
 }

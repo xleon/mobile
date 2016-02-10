@@ -228,7 +228,7 @@ namespace Toggl.Phoebe.Data
         {
             class QueueItem
             {
-                [SQLite.Net.Attributes.Column("rowid")]
+                [SQLite.Net.Attributes.Column ("rowid")]
                 public long RowId { get; set; }
                 public string Data { get; set; }
             }
@@ -280,8 +280,9 @@ namespace Toggl.Phoebe.Data
             public void Enqueue (string json)
             {
                 var res = conn.Execute (QueueInsertSql, json);
-                if (res != 1)
+                if (res != 1) {
                     throw new Exception ("Didn't queue the item");
+                }
             }
 
             public bool TryDequeue (out string json)
@@ -294,13 +295,11 @@ namespace Toggl.Phoebe.Data
                     var res = cmd.ExecuteNonQuery ();
                     if (res != 1) {
                         return false;
-                    }
-                    else {
+                    } else {
                         json = record.Data;
                         return true;
-                    }   
-                }
-                else {
+                    }
+                } else {
                     return false;
                 }
             }
@@ -312,8 +311,7 @@ namespace Toggl.Phoebe.Data
                 if (record != null) {
                     json = record.Data;
                     return true;
-                }
-                else {
+                } else {
                     json = null;
                     return false;
                 }

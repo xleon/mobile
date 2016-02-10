@@ -13,137 +13,134 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._Reactive
 {
-    public static class StoreRegister
+    public static class Reducers
     {
-        public static IDataMsg ResolveAction (IDataMsg msg, ISyncDataStore dataStore)
+        static DataSyncMsg<TimerState> TimeEntryLoad (TimerState state, IDataMsg msg)
         {
-            switch (msg.Tag) {
-                case DataTag.TimeEntryLoad:
-                    return TimeEntryLoad (msg, dataStore);
-
-                case DataTag.TimeEntryReceivedFromServer:
-                    return TimeEntryReceivedFromServer (msg, dataStore);
-
-                case DataTag.TimeEntryUpdate:
-                    return TimeEntryUpdate (msg, dataStore);
-
-                // Don't touch the database
-                case DataTag.TimeEntryUpdateOnlyAppState:
-                    return msg;
-                    
-                default:
-                    throw new ActionNotFoundException (msg.Tag, typeof (StoreRegister));
-            }
-        }
-        // Set initial pagination Date to the beginning of the next day.
-        // So, we can include all entries created -Today-.
-        static DateTime paginationDate = Time.UtcNow.Date.AddDays (1);
-        static IDataMsg TimeEntryLoad (IDataMsg msg, ISyncDataStore dataStore)
-        {
+            var userId = state.User.Id;
+            var paginationDate = state.PaginationDate;
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             var startDate = GetDatesByDays (dataStore, paginationDate, Literals.TimeEntryLoadDays);
 
-            // Always fall back to local data:
-            var userId = ServiceContainer
-                .Resolve<Toggl.Phoebe.Net.AuthManager> ()
-                .GetUserId ();
-
             var dbEntries = dataStore
-                .Table<TimeEntryData> ()
-                .Where (r =>
-                        r.State != TimeEntryState.New &&
-                        r.StartTime >= startDate && r.StartTime < paginationDate &&
-                        r.DeletedAt == null &&
-                        r.UserId == userId)
-                .Take (Literals.TimeEntryLoadMaxInit)
-                .OrderByDescending (r => r.StartTime)
-                .ToList ();
+                            .Table<TimeEntryData> ()
+                            .Where (r =>
+                                    r.State != TimeEntryState.New &&
+                                    r.StartTime >= startDate && r.StartTime < paginationDate &&
+                                    r.DeletedAt == null &&
+                                    r.UserId == userId)
+                            .Take (Literals.TimeEntryLoadMaxInit)
+                            .OrderByDescending (r => r.StartTime)
+                            .ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            RxChain.Send (typeof(StoreRegister), DataTag.EmptyQueueAndSync, paginationDate);
+            RxChain.Send (typeof (Reducers), DataTag.EmptyQueueAndSync, paginationDate);
             paginationDate = dbEntries.Count > 0 ? startDate : paginationDate;
 
-            // TODO: Check if there're entries in the db that haven't been synced
-            return DataMsg.Success (msg.Tag, new TimeEntryMsg (DataDir.Incoming, dbEntries));
+            return DataSyncMsg.Create (state.With (
+                                           paginationDate: paginationDate,
+                                           timeEntries: state.UpdateTimeEntries (dbEntries)));
         }
 
-        static IDataMsg TimeEntryReceivedFromServer (IDataMsg msg, ISyncDataStore dataStore)
+        static DataSyncMsg<TimerState> TimeEntryReceivedFromServer (TimerState state, IDataMsg msg)
         {
-            var jsonEntries = msg.GetDataOrDefault<List<TimeEntryJson>> ();
-            if (jsonEntries == null) {
-                // TODO: Error management
-            }
+            var receivedData = msg.ForceGetData<IReadOnlyList<CommonData>> ();
 
-            // TODO: Error management when mapping JSON or storing in db
-            var mapper = new JsonMapper ();
-            var dir = DataDir.Incoming;
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            var msgs = dataStore.Update (ctx => {
-                foreach (var jsonEntry in jsonEntries) {
-                    var dataEntry = mapper.Map<TimeEntryData> (jsonEntry);
-
-                    if (dataEntry.DeletedAt != null) {
-                        ctx.Delete (dataEntry);
-                    }
-                    else {
-                        ctx.Put (dataEntry);
+            var updated = dataStore.Update (ctx => {
+                foreach (var newData in receivedData) {
+                    var oldData = ctx.SingleOrDefault (x => x.RemoteId == newData.RemoteId);
+                    if (oldData != null) {
+                        if (newData.CompareTo (oldData) > 0) {
+                            newData.Id = oldData.Id;
+                            PutOrDelete (ctx, newData);
+                        }
+                    } else {
+                        newData.Id = Guid.NewGuid (); // Assign new Id
+                        PutOrDelete (ctx, newData);
                     }
                 }
             });
 
-            var entryMsg = new TimeEntryMsg (dir, msgs.Cast<TimeEntryData> ());
-            return DataMsg.Success<TimeEntryMsg> (msg.Tag, entryMsg);
+            return DataSyncMsg.Create (state.With (
+                                           workspaces: state.Update (state.Workspaces, updated),
+                                           projects: state.Update (state.Projects, updated),
+                                           clients: state.Update (state.Clients, updated),
+                                           tasks: state.Update (state.Tasks, updated),
+                                           tags: state.Update (state.Tags, updated),
+                                           timeEntries: state.UpdateTimeEntries (updated)
+                                       ));
         }
 
-        static IDataMsg TimeEntryUpdate (IDataMsg msg, ISyncDataStore dataStore)
+        static DataSyncMsg<TimerState> TimeEntryStop (TimerState state, IDataMsg msg)
         {
-            try {
-                var entryMsg = msg.ForceGetData<TimeEntryMsg> ();
-                // TODO: Sanity check: DataDir.Outcoming, etc...
+            var entryData = msg.ForceGetData<ITimeEntryData> ();
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-                var dbMsgs = dataStore.Update (ctx => {
-                    foreach (var entry in entryMsg.Data) {
-                        if (entry.DeletedAt == null) {
-                            ctx.Put (entry);
-                        }
-                        else {
-                            ctx.Delete (entry);
-                        }
-                    }
+            if (entryData.State != TimeEntryState.Running) {
+                throw new InvalidOperationException (
+                    String.Format ("Cannot stop a time entry ({0}) in {1} state.",
+                                   entryData.Id, entryData.State));
+            }
 
-                    if (ctx.UpdatedItems.Count != entryMsg.Data.Count) {
-                        var missing = entryMsg.Data
-                            .Where(x => ctx.UpdatedItems.All (y => y.Id != x.Id))
-                            .Select(x => x.Id);
-
-                        // Throw an exception to roll back any change
-                        throw new Exception(string.Format("Couldn't stop time entries: {0}",
-                            string.Join (", ", missing))); 
-                    }
+            var updated = dataStore.Update (ctx => {
+                ctx.Put (new TimeEntryData (entryData) {
+                    State = TimeEntryState.Finished,
+                    StopTime = Time.UtcNow
                 });
+            });
 
-                return DataMsg.Success (msg.Tag, entryMsg);
-            }
-            catch (Exception ex) {
-                return DataMsg.Error<TimeEntryMsg> (msg.Tag, ex);
-            }
+            // TODO: Check updated.Count == 1?
+            return DataSyncMsg.Create (
+                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                       updated);
+        }
+
+        static DataSyncMsg<TimerState> TimeEntriesRemovePermanently (TimerState state, IDataMsg msg)
+        {
+            var entryMsg = msg.ForceGetData<IEnumerable<ITimeEntryData>> ();
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+
+            var removed = dataStore.Update (ctx => {
+                foreach (var entryData in entryMsg) {
+                    ctx.Delete (new TimeEntryData (entryData) {
+                        DeletedAt = Time.UtcNow
+                    });
+                }
+            });
+
+            // TODO: Check removed.Count?
+            return DataSyncMsg.Create (
+                       state.With (timeEntries: state.UpdateTimeEntries (removed)),
+                       removed);
         }
 
         #region Util
+        static void PutOrDelete (ISyncDataStoreContext ctx, ICommonData data)
+        {
+            if (data.DeletedAt == null) {
+                ctx.Put (data);
+            } else {
+                ctx.Delete (data);
+            }
+        }
+
         // TODO: replace this method with the SQLite equivalent.
         static DateTime GetDatesByDays (ISyncDataStore dataStore, DateTime startDate, int numDays)
         {
             var baseQuery = dataStore.Table<TimeEntryData> ().Where (
-                r => r.State != TimeEntryState.New &&
-                r.StartTime < startDate &&
-                r.DeletedAt == null);
+                                r => r.State != TimeEntryState.New &&
+                                r.StartTime < startDate &&
+                                r.DeletedAt == null);
 
             var entries = baseQuery.ToList ();
             if (entries.Count > 0) {
                 var group = entries
-                    .OrderByDescending (r => r.StartTime)
-                    .GroupBy (t => t.StartTime.Date)
-                    .Take (numDays)
-                    .LastOrDefault ();
+                            .OrderByDescending (r => r.StartTime)
+                            .GroupBy (t => t.StartTime.Date)
+                            .Take (numDays)
+                            .LastOrDefault ();
                 return group.Key;
             }
             return DateTime.MinValue;

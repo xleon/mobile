@@ -19,16 +19,15 @@ namespace Toggl.Phoebe._Data
         TimeEntryLoad,
         TimeEntryReceivedFromServer,
 
-        TimeEntryUpdate,
-        TimeEntryUpdateOnlyAppState,
+        TimeEntryStop,
+        TimeEntryContinue,
+
+        TimeEntriesRemoveWithUndo,
+        TimeEntriesRestoreFromUndo,
+        TimeEntriesRemovePermanently,
 
         EmptyQueue,
         EmptyQueueAndSync
-    }
-
-    public enum DataDir {
-        Incoming,
-        Outcoming
     }
 
     public interface IDataMsg
@@ -48,9 +47,9 @@ namespace Toggl.Phoebe._Data
         {
             get {
                 return Data.Match (
-                    x => Either<object, Exception>.Left (x),
-                    e => Either<object, Exception>.Right (e)
-                );
+                           x => Either<object, Exception>.Left (x),
+                           e => Either<object, Exception>.Right (e)
+                       );
             }
         }
 
@@ -61,10 +60,16 @@ namespace Toggl.Phoebe._Data
         }
     }
 
-    public interface IDataSyncMsg
+    public class DataSyncMsg<T>
     {
-        DataDir Dir { get; }
-        IReadOnlyList<ICommonData> Data { get; }
+        public T State { get; private set; }
+        public IReadOnlyList<ICommonData> SyncData { get; private set; }
+
+        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null)
+        {
+            State = state;
+            SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
+        }
     }
 
     public class DataJsonMsg
@@ -84,8 +89,7 @@ namespace Toggl.Phoebe._Data
                     typeCache.Add (TypeName, type);
                 }
                 return (CommonJson)JsonConvert.DeserializeObject (RawData, type);
-            }
-            set {
+            } set {
                 RawData = JsonConvert.SerializeObject (value);
             }
         }
@@ -101,6 +105,7 @@ namespace Toggl.Phoebe._Data
         }
     }
 
+    #region Util
     public static class DataMsg
     {
         public static U MatchData<T,U> (this IDataMsg msg, Func<T,U> left, Func<Exception,U> right)
@@ -125,10 +130,10 @@ namespace Toggl.Phoebe._Data
         {
             var typedMsg = msg as DataMsg<T>;
             if (typedMsg == null) {
-                return default(T);
+                return default (T);
             }
 
-            return typedMsg.Data.Match (x => x, e => default(T));
+            return typedMsg.Data.Match (x => x, e => default (T));
         }
 
         public static T ForceGetData<T> (this IDataMsg msg)
@@ -152,5 +157,14 @@ namespace Toggl.Phoebe._Data
             return new DataMsg<T> (tag, Either<T, Exception>.Right (ex));
         }
     }
+
+    public static class DataSyncMsg
+    {
+        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null)
+        {
+            return new DataSyncMsg<T> (state, syncData);
+        }
+    }
+    #endregion
 }
 

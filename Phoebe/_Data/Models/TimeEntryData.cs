@@ -13,21 +13,21 @@ namespace Toggl.Phoebe._Data.Models
 
     public interface ITimeEntryData : ICommonData
     {
-       TimeEntryState State { get; }
-       string Description { get; }
-       DateTime StartTime { get; }
-       DateTime? StopTime { get; }
-       bool DurationOnly { get; }
-       bool IsBillable { get; }
-       long UserRemoteId { get; }
-       long WorkspaceRemoteId { get; }
-       long? ProjectRemoteId { get; }
-       long? TaskRemoteId { get; }
-       Guid UserId { get; }
-       Guid WorkspaceId { get; }
-       Guid ProjectId { get; }
-       Guid TaskId { get; }
-       IReadOnlyList<string> Tags { get; }
+        TimeEntryState State { get; }
+        string Description { get; }
+        DateTime StartTime { get; }
+        DateTime? StopTime { get; }
+        bool DurationOnly { get; }
+        bool IsBillable { get; }
+        long UserRemoteId { get; }
+        long WorkspaceRemoteId { get; }
+        long? ProjectRemoteId { get; }
+        long? TaskRemoteId { get; }
+        Guid UserId { get; }
+        Guid WorkspaceId { get; }
+        Guid ProjectId { get; }
+        Guid TaskId { get; }
+        IReadOnlyList<string> Tags { get; }
     }
 
     [Table ("TimeEntryModel")]
@@ -89,8 +89,7 @@ namespace Toggl.Phoebe._Data.Models
         {
             get {
                 return JsonConvert.DeserializeObject<List<string>> (RawTags);
-            }
-            set {
+            } set {
                 RawTags = JsonConvert.SerializeObject (value);
             }
         }

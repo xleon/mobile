@@ -144,10 +144,10 @@ namespace Toggl.Phoebe._ViewModels
             }
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                TimeEntryMsg.StopAndSend (timeEntryHolder.Data);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             } else {
-                TimeEntryMsg.StartAndSend (timeEntryHolder.Data);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryContinue, timeEntryHolder.Data);
                 ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
         }
@@ -167,10 +167,9 @@ namespace Toggl.Phoebe._ViewModels
             IsProcessingAction = true;
             var active = activeTimeEntryManager.ActiveTimeEntry;
             if (active.State == TimeEntryState.Running) {
-                TimeEntryMsg.StopAndSend (active);
-            }
-            else {
-                TimeEntryMsg.StartAndSend (active);
+                RxChain.Send (this.GetType (), DataTag.TimeEntryStop, active);
+            } else {
+                RxChain.Send (this.GetType (), DataTag.TimeEntryContinue, active);
             }
             // TODO: This must be at the end of the Reactive chain
             IsProcessingAction = false;

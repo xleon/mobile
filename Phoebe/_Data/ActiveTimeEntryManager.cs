@@ -82,8 +82,8 @@ namespace Toggl.Phoebe._Data
                          .ToListAsync ();
 
             ActiveTimeEntry = teList.Any ()
-                ? teList.FirstOrDefault () : TimeEntryUtil.CreateTimeEntryDraft ();
-            
+                              ? teList.FirstOrDefault () : TimeEntryUtil.CreateTimeEntryDraft ();
+
             IsRunning = ActiveTimeEntry.State == TimeEntryState.Running;
         }
 

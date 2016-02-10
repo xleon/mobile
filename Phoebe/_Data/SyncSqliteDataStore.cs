@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using Toggl.Phoebe._Data;
@@ -42,12 +43,12 @@ namespace Toggl.Phoebe._Data
         {
             var dataType = typeof (TimeEntryData);
             return dataType
-                .Assembly
-                .GetTypes ()
-                .Where (t =>
-                    t.Namespace == dataType.Namespace &&
-                    t.CustomAttributes.Any (att => att.AttributeType.Name == "TableAttribute"))
-                .ToList ();
+                   .Assembly
+                   .GetTypes ()
+                   .Where (t =>
+                           t.Namespace == dataType.Namespace &&
+                           t.CustomAttributes.Any (att => att.AttributeType.Name == "TableAttribute"))
+                   .ToList ();
         }
 
         public TableQuery<T> Table<T> () where T : CommonData, new()
@@ -77,14 +78,14 @@ namespace Toggl.Phoebe._Data
 
         class QueueItem
         {
-            [SQLite.Net.Attributes.Column("rowid")]
+            [SQLite.Net.Attributes.Column ("rowid")]
             public long RowId { get; set; }
             public string Data { get; set; }
         }
 
         private void CreateQueueTable (string queueId)
         {
-            cnn.Execute (string.Format(QueueCreateSql, queueId));
+            cnn.Execute (string.Format (QueueCreateSql, queueId));
         }
 
         public int GetSize (string queueId)
@@ -96,7 +97,7 @@ namespace Toggl.Phoebe._Data
         public bool TryEnqueue (string queueId, string json)
         {
             CreateQueueTable (queueId);
-            var res = cnn.Execute (string.Format(QueueInsertSql, queueId), json);
+            var res = cnn.Execute (string.Format (QueueInsertSql, queueId), json);
             return res == 1;
         }
 
@@ -105,20 +106,18 @@ namespace Toggl.Phoebe._Data
             json = null;
             CreateQueueTable (queueId);
 
-            var cmd = cnn.CreateCommand (string.Format(QueueSelectFirstSql, queueId));
+            var cmd = cnn.CreateCommand (string.Format (QueueSelectFirstSql, queueId));
             var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
             if (record != null) {
-                cmd = cnn.CreateCommand (string.Format(QueueDeleteSql, queueId), record.RowId);
+                cmd = cnn.CreateCommand (string.Format (QueueDeleteSql, queueId), record.RowId);
                 var res = cmd.ExecuteNonQuery ();
                 if (res != 1) {
                     return false;
-                }
-                else {
+                } else {
                     json = record.Data;
                     return true;
-                }   
-            }
-            else {
+                }
+            } else {
                 return false;
             }
         }
@@ -127,13 +126,12 @@ namespace Toggl.Phoebe._Data
         {
             CreateQueueTable (queueId);
 
-            var cmd = cnn.CreateCommand (string.Format(QueueSelectFirstSql, queueId));
+            var cmd = cnn.CreateCommand (string.Format (QueueSelectFirstSql, queueId));
             var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
             if (record != null) {
                 json = record.Data;
                 return true;
-            }
-            else {
+            } else {
                 json = null;
                 return false;
             }
@@ -145,7 +143,7 @@ namespace Toggl.Phoebe._Data
             readonly SQLiteConnectionWithLock conn;
             readonly List<ICommonData> updated;
 
-            public SyncSqliteDataStoreContext(SQLiteConnectionWithLock conn)
+            public SyncSqliteDataStoreContext (SQLiteConnectionWithLock conn)
             {
                 this.conn = conn;
                 this.updated = new List<ICommonData> ();
@@ -170,6 +168,11 @@ namespace Toggl.Phoebe._Data
                 if (success) {
                     updated.Add (obj);
                 }
+            }
+
+            public ICommonData SingleOrDefault (Expression<Func<ICommonData, bool>> selector)
+            {
+                return conn.Get (selector);
             }
         }
     }

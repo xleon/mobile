@@ -8,8 +8,7 @@ namespace Toggl.Phoebe._Reactive
 {
     public static class RxChain
     {
-        public enum InitMode
-        {
+        public enum InitMode {
             Full,
             TestStoreManager
         }
@@ -23,26 +22,25 @@ namespace Toggl.Phoebe._Reactive
             if (protectedTags.TryGetValue (tag, out t)) {
                 if (source != t) {
                     throw new Exception (string.Format ("Type {0} cannot send {1}",
-                        source.FullName, Util.GetName (tag))); 
+                                                        source.FullName, Util.GetName (tag)));
                 }
             }
         }
 
-        public static void Init (InitMode mode = InitMode.Full)
+        public static void Init (AppState initState, Reducer<AppState> reducer, InitMode mode = InitMode.Full)
         {
             switch (mode) {
             case InitMode.TestStoreManager:
-                StoreManager.Init ();
+                StoreManager.Init (initState, reducer);
                 break;
 
             // Full
             default:
-                StoreManager.Init ();
+                StoreManager.Init (initState, reducer);
                 SyncOutManager.Init ();
                 break;
             }
         }
-
 
         public static void Send (Type source, DataTag tag)
         {
@@ -62,8 +60,8 @@ namespace Toggl.Phoebe._Reactive
             StoreManager.Singleton.Send (DataMsg.Error<T> (tag, exc));
         }
 
-		public static IObservable<IDataMsg> PropagateError (Exception ex) =>
-		    Observable.Return (DataMsg.Error<object> (DataTag.UncaughtError, ex));
+        public static IObservable<IDataMsg> PropagateError (Exception ex) =>
+        Observable.Return (DataMsg.Error<object> (DataTag.UncaughtError, ex));
     }
 
     public class ActionNotFoundException : Exception
@@ -72,7 +70,7 @@ namespace Toggl.Phoebe._Reactive
         public Type Register { get; private set; }
 
         public ActionNotFoundException (DataTag tag, Type register)
-            : base (Enum.GetName (typeof (DataTag), tag) + " not found in " + register.FullName)
+        : base (Enum.GetName (typeof (DataTag), tag) + " not found in " + register.FullName)
         {
             Tag = tag;
             Register = register;

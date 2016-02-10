@@ -52,60 +52,6 @@ namespace Toggl.Phoebe._ViewModels.Timer
         }
     }
 
-    public class TimeEntryMsg : IDataSyncMsg
-    {
-        public DataDir Dir { get; private set; }
-        public IReadOnlyList<ITimeEntryData> Data { get; private set; }
-
-        IReadOnlyList<ICommonData> IDataSyncMsg.Data
-        {
-            get { return Data; }
-        }
-
-        public TimeEntryMsg (DataDir dir, IEnumerable<ITimeEntryData> data)
-        {
-            Dir = dir;
-            Data = new List<ITimeEntryData> (data);
-        }
-
-        public TimeEntryMsg (DataDir dir, ITimeEntryData data)
-        {
-            Dir = dir;
-            Data = new List<ITimeEntryData> { data };
-        }
-
-        static void send (ITimeEntryData oldEntry, Action<TimeEntryData> update)
-        {
-            var newEntry = new TimeEntryData (oldEntry);
-            update (newEntry);
-            var msg = new TimeEntryMsg (DataDir.Outcoming, newEntry);
-            RxChain.Send (typeof(TimeEntryMsg), DataTag.TimeEntryUpdate, msg);
-        }
-
-        public static void StopAndSend (ITimeEntryData data)
-        {
-            send (data, newEntry => {
-                newEntry.State = TimeEntryState.Finished;
-                newEntry.StopTime = Time.UtcNow;
-            });
-        }
-
-        public static void StartAndSend (ITimeEntryData data)
-        {
-            send (data, newEntry => {
-                // TODO: Create new Guid?
-                throw new NotImplementedException ();
-            });
-        }
-
-        public static void DeleteAndSend (ITimeEntryData data)
-        {
-            send (data, newEntry => {
-                newEntry.DeletedAt = Time.UtcNow;
-            });
-        }
-    }
-
     public static class TimeEntryUtil
     {
         public static TimeEntryData CreateTimeEntryDraft ()

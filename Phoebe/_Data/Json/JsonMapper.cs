@@ -82,7 +82,7 @@ namespace Toggl.Phoebe._Data.Json
             Type sourceType = source.GetType ();
 
             if (sourceType == typeof (ClientData)) {
-                destinationType = typeof(ClientJson);
+                destinationType = typeof (ClientJson);
             } else if (sourceType == typeof (ProjectData)) {
                 destinationType = typeof (ProjectJson);
             } else if (sourceType == typeof (TaskData)) {

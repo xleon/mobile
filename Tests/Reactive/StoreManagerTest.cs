@@ -27,11 +27,11 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.Register<IPlatformUtils> (platformUtils);
             ServiceContainer.Register<ISchedulerProvider> (new TestSchedulerProvider ());
             ServiceContainer.Register<ISyncDataStore> (store);
-            
+
             RxChain.Init (RxChain.InitMode.TestStoreManager);
         }
 
-        TimeEntryMsg msg(ITimeEntryData teData)
+        TimeEntryMsg msg (ITimeEntryData teData)
         {
             return new TimeEntryMsg (DataDir.Outcoming, teData);
         }
@@ -43,7 +43,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             var te = Util.CreateTimeEntryData (DateTime.Now);
             te.State = TimeEntryState.Running;
 
-            RxChain.Send (sender, DataTag.TimeEntryUpdate, msg(te));
+            RxChain.Send (sender, DataTag.TimeEntryUpdate, msg (te));
 
             var newCount = store.Table<TimeEntryData> ().Count ();
             Assert.AreEqual (oldCount + 1, newCount);
@@ -56,7 +56,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             var te = Util.CreateTimeEntryData (DateTime.Now);
             te.State = TimeEntryState.Running;
 
-            RxChain.Send (sender, DataTag.TimeEntryUpdate, msg(te));
+            RxChain.Send (sender, DataTag.TimeEntryUpdate, msg (te));
 
             var newCount = store.Table<TimeEntryData> ().Count ();
             Assert.AreEqual (oldCount + 1, newCount);
@@ -79,8 +79,8 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             TimeEntryMsg.StopAndSend (te);
             var newTe = store
-                .Table<TimeEntryData> ()
-                .Single (x => x.Id == te.Id);
+                        .Table<TimeEntryData> ()
+                        .Single (x => x.Id == te.Id);
             Assert.AreEqual (TimeEntryState.Finished, newTe.State);
         }
 

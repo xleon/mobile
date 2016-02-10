@@ -14,9 +14,9 @@ namespace Toggl.Phoebe.Data
         int GetQueueSize ();
 
         void Enqueue (string json);
-        
+
         bool TryDequeue (out string json);
-        
+
         bool TryPeekQueue (out string json);
     }
 }

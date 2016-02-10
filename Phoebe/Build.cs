@@ -37,6 +37,7 @@ namespace Toggl.Phoebe
         public static readonly string AppIdentifier = "TogglRoss";
         public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl";
         public static readonly string RaygunApiKey = "";
+        public static readonly string TestFairyApiToken = "";
         #endif
         #endregion
     }

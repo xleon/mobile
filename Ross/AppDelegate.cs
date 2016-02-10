@@ -6,6 +6,7 @@ using Google.SignIn;
 using Mindscape.Raygun4Net;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.XamarinIOS;
+using TestFairyLib;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
@@ -40,6 +41,7 @@ namespace Toggl.Ross
             // Attach bug tracker
             #if (!DEBUG)
             RaygunClient.Attach (Build.RaygunApiKey);
+            TestFairy.Begin (Build.TestFairyApiToken);
             #endif
 
             // Component initialisation.

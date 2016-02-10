@@ -5,61 +5,119 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using XPlatUtils;
 using Toggl.Phoebe.Logging;
+using System.Reflection;
+using System.Linq.Expressions;
 
 namespace Toggl.Phoebe._Reactive
 {
-    public interface IUpdater
+    public interface IWithDictionary<T>
     {
-        object Select (object source);
-        void Update (object state, IDataMsg msg);
+        T WithDictionary (IReadOnlyDictionary<string, object> dic);
     }
 
-    public class Updater<T,TSource> : IUpdater 
+    public interface IReducer
     {
-        readonly Func<TSource,T> selector;
-        readonly Action<T,IDataMsg> updater;
+        object Reduce (object state, IDataMsg msg);
+    }
 
-        public T Select (TSource source) => selector (source);
-        public void Update (T state, IDataMsg msg) => updater (state, msg);
+    public class Reducer<T> : IReducer 
+    {
+        readonly Func<T,IDataMsg,T> reducer;
 
-        object IUpdater.Select (object source) => selector ((TSource)source);
-        void IUpdater.Update (object state, IDataMsg msg) => updater ((T)state, msg);
+        public virtual T Reduce (T state, IDataMsg msg) => reducer (state, msg);
+        object IReducer.Reduce (object state, IDataMsg msg) => reducer ((T)state, msg);
 
-        public Updater (Func<TSource,T> selector, Action<T,IDataMsg> updater)
+        protected Reducer () { }
+
+        public Reducer (Func<T,IDataMsg,T> reducer)
         {
-            this.selector = selector;
-            this.updater = updater;
+            this.reducer = reducer;
         }
     }
 
-    public class CompositeUpdater<T>
+    public class TagCompositeReducer<T> : Reducer<T>
     {
-        readonly List<IUpdater> updaters = new List<IUpdater> ();
+        readonly Dictionary<DataTag,Reducer<T>> reducers = new Dictionary<DataTag,Reducer<T>> ();
 
-        public CompositeUpdater<T> Add<TPart> (Func<T,TPart> selector, Action<TPart,IDataMsg> updater)
+        public TagCompositeReducer<T> Add (DataTag tag, Func<T,IDataMsg,T> reducer)
         {
-            updaters.Add (new Updater<TPart,T> (selector, updater));
+            return Add (tag, new Reducer<T> (reducer));
+        }
+
+        public TagCompositeReducer<T> Add (DataTag tag, Reducer<T> reducer)
+        {
+            reducers.Add (tag, reducer);
             return this;
         }
 
-        public void Update (T state, IDataMsg msg)
+        public override T Reduce (T state, IDataMsg msg)
         {
-            foreach (var updater in updaters) {
-                var selection = updater.Select (state);
-                updater.Update (selection, msg);
+            Reducer<T> reducer;
+            if (reducers.TryGetValue (msg.Tag, out reducer)) {
+                return reducer.Reduce (state, msg);
+            }
+            else {
+                return state;
             }
         }
     }
 
-    public interface IAppState
+    public class FieldCompositeReducer<T> : IReducer
+        where T : IWithDictionary<T>
     {
-        ITimerState TimerState { get; }
+        readonly List<Tuple<FieldInfo,IReducer>> reducers = new List<Tuple<FieldInfo,IReducer>> ();
+
+        public FieldCompositeReducer<T> Add<TPart> (Expression<Func<T,TPart>> selector, Func<TPart,IDataMsg,TPart> reducer)
+        {
+            return Add (selector, new Reducer<TPart> (reducer));
+        }
+
+        public FieldCompositeReducer<T> Add<TPart> (Expression<Func<T,TPart>> selector, Reducer<TPart> reducer)
+        {
+            var memberExpr = selector.Body as MemberExpression;
+            var member = (FieldInfo) memberExpr.Member;
+
+            if (memberExpr == null)
+                throw new ArgumentException(string.Format(
+                    "Expression '{0}' should be a field.",
+                    selector.ToString()));
+            if (member == null)
+                throw new ArgumentException(string.Format(
+                    "Expression '{0}' should be a constant expression",
+                    selector.ToString()));
+
+            reducers.Add(Tuple.Create(member, (IReducer)reducer));
+            return this;
+        }
+
+        public T Reduce (T state, IDataMsg msg)
+        {
+            var dic = new Dictionary<string, object> ();
+            foreach (var reducer in reducers) {
+                var field = reducer.Item1.GetValue (state);
+                dic.Add (reducer.Item1.Name, reducer.Item2.Reduce (field, msg));
+            }
+            return state.WithDictionary (dic);
+        }
+
+        object IReducer.Reduce (object state, IDataMsg msg) => Reduce ((T)state, msg);
     }
 
-    public class AppState : IAppState
+    public class AppState : IWithDictionary<AppState>
     {
-        public TimerState TimerState { get; set; } = new TimerState ();
-        ITimerState IAppState.TimerState => TimerState;
+        public TimerState TimerState { get; private set; }
+
+        public AppState (
+            TimerState timerState)
+        {
+            TimerState = timerState;
+        }
+
+        public AppState WithDictionary (IReadOnlyDictionary<string, object> dic)
+        {
+            return new AppState (
+                dic.ContainsKey (nameof(TimerState)) ? (TimerState)dic[nameof(TimerState)] : this.TimerState);
+        }
     }
 
     public class RichTimeEntry
@@ -74,39 +132,52 @@ namespace Toggl.Phoebe._Reactive
         }
     }
 
-    public interface ITimerState
+    public class TimerState
     {
-        UserData User { get; }
-        DateTime LowerLimit { get; }
+        public UserData User { get; private set; }
+        public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
+        public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
+        public IReadOnlyDictionary<Guid, ClientData> Clients { get; private set; }
+        public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
+        public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
+        public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
 
-        IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; }
-        IReadOnlyDictionary<Guid, ProjectData> Projects { get; }
-        IReadOnlyDictionary<Guid, ClientData> Clients { get; }
-        IReadOnlyDictionary<Guid, TaskData> Tasks { get; }
-        IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; }
+        public TimerState (
+            UserData user,
+            IReadOnlyDictionary<Guid, WorkspaceData> workspaces, 
+            IReadOnlyDictionary<Guid, ProjectData> projects,
+            IReadOnlyDictionary<Guid, ClientData> clients,
+            IReadOnlyDictionary<Guid, TaskData> tasks,
+            IReadOnlyDictionary<Guid, TagData> tags,
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
+        {
+            User = user;
+            Workspaces = workspaces;
+            Projects = projects;
+            Clients = clients;
+            Tasks = tasks;
+            Tags = tags;
+            TimeEntries = timeEntries;
+        }
 
-        // TODO: Tags
-    }
-
-
-    public class TimerState : ITimerState
-    {
-        public UserData User { get; set; } = new UserData ();
-        public DateTime LowerLimit { get; set; } = DateTime.MinValue;
-
-        public Dictionary<Guid, WorkspaceData> Workspaces { get; set; } = new Dictionary<Guid, WorkspaceData> ();
-        public Dictionary<Guid, ProjectData> Projects { get; set; } = new Dictionary<Guid, ProjectData> ();
-        public Dictionary<Guid, ClientData> Clients { get; set; } = new Dictionary<Guid, ClientData> ();
-        public Dictionary<Guid, TaskData> Tasks { get; set; } = new Dictionary<Guid, TaskData> ();
-        public Dictionary<Guid, RichTimeEntry> TimeEntries { get; set; } = new Dictionary<Guid, RichTimeEntry> ();
-
-        IReadOnlyDictionary<Guid, WorkspaceData> ITimerState.Workspaces => Workspaces;
-        IReadOnlyDictionary<Guid, ProjectData> ITimerState.Projects => Projects;
-        IReadOnlyDictionary<Guid, ClientData> ITimerState.Clients => Clients;
-        IReadOnlyDictionary<Guid, TaskData> ITimerState.Tasks => Tasks;
-        IReadOnlyDictionary<Guid, RichTimeEntry> ITimerState.TimeEntries => TimeEntries;
-
-        // TODO: Tags
+        TimerState With (
+            UserData user = null,
+            IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
+            IReadOnlyDictionary<Guid, ProjectData> projects = null,
+            IReadOnlyDictionary<Guid, ClientData> clients = null,
+            IReadOnlyDictionary<Guid, TaskData> tasks = null,
+            IReadOnlyDictionary<Guid, TagData> tags = null,
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
+        {
+            return new TimerState (
+                user ?? this.User,
+                workspaces ?? this.Workspaces,
+                projects ?? this.Projects,
+                clients ?? this.Clients,
+                tasks ?? this.Tasks,
+                tags ?? this.Tags,
+                timeEntries ?? this.TimeEntries);
+        }
     }
 }
 

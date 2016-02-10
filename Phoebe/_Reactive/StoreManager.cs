@@ -42,5 +42,14 @@ namespace Toggl.Phoebe._Reactive
         {
             return subject2.AsObservable ();
         }
+
+        public IObservable<T> Observe<T> (Func<AppState, T> selector)
+        {
+            
+            return subject2.AsObservable ()
+                .Cast<AppState> ()  // TODO
+                .Select (state => selector (state))
+                .DistinctUntilChanged ();
+        }
     }
 }

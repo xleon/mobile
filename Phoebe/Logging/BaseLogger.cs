@@ -50,20 +50,8 @@ namespace Toggl.Phoebe.Logging
 
         private void LogToLoggerClient (LogLevel level, string tag, string message, Exception exc)
         {
-            if (level >= LogLevel.Warning) {
-                ErrorSeverity severity;
-
-                switch (level) {
-                case LogLevel.Warning:
-                    severity = ErrorSeverity.Warning;
-                    break;
-                case LogLevel.Error:
-                    severity = ErrorSeverity.Error;
-                    break;
-                default:
-                    severity = ErrorSeverity.Info;
-                    break;
-                }
+            if (level == LogLevel.Error) {
+                ErrorSeverity severity = ErrorSeverity.Error;
 
                 var md = new Metadata ();
                 md.AddToTab ("Logger", "Tag", tag);
@@ -71,7 +59,6 @@ namespace Toggl.Phoebe.Logging
                 AddExtraMetadata (md);
 
                 var loggerClient = ServiceContainer.Resolve<ILoggerClient> ();
-
                 if (loggerClient != null) {
                     loggerClient.Notify (exc, severity, md);
                 }
@@ -101,7 +88,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, arg0));
+            Process (LogLevel.Debug, tag, string.Format (message, arg0));
         }
 
         public void Debug (string tag, string message, object arg0, object arg1)
@@ -109,7 +96,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, arg0, arg1));
+            Process (LogLevel.Debug, tag, string.Format (message, arg0, arg1));
         }
 
         public void Debug (string tag, string message, object arg0, object arg1, object arg2)
@@ -117,7 +104,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, arg0, arg1, arg2));
+            Process (LogLevel.Debug, tag, string.Format (message, arg0, arg1, arg2));
         }
 
         public void Debug (string tag, string message, params object[] args)
@@ -125,7 +112,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, args));
+            Process (LogLevel.Debug, tag, string.Format (message, args));
         }
 
         public void Debug (string tag, Exception exc, string message)
@@ -141,7 +128,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, arg0), exc);
+            Process (LogLevel.Debug, tag, string.Format (message, arg0), exc);
         }
 
         public void Debug (string tag, Exception exc, string message, object arg0, object arg1)
@@ -149,7 +136,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, arg0, arg1), exc);
+            Process (LogLevel.Debug, tag, string.Format (message, arg0, arg1), exc);
         }
 
         public void Debug (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
@@ -157,7 +144,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, arg0, arg1, arg2), exc);
+            Process (LogLevel.Debug, tag, string.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Debug (string tag, Exception exc, string message, params object[] args)
@@ -165,7 +152,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Debug) {
                 return;
             }
-            Process (LogLevel.Debug, tag, String.Format (message, args), exc);
+            Process (LogLevel.Debug, tag, string.Format (message, args), exc);
         }
 
         public void Info (string tag, string message)
@@ -181,7 +168,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, arg0));
+            Process (LogLevel.Info, tag, string.Format (message, arg0));
         }
 
         public void Info (string tag, string message, object arg0, object arg1)
@@ -189,7 +176,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, arg0, arg1));
+            Process (LogLevel.Info, tag, string.Format (message, arg0, arg1));
         }
 
         public void Info (string tag, string message, object arg0, object arg1, object arg2)
@@ -197,7 +184,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, arg0, arg1, arg2));
+            Process (LogLevel.Info, tag, string.Format (message, arg0, arg1, arg2));
         }
 
         public void Info (string tag, string message, params object[] args)
@@ -205,7 +192,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, args));
+            Process (LogLevel.Info, tag, string.Format (message, args));
         }
 
         public void Info (string tag, Exception exc, string message)
@@ -221,7 +208,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, arg0), exc);
+            Process (LogLevel.Info, tag, string.Format (message, arg0), exc);
         }
 
         public void Info (string tag, Exception exc, string message, object arg0, object arg1)
@@ -229,7 +216,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, arg0, arg1), exc);
+            Process (LogLevel.Info, tag, string.Format (message, arg0, arg1), exc);
         }
 
         public void Info (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
@@ -237,7 +224,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, arg0, arg1, arg2), exc);
+            Process (LogLevel.Info, tag, string.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Info (string tag, Exception exc, string message, params object[] args)
@@ -245,7 +232,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Info) {
                 return;
             }
-            Process (LogLevel.Info, tag, String.Format (message, args), exc);
+            Process (LogLevel.Info, tag, string.Format (message, args), exc);
         }
 
         public void Warning (string tag, string message)
@@ -261,7 +248,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, arg0));
+            Process (LogLevel.Warning, tag, string.Format (message, arg0));
         }
 
         public void Warning (string tag, string message, object arg0, object arg1)
@@ -269,7 +256,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, arg0, arg1));
+            Process (LogLevel.Warning, tag, string.Format (message, arg0, arg1));
         }
 
         public void Warning (string tag, string message, object arg0, object arg1, object arg2)
@@ -277,7 +264,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, arg0, arg1, arg2));
+            Process (LogLevel.Warning, tag, string.Format (message, arg0, arg1, arg2));
         }
 
         public void Warning (string tag, string message, params object[] args)
@@ -285,7 +272,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, args));
+            Process (LogLevel.Warning, tag, string.Format (message, args));
         }
 
         public void Warning (string tag, Exception exc, string message)
@@ -301,7 +288,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, arg0), exc);
+            Process (LogLevel.Warning, tag, string.Format (message, arg0), exc);
         }
 
         public void Warning (string tag, Exception exc, string message, object arg0, object arg1)
@@ -309,7 +296,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, arg0, arg1), exc);
+            Process (LogLevel.Warning, tag, string.Format (message, arg0, arg1), exc);
         }
 
         public void Warning (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
@@ -317,7 +304,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, arg0, arg1, arg2), exc);
+            Process (LogLevel.Warning, tag, string.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Warning (string tag, Exception exc, string message, params object[] args)
@@ -325,7 +312,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Warning) {
                 return;
             }
-            Process (LogLevel.Warning, tag, String.Format (message, args), exc);
+            Process (LogLevel.Warning, tag, string.Format (message, args), exc);
         }
 
         public void Error (string tag, string message)
@@ -341,7 +328,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, arg0));
+            Process (LogLevel.Error, tag, string.Format (message, arg0));
         }
 
         public void Error (string tag, string message, object arg0, object arg1)
@@ -349,7 +336,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, arg0, arg1));
+            Process (LogLevel.Error, tag, string.Format (message, arg0, arg1));
         }
 
         public void Error (string tag, string message, object arg0, object arg1, object arg2)
@@ -357,7 +344,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, arg0, arg1, arg2));
+            Process (LogLevel.Error, tag, string.Format (message, arg0, arg1, arg2));
         }
 
         public void Error (string tag, string message, params object[] args)
@@ -365,7 +352,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, args));
+            Process (LogLevel.Error, tag, string.Format (message, args));
         }
 
         public void Error (string tag, Exception exc, string message)
@@ -381,7 +368,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, arg0), exc);
+            Process (LogLevel.Error, tag, string.Format (message, arg0), exc);
         }
 
         public void Error (string tag, Exception exc, string message, object arg0, object arg1)
@@ -389,7 +376,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, arg0, arg1), exc);
+            Process (LogLevel.Error, tag, string.Format (message, arg0, arg1), exc);
         }
 
         public void Error (string tag, Exception exc, string message, object arg0, object arg1, object arg2)
@@ -397,7 +384,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, arg0, arg1, arg2), exc);
+            Process (LogLevel.Error, tag, string.Format (message, arg0, arg1, arg2), exc);
         }
 
         public void Error (string tag, Exception exc, string message, params object[] args)
@@ -405,7 +392,7 @@ namespace Toggl.Phoebe.Logging
             if (threshold > LogLevel.Error) {
                 return;
             }
-            Process (LogLevel.Error, tag, String.Format (message, args), exc);
+            Process (LogLevel.Error, tag, string.Format (message, args), exc);
         }
     }
 }

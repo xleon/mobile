@@ -22,15 +22,17 @@ namespace Toggl.Phoebe._Reactive
             .Add (DataTag.ReceivedFromServer, ReceivedFromServer)
             .Add (DataTag.TimeEntriesLoad, TimeEntriesLoad)
 
+            .Add (DataTag.TimeEntryAdd, TimeEntryAdd)
             .Add (DataTag.TimeEntryContinue, TimeEntryContinue)
             .Add (DataTag.TimeEntryStop, TimeEntryStop)
             .Add (DataTag.TimeEntriesRemoveWithUndo, TimeEntriesRemoveWithUndo)
             .Add (DataTag.TimeEntriesRestoreFromUndo, TimeEntriesRestoreFromUndo)
             .Add (DataTag.TimeEntriesRemovePermanently, TimeEntriesRemovePermanently);
 
-            return new FieldCompositeReducer<AppState> ()
+            return new PropertyCompositeReducer<AppState> ()
                    .Add (x => x.TimerState, tagReducer);
         }
+
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, IDataMsg msg)
         {
             var userId = state.User.Id;
@@ -91,6 +93,21 @@ namespace Toggl.Phoebe._Reactive
                            tags: state.Update (state.Tags, updated),
                            timeEntries: state.UpdateTimeEntries (updated)
                        ));
+        }
+
+        static DataSyncMsg<TimerState> TimeEntryAdd (TimerState state, IDataMsg msg)
+        {
+            var entryData = msg.ForceGetData<ITimeEntryData> ();
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+
+            // TODO: Entry sanity check
+            var updated = dataStore.Update (ctx => ctx.Put (entryData));
+
+            // TODO: Check updated.Count == 1?
+            return DataSyncMsg.Create (
+                msg.Tag,
+                state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                updated);
         }
 
         static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, IDataMsg msg)
@@ -162,7 +179,7 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<TimerState> TimeEntriesRemovePermanently (TimerState state, IDataMsg msg)
         {
-            var entryMsg = msg.ForceGetData<IEnumerable<ITimeEntryData>> ();
+            var entryMsg = msg.ForceGetData<List<ITimeEntryData>> ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             var removed = dataStore.Update (ctx => {

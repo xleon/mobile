@@ -31,7 +31,7 @@ namespace Toggl.Phoebe._Reactive
 
         DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
         {
-            var res = reducer ((T)state, msg);
+            var res = Reduce ((T)state, msg);
             return DataSyncMsg.Create (res.Tag, (object)res.State, res.SyncData);
         }
 
@@ -43,7 +43,7 @@ namespace Toggl.Phoebe._Reactive
         }
     }
 
-    public class TagCompositeReducer<T> : Reducer<T>
+    public class TagCompositeReducer<T> : Reducer<T>, IReducer
     {
         readonly Dictionary<DataTag, Reducer<T>> reducers = new Dictionary<DataTag, Reducer<T>> ();
 
@@ -67,28 +67,34 @@ namespace Toggl.Phoebe._Reactive
                 return DataSyncMsg.Create (msg.Tag, state);
             }
         }
+
+        DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
+        {
+            var res = Reduce ((T)state, msg);
+            return DataSyncMsg.Create (res.Tag, (object)res.State, res.SyncData);
+        }
     }
 
-    public class FieldCompositeReducer<T> : Reducer<T>
+    public class PropertyCompositeReducer<T> : Reducer<T>, IReducer
         where T : IWithDictionary<T>
     {
-        readonly List<Tuple<FieldInfo,IReducer>> reducers = new List<Tuple<FieldInfo,IReducer>> ();
+        readonly List<Tuple<PropertyInfo, IReducer>> reducers = new List<Tuple<PropertyInfo, IReducer>> ();
 
-        public FieldCompositeReducer<T> Add<TPart> (
+        public PropertyCompositeReducer<T> Add<TPart> (
             Expression<Func<T,TPart>> selector,
             Func<TPart, IDataMsg, DataSyncMsg<TPart>> reducer)
         {
             return Add (selector, new Reducer<TPart> (reducer));
         }
 
-        public FieldCompositeReducer<T> Add<TPart> (Expression<Func<T,TPart>> selector, Reducer<TPart> reducer)
+        public PropertyCompositeReducer<T> Add<TPart> (Expression<Func<T,TPart>> selector, Reducer<TPart> reducer)
         {
             var memberExpr = selector.Body as MemberExpression;
-            var member = (FieldInfo) memberExpr.Member;
+            var member = memberExpr.Member as PropertyInfo;
 
             if (memberExpr == null)
                 throw new ArgumentException (string.Format (
-                                                 "Expression '{0}' should be a field.",
+                                                 "Expression '{0}' should be a property.",
                                                  selector.ToString()));
             if (member == null)
                 throw new ArgumentException (string.Format (
@@ -105,14 +111,20 @@ namespace Toggl.Phoebe._Reactive
             var dic = new Dictionary<string, object> ();
 
             foreach (var reducer in reducers) {
-                var field = reducer.Item1.GetValue (state);
-                var res = reducer.Item2.Reduce (field, msg);
+                var propValue = reducer.Item1.GetValue (state);
+                var res = reducer.Item2.Reduce (propValue, msg);
 
                 dic.Add (reducer.Item1.Name, res.State);
                 syncData.AddRange (res.SyncData);
             }
 
             return new DataSyncMsg<T> (msg.Tag, state.WithDictionary (dic), syncData);
+        }
+
+        DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
+        {
+            var res = Reduce ((T)state, msg);
+            return DataSyncMsg.Create (res.Tag, (object)res.State, res.SyncData);
         }
     }
 
@@ -138,10 +150,10 @@ namespace Toggl.Phoebe._Reactive
         public TimeEntryInfo Info { get; private set; }
         public ITimeEntryData Data { get; private set; }
 
-        public RichTimeEntry (TimeEntryData data, TimeEntryInfo info)
+        public RichTimeEntry (ITimeEntryData data, TimeEntryInfo info)
         {
             Info = info;
-            Data = data;
+            Data = (ITimeEntryData)data.Clone ();
         }
     }
 
@@ -217,7 +229,7 @@ namespace Toggl.Phoebe._Reactive
         {
             var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
             foreach (var newItem in newItems.OfType<T> ()) {
-                if (newItem.DeletedAt != null) {
+                if (newItem.DeletedAt == null) {
                     if (dic.ContainsKey (newItem.Id)) {
                         dic [newItem.Id] = newItem;
                     } else {
@@ -240,14 +252,14 @@ namespace Toggl.Phoebe._Reactive
             IEnumerable<ICommonData> newItems)
         {
             var dic = TimeEntries.ToDictionary (x => x.Key, x => x.Value);
-            foreach (var newItem in newItems.OfType<TimeEntryData> ()) {
-                if (newItem.DeletedAt != null) {
+            foreach (var newItem in newItems.OfType<ITimeEntryData> ()) {
+                if (newItem.DeletedAt == null) {
                     if (dic.ContainsKey (newItem.Id)) {
                         dic [newItem.Id] = new RichTimeEntry (
                             newItem, LoadTimeEntryInfo (newItem));
                     } else {
                         dic.Add (newItem.Id, new RichTimeEntry (
-                                     newItem, LoadTimeEntryInfo (newItem)));
+                            newItem, LoadTimeEntryInfo (newItem)));
                     }
                 } else {
                     if (dic.ContainsKey (newItem.Id)) {
@@ -258,7 +270,7 @@ namespace Toggl.Phoebe._Reactive
             return dic;
         }
 
-        public TimeEntryInfo LoadTimeEntryInfo (TimeEntryData teData)
+        public TimeEntryInfo LoadTimeEntryInfo (ITimeEntryData teData)
         {
             var projectData = teData.ProjectId != Guid.Empty
                               ? this.Projects[teData.ProjectId]

@@ -15,7 +15,7 @@ namespace Toggl.Phoebe._Reactive
 {
     public static class Reducers
     {
-        static DataSyncMsg<TimerState> TimeEntryLoad (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, IDataMsg msg)
         {
             var userId = state.User.Id;
             var paginationDate = state.PaginationDate;
@@ -37,15 +37,17 @@ namespace Toggl.Phoebe._Reactive
             RxChain.Send (typeof (Reducers), DataTag.EmptyQueueAndSync, paginationDate);
             paginationDate = dbEntries.Count > 0 ? startDate : paginationDate;
 
-            return DataSyncMsg.Create (state.With (
-                                           paginationDate: paginationDate,
-                                           timeEntries: state.UpdateTimeEntries (dbEntries)));
+            return DataSyncMsg.Create (
+                       msg.Tag,
+                       state.With (
+                           paginationDate: paginationDate,
+                           timeEntries: state.UpdateTimeEntries (dbEntries)));
         }
 
-        static DataSyncMsg<TimerState> TimeEntryReceivedFromServer (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> ReceivedFromServer (TimerState state, IDataMsg msg)
         {
+            // TODO: Check if there had been errors
             var receivedData = msg.ForceGetData<IReadOnlyList<CommonData>> ();
-
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             var updated = dataStore.Update (ctx => {
@@ -63,14 +65,16 @@ namespace Toggl.Phoebe._Reactive
                 }
             });
 
-            return DataSyncMsg.Create (state.With (
-                                           workspaces: state.Update (state.Workspaces, updated),
-                                           projects: state.Update (state.Projects, updated),
-                                           clients: state.Update (state.Clients, updated),
-                                           tasks: state.Update (state.Tasks, updated),
-                                           tags: state.Update (state.Tags, updated),
-                                           timeEntries: state.UpdateTimeEntries (updated)
-                                       ));
+            return DataSyncMsg.Create (
+                       msg.Tag,
+                       state.With (
+                           workspaces: state.Update (state.Workspaces, updated),
+                           projects: state.Update (state.Projects, updated),
+                           clients: state.Update (state.Clients, updated),
+                           tasks: state.Update (state.Tasks, updated),
+                           tags: state.Update (state.Tags, updated),
+                           timeEntries: state.UpdateTimeEntries (updated)
+                       ));
         }
 
         static DataSyncMsg<TimerState> TimeEntryStop (TimerState state, IDataMsg msg)
@@ -93,6 +97,7 @@ namespace Toggl.Phoebe._Reactive
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
+                       msg.Tag,
                        state.With (timeEntries: state.UpdateTimeEntries (updated)),
                        updated);
         }
@@ -112,6 +117,7 @@ namespace Toggl.Phoebe._Reactive
 
             // TODO: Check removed.Count?
             return DataSyncMsg.Create (
+                       msg.Tag,
                        state.With (timeEntries: state.UpdateTimeEntries (removed)),
                        removed);
         }

@@ -32,7 +32,7 @@ namespace Toggl.Phoebe._Reactive
         DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
         {
             var res = reducer ((T)state, msg);
-            return DataSyncMsg.Create ((object)res.State, res.SyncData);
+            return DataSyncMsg.Create (res.Tag, (object)res.State, res.SyncData);
         }
 
         protected Reducer () { }
@@ -64,7 +64,7 @@ namespace Toggl.Phoebe._Reactive
             if (reducers.TryGetValue (msg.Tag, out reducer)) {
                 return reducer.Reduce (state, msg);
             } else {
-                return DataSyncMsg.Create (state);
+                return DataSyncMsg.Create (msg.Tag, state);
             }
         }
     }
@@ -112,7 +112,7 @@ namespace Toggl.Phoebe._Reactive
                 syncData.AddRange (res.SyncData);
             }
 
-            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData);
+            return new DataSyncMsg<T> (msg.Tag, state.WithDictionary (dic), syncData);
         }
     }
 
@@ -151,8 +151,10 @@ namespace Toggl.Phoebe._Reactive
         // So, we can include all entries created -Today-.
         // PaginationDate = Time.UtcNow.Date.AddDays (1);
 
-        public UserData User { get; private set; }
+        public DateTime StartFrom { get; private set; }
         public DateTime PaginationDate { get; private set; }
+
+        public UserData User { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
         public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
         public IReadOnlyDictionary<Guid, ClientData> Clients { get; private set; }
@@ -161,8 +163,9 @@ namespace Toggl.Phoebe._Reactive
         public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
 
         public TimerState (
-            UserData user,
+            DateTime startFrom,
             DateTime paginationDate,
+            UserData user,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, ProjectData> projects,
             IReadOnlyDictionary<Guid, ClientData> clients,
@@ -170,8 +173,9 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, TagData> tags,
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
-            User = user;
+            StartFrom = startFrom;
             PaginationDate = paginationDate;
+            User = user;
             Workspaces = workspaces;
             Projects = projects;
             Clients = clients;
@@ -181,8 +185,9 @@ namespace Toggl.Phoebe._Reactive
         }
 
         public TimerState With (
-            UserData user = null,
+            DateTime startFrom = default (DateTime),
             DateTime paginationDate = default (DateTime),
+            UserData user = null,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
             IReadOnlyDictionary<Guid, ClientData> clients = null,
@@ -191,8 +196,9 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new TimerState (
-                       user ?? this.User,
+                       startFrom == default (DateTime) ? this.StartFrom : startFrom,
                        paginationDate == default (DateTime) ? this.PaginationDate : paginationDate,
+                       user ?? this.User,
                        workspaces ?? this.Workspaces,
                        projects ?? this.Projects,
                        clients ?? this.Clients,

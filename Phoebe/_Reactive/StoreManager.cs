@@ -20,14 +20,14 @@ namespace Toggl.Phoebe._Reactive
         readonly Subject<IDataMsg> subject1 = new Subject<IDataMsg> ();
         readonly Subject<DataSyncMsg<AppState>> subject2 = new Subject<DataSyncMsg<AppState>> ();
 
-        readonly ISyncDataStore dataStore =
-            ServiceContainer.Resolve<ISyncDataStore> ();
-
         StoreManager (AppState initState, Reducer<AppState> reducer)
         {
+            var scheduler = ServiceContainer.Resolve<ISchedulerProvider> ().GetScheduler ();
+            var initSyncMsg = DataSyncMsg.Create (DataTag.EmptyQueueAndSync, initState);
+
             subject1
-            .Synchronize (ServiceContainer.Resolve<ISchedulerProvider> ().GetScheduler ())
-            .Scan (DataSyncMsg.Create (initState), (acc, msg) => {
+            .Synchronize (scheduler)
+            .Scan (initSyncMsg, (acc, msg) => {
                 try {
                     return reducer.Reduce (acc.State, msg);
                 } catch (Exception ex) {

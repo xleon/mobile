@@ -14,10 +14,10 @@ using XPlatUtils;
 namespace Toggl.Phoebe._Data
 {
     public enum DataTag {
-        UncaughtError,
+        AssignRemoteIds,
+        ReceivedFromServer,
 
-        TimeEntryLoad,
-        TimeEntryReceivedFromServer,
+        TimeEntriesLoad,
 
         TimeEntryStop,
         TimeEntryContinue,
@@ -26,7 +26,7 @@ namespace Toggl.Phoebe._Data
         TimeEntriesRestoreFromUndo,
         TimeEntriesRemovePermanently,
 
-        EmptyQueue,
+        // Launch this message when connection has been recovered after a while
         EmptyQueueAndSync
     }
 
@@ -63,10 +63,12 @@ namespace Toggl.Phoebe._Data
     public class DataSyncMsg<T>
     {
         public T State { get; private set; }
+        public DataTag Tag { get; private set; }
         public IReadOnlyList<ICommonData> SyncData { get; private set; }
 
-        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null)
+        public DataSyncMsg (DataTag tag, T state, IEnumerable<ICommonData> syncData = null)
         {
+            Tag = tag;
             State = state;
             SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
         }
@@ -160,9 +162,9 @@ namespace Toggl.Phoebe._Data
 
     public static class DataSyncMsg
     {
-        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null)
+        static public DataSyncMsg<T> Create<T> (DataTag tag, T state, IEnumerable<ICommonData> syncData = null)
         {
-            return new DataSyncMsg<T> (state, syncData);
+            return new DataSyncMsg<T> (tag, state, syncData);
         }
     }
     #endregion
